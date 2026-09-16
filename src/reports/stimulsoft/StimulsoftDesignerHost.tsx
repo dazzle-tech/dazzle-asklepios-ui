@@ -20,6 +20,11 @@ import {
   syncReportDictionary,
 } from './reportDesignerSchema';
 import { templateJsonToString } from './reportPrintParameters';
+import {
+  StimulsoftDesignerMode,
+  applyStimulsoftDesignerModeOptions,
+  createStimulsoftDocument,
+} from './stimulsoftDesignerMode';
 
 export type StimulsoftDesignerHostHandle = {
   getTemplateJson: () => string | null;
@@ -30,6 +35,7 @@ type Props = {
   schema: DesignerSchema;
   onSave?: (templateJson: string) => void | Promise<void>;
   height?: string | number;
+  mode?: StimulsoftDesignerMode;
 };
 
 const refreshDesignerDictionary = (designer: any, report?: any) => {
@@ -114,7 +120,10 @@ const waitUntilVisible = (
  * Must only mount after loadStimulsoftDesigner() has resolved.
  */
 const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
-  ({ templateJson, schema, onSave, height = 'calc(100vh - 220px)' }, ref) => {
+  (
+    { templateJson, schema, onSave, height = 'calc(100vh - 220px)', mode = 'report' },
+    ref
+  ) => {
     const hostRef = useRef<HTMLDivElement>(null);
     const onSaveRef = useRef(onSave);
     const schemaRef = useRef(schema);
@@ -127,6 +136,8 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
     );
     const cacheTimerRef = useRef<number | null>(null);
     const dictionaryTimerRef = useRef<number | null>(null);
+    const modeRef = useRef(mode);
+    modeRef.current = mode;
 
     const cacheJson = (json?: string | null) => {
       const text = templateJsonToString(json);
@@ -245,6 +256,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
         if (options.appearance.showSaveDialog !== undefined) {
           options.appearance.showSaveDialog = false;
         }
+        applyStimulsoftDesignerModeOptions(options, modeRef.current);
         if (options.toolbar) {
           options.toolbar.showSaveButton = false;
           options.toolbar.showFileMenuSave = false;
@@ -266,7 +278,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
           return;
         }
 
-        const report = new Stimulsoft.Report.StiReport();
+        const report = createStimulsoftDocument(Stimulsoft, modeRef.current);
         attachStimulsoftProxyHeaders(report);
         prepareReportDictionary(report);
 

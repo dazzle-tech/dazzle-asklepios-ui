@@ -88,6 +88,20 @@ const StimulsoftReportDesignerPage = lazy(
       './pages/setup/stimulsoft-report-designer/StimulsoftReportDesignerPage'
     )
 );
+const StimulsoftDashboardTemplateList = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-dashboard-list" */
+      './pages/setup/stimulsoft-dashboard-designer'
+    )
+);
+const StimulsoftDashboardDesignerPage = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "stimulsoft-dashboard-designer" */
+      './pages/setup/stimulsoft-dashboard-designer/StimulsoftDashboardDesignerPage'
+    )
+);
 const ModuleReportsPage = lazy(
   () =>
     import(
@@ -668,6 +682,9 @@ const App = () => {
               <Route path="report-designer" element={<StimulsoftReportTemplateList />} />
               <Route path="report-designer/new" element={<StimulsoftReportDesignerPage />} />
               <Route path="report-designer/:id" element={<StimulsoftReportDesignerPage />} />
+              <Route path="dashboard-designer" element={<StimulsoftDashboardTemplateList />} />
+              <Route path="dashboard-designer/new" element={<StimulsoftDashboardDesignerPage />} />
+              <Route path="dashboard-designer/:id" element={<StimulsoftDashboardDesignerPage />} />
               <Route path="module-reports/:moduleCode" element={<ModuleReportsPage />} />
               <Route
                 path="patient-old/facility-patient-list"

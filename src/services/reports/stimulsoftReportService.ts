@@ -4,8 +4,15 @@ import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 import { DesignerSchema } from '@/reports/stimulsoft/reportDesignerSchema';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import type { StimulsoftTemplateType } from '@/reports/stimulsoft/stimulsoftDesignerMode';
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  timestamp?: number;
+  templateType?: StimulsoftTemplateType;
+};
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -39,6 +46,7 @@ export type StimulsoftReportTemplate = {
   facilityId?: number | null;
   departmentIds?: string | null;
   module?: string | null;
+  templateType?: StimulsoftTemplateType | null;
 };
 
 /**
@@ -54,6 +62,7 @@ export type StimulsoftReportTemplateWriteVM = {
   facilityId?: number | null;
   departmentIds?: string | null;
   module?: string | null;
+  templateType?: StimulsoftTemplateType | null;
 };
 
 /**
@@ -245,8 +254,13 @@ export const stimulsoftReportService = createApi({
       PagedResult<StimulsoftReportTemplate>,
       PagedParams
     >({
-      query: ({ page, size, sort = 'id,desc' }) =>
-        noStoreGet('/api/analytics/reports/templates', { page, size, sort }),
+      query: ({ page, size, sort = 'id,desc', templateType }) =>
+        noStoreGet('/api/analytics/reports/templates', {
+          page,
+          size,
+          sort,
+          templateType,
+        }),
       transformResponse: mapPagedTemplates,
       serializeQueryArgs: ({ endpointName, queryArgs }) => {
         const { timestamp, ...rest } = queryArgs;
@@ -260,10 +274,10 @@ export const stimulsoftReportService = createApi({
       PagedResult<StimulsoftReportTemplate>,
       { name: string } & PagedParams
     >({
-      query: ({ name, page, size, sort }) =>
+      query: ({ name, page, size, sort, templateType }) =>
         noStoreGet(
           `/api/analytics/reports/templates/by-name/${encodeURIComponent(name)}`,
-          { page, size, sort }
+          { page, size, sort, templateType }
         ),
       transformResponse: mapPagedTemplates,
       serializeQueryArgs: ({ endpointName, queryArgs }) => {
@@ -410,6 +424,7 @@ export const stimulsoftReportService = createApi({
           facilityId,
           departmentId,
           isActive: true,
+          templateType: 'REPORT',
           page: 0,
           size: 200,
           sort: 'name,asc',
@@ -417,6 +432,9 @@ export const stimulsoftReportService = createApi({
       transformResponse: (response: unknown, meta: any, arg) => {
         const mapped = mapPagedTemplates(response, meta);
         return mapped.data.filter(template => {
+          if (String(template.templateType ?? '').toUpperCase() === 'DASHBOARD') {
+            return false;
+          }
           if (template.isActive === false) return false;
           if (
             arg.module &&

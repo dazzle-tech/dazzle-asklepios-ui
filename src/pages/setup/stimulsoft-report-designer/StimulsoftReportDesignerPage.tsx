@@ -21,6 +21,10 @@ import {
 
 import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import {
+  StimulsoftDesignerMode,
+  templateTypeFromMode,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 
 const StimulsoftDesignerHost = React.lazy(
   () =>
@@ -30,7 +34,11 @@ const StimulsoftDesignerHost = React.lazy(
     )
 );
 
-const StimulsoftReportDesignerPage = () => {
+const StimulsoftReportDesignerPage = ({
+  mode = 'report',
+}: {
+  mode?: StimulsoftDesignerMode;
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const params = useParams();
@@ -66,13 +74,21 @@ const StimulsoftReportDesignerPage = () => {
   useEffect(() => {
     dispatch(setPageCode('STIMULSOFT_REPORT_DESIGNER'));
     dispatch(
-      setDivContent(isNew ? 'New Report Template' : 'Edit Report Template')
+      setDivContent(
+        isNew
+          ? mode === 'dashboard'
+            ? 'New Dashboard Template'
+            : 'New Report Template'
+          : mode === 'dashboard'
+            ? 'Edit Dashboard Template'
+            : 'Edit Report Template'
+      )
     );
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
     };
-  }, [dispatch, isNew]);
+  }, [dispatch, isNew, mode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +183,7 @@ const StimulsoftReportDesignerPage = () => {
           facilityId: current.facilityId,
           departmentIds: current.departmentIds,
           module: current.module || null,
+          templateType: templateTypeFromMode(mode),
         };
 
         if (savedIdRef.current) {
@@ -175,12 +192,23 @@ const StimulsoftReportDesignerPage = () => {
           const created = await createTemplate(body).unwrap();
           savedIdRef.current = created.id ?? null;
           if (created.id) {
-            navigate(`/report-designer/${created.id}`, { replace: true });
+            navigate(
+              mode === 'dashboard'
+                ? `/dashboard-designer/${created.id}`
+                : `/report-designer/${created.id}`,
+              { replace: true }
+            );
           }
         }
 
         dispatch(
-          notify({ msg: 'Report template saved successfully', sev: 'success' })
+          notify({
+            msg:
+              mode === 'dashboard'
+                ? 'Dashboard template saved successfully'
+                : 'Report template saved successfully',
+            sev: 'success',
+          })
         );
       } catch (err: any) {
         dispatch(
@@ -191,7 +219,9 @@ const StimulsoftReportDesignerPage = () => {
               err?.error?.data?.message ||
               err?.error?.data?.detail ||
               err?.message ||
-              'Failed to save report template',
+              (mode === 'dashboard'
+                ? 'Failed to save dashboard template'
+                : 'Failed to save report template'),
             sev: 'error',
           })
         );
@@ -199,7 +229,7 @@ const StimulsoftReportDesignerPage = () => {
         setSaving(false);
       }
     },
-    [createTemplate, dispatch, navigate, updateTemplate]
+    [createTemplate, dispatch, mode, navigate, updateTemplate]
   );
 
   const handleToolbarSave = useCallback(async () => {
@@ -221,7 +251,14 @@ const StimulsoftReportDesignerPage = () => {
     <div className="stimulsoft-designer-page" style={{ padding: 16 }}>
       <Panel bordered>
         <Stack spacing={12} alignItems="flex-end" wrap>
-          <Button appearance="subtle" onClick={() => navigate('/report-designer')}>
+          <Button
+            appearance="subtle"
+            onClick={() =>
+              navigate(
+                mode === 'dashboard' ? '/dashboard-designer' : '/report-designer'
+              )
+            }
+          >
             <Translate>Back</Translate>
           </Button>
           <Button
@@ -283,6 +320,7 @@ const StimulsoftReportDesignerPage = () => {
               ref={designerRef}
               templateJson={templateJson}
               schema={schema}
+              mode={mode}
               onSave={handleSave}
             />
           </React.Suspense>

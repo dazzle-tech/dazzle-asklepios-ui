@@ -6,6 +6,7 @@ export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const ENGINE_FILES = [
   '/stimulsoft/stimulsoft.reports.pack.js',
+  '/stimulsoft/stimulsoft.dashboards.pack.js',
   '/stimulsoft/stimulsoft.viewer.pack.js',
 ];
 
@@ -56,7 +57,7 @@ const loadScript = (src: string) =>
     script.onerror = () =>
       reject(
         new Error(
-          `Failed to load ${src}. Run npm install so webpack can copy Stimulsoft pack scripts into public/stimulsoft.`
+          `Failed to load ${src}. Run npm install so webpack can copy Stimulsoft pack scripts (including dashboards) into public/stimulsoft.`
         )
       );
     document.body.appendChild(script);

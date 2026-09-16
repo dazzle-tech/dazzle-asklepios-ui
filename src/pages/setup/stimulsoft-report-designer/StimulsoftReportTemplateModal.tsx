@@ -27,6 +27,10 @@ import {
 } from '@/services/reports/stimulsoftReportService';
 import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import {
+  StimulsoftDesignerMode,
+  templateTypeFromMode,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -49,18 +53,35 @@ const EMPTY_DETAILS = {
   module: '',
 };
 
-const STEPS = [
-  {
-    title: 'Details',
-    description: 'Report name, facility and module',
-    icon: 1,
-  },
-  {
-    title: 'Design',
-    description: 'Layout the report template',
-    icon: 2,
-  },
-];
+const STEPS_BY_MODE: Record<
+  StimulsoftDesignerMode,
+  { title: string; description: string; icon: number }[]
+> = {
+  report: [
+    {
+      title: 'Details',
+      description: 'Report name, facility and module',
+      icon: 1,
+    },
+    {
+      title: 'Design',
+      description: 'Layout the report template',
+      icon: 2,
+    },
+  ],
+  dashboard: [
+    {
+      title: 'Details',
+      description: 'Dashboard name, facility and module',
+      icon: 1,
+    },
+    {
+      title: 'Design',
+      description: 'Layout the dashboard template',
+      icon: 2,
+    },
+  ],
+};
 
 type Details = typeof EMPTY_DETAILS;
 
@@ -113,16 +134,19 @@ type Props = {
   setOpen: (open: boolean) => void;
   initialData?: StimulsoftReportTemplate | null;
   onSaved?: () => void;
+  mode?: StimulsoftDesignerMode;
 };
 
 const DesignStep = ({
   code,
   templateJson,
   designerRef,
+  mode,
 }: {
   code: string;
   templateJson?: string | null;
   designerRef: React.MutableRefObject<StimulsoftDesignerHostHandle | null>;
+  mode: StimulsoftDesignerMode;
 }) => {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,6 +218,7 @@ const DesignStep = ({
         ref={designerRef}
         templateJson={templateJson}
         schema={schema}
+        mode={mode}
         height="calc(100vh - 320px)"
       />
     </React.Suspense>
@@ -205,6 +230,7 @@ const StimulsoftReportTemplateModal = ({
   setOpen,
   initialData,
   onSaved,
+  mode = 'report',
 }: Props) => {
   const dispatch = useDispatch();
   const designerRef = useRef<StimulsoftDesignerHostHandle | null>(null);
@@ -315,6 +341,7 @@ const StimulsoftReportTemplateModal = ({
           ? serializeDepartmentIds(details.departmentIds)
           : '',
         module: details.module || null,
+        templateType: templateTypeFromMode(mode),
       };
 
       if (savedId) {
@@ -333,6 +360,7 @@ const StimulsoftReportTemplateModal = ({
       details.facilityId,
       details.module,
       details.name,
+      mode,
       savedId,
       selectedFacilityId,
       templateJson,
@@ -357,14 +385,24 @@ const StimulsoftReportTemplateModal = ({
       setSaving(true);
       await persist(json);
       dispatch(
-        notify({ msg: 'Report template saved successfully', sev: 'success' })
+        notify({
+          msg:
+            mode === 'dashboard'
+              ? 'Dashboard template saved successfully'
+              : 'Report template saved successfully',
+          sev: 'success',
+        })
       );
       onSaved?.();
       setOpen(false);
     } catch (err: any) {
       dispatch(
         notify({
-          msg: err?.data?.message || 'Failed to save report template',
+          msg:
+            err?.data?.message ||
+            (mode === 'dashboard'
+              ? 'Failed to save dashboard template'
+              : 'Failed to save report template'),
           sev: 'error',
         })
       );
@@ -372,7 +410,7 @@ const StimulsoftReportTemplateModal = ({
     } finally {
       setSaving(false);
     }
-  }, [dispatch, onSaved, persist, setOpen, templateJson]);
+  }, [dispatch, mode, onSaved, persist, setOpen, templateJson]);
 
   return (
     <MyModal
@@ -380,15 +418,23 @@ const StimulsoftReportTemplateModal = ({
       setOpen={setOpen}
       title={
         isEdit ? (
-          <Translate>Edit Report Template</Translate>
+          <Translate>
+            {mode === 'dashboard'
+              ? 'Edit Dashboard Template'
+              : 'Edit Report Template'}
+          </Translate>
         ) : (
-          <Translate>New Report Template</Translate>
+          <Translate>
+            {mode === 'dashboard'
+              ? 'New Dashboard Template'
+              : 'New Report Template'}
+          </Translate>
         )
       }
       size="full"
       bodyheight="calc(100vh - 240px)"
       enforceFocus={false}
-      steps={STEPS}
+      steps={STEPS_BY_MODE[mode]}
       onBeforeNext={handleBeforeNext}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
@@ -514,6 +560,7 @@ const StimulsoftReportTemplateModal = ({
               code={details.code.trim()}
               templateJson={templateJson}
               designerRef={designerRef}
+              mode={mode}
             />
           </MountWhenVisible>
         </>
