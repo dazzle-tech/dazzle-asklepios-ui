@@ -217,6 +217,9 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
               fieldLabel="Treatment Plan / Management"
               disabled={disabled}
               required
+              onBlur={() => {
+                if (!disabled) handleSave();
+              }}
             />
 
             <MyInput
@@ -227,6 +230,9 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
               setRecord={(r: any) => setGoals(r?.goals ?? '')}
               fieldLabel="Goals"
               disabled={disabled}
+              onBlur={() => {
+                if (!disabled) handleSave();
+              }}
             />
           </Form>
         </div>
