@@ -121,10 +121,10 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         skip: !queryArgs
     });
 
-const { data: departmentsResponse } =
-  useGetAllDepartmentsWithoutPaginationQuery(undefined, {
-    skip: !open
-  });
+    const { data: departmentsResponse } =
+        useGetAllDepartmentsWithoutPaginationQuery(undefined, {
+            skip: !open
+        });
 
     const {
         data: facilitiesResponse,
@@ -138,7 +138,7 @@ const { data: departmentsResponse } =
     const tableData = useMemo(() => {
         return referralListResponse?.data ?? referralListResponse ?? [];
     }, [referralListResponse]);
-
+    console.log("tableData: ", tableData)
     const totalCount = referralListResponse?.totalCount ?? tableData.length ?? 0;
 
     useEffect(() => {
@@ -161,7 +161,7 @@ const { data: departmentsResponse } =
         setFacilityMap(map);
     }, [facilitiesResponse, open]);
 
-        useEffect(() => {
+    useEffect(() => {
         if (!open) return;
 
         if (!departmentsResponse?.length) {
@@ -176,7 +176,7 @@ const { data: departmentsResponse } =
         });
 
         setDepartmentsMap(map);
-        }, [departmentsResponse, open]);
+    }, [departmentsResponse, open]);
 
     const patientIdsForBulk = useMemo(() => {
         const ids = (tableData as any[])
@@ -266,29 +266,29 @@ const { data: departmentsResponse } =
     }, [tableData, patientMap]);
 
     const extractErrorMessage = (response: any): string => {
-    try {
-      const data = response?.data ?? response?.error?.data ?? null;
-      const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
-      const path = data?.path ?? data?.detail ?? data?.instance ?? '';
-      const rawMessage =
-        data?.message ??
-        data?.error ??
-        response?.error?.message ??
-        response?.message ??
-        response?.toString?.() ??
-        '';
-      const message =
-        typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
+        try {
+            const data = response?.data ?? response?.error?.data ?? null;
+            const status = response?.status ?? response?.originalStatus ?? response?.error?.status ?? null;
+            const path = data?.path ?? data?.detail ?? data?.instance ?? '';
+            const rawMessage =
+                data?.message ??
+                data?.error ??
+                response?.error?.message ??
+                response?.message ??
+                response?.toString?.() ??
+                '';
+            const message =
+                typeof rawMessage === 'string' ? rawMessage.replace(/^error\./i, '').trim() : '';
 
-      const parts = [message];
-      if (status) parts.push(`HTTP ${status}`);
-      if (path && typeof path === 'string') parts.push(path);
+            const parts = [message];
+            if (status) parts.push(`HTTP ${status}`);
+            if (path && typeof path === 'string') parts.push(path);
 
-      return parts.filter(Boolean).join(' | ');
-    } catch {
-      return '';
-    }
-  };
+            return parts.filter(Boolean).join(' | ');
+        } catch {
+            return '';
+        }
+    };
 
     const handleOpenQuickAppointment = (row: any) => {
         const patientId = row?.patient?.id;
@@ -340,56 +340,56 @@ const { data: departmentsResponse } =
     };
 
     const handleApproveAgendaSelectAppointment = (appointmentFromAgenda: any) => {
-    setSelectedAppointment(appointmentFromAgenda)
-    setAgendaSlotConfirmOpen(true);
-  };
+        setSelectedAppointment(appointmentFromAgenda)
+        setAgendaSlotConfirmOpen(true);
+    };
 
-const handleBookAppointment = async () => {
-  try {
-    if (!selectedAppointment?.id || !selectedReferral?.patient?.id) {
-      dispatch(notify({ msg: 'Missing appointment or patient data', sev: 'warning' }));
-      return;
-    }
+    const handleBookAppointment = async () => {
+        try {
+            if (!selectedAppointment?.id || !selectedReferral?.patient?.id) {
+                dispatch(notify({ msg: 'Missing appointment or patient data', sev: 'warning' }));
+                return;
+            }
 
-    if (!selectedAppointment?.priority) {
-      dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
-      return;
-    }
+            if (!selectedAppointment?.priority) {
+                dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
+                return;
+            }
 
-    // 1. Accept referral
-    await acceptReferralRequest({
-      id: selectedReferral.id,
-      appointmentId: selectedAppointment.id
-    }).unwrap();
+            // 1. Accept referral
+            await acceptReferralRequest({
+                id: selectedReferral.id,
+                appointmentId: selectedAppointment.id
+            }).unwrap();
 
-    // 2. Book appointment
-    await bookPatientAppointment({
-      id: selectedAppointment.id,
-      patientId: Number(selectedReferral.patient.id),
-      defaultService: null,
-      defaultPractitioner: selectedAppointment.defaultPractitionerId ?? null,
-      reason: "REFERRAL",
-      service: "REFERRAL",
-      note: null,
-      originType: null,
-      originName: null,
-      status: 'BOOKED',
-      priority: selectedAppointment.priority,
-      followUpEncounterId: null
-    }).unwrap();
+            // 2. Book appointment
+            await bookPatientAppointment({
+                id: selectedAppointment.id,
+                patientId: Number(selectedReferral.patient.id),
+                defaultService: null,
+                defaultPractitioner: selectedAppointment.defaultPractitionerId ?? null,
+                reason: "REFERRAL",
+                service: "REFERRAL",
+                note: null,
+                originType: null,
+                originName: null,
+                status: 'BOOKED',
+                priority: selectedAppointment.priority,
+                followUpEncounterId: null
+            }).unwrap();
 
-    dispatch(notify({
-      msg: 'Appointment booked successfully',
-      sev: 'success'
-    }));
-    setAgendaSlotConfirmOpen(false);
-  } catch (error: any) {
-    dispatch(notify({
-      msg: extractErrorMessage(error) || 'Failed to load appointments',
-      sev: 'error'
-    }));
-  }
-};
+            dispatch(notify({
+                msg: 'Appointment booked successfully',
+                sev: 'success'
+            }));
+            setAgendaSlotConfirmOpen(false);
+        } catch (error: any) {
+            dispatch(notify({
+                msg: extractErrorMessage(error) || 'Failed to load appointments',
+                sev: 'error'
+            }));
+        }
+    };
     const tableColumns = [
         {
             key: 'referralType',
@@ -404,10 +404,22 @@ const handleBookAppointment = async () => {
             render: (row: any) => facilityMap[row.fromFacilityId] ?? '-'
         },
         {
+            key: 'fromDepartmentId',
+            title: <Translate>From Department</Translate>,
+            flexGrow: 2,
+            render: (row: any) => departmentsMap[row.fromDepartmentId] ?? '-'
+        },
+        {
             key: 'toFacilityId',
             title: <Translate>To Facility</Translate>,
             flexGrow: 2,
             render: () => selectedFacility?.name ?? '-'
+        },
+        {
+            key: 'toDepartmentId',
+            title: <Translate>To Department</Translate>,
+            flexGrow: 2,
+            render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
         },
         {
             key: 'patientInfo',
@@ -446,12 +458,6 @@ const handleBookAppointment = async () => {
                     </Whisper>
                 );
             }
-        },
-        {
-        key: 'toDepartmentId',
-        title: <Translate>Department</Translate>,
-        flexGrow: 2,
-        render: (row: any) => departmentsMap[row.toDepartmentId] ?? '-'
         },
         {
             key: 'priority',
@@ -547,24 +553,24 @@ const handleBookAppointment = async () => {
                 const isRequested = statusUpper === 'REQUESTED';
                 return (
                     <Form fluid className="nurse-doctor-form">
-                      <div className="referal-request-icons-positioning">
-                          <Whisper
-                            trigger="hover"
-                            placement="top"
-                            speaker={<Tooltip>Accept</Tooltip>}
-                            container={getTooltipContainer}
-                        >
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
-                                    onClick={() => handleOpenQuickAppointment(row)}
-                                >
-                                    <FontAwesomeIcon icon={faCircleCheck} />
-                                </MyButton>
-                            </div>
-                          </Whisper>
-                          <Whisper
+                        <div className="referal-request-icons-positioning">
+                            <Whisper
+                                trigger="hover"
+                                placement="top"
+                                speaker={<Tooltip>Accept</Tooltip>}
+                                container={getTooltipContainer}
+                            >
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        disabled={!isRequested || row?.patientObject?.patientStatus === 'MERGED'}
+                                        onClick={() => handleOpenQuickAppointment(row)}
+                                    >
+                                        <FontAwesomeIcon icon={faCircleCheck} />
+                                    </MyButton>
+                                </div>
+                            </Whisper>
+                            <Whisper
                                 trigger="hover"
                                 placement="top"
                                 speaker={<Tooltip>Reject</Tooltip>}
@@ -580,8 +586,8 @@ const handleBookAppointment = async () => {
                                         <FontAwesomeIcon icon={faCircleXmark} />
                                     </MyButton>
                                 </div>
-                          </Whisper>
-                      </div>
+                            </Whisper>
+                        </div>
                     </Form>
                 );
             }
@@ -695,13 +701,13 @@ const handleBookAppointment = async () => {
 
             {quickAppointmentModel && selectedPatient && (
                 <>
-                <ApproveRequestAgendaModal
-                    open={quickAppointmentModel}
-                    setOpen={ setQuickAppointmentModel}
-                    request={{...selectedReferral, departmentId: selectedReferral?.toDepartmentId, facilityId: selectedReferral?.toFacilityId}}
-                    onSelectAppointment={handleApproveAgendaSelectAppointment}
-                />
-                <DeletionConfirmationModal
+                    <ApproveRequestAgendaModal
+                        open={quickAppointmentModel}
+                        setOpen={setQuickAppointmentModel}
+                        request={{ ...selectedReferral, departmentId: selectedReferral?.toDepartmentId, facilityId: selectedReferral?.toFacilityId }}
+                        onSelectAppointment={handleApproveAgendaSelectAppointment}
+                    />
+                    <DeletionConfirmationModal
                         open={agendaSlotConfirmOpen}
                         setOpen={setAgendaSlotConfirmOpen}
                         actionType="confirm"
@@ -709,8 +715,8 @@ const handleBookAppointment = async () => {
                         cancelButtonLabel="No"
                         actionButtonLabel="Yes"
                         actionButtonFunction={() => handleBookAppointment()}
-                      />
-                      </>
+                    />
+                </>
             )}
         </div>
     );
