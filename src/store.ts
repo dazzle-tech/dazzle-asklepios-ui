@@ -263,6 +263,7 @@ import { patientTimelineService } from './services/patients/patientTimelineServi
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -647,7 +648,8 @@ export const store = configureStore({
     [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
-    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer
+    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -884,7 +886,8 @@ export const store = configureStore({
         patientTimelineService.middleware,
         autoPopulationService.middleware,
         dischargeReportService.middleware,
-         ocrParsingService.middleware
+         ocrParsingService.middleware,
+        labInterpretationService.middleware
       ) as any
 });
 
