@@ -12,6 +12,7 @@ import { useAppDispatch } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { TpaDefinition } from '@/types/model-types-new';
 import { newTpaDefinition } from '@/types/model-types-constructor-new';
+import { approvalCoverageCompanyLabel } from '@/pages/setup/coverage-management/coverageHelpers';
 import {
   TpaDefinitionService,
   useCreateTpaDefinitionMutation,
@@ -230,6 +231,7 @@ const TpaDefinitionSection = () => {
         address: selectedTpa.address || null,
         phone: selectedTpa.phone || null,
         email: selectedTpa.email || null,
+        approvalCoverageCompany: selectedTpa.approvalCoverageCompany || null,
         insuranceCompanyIds: toIdList(selectedTpa.insuranceCompanyIds)
       };
 
@@ -423,6 +425,14 @@ const TpaDefinitionSection = () => {
       key: 'guarantorType',
       title: <Translate>Guarantor Type</Translate>,
       flexGrow: 2
+    },
+    {
+      key: 'approvalCoverageCompany',
+      title: <Translate>Approval Coverage Co.</Translate>,
+      flexGrow: 2,
+      render: (rowData: TpaDefinition) => (
+        <span>{approvalCoverageCompanyLabel(rowData.approvalCoverageCompany)}</span>
+      )
     },
     {
       key: 'activationDate',

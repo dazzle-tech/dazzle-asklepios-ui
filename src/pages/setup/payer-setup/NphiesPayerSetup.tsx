@@ -15,6 +15,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 
 import { NphiesPayer } from '@/types/model-types-new';
 import { newNphiesPayer } from '@/types/model-types-constructor-new';
+import { approvalCoverageCompanyLabel } from '@/pages/setup/coverage-management/coverageHelpers';
 
 import {
   useGetAllNphiesPayersQuery,
@@ -310,10 +311,18 @@ const NphiesPayerSetup = () => {
       const uniqueTpaIds = [...new Set(payload.tpaIds ?? [])];
 
       if (selectedPayer.id) {
-        await updateNphiesPayer({ ...payload, tpaIds: uniqueTpaIds }).unwrap();
+        await updateNphiesPayer({
+          ...payload,
+          tpaIds: uniqueTpaIds,
+          approvalCoverageCompany: payload.approvalCoverageCompany || null
+        }).unwrap();
         dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
       } else {
-        await createNphiesPayer({ ...payload, tpaIds: uniqueTpaIds }).unwrap();
+        await createNphiesPayer({
+          ...payload,
+          tpaIds: uniqueTpaIds,
+          approvalCoverageCompany: payload.approvalCoverageCompany || null
+        }).unwrap();
         dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
       }
 
@@ -480,6 +489,14 @@ const NphiesPayerSetup = () => {
       key: 'facilityName',
       title: <Translate>Facility</Translate>,
       flexGrow: 2
+    },
+    {
+      key: 'approvalCoverageCompany',
+      title: <Translate>Approval Coverage Co.</Translate>,
+      flexGrow: 2,
+      render: (rowData: NphiesPayer) => (
+        <span>{approvalCoverageCompanyLabel(rowData.approvalCoverageCompany)}</span>
+      )
     },
     {
       key: 'tpas',

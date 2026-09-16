@@ -57,6 +57,7 @@ import {
 import {
   useGetInsurancesByPatientQuery
 } from '@/services/patients/patientInsurancesService';
+import { useGetPayorByIdQuery } from '@/services/setup/payer/PayorService';
 
 import { extractPatientInsurancesList,
   getTodayServiceDate,
@@ -65,6 +66,7 @@ import { extractPatientInsurancesList,
 } from '../cchiMappers';
 
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import CoverageContractTermsSummary from './CoverageContractTermsSummary';
 
 import {
   useCreateAdvancePaymentMutation,
@@ -858,6 +860,21 @@ const PatientPaymentInfo =
           summary
         );
 
+      const { data: selectedPayor } =
+        useGetPayorByIdQuery(
+          Number(
+            patientInsurance?.payorId
+          ),
+          {
+            skip:
+              !patientInsurance?.payorId
+          }
+        );
+
+      const isWaseelCoverage =
+        selectedPayor?.isWaseelEnabled !==
+        false;
+
       const {
         data: waseelCoverage,
         isFetching:
@@ -878,7 +895,9 @@ const PatientPaymentInfo =
               !patientId ||
               formState.coverageType !==
                 'INSURANCE' ||
-              !formState.patientInsuranceId
+              !formState.patientInsuranceId ||
+              selectedPayor?.isWaseelEnabled ===
+                false
           }
         );
 
@@ -1046,6 +1065,7 @@ const PatientPaymentInfo =
       const showCheckEligibilityButton =
         useMemo(
           () =>
+            isWaseelCoverage &&
             shouldShowCheckEligibilityAction(
               patientInsurance ??
                 null
@@ -1053,6 +1073,7 @@ const PatientPaymentInfo =
             !isLocked &&
             !isViewOnlyMode,
           [
+            isWaseelCoverage,
             patientInsurance,
             isLocked,
             isViewOnlyMode
@@ -5162,6 +5183,25 @@ const PatientPaymentInfo =
                   ) : null}
                 </div>
 
+                {isInsurance ? (
+                  <CoverageContractTermsSummary
+                    insurance={
+                      displayedPatientInsurance ??
+                      patientInsurance ??
+                      null
+                    }
+                    encounterType={
+                      localEncounter?.encounterType
+                    }
+                    isWaseelEnabled={
+                      selectedPayor?.isWaseelEnabled
+                    }
+                    payerNphiesId={
+                      selectedPayor?.nphiesId
+                    }
+                  />
+                ) : null}
+
                 <MyInput
                   column
                   disabled
@@ -5179,7 +5219,8 @@ const PatientPaymentInfo =
               </div>
             ) : null}
 
-            {isInsurance ? (
+            {isInsurance &&
+            isWaseelCoverage ? (
               <Panel
                 bordered
                 className="payment-info__panel payment-info__panel--nested"

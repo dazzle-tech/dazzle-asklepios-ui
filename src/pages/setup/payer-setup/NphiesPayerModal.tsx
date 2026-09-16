@@ -5,10 +5,12 @@ import MyInput from '@/components/MyInput';
 import { NphiesPayer } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetAllTpaDefinitionsQuery } from '@/services/setup/payer/TpaDefinitionSetupService';
+import { APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from '@/pages/setup/coverage-management/coverageHelpers';
 
 type NphiesPayerModalProps = {
   open: boolean;
@@ -51,6 +53,12 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
   const { data: tpaResponse, isFetching: isTpasLoading } = useGetAllTpaDefinitionsQuery(
     { page: 0, size: 1000, sort: 'id,asc' },
     { skip: !open }
+  );
+
+  const approvalCoverageCompanies = approvalCoverageCompanyOptions(
+    useEnumOptions('ApprovalCoverageCompany', {
+      labelOverrides: APPROVAL_COVERAGE_COMPANY_LABELS
+    })
   );
 
   const facilityOptions = useMemo(() => {
@@ -213,6 +221,17 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
                     selectDataValue="value"
                     searchable={false}
                     required
+                  />
+                  <MyInput
+                    {...fieldProps}
+                    fieldName="approvalCoverageCompany"
+                    fieldType="select"
+                    fieldLabel="Approval Coverage Co."
+                    selectData={approvalCoverageCompanies}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    searchable={false}
+                    cleanable
                   />
                   <div className="nphies-payer-field-span-2">
                     <MyInput

@@ -5,8 +5,10 @@ import MyInput from '@/components/MyInput';
 import { TpaDefinition } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
+import { APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from '@/pages/setup/coverage-management/coverageHelpers';
 
 type TpaDefinitionModalProps = {
   open: boolean;
@@ -43,6 +45,12 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
       sort: 'name,asc'
     },
     { skip: !open || !tpa.countryId }
+  );
+
+  const approvalCoverageCompanies = approvalCoverageCompanyOptions(
+    useEnumOptions('ApprovalCoverageCompany', {
+      labelOverrides: APPROVAL_COVERAGE_COMPANY_LABELS
+    })
   );
 
   const countryOptions = useMemo(() => {
@@ -170,6 +178,17 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
                     selectDataValue="value"
                     searchable={false}
                     required
+                  />
+                  <MyInput
+                    {...fieldProps}
+                    fieldName="approvalCoverageCompany"
+                    fieldType="select"
+                    fieldLabel="Approval Coverage Co."
+                    selectData={approvalCoverageCompanies}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    searchable={false}
+                    cleanable
                   />
                   <MyInput
                     {...fieldProps}

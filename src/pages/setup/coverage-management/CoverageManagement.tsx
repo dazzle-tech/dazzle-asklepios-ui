@@ -15,7 +15,7 @@ import { formatEnumString } from '@/utils';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import CoverageContractEditor from './CoverageContractEditor';
 import CoverageRulePanels from './CoverageRulePanels';
-import { emptyContract, notifyError, notifySuccess } from './coverageHelpers';
+import { emptyContract, notifyError, notifySuccess, approvalCoverageCompanyLabel } from './coverageHelpers';
 import {
   useSearchCoverageCompaniesQuery,
   useSearchCoverageContractsQuery,
@@ -189,6 +189,12 @@ const CoverageManagement = () => {
             render: (row: CoverageContract) => formatEnumString(row.guarantorType)
           },
           { key: 'companyName', title: <Translate>Company</Translate>, flexGrow: 2 },
+          {
+            key: 'approvalCoverageCompany',
+            title: <Translate>Approval Coverage Co.</Translate>,
+            flexGrow: 1.4,
+            render: (row: CoverageContract) => approvalCoverageCompanyLabel(row.approvalCoverageCompany)
+          },
           { key: 'insurancePayerName', title: <Translate>Insurance Name</Translate>, flexGrow: 2 },
           {
             key: 'className',

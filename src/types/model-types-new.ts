@@ -1970,6 +1970,8 @@ export interface NphiesPayer {
 
   isActive: boolean;
 
+  approvalCoverageCompany?: string | null;
+
   tpaIds?: number[];
   tpas?: LinkedTpa[];
 
@@ -1991,6 +1993,7 @@ export interface TpaDefinition {
   guarantorType: string;
   activationDate: string | null;
   isActive: boolean;
+  approvalCoverageCompany?: string | null;
   taxRegistrationNo?: string | null;
   countryId?: number | null;
   countryName?: string | null;

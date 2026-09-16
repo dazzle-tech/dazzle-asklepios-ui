@@ -70,6 +70,27 @@ export function usePagedLookupCache({
   };
 }
 
+export const APPROVAL_COVERAGE_COMPANY_LABELS: Record<string, string> = {
+  WASEEL: 'Wasel',
+  NPHIES: 'NPHIES'
+};
+
+export const APPROVAL_COVERAGE_COMPANY_OPTIONS = [
+  { value: 'WASEEL', label: 'Wasel' },
+  { value: 'NPHIES', label: 'NPHIES' }
+];
+
+export function approvalCoverageCompanyOptions(enumOptions: { value: string; label: string }[]) {
+  return enumOptions.length ? enumOptions : APPROVAL_COVERAGE_COMPANY_OPTIONS;
+}
+
+export function approvalCoverageCompanyLabel(value?: string | null) {
+  if (!value) {
+    return '-';
+  }
+  return APPROVAL_COVERAGE_COMPANY_LABELS[value] ?? value;
+}
+
 export const ALL_LOOKUP_OPTION: CoverageLookupItem = {
   id: 0,
   code: 'ALL',
@@ -121,6 +142,7 @@ export function emptyContract(): any {
     priceListSetupId: undefined,
     parentPayerId: undefined,
     className: '',
+    approvalCoverageCompany: '',
     isActive: true,
     startDate: null,
     endDate: null

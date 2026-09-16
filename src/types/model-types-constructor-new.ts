@@ -1487,6 +1487,8 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
 
   isActive: true,
 
+  approvalCoverageCompany: null,
+
   tpaIds: [],
   tpas: [],
 
@@ -1501,6 +1503,7 @@ export const newTpaDefinition: modelTypes.TpaDefinition = {
   guarantorType: 'TPA',
   activationDate: null,
   isActive: true,
+  approvalCoverageCompany: null,
   taxRegistrationNo: null,
   countryId: null,
   countryName: null,

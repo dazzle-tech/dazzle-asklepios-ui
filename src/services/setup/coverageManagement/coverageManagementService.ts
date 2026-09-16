@@ -56,6 +56,7 @@ export type CoverageContract = {
   parentPayerId?: number | null;
   parentPayerName?: string | null;
   className?: string;
+  approvalCoverageCompany?: string | null;
   isActive?: boolean;
 };
 
@@ -156,6 +157,63 @@ export type CoveragePreApprovalItem = {
   isActive?: boolean;
 };
 
+export type CoverageContractResolveRequest = {
+  insurancePayerId?: number | null;
+  payerNphiesId?: string | null;
+  tpaId?: number | null;
+  tpaName?: string | null;
+  policyNumber?: string | null;
+  className?: string | null;
+  encounterType?: string | null;
+  asOfDate?: string | null;
+  facilityId?: number | null;
+  departmentId?: number | null;
+  diagnosisIds?: number[] | null;
+  billingItemType?: string | null;
+  catalogItemId?: number | null;
+};
+
+export type CoverageReading = {
+  termId?: number | null;
+  itemId?: number | null;
+  categoryScope?: string | null;
+  billingItemType?: string | null;
+  serviceId?: number | null;
+  valueType?: string | null;
+  limitValue?: number | string | null;
+  periodBasis?: string | null;
+  coverageBasis?: string | null;
+};
+
+export type CoverageContractResolveResponse = {
+  matched: boolean;
+  matchReason?: string | null;
+  contract?: CoverageContract | null;
+  copayment?: CoverageCopayment | null;
+  coverageConfigured?: boolean;
+  uncovered?: boolean;
+  coverage?: CoverageReading | null;
+  limit?: CoverageReading | null;
+  cashLimit?: CoverageReading | null;
+  discount?: CoverageDiscount | null;
+  exclusion?: CoverageExclusion | null;
+  preApproval?: CoveragePreApprovalReading | null;
+};
+
+export type CoveragePreApprovalReading = {
+  preApprovalId?: number | null;
+  itemId?: number | null;
+  approvalScope?: string | null;
+  facilityId?: number | null;
+  departmentId?: number | null;
+  encounterType?: string | null;
+  itemType?: string | null;
+  serviceCategory?: string | null;
+  serviceId?: number | null;
+  allDiagnoses?: boolean;
+  diagnosisId?: number | null;
+};
+
 const toContractPayload = (body: CoverageContract) => ({
   ...(body.id != null ? { id: body.id } : {}),
   guarantorType: body.guarantorType,
@@ -167,6 +225,7 @@ const toContractPayload = (body: CoverageContract) => ({
   priceListSetupId: body.priceListSetupId,
   parentPayerId: body.parentPayerId,
   className: body.className,
+  approvalCoverageCompany: body.approvalCoverageCompany || null,
   isActive: body.isActive
 });
 
@@ -583,6 +642,16 @@ export const coverageManagementService = createApi({
         method: 'PATCH'
       }),
       invalidatesTags: ['CoveragePreApprovalItem']
+    }),
+    resolveCoverageContract: builder.query<
+      CoverageContractResolveResponse,
+      CoverageContractResolveRequest
+    >({
+      query: body => ({
+        url: '/api/setup/coverage-contracts/resolve',
+        method: 'POST',
+        body
+      })
     })
   })
 });
@@ -617,5 +686,6 @@ export const {
   useSavePreApprovalMutation,
   useListPreApprovalItemsQuery,
   useCreatePreApprovalItemMutation,
-  useDeactivatePreApprovalItemMutation
+  useDeactivatePreApprovalItemMutation,
+  useResolveCoverageContractQuery
 } = coverageManagementService;

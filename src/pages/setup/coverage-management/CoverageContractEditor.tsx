@@ -5,7 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
-import { emptyContract, notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
+import { emptyContract, notifyError, notifySuccess, notifyWarning, APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from './coverageHelpers';
 import {
   useCreateCoverageContractMutation,
   useSearchCoverageCompaniesQuery,
@@ -32,6 +32,11 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
   const guarantorTypes = useEnumOptions('GuarantorType');
   const coverageBasis = useEnumOptions('CoverageBasis');
   const classNames = useEnumOptions('CoverageClassName');
+  const approvalCoverageCompanies = approvalCoverageCompanyOptions(
+    useEnumOptions('ApprovalCoverageCompany', {
+      labelOverrides: APPROVAL_COVERAGE_COMPANY_LABELS
+    })
+  );
   const companyLookup = useLookupPaging(`${record.guarantorType || ''}`);
   const tpaInsuranceLookup = useLookupPaging(String(record.companyId || ''));
   const parentLookup = useLookupPaging('parent');
@@ -246,6 +251,16 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             record={record}
             setRecord={setRecord}
             selectData={classNames}
+          />
+          <MyInput
+            width="100%"
+            fieldLabel="Approval Coverage Co."
+            fieldType="select"
+            fieldName="approvalCoverageCompany"
+            record={record}
+            setRecord={setRecord}
+            selectData={approvalCoverageCompanies}
+            cleanable
           />
           {isTpa ? (
             <CoveragePagedSelect
