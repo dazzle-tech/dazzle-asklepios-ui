@@ -262,6 +262,7 @@ import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSa
 import { patientTimelineService } from './services/patients/patientTimelineService';
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
+import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -312,6 +313,7 @@ export const store = configureStore({
     [documentManagementService.reducerPath]: documentManagementService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
+    [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -881,7 +883,8 @@ export const store = configureStore({
         financialDocumentAdjustmentService.middleware,
         patientTimelineService.middleware,
         autoPopulationService.middleware,
-        dischargeReportService.middleware
+        dischargeReportService.middleware,
+         ocrParsingService.middleware
       ) as any
 });
 

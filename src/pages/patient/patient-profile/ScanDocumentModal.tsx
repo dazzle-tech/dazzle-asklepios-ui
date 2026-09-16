@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
@@ -9,12 +9,17 @@ import { notify } from '@/utils/uiReducerActions';
 import { SelectPicker } from 'rsuite';
 import { useSelector } from 'react-redux';
 import './styles.less';
+import { useExtractAndParseMutation } from '@/services/ocr-parsing/ocrParsingService';
+import { OCRParsingResponseDTO, Patient } from '@/types/model-types-new';
+import { newOCRParsingResponseDTO, newPatient } from '@/types/model-types-constructor-new';
 type ScanDocumentModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
   patientId: number | string | undefined;
   onUploadSuccess?: () => void;
   onIdParsed?: (parsedData: any) => void;
+  localPatient: Patient;
+  setLocalPatient: any;
 };
 
 const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
@@ -22,9 +27,13 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
   setOpen,
   patientId,
   onUploadSuccess,
-  onIdParsed
+  onIdParsed,
+  localPatient,
+  setLocalPatient
 }) => {
+
   const dispatch = useAppDispatch();
+  const [parsingResponse, setParsingResponse] = useState<OCRParsingResponseDTO>({ ...newOCRParsingResponseDTO });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<string>('');
@@ -35,6 +44,7 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
 
   const [parseIdDocument] = useParseIdDocumentMutation();
   const [uploadAttachments] = useUploadAttachmentsMutation();
+  const [extractAndParse] = useExtractAndParseMutation();
 
   // Document types that support ID parsing
   const ID_TYPES = ['ID_CARD', 'PASSPORT'];
@@ -65,7 +75,9 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
       setIsProcessing(true);
 
       // Step 1: Parse the ID document
-      const parsedData = await parseIdDocument(selectedFile).unwrap();
+      const parsedData = await extractAndParse({
+        file: selectedFile
+      }).unwrap();
 
       dispatch(
         notify({
@@ -73,40 +85,8 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
           sev: 'success'
         })
       );
+      setParsingResponse(parsedData)
 
-      // Step 2: Upload the attachment if patient exists
-      if (patientId) {
-        try {
-          await uploadAttachments({
-            patientId: Number(patientId),
-            file: selectedFile,
-            type: documentType || 'ID_CARD',
-            details: details || 'Scanned ID Document',
-            source: 'PATIENT_DOCUMENT'
-          }).unwrap();
-
-          dispatch(
-            notify({
-              msg: 'Document Uploaded Successfully',
-              sev: 'success'
-            })
-          );
-        } catch (uploadError: any) {
-          console.warn('ID parsed but upload failed:', uploadError);
-          console.error('Upload error details:', {
-            status: uploadError?.status,
-            data: uploadError?.data,
-            message: uploadError?.message
-          });
-          // Continue anyway - parsing was successful
-          dispatch(
-            notify({
-              msg: 'ID parsed successfully, but upload failed. Data will be auto-filled.',
-              sev: 'warning'
-            })
-          );
-        }
-      }
 
       // Reset form
       setSelectedFile(null);
@@ -115,8 +95,8 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
       setOpen(false);
 
       // Call callbacks
-      onIdParsed?.(parsedData);
-      onUploadSuccess?.();
+      // onIdParsed?.(parsedData);
+      // onUploadSuccess?.();
     } catch (error: any) {
       console.error('Failed to parse ID document:', error);
       console.error('Error details:', {
@@ -207,139 +187,150 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    setLocalPatient(
+      { ...localPatient,
+         firstName: parsingResponse?.givenNames,
+         lastName: parsingResponse?.familyName,
+         sexAtBirth: parsingResponse?.sex,
+         dateOfBirth: parsingResponse?.dateOfBirth,
+         nationality: parsingResponse?.nationality
+      });
+  }, [parsingResponse])
+
   const isIdDocument = ID_TYPES.includes(documentType);
   const canScanAndParse = selectedFile && isIdDocument;
   const canUploadOnly = selectedFile && !isIdDocument && patientId;
 
   const content = (
-  <div className={`scan-doc-wrapper ${mode === 'dark' ? 'dark' : 'light'}`}>
-    {/* Header */}
-    <div className="scan-doc-header">
-      <div className="scan-doc-icon">📄</div>
-      <div>
-        <h3 className="scan-doc-title">
-          <Translate>Scan & Upload Document</Translate>
-        </h3>
-        <p className="scan-doc-subtitle">
-          <Translate>Upload and automatically parse patient ID documents</Translate>
-        </p>
-      </div>
-    </div>
-
-    {/* Instructions */}
-    <div className="scan-doc-card">
-      <div className="scan-doc-card-header">
-        <span className="scan-doc-card-icon">i</span>
-        <span className="scan-doc-card-title">
-          <Translate>How it works</Translate>
-        </span>
+    <div className={`scan-doc-wrapper ${mode === 'dark' ? 'dark' : 'light'}`}>
+      {/* Header */}
+      <div className="scan-doc-header">
+        <div className="scan-doc-icon">📄</div>
+        <div>
+          <h3 className="scan-doc-title">
+            <Translate>Scan & Upload Document</Translate>
+          </h3>
+          <p className="scan-doc-subtitle">
+            <Translate>Upload and automatically parse patient ID documents</Translate>
+          </p>
+        </div>
       </div>
 
-      <ol className="scan-doc-steps">
-        <li>
-          <Translate>Select document type (ID Card/Passport for auto-parsing)</Translate>
-        </li>
-        <li>
-          <Translate>Choose the document file to scan</Translate>
-        </li>
-        <li>
-          <Translate>Click Scan & Parse to extract information automatically</Translate>
-        </li>
-        <li>
-          <Translate>Patient data will be auto-filled from the document</Translate>
-        </li>
-      </ol>
-    </div>
-
-    {/* Document Type Selection */}
-    <div>
-      <label className="scan-doc-label">
-        <Translate>Document Type</Translate>
-        {isIdDocument && <span className="scan-doc-badge">AUTO-PARSE</span>}
-      </label>
-
-      <SelectPicker
-        data={documentTypes}
-        value={documentType}
-        onChange={setDocumentType}
-        placeholder="Select document type"
-        searchable={false}
-        style={{ width: '100%' }}
-      />
-    </div>
-
-    {/* Details Input */}
-    <div>
-      <label className="scan-doc-label">
-        <Translate>Details (Optional)</Translate>
-      </label>
-      <input
-        className="scan-doc-input"
-        type="text"
-        value={details}
-        onChange={e => setDetails(e.target.value)}
-        placeholder="Add description or notes"
-      />
-    </div>
-
-    {/* Upload File */}
-    <div className="scan-doc-upload">
-      <span className="scan-doc-label">
-        <Translate>Upload Document</Translate>
-      </span>
-
-      <p className="scan-doc-upload-subtext">
-        <Translate>Supports</Translate> <strong>PDF, JPG, PNG, JPEG</strong>{' '}
-        <Translate>files. Maximum size 10MB.</Translate>
-      </p>
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        hidden
-        accept=".pdf,.jpg,.jpeg,.png"
-        onChange={handleFileChange}
-      />
-
-      <div className="scan-doc-file-row">
-        <div className="scan-doc-file-display">
-          {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
+      {/* Instructions */}
+      <div className="scan-doc-card">
+        <div className="scan-doc-card-header">
+          <span className="scan-doc-card-icon">i</span>
+          <span className="scan-doc-card-title">
+            <Translate>How it works</Translate>
+          </span>
         </div>
 
-        <MyButton appearance="ghost" onClick={handleClickUpload}>
-          <Translate>Choose File</Translate>
-        </MyButton>
+        <ol className="scan-doc-steps">
+          <li>
+            <Translate>Select document type (ID Card/Passport for auto-parsing)</Translate>
+          </li>
+          <li>
+            <Translate>Choose the document file to scan</Translate>
+          </li>
+          <li>
+            <Translate>Click Scan & Parse to extract information automatically</Translate>
+          </li>
+          <li>
+            <Translate>Patient data will be auto-filled from the document</Translate>
+          </li>
+        </ol>
       </div>
 
-      {/* Action Buttons */}
-      {isIdDocument ? (
-        <MyButton
-          onClick={handleScanAndParse}
-          disabled={!canScanAndParse || isProcessing}
-          loading={isProcessing}
-          block
-        >
-          <Translate>Scan & Parse ID</Translate>
-        </MyButton>
-      ) : (
-        <MyButton
-          onClick={handleUploadOnly}
-          disabled={!canUploadOnly || isProcessing}
-          loading={isProcessing}
-          block
-        >
+      {/* Document Type Selection */}
+      <div>
+        <label className="scan-doc-label">
+          <Translate>Document Type</Translate>
+          {isIdDocument && <span className="scan-doc-badge">AUTO-PARSE</span>}
+        </label>
+
+        <SelectPicker
+          data={documentTypes}
+          value={documentType}
+          onChange={setDocumentType}
+          placeholder="Select document type"
+          searchable={false}
+          style={{ width: '100%' }}
+        />
+      </div>
+
+      {/* Details Input */}
+      <div>
+        <label className="scan-doc-label">
+          <Translate>Details (Optional)</Translate>
+        </label>
+        <input
+          className="scan-doc-input"
+          type="text"
+          value={details}
+          onChange={e => setDetails(e.target.value)}
+          placeholder="Add description or notes"
+        />
+      </div>
+
+      {/* Upload File */}
+      <div className="scan-doc-upload">
+        <span className="scan-doc-label">
           <Translate>Upload Document</Translate>
-        </MyButton>
-      )}
+        </span>
+
+        <p className="scan-doc-upload-subtext">
+          <Translate>Supports</Translate> <strong>PDF, JPG, PNG, JPEG</strong>{' '}
+          <Translate>files. Maximum size 10MB.</Translate>
+        </p>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          hidden
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={handleFileChange}
+        />
+
+        <div className="scan-doc-file-row">
+          <div className="scan-doc-file-display">
+            {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
+          </div>
+
+          <MyButton appearance="ghost" onClick={handleClickUpload}>
+            <Translate>Choose File</Translate>
+          </MyButton>
+        </div>
+
+        {/* Action Buttons */}
+        {isIdDocument ? (
+          <MyButton
+            onClick={handleScanAndParse}
+            disabled={!canScanAndParse || isProcessing}
+            loading={isProcessing}
+            block
+          >
+            <Translate>Scan & Parse ID</Translate>
+          </MyButton>
+        ) : (
+          <MyButton
+            onClick={handleUploadOnly}
+            disabled={!canUploadOnly || isProcessing}
+            loading={isProcessing}
+            block
+          >
+            <Translate>Upload Document</Translate>
+          </MyButton>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
