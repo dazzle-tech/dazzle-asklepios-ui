@@ -260,6 +260,8 @@ import { financialDocumentAdjustmentService } from './services/billing/financial
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
+import { dischargeReportService } from './services/ai-services/dischargeReportService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -540,6 +542,7 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+     [dischargeReportService.reducerPath]: dischargeReportService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
     [progressNoteService.reducerPath]: progressNoteService.reducer,
     [patientProcedureService.reducerPath]: patientProcedureService.reducer,
@@ -574,6 +577,8 @@ export const store = configureStore({
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
     [medicationValidationService.reducerPath]: medicationValidationService.reducer,
+
+     [autoPopulationService.reducerPath]: autoPopulationService.reducer,
 
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
@@ -874,7 +879,9 @@ export const store = configureStore({
         PointOfSaleTransactionService.middleware,
         pointOfSaleWebhookLogService.middleware,
         financialDocumentAdjustmentService.middleware,
-        patientTimelineService.middleware
+        patientTimelineService.middleware,
+        autoPopulationService.middleware,
+        dischargeReportService.middleware
       ) as any
 });
 

@@ -5078,53 +5078,95 @@ export type CurrentMedicationForm = CurrentMedication & {
 };
 
 
-export interface PatientUccMedicationOrder {
-  id?: number;
+  export interface PatientUccMedicationOrder {
+    id?: number;
 
-  patientId: number;
-  encounterId: number;
+    patientId: number;
+    encounterId: number;
 
-  activeIngredientId: number;
+    activeIngredientId: number;
 
-  instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
-  instructionText?: string | null;
+    instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+    instructionText?: string | null;
 
-  dose?: number | null;
-  doseUnit?: string | null;
-  route?: string | null;
-  frequency?: string | null;
+    dose?: number | null;
+    doseUnit?: string | null;
+    route?: string | null;
+    frequency?: string | null;
 
-  isHighAlert?: boolean | null;
+    isHighAlert?: boolean | null;
 
-  status?:
-  | 'WAITING_DOUBLE_CHECK'
-  | 'ADMINISTERED'
-  | 'CANCELLED'
-  | 'DISCARDED'
-  | 'NEW'
-  | 'SUBMITTED';
+    status?:
+    | 'WAITING_DOUBLE_CHECK'
+    | 'ADMINISTERED'
+    | 'CANCELLED'
+    | 'DISCARDED'
+    | 'NEW'
+    | 'SUBMITTED';
 
-  submittedDate?: string | Date | null;
-  submittedBy?: string | null;
+    submittedDate?: string | Date | null;
+    submittedBy?: string | null;
 
-  administeredDate?: string | Date | null;
-  administeredBy?: string | null;
+    administeredDate?: string | Date | null;
+    administeredBy?: string | null;
 
-  doubleCheckedDate?: string | Date | null;
-  doubleCheckedBy?: string | null;
+    doubleCheckedDate?: string | Date | null;
+    doubleCheckedBy?: string | null;
 
-  discardedDate?: string | Date | null;
-  discardedBy?: string | null;
-  discardReason?: string | null;
+    discardedDate?: string | Date | null;
+    discardedBy?: string | null;
+    discardReason?: string | null;
 
-  cancelledDate?: string | Date | null;
-  cancelledBy?: string | null;
-  cancellationReason?: string | null;
-  createdBy?: string | null;
-  createdDate?: string | Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: string | Date | null;
-}
+    cancelledDate?: string | Date | null;
+    cancelledBy?: string | null;
+    cancellationReason?: string | null;
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
+
+  export interface PatientUccMedicationOrderGroup {
+    orderGroupId: number;
+
+    patientId: number;
+    encounterId: number;
+    activeIngredientId: number;
+
+    instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+
+    instructionText?: string | null;
+
+    dose?: number | null;
+    doseUnit?: string | null;
+    route?: string | null;
+
+    frequencyNumber?: number | null;
+    frequencyUnit?: string | null;
+    duration?: number | null;
+    startTime?: string | null;
+
+    doseCount: number;
+
+    isHighAlert?: boolean | null;
+
+    status?:
+      | 'WAITING_DOUBLE_CHECK'
+      | 'ADMINISTERED'
+      | 'CANCELLED'
+      | 'DISCARDED'
+      | 'NEW'
+      | 'SUBMITTED';
+
+    submittedDate?: string | Date | null;
+    submittedBy?: string | null;
+
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
 
 // ------------------- Dental Procedures -------------------
 
@@ -7230,4 +7272,75 @@ export interface TimelineResponse {
   timeline: TimelineEvent[];
   summary: string;
   processing_metadata: ProcessingMetadata;
+}
+
+export interface AutoPopulateRequest {
+  userText: string;
+  patientId: number;
+}
+
+export interface AutoPopulationStructuredFields {
+  chief_complaint?: string | null;
+  history_of_present_illness?: string | null;
+  diagnosis?: string[] | null;
+  medications?: Record<string, any>[] | null;
+  vitals?: Record<string, any> | null;
+  procedures?: string[] | null;
+  allergies?: string[] | null;
+  assessment?: string | null;
+  plan?: string | null;
+  past_medical_history?: string | null;
+  family_history?: string | null;
+  social_history?: string | null;
+  review_of_systems?: Record<string, string> | null;
+}
+
+export interface AutoPopulationUncertaintyFlag {
+  field_name: string;
+  reason: string;
+  confidence?: string | null;
+}
+
+export interface AutoPopulationContradictionFlag {
+  field_name: string;
+  user_text_value: any;
+  patient_record_value: any;
+  recommendation: string;
+  severity: string;
+}
+
+export interface AutoPopulationWarning {
+  level: string;
+  message: string;
+  field_name?: string | null;
+}
+
+export interface AutoPopulationResponse {
+  request_id: string;
+  task_type: string;
+  output_language: string;
+  structured_fields: AutoPopulationStructuredFields;
+  uncertainty_flags: AutoPopulationUncertaintyFlag[];
+  contradictions: AutoPopulationContradictionFlag[];
+  source_trace: any[];
+  warnings: AutoPopulationWarning[];
+  processing_metadata?: Record<string, any>;
+}
+export interface DischargeReportSection {
+  section_name: string;
+  content: string;
+  confidence: number;
+  sources: string[];
+}
+
+export interface DischargeReportResponse {
+  patient_id: string;
+  generation_timestamp: string;
+  generation_mode: string;
+  report_sections: DischargeReportSection[];
+  full_report_text: string;
+  template_used?: Record<string, any> | null;
+  confidence_score?: number;
+  disclaimer?: string;
+  requires_physician_review?: boolean;
 }

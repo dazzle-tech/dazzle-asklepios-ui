@@ -331,27 +331,28 @@ const Encounter = ({
     [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
   );
 
-  const handleGoBack = () => {
-
-    if (currentFromPage === 'PatientEMR') {
-      navigate('/patient-EMR', {
-        state: {
-          localPatient: propsData?.patient,
-          fromPage: 'clinicalVisit'
-        }
-      });
-    } else if (localEncounter?.encounterType == 'INPATIENT') {
-      navigate('/inpatient-encounters-list');
-    } else if (currentFromPage === 'DayCaseList') {
-      navigate('/day-case-list');
-    } else if (currentFromPage === 'ER_Department') {
-      navigate('/ER-department');
-    } else if (currentFromPage === 'Urgent_Care_List') {
-      navigate('/urgent-care-department-list');
-    } else {
-      navigate('/encounter-list');
-    }
-  };
+const handleGoBack = () => {
+  if (currentFromPage === 'PatientEMR') {
+    navigate('/patient-EMR', {
+      state: {
+        localPatient: propsData?.patient,
+        fromPage: 'clinicalVisit'
+      }
+    });
+  } else if (localEncounter?.encounterType === 'INPATIENT') {
+    navigate('/inpatient-encounters-list');
+  } else if (currentFromPage === 'DayCaseList') {
+    navigate('/day-case-list');
+  } else if (currentFromPage === 'ER_Department') {
+    navigate('/ER-department');
+  } else if (currentFromPage === 'Urgent_Care_List') {
+    navigate('/urgent-care-department-list');
+  } else if (currentFromPage === 'PatientsLists') {
+    navigate('/patients-list');
+  } else {
+    navigate('/encounter-list');
+  }
+};
 
   const followUpDraftAppointmentData = React.useMemo(() => {
     if (!patientToSend) return null;

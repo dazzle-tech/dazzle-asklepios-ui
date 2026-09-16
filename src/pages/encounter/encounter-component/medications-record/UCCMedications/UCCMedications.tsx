@@ -44,7 +44,19 @@ type MedicationOrderRow = {
   };
 
   activeIngredientId?: number;
+
   instructionText?: string;
+
+  dose?: number;
+  doseUnit?: string;
+  route?: string;
+
+  frequencyNumber?: number;
+  frequencyUnit?: string;
+  duration?: number;
+  startTime?: string;
+  doseTime?: string;
+
   status?: string;
   isHighAlert?: boolean;
 
@@ -86,27 +98,34 @@ const MedicationClassCell = ({
 };
 
 const InstructionsCell = ({
-  text,
+  row,
   unitMap,
-  frequencyMap,
   roaMap
 }: any) => {
-  const parsed = useMemo(() => {
-    if (!text) return '-';
+  // Manual instructions are stored directly in instructionText
+  if (row?.instructionType === 'MANUAL_INSTRUCTIONS') {
+    return <>{row?.instructionText || '-'}</>;
+  }
 
-    const parts = text.split(',').map((x: string) => x.trim());
+  const parts = [
+    row?.dose,
+    row?.doseUnit
+      ? unitMap[String(row.doseUnit)] || row.doseUnit
+      : null,
+    row?.frequencyNumber && row?.frequencyUnit
+      ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
+      : null,
+    row?.route
+      ? roaMap[String(row.route)] || row.route
+      : null
+  ].filter(
+    value =>
+      value !== null &&
+      value !== undefined &&
+      value !== ''
+  );
 
-    return parts
-      .map((part: string, index: number) => {
-        if (index === 1) return unitMap[part] || part;
-        if (index === 2) return frequencyMap[part] || part;
-        if (index === 3) return roaMap[part] || part;
-        return part;
-      })
-      .join(', ');
-  }, [text]);
-
-  return <>{parsed}</>;
+  return <>{parts.length > 0 ? parts.join(', ') : '-'}</>;
 };
 
 const formatDate = (date: any) => {
@@ -206,8 +225,6 @@ const UCCMedications = ({ patient }: Props) => {
   const { data: unitLov } =
     useGetLovValuesByCodeQuery('UOM');
 
-  const { data: frequencyLov } =
-    useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   const roaOptions =
     useEnumOptions('RouteOfAdministration');
@@ -221,16 +238,6 @@ const UCCMedications = ({ patient }: Props) => {
 
     return map;
   }, [unitLov]);
-
-  const frequencyMap = useMemo(() => {
-    const map: Record<string, string> = {};
-
-    (frequencyLov?.object || []).forEach((item: any) => {
-      map[String(item.key)] = item.lovDisplayVale;
-    });
-
-    return map;
-  }, [frequencyLov]);
 
   const roaMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -363,12 +370,22 @@ const UCCMedications = ({ patient }: Props) => {
       minWidth: 300,
       render: (row: MedicationOrderRow) => (
         <InstructionsCell
-          text={row.instructionText}
+          row={row}
           unitMap={unitMap}
-          frequencyMap={frequencyMap}
           roaMap={roaMap}
         />
       )
+    },
+    {
+      key: 'doseTime',
+      title: (
+        <Translate>DOSE TIME</Translate>
+      ),
+      minWidth: 160,
+      render: (row: MedicationOrderRow) =>
+        row.doseTime
+          ? formatDateWithoutSeconds(row.doseTime)
+          : '-'
     },
     {
       key: 'prescribed',
@@ -498,9 +515,7 @@ const UCCMedications = ({ patient }: Props) => {
     discarding ||
     doubleChecking;
 
-  console.log('patient', patient);
-  console.log('patient.id', patient?.id);
-  console.log('patient.key', patient?.key);
+
 
 
   return (

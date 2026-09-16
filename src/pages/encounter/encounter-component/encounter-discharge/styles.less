@@ -5,3 +5,84 @@
   justify-content: center;                      
   gap: 20px;                    
 }
+
+.discharge-report-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.discharge-report-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.discharge-report-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9363e;
+}
+
+.discharge-report-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.discharge-report-confidence,
+.discharge-report-mode {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--rs-gray-100, #f2f2f2);
+  color: var(--rs-text-secondary, #575757);
+}
+
+.discharge-report-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(255, 152, 0, 0.12);
+  color: #b26a00;
+  font-size: 13px;
+}
+
+.discharge-report-card {
+  border: 1px solid var(--rs-border-primary, #e5e5e5);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.discharge-report-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.discharge-report-card-title {
+  font-weight: 600;
+}
+
+.discharge-report-card-confidence {
+  font-size: 11px;
+  color: var(--rs-text-secondary, #8f8f8f);
+}
+
+.discharge-report-card-content {
+  white-space: pre-line;
+  margin: 0;
+}
+
+.discharge-report-fulltext {
+  white-space: pre-line;
+}

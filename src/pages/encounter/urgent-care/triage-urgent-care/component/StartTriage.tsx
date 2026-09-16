@@ -47,6 +47,7 @@ type StartTriageProps = {
   patient: any;
   encounter: any;
   sourcePage: any;
+  fromPage?: string;
   emergencyTriageNew?: any;
 };
 
@@ -54,6 +55,7 @@ const StartTriage = ({
   patient,
   encounter,
   sourcePage,
+  fromPage,
   emergencyTriageNew,
 }: StartTriageProps) => {
   const navigate = useNavigate();
@@ -376,10 +378,16 @@ const StartTriage = ({
     <Tooltip>Assign Bed</Tooltip>
   );
 
-  const handleGoBackToTriageList = () => {
-    dispatch(setRefetchEncounter(true));
-    navigate("/urgent-care-triage");
-  };
+const handleGoBackToTriageList = () => {
+  dispatch(setRefetchEncounter(true));
+
+  if (fromPage === "PatientsLists") {
+    navigate("/patients-list");
+    return;
+  }
+
+  navigate("/urgent-care-triage");
+};
 
   const handleBedAssignmentRefetch = async () => {
     await refetchEncounter();

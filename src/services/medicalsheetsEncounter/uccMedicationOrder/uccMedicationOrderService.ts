@@ -54,6 +54,80 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
+filterGroupedUccMedicationOrders: builder.query<
+  PagedResult<modelTypes.PatientUccMedicationOrderGroup>,
+  {
+    patientId?: Id;
+    patientIds?: number[];
+    encounterId?: Id;
+    activeIngredientId?: Id;
+    status?: string;
+    statusIn?: string[];
+    statusNotIn?: string[];
+    route?: string;
+    orderDateFrom?: string;
+    orderDateTo?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+  }
+>({
+  query: ({
+    patientId,
+    patientIds,
+    encounterId,
+    activeIngredientId,
+    status,
+    statusIn,
+    statusNotIn,
+    route,
+    orderDateFrom,
+    orderDateTo,
+    page = 0,
+    size = 10,
+    sort = 'createdDate,desc',
+  }) => ({
+    url: `/api/patient/urgent-care-medication-orders/filter-grouped`,
+    params: {
+      patientId,
+      patientIds,
+      encounterId,
+      activeIngredientId,
+      status,
+      statusIn,
+      statusNotIn,
+      route,
+      orderDateFrom,
+      orderDateTo,
+      page,
+      size,
+      sort,
+    },
+  }),
+
+  transformResponse: (
+    response: any,
+  ): PagedResult<modelTypes.PatientUccMedicationOrderGroup> => ({
+    data: response?.content ?? [],
+    totalCount: response?.totalElements ?? 0,
+  }),
+
+  providesTags: ['UccMedicationOrder'],
+}),
+
+submitUccMedicationOrderGroup: builder.mutation<
+  modelTypes.PatientUccMedicationOrder[],
+  { orderGroupId: Id; isHighAlert: boolean }
+>({
+  query: ({ orderGroupId, isHighAlert }) => ({
+    url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}/submit`,
+    method: 'POST',
+    body: { isHighAlert },
+  }),
+
+  invalidatesTags: ['UccMedicationOrder'],
+}),
+
     // ================= GET BY ID =================
     getUccMedicationOrderById: builder.query<
       modelTypes.PatientUccMedicationOrder,
@@ -243,12 +317,15 @@ export const {
   useUpdateUccMedicationOrderMutation,
   useGetUccMedicationOrderByIdQuery,
   useLazyGetUccMedicationOrderByIdQuery,
+
   useFilterUccMedicationOrdersQuery,
+  useFilterGroupedUccMedicationOrdersQuery,
 
   useSubmitUccMedicationOrderMutation,
+  useSubmitUccMedicationOrderGroupMutation,
+
   useAdministerUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,
-  useCancelUccMedicationOrderMutation
-
+  useCancelUccMedicationOrderMutation,
 } = uccMedicationOrderService;
