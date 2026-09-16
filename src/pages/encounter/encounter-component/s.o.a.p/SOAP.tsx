@@ -119,81 +119,85 @@ const SOAP = props => {
     physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null
   });
 
-  const saveChanges = async () => {
-    if (!localEncounter?.chiefComplaint?.trim()) {
+  
+const saveChanges = async () => {
+  if (!localEncounter?.chiefComplaint?.trim()) {
+    dispatch(
+      notify({
+        msg: 'Chief Complaint cannot be empty.',
+        sev: 'warning',
+      })
+    );
+    return;
+  }
+  // Don't resave if no changes
+    if (localEncounter?.chiefComplaint?.trim().trim() === (encounterFromServer?.chiefComplaint ?? '').trim()) {
+      return;
+    }
+  try {
+    const idToUpdate = localEncounter?.id ?? encounterId;
+
+    if (!idToUpdate) {
       dispatch(
         notify({
-          msg: 'Chief Complaint cannot be empty.',
-          sev: 'warning'
+          msg: 'No encounter id to update',
+          sev: 'error',
         })
       );
       return;
     }
 
-    try {
-      const idToUpdate = localEncounter?.id ?? encounterId;
+    const payload = {
+      ...toEncounterPayload(localEncounter),
+      physicalExaminationSummery:
+        encounterFromServer?.physicalExaminationSummery ?? null,
+    };
 
-      if (!idToUpdate) {
-        dispatch(
-          notify({
-            msg: 'No encounter id to update',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const payload = {
-        ...toEncounterPayload(localEncounter),
-        physicalExaminationSummery:
-          encounterFromServer?.physicalExaminationSummery ?? null
-      };
-
-      if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
-        dispatch(
-          notify({
-            msg: 'Missing required fields: patientId / facilityId / departmentId',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      if (
-        payload.encounterReason === 'FOLLOW_UP' &&
-        !payload.followUpEncounterId
-      ) {
-        dispatch(
-          notify({
-            msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const updatedEncounter = await updateEncounter({
-        id: idToUpdate,
-        body: payload
-      }).unwrap();
-
-      setLocalEncounter(updatedEncounter);
-
+    if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
       dispatch(
         notify({
-          msg: 'Saved Successfully',
-          sev: 'success'
+          msg: 'Missing required fields: patientId / facilityId / departmentId',
+          sev: 'error',
         })
       );
-    } catch {
-      dispatch(
-        notify({
-          msg: 'Save Failed',
-          sev: 'error'
-        })
-      );
+      return;
     }
-  };
+
+    if (
+      payload.encounterReason === 'FOLLOW_UP' &&
+      !payload.followUpEncounterId
+    ) {
+      dispatch(
+        notify({
+          msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
+          sev: 'error',
+        })
+      );
+      return;
+    }
+
+    const updatedEncounter = await updateEncounter({
+      id: idToUpdate,
+      body: payload,
+    }).unwrap();
+
+    setLocalEncounter(updatedEncounter);
+
+    dispatch(
+      notify({
+        msg: 'Saved Successfully',
+        sev: 'success',
+      })
+    );
+  } catch (e: any) {
+    dispatch(
+      notify({
+        msg: e?.data?.detail || e?.data?.message || 'Save Failed',
+        sev: 'error',
+      })
+    );
+  }
+};
 
   const openAuditHistory = (fieldName: string) => {
    setSelectedAuditField(fieldName);
@@ -347,6 +351,11 @@ const SOAP = props => {
                           fieldName="chiefComplaint"
                           record={localEncounter}
                           setRecord={setLocalEncounter}
+                          onBlur={() => {
+                            if (!edit) {
+                              saveChanges(true);
+                            }
+                          }}
                         />
 
                         {/* <MyInput
@@ -372,7 +381,7 @@ const SOAP = props => {
                       >
                          History
                       </MyButton>
-                      <MyButton size="small" onClick={saveChanges}>
+                      <MyButton size="small" onClick={() => saveChanges(false)}>
                         Save
                       </MyButton>
                       </>
@@ -403,6 +412,8 @@ const SOAP = props => {
                           fieldName="physicalExaminationSummery"
                           record={localEncounter}
                           setRecord={setLocalEncounter}
+                         
+                          onBlur={() => savePhysicalExamination()}
                         />
                       </Form>
                     }

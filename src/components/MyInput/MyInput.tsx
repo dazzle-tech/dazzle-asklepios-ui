@@ -118,6 +118,7 @@ type MyInputProps = {
   menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
+  onBlur?: (e?: any) => void;
   creatable?: boolean;
   groupBy?: string | null;
   onSelectItem?: (item: any) => void;
@@ -666,6 +667,7 @@ return (keyword: string, label: any, item: any) => {
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
+              onBlur={props.onBlur}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   if (allowEnterNewLine) {

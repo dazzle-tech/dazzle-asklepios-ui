@@ -38,19 +38,28 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
     setHistoryOfPresentIllness(encounter?.historyOfPresentIllness ?? '');
   }, [encounter?.id, encounter?.historyOfPresentIllness]);
 
-  const handleSave = async () => {
+  const handleSave = async (silent = false) => {
     if (!encounterId) {
-      dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
+      if (!silent) {
+        dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
+      }
       return;
     }
 
     if (!historyOfPresentIllness?.trim()) {
-      dispatch(
-        notify({
-          msg: 'History of present illness cannot be empty.',
-          sev: 'warning',
-        })
-      );
+      if (!silent) {
+        dispatch(
+          notify({
+            msg: 'History of present illness cannot be empty.',
+            sev: 'warning',
+          })
+        );
+      }
+      return;
+    }
+
+    // Don't resave if no changes
+    if (historyOfPresentIllness.trim() === (encounter?.historyOfPresentIllness ?? '').trim()) {
       return;
     }
 
@@ -94,6 +103,12 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
                 setHistoryOfPresentIllness(r?.historyOfPresentIllness ?? '')
               }
               disabled={disabled}
+              onBlur={() => {
+                if (!disabled) {
+                  handleSave(true);
+                }
+              }}
+            
             />
           </Form>
         </div>
@@ -108,7 +123,7 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
         </MyButton>
         <MyButton
           size="small"
-          onClick={handleSave}
+          onClick={() => handleSave(false)}
           disabled={disabled || isSaving}
         >
           Save

@@ -135,6 +135,10 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
       dispatch(notify({ msg: 'Assessment cannot be empty.', sev: 'warning' }));
       return;
     }
+    // Don't resave if no changes
+    if (payload.assessment?.trim() === (latestAssessment?.assessment ?? '').trim()) {
+      return;
+    }
 
     try {
       if (latestAssessment?.id) {
@@ -169,6 +173,9 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
               record={{ assessment: assessmentText }}
               setRecord={(r: any) => setAssessmentText(r?.assessment ?? '')}
               disabled={disabled}
+              onBlur={() => {
+                if (!disabled) handleSave();
+              }}
             />
            
           </Form>
