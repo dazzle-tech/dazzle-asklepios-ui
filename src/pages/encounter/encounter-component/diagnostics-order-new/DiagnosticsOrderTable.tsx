@@ -146,7 +146,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       flexGrow: 1,
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
-        const isDisabled = rowData.status !== 'NEW';
+        const isDisabled = rowData.status === 'CANCELLED';
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -357,7 +357,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
           data={orderId ? normalizedOrderTestList : []}
           onRowClick={(rowData: any) => {
             const rowId = Number(rowData.id);
-            if (rowData.status === 'NEW') {
+            if (rowData.status !== 'CANCELLED') {
               handleCheckboxChange(rowId);
             }
             setOrderTest(normalizeOrderTest(rowData));

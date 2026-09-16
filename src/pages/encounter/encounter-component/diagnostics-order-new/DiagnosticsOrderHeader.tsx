@@ -94,7 +94,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     setRecallFavoriteModal
   } = props;
 
-  const orderId = orders?.id ?? orders?.key ?? null;
+  const orderId = orders?.id ?? null;
 
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -262,14 +262,14 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             </MyButton>
 
             <MyButton
-              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)  || edit}
+              disabled={isNurse || (orders.id  ? selectedRows.length === 0 : true)  || edit}
               prefixIcon={() => <CloseOutlineIcon />}
               onClick={OpenConfirmDeleteModel}
             >
               Cancel
             </MyButton>
 
-            <MyButton disabled={isNurse || selectedRows.length === 0 || edit} onClick={() => setBulkDepartmentModalOpen(true)}>
+            <MyButton disabled={isSubmitDisabled ||isNurse || selectedRows.length === 0 || edit} onClick={() => setBulkDepartmentModalOpen(true)}>
               Assign Department
             </MyButton>
           </div>

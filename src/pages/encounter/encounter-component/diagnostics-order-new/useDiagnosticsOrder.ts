@@ -68,6 +68,8 @@ const extractErrorMessage = (error: any) => {
   const data = error?.data;
 
   let msg =
+    data?.messageKey ||
+    data?.properties?.messageKey ||
     data?.properties?.message ||
     data?.message ||
     data?.detail ||
@@ -527,7 +529,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (e) {
-      dispatch(notify({ msg: 'Bulk reject failed', sev: 'error' }));
+      const msg = extractErrorMessage(e) || 'Cancel failed';
+      dispatch(notify({ msg, sev: 'error' }));
     }
 
   }
@@ -1044,7 +1047,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
-      .filter((row: any) => row.status === 'NEW')
+      .filter((row: any) => row.status !== 'CANCELLED')
       .map((row: any) => Number(row.id))
       .filter(Boolean);
   }, [normalizedOrderTestList]);
