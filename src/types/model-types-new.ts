@@ -4585,6 +4585,7 @@ export interface PainAssessment {
 
   painDegree?: string | null;
   painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
+  painAssessmentType?: 'NUMERIC' | 'FLACC' | 'FACES' | string | null;
   painDescription?: string | null;
 
   isActive: boolean;
