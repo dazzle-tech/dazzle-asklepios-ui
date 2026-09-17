@@ -2,32 +2,78 @@ import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import clsx from 'clsx';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form } from 'rsuite';
+
 interface ExtraDetailsTabProps {
   localPatient: Patient;
   setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
+
 const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data for various fields
-  const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
-  const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
-  const { data: religeonLovQueryResponse } = useGetLovValuesByCodeQuery('REL');
-  const { data: ethnicityLovQueryResponse } = useGetLovValuesByCodeQuery('ETH');
-  const { data: occupationLovQueryResponse } = useGetLovValuesByCodeQuery('OCCP');
-  const { data: responsiblePartyLovQueryResponse } = useGetLovValuesByCodeQuery('RESP_PARTY');
-  const { data: educationalLevelLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
+  const { data: maritalStatusLovQueryResponse } =
+    useGetLovValuesByCodeQuery('MARI_STATUS');
+
+  const { data: nationalityLovQueryResponse } =
+    useGetLovValuesByCodeQuery('NAT');
+
+  const { data: religeonLovQueryResponse } =
+    useGetLovValuesByCodeQuery('REL');
+
+  const { data: ethnicityLovQueryResponse } =
+    useGetLovValuesByCodeQuery('ETH');
+
+  const { data: occupationLovQueryResponse } =
+    useGetLovValuesByCodeQuery('OCCP');
+
+  const { data: responsiblePartyLovQueryResponse } =
+    useGetLovValuesByCodeQuery('RESP_PARTY');
+
+  const { data: educationalLevelLovQueryResponse } =
+    useGetLovValuesByCodeQuery('EDU_LEVEL');
+
+  // Set default values for Registration > Extra Details
+  useEffect(() => {
+    const maritalStatusMissing =
+      localPatient?.maritalStatus === null ||
+      localPatient?.maritalStatus === undefined ||
+      localPatient?.maritalStatus === '';
+
+    const occupationMissing =
+      localPatient?.occupation === null ||
+      localPatient?.occupation === undefined ||
+      localPatient?.occupation === '';
+
+    if (!maritalStatusMissing && !occupationMissing) {
+      return;
+    }
+
+    setLocalPatient({
+      ...localPatient,
+      ...(maritalStatusMissing && {
+        maritalStatus: '4522615684622822',
+      }),
+      ...(occupationMissing && {
+        occupation: '4522587492044507',
+      }),
+    });
+  }, [
+    localPatient,
+    setLocalPatient,
+  ]);
 
   return (
-    <div className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
-      <Form layout="inline" fluid
-
-      >
+    <div
+      className={clsx('', {
+        'disabled-panel': localPatient?.patientStatus === 'MERGED',
+      })}
+    >
+      <Form layout="inline" fluid>
         <MyInput
           vr={validationResult}
           column
@@ -40,7 +86,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           searchable={false}
-          disableByField='isValid'
+          disableByField="isValid"
           required
         />
 
@@ -56,7 +102,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           menuMaxHeight={200}
-          disableByField='isValid'
+          disableByField="isValid"
           required
         />
 
@@ -71,8 +117,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           selectDataValue="key"
           record={localPatient}
           setRecord={setLocalPatient}
-          disableByField='isValid'
+          disableByField="isValid"
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -85,9 +132,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           searchable={false}
-          disableByField='isValid'
-
+          disableByField="isValid"
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -100,8 +147,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           searchable={false}
-          disableByField='isValid'
-
+          disableByField="isValid"
         />
 
         <MyInput
@@ -116,9 +162,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           searchable={false}
-          disableByField='isValid'
-
+          disableByField="isValid"
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -131,8 +177,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
           searchable={false}
-          disableByField='isValid'
+          disableByField="isValid"
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -141,6 +188,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -150,6 +198,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
           setRecord={setLocalPatient}
           fieldType="number"
         />
+
         <MyInput
           vr={validationResult}
           column
@@ -161,7 +210,6 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         />
       </Form>
     </div>
-
   );
 };
 
