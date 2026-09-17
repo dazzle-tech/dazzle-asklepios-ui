@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 import {
+  applyLicense,
   applyStimulsoftWebServer,
   attachStimulsoftProxyHeaders,
   patchStimulsoftDesignerRuntime,
@@ -246,6 +247,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
         await waitUntilVisible(container, () => cancelled);
         if (cancelled || !hostRef.current) return;
 
+        applyLicense(Stimulsoft);
         applyStimulsoftWebServer(Stimulsoft);
         patchStimulsoftParsePath(Stimulsoft);
         patchStimulsoftDictionaryHelper(Stimulsoft);

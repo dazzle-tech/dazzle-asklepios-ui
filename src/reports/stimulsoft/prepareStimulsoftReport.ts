@@ -1,4 +1,5 @@
 import {
+  applyLicense,
   applyStimulsoftWebServer,
   attachStimulsoftProxyHeaders,
   loadStimulsoftEngine,
@@ -37,6 +38,7 @@ export const createPreparedStimulsoftReport = async (
   const Stimulsoft = options?.withViewer
     ? await loadStimulsoftViewer()
     : await loadStimulsoftEngine();
+  applyLicense(Stimulsoft);
   applyStimulsoftWebServer(Stimulsoft);
   patchStimulsoftParsePath(Stimulsoft);
 

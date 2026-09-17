@@ -63,13 +63,107 @@ const loadScript = (src: string) =>
     document.body.appendChild(script);
   });
 
-const applyLicense = (Stimulsoft: any) => {
+const productList = (licenseKey: any): any[] => {
+  const products = licenseKey?.products;
+  if (!products) return [];
+  if (Array.isArray(products)) return products;
+  if (Array.isArray(products.list)) return products.list;
+  const count = Number(products.count ?? 0);
+  if (typeof products.getByIndex === 'function' && count > 0) {
+    const items: any[] = [];
+    for (let i = 0; i < count; i += 1) items.push(products.getByIndex(i));
+    return items;
+  }
+  return [];
+};
+
+const mergeLicenseProducts = (target: any, source: any) => {
+  if (!target || !source) return;
+  const have = new Set(
+    productList(target).map((item: any) => item?.ident ?? item?.Ident)
+  );
+  productList(source).forEach((product: any) => {
+    const ident = product?.ident ?? product?.Ident;
+    if (ident == null || have.has(ident)) return;
+    have.add(ident);
+    const products = target.products;
+    if (typeof products?.add === 'function') products.add(product);
+    else if (Array.isArray(products)) products.push(product);
+    else if (Array.isArray(products?.list)) products.list.push(product);
+  });
+};
+
+const assignLicenseString = (license: any, value: string) => {
+  if (!license || !value) return;
+  try {
+    if (typeof license.setNewLicenseKey === 'function') {
+      license.setNewLicenseKey(value, false);
+    }
+  } catch {
+    /* try the public setters next */
+  }
+  try {
+    license.key = value;
+  } catch {
+    /* Dashboards.JS samples use lowercase key */
+  }
+  try {
+    license.Key = value;
+  } catch {
+    /* Reports.JS / C# style */
+  }
+};
+
+export const applyLicense = (Stimulsoft: any) => {
   const license = Stimulsoft?.Base?.StiLicense;
   if (!license) return;
-  const reportKey = config.stimulsoftLicenseKey;
-  const dashboardKey = config.stimulsoftDashboardLicenseKey;
-  if (reportKey) license.Key = reportKey;
-  if (dashboardKey) license.Key = (license.Key || '') + dashboardKey;
+
+  const reportKey = String(
+    window.APP_CONFIG?.stimulsoftLicenseKey || config.stimulsoftLicenseKey || ''
+  ).trim();
+  const dashboardKey = String(
+    window.APP_CONFIG?.stimulsoftDashboardLicenseKey ||
+      config.stimulsoftDashboardLicenseKey ||
+      ''
+  ).trim();
+
+  const LicenseKey = Stimulsoft.Base?.Licenses?.StiLicenseKey;
+  const decode = (raw: string) => {
+    if (!raw || typeof LicenseKey?.get2 !== 'function') return null;
+    try {
+      return LicenseKey.get2(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const reportLic = decode(reportKey);
+  const dashboardLic = decode(dashboardKey);
+  const dashboardsLicensed = () =>
+    Stimulsoft.Base?.Licenses?.StiLicenseKeyValidator?.isValidOnDbsJS?.() === true;
+
+  // Two complete keys cannot be concatenated (that JSON-parses as one license).
+  // Decode both and merge product idents so Reports.JS + Dashboards.JS are valid.
+  if (reportLic && dashboardLic) {
+    mergeLicenseProducts(reportLic, dashboardLic);
+    assignLicenseString(license, reportKey);
+    license.licenseKey = reportLic;
+    if (!dashboardsLicensed() && dashboardKey) {
+      mergeLicenseProducts(dashboardLic, reportLic);
+      assignLicenseString(license, dashboardKey);
+      license.licenseKey = dashboardLic;
+    }
+    return;
+  }
+
+  // Dashboards.JS trial watermark is tied to the DbsJs product. Prefer that key
+  // when only one of the two can be applied.
+  if (dashboardKey) {
+    assignLicenseString(license, dashboardKey);
+    if (dashboardLic) license.licenseKey = dashboardLic;
+    return;
+  }
+  if (reportKey) assignLicenseString(license, reportKey);
 };
 
 /**
