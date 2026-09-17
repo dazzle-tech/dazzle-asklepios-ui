@@ -1,16 +1,22 @@
 import Translate from '@/components/Translate';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { Panel, SelectPicker, Loader, Message } from 'rsuite';
+import { Panel, SelectPicker, Loader, Message, Form } from 'rsuite';
 import { Link } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useSelector } from 'react-redux';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import {
   StimulsoftReportTemplate,
   useGetViewableStimulsoftDashboardsQuery,
   useLazyGetStimulsoftReportTemplateByIdQuery,
 } from '@/services/reports/stimulsoftReportService';
-import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import {
+  extractReportPrintParameters,
+  normalizeStimulsoftTemplateJson,
+  valuesFromParameters,
+} from '@/reports/stimulsoft/reportPrintParameters';
 import './styles.less';
 
 const StimulsoftViewerHost = React.lazy(
@@ -34,6 +40,10 @@ const Dashboard = () => {
   const [templateJson, setTemplateJson] = useState<string | null>(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftParams, setDraftParams] = useState<Record<string, any>>({});
+  const [appliedParams, setAppliedParams] = useState<Record<string, string>>(
+    {}
+  );
 
   const { data: dashboards = [], isFetching } =
     useGetViewableStimulsoftDashboardsQuery(
@@ -107,19 +117,68 @@ const Dashboard = () => {
     };
   }, [loadTemplate, selectedId]);
 
+  const dashboardParameters = useMemo(() => {
+    const extracted = extractReportPrintParameters(templateJson).filter(
+      param => param.type !== 'department'
+    );
+    const hasDateRange = extracted.some(param =>
+      /^(startDate|fromDate)$/i.test(param.name)
+    );
+    const filtered = hasDateRange
+      ? extracted.filter(param => !/^date$/i.test(param.name))
+      : extracted;
+    const rank = (name: string) => {
+      if (/^(startDate|fromDate)$/i.test(name)) return 0;
+      if (/^(endDate|toDate)$/i.test(name)) return 1;
+      return 2;
+    };
+    return [...filtered].sort((a, b) => rank(a.name) - rank(b.name));
+  }, [templateJson]);
+
+  useEffect(() => {
+    const defaults = valuesFromParameters(dashboardParameters);
+    setDraftParams(defaults);
+    setAppliedParams(defaults);
+  }, [dashboardParameters]);
+
   const selectedDashboard: StimulsoftReportTemplate | undefined =
     activeDashboards.find(item => item.id === selectedId);
   const viewerParams = useMemo(() => {
     const next: Record<string, string> = {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...appliedParams,
     };
     if (facilityId) next.facilityId = String(facilityId);
     if (departmentId) next.departmentId = String(departmentId);
     return next;
-  }, [departmentId, facilityId]);
+  }, [appliedParams, departmentId, facilityId]);
+  const appliedParamsKey = useMemo(
+    () =>
+      dashboardParameters
+        .map(param => `${param.name}:${appliedParams[param.name] || ''}`)
+        .join('|'),
+    [appliedParams, dashboardParameters]
+  );
+
+  const handleResetParams = () => {
+    const defaults = valuesFromParameters(dashboardParameters);
+    setDraftParams(defaults);
+    setAppliedParams(defaults);
+  };
+
+  const handleSubmitParams = () => {
+    const next: Record<string, string> = {};
+    dashboardParameters.forEach(param => {
+      const value = draftParams[param.name];
+      next[param.name] = value == null ? '' : String(value);
+    });
+    setAppliedParams(next);
+  };
 
   return (
-    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
+    <Panel
+      className={`stimulsoft-dashboard-page${mode === 'dark' ? ' dashboard-dark' : ''}`}
+    >
       <div className="stimulsoft-dashboard-toolbar">
         <SelectPicker
           data={activeDashboards.map(item => ({
@@ -135,6 +194,49 @@ const Dashboard = () => {
           style={{ minWidth: 280 }}
         />
       </div>
+
+      {dashboardParameters.length > 0 && templateJson ? (
+        <Form
+          className="stimulsoft-dashboard-params"
+          layout="inline"
+          onSubmit={event => {
+            event.preventDefault();
+            handleSubmitParams();
+          }}
+        >
+          {dashboardParameters.map(param =>
+            param.type === 'date' ? (
+              <MyInput
+                key={param.name}
+                fieldType="date"
+                fieldName={param.name}
+                fieldLabel={param.label}
+                record={draftParams}
+                setRecord={setDraftParams}
+                width={220}
+              />
+            ) : (
+              <MyInput
+                key={param.name}
+                fieldType="text"
+                fieldName={param.name}
+                fieldLabel={param.label}
+                record={draftParams}
+                setRecord={setDraftParams}
+                width={220}
+              />
+            )
+          )}
+          <div className="stimulsoft-dashboard-params-actions">
+            <MyButton appearance="ghost" onClick={handleResetParams}>
+              Reset
+            </MyButton>
+            <MyButton appearance="primary" onClick={handleSubmitParams}>
+              Submit
+            </MyButton>
+          </div>
+        </Form>
+      ) : null}
 
       {isFetching || loadingTemplate ? (
         <div style={{ padding: 48 }}>
@@ -160,14 +262,17 @@ const Dashboard = () => {
             </div>
           }
         >
-          <StimulsoftViewerHost
-            sessionKey={`${selectedId}-${departmentId}-${facilityId}-${templateJson.length}-${mode}`}
-            templateJson={templateJson}
-            params={viewerParams}
-            uiMode={mode === 'dark' ? 'dark' : 'light'}
-            height="calc(100vh - 220px)"
-            onError={setError}
-          />
+          <div className="stimulsoft-dashboard-viewer-scroll">
+            <StimulsoftViewerHost
+              sessionKey={`${selectedId}-${departmentId}-${facilityId}-${templateJson.length}-${mode}-${appliedParamsKey}`}
+              templateJson={templateJson}
+              params={viewerParams}
+              uiMode={mode === 'dark' ? 'dark' : 'light'}
+              hideDashboardParameterControls={dashboardParameters.length > 0}
+              height="100%"
+              onError={setError}
+            />
+          </div>
         </React.Suspense>
       ) : (
         <Message type="warning" showIcon>

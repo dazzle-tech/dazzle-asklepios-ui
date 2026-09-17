@@ -4,12 +4,21 @@
   z-index: 0;
   width: 100%;
   height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .stimulsoft-viewer-host--light {
   color-scheme: light;
   color: #212121;
   background-color: #ffffff;
+
+  .stiJsViewerMainPanel,
+  .stiJsViewerReportPanel,
+  .stiJsViewerPage,
+  .stiJsViewerDashboardBackPanel {
+    background: #ffffff !important;
+  }
 }
 
 .stimulsoft-viewer-host--dark {
@@ -46,6 +55,19 @@
     color: #ffffff !important;
     background-color: var(--primary-blue, #1976d2) !important;
     border: 1px solid var(--primary-blue, #1976d2) !important;
+  }
+}
+
+.stimulsoft-viewer-host--hide-params {
+  .stiJsViewerParametersPanel,
+  .stiJsViewerInnerContainerParametersPanel {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
   }
 }
 
