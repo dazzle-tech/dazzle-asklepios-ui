@@ -270,10 +270,29 @@ export const normalizeCoverageContract = (
   if (!contract) {
     return contract as CoverageContract;
   }
+  const row = contract as CoverageContract & Record<string, any>;
+  const guarantorType = firstDefined(row.guarantorType, row.guarantor_type);
+  const companyId = firstDefined(row.companyId, row.company_id);
+  const insurancePayerId = firstDefined(
+    row.insurancePayerId,
+    row.insurance_payer_id,
+    String(guarantorType || '').toUpperCase() === 'INSURANCE' ? companyId : null
+  );
   return {
     ...contract,
-    startDate: firstDefined(contract.startDate, contract.priceListEffectiveFrom),
-    endDate: firstDefined(contract.endDate, contract.priceListEffectiveTo)
+    guarantorType,
+    companyId,
+    companyName: firstDefined(row.companyName, row.company_name),
+    companyCode: firstDefined(row.companyCode, row.company_code),
+    code: firstDefined(row.code, row.coverageCode),
+    policyNumber: firstDefined(row.policyNumber, row.policy_number),
+    insurancePayerId,
+    insurancePayerName: firstDefined(row.insurancePayerName, row.insurance_payer_name),
+    className: firstDefined(row.className, row.class_name),
+    priceListName: firstDefined(row.priceListName, row.price_list_name),
+    isActive: firstDefined(row.isActive, row.is_active) ?? row.isActive,
+    startDate: firstDefined(contract.startDate, contract.priceListEffectiveFrom, row.start_date),
+    endDate: firstDefined(contract.endDate, contract.priceListEffectiveTo, row.end_date)
   };
 };
 

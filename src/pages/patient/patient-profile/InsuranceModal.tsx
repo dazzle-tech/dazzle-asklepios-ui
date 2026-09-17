@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Message } from 'rsuite';
+import { Form, Message, SelectPicker } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { useGetActivePlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
@@ -15,13 +15,15 @@ import { PatientInsurance } from '@/types/model-types-new';
 import { newPatientInsurance } from '@/types/model-types-constructor-new';
 import { normalizePatientInsuranceFromApi } from './cchiMappers';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { formatInsuranceDate } from './insuranceDisplayUtils';
 import {
-  useSearchContractedInsurancesQuery,
   useSearchCoverageContractsQuery,
+  useSearchCoverageInsurancePayersQuery,
   type CoverageContract,
   type CoverageContractedInsurance
 } from '@/services/setup/coverageManagement/coverageManagementService';
+import { useGetNphiesPayerByIdQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 import {
   useAddPatientInsuranceMutation,
@@ -92,22 +94,180 @@ const emptyInsuranceForm = (): PatientInsuranceForm => ({
   priceListName: null
 });
 
-const formatContractedInsuranceLabel = (item: CoverageContractedInsurance): string => {
-  const name = item.name || item.payorName || item.nphiesId || `Insurance #${item.insurancePayerId}`;
-  const nphies = item.nphiesId ? ` (${item.nphiesId})` : '';
-  const count =
-    item.contractCount && item.contractCount > 0
-      ? ` · ${item.contractCount} contract${item.contractCount === 1 ? '' : 's'}`
-      : '';
-  return `${name}${nphies}${count}`;
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+/**
+ * Coverage endpoints are currently not consistent in response shape.
+ * Some return a raw array: [...]
+ * Others may return a paged object: { data: [...] }.
+ *
+ * Keep the UI independent from that difference.
+ */
+const extractRows = <T,>(response: unknown): T[] => {
+  if (Array.isArray(response)) {
+    return response as T[];
+  }
+
+  const row = asRecord(response);
+  return Array.isArray(row.data) ? (row.data as T[]) : [];
 };
 
-const formatCoverageContractLabel = (contract: CoverageContract): string => {
-  const policy = contract.policyNumber || contract.code || `Contract #${contract.id}`;
-  const className = contract.className ? `Class ${formatEnumString(contract.className)}` : '';
-  const dates = [contract.startDate, contract.endDate].filter(Boolean).join(' → ');
-  return [policy, className, dates].filter(Boolean).join(' · ');
+const readText = (row: Record<string, unknown>, ...keys: string[]): string | null => {
+  for (const key of keys) {
+    const value = row[key];
+    if (value == null) {
+      continue;
+    }
+    const text = String(value).trim();
+    if (text && text !== 'undefined' && text !== 'null') {
+      return text;
+    }
+  }
+  return null;
 };
+
+const readNumber = (row: Record<string, unknown>, ...keys: string[]): number | null => {
+  for (const key of keys) {
+    const parsed = Number(row[key]);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const isInsuranceGuarantor = (contract: CoverageContract | null | undefined): boolean =>
+  String(asRecord(contract).guarantorType || asRecord(contract).guarantor_type || '').toUpperCase() ===
+  'INSURANCE';
+
+const insuranceKeyFromContract = (contract: CoverageContract | null | undefined): number | null =>
+  readNumber(
+    asRecord(contract),
+    'insurancePayerId',
+    'insurance_payer_id',
+    'companyId',
+    'company_id'
+  );
+
+const payerIdFromContract = (contract: CoverageContract | null | undefined): number | null =>
+  insuranceKeyFromContract(contract);
+
+const classNameFromContract = (contract: CoverageContract | null | undefined): string | null => {
+  const row = asRecord(contract);
+  const raw = row.className ?? row.class_name ?? row.coverageClassName ?? row.coverage_class;
+  if (raw && typeof raw === 'object') {
+    const nested = asRecord(raw);
+    return readText(nested, 'name', 'value', 'code');
+  }
+  return readText(row, 'className', 'class_name', 'coverageClassName', 'coverage_class');
+};
+
+const nphiesIdFromContract = (contract: CoverageContract | null | undefined): string | null => {
+  const row = asRecord(contract);
+  if (isInsuranceGuarantor(contract)) {
+    return readText(row, 'companyCode', 'company_code', 'nphiesId', 'nphies_id');
+  }
+  return readText(row, 'nphiesId', 'nphies_id');
+};
+
+const insuranceNameFromContract = (contract: CoverageContract | null | undefined): string | null => {
+  const row = asRecord(contract);
+  return readText(
+    row,
+    'insurancePayerName',
+    'insurance_payer_name',
+    'companyName',
+    'company_name'
+  );
+};
+
+const formatInsuranceCompanyLabel = (
+  code?: string | null,
+  name?: string | null,
+  id?: number | null
+): string => {
+  const trimmedCode = String(code || '').trim();
+  const trimmedName = String(name || '').trim();
+  if (trimmedCode && trimmedName && trimmedCode !== trimmedName) {
+    return `${trimmedCode} — ${trimmedName}`;
+  }
+  return trimmedName || trimmedCode || (id ? `Insurance #${id}` : '');
+};
+
+const formatActiveContractLabel = (contract: CoverageContract): string => {
+  const className = classNameFromContract(contract);
+  const policyNumber = String(contract.policyNumber || contract.code || '').trim();
+  const classLabel = className ? `Class ${formatEnumString(className)}` : '';
+  return [classLabel, policyNumber].filter(Boolean).join(' · ') || `Contract #${contract.id}`;
+};
+
+type ContractedInsuranceChoice = CoverageContractedInsurance & {
+  contracts: CoverageContract[];
+};
+
+type ContractedPickerOption = {
+  value: string | number;
+  label: string;
+};
+
+const SETUP_COVERAGE_CLASS_FALLBACK: ContractedPickerOption[] = [
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+  { value: 'C', label: 'C' },
+  { value: 'VIP', label: 'Vip' }
+];
+
+const toSafePickerData = (data: ContractedPickerOption[]): ContractedPickerOption[] =>
+  (Array.isArray(data) ? data : [])
+    .filter(item => item != null && item.value != null && String(item.label ?? '').trim() !== '')
+    .map(item => ({
+      value: item.value,
+      label: String(item.label)
+    }));
+
+const ContractedPicker = ({
+  fieldLabel,
+  required,
+  data,
+  value,
+  onChange,
+  disabled,
+  placeholder
+}: {
+  fieldLabel: string;
+  required?: boolean;
+  data: ContractedPickerOption[];
+  value: string | number | null | undefined;
+  onChange: (value: string | number | null) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}) => (
+  <Form.Group className="my-input-container">
+    <Form.ControlLabel>
+      <Translate>{fieldLabel}</Translate>
+      {required ? <span className="required-field">*</span> : null}
+    </Form.ControlLabel>
+    <div style={{ marginBottom: 5 }} />
+    <SelectPicker
+      data={toSafePickerData(data)}
+      labelKey="label"
+      valueKey="value"
+      value={value ?? null}
+      onChange={next => onChange(next ?? null)}
+      disabled={disabled}
+      placeholder={placeholder}
+      searchable
+      cleanable
+      virtualized={false}
+      block
+      preventOverflow
+      container={() => document.body}
+      style={{ width: '100%' }}
+      menuMaxHeight={240}
+    />
+  </Form.Group>
+);
 
 const stripUiOnlyInsuranceFields = (insurance: PatientInsuranceForm): PatientInsurance => {
   const {
@@ -186,16 +346,11 @@ const InsuranceModal = ({
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
   const [planPage, setPlanPage] = useState(0);
 
-  const [insuranceSearch, setInsuranceSearch] = useState('');
-  const [insurancePage, setInsurancePage] = useState(0);
-  const [allContractedInsurances, setAllContractedInsurances] = useState<CoverageContractedInsurance[]>([]);
-  const [contractPage, setContractPage] = useState(0);
-  const [allCoverageContracts, setAllCoverageContracts] = useState<CoverageContract[]>([]);
-
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
   const isContractedCreate = Boolean(open && !editing?.id && !insuranceBrowsing);
+  const setupCoverageClasses = useEnumOptions('CoverageClassName');
 
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
 
@@ -228,38 +383,184 @@ const InsuranceModal = ({
     }
   );
 
+  const selectedInsurancePayerId = Number(patientInsurance.insurancePayerId);
+
   const {
-    data: contractedInsurancesResponse,
-    isLoading: contractedInsurancesLoading,
-    isFetching: contractedInsurancesFetching
-  } = useSearchContractedInsurancesQuery(
+    data: insurancePayersResponse,
+    isLoading: insurancePayersLoading,
+    isFetching: insurancePayersFetching,
+    isError: insurancePayersError
+  } = useSearchCoverageInsurancePayersQuery(
     {
-      page: insurancePage,
-      size: 20,
-      sort: 'nameEn,asc',
-      search: insuranceSearch.trim() || undefined
+      page: 0,
+      size: 500,
+      sort: 'nameEn,asc'
     },
     { skip: !open || !isContractedCreate }
   );
 
-  const selectedInsurancePayerId = Number(patientInsurance.insurancePayerId);
-
   const {
-    data: coverageContractsResponse,
+    data: activeContractsResponse,
     isLoading: coverageContractsLoading,
-    isFetching: coverageContractsFetching
+    isFetching: coverageContractsFetching,
+    isError: coverageContractsError
   } = useSearchCoverageContractsQuery(
     {
-      page: contractPage,
-      size: 20,
-      sort: 'policyNumber,asc',
-      isActive: true,
-      insurancePayerId: selectedInsurancePayerId
+      page: 0,
+      size: 500,
+      sort: 'id,desc',
+      isActive: true
     },
-    {
-      skip: !open || !isContractedCreate || !Number.isFinite(selectedInsurancePayerId) || selectedInsurancePayerId <= 0
-    }
+    { skip: !open || !isContractedCreate }
   );
+
+  const allActiveContracts = useMemo(
+    () =>
+      extractRows<CoverageContract>(activeContractsResponse).filter(
+        contract => contract?.isActive !== false
+      ),
+    [activeContractsResponse]
+  );
+
+  const contractedInsurances = useMemo(() => {
+    const byPayer = new Map<number, ContractedInsuranceChoice>();
+
+    allActiveContracts.forEach(contract => {
+      const insurancePayerId = insuranceKeyFromContract(contract);
+      if (!insurancePayerId) return;
+
+      const row = asRecord(contract);
+      const name =
+        insuranceNameFromContract(contract) || `Insurance #${insurancePayerId}`;
+      const nphiesId = nphiesIdFromContract(contract);
+      const existing = byPayer.get(insurancePayerId);
+
+      if (existing) {
+        existing.contractCount = (existing.contractCount ?? 1) + 1;
+        existing.contracts.push(contract);
+        if (!existing.nphiesId && nphiesId) {
+          existing.nphiesId = nphiesId;
+        }
+        if (existing.name.startsWith('Insurance #') && insuranceNameFromContract(contract)) {
+          existing.name = name;
+        }
+        return;
+      }
+
+      byPayer.set(insurancePayerId, {
+        insurancePayerId,
+        nphiesId,
+        name,
+        nameAr: null,
+        payorId: null,
+        payorName: name,
+        contractCount: 1,
+        isActive: row.isActive !== false,
+        contracts: [contract]
+      });
+    });
+
+    const lookupRows = extractRows<any>(insurancePayersResponse);
+    return Array.from(byPayer.values())
+      .map(item => {
+        const lookup = lookupRows.find(payer => Number(payer.id) === item.insurancePayerId);
+        if (!lookup) {
+          return item;
+        }
+        return {
+          ...item,
+          nphiesId: lookup.code || item.nphiesId,
+          name: lookup.name || item.name,
+          nameAr: lookup.extra || item.nameAr
+        };
+      })
+      .sort((left, right) =>
+        formatInsuranceCompanyLabel(left.nphiesId, left.name, left.insurancePayerId).localeCompare(
+          formatInsuranceCompanyLabel(right.nphiesId, right.name, right.insurancePayerId),
+          undefined,
+          { sensitivity: 'base' }
+        )
+      );
+  }, [allActiveContracts, insurancePayersResponse]);
+
+  const selectedCoverageContracts = useMemo(() => {
+    if (!Number.isFinite(selectedInsurancePayerId) || selectedInsurancePayerId <= 0) {
+      return [];
+    }
+    const selectedInsurance = contractedInsurances.find(
+      item => Number(item.insurancePayerId) === selectedInsurancePayerId
+    );
+    if (selectedInsurance?.contracts?.length) {
+      return selectedInsurance.contracts;
+    }
+    return allActiveContracts.filter(
+      contract => insuranceKeyFromContract(contract) === selectedInsurancePayerId
+    );
+  }, [allActiveContracts, contractedInsurances, selectedInsurancePayerId]);
+
+  const classOptions = useMemo(() => {
+    const fromSetup = (setupCoverageClasses ?? [])
+      .map(item => ({
+        value: String(item.value),
+        label: String(item.label || item.value)
+      }))
+      .filter(item => item.value.trim() !== '');
+
+    return fromSetup.length ? fromSetup : SETUP_COVERAGE_CLASS_FALLBACK;
+  }, [setupCoverageClasses]);
+
+  const contractsForSelectedClass = useMemo(() => {
+    const selectedClass = String(patientInsurance.policyClassName || '').trim().toUpperCase();
+    if (!selectedClass) {
+      return [];
+    }
+
+    const matching = selectedCoverageContracts
+      .filter(contract => {
+        const contractClass = classNameFromContract(contract);
+        return Boolean(contractClass) && contractClass.toUpperCase() === selectedClass;
+      })
+      .sort((left, right) =>
+        String(left.policyNumber || left.code || '').localeCompare(
+          String(right.policyNumber || right.code || ''),
+          undefined,
+          { sensitivity: 'base' }
+        )
+      );
+
+    if (matching.length > 0) {
+      return matching;
+    }
+
+    const anyContractHasClass = selectedCoverageContracts.some(contract =>
+      Boolean(classNameFromContract(contract))
+    );
+
+    return anyContractHasClass
+      ? []
+      : [...selectedCoverageContracts].sort((left, right) =>
+          String(left.policyNumber || left.code || '').localeCompare(
+            String(right.policyNumber || right.code || ''),
+            undefined,
+            { sensitivity: 'base' }
+          )
+        );
+  }, [selectedCoverageContracts, patientInsurance.policyClassName]);
+
+  const selectedContractedInsurance = useMemo(
+    () =>
+      contractedInsurances.find(item => Number(item.insurancePayerId) === selectedInsurancePayerId) ??
+      null,
+    [contractedInsurances, selectedInsurancePayerId]
+  );
+
+  const { data: selectedNphiesPayer } = useGetNphiesPayerByIdQuery(selectedInsurancePayerId, {
+    skip:
+      !open ||
+      !isContractedCreate ||
+      !Number.isFinite(selectedInsurancePayerId) ||
+      selectedInsurancePayerId <= 0
+  });
 
   const {
     data: relativesResponse,
@@ -276,8 +577,6 @@ const InsuranceModal = ({
   );
 
   const applyContractedInsurance = (item: CoverageContractedInsurance | null) => {
-    setContractPage(0);
-    setAllCoverageContracts([]);
     setPatientInsurance(prev => ({
       ...prev,
       insurancePayerId: item?.insurancePayerId ?? null,
@@ -286,7 +585,7 @@ const InsuranceModal = ({
       contractStartDate: null,
       contractEndDate: null,
       priceListName: null,
-      payorId: item?.payorId ?? null,
+      payorId: null,
       payerNphiesId: item?.nphiesId ?? null,
       payerName: item?.payorName || item?.name || null,
       policyNumber: '',
@@ -297,6 +596,7 @@ const InsuranceModal = ({
   };
 
   const applyCoverageContract = (contract: CoverageContract | null) => {
+    const nphiesId = nphiesIdFromContract(contract);
     setPatientInsurance(prev => ({
       ...prev,
       coverageContractId: contract?.id ?? null,
@@ -306,18 +606,28 @@ const InsuranceModal = ({
       priceListName: contract?.priceListName ?? null,
       policyNumber: contract?.policyNumber || prev.policyNumber || '',
       policyClassName: contract?.className || prev.policyClassName || null,
-      groupName: contract?.companyName || contract?.insurancePayerName || prev.groupName || null,
-      payerName: prev.payerName || contract?.insurancePayerName || null
+      groupName: insuranceNameFromContract(contract) || prev.groupName || null,
+      payerName: prev.payerName || insuranceNameFromContract(contract) || null,
+      payerNphiesId: nphiesId || prev.payerNphiesId || null
+    }));
+  };
+
+  const applyContractClass = (className: string | null) => {
+    setPatientInsurance(prev => ({
+      ...prev,
+      policyClassName: className,
+      coverageContractId: null,
+      contractCode: null,
+      contractStartDate: null,
+      contractEndDate: null,
+      priceListName: null,
+      policyNumber: ''
     }));
   };
 
   useEffect(() => {
     setPayorPage(0);
   }, [payorSearchKeyword]);
-
-  useEffect(() => {
-    setInsurancePage(0);
-  }, [insuranceSearch]);
 
   useEffect(() => {
     const currentPayorId = patientInsurance?.payorId
@@ -340,62 +650,43 @@ const InsuranceModal = ({
   }, [patientInsurance?.payorId]);
 
   useEffect(() => {
-    if (!open || !isContractedCreate) {
-      setAllContractedInsurances([]);
+    if (!isContractedCreate || !selectedInsurancePayerId || coverageContractsFetching) {
       return;
     }
 
-    const incoming = contractedInsurancesResponse?.data ?? [];
-    setAllContractedInsurances(prev => {
-      if (insurancePage === 0) {
-        return incoming;
-      }
-      const seen = new Set(prev.map(item => Number(item.insurancePayerId)));
-      return [
-        ...prev,
-        ...incoming.filter(item => !seen.has(Number(item.insurancePayerId)))
-      ];
-    });
-  }, [contractedInsurancesResponse, insurancePage, open, isContractedCreate]);
-
-  useEffect(() => {
-    if (!open || !isContractedCreate || !selectedInsurancePayerId) {
-      setAllCoverageContracts([]);
-      return;
-    }
-
-    const incoming = coverageContractsResponse?.data ?? [];
-    setAllCoverageContracts(prev => {
-      if (contractPage === 0) {
-        return incoming;
-      }
-      const seen = new Set(prev.map(item => Number(item.id)));
-      return [...prev, ...incoming.filter(item => !seen.has(Number(item.id)))];
-    });
-  }, [coverageContractsResponse, contractPage, open, isContractedCreate, selectedInsurancePayerId]);
-
-  useEffect(() => {
-    if (!isContractedCreate || !selectedInsurancePayerId) {
-      return;
-    }
-
-    const contracts = coverageContractsResponse?.data ?? [];
     if (
-      contractPage === 0 &&
-      contracts.length === 1 &&
-      !patientInsurance.coverageContractId &&
-      !coverageContractsFetching
+      contractsForSelectedClass.length === 1 &&
+      !patientInsurance.coverageContractId
     ) {
-      applyCoverageContract(contracts[0]);
+      applyCoverageContract(contractsForSelectedClass[0]);
     }
   }, [
-    coverageContractsResponse,
+    contractsForSelectedClass,
     coverageContractsFetching,
-    contractPage,
     isContractedCreate,
     selectedInsurancePayerId,
     patientInsurance.coverageContractId
   ]);
+  useEffect(() => {
+    const nphiesId = selectedNphiesPayer?.nphiesId;
+    if (!nphiesId || !isContractedCreate) {
+      return;
+    }
+
+    setPatientInsurance(prev => {
+      if (Number(prev.insurancePayerId) !== selectedInsurancePayerId) {
+        return prev;
+      }
+      if (prev.payerNphiesId === nphiesId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        payerNphiesId: nphiesId,
+        payerName: prev.payerName || selectedNphiesPayer.nameEn || selectedNphiesPayer.nameAr || null
+      };
+    });
+  }, [selectedNphiesPayer, selectedInsurancePayerId, isContractedCreate]);
 
   useEffect(() => {
     if (!open) {
@@ -428,12 +719,11 @@ const InsuranceModal = ({
   const hasMorePayors = payorResponse?.links?.next != null;
   const hasMorePlans = plansResponse?.links?.next != null;
   const hasMoreRelatives = relativesResponse?.links?.next != null;
-  const hasMoreContractedInsurances =
-    contractedInsurancesResponse?.links?.next != null ||
-    Number(contractedInsurancesResponse?.totalCount ?? 0) > allContractedInsurances.length;
-  const hasMoreCoverageContracts =
-    coverageContractsResponse?.links?.next != null ||
-    Number(coverageContractsResponse?.totalCount ?? 0) > allCoverageContracts.length;
+  const contractedInsurancesLoading =
+    coverageContractsLoading ||
+    coverageContractsFetching ||
+    insurancePayersLoading ||
+    insurancePayersFetching;
 
   const handleLoadMorePayors = () => {
     if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
@@ -449,24 +739,22 @@ const InsuranceModal = ({
     }
   };
 
-  const handleLoadMoreContractedInsurances = () => {
-    if (hasMoreContractedInsurances && !contractedInsurancesFetching) {
-      setInsurancePage(currentPage => currentPage + 1);
-    }
-  };
-
-  const handleLoadMoreCoverageContracts = () => {
-    if (hasMoreCoverageContracts && !coverageContractsFetching) {
-      setContractPage(currentPage => currentPage + 1);
-    }
-  };
-
   const handleSave = async () => {
     if (isContractedCreate) {
       if (!patientInsurance.insurancePayerId) {
         dispatch(
           notify({
             msg: 'Select an insurance company that has an active coverage contract.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patientInsurance.policyClassName) {
+        dispatch(
+          notify({
+            msg: 'Select a coverage class for this insurance.',
             sev: 'warning'
           })
         );
@@ -512,11 +800,27 @@ const InsuranceModal = ({
         );
         return;
       }
+
+      if (!String(patientInsurance.payerNphiesId || '').trim()) {
+        dispatch(
+          notify({
+            msg: 'Could not resolve the NPHIES ID for the selected insurance company.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
     }
 
     const insuranceBody: PatientInsurance = {
       ...stripUiOnlyInsuranceFields(patientInsurance),
-      patientId: resolvedPatientId
+      patientId: resolvedPatientId,
+      ...(isContractedCreate
+        ? {
+            payorId: null,
+            payerNphiesId: String(patientInsurance.payerNphiesId).trim()
+          }
+        : {})
     };
 
     try {
@@ -541,11 +845,6 @@ const InsuranceModal = ({
     setPayorPage(0);
     setPayorSearchKeyword('');
     setPlanPage(0);
-    setInsuranceSearch('');
-    setInsurancePage(0);
-    setAllContractedInsurances([]);
-    setContractPage(0);
-    setAllCoverageContracts([]);
     setRelativePage(0);
     setAllRelatives([]);
   };
@@ -602,23 +901,22 @@ const InsuranceModal = ({
     </div>
   );
 
-  const contractedInsuranceOptions = useMemo(
+  const insurancePickerData = useMemo(
     () =>
-      allContractedInsurances.map(item => ({
-        ...item,
-        id: item.insurancePayerId,
-        displayName: formatContractedInsuranceLabel(item)
+      contractedInsurances.map(item => ({
+        value: item.insurancePayerId,
+        label: formatInsuranceCompanyLabel(item.nphiesId, item.name, item.insurancePayerId)
       })),
-    [allContractedInsurances]
+    [contractedInsurances]
   );
 
-  const coverageContractOptions = useMemo(
+  const coveragePickerData = useMemo(
     () =>
-      allCoverageContracts.map(item => ({
-        ...item,
-        displayName: formatCoverageContractLabel(item)
+      contractsForSelectedClass.map(item => ({
+        value: Number(item.id),
+        label: formatActiveContractLabel(item)
       })),
-    [allCoverageContracts]
+    [contractsForSelectedClass]
   );
 
   const renderContractedPolicySection = () => (
@@ -626,13 +924,17 @@ const InsuranceModal = ({
       <div className="insurance-modal__section-title">Contracted Insurance</div>
       <Message showIcon type="info" className="insurance-modal__info-banner">
         <Translate>
-          Choose an insurance company that already has an active coverage contract, then select
-          the contract to link this patient.
+          Choose an insurance company that already has an active coverage contract, pick the class,
+          then select the matching active contract.
         </Translate>
       </Message>
-      {!contractedInsurancesLoading &&
-      !contractedInsurancesFetching &&
-      allContractedInsurances.length === 0 ? (
+      {coverageContractsError || insurancePayersError ? (
+        <Message showIcon type="warning" className="insurance-modal__info-banner">
+          <Translate>
+            Could not load insurance companies or coverage contracts. Refresh and try again.
+          </Translate>
+        </Message>
+      ) : !contractedInsurancesLoading && contractedInsurances.length === 0 ? (
         <Message showIcon type="warning" className="insurance-modal__info-banner">
           <Translate>
             No insurance companies with an active coverage contract were found. Add a coverage
@@ -640,56 +942,50 @@ const InsuranceModal = ({
           </Translate>
         </Message>
       ) : null}
-      <MyInput
-        column
-        required
+      <ContractedPicker
         fieldLabel="Insurance Company"
-        fieldType="selectPagination"
-        fieldName="insurancePayerId"
-        selectData={contractedInsuranceOptions}
-        selectDataLabel="displayName"
-        selectDataValue="insurancePayerId"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
+        required
+        data={insurancePickerData}
+        value={patientInsurance.insurancePayerId}
         disabled={insuranceBrowsing}
-        searchable
-        loading={contractedInsurancesLoading || contractedInsurancesFetching}
-        hasMore={hasMoreContractedInsurances}
-        onFetchMore={handleLoadMoreContractedInsurances}
-        searchKeyWard={insuranceSearch}
-        setSearchKeyWard={setInsuranceSearch}
         placeholder="Select insurance with a contract..."
-        onSelectItem={(item: any) => {
-          if (!item?.isLoadMore) {
-            applyContractedInsurance(item);
-          }
+        onChange={next => {
+          const selected =
+            contractedInsurances.find(item => Number(item.insurancePayerId) === Number(next)) ??
+            null;
+          applyContractedInsurance(selected);
         }}
       />
-      <MyInput
-        column
+      <ContractedPicker
+        fieldLabel="Policy Class"
         required
+        data={classOptions}
+        value={patientInsurance.policyClassName}
+        disabled={insuranceBrowsing}
+        placeholder="Select class..."
+        onChange={next => applyContractClass(next == null ? null : String(next))}
+      />
+      <ContractedPicker
         fieldLabel="Coverage Contract"
-        fieldType="selectPagination"
-        fieldName="coverageContractId"
-        selectData={coverageContractOptions}
-        selectDataLabel="displayName"
-        selectDataValue="id"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
-        disabled={insuranceBrowsing || !patientInsurance.insurancePayerId}
-        searchable
-        loading={coverageContractsLoading || coverageContractsFetching}
-        hasMore={hasMoreCoverageContracts}
-        onFetchMore={handleLoadMoreCoverageContracts}
+        required
+        data={coveragePickerData}
+        value={patientInsurance.coverageContractId}
+        disabled={
+          insuranceBrowsing ||
+          !patientInsurance.insurancePayerId ||
+          !patientInsurance.policyClassName
+        }
         placeholder={
           !patientInsurance.insurancePayerId
             ? 'Select insurance company first...'
-            : 'Select coverage contract...'
+            : !patientInsurance.policyClassName
+              ? 'Select class first...'
+              : 'Select active coverage contract...'
         }
-        onSelectItem={(item: any) => {
-          if (!item?.isLoadMore) {
-            applyCoverageContract(item);
-          }
+        onChange={next => {
+          const selected =
+            contractsForSelectedClass.find(item => Number(item.id) === Number(next)) ?? null;
+          applyCoverageContract(selected);
         }}
       />
       {patientInsurance.coverageContractId ? (
@@ -730,15 +1026,6 @@ const InsuranceModal = ({
         record={patientInsurance}
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
-      />
-      <MyInput
-        column
-        fieldType="text"
-        fieldLabel="Policy Class"
-        fieldName="policyClassName"
-        record={patientInsurance}
-        setRecord={setPatientInsurance}
-        disabled
       />
       <MyInput
         column
@@ -931,13 +1218,19 @@ const InsuranceModal = ({
         fieldType={isContractedCreate ? 'select' : 'text'}
         fieldLabel="Relation With Subscriber"
         fieldName="relationWithSubscriber"
-        selectData={relationsLovQueryResponse?.object ?? []}
+        selectData={(relationsLovQueryResponse?.object ?? []).map((item: any) => ({
+          ...item,
+          key: item.key,
+          label: item.lovDisplayVale || item.key,
+          lovDisplayVale: item.lovDisplayVale || item.key
+        }))}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={patientInsurance}
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
         searchable={false}
+        virtualized={false}
       />
       <MyInput
         column
