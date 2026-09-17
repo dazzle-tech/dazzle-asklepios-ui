@@ -24,6 +24,8 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
   const [currentView, setCurrentView] = useState<'agenda'>('agenda');
   const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
   const [slots, setSlots] = useState<any[]>([]);
+  console.log("searchAppointments: ", searchAppointments)
+  console.log("slots: ", slots)
   const dateRangeInvalid = dateFrom != null && dateTo != null && dateTo < dateFrom;
 
   const facilityId = useMemo(

@@ -48,7 +48,7 @@ import {
   initialListRequestAllValues
 } from '@/types/types';
 import LaboratoryReportButton from './LaboratoryReportButton';
-
+import LabInterpretationAI from './LabInterpretationAI';
 type Props = {
   patient: any;
 };
@@ -568,6 +568,7 @@ normalRangeValue =
         handleSendMessage={{}}
         disabled
       />
+       <LabInterpretationAI patientId={patientId} />
     </Panel>
   );
 });
