@@ -17,11 +17,74 @@ const SCRIPT_FILES = [
 
 let loadPromise: Promise<any> | null = null;
 let enginePromise: Promise<any> | null = null;
+let hostPrototypeGuardInstalled = false;
+
+const stimulsoftHostPrototypes = () =>
+  typeof window === 'undefined'
+    ? []
+    : [
+        Object.prototype,
+        Array.prototype,
+        Date.prototype,
+        String.prototype,
+        Number.prototype,
+        Boolean.prototype,
+      ];
+
+const isStimulsoftHostSymbol = (key: PropertyKey) =>
+  typeof key === 'symbol' && String(key).toLowerCase().includes('stimulsoft');
+
+/**
+ * Stimulsoft attaches an enumerable Symbol(stimulsoft) to built-in prototypes.
+ * lodash omitBy/pickBy then hands that symbol to rsuite DatePicker as a key,
+ * which crashes with `key.startsWith is not a function`.
+ */
+const hideStimulsoftHostSymbols = () => {
+  stimulsoftHostPrototypes().forEach(proto => {
+    Object.getOwnPropertySymbols(proto).forEach(symbol => {
+      if (!isStimulsoftHostSymbol(symbol)) return;
+      const descriptor = Object.getOwnPropertyDescriptor(proto, symbol);
+      if (!descriptor?.enumerable) return;
+      try {
+        Object.defineProperty(proto, symbol, {
+          ...descriptor,
+          enumerable: false,
+        });
+      } catch {
+        /* already sealed */
+      }
+    });
+  });
+};
+
+const installStimulsoftHostPrototypeGuard = () => {
+  if (hostPrototypeGuardInstalled || typeof window === 'undefined') return;
+  hostPrototypeGuardInstalled = true;
+
+  const originalDefineProperty = Object.defineProperty;
+  Object.defineProperty = ((
+    obj: any,
+    key: PropertyKey,
+    descriptor: PropertyDescriptor
+  ) => {
+    if (
+      descriptor &&
+      isStimulsoftHostSymbol(key) &&
+      stimulsoftHostPrototypes().includes(obj)
+    ) {
+      descriptor = { ...descriptor, enumerable: false };
+    }
+    return originalDefineProperty.call(Object, obj, key, descriptor);
+  }) as typeof Object.defineProperty;
+
+  hideStimulsoftHostSymbols();
+};
 
 const finishEngine = (Stimulsoft: any) => {
   if (!Stimulsoft?.Report?.StiReport) {
     throw new Error('Stimulsoft engine did not initialize.');
   }
+  hideStimulsoftHostSymbols();
   applyLicense(Stimulsoft);
   applyStimulsoftWebServer(Stimulsoft);
   installStimulsoftErrorGuards();
@@ -35,6 +98,7 @@ const loadScript = (src: string) =>
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
       if ((existing as HTMLScriptElement).dataset.loaded === 'true') {
+        hideStimulsoftHostSymbols();
         resolve();
         return;
       }
@@ -52,6 +116,7 @@ const loadScript = (src: string) =>
     script.async = false;
     script.onload = () => {
       script.dataset.loaded = 'true';
+      hideStimulsoftHostSymbols();
       resolve();
     };
     script.onerror = () =>
@@ -212,7 +277,9 @@ const isStimulsoftInternalError = (error: unknown) => {
     stack.includes('StiMobileDesigner.FindMousePosOnSvgPage') ||
     stack.includes('ZoomPage') ||
     stack.includes('ConvertPixelToUnit') ||
-    stack.includes('FindMousePosOnSvgPage') ||
+    stack.includes('getElementAttributesAsync') ||
+    stack.includes('StiReportHelper') ||
+    message.includes("reading 'bottom'") ||
     message.includes("reading 'reportUnit'") ||
     message.includes("reading 'forEach'") ||
     message.includes("reading 'repaint'")
@@ -405,6 +472,7 @@ const ensureViewer = async (Stimulsoft: any) => {
  */
 export const loadStimulsoftEngine = (): Promise<any> => {
   installStimulsoftApiInterceptor();
+  installStimulsoftHostPrototypeGuard();
 
   if (window.Stimulsoft?.Report?.StiReport) {
     return Promise.resolve(finishEngine(window.Stimulsoft));
@@ -440,8 +508,10 @@ export const loadStimulsoftViewer = async (): Promise<any> =>
 export const loadStimulsoftDesigner = (): Promise<any> => {
   // Patch fetch/XHR before Stimulsoft scripts capture the native functions.
   installStimulsoftApiInterceptor();
+  installStimulsoftHostPrototypeGuard();
 
   if (window.Stimulsoft?.Designer?.StiDesigner) {
+    hideStimulsoftHostSymbols();
     applyLicense(window.Stimulsoft);
     applyStimulsoftWebServer(window.Stimulsoft);
     installStimulsoftErrorGuards();
@@ -467,6 +537,7 @@ export const loadStimulsoftDesigner = (): Promise<any> => {
         }
         applyLicense(Stimulsoft);
         applyStimulsoftWebServer(Stimulsoft);
+        hideStimulsoftHostSymbols();
         installStimulsoftErrorGuards();
         patchStimulsoftHttp(Stimulsoft);
         patchStimulsoftDesignerRuntime(Stimulsoft);
