@@ -6,12 +6,19 @@ import {
   setActiveStimulsoftReport,
   tryFulfillStimulsoftApiRequest,
 } from './stimulsoftApiProxy';
+import {
+  applyStimulsoftAppearanceTheme,
+  applyStimulsoftDashboardColorMode,
+  type StimulsoftUiMode,
+} from './stimulsoftViewerTheme';
+import './stimulsoftViewerHost.less';
 
 type Props = {
   templateJson: string;
   params?: Record<string, string>;
   sessionKey: string | number;
   height?: string | number;
+  uiMode?: StimulsoftUiMode;
   onError?: (message: string) => void;
 };
 
@@ -61,12 +68,14 @@ const StimulsoftViewerHost = ({
   params = {},
   sessionKey,
   height = 'calc(100vh - 260px)',
+  uiMode = 'light',
   onError,
 }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
   const [status, setStatus] = useState('Loading report…');
+  const paramsSignature = JSON.stringify(params);
   const boxStyle = {
     width: '100%' as const,
     height,
@@ -98,6 +107,8 @@ const StimulsoftViewerHost = ({
 
         const options = new Stimulsoft.Viewer.StiViewerOptions();
         applyViewerExportOptions(options);
+        applyStimulsoftAppearanceTheme(Stimulsoft, options, uiMode);
+        applyStimulsoftDashboardColorMode(Stimulsoft, report, uiMode);
 
         viewer = new Stimulsoft.Viewer.StiViewer(
           options,
@@ -140,9 +151,9 @@ const StimulsoftViewerHost = ({
         hostRef.current.innerHTML = '';
       }
     };
-    // sessionKey is the remount trigger; params are captured for that session.
+    // paramsSignature remounts the viewer when department/facility filters change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, templateJson]);
+  }, [sessionKey, templateJson, uiMode, paramsSignature]);
 
   return (
     <div style={boxStyle}>
@@ -151,7 +162,9 @@ const StimulsoftViewerHost = ({
       ) : null}
       <div
         ref={hostRef}
-        className="stimulsoft-viewer-host"
+        className={`stimulsoft-viewer-host stimulsoft-viewer-host--${
+          uiMode === 'dark' ? 'dark' : 'light'
+        }`}
         style={{ width: '100%', height: '100%', minHeight: 280 }}
       />
     </div>

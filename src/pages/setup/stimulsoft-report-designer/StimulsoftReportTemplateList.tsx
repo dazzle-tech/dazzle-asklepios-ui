@@ -27,10 +27,20 @@ import {
 import StimulsoftReportTemplateModal from './StimulsoftReportTemplateModal';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { formatEnumString } from '@/utils';
+import {
+  StimulsoftDesignerMode,
+  matchesStimulsoftTemplateMode,
+  templateTypeFromMode,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 import './styles.less';
 
-const StimulsoftReportTemplateList = () => {
+const StimulsoftReportTemplateList = ({
+  mode = 'report',
+}: {
+  mode?: StimulsoftDesignerMode;
+}) => {
   const dispatch = useDispatch();
+  const templateType = templateTypeFromMode(mode);
 
   const [filterValue, setFilterValue] = useState({ name: '' });
   const [isFiltered, setIsFiltered] = useState(false);
@@ -52,8 +62,12 @@ const StimulsoftReportTemplateList = () => {
   const [editingTemplate, setEditingTemplate] =
     useState<StimulsoftReportTemplate | null>(null);
 
+  const listQuery = {
+    ...paginationParams,
+    templateType,
+  };
   const { data, isLoading, refetch } =
-    useGetStimulsoftReportTemplatesQuery(paginationParams, {
+    useGetStimulsoftReportTemplatesQuery(listQuery, {
       refetchOnMountOrArgChange: true,
     });
   const [triggerFilter, { data: filterResponse, isFetching: fetchingFilter }] =
@@ -68,12 +82,16 @@ const StimulsoftReportTemplateList = () => {
 
   useEffect(() => {
     dispatch(setPageCode('STIMULSOFT_REPORT_DESIGNER'));
-    dispatch(setDivContent('Report Templates'));
+    dispatch(
+      setDivContent(
+        mode === 'dashboard' ? 'Dashboard Templates' : 'Report Templates'
+      )
+    );
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
     };
-  }, [dispatch]);
+  }, [dispatch, mode]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -91,16 +109,17 @@ const StimulsoftReportTemplateList = () => {
           page: 0,
           size: filterPagination.size,
           sort: filterPagination.sort,
+          templateType,
         },
         false
       );
     }, 100);
     return () => clearTimeout(delay);
-  }, [filterValue.name]);
+  }, [filterValue.name, mode]);
 
   const rawList = isFiltered ? filterResponse?.data : data?.data;
   const currentList: StimulsoftReportTemplate[] = Array.isArray(rawList)
-    ? rawList
+    ? rawList.filter(row => matchesStimulsoftTemplateMode(row, mode))
     : [];
 
   const refreshList = useCallback(async () => {
@@ -114,6 +133,7 @@ const StimulsoftReportTemplateList = () => {
           page: filterPagination.page,
           size: filterPagination.size,
           sort: filterPagination.sort,
+          templateType,
         },
         false
       ).unwrap();
@@ -127,6 +147,7 @@ const StimulsoftReportTemplateList = () => {
     filterPagination.sort,
     filterValue?.name,
     isFiltered,
+    mode,
     refetch,
     triggerFilter,
   ]);
@@ -141,15 +162,22 @@ const StimulsoftReportTemplateList = () => {
       dispatch(
         notify({
           msg: current
-            ? 'Report template deactivated successfully'
-            : 'Report template reactivated successfully',
+            ? mode === 'dashboard'
+              ? 'Dashboard template deactivated successfully'
+              : 'Report template deactivated successfully'
+            : mode === 'dashboard'
+              ? 'Dashboard template reactivated successfully'
+              : 'Report template reactivated successfully',
           sev: 'success',
         })
       );
     } catch {
       dispatch(
         notify({
-          msg: 'Failed to update report template status',
+          msg:
+            mode === 'dashboard'
+              ? 'Failed to update dashboard template status'
+              : 'Failed to update report template status',
           sev: 'error',
         })
       );
@@ -162,6 +190,14 @@ const StimulsoftReportTemplateList = () => {
   const columns = [
     { key: 'name', title: 'Template Name', dataKey: 'name', width: 200 },
     { key: 'code', title: 'Code', dataKey: 'code', width: 140 },
+    {
+      key: 'templateType',
+      title: 'Type',
+      dataKey: 'templateType',
+      width: 120,
+      render: (row: StimulsoftReportTemplate) =>
+        formatEnumString(row.templateType || templateType),
+    },
     {
       key: 'facility',
       title: 'Facility',
@@ -199,7 +235,7 @@ const StimulsoftReportTemplateList = () => {
         <div className="actions">
           <MdEdit
             className="icon-edit"
-            title="Edit Report"
+            title={mode === 'dashboard' ? 'Edit Dashboard' : 'Edit Report'}
             onClick={() => {
               setEditingTemplate(rowData);
               setOpenTemplateModal(true);
@@ -239,6 +275,7 @@ const StimulsoftReportTemplateList = () => {
           page,
           size: filterPagination.size,
           sort: filterPagination.sort,
+          templateType,
         },
         false
       );
@@ -257,6 +294,7 @@ const StimulsoftReportTemplateList = () => {
           page: 0,
           size: newSize,
           sort: filterPagination.sort,
+          templateType,
         },
         false
       );
@@ -279,6 +317,7 @@ const StimulsoftReportTemplateList = () => {
           page: 0,
           size: filterPagination.size,
           sort: sortValue,
+          templateType,
         },
         false
       );
@@ -304,7 +343,7 @@ const StimulsoftReportTemplateList = () => {
             <div className="filters">
               <MyInput
                 fieldName="name"
-                fieldLabel="Report Name"
+                fieldLabel={mode === 'dashboard' ? 'Dashboard Name' : 'Report Name'}
                 record={filterValue}
                 setRecord={setFilterValue}
               />
@@ -340,6 +379,7 @@ const StimulsoftReportTemplateList = () => {
 
       <StimulsoftReportTemplateModal
         open={openTemplateModal}
+        mode={mode}
         setOpen={open => {
           setOpenTemplateModal(open);
           if (!open) setEditingTemplate(null);

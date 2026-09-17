@@ -118,6 +118,7 @@
     "rsuite": "^5.78.0",
     "schema-types": "^2.3.0",
     "sonner": "^2.0.7",
+    "stimulsoft-dashboards-js": "^2026.3.4",
     "stimulsoft-reports-js": "^2026.3.2",
     "styled-components": "^5.3.11",
     "survey-core": "^2.5.1",

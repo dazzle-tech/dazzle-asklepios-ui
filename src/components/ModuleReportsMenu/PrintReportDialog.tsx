@@ -158,14 +158,15 @@ const PrintReportDialog = ({
   const isView = mode === 'view';
   const hasDepartmentParam = parameters.some(param => param.type === 'department');
   const facilityId = Number(context?.facilityId) || 0;
-  const { data: facilityDepartments, isFetching: facilityDepartmentsLoading } =
+    const { data: facilityDepartments, isFetching: facilityDepartmentsLoading } =
     useGetActiveDepartmentByFacilityListQuery(
       { facilityId },
-      { skip: !open || !hasDepartmentParam || !facilityId }
+      { skip: !open || !hasDepartmentParam || !facilityId, refetchOnMountOrArgChange: true }
     );
   const { data: allDepartments, isFetching: allDepartmentsLoading } =
     useGetAllDepartmentsWithoutPaginationQuery(undefined, {
       skip: !open || !hasDepartmentParam || !!facilityId,
+      refetchOnMountOrArgChange: true,
     });
   const departments = useMemo(
     () =>

@@ -406,7 +406,8 @@ export const MODULES: Module[] =
       icon: "FaChartColumn",
       viewOrder: 2,
       screens: [
-        { name: "Report Designer", code: "STIMULSOFT_REPORT_DESIGNER", description: "Design Stimulsoft report templates", icon: "FaFilePen", viewOrder: 5, navPath: "report-designer" }
+        { name: "Report Designer", code: "STIMULSOFT_REPORT_DESIGNER", description: "Design Stimulsoft report templates", icon: "FaFilePen", viewOrder: 5, navPath: "report-designer" },
+        { name: "Dashboard Designer", code: "STIMULSOFT_DASHBOARD_DESIGNER", description: "Design Stimulsoft dashboard templates", icon: "FaChartBar", viewOrder: 6, navPath: "dashboard-designer" }
       ]
     }
     ,
