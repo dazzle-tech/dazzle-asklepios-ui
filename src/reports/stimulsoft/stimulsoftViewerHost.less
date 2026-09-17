@@ -1,0 +1,64 @@
+.stimulsoft-viewer-host {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stimulsoft-viewer-host--light {
+  color-scheme: light;
+  color: #212121;
+  background-color: #ffffff;
+}
+
+.stimulsoft-viewer-host--dark {
+  color-scheme: dark;
+  color: #e5e7eb;
+  background-color: #121212;
+
+  .stiJsViewerMainPanel {
+    background: #121212 !important;
+  }
+
+  .stiJsViewerPage {
+    background: #202024 !important;
+    color: #e5e7eb !important;
+  }
+
+  input.stiJsViewerTextBox,
+  input.stiJsViewerDropDownList_TextBox {
+    color: #f3f4f6 !important;
+    background-color: #1f1f1f !important;
+    border: 1px solid #4b5563 !important;
+    caret-color: #f3f4f6;
+  }
+
+  .stiJsViewerFormButton,
+  .stiJsViewerFormButtonDefault {
+    color: #f3f4f6 !important;
+    background-color: #2a2a2a !important;
+    border: 1px solid #4b5563 !important;
+  }
+
+  .stiJsViewerFormButtonTheme,
+  .stiJsViewerFormButtonThemeDefault {
+    color: #ffffff !important;
+    background-color: var(--primary-blue, #1976d2) !important;
+    border: 1px solid var(--primary-blue, #1976d2) !important;
+  }
+}
+
+.dashboard-dark .stimulsoft-viewer-host--dark {
+  color: #e5e7eb !important;
+
+  table,
+  td,
+  th {
+    color: inherit;
+  }
+
+  svg {
+    color: inherit;
+  }
+}

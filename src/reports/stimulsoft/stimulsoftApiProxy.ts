@@ -41,6 +41,36 @@ const hisPathname = (value?: string | null): string => {
 const isHisApiPath = (value?: string | null): boolean =>
   hisPathname(value).startsWith('/api/');
 
+const backendRequestHost = (): string => {
+  const backend = String(config.backendBaseURL || '').replace(/\/$/, '');
+  if (!backend) return '';
+  try {
+    return new URL(backend, window.location.origin).host;
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * RTK Query already calls backendBaseURL with JWT. Those must not be rewritten
+ * or have Stimulsoft report variables injected — that emptied the department
+ * switcher and kept report lists on the previous department until a refresh.
+ */
+const isAppBackendRequest = (url: string): boolean => {
+  const path = hisPathname(url);
+  if (/\/api\/setup\//i.test(path)) return true;
+  if (/\/api\/analytics\/reports\/templates(?:\/|$|\?)/i.test(path)) return true;
+  const parsed = tryUrl(url);
+  if (!parsed) return false;
+  const backendHost = backendRequestHost();
+  return Boolean(backendHost && parsed.host === backendHost);
+};
+
+const shouldRewriteStimulsoftGet = (method: string, url: string): boolean =>
+  String(method || 'GET').toUpperCase() === 'GET' &&
+  isHisApiPath(url) &&
+  !isAppBackendRequest(url);
+
 const toIsoDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -711,7 +741,6 @@ export const installStimulsoftApiInterceptor = () => {
   }
 
   const methodOf = (method: string) => String(method || 'GET').toUpperCase();
-  const isGet = (method: string) => methodOf(method) === 'GET';
   const skipAuth = (method: string) => methodOf(method) === 'OPTIONS';
 
   const markAndOpen = function (
@@ -722,7 +751,7 @@ export const installStimulsoftApiInterceptor = () => {
     rest: unknown[]
   ) {
     const raw = String(url);
-    const rewrite = isGet(method) && isHisApiPath(raw);
+    const rewrite = shouldRewriteStimulsoftGet(method, raw);
     const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
     const flagged = xhr as XMLHttpRequest & {
       __stiHisApi?: boolean;
@@ -730,7 +759,9 @@ export const installStimulsoftApiInterceptor = () => {
     };
     flagged.__stiUrl = resolved;
     flagged.__stiHisApi =
-      !skipAuth(method) && (isHisApiPath(raw) || isHisApiPath(resolved));
+      !skipAuth(method) &&
+      rewrite &&
+      (isHisApiPath(raw) || isHisApiPath(resolved));
     const result = nativeOpen.call(xhr, method, resolved, ...(rest as []));
     if (flagged.__stiHisApi) applyAuthHeadersToXhr(xhr);
     return result;
@@ -745,14 +776,11 @@ export const installStimulsoftApiInterceptor = () => {
       __stiHisApi?: boolean;
       __stiUrl?: string;
     };
-    if (flagged.__stiHisApi || isHisApiPath(flagged.__stiUrl)) {
+    if (flagged.__stiHisApi) {
       applyAuthHeadersToXhr(xhr);
     }
     const result = nativeSend.call(xhr, body);
-    if (
-      (flagged.__stiHisApi || isHisApiPath(flagged.__stiUrl)) &&
-      xhr.status === 401
-    ) {
+    if (flagged.__stiHisApi && xhr.status === 401) {
       try {
         Object.defineProperty(xhr, 'status', { configurable: true, value: 200 });
         Object.defineProperty(xhr, 'statusText', {
@@ -828,7 +856,10 @@ export const installStimulsoftApiInterceptor = () => {
 
     // Leave POST/PUT/PATCH/DELETE alone. Rebuilding those requests drops the
     // body, so template save never reaches the network.
-    if (!isGet(method) || !isHisApiPath(originalUrl)) {
+    // Also leave the app's own backend GETs alone (department switcher, report
+    // catalogs). Stimulsoft must not rewrite those onto the UI origin or inject
+    // the currently open report's departmentId.
+    if (!shouldRewriteStimulsoftGet(method, originalUrl)) {
       return originals.fetch(input as RequestInfo, init);
     }
 

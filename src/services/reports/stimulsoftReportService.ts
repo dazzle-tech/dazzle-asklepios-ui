@@ -4,7 +4,10 @@ import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 import { DesignerSchema } from '@/reports/stimulsoft/reportDesignerSchema';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
-import type { StimulsoftTemplateType } from '@/reports/stimulsoft/stimulsoftDesignerMode';
+import {
+  isStimulsoftDashboardTemplate,
+  type StimulsoftTemplateType,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 
 type PagedParams = {
   page: number;
@@ -181,6 +184,40 @@ const unwrapTemplate = (response: unknown): StimulsoftReportTemplate => {
     return nested as StimulsoftReportTemplate;
   }
   return body as StimulsoftReportTemplate;
+};
+
+type TemplateContext = {
+  module?: string | null;
+  facilityId?: number | null;
+  departmentId?: number | null;
+};
+
+const matchesTemplateContext = (
+  template: StimulsoftReportTemplate,
+  arg: TemplateContext
+) => {
+  if (template.isActive === false) return false;
+  if (
+    arg.module &&
+    template.module &&
+    String(template.module).toUpperCase() !== String(arg.module).toUpperCase()
+  ) {
+    return false;
+  }
+  if (
+    arg.facilityId &&
+    template.facilityId &&
+    Number(template.facilityId) !== Number(arg.facilityId)
+  ) {
+    return false;
+  }
+  if (arg.departmentId && template.departmentIds) {
+    const ids = parseDepartmentIds(template.departmentIds);
+    if (ids.length > 0 && !ids.includes(Number(arg.departmentId))) {
+      return false;
+    }
+  }
+  return true;
 };
 
 const noStoreGet = (url: string, params: Record<string, unknown> = {}) => ({
@@ -435,29 +472,42 @@ export const stimulsoftReportService = createApi({
           if (String(template.templateType ?? '').toUpperCase() === 'DASHBOARD') {
             return false;
           }
-          if (template.isActive === false) return false;
-          if (
-            arg.module &&
-            template.module &&
-            String(template.module).toUpperCase() !== String(arg.module).toUpperCase()
-          ) {
-            return false;
-          }
+          if (isStimulsoftDashboardTemplate(template)) return false;
           if (!template.module) return false;
+          return matchesTemplateContext(template, arg);
+        });
+      },
+      providesTags: ['StimulsoftReportTemplate'],
+      forceRefetch: () => true,
+    }),
+
+    getViewableStimulsoftDashboards: builder.query<
+      StimulsoftReportTemplate[],
+      { facilityId?: number | null; departmentId?: number | null }
+    >({
+      query: ({ facilityId, departmentId }) =>
+        noStoreGet('/api/analytics/reports/templates', {
+          facilityId,
+          departmentId,
+          isActive: true,
+          templateType: 'DASHBOARD',
+          page: 0,
+          size: 200,
+          sort: 'name,asc',
+        }),
+      transformResponse: (response: unknown, meta: any, arg) => {
+        const mapped = mapPagedTemplates(response, meta);
+        return mapped.data.filter(template => {
+          if (String(template.templateType ?? '').toUpperCase() === 'REPORT') {
+            return false;
+          }
           if (
-            arg.facilityId &&
-            template.facilityId &&
-            Number(template.facilityId) !== Number(arg.facilityId)
+            String(template.templateType ?? '').toUpperCase() !== 'DASHBOARD' &&
+            !isStimulsoftDashboardTemplate(template)
           ) {
             return false;
           }
-          if (arg.departmentId && template.departmentIds) {
-            const ids = parseDepartmentIds(template.departmentIds);
-            if (ids.length > 0 && !ids.includes(Number(arg.departmentId))) {
-              return false;
-            }
-          }
-          return true;
+          return matchesTemplateContext(template, arg);
         });
       },
       providesTags: ['StimulsoftReportTemplate'],
@@ -477,4 +527,5 @@ export const {
   useLazyPrintStimulsoftReportPdfQuery,
   useGetPrintableStimulsoftReportsQuery,
   useLazyGetPrintableStimulsoftReportsQuery,
+  useGetViewableStimulsoftDashboardsQuery,
 } = stimulsoftReportService;
