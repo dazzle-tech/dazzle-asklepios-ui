@@ -64,9 +64,12 @@ const loadScript = (src: string) =>
   });
 
 const applyLicense = (Stimulsoft: any) => {
-  const key = config.stimulsoftLicenseKey;
-  if (!key || !Stimulsoft?.Base?.StiLicense) return;
-  Stimulsoft.Base.StiLicense.Key = key;
+  const license = Stimulsoft?.Base?.StiLicense;
+  if (!license) return;
+  const reportKey = config.stimulsoftLicenseKey;
+  const dashboardKey = config.stimulsoftDashboardLicenseKey;
+  if (reportKey) license.Key = reportKey;
+  if (dashboardKey) license.Key = (license.Key || '') + dashboardKey;
 };
 
 /**
