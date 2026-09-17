@@ -613,6 +613,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
+  const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
   const contentOfMoreIconMenu = (
     <Popover>
       <Dropdown.Menu>
@@ -1012,6 +1016,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
 
+               <MyButton onClick={handleScanDocumentClick}>
+                Scan Document
+              </MyButton>
+
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
@@ -1105,6 +1113,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+         localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
 
       <MyModal

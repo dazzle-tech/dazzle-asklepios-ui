@@ -49,6 +49,7 @@ type Props = {
   // patient
   patient: any;
   departments: any[];
+  edit?: boolean;
 };
 
 const DiagnosticsOrderTable: React.FC<Props> = props => {
@@ -79,7 +80,8 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     setPreviewDiagnosticsOrder,
 
     patient,
-    departments
+    departments,
+    edit,
   } = props;
 
   const resolveReceivedDepartmentName = (rowData: any) => {
@@ -144,7 +146,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       flexGrow: 1,
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
-        const isDisabled = rowData.status !== 'NEW';
+        const isDisabled = rowData.status === 'CANCELLED';
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -250,7 +252,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
               <span style={{ display: 'inline-flex', alignItems: 'center', cursor: actionCursor }}>
                 <MdModeEdit
                   onClick={() => {
-                    if (isRescheduled) return;
+                    if (isRescheduled || edit) return;
                     handleEdit(rowData);
                   }}
                   className="icons-styles"
@@ -270,7 +272,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
                   className="icons-styles"
                   color={actionColor}
                   onClick={() => {
-                    if (isRescheduled) return;
+                    if (isRescheduled || edit) return;
                     setOrderTest(normalizeOrderTest(rowData));
                     setTest(rowData.test);
                     setTestCardModal(true);
@@ -355,7 +357,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
           data={orderId ? normalizedOrderTestList : []}
           onRowClick={(rowData: any) => {
             const rowId = Number(rowData.id);
-            if (rowData.status === 'NEW') {
+            if (rowData.status !== 'CANCELLED') {
               handleCheckboxChange(rowId);
             }
             setOrderTest(normalizeOrderTest(rowData));

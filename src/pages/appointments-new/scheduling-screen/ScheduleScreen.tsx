@@ -33,6 +33,7 @@ import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ScheduleFloatingActions from './components/ScheduleFloatingActions';
 import BulkRescheduleModal from './components/BulkRescheduleModal';
+import BulkTransferModal from './components/BulkTransferModal';
 import CancelledAppointmentsModal from './components/CancelledAppointmentsModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -83,10 +84,10 @@ const formatAppointmentRequestApproveError = (e: unknown): string => {
 
 const getAvailabilityTemplateName = (appointment: any): string => {
   return String(
-   
-      appointment?.availabilityGenerationBatch?.template?.templateName ??
-    
-      ''
+
+    appointment?.availabilityGenerationBatch?.template?.templateName ??
+
+    ''
   ).trim();
 };
 
@@ -99,28 +100,28 @@ const SCHEDULE_LEGEND_ITEMS: {
   icon: IconDefinition;
   summaryIconBg: string;
 }[] = [
-  { label: 'No-Show',    color: '#FDE68A', icon: faUserSlash,    summaryIconBg: '#b45309' },
-  { label: 'Checked In', color: '#FDBA74', icon: faUserCheck,    summaryIconBg: '#ea580c' },
-  { label: 'Booked',     color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
-  { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
-  { label: 'New',        color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
-  { label: 'In Service', color: '#C7D2FE', icon: faStethoscope,  summaryIconBg: '#4f46e5' },
-  { label: 'Confirmed',  color: '#ADFF2F', icon: faCheckDouble,  summaryIconBg: '#65a30d' },
-  { label: 'Completed',  color: '#93C5FD', icon: faCircleCheck,  summaryIconBg: '#1d4ed8' },
-  { label: 'Cancel',     color: '#FECACA', icon: faXmark,        summaryIconBg: '#dc2626' },
-];
+    { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
+    { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
+    { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+    { label: 'Reschedule', color: '#E9D5FF', icon: faCalendarCheck, summaryIconBg: '#7e22ce' },
+    { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
+    { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
+    { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
+    { label: 'Completed', color: '#93C5FD', icon: faCircleCheck, summaryIconBg: '#1d4ed8' },
+    { label: 'Cancel', color: '#FECACA', icon: faXmark, summaryIconBg: '#dc2626' },
+  ];
 
 
 const DARK_COLORS: Record<string, { color: string; borderColor?: string; summaryIconBg: string }> = {
-  'No-Show':    { color: '#FBBF24', summaryIconBg: '#92400e' },
+  'No-Show': { color: '#FBBF24', summaryIconBg: '#92400e' },
   'Checked In': { color: '#FB923C', summaryIconBg: '#c2410c' },
-  'Booked':     { color: '#38BDF8', summaryIconBg: '#075985' },
+  'Booked': { color: '#38BDF8', summaryIconBg: '#075985' },
   'Reschedule': { color: '#C084FC', summaryIconBg: '#6d28d9' },
-  'New':        { color: '#34D399', borderColor: '#6EE7B7', summaryIconBg: '#047857' },
+  'New': { color: '#34D399', borderColor: '#6EE7B7', summaryIconBg: '#047857' },
   'In Service': { color: '#818CF8', summaryIconBg: '#3730a3' },
-  'Confirmed':  { color: '#A3E635', summaryIconBg: '#4d7c0f' },
-  'Completed':  { color: '#60A5FA', summaryIconBg: '#1e40af' },
-  'Cancel':     { color: '#F87171', summaryIconBg: '#b91c1c' },
+  'Confirmed': { color: '#A3E635', summaryIconBg: '#4d7c0f' },
+  'Completed': { color: '#60A5FA', summaryIconBg: '#1e40af' },
+  'Cancel': { color: '#F87171', summaryIconBg: '#b91c1c' },
 };
 
 const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
@@ -178,6 +179,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const [bulkRescheduleModalOpen, setBulkRescheduleModalOpen] = useState(false);
+  const [bulkTransferModalOpen, setBulkTransferModalOpen] = useState(false);
   const [cancelledAppointmentsModalOpen, setCancelledAppointmentsModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
@@ -218,6 +220,7 @@ const ScheduleScreen = () => {
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const [currentView, setCurrentView] = useState('day');
+  const [dateType, setDateType] = useState<'GREGORIAN' | 'HIJRI'>('GREGORIAN');
   const [calendarDate, setCalendarDate] = useState<Date | null>(null);
   const [finalAppointments, setFinalAppointments] = useState<any[]>([]);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
@@ -250,8 +253,8 @@ const ScheduleScreen = () => {
     const departmentIds =
       Array.isArray(rawDeptIds) && rawDeptIds.length > 0
         ? rawDeptIds
-            .map(id => Number(id))
-            .filter(id => Number.isFinite(id) && id > 0)
+          .map(id => Number(id))
+          .filter(id => Number.isFinite(id) && id > 0)
         : null;
 
     return {
@@ -1017,10 +1020,12 @@ const ScheduleScreen = () => {
       otherCount,
       rangeLabel:
         currentView === 'day'
-          ? moment(currentCalendarDate).format('ddd, MMM D, YYYY')
+          ? moment(currentCalendarDate).locale('en').format('ddd, MMM D, YYYY')
           : currentView === 'week'
-            ? `${moment(calendarViewRange.start).format('MMM D')} – ${moment(calendarViewRange.end).format('MMM D, YYYY')}`
-            : moment(currentCalendarDate).format('MMMM YYYY')
+            ? `${moment(calendarViewRange.start).locale('en').format('MMM D')} – ${moment(calendarViewRange.end)
+              .locale('en')
+              .format('MMM D, YYYY')}`
+            : moment(currentCalendarDate).locale('en').format('MMMM YYYY')
     };
   }, [visibleAppointments, calendarViewRange, currentView, currentCalendarDate, legendItems]);
 
@@ -1831,6 +1836,8 @@ const ScheduleScreen = () => {
             selectedResourceTypeValue={selectedResourceTypeValue}
           />
           <ScheduleContentGrid
+            dateType={dateType}
+            setDateType={setDateType}
             calendarKey={calendarKey}
             currentCalendarDate={currentCalendarDate}
             setCalendarDate={setCalendarDate}
@@ -2001,13 +2008,19 @@ const ScheduleScreen = () => {
         setOpen={setBulkRescheduleModalOpen}
         onSuccess={() => void handleSearchAppointmentsByCriteria()}
       />
+      <BulkTransferModal
+        open={bulkTransferModalOpen}
+        setOpen={setBulkTransferModalOpen}
+        calendarViewRange={calendarViewRange}
+        onSuccess={() => void handleSearchAppointmentsByCriteria()}
+      />
       <CancelledAppointmentsModal
         open={cancelledAppointmentsModalOpen}
         setOpen={setCancelledAppointmentsModalOpen}
         calendarViewRange={calendarViewRange}
         departmentId={
           Array.isArray(selectedDepartmentIds?.departmentIds) &&
-          selectedDepartmentIds.departmentIds.length === 1
+            selectedDepartmentIds.departmentIds.length === 1
             ? selectedDepartmentIds.departmentIds[0]
             : null
         }
@@ -2017,6 +2030,7 @@ const ScheduleScreen = () => {
       <ScheduleFloatingActions
         onViewAppointmentRequests={() => setAppRequestModalOpen(true)}
         onBulkReschedule={() => setBulkRescheduleModalOpen(true)}
+        onBulkTransfer={() => setBulkTransferModalOpen(true)}
         onViewCancelledAppointments={() => setCancelledAppointmentsModalOpen(true)}
       />
     </div>

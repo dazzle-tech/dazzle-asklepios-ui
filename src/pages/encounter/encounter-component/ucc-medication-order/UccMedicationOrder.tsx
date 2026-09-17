@@ -7,7 +7,7 @@ import { notify } from '@/utils/uiReducerActions';
 import UccMedicationOrderAddModal from './UccMedicationOrderAddModal';
 import CancellationModal from '@/components/CancellationModal';
 import PlusIcon from '@rsuite/icons/Plus';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Tooltip, Whisper } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -16,11 +16,12 @@ import { useLocation } from 'react-router-dom';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
-  useFilterUccMedicationOrdersQuery,
-  useSubmitUccMedicationOrderMutation,
+  useFilterGroupedUccMedicationOrdersQuery,
+  useSubmitUccMedicationOrderGroupMutation,
   useCancelUccMedicationOrderMutation,
   useCreateUccMedicationOrderMutation,
-  useUpdateUccMedicationOrderMutation
+  useUpdateUccMedicationOrderMutation,
+  useSubmitUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { formatEnumString } from '@/utils';
@@ -51,26 +52,25 @@ const UccMedicationOrder = (props: any) => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
 
   const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
-  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
   const roaOptions = useEnumOptions('RouteOfAdministration');
 
   const [cancelObject, setCancelObject] = useState({ cancelReason: '' });
 
-  const {
-    data: ordersResponse,
-    isLoading,
-    isFetching,
-    refetch
-  } = useFilterUccMedicationOrdersQuery(
-    {
-      encounterId: encounter?.id,
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    { skip: !encounter?.id }
-  );
-
+const {
+  data: ordersResponse,
+  isLoading,
+  isFetching,
+  refetch
+} = useFilterGroupedUccMedicationOrdersQuery(
+  {
+    encounterId: encounter?.id,
+    page: paginationParams.page,
+    size: paginationParams.size,
+    sort: paginationParams.sort
+  },
+  { skip: !encounter?.id }
+);
+  const [submitOrderGroup] = useSubmitUccMedicationOrderGroupMutation();
   const [submitOrder] = useSubmitUccMedicationOrderMutation();
   const [cancelOrder] = useCancelUccMedicationOrderMutation();
   const [createOrder] = useCreateUccMedicationOrderMutation();
@@ -97,17 +97,19 @@ const UccMedicationOrder = (props: any) => {
       if (data?.isEdit && data?.id) {
         const { id, isEdit, ...payload } = data;
 
-        const updatePayload = {
-          id,
-          activeIngredientId: payload.activeIngredientId,
-          instructionType: payload.instructionType,
-          instructionText: payload.instructionText,
-          dose: payload.dose,
-          doseUnit: payload.doseUnit,
-          frequency: payload.frequency,
-          route: payload.route
-        };
-
+const updatePayload = {
+  id,
+  activeIngredientId: payload.activeIngredientId,
+  instructionType: payload.instructionType,
+  instructionText: payload.instructionText,
+  dose: payload.dose,
+  doseUnit: payload.doseUnit,
+  route: payload.route,
+  frequencyNumber: payload.frequencyNumber,
+  frequencyUnit: payload.frequencyUnit,
+  duration: payload.duration,
+  startTime: payload.startTime
+};
         await updateOrder({
           id,
           data: updatePayload
@@ -143,21 +145,26 @@ const UccMedicationOrder = (props: any) => {
 
   const handleSubmit = async (row: any) => {
     try {
-      await submitOrder({
-        id: row.id,
-        isHighAlert: !!ingredientMap[row?.activeIngredientId]?.highAlert
+      await submitOrderGroup({
+        orderGroupId: row.orderGroupId,
+        isHighAlert: !!row.isHighAlert
       }).unwrap();
 
       dispatch(
         notify({
-          msg: 'Medication Submitted Successfully',
+          msg: 'Medication Order Submitted Successfully',
           sev: 'success'
         })
       );
-      setSelectedIds(prev => prev.filter(id => id !== row.id));
+
+      setSelectedIds(prev =>
+        prev.filter(id => id !== row.orderGroupId)
+      );
+
       await refetch();
     } catch (error: any) {
       console.log(error);
+
       dispatch(
         notify({
           msg: error?.data?.detail || 'Submit failed',
@@ -241,13 +248,6 @@ const UccMedicationOrder = (props: any) => {
     return map;
   }, [unitLov]);
 
-  const frequencyMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    (frequencyLov?.object || []).forEach((item: any) => {
-      map[item.key] = item.lovDisplayVale;
-    });
-    return map;
-  }, [frequencyLov]);
 
   const roaMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -286,7 +286,6 @@ const UccMedicationOrder = (props: any) => {
         return parts
           .map((part: string, index: number) => {
             if (index === 1) return unitMap[part] || part;
-            if (index === 2) return frequencyMap[part] || part;
             if (index === 3) return roaMap[part] || part;
             return part;
           })
@@ -369,24 +368,41 @@ const UccMedicationOrder = (props: any) => {
       width: 120,
       render: (row: any) => (
         <div style={{ display: 'flex', gap: 10 }}>
-          <FontAwesomeIcon
-            icon={faPenToSquare}
-            className="ucc-medication-order-icons-size"
-            style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
-            }}
-            onClick={() => {
-              if (row?.status !== 'NEW') return;
-              setEditRow(row);
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Edit</Translate>
+              </Tooltip>
+            }
+          >
+            <FontAwesomeIcon
+              icon={faPenToSquare}
+              className="ucc-medication-order-icons-size"
+              style={{
+                cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
+                opacity: row?.status === 'NEW' ? 1 : 0.4
+              }}
+              onClick={() => {
+                if (row?.status !== 'NEW') return;
+                setEditRow(row);
 
-              setTimeout(() => {
-                setOpenAdd(true);
-              }, 0);
-            }}
-          />
+                setTimeout(() => {
+                  setOpenAdd(true);
+                }, 0);
+              }}
+            />
+          </Whisper>
 
-          <CheckRoundIcon
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Submit</Translate>
+              </Tooltip>
+            }
+          >
+            <CheckRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
@@ -397,8 +413,17 @@ const UccMedicationOrder = (props: any) => {
               handleSubmit(row);
             }}
           />
+          </Whisper>
 
-          <WarningRoundIcon
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Cancel</Translate>
+              </Tooltip>
+            }
+          >
+            <WarningRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
@@ -410,13 +435,15 @@ const UccMedicationOrder = (props: any) => {
               setOpenCancel(true);
             }}
           />
+          </Whisper>
         </div>
       )
     }
   ];
 
+  
   return (
-      <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
+    <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
       <MyTable
         height={450}
         data={rows}

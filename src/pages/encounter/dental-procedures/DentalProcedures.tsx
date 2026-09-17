@@ -5,7 +5,7 @@ import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPen } from '@fortawesome/free-solid-svg-icons';
-
+import { MdAttachFile } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
@@ -69,7 +69,8 @@ const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
   cannotUpdateCancelled: 'Cannot update a cancelled dental procedure.',
   procedureAlreadyBilled: 'Cannot modify this procedure because it has already been billed.',
   serviceAlreadyBilled: 'Cannot modify this procedure because the service has already been billed.',
-  alreadyCancelled: 'This dental procedure is already cancelled.'
+  alreadyCancelled: 'This dental procedure is already cancelled.',
+  cancellationReasonRequired: 'Cancellation reason is required.'
 };
 
 const normalizeMsg = (msg: string) => {
@@ -422,8 +423,9 @@ const DentalProcedures = props => {
     if (!selectedRow?.id) return;
 
     try {
-      await cancelProcedure({ id: selectedRow.id }).unwrap();
+      await cancelProcedure({ id: selectedRow.id, cancellationReason: cancelForm.cancellationReason || '' }).unwrap();
     } catch (error) {
+      console.log("error:",error)
       handleCrudError(error, dispatch);
       setCancelModalOpen(false);
     }
@@ -499,6 +501,27 @@ const DentalProcedures = props => {
         }
       },
       {
+        key: 'attachments',
+        dataKey: '',
+        title: <Translate>ATTACHMENTS</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          return (
+            <MdAttachFile
+              size={20}
+              fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
+              onClick={() => {
+                if (rowData?.id) {
+                  // setProcedure(rowData);
+                  setAttachmentsModalOpen(true)
+                }
+              }}
+              className={rowData?.id ? 'attachment-icon active' : 'attachment-icon disabled'}
+            />
+          );
+        }
+      },
+      {
         key: 'anesthesiaUsed',
         title: <Translate>Anesthesia Used</Translate>,
         flexGrow: 1,
@@ -565,7 +588,24 @@ const DentalProcedures = props => {
             }}
           />
         )
-      }
+      },
+      {
+        key: 'cancelledByAt',
+        title: "Cancelled By / At",
+        render: (row: DentalProcedureResponseVM) => (
+          <>
+            {row.cancelledBy ?? '-'}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
+          </>
+        ),
+        expandable: true
+      },
+      {
+        key: 'cancellationReason',
+        title: "Cancellation Reason",
+        expandable: true
+      },
     ],
     [serviceList, procedureList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
   );
@@ -605,15 +645,7 @@ const DentalProcedures = props => {
                   <Translate>Cancel</Translate>
                 </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  disabled={!selectedRow}
-                  onClick={() => setAttachmentsModalOpen(true)}
-                >
-                  <Translate>Attach</Translate>
-                </MyButton>
-
-                <Checkbox  className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
+                <Checkbox className="show-cancelled" checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
                   <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
@@ -676,10 +708,10 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
-                            disableByField='isValid'
+                    disableByField='isValid'
 
                   />
-                  
+
                 </Col>
               </Row>
 
@@ -722,8 +754,7 @@ const DentalProcedures = props => {
                     selectDataValue="key"
                     record={form}
                     setRecord={setForm}
-                            disableByField='isValid'
-
+                    disableByField='isValid'
                   />
                 </Col>
 
@@ -809,7 +840,7 @@ const DentalProcedures = props => {
         setObject={setCancelForm}
         handleCancle={handleCancel}
         fieldName="cancellationReason"
-        required={false}
+        required={true}
       />
 
       <MyModal
@@ -824,7 +855,7 @@ const DentalProcedures = props => {
             source="DENTAL_PROCEDURE_ATTACHMENT"
             sourceId={selectedRow?.id ? Number(selectedRow.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

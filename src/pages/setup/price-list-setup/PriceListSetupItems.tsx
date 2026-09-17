@@ -192,6 +192,24 @@ const normalizeServiceProductOptions = (
     });
 };
 
+const createMappingOption = (
+  mapping: WaseelItemMapping
+): MappingOption => {
+  const displayParts = [
+    mapping.itemName,
+    mapping.itemCode,
+    mapping.sbsCode
+  ].filter(Boolean);
+
+  return {
+    ...mapping,
+
+    displayName:
+      displayParts.join(' - ') ||
+      `Mapping #${mapping.id}`
+  };
+};
+
 const mergeOptions = (
   previous: ServiceProductOption[],
   incoming: ServiceProductOption[],
@@ -989,23 +1007,6 @@ const PriceListSetupItems: React.FC<Props> = ({
     return [];
   };
 
-  const createMappingOption = (
-    mapping: WaseelItemMapping
-  ): MappingOption => {
-    const displayParts = [
-      mapping.itemName,
-      mapping.itemCode,
-      mapping.sbsCode
-    ].filter(Boolean);
-
-    return {
-      ...mapping,
-
-      displayName:
-        displayParts.join(' - ')
-    };
-  };
-
   const mappingTotalPages = Number(
     mappingResponse?.totalPages ?? 0
   );
@@ -1082,11 +1083,13 @@ const PriceListSetupItems: React.FC<Props> = ({
 
   const mappingSelectData = useMemo(() => {
     const filteredCache =
-      mappingCache.filter(
-        item =>
-          item.itemType ===
-          selectedItem.itemType
-      );
+      mappingCache
+        .filter(
+          item =>
+            item.itemType ===
+            selectedItem.itemType
+        )
+        .map(createMappingOption);
 
     if (
       !selectedMapping?.id ||
@@ -1107,7 +1110,7 @@ const PriceListSetupItems: React.FC<Props> = ({
     }
 
     return [
-      selectedMapping as MappingOption,
+      createMappingOption(selectedMapping),
       ...filteredCache
     ];
   }, [
@@ -1390,18 +1393,20 @@ const PriceListSetupItems: React.FC<Props> = ({
       isInsurancePriceList &&
       row.waseelItemMappingId
     ) {
-      setSelectedMapping({
-        id: Number(row.waseelItemMappingId),
-        itemType: row.itemType,
-        sourceId: row.sourceId,
-        itemCode: row.itemCode,
-        itemName: row.itemName,
-        sbsCatalogId: Number(
-          row.sbsCatalogId ?? 0
-        ),
-        sbsCode: '',
-        isActive: row.isActive ?? true
-      });
+      setSelectedMapping(
+        createMappingOption({
+          id: Number(row.waseelItemMappingId),
+          itemType: row.itemType,
+          sourceId: row.sourceId,
+          itemCode: row.itemCode,
+          itemName: row.itemName,
+          sbsCatalogId: Number(
+            row.sbsCatalogId ?? 0
+          ),
+          sbsCode: '',
+          isActive: row.isActive ?? true
+        })
+      );
     } else {
       setSelectedMapping(null);
     }

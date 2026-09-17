@@ -12,6 +12,7 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
 import {
+  useBulkCancelDiagnosticOrderTestsMutation,
   useCancelDiagnosticOrderTestMutation,
   useCreateDiagnosticOrderTestMutation,
   useFilterDiagnosticOrderTestsQuery,
@@ -53,11 +54,11 @@ import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 
 
 type UseDiagnosticsOrderArgs = {
-    patient?: any;
-    encounter?: any;
-    edit?: boolean;
+  patient?: any;
+  encounter?: any;
+  edit?: boolean;
   setLoading?: (value: boolean) => void;
-    patientPrevTestsRef?: React.RefObject<any>;
+  patientPrevTestsRef?: React.RefObject<any>;
 };
 const extractErrorMessage = (error: any) => {
   if (isUncoveredCashCancelled(error)) {
@@ -67,6 +68,8 @@ const extractErrorMessage = (error: any) => {
   const data = error?.data;
 
   let msg =
+    data?.messageKey ||
+    data?.properties?.messageKey ||
     data?.properties?.message ||
     data?.message ||
     data?.detail ||
@@ -81,7 +84,7 @@ const extractErrorMessage = (error: any) => {
   return msg;
 };
 
-export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef,setLoading }: UseDiagnosticsOrderArgs) => {
+export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef, setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -309,7 +312,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
 
 
-  
+
   const { data: favoriteTests, isFetching: loadingFavorites } = useGetDiagnosticTestsByIdsQuery(
     favoriteTestIds.length ? { ids: favoriteTestIds } : skipToken
   );
@@ -333,6 +336,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
   const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
   const [checkInsuranceCoverage] = useCheckInsurancePriceListCoverageMutation();
+  const [bulkCancel, { isLoading: isBulkCancelLoading }] =
+    useBulkCancelDiagnosticOrderTestsMutation();
 
   const shouldAcceptUncoveredAsCash = async (
     testId: number,
@@ -508,36 +513,57 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const handleCheckboxChange = (id: number) => {
     setSelectedRows(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
-
   const handleCancle = async () => {
+    if (!selectedRows.length) {
+      dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+      return;
+    }
     try {
-      setLoading(true);
-      await Promise.all(
-        selectedRows.map((itemId: number) =>
-          cancelDiagnosticOrderTest({
-            id: itemId,
-            body: { cancellationReason: reson.cancellationReason }
-          }).unwrap()
-        )
+      await bulkCancel({ ids: selectedRows, cancellationReason: reson.cancellationReason }).unwrap();
+      dispatch(
+        notify({ msg: `Cancel ${selectedRows.length} tests successfully`, sev: 'success' })
       );
-
-      dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
+      setSelectedRows([]);
       setSelectedRows([]);
       CloseConfirmDeleteModel();
       await orderTestRefetch();
-      
       patientPrevTestsRef?.current?.refetchPrevTests();
-    } catch (error) {
-      console.error('Cancel failed:', error);
-      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
-      CloseConfirmDeleteModel();
-      orderTestRefetch()
+    } catch (e) {
+      const msg = extractErrorMessage(e) || 'Cancel failed';
+      dispatch(notify({ msg, sev: 'error' }));
+    }
 
-    }
-    finally {
-      setLoading(false);
-    }
-  };
+  }
+  // const handleCancle = async () => {
+  //   console.log("Selected Rows",selectedRows)
+  //   try {
+  //     setLoading(true);
+  //     await Promise.all(
+  //       selectedRows.map((itemId: number) =>
+  //         cancelDiagnosticOrderTest({
+  //           id: itemId,
+  //           body: { cancellationReason: reson.cancellationReason }
+  //         }).unwrap()
+  //       )
+  //     );
+
+  //     dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
+  //     setSelectedRows([]);
+  //     CloseConfirmDeleteModel();
+  //     await orderTestRefetch();
+
+  //     patientPrevTestsRef?.current?.refetchPrevTests();
+  //   } catch (error) {
+  //     console.error('Cancel failed:', error);
+  //     dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+  //     CloseConfirmDeleteModel();
+  //     orderTestRefetch()
+
+  //   }
+  //   finally {
+  //     setLoading(false);
+  //   }
+  // };
 
 
   const convertToMonths = (value: number, unit?: string) => {
@@ -671,7 +697,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const handleSaveTests = async () => {
     setOpenTestsModal(false);
-   
+
 
     const _orderId = toNumericId(orders?.id ?? orders?.key);
     const fromDepartmentId = resolveFromDepartmentId();
@@ -819,13 +845,13 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
     finally {
       console.log("Fainaly ")
-       setLoading(false);
+      setLoading(false);
 
     }
   };
 
   const handleSaveOrders = async () => {
-setLoading(true);
+    setLoading(true);
 
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
@@ -861,7 +887,7 @@ setLoading(true);
     finally {
       setLoading(false);
 
-     }
+    }
   };
 
   const handleSubmitPres = async () => {
@@ -981,7 +1007,7 @@ setLoading(true);
         })
       );
     }
-    finally{
+    finally {
       setLoading(false);
     }
   };
@@ -989,12 +1015,12 @@ setLoading(true);
 
 
   // Normalization + sorting
-    const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
+  const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
 
-    const testsMap = useMemo(
-      () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
-      [diagnosticTestsByIds]
-    );
+  const testsMap = useMemo(
+    () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
+    [diagnosticTestsByIds]
+  );
 
 
   const STATUS_PRIORITY: Record<string, number> = {
@@ -1021,7 +1047,7 @@ setLoading(true);
 
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
-      .filter((row: any) => row.status === 'NEW')
+      .filter((row: any) => row.status !== 'CANCELLED')
       .map((row: any) => Number(row.id))
       .filter(Boolean);
   }, [normalizedOrderTestList]);

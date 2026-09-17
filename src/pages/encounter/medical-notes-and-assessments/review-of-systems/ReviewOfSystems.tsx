@@ -234,20 +234,22 @@ const handleClearSection = async () => {
           <div className="top-div">
             <div className="bt-right">
               <MyButton
-                disabled={!selectedSystem?.key}
+                disabled={!selectedSystem?.key || edit}
                 onClick={handleClearSection}
               >
                 Clear
               </MyButton>
-
+            <div className="filter-form-disable-fix">
             <MyButton
               onClick={() => {
                 setOpenModel(!openModel);
               }}
               prefixIcon={() => <icons.List />}
+              // className="filter-form-disable-fix show-cancelled"
             >
               Findings
             </MyButton>
+            </div>
             </div>
           </div>
 
@@ -259,11 +261,12 @@ const handleClearSection = async () => {
                   encounter={encounter}
                   setEncounter={setEncounter}
                   system={bodySystemsLovQueryResponse}
+                  edit={edit}
                 />
               </div>
             )}
           <div className="system-container">
-            <div className="system-style">
+            <div className="system-style filter-form-disable-fix">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}

@@ -64,9 +64,9 @@ export const serviceService = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map((item: any) => ({ type: 'Service' as const, id: item.id })),
-              { type: 'Service', id: 'LIST' },
-            ]
+            ...result.map((item: any) => ({ type: 'Service' as const, id: item.id })),
+            { type: 'Service', id: 'LIST' },
+          ]
           : [{ type: 'Service', id: 'LIST' }],
     }),
 
@@ -107,6 +107,18 @@ export const serviceService = createApi({
     >({
       query: ({ category, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-category/${encodeURIComponent(category)}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    getServicesByStatus: builder.query<
+      PagedResult<any>,
+      { isActive: boolean } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-status/${isActive}`,
         params: { page, size, sort },
       }),
       transformResponse: mapPaged,
@@ -187,9 +199,9 @@ export const serviceService = createApi({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
-              { type: 'ServiceItems', id: 'LIST' },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
+            { type: 'ServiceItems', id: 'LIST' },
+          ]
           : [{ type: 'ServiceItems', id: 'LIST' }],
     }),
 
@@ -203,9 +215,9 @@ export const serviceService = createApi({
       providesTags: (result, _err, args) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
-              { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
+            { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
+          ]
           : [{ type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` }],
     }),
 
@@ -333,5 +345,7 @@ export const {
   useGetServiceItemSourcesByFacilityQuery,
   useLazyGetServiceItemSourcesByFacilityQuery,
   useGetServicesByDepartmentQuery,
+  useGetServicesByStatusQuery,
+  useLazyGetServicesByStatusQuery,
   useLazyGetServicesByDepartmentQuery,
 } = serviceService;

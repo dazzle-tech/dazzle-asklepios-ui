@@ -36,6 +36,7 @@ import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetLovsQuery } from '@/services/setupService';
+import DiagnosticTestNormalRangeTable from './DiagnosticTestNormalRangeTable';
 
 const Profile = ({
   open,
@@ -62,6 +63,8 @@ const Profile = ({
     useState<DiagnosticTestNormalRange>({
       ...newDiagnosticTestNormalRange
     });
+
+  const [normalRangeFormKey, setNormalRangeFormKey] = useState(0);
 
   const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
   const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
@@ -101,18 +104,6 @@ const Profile = ({
 
   const resultType = useEnumOptions('TestResultType');
 
-  const {
-    data: normalRangeListResponse,
-    refetch: refetchNormalRange,
-    isFetching: isFetchingNormalRanges
-  } = useGetDiagnosticTestNormalRangesByProfileTestIdQuery(
-    {
-      profileTestId: diagnosticsTestProfile?.id,
-      page: paginationParams.page,
-      size: paginationParams.size
-    },
-    { skip: !diagnosticsTestProfile?.id }
-  );
 
   const [addTestProfile] = useCreateDiagnosticTestProfileMutation();
   const [updateTestProfile] = useUpdateDiagnosticTestProfileMutation();
@@ -142,11 +133,6 @@ const Profile = ({
     } else return '';
   };
 
-  const isSelectedDiagnosticTestNormalRange = rowData => {
-    if (rowData && diagnosticTestNormalRange && rowData.id === diagnosticTestNormalRange.id) {
-      return 'selected-row';
-    } else return '';
-  };
 
   const iconsForActions = (rowData: any) => {
     const isTextType = String(rowData?.resultType ?? '').toUpperCase() === 'TEXT';
@@ -247,72 +233,6 @@ const Profile = ({
     }
   ];
 
-  const tableNormalRangesColumns = [
-    {
-      key: 'gender',
-      title: <Translate>Gender</Translate>,
-      render: rowData => <p>{formatEnumString(rowData?.gender)}</p>
-    },
-    {
-      key: 'ageFromTo',
-      title: <Translate>Age From - To</Translate>,
-      render: rowData => (
-        <span>
-          {rowData.ageFrom ?? '-'} {formatEnumString(rowData.ageFromUnit)}
-          {'  -  '}
-          {rowData.ageTo ?? '-'} {formatEnumString(rowData.ageToUnit)}
-        </span>
-      )
-    },
-    {
-      key: 'lovKeys',
-      title: <Translate>LOV Values</Translate>,
-      render: rowData => {
-        if (!rowData.lovKeys || !lovValues?.object) return '-';
-
-        const names = rowData.lovKeys
-          .map(key => lovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
-          .filter(Boolean);
-
-        return names.length ? names.join(', ') : '-';
-      }
-    },
-    {
-      key: 'condition',
-      title: <Translate>Condition</Translate>,
-      render: rowData => <p>{formatEnumString(rowData?.condition)}</p>
-    },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      render: (rowData) => (
-        <div style={{ display: 'flex', gap: 10 }}>
-          <MdEdit
-            className="icons-style"
-            title="Edit"
-            size={22}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setDiagnosticTestNormalRange(rowData);
-              setOpenSubChild(true);
-            }}
-          />
-
-          <MdDelete
-            className="icons-style"
-            title="Remove"
-            size={22}
-            fill="var(--primary-pink)"
-            onClick={() => {
-              setDiagnosticTestNormalRange(rowData);
-              setOpenConfirmDeleteProfileNormalRange(true);
-            }}
-          />
-        </div>
-      )
-    }
-
-  ];
 
   const isEditMode = Boolean(diagnosticsTestProfile?.id);
 
@@ -353,7 +273,8 @@ const Profile = ({
       if (diagnosticsTestProfile.id) {
       } else {
         setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
-        setSearchKeyword('');      }
+        setSearchKeyword('');
+      }
     } catch (error: any) {
       const rawMessage =
         error?.data?.properties?.message ||
@@ -582,41 +503,11 @@ const Profile = ({
     }
   };
 
-  const conjureFormContentOfChildModal = () => {
-    return (
-      <Form fluid>
-        <div className="container-of-add-new-button">
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            disabled={!diagnosticsTestProfile?.id || diagnosticsTestProfile.resultType?.toUpperCase() === 'TEXT'  }
-            color="var(--deep-blue)"
-            onClick={() => {
-              setOpenSubChild(true);
-              setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id,
-                    profileTestId: diagnosticsTestProfile?.id
-
-               });
-            }}
-            width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>
-        <MyTable
-          height={380}
-          data={normalRangeListResponse?.data ?? []}
-          loading={isFetchingNormalRanges}
-          columns={tableNormalRangesColumns}
-          rowClassName={isSelectedDiagnosticTestNormalRange}
-       
-        />
-      </Form>
-    );
-  };
 
   const conjureFormContentOfSecondChildModal = () => {
     return (
       <AddNormalRange
+        key={normalRangeFormKey}
         diagnosticTestNormalRange={diagnosticTestNormalRange}
         setDiagnosticTestNormalRange={setDiagnosticTestNormalRange}
         diagnosticsTestProfile={diagnosticsTestProfile}
@@ -652,24 +543,66 @@ const Profile = ({
       };
 
       if (diagnosticTestNormalRange.id) {
-        await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
-        dispatch(notify({ msg: 'Normal Range Updated', sev: 'success' }));
+        await updateDiagnosticTestNormalRange({
+          id: diagnosticTestNormalRange.id,
+          body: payload
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Normal Range Updated',
+            sev: 'success'
+          })
+        );
       } else {
-        await createDiagnosticTestNormalRange(payload);
-        dispatch(notify({ msg: 'Normal Range Created', sev: 'success' }));
+        await createDiagnosticTestNormalRange(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Normal Range Created',
+            sev: 'success'
+          })
+        );
+
+        const currentNormalRangeType =
+          diagnosticTestNormalRange.normalRangeType;
+
+        setDiagnosticTestNormalRange({
+          ...newDiagnosticTestNormalRange,
+          testId: diagnosticsTest.id,
+          profileTestId: diagnosticsTestProfile?.id,
+          resultType: diagnosticsTestProfile?.resultType ?? '',
+          normalRangeType: currentNormalRangeType
+        });
+
+        setNormalRangeFormKey(prev => prev + 1);
+
+        return;
+
       }
 
-      setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id });
+      // For Update
+      setDiagnosticTestNormalRange({
+        ...newDiagnosticTestNormalRange,
+        testId: diagnosticsTest.id
+      });
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to Save Normal Range', sev: 'error' }));
+      dispatch(
+        notify({
+          msg: 'Failed to Save Normal Range',
+          sev: 'error'
+        })
+      );
     }
   };
 
-useEffect(() => {
-  if (open && diagnosticsTest?.id) {
-    refetchDiagnosticsTestProfile();
-  }
-}, [open, diagnosticsTest?.id]);
+
+
+  useEffect(() => {
+    if (open && diagnosticsTest?.id) {
+      refetchDiagnosticsTestProfile();
+    }
+  }, [open, diagnosticsTest?.id]);
 
   useEffect(() => {
     if (!diagnosticsTestProfile?.listOfValueId) return;
@@ -685,16 +618,16 @@ useEffect(() => {
 
 
   useEffect(() => {
-  if (open && selectedProfile) {
-    setDiagnosticsTestProfile(selectedProfile); 
-  }
-}, [open, selectedProfile]);
+    if (open && selectedProfile) {
+      setDiagnosticsTestProfile(selectedProfile);
+    }
+  }, [open, selectedProfile]);
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <ChildModal
@@ -712,13 +645,34 @@ useEffect(() => {
       mainStep={[{ title: 'Profile', icon: <FaChartLine /> }]}
       childStep={[{ title: 'Normal Range Info', icon: <FaChartLine /> }]}
       childTitle="Normal Ranges"
-      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
+      childContent={
+        <div dir={dir}>
+          <DiagnosticTestNormalRangeTable
+            profileId={diagnosticsTestProfile?.id}
+            testId={diagnosticsTest?.id}
+            resultType={diagnosticsTestProfile?.resultType}
+            onAdd={range => {
+              setDiagnosticTestNormalRange(range);
+              setOpenSubChild(true);
+            }}
+            onEdit={range => {
+              setDiagnosticTestNormalRange(range);
+              setOpenSubChild(true);
+            }}
+            onDelete={range => {
+              setDiagnosticTestNormalRange(range);
+              setOpenConfirmDeleteProfileNormalRange(true);
+            }}
+          />
+        </div>
+      }
+
       hideActionChildBtn={true}
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
       mainSize="xs"
-      childSize="30vw"
+      childSize="sm"
     />
   );
 };

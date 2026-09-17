@@ -18,7 +18,6 @@ import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients
 
 import {
   useFilterUccMedicationOrdersQuery,
-  useAdministerUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
@@ -29,6 +28,9 @@ import { useEnumOptions } from '@/services/enumsApi';
 import CancellationModal from '@/components/CancellationModal';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { skipToken } from '@reduxjs/toolkit/query';
+import MedicationAdministrationModal from '@/pages/encounter/urgent-care/MedicationAdministrationModal';
+import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
+import { Tooltip, Whisper } from 'rsuite';
 
 type Props = {
   patient: any;
@@ -42,7 +44,19 @@ type MedicationOrderRow = {
   };
 
   activeIngredientId?: number;
+
   instructionText?: string;
+
+  dose?: number;
+  doseUnit?: string;
+  route?: string;
+
+  frequencyNumber?: number;
+  frequencyUnit?: string;
+  duration?: number;
+  startTime?: string;
+  doseTime?: string;
+
   status?: string;
   isHighAlert?: boolean;
 
@@ -84,27 +98,34 @@ const MedicationClassCell = ({
 };
 
 const InstructionsCell = ({
-  text,
+  row,
   unitMap,
-  frequencyMap,
   roaMap
 }: any) => {
-  const parsed = useMemo(() => {
-    if (!text) return '-';
+  // Manual instructions are stored directly in instructionText
+  if (row?.instructionType === 'MANUAL_INSTRUCTIONS') {
+    return <>{row?.instructionText || '-'}</>;
+  }
 
-    const parts = text.split(',').map((x: string) => x.trim());
+  const parts = [
+    row?.dose,
+    row?.doseUnit
+      ? unitMap[String(row.doseUnit)] || row.doseUnit
+      : null,
+    row?.frequencyNumber && row?.frequencyUnit
+      ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
+      : null,
+    row?.route
+      ? roaMap[String(row.route)] || row.route
+      : null
+  ].filter(
+    value =>
+      value !== null &&
+      value !== undefined &&
+      value !== ''
+  );
 
-    return parts
-      .map((part: string, index: number) => {
-        if (index === 1) return unitMap[part] || part;
-        if (index === 2) return frequencyMap[part] || part;
-        if (index === 3) return roaMap[part] || part;
-        return part;
-      })
-      .join(', ');
-  }, [text]);
-
-  return <>{parsed}</>;
+  return <>{parts.length > 0 ? parts.join(', ') : '-'}</>;
 };
 
 const formatDate = (date: any) => {
@@ -119,7 +140,11 @@ const formatDate = (date: any) => {
 
 const UCCMedications = ({ patient }: Props) => {
   const dispatch = useAppDispatch();
+  const [administrationModalOpen, setAdministrationModalOpen] =
+    useState(false);
 
+  const [selectedOrderId, setSelectedOrderId] =
+    useState<number | null>(null);
   const user = useAppSelector(
     (state: any) => state.auth.user
   );
@@ -180,7 +205,7 @@ const UCCMedications = ({ patient }: Props) => {
 
   const orderedRows = orderedResponse?.data || [];
   const administeredRows = adminResponse?.data || [];
-    const { data: activeIngredientsRes } = useGetActiveIngredientsQuery({
+  const { data: activeIngredientsRes } = useGetActiveIngredientsQuery({
     page: 0,
     size: 1000
   });
@@ -200,8 +225,6 @@ const UCCMedications = ({ patient }: Props) => {
   const { data: unitLov } =
     useGetLovValuesByCodeQuery('UOM');
 
-  const { data: frequencyLov } =
-    useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   const roaOptions =
     useEnumOptions('RouteOfAdministration');
@@ -216,16 +239,6 @@ const UCCMedications = ({ patient }: Props) => {
     return map;
   }, [unitLov]);
 
-  const frequencyMap = useMemo(() => {
-    const map: Record<string, string> = {};
-
-    (frequencyLov?.object || []).forEach((item: any) => {
-      map[String(item.key)] = item.lovDisplayVale;
-    });
-
-    return map;
-  }, [frequencyLov]);
-
   const roaMap = useMemo(() => {
     const map: Record<string, string> = {};
 
@@ -236,10 +249,7 @@ const UCCMedications = ({ patient }: Props) => {
     return map;
   }, [roaOptions]);
 
-  const [
-    administerOrder,
-    { isLoading: administering }
-  ] = useAdministerUccMedicationOrderMutation();
+
 
   const [
     discardOrder,
@@ -262,32 +272,6 @@ const UCCMedications = ({ patient }: Props) => {
       discardReason: ''
     });
 
-  const handleAdminister = async (
-    row: MedicationOrderRow
-  ) => {
-    try {
-      await administerOrder(row.id).unwrap();
-
-      dispatch(
-        notify({
-          msg: 'Medication administered successfully',
-          sev: 'success'
-        })
-      );
-
-      refetchOrdered();
-      refetchAdmin();
-    } catch (e: any) {
-      dispatch(
-        notify({
-          msg:
-            e?.data?.detail ||
-            'Administer failed',
-          sev: 'error'
-        })
-      );
-    }
-  };
 
   const handleDiscard = async () => {
     if (!selectedRow) return;
@@ -386,12 +370,22 @@ const UCCMedications = ({ patient }: Props) => {
       minWidth: 300,
       render: (row: MedicationOrderRow) => (
         <InstructionsCell
-          text={row.instructionText}
+          row={row}
           unitMap={unitMap}
-          frequencyMap={frequencyMap}
           roaMap={roaMap}
         />
       )
+    },
+    {
+      key: 'doseTime',
+      title: (
+        <Translate>DOSE TIME</Translate>
+      ),
+      minWidth: 160,
+      render: (row: MedicationOrderRow) =>
+        row.doseTime
+          ? formatDateWithoutSeconds(row.doseTime)
+          : '-'
     },
     {
       key: 'prescribed',
@@ -420,82 +414,94 @@ const UCCMedications = ({ patient }: Props) => {
       minWidth: 140,
       render: (row: MedicationOrderRow) =>
         formatEnumString(row.status)
-    },    {
+    },
+    {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
       width: 120,
       align: 'center',
       render: (row: MedicationOrderRow) => {
-        if (row.status === 'SUBMITTED') {
-          return (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 12
-              }}
-            >
-              <CheckRoundIcon
-                className="medication-record-order-icons-size"
-                style={{ cursor: 'pointer' }}
-                onClick={() => handleAdminister(row)}
-              />
+        return (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 12
+            }}
+          >
+            {row.status === 'SUBMITTED' && (
+              <>
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Administer</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <CheckRoundIcon
+                    className="medication-record-order-icons-size"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setSelectedOrderId(row.id);
+                      setAdministrationModalOpen(true);
+                    }}
+                  />
+                </Whisper>
 
-              <FontAwesomeIcon
-                icon={faXmark}
-                className="medication-record-order-icons-size"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setSelectedRow(row);
-                  setCancelObject({
-                    discardReason: ''
-                  });
-                  setOpenDiscardModal(true);
-                }}
-              />
-            </div>
-          );
-        }
 
-        if (row.status === 'WAITING_DOUBLE_CHECK') {
-          const currentUser =
-            user?.login || user?.username;
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Discard</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={faXmark}
+                    className="medication-record-order-icons-size"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setSelectedRow(row);
+                      setCancelObject({
+                        discardReason: ''
+                      });
+                      setOpenDiscardModal(true);
+                    }}
+                  />
+                </Whisper>
 
-          const isSameUser =
-            row.administeredBy &&
-            currentUser &&
-            row.administeredBy.toLowerCase() ===
-              currentUser.toLowerCase();
+              </>
+            )}
 
-          return (
-            <FontAwesomeIcon
-              icon={faCheckDouble}
-              className="medication-record-order-icons-size"
-              style={{
-                cursor: isSameUser
-                  ? 'not-allowed'
-                  : 'pointer',
-                opacity: isSameUser ? 0.4 : 1
-              }}
-              onClick={() => {
-                if (isSameUser) {
-                  dispatch(
-                    notify({
-                      msg:
-                        'Double check must be done by another user',
-                      sev: 'warning'
-                    })
-                  );
-                  return;
+            {row.status === 'WAITING_DOUBLE_CHECK' && (
+              <Whisper
+                placement="top"
+                speaker={
+                  <Tooltip>
+                    <Translate>Double Check</Translate>
+                  </Tooltip>
                 }
+              >
+                <FontAwesomeIcon
+                  icon={faCheckDouble}
+                  className="medication-record-order-icons-size"
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleDoubleCheck(row)}
+                />
+              </Whisper>
 
-                handleDoubleCheck(row);
-              }}
+            )}
+
+            <MedicationAdministrationLogs
+              order={row}
             />
-          );
-        }
-
-        return null;
+          </div>
+        );
       }
     }
   ];
@@ -505,13 +511,11 @@ const UCCMedications = ({ patient }: Props) => {
     orderedFetching ||
     adminLoading ||
     adminFetching ||
-    administering ||
+
     discarding ||
     doubleChecking;
 
-    console.log('patient', patient);
-    console.log('patient.id', patient?.id);
-    console.log('patient.key', patient?.key);
+
 
 
   return (
@@ -575,7 +579,15 @@ const UCCMedications = ({ patient }: Props) => {
           />
         }
       />
-
+      <MedicationAdministrationModal
+        orderId={selectedOrderId}
+        open={administrationModalOpen}
+        setOpen={setAdministrationModalOpen}
+        onSuccess={async () => {
+          await refetchOrdered();
+          await refetchAdmin();
+        }}
+      />
       <CancellationModal
         open={openDiscardModal}
         setOpen={setOpenDiscardModal}

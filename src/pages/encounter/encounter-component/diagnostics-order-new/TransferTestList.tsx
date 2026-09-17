@@ -44,6 +44,9 @@
 
     /* ================= helpers ================= */
 
+    const normalizeSearchText = (value: any) =>
+      String(value ?? '').trim().toLocaleLowerCase();
+
     const getItemKey = (item: any) => item?.id ?? item?.key;
     const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
 
@@ -87,18 +90,18 @@
 
 
     const filteredLeft = useMemo(() => {
+      const normalizedSearchTerm = normalizeSearchText(searchTerm);
+
       return leftItems.filter(item => {
         const testId = getItemKey(item);
 
-        // 🔹 name search
-        const matchesName = getItemName(item)
-          .toLowerCase()
-          .includes((searchTerm ?? '').toLowerCase());
+        // 🔹 name search (case-insensitive)
+        const matchesName = normalizeSearchText(getItemName(item)).includes(normalizedSearchTerm);
 
         // 🔹 type filter
         const selectedType = searchType?.type;
         const matchesType =
-          !selectedType || getItemType(item) === selectedType;
+          !selectedType || normalizeSearchText(getItemType(item)) === normalizeSearchText(selectedType);
 
         // 🔥 catalog filter (REAL SOURCE)
         const matchesCatalog =
@@ -230,7 +233,7 @@
     if (!searchType?.type) return catalogs;
 
     return catalogs.filter((catalog: any) => {
-      return String(catalog.type).toUpperCase() === String(searchType.type).toUpperCase();
+      return normalizeSearchText(catalog.type) === normalizeSearchText(searchType.type);
     });
   }, [catalogs, searchType?.type]);
 

@@ -1,28 +1,35 @@
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
+import LovValueCell from '@/components/LovValueCell';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import PatientSearch from '@/components/PatientSearch';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useLazyFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetNotesByResultIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useToggleReviewDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import {
   faArrowDown,
   faArrowUp,
@@ -40,21 +47,9 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useDispatch } from 'react-redux';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
-import { newApEncounter } from '@/types/model-types-constructor';
-import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import './ReviewResultsIcon.less';
-import UserDateCell from '@/components/UserDateCell';
-import PatientSearch from '@/components/PatientSearch';
-import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
-import { notify } from '@/utils/uiReducerActions';
-import MyButton from '@/components/MyButton/MyButton';
-
 
 const renderMarker = (marker?: string) => {
   switch (marker) {
@@ -104,41 +99,9 @@ const renderMarker = (marker?: string) => {
 const isLovProfile = (profile?: any) =>
   profile?.resultType?.toUpperCase() === 'LOV';
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
-
-  const normalizedKey = String(key);
-
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === normalizedKey
-    )?.lovDisplayVale ?? key
-  );
-};
-
 const ReviewResults = forwardRef<any, any>(
   ({ loading, setTest, setPatient, setEncounter }, ref) => {
-    const today = new Date();
+    const today = new Date(Date.now());
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
     const [openNotesModal, setOpenNotesModal] = useState(false);
@@ -161,11 +124,8 @@ const ReviewResults = forwardRef<any, any>(
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
     const [filtersKey, setFiltersKey] = useState(0);
-
     const [orderIdFilter, setOrderIdFilter] = useState('');
-
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
-
     const [departmentFilter, setDepartmentFilter] = useState<any>({
       fromDepartmentIdIn: null
     });
@@ -180,20 +140,13 @@ const ReviewResults = forwardRef<any, any>(
       useToggleReviewDiagnosticOrderTestResultMutation();
     const [bulkToggleReviewDiagnosticOrderTestResult] =
       useBulkToggleReviewDiagnosticOrderTestResultMutation();
+    const [getProfilesByIds, { data: profilesResponse }] =
+      useGetDiagnosticTestProfilesByIdsMutation();
+    const [getAllIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-    const { data: allLovValues } = useGetLovAllValuesQuery({
-      ...initialListRequestAllValues
-    });
-
-    const { data: lovDefinitions } = useGetLovsQuery({
-      ...initialListRequest,
-      pageSize: 1000
-    });
-
-
     const { data: departmentsList = [] } =
-      useGetAllDepartmentsWithoutPaginationQuery();
+      useGetAllDepartmentsWithoutPaginationQuery({});
 
     const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
       if (from && to && from > to) {
@@ -316,6 +269,29 @@ const ReviewResults = forwardRef<any, any>(
     const results = resultsResponse?.data ?? [];
     const totalCount = resultsResponse?.totalCount ?? 0;
 
+    const profileTestIds = useMemo(
+      () =>
+        results
+          .map((r: any) => r.profileTestId)
+          .filter((id): id is number => Boolean(id))
+          .filter((id, index, arr) => arr.indexOf(id) === index),
+      [results]
+    );
+
+    const profilesMap = useMemo(
+      () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
+      [profilesResponse]
+    );
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      getProfilesByIds(profileTestIds)
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [getProfilesByIds, profileTestIds]);
+
     const { data: notesResponse } = useGetNotesByResultIdQuery(
       openNotesModal && selectedResultId ? selectedResultId : skipToken
     );
@@ -398,17 +374,6 @@ const ReviewResults = forwardRef<any, any>(
         }
       });
     }, [orderTestsMap]);
-
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-
-    const profilesMap = useMemo(
-      () => new Map(profilesResponse?.data?.map((p) => [p.id, p]) ?? []),
-      [profilesResponse]
-    );
 
     const normalizedResults = useMemo(() => {
       return results.map((r) => {
@@ -503,11 +468,27 @@ const ReviewResults = forwardRef<any, any>(
 
       setFiltersKey(prev => prev + 1);
     };
-    const handleSelectAll = (checked: boolean) => {
-      if (checked) {
-        setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
-      } else {
-        setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
+    // const handleSelectAll = (checked: boolean) => {
+    //   if (checked) {
+    //     setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
+    //   } else {
+    //     setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
+    //   }
+    // };
+    const handleSelectAll = async (checked: boolean) => {
+      if (!checked) {
+        setSelectedRows([]);
+        return;
+      }
+
+      try {
+        const ids = await getAllIds({
+          ...filterParams
+        }).unwrap();
+        console.log('IDS', ids);
+        setSelectedRows(ids);
+      } catch (e) {
+        console.error(e);
       }
     };
 
@@ -577,11 +558,11 @@ const ReviewResults = forwardRef<any, any>(
             const value = row.resultValueNumber ?? row.resultValueText ?? '';
 
             if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                value,
-                lovDefinitions,
-                allLovValues
+              return (
+                <LovValueCell
+                  valueKey={value}
+                  listOfValueId={profile.listOfValueId}
+                />
               );
             }
 
@@ -606,11 +587,11 @@ const ReviewResults = forwardRef<any, any>(
 
             if (hasViewRange) {
               if (isLovProfile(profile)) {
-                return resolveLovDisplayValue(
-                  profile,
-                  String(row.normalRangeValue),
-                  lovDefinitions,
-                  allLovValues
+                return (
+                  <LovValueCell
+                    valueKey={String(row.normalRangeValue)}
+                    listOfValueId={profile.listOfValueId}
+                  />
                 );
               }
 
@@ -699,7 +680,7 @@ const ReviewResults = forwardRef<any, any>(
           )
         },
       ],
-      [patientsMap, normalizedResults,,isAllSelected,isSomeSelected,selectedRows]
+      [patientsMap, normalizedResults, isAllSelected, isSomeSelected, selectedRows]
     );
 
     const filters = () => (

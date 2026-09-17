@@ -1,96 +1,23 @@
-import React, { useState } from 'react';
-import { Checkbox } from 'rsuite';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
-import NewFlacc from './NewFlacc';
+import React from 'react';
 import '../style.less';
-import Translate from '@/components/Translate/Translate';
+import { useLocation } from 'react-router-dom';
+import FlaccComponent from '@/components/PatientFlaccComponent';
 
-const Flacc = () => {
-  const [flaccData, setFlaccData] = useState<any[]>([]);
-  const [openFlaccModal, setOpenFlaccModal] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(true);
-  //
-  const flaccColumns = [
-    { key: 'totalScore', title: 'Total Score' },
-    { key: 'face', title: 'Face' },
-    { key: 'legs', title: 'Legs' },
-    { key: 'activity', title: 'Activity' },
-    { key: 'cry', title: 'Cry' },
-    { key: 'consolability', title: 'Consolability' },
-    {
-      key: 'expand',
-      title: 'Details',
-      expandable: true,
-      render: row => (
-        <>
-          <div>Created By: {row.createdBy}</div>
-          <div>Created At: {row.createdAt}</div>
-          {row.cancelledBy && (
-            <>
-              <div>Cancelled By: {row.cancelledBy}</div>
-              <div>Cancelled At: {row.cancelledAt}</div>
-              <div>Reason: {row.cancelReason}</div>
-            </>
-          )}
-        </>
-      )
-    }
-  ];
-  //
-  const tableButtons = (
-    <>
-      <div className="table-buttons-left-part-handle-positions">
-        <Checkbox className="show-cancelled"
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-          }}
-        >
-          <Translate>Show Cancelled</Translate>
-        </Checkbox>
-      </div>
+const Flacc = ({ ...props }) => {
+  const location = useLocation();
 
-      <div className="bt-right">
-        <MyButton onClick={() => setOpenFlaccModal(true)}>
-          <FontAwesomeIcon icon={faBan} /> <Translate>Cancel</Translate>
-        </MyButton>
-        <MyButton onClick={() => setOpenFlaccModal(true)}>
-          <FontAwesomeIcon icon={faPlus} />
-          <Translate>Add</Translate>
-        </MyButton>
-      </div>
-    </>
-  );
+  const patient = props.patient ?? location.state?.patient ?? {};
+  const encounter = props.encounter ?? location.state?.encounter ?? {};
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
-      <MyTable
-        data={showCanceled ? flaccData : flaccData.filter(r => !r.cancelledBy)}
-        columns={flaccColumns}
-        tableButtons={tableButtons}
-      />
-
-      <NewFlacc
-        open={openFlaccModal}
-        setOpen={setOpenFlaccModal}
-        patient={null}
-        encounter={null}
-        edit={false}
-        refetch={null}
-      />
+      <FlaccComponent patient={patient} encounter={encounter} />
     </div>
   );
 };
 
 export default Flacc;
+

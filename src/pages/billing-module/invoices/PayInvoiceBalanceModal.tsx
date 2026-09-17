@@ -11,6 +11,7 @@ import type {
   InvoicePricingSummary
 } from '@/services/billing/financialDocumentAdjustmentService';
 import { useCollectInvoiceBalanceMutation } from '@/services/billing/financialDocumentAdjustmentService';
+import { useGetInvoiceByIdQuery } from '@/services/billing/BillingService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import PaymentMethodSelector from '@/pages/billing-module/accounting/components/PaymentMethodSelector';
@@ -23,6 +24,7 @@ import {
   mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
+import { useCreditCardMachinePayment } from '@/utils/cardMachinePayment';
 
 export type InvoicePaymentCompletedContext = {
   paymentMethodLabel: string;
@@ -33,6 +35,8 @@ type PayInvoiceBalanceModalProps = {
   open: boolean;
   onClose: () => void;
   invoiceId: number;
+  patientId?: number | null;
+  encounterId?: number | null;
   documentNumber?: string | null;
   summary?: InvoiceAdjustmentSummary | null;
   lineItems?: InvoiceLineItem[];
@@ -51,6 +55,8 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   open,
   onClose,
   invoiceId,
+  patientId = null,
+  encounterId = null,
   documentNumber,
   summary,
   lineItems = [],
@@ -62,6 +68,27 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   onPaid
 }) => {
   const dispatch = useAppDispatch();
+   console.log("Summary:", summary);
+   
+  const resolvedPatientId =
+    patientId ??
+    (typeof (summary as any)?.patientId === 'number'
+      ? Number((summary as any).patientId)
+      : null) ??
+    (typeof (summary as any)?.patient?.id === 'number'
+      ? Number((summary as any).patient.id)
+      : null);
+
+  const resolvedEncounterId =
+    encounterId ??
+    (typeof (summary as any)?.encounterId === 'number'
+      ? Number((summary as any).encounterId)
+      : null) ??
+    (typeof (summary as any)?.encounter?.id === 'number'
+      ? Number((summary as any).encounter.id)
+      : null);
+console.log("Resolved Patient ID:", resolvedPatientId);
+   console.log("Resolved Encounter ID:", resolvedEncounterId);
   const enumPaymentMethods =
     useEnumOptions('PaymentMethods', {
       exclude: ['INSURANCE_COVERAGE'],
@@ -89,7 +116,10 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
   });
 
   const [collectInvoiceBalance, { isLoading }] = useCollectInvoiceBalanceMutation();
-
+  const {
+    collectCreditCardAmountOrSkip,
+    isProcessingCard
+  } = useCreditCardMachinePayment();
   const isWalletMethod = isWalletPaymentMethod(form.paymentMethodCode);
   const walletAvailable = Math.max(0, Number(walletBalance) + Number(walletReserved));
   const walletCollectPreview = computeWalletCollectAmounts(
@@ -205,6 +235,40 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
           sev: 'warning'
         })
       );
+      return;
+    }
+    const chargeCreditCardIfNeeded = async () => {
+      if (resolvedPatientId == null || resolvedEncounterId == null) {
+        return true;
+      }
+
+      const creditCardCollect = await collectCreditCardAmountOrSkip(
+        selectedMethod?.value ?? form.paymentMethodCode,
+        paymentAmount,
+        {
+          patientId: resolvedPatientId,
+          sourceType: 'ENCOUNTER',
+          sourceReferenceId: resolvedEncounterId,
+          facilityId: null
+        }
+      );
+
+      if (!creditCardCollect.proceed) {
+        dispatch(
+          notify({
+            msg: creditCardCollect.result?.message ?? 'Credit card payment was not completed.',
+            sev: 'warning'
+          })
+        );
+        return false;
+      }
+
+      return true;
+    };
+
+    const creditCardCharged = await chargeCreditCardIfNeeded();
+
+    if (!creditCardCharged) {
       return;
     }
 
@@ -408,7 +472,7 @@ const PayInvoiceBalanceModal: React.FC<PayInvoiceBalanceModalProps> = ({
         <MyButton onClick={onClose} disabled={isLoading}>
           Cancel
         </MyButton>
-        <MyButton appearance="primary" loading={isLoading} onClick={handleSubmit}>
+        <MyButton appearance="primary" loading={isLoading || isProcessingCard} onClick={handleSubmit}>
           Collect payment
         </MyButton>
       </Modal.Footer>

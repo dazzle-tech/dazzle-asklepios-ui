@@ -1,5 +1,6 @@
 import { camelCaseToLabel, fromCamelCaseToDBName, formatEnumString } from '@/utils';
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
   Checkbox,
@@ -117,6 +118,7 @@ type MyInputProps = {
   menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
+  onBlur?: (e?: any) => void;
   creatable?: boolean;
   groupBy?: string | null;
   onSelectItem?: (item: any) => void;
@@ -133,6 +135,8 @@ type MyInputProps = {
   allowEnterNewLine?: boolean;
   showZero?: boolean;
   disablePastDates?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
   disableFutureDates?: boolean;
   showWarningIfBeforeYear1900?: boolean;
   showWarningIfInPast?: boolean;
@@ -141,6 +145,7 @@ type MyInputProps = {
   allowDecimal?: boolean;
   disabledItemValues?: boolean;
   disableByField?: string;
+  disableByFieldValue?: any;
 };
 
 const MyInput = ({
@@ -168,6 +173,10 @@ const MyInput = ({
   const [validationResult, setValidationResult] = useState<any[] | undefined>(undefined);
 
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [portaledSelectOpen, setPortaledSelectOpen] = useState(false);
+  const [portaledSelectBox, setPortaledSelectBox] = useState({ top: 0, left: 0, width: 0 });
+  const portaledSelectMenuRef = useRef<HTMLDivElement | null>(null);
+  const selectOpenGuardRef = useRef(0);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
   const dateOpenGuardRef = useRef(0);
@@ -215,14 +224,63 @@ const MyInput = ({
   };
 
   useEffect(() => {
+    if (isSelectOpen) {
+      selectOpenGuardRef.current = Date.now();
+    }
+  }, [isSelectOpen]);
+
+  useEffect(() => {
     if (isDateOpen) {
       dateOpenGuardRef.current = Date.now();
     }
   }, [isDateOpen]);
 
   useEffect(() => {
+    if (!isDateOpen && !isDateTimeOpen) return;
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (!target) return;
+      if (pickerRef.current?.contains(target)) return;
+      if (
+        target.closest?.(
+          '.rs-picker-date-menu, .rs-picker-popup, .rs-calendar, .rs-calendar-panel, .my-input-calendar-popup'
+        )
+      ) {
+        return;
+      }
+      setIsDateOpen(false);
+      setIsDateTimeOpen(false);
+    };
+
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onMouseDown, true);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onMouseDown, true);
+    };
+  }, [isDateOpen, isDateTimeOpen]);
+
+  useEffect(() => {
     const handleScroll = event => {
-      if (isDateOpen && Date.now() - dateOpenGuardRef.current < 200) {
+      const targetEl = event.target as Element | null;
+      if (
+        targetEl?.closest?.(
+          '.rs-picker-popup, .rs-picker-date-menu, .rs-calendar, .rs-calendar-panel, .my-input-calendar-popup'
+        )
+      ) {
+        return;
+      }
+
+      if (isDateOpen || isDateTimeOpen) {
+        return;
+      }
+
+      if (document.querySelector('.rs-picker-popup')) {
+        return;
+      }
+      if (Date.now() - selectOpenGuardRef.current < 300) {
         return;
       }
 
@@ -259,7 +317,7 @@ const MyInput = ({
 
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [isDateOpen]);
+  }, [isDateOpen, isDateTimeOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -321,7 +379,7 @@ const MyInput = ({
     });
   };
 
-  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
+  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName ?? '');
 
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
@@ -420,15 +478,67 @@ const MyInput = ({
     }
   };
 
-  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
+  useEffect(() => {
+    if (!portaledSelectOpen) return;
 
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (pickerRef.current?.contains(target)) return;
+      if (portaledSelectMenuRef.current?.contains(target)) return;
+      setPortaledSelectOpen(false);
+      setLocalSearch('');
+    };
+
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', onMouseDown, true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', onMouseDown, true);
+    };
+  }, [portaledSelectOpen]);
+
+  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
   const pickerRef = useRef<any>(null);
 
-  const calculatePlacement = () => {
+  const calculatePlacement = (popupHeight = 250) => {
     if (!pickerRef.current) return 'bottomStart';
     const rect = pickerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    return spaceBelow > 250 ? 'bottomStart' : 'topStart';
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    if (spaceBelow >= popupHeight) return 'bottomStart';
+    if (spaceAbove >= popupHeight) return 'topStart';
+    return spaceAbove > spaceBelow ? 'topStart' : 'bottomStart';
+  };
+
+  const openCalendar = (kind: 'date' | 'datetime') => {
+    if (props.disabled) return;
+    dateOpenGuardRef.current = Date.now();
+    setPlacement(calculatePlacement(kind === 'datetime' ? 420 : 360));
+    if (kind === 'datetime') {
+      setIsDateTimeOpen(true);
+    } else {
+      setIsDateOpen(true);
+    }
+  };
+
+  // Anchor the hidden RSuite DatePicker to the visible input edge so the
+  // popup sits flush under/above the field instead of leaving a large gap.
+  const getCalendarTriggerStyle = (kind: 'date' | 'datetime'): React.CSSProperties => {
+    const open = kind === 'datetime' ? isDateTimeOpen : isDateOpen;
+    const placeAbove = open && String(placement).startsWith('top');
+    return {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      width: '100%',
+      height: 0,
+      top: placeAbove ? 0 : '100%',
+      opacity: 0,
+      pointerEvents: 'none',
+      overflow: 'hidden'
+    };
   };
 
   const resolveContainer = () => {
@@ -437,6 +547,14 @@ const MyInput = ({
     }
 
     const pickerElement = pickerRef.current as HTMLElement | null;
+
+    if (
+      pickerElement?.closest(
+        '.profile-sidebar-container, .book-patient-sidebar-overlay, .rs-modal-wrapper, .rs-drawer'
+      )
+    ) {
+      return document.body;
+    }
 
     return (
       pickerElement?.closest('.sub-child-right-modal .rs-modal-body') ||
@@ -449,6 +567,18 @@ const MyInput = ({
     ) as HTMLElement;
   };
 
+  const focusPickerSearch = () => {
+    window.requestAnimationFrame(() => {
+      const input = document.querySelector(
+        '.rs-picker-popup:not(.rs-anim-leave) .rs-picker-search-bar-input, .rs-picker-popup:not(.rs-anim-leave) .rs-picker-search-bar input'
+      ) as HTMLInputElement | null;
+      if (!input) return;
+      input.disabled = false;
+      input.readOnly = false;
+      input.focus();
+    });
+  };
+
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
     const parts = labelKeys
@@ -457,13 +587,71 @@ const MyInput = ({
     const combined = parts.join(' ').trim();
     return combined || fallback;
   };
-  const getDisabledValues = (dataList: any[], valueKey: string) =>
-    props.disabledItemValues
-      ? dataList.map(item => item[valueKey])
-      : props.disableByField
-        ? dataList
-          .filter(item => item?.[props.disableByField] === false).map(item => item[valueKey])
-        : [];
+  const getDisabledValues = (
+  dataList: any[],
+  valueKey: string
+) => {
+  if (props.disabledItemValues) {
+    return dataList.map(item => item[valueKey]);
+  }
+
+  if (props.disableByField) {
+    const expectedValue =
+      props.disableByFieldValue ?? false;
+
+    return dataList
+      .filter(
+        item =>
+          item?.[props.disableByField] ===
+          expectedValue
+      )
+      .map(item => item[valueKey]);
+  }
+
+  return [];
+};
+
+  const isPickerSearchable = props.searchable ?? true;
+
+const shouldVirtualizePicker = (itemCount = 0) => {
+    if (isPickerSearchable) return false;
+    if (props.virtualized !== undefined) return Boolean(props.virtualized);
+    return itemCount > 20;
+  };
+  const getPickerItemSearchText = (
+    item: any,
+    labelKeys: string[],
+    isArrayLabel: boolean,
+    isEnum?: boolean
+  ) => {
+    if (!item) return '';
+    const raw = isArrayLabel
+      ? String(buildCombinedLabel(item, labelKeys, '') ?? '')
+      : String(item?.[labelKeys[0] ?? 'label'] ?? '');
+    return isEnum ? `${raw} ${formatEnumString(raw)}`.trim() : raw;
+  };
+
+  const resolvePickerSearchBy = (
+    labelKeys: string[],
+    isArrayLabel: boolean,
+    isEnum?: boolean,
+    skipClientFilter?: boolean
+  ) => {
+    if (skipClientFilter) {
+      return () => true;
+    }
+    if (props.searchBy) {
+      return props.searchBy;
+    }
+return (keyword: string, label: any, item: any) => {
+      if (item?.isLoadMore) return !String(keyword ?? '').trim();
+      const needle = String(keyword ?? '').trim().toLowerCase();
+      if (!needle) return true;
+      const fromItem = getPickerItemSearchText(item, labelKeys, isArrayLabel, isEnum);
+      const fromLabel = typeof label === 'string' ? label : '';
+      return `${fromItem} ${fromLabel}`.toLowerCase().includes(needle);
+    };
+  };
 
 
   const conjureFormControl = () => {
@@ -479,6 +667,7 @@ const MyInput = ({
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
+              onBlur={props.onBlur}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   if (allowEnterNewLine) {
@@ -571,17 +760,13 @@ const MyInput = ({
               )}
 
               open={isDateTimeOpen}
-
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsDateTimeOpen(true);
+                dateOpenGuardRef.current = Date.now();
               }}
-
-              onClose={() => setIsDateTimeOpen(false)}
-
+              onClose={() => undefined}
               placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              container={resolveContainer()}
+              preventOverflow={false}
+              container={() => document.body}
 
               shouldDisableDate={(date: Date) => {
                 const today = new Date(
@@ -599,14 +784,8 @@ const MyInput = ({
                 return false;
               }}
 
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                pointerEvents: 'none',
-                zIndex: -1
-              }}
+              className="my-input-date-trigger"
+              style={getCalendarTriggerStyle('datetime')}
             />
 
             {/* Real DateTime input */}
@@ -644,15 +823,12 @@ const MyInput = ({
 
                 onFocus={() => {
                   if (!props.disabled) {
-                    setPlacement(calculatePlacement());
+                    setPlacement(calculatePlacement(420));
                   }
                 }}
 
                 onClick={() => {
-                  if (!props.disabled) {
-                    setPlacement(calculatePlacement());
-                    setIsDateTimeOpen(true);
-                  }
+                  openCalendar('datetime');
                 }}
 
                 onBlur={() => {
@@ -1136,14 +1312,11 @@ const MyInput = ({
                 }}
                 onClick={() => {
                   if (props.disabled) return;
-
-                  setPlacement(
-                    calculatePlacement()
-                  );
-
-                  setIsDateTimeOpen(
-                    prev => !prev
-                  );
+                  if (isDateTimeOpen) {
+                    setIsDateTimeOpen(false);
+                    return;
+                  }
+                  openCalendar('datetime');
                 }}
                 style={{
                   position: 'absolute',
@@ -1230,30 +1403,24 @@ const MyInput = ({
         const valueKey = props?.selectDataValue ?? 'value';
 
         const dataList = props?.selectData ?? [];
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum
+        );
 
         const filteredData = !localSearch
           ? dataList
-          : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
-
-            return text
-              .toLowerCase()
-              .includes(localSearch.toLowerCase());
-          });
+          : dataList.filter(item => pickerSearchBy(localSearch, '', item));
 
         const longestLabel = dataList.reduce(
           (longest, item) => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(
-                item,
-                labelKeys,
-                ''
-              )
-              : String(
-                item?.[primaryLabelKey] ?? ''
-              );
+            const text = getPickerItemSearchText(
+              item,
+              labelKeys,
+              isArrayLabel,
+              props.isEnum
+            );
 
             return text.length > longest.length
               ? text
@@ -1269,10 +1436,183 @@ const MyInput = ({
           longestLabel.length * 9 + 120
         );
 
+        const dataForPicker =
+          isPickerSearchable && localSearch ? filteredData : dataList;
+
+        const selectedSelectItem = dataList.find(
+          (item: any) => String(item?.[valueKey]) === String(record?.[fieldName] ?? '')
+        );
+        const selectedSelectLabel =
+          (selectedSelectItem &&
+            (isArrayLabel
+              ? buildCombinedLabel(selectedSelectItem, labelKeys, '')
+              : selectedSelectItem?.[primaryLabelKey])) ||
+          props.placeholder ||
+          '';
+        const disabledSelectValues = getDisabledValues(dataList, valueKey);
+
+        const renderSelectLabel = (item: any, fallback: any) => {
+          if (props.renderMenuItem) {
+            return props.renderMenuItem(
+              item?.[primaryLabelKey],
+              item
+            );
+          }
+          if (isArrayLabel) {
+            return (
+              <Translate>
+                {buildCombinedLabel(item, labelKeys, fallback)}
+              </Translate>
+            );
+          }
+          if (props.isEnum) {
+            return (
+              <Translate>
+                {formatEnumString(String(item?.[primaryLabelKey] ?? fallback ?? ''))}
+              </Translate>
+            );
+          }
+          return (
+            <Translate>
+              {String(item?.[primaryLabelKey] ?? fallback ?? '')}
+            </Translate>
+          );
+        };
+
+        if (props.container) {
+          return (
+            <div
+              ref={pickerRef}
+              className={clsx(
+                'my-input-portaled-select',
+                inputColor ? `input-${inputColor}` : ''
+              )}
+              style={{ width: props?.width ?? '100%', maxWidth: '100%' }}
+              onMouseDown={event => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className={clsx('my-input-portaled-select-toggle', {
+                  open: portaledSelectOpen
+                })}
+                disabled={props.disabled}
+                aria-haspopup="listbox"
+                aria-expanded={portaledSelectOpen}
+                onMouseDown={event => {
+                  event.stopPropagation();
+                }}
+                onClick={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const toggle =
+                    (pickerRef.current?.querySelector(
+                      '.my-input-portaled-select-toggle'
+                    ) as HTMLElement | null) ?? pickerRef.current;
+                  const rect = toggle?.getBoundingClientRect();
+                  if (!rect) return;
+                  const menuHeight = Math.min(
+                    240,
+                    Math.max(dataForPicker.length, 1) * 36 + 8
+                  );
+                  const openUpward = window.innerHeight - rect.bottom < menuHeight + 8;
+                  setPortaledSelectBox({
+                    top: openUpward ? Math.max(8, rect.top - menuHeight - 4) : rect.bottom + 4,
+                    left: rect.left,
+                    width: rect.width
+                  });
+                  setPortaledSelectOpen(open => !open);
+                }}
+              >
+                <span className="my-input-portaled-select-value">
+                  {selectedSelectItem
+                    ? renderSelectLabel(selectedSelectItem, selectedSelectLabel)
+                    : selectedSelectLabel}
+                </span>
+                <span className="my-input-portaled-select-caret" aria-hidden>
+                  ▾
+                </span>
+              </button>
+              {portaledSelectOpen &&
+                createPortal(
+                  <div
+                    ref={portaledSelectMenuRef}
+                    className={clsx(
+                      'my-input-portaled-select-menu',
+                      props.menuClassName
+                    )}
+                    role="listbox"
+                    style={{
+                      top: portaledSelectBox.top,
+                      left: portaledSelectBox.left,
+                      width: portaledSelectBox.width,
+                      minWidth: portaledSelectBox.width,
+                      maxWidth: portaledSelectBox.width,
+                      boxSizing: 'border-box',
+                      maxHeight: getDynamicMenuMaxHeight(dataForPicker)
+                    }}
+                    onMouseDown={event => event.stopPropagation()}
+                  >
+                    {isPickerSearchable && (
+                      <input
+                        className="my-input-portaled-select-search"
+                        type="text"
+                        value={localSearch}
+                        placeholder="Search"
+                        autoFocus
+                        onMouseDown={event => event.stopPropagation()}
+                        onChange={event => setLocalSearch(event.target.value)}
+                      />
+                    )}
+                    {dataForPicker.length ? (
+                      dataForPicker.map((item: any) => {
+                        const itemValue = item?.[valueKey];
+                        const selected =
+                          String(itemValue) === String(record?.[fieldName] ?? '');
+                        const disabled = disabledSelectValues.includes(itemValue);
+
+                        return (
+                          <button
+                            key={String(itemValue)}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            disabled={disabled}
+                            className={clsx('my-input-portaled-select-option', {
+                              selected,
+                              disabled
+                            })}
+                            onMouseDown={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                            }}
+                            onClick={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (disabled) return;
+                              handleValueChange(itemValue);
+                              if (props.onSelectItem) {
+                                props.onSelectItem(item);
+                              }
+                              setPortaledSelectOpen(false);
+                            }}
+                          >
+                            {renderSelectLabel(item, item?.[primaryLabelKey])}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="my-input-portaled-select-empty">No options</div>
+                    )}
+                  </div>,
+                  document.body
+                )}
+            </div>
+          );
+        }
+
         return (
           <div ref={pickerRef}>
-            <Form.Control
-              name={fieldName}
+            <SelectPicker
               style={{
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
@@ -1281,19 +1621,17 @@ const MyInput = ({
                 }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
-              accepter={SelectPicker}
-              searchable={props.searchable ?? false}
-              data={filteredData}
+              searchable={isPickerSearchable}
+              data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-
+              searchBy={pickerSearchBy}
               value={
                 record?.[fieldName] !== undefined &&
                   record?.[fieldName] !== null
                   ? record[fieldName]
                   : null
               }
-
               onChange={value => {
                 handleValueChange(value);
 
@@ -1307,40 +1645,6 @@ const MyInput = ({
                   props.onSelectItem(selectedItem);
                 }
               }}
-
-              onKeyDown={(event: any) => {
-                const key = event?.key;
-
-                if (!key) return;
-
-                const ignoredKeys = [
-                  'Shift',
-                  'Tab',
-                  'Enter',
-                  'Escape',
-                  'ArrowUp',
-                  'ArrowDown',
-                  'ArrowLeft',
-                  'ArrowRight',
-                  'Control',
-                  'Alt',
-                  'Meta'
-                ];
-
-                if (ignoredKeys.includes(key)) {
-                  return;
-                }
-
-                if (key === 'Backspace') {
-                  setLocalSearch(prev => prev.slice(0, -1));
-                  return;
-                }
-
-                if (key.length === 1) {
-                  setLocalSearch(prev => prev + key);
-                }
-              }}
-
               renderMenuItem={
                 props.renderMenuItem ??
                 (isArrayLabel
@@ -1357,18 +1661,21 @@ const MyInput = ({
                     </Translate>
                   )
                   : props.isEnum
-                    ? (label: any) => (
+                    ? (label: any, item: any) => (
+                      // NOTE: don't use `label` here — RSuite swaps it for a
+                      // highlighted React node while the search box has text,
+                      // which is what produced "[object Object]" during search.
+                      // Always read the raw string straight from `item`.
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     )
-                    : (label: any) => (
+                    : (label: any, item: any) => (
                       <Translate>
-                        {String(label ?? '')}
+                        {String(item?.[primaryLabelKey] ?? '')}
                       </Translate>
                     ))
               }
-
               renderValue={
                 isArrayLabel
                   ? (
@@ -1436,52 +1743,36 @@ const MyInput = ({
                       );
                     }
               }
-
-              placeholder={
-                localSearch
-                  ? `Search: ${localSearch}`
-                  : props.placeholder
-              }
-
+              placeholder={props.placeholder}
               cleanable={
                 props.cleanable !== undefined
                   ? props.cleanable
                   : true
               }
-
               loading={props?.loading ?? false}
-
-              open={isSelectOpen}
-
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsSelectOpen(true);
+                selectOpenGuardRef.current = Date.now();
+                focusPickerSearch();
               }}
-
               onClose={() => {
-                setIsSelectOpen(false);
                 setLocalSearch('');
               }}
-
-              placement={placement}
-
-              preventOverflow={pickerPreventOverflow}
-
-              container={resolveContainer()}
-
+              placement={props.placement ?? 'bottomStart'}
+              preventOverflow={false}
+              container={() => document.body}
               menuMaxHeight={getDynamicMenuMaxHeight(
-                filteredData
+                dataList
               )}
-
               menuStyle={{
                 minWidth: props?.width ?? '12vw',
-                width: 'auto'
+                width: 'auto',
+                zIndex: 100050
               }}
-
-              menuClassName={props.menuClassName}
-
-              virtualized={props?.virtualized ?? true}
-
+              menuClassName={clsx(
+                'my-input-select-menu',
+                props.menuClassName
+              )}
+virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(
                 dataList,
                 valueKey
@@ -1502,6 +1793,12 @@ const MyInput = ({
         const primaryLabelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
         const dataList = props.selectData ?? [];
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum,
+          isServerSideSearch
+        );
         const searchTerm = isServerSideSearch
           ? String(props.searchKeyWard ?? '')
           : localSearch;
@@ -1510,16 +1807,10 @@ const MyInput = ({
           ? dataList
           : !localSearch
             ? dataList
-            : dataList.filter(item => {
-              const text = isArrayLabel
-                ? buildCombinedLabel(item, labelKeys, '')
-                : String(item?.[primaryLabelKey] ?? '');
-
-              return text.toLowerCase().includes(localSearch.toLowerCase());
-            });
+            : dataList.filter(item => pickerSearchBy(localSearch, '', item));
 
         const shouldAutoLoadSearch =
-          Boolean(props.searchable) &&
+          isPickerSearchable &&
           isServerSideSearch &&
           Boolean(String(searchTerm).trim());
 
@@ -1549,22 +1840,18 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={SelectPicker}
-              searchable={props.searchable ?? false}
-              searchBy={
-                isServerSideSearch
-                  ? () => true
-                  : undefined
-              }
-              onSearch={(value: string) => {
-                if (isServerSideSearch && props.setSearchKeyWard) {
-                  props.setSearchKeyWard(value);
-                  return;
-                }
-                setLocalSearch(value);
-              }}
+              searchable={isPickerSearchable}
               data={pickerData}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
+              searchBy={pickerSearchBy}
+              onSearch={(keyword: string) => {
+                if (isServerSideSearch && props.setSearchKeyWard) {
+                  props.setSearchKeyWard(keyword);
+                  return;
+                }
+                setLocalSearch(keyword);
+              }}
               value={
                 record?.[fieldName] !== undefined && record?.[fieldName] !== null
                   ? record[fieldName]
@@ -1596,7 +1883,10 @@ const MyInput = ({
                   props.onSelectItem(selectedItem);
                 }
               }}
-              onKeyDown={(event: any) => {
+              onKeyDown={
+                isPickerSearchable
+                  ? undefined
+                  : (event: any) => {
                 const key = event?.key;
                 if (!key) return;
 
@@ -1634,7 +1924,8 @@ const MyInput = ({
                     setLocalSearch(prev => prev + key);
                   }
                 }
-              }}
+              }
+              }
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => {
@@ -1651,14 +1942,18 @@ const MyInput = ({
                   }
 
                   if (props.isEnum) {
+                    // NOTE: don't use `label` here — RSuite swaps it for a
+                    // highlighted React node while the search box has text,
+                    // which is what produced "[object Object]" during search.
+                    // Always read the raw string straight from `item`.
                     return (
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(label ?? '')}</Translate>;
+                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
                 })
               }
               renderValue={
@@ -1707,8 +2002,10 @@ const MyInput = ({
               loading={props.loading ?? false}
               open={isSelectOpen}
               onOpen={() => {
+                selectOpenGuardRef.current = Date.now();
                 setPlacement(calculatePlacement());
                 setIsSelectOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => {
                 if (loadMoreClickedRef.current) {
@@ -1732,7 +2029,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(pickerData.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
@@ -1742,6 +2039,11 @@ const MyInput = ({
       case 'multyPicker': {
         const dataList = props?.selectData ?? [];
         const valueKey = props?.selectDataValue ?? '';
+        const pickerSearchBy = resolvePickerSearchBy(
+          [String(props?.selectDataLabel ?? 'name')],
+          false,
+          props.isEnum
+        );
 
         return (
           <div ref={pickerRef}>
@@ -1762,11 +2064,12 @@ const MyInput = ({
               placeholder={props.placeholder ?? 'Select...'}
               creatable={props.creatable ?? false}
               groupBy={props.groupBy ?? null}
-              searchBy={props.searchBy}
+              searchable={isPickerSearchable}
+              searchBy={pickerSearchBy}
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any) => (
-                  <Translate>{String(label ?? '')}</Translate>
+                ((label: any, item: any) => (
+                  <Translate>{String(item?.[props?.selectDataLabel ?? ''] ?? '')}</Translate>
                 ))
               }
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
@@ -1775,6 +2078,7 @@ const MyInput = ({
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsMultyPickerOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => setIsMultyPickerOpen(false)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
@@ -1804,53 +2108,12 @@ const MyInput = ({
 
         const primaryLabelKey = labelKeys[0] ?? 'label';
         const valueKey = props?.selectDataValue ?? 'value';
-        const selectedValues = Array.isArray(record?.[fieldName]) ? record[fieldName] : [];
-
-        const dataList = (props?.selectData ?? [])
-          .filter((item: any) => item != null && typeof item === 'object')
-          .map((item: any) => {
-            const value = item[valueKey] ?? item.value ?? item.id;
-            const label =
-              item[primaryLabelKey] ??
-              item.label ??
-              item.displayName ??
-              item.name ??
-              item.nameEn ??
-              (value != null ? String(value) : '');
-            return {
-              ...item,
-              [valueKey]: value,
-              [primaryLabelKey]: label
-            };
-          })
-          .filter((item: any) => item[valueKey] != null && item[primaryLabelKey] !== '');
-
-        selectedValues.forEach((selected: any) => {
-          const selectedId =
-            selected != null && typeof selected === 'object'
-              ? selected[valueKey] ?? selected.value ?? selected.id
-              : selected;
-          if (
-            selectedId == null ||
-            dataList.some((item: any) => String(item[valueKey]) === String(selectedId))
-          ) {
-            return;
-          }
-          dataList.push({
-            [valueKey]: selectedId,
-            [primaryLabelKey]: String(selectedId)
-          });
-        });
-
-        const filteredData = !localSearch
-          ? dataList
-          : dataList.filter(item => {
-            const text = isArrayLabel
-              ? buildCombinedLabel(item, labelKeys, '')
-              : String(item?.[primaryLabelKey] ?? '');
-
-            return text.toLowerCase().includes(localSearch.toLowerCase());
-          });
+        const dataList = props?.selectData ?? [];
+        const pickerSearchBy = resolvePickerSearchBy(
+          labelKeys,
+          isArrayLabel,
+          props.isEnum
+        );
 
         return (
           <div ref={pickerRef}>
@@ -1864,25 +2127,20 @@ const MyInput = ({
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
-              searchable={props.searchable ?? false}
+              searchable={isPickerSearchable}
+              searchBy={pickerSearchBy}
               container={resolveContainer()}
               placement={placement}
               preventOverflow={pickerPreventOverflow}
               name={fieldName}
-              data={filteredData}
+              data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
               menuClassName={clsx(
                 'my-input-picker-popup',
                 props?.menuClassName
               )}
-              value={selectedValues
-                .map((selected: any) =>
-                  selected != null && typeof selected === 'object'
-                    ? selected[valueKey] ?? selected.value ?? selected.id
-                    : selected
-                )
-                .filter((selected: any) => selected != null)}
+              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => {
@@ -1897,12 +2155,12 @@ const MyInput = ({
                   if (props.isEnum) {
                     return (
                       <Translate>
-                        {formatEnumString(String(label))}
+                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(label ?? '')}</Translate>;
+                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
                 })
               }
               onChange={value => {
@@ -1918,48 +2176,14 @@ const MyInput = ({
                   props.onSelectItem(selectedItems);
                 }
               }}
-              onKeyDown={(event: any) => {
-                const key = event?.key;
-                if (!key) return;
-
-                const ignoredKeys = [
-                  'Shift',
-                  'Tab',
-                  'Enter',
-                  'Escape',
-                  'ArrowUp',
-                  'ArrowDown',
-                  'ArrowLeft',
-                  'ArrowRight',
-                  'Control',
-                  'Alt',
-                  'Meta'
-                ];
-
-                if (ignoredKeys.includes(key)) {
-                  return;
-                }
-
-                if (key === 'Backspace') {
-                  setLocalSearch(prev => prev.slice(0, -1));
-                  return;
-                }
-
-                if (key.length === 1) {
-                  setLocalSearch(prev => prev + key);
-                }
-              }}
-              placeholder={
-                localSearch
-                  ? `Search: ${localSearch}`
-                  : props.placeholder ?? 'Select...'
-              }
+              placeholder={props.placeholder ?? 'Select...'}
               groupBy={props.groupBy ?? null}
-              menuMaxHeight={getDynamicMenuMaxHeight(filteredData)}
+              menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               open={isCheckPickerOpen}
               onOpen={() => {
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
+                focusPickerSearch();
               }}
               onClose={() => {
                 setIsCheckPickerOpen(false);
@@ -1969,7 +2193,7 @@ const MyInput = ({
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
-              virtualized={props?.virtualized ?? true}
+              virtualized={shouldVirtualizePicker(dataList.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
           </div>
@@ -1993,6 +2217,8 @@ const MyInput = ({
                   ? dayjs(record[fieldName]).toDate()
                   : null
               }
+              minDate={props.minDate}
+              maxDate={props.maxDate}
               onChange={(value: Date | null) => {
                 if (!value) {
                   setDateText('');
@@ -2027,40 +2253,56 @@ const MyInput = ({
 
               open={isDateOpen}
               onOpen={() => {
-                setPlacement(calculatePlacement());
-                setIsDateOpen(true);
+                dateOpenGuardRef.current = Date.now();
               }}
-              onClose={() => setIsDateOpen(false)}
+              onClose={() => undefined}
               placement={placement}
-              preventOverflow={pickerPreventOverflow}
-              container={resolveContainer()}
+              preventOverflow={false}
+              container={() => document.body}
               shouldDisableDate={(date: Date) => {
-                const today = new Date(
-                  new Date().setHours(0, 0, 0, 0)
-                );
+                const currentDate = new Date(date);
+                currentDate.setHours(0, 0, 0, 0);
 
-                const minDate = new Date(1900, 0, 1);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-                if (date < minDate) return true;
+                const minYearDate = new Date(1900, 0, 1);
+                minYearDate.setHours(0, 0, 0, 0);
 
-                if (props.disablePastDates) {
-                  return date < today;
+                if (currentDate < minYearDate) {
+                  return true;
                 }
 
-                if (props.disableFutureDates) {
-                  return date > today;
+                if (props.minDate) {
+                  const minDate = new Date(props.minDate);
+                  minDate.setHours(0, 0, 0, 0);
+
+                  if (currentDate < minDate) {
+                    return true;
+                  }
+                }
+
+                if (props.maxDate) {
+                  const maxDate = new Date(props.maxDate);
+                  maxDate.setHours(0, 0, 0, 0);
+
+                  if (currentDate > maxDate) {
+                    return true;
+                  }
+                }
+
+                if (props.disablePastDates && currentDate < today) {
+                  return true;
+                }
+
+                if (props.disableFutureDates && currentDate > today) {
+                  return true;
                 }
 
                 return false;
               }}
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                pointerEvents: 'none',
-                zIndex: -1
-              }}
+              className="my-input-date-trigger"
+              style={getCalendarTriggerStyle('date')}
             />
 
             <div
@@ -2090,67 +2332,98 @@ const MyInput = ({
                 }}
                 onFocus={() => {
                   if (!props.disabled) {
-                    setPlacement(calculatePlacement());
+                    setPlacement(calculatePlacement(360));
                   }
                 }}
                 onClick={() => {
-                  if (!props.disabled) {
-                    setPlacement(calculatePlacement());
-                    setIsDateOpen(true);
-                  }
+                  openCalendar('date');
                 }}
-                onBlur={() => {
-                  const value = dateTextRef.current?.value || '';
+onBlur={() => {
+  const value = dateTextRef.current?.value || '';
+  const parsed = getDateFromText(value);
 
-                  const parsed = getDateFromText(value);
+  if (parsed) {
+    const recordValue = parsed.toDate();
+    recordValue.setHours(0, 0, 0, 0);
 
-                  if (parsed) {
-                    setRecord?.({
-                      ...record,
-                      [fieldName]: parsed.format('YYYY-MM-DD')
-                    });
-                  }
+    if (props.minDate) {
+      const minDate = new Date(props.minDate);
+      minDate.setHours(0, 0, 0, 0);
 
-                  const recordValue = parsed
-                    ? parsed.toDate()
-                    : record?.[fieldName]
-                      ? new Date(record[fieldName])
-                      : null;
+      if (recordValue < minDate) {
+        dispatch(
+          notify({
+            msg: 'Date cannot be earlier than the allowed date',
+            sev: 'warning'
+          })
+        );
 
-                  if (!recordValue) return;
+        setDateText(formatDateText(record?.[fieldName]));
+        return;
+      }
+    }
 
-                  const minDate = new Date(1900, 0, 1);
+    if (props.maxDate) {
+      const maxDate = new Date(props.maxDate);
+      maxDate.setHours(0, 0, 0, 0);
 
-                  const today = new Date(
-                    new Date().setHours(0, 0, 0, 0)
-                  );
+      if (recordValue > maxDate) {
+        dispatch(
+          notify({
+            msg: 'Date cannot be later than the allowed date',
+            sev: 'warning'
+          })
+        );
 
-                  if (
-                    props.showWarningIfBeforeYear1900 &&
-                    recordValue < minDate
-                  ) {
-                    dispatch(
-                      notify({
-                        msg: 'Date cannot be before 01-01-1900',
-                        sev: 'warning'
-                      })
-                    );
+        setDateText(formatDateText(record?.[fieldName]));
+        return;
+      }
+    }
 
-                    return;
-                  }
+    setRecord?.({
+      ...record,
+      [fieldName]: parsed.format('YYYY-MM-DD')
+    });
+  }
 
-                  if (
-                    props.showWarningIfInPast &&
-                    recordValue < today
-                  ) {
-                    dispatch(
-                      notify({
-                        msg: 'Date cannot be in the past',
-                        sev: 'warning'
-                      })
-                    );
-                  }
-                }}
+  const recordValue = parsed
+    ? parsed.toDate()
+    : record?.[fieldName]
+      ? new Date(record[fieldName])
+      : null;
+
+  if (!recordValue) return;
+
+  const minDate = new Date(1900, 0, 1);
+  const today = new Date(
+    new Date().setHours(0, 0, 0, 0)
+  );
+
+  if (
+    props.showWarningIfBeforeYear1900 &&
+    recordValue < minDate
+  ) {
+    dispatch(
+      notify({
+        msg: 'Date cannot be earlier than 1900',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (
+    props.showWarningIfInPast &&
+    recordValue < today
+  ) {
+    dispatch(
+      notify({
+        msg: 'Date is in the past',
+        sev: 'warning'
+      })
+    );
+  }
+}}
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   const input = e.currentTarget;
 
@@ -2473,9 +2746,11 @@ const MyInput = ({
                 }}
                 onClick={() => {
                   if (props.disabled) return;
-
-                  setPlacement(calculatePlacement());
-                  setIsDateOpen(prev => !prev);
+                  if (isDateOpen) {
+                    setIsDateOpen(false);
+                    return;
+                  }
+                  openCalendar('date');
                 }}
                 style={{
                   position: 'absolute',

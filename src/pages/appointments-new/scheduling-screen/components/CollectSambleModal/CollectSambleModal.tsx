@@ -41,21 +41,67 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import '@/pages/appointments-new/scheduling-screen/styles.less';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import PatientSearch from '@/components/PatientSearch';
 import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-
+import {
+    useGetCollectedSamplesByOrderTestIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
+import BulkCollectSampleModal from '@/pages/lab-module-new/BulkCollectSampleModal';
+import MyButton from '@/components/MyButton/MyButton';
 type CollectSambleModalProps = {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     facilityId?: number | string;
+    fromDepartmentId?: number | string;
+};
+
+const CollectSampleIcon = ({
+    rowData,
+    canCollect,
+    onClick
+}: {
+    rowData: any;
+    canCollect: boolean;
+    onClick: (e: React.MouseEvent) => void;
+}) => {
+    const { data: samplesPage } =
+        useGetCollectedSamplesByOrderTestIdQuery(
+            {
+                orderTestId: rowData?.id,
+                page: 0,
+                size: 1
+            },
+            {
+                skip: !rowData?.id
+            }
+        );
+
+    const hasCollectedSample =
+        (samplesPage?.data?.length ?? 0) > 0;
+
+    return (
+        <FontAwesomeIcon
+            icon={faVialCircleCheck}
+            className="icon-laboratory-size"
+            style={{
+                cursor: canCollect ? 'pointer' : 'not-allowed',
+                opacity: canCollect || hasCollectedSample ? 1 : 0.35,
+                color: hasCollectedSample
+                    ? 'var(--primary-blue)'
+                    : undefined
+            }}
+            onClick={onClick}
+        />
+    );
 };
 
 const CollectSambleModal = ({
     open,
     setOpen,
-    facilityId
+    facilityId,
+    fromDepartmentId
 }: CollectSambleModalProps) => {
 
     const dispatch = useAppDispatch();
@@ -67,6 +113,11 @@ const CollectSambleModal = ({
     const [order, setOrder] = useState<any>({
         ...newApDiagnosticOrders
     });
+
+    useEffect(() => {
+        setSelectedRows([]);
+        setOpenBulkSampleModal(false);
+    }, [order?.id]);
 
     const [test, setTest] = useState<any>({
         ...newApDiagnosticOrderTests
@@ -81,9 +132,15 @@ const CollectSambleModal = ({
     });
 
     const [openCollectSample, setOpenCollectSample] = useState(false);
+
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
+
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [orderNumberFilter, setOrderNumberFilter] = useState('');
-    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+    const [selectedDepartmentId, setSelectedDepartmentId] =
+        useState<number | null>(null);
+
 
     const today = new Date();
 
@@ -219,10 +276,11 @@ const CollectSambleModal = ({
         isFetching: isTestsFetching,
         refetch: refetchTests
     } = useFilterDiagnosticOrderTestsQuery(
-        order?.id && selectedDepartmentId
+        order?.id && selectedDepartmentId && fromDepartmentId
             ? {
                 orderId: order.id,
                 status: 'SUBMITTED',
+                fromDepartmentId: fromDepartmentId,
                 receivedDepartmentId: selectedDepartmentId,
                 page: paginationParams.page,
                 size: paginationParams.size,
@@ -293,10 +351,45 @@ const CollectSambleModal = ({
     const collectableTests = useMemo(() => {
         return orderTests.filter(
             (item: any) =>
-                item.status === DiagnosticOrderTestStatus.SUBMITTED &&
-                item.processingStatus !== DiagnosticOrderTestStatus.REJECTED
+                item.processingStatus === DiagnosticOrderTestStatus.PARTIALLY ||
+                item.processingStatus === DiagnosticOrderTestStatus.NEW ||
+                item.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
         );
     }, [orderTests]);
+
+    const allRowIds = useMemo(
+        () => collectableTests.map((row: any) => row.id),
+        [collectableTests]
+    );
+
+    const isAllSelected =
+        allRowIds.length > 0 &&
+        allRowIds.every(id => selectedRows.includes(id));
+
+    const isSomeSelected =
+        allRowIds.some(id => selectedRows.includes(id)) &&
+        !isAllSelected;
+
+    const handleCheckboxChange = (rowId: number) => {
+        setSelectedRows(prev =>
+            prev.includes(rowId)
+                ? prev.filter(id => id !== rowId)
+                : [...prev, rowId]
+        );
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedRows(prev =>
+                Array.from(new Set([...prev, ...allRowIds]))
+            );
+        } else {
+            setSelectedRows(prev =>
+                prev.filter(id => !allRowIds.includes(id))
+            );
+        }
+    };
+
 
     const sampleCollectedCount = useMemo(
         () =>
@@ -403,6 +496,26 @@ const CollectSambleModal = ({
 
     const testColumns = [
         {
+            key: 'check',
+            title: (
+                <Checkbox
+                    checked={isAllSelected}
+                    indeterminate={isSomeSelected}
+                    onChange={(_, checked) => handleSelectAll(checked)}
+                    onClick={e => e.stopPropagation()}
+                />
+            ),
+            width: 60,
+            align: 'center',
+            render: (rowData: any) => (
+                <Checkbox
+                    checked={selectedRows.includes(rowData.id)}
+                    onChange={() => handleCheckboxChange(rowData.id)}
+                    onClick={e => e.stopPropagation()}
+                />
+            )
+        },
+        {
             key: 'testName',
             title: <Translate>TEST NAME</Translate>,
             width: 180,
@@ -435,7 +548,6 @@ const CollectSambleModal = ({
             width: 110,
             align: 'center',
             render: (rowData: any) => {
-
                 const canCollect =
                     rowData.status ===
                     DiagnosticOrderTestStatus.SUBMITTED &&
@@ -443,15 +555,9 @@ const CollectSambleModal = ({
                     DiagnosticOrderTestStatus.REJECTED;
 
                 return (
-                    <FontAwesomeIcon
-                        icon={faVialCircleCheck}
-                        className="icon-laboratory-size"
-                        style={{
-                            cursor: canCollect
-                                ? 'pointer'
-                                : 'not-allowed',
-                            opacity: canCollect ? 1 : 0.35
-                        }}
+                    <CollectSampleIcon
+                        rowData={rowData}
+                        canCollect={canCollect}
                         onClick={e => {
                             e.stopPropagation();
 
@@ -521,7 +627,7 @@ const CollectSambleModal = ({
 
                     <div className="container">
 
-                        <div className="left-boxs">
+                        <div className="left-boxs left-boxs-collect-samble-modal">
 
                             <Orders
                                 ref={OrdersRef}
@@ -532,10 +638,23 @@ const CollectSambleModal = ({
                                 selectedPatient={selectedPatient}
                                 filters={tablefilters}
                                 departmentId={selectedDepartmentId}
+                                fromDepartmentId={fromDepartmentId}
                             />
 
                             <div className="laboratory-table-size-container">
 
+
+                                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Collect Sample</Tooltip>}>
+                                    <span>
+                                        <MyButton
+                                            prefixIcon={() => <FontAwesomeIcon icon={faVialCircleCheck} />}
+                                            disabled={!selectedRows.length}
+                                            onClick={() => setOpenBulkSampleModal(true)}
+                                        >
+                                            Bulk Collect Sample
+                                        </MyButton>
+                                    </span>
+                                </Whisper>
                                 <MyTable
                                     data={collectableTests}
                                     columns={testColumns}
@@ -647,6 +766,21 @@ const CollectSambleModal = ({
                             setOpen={setOpenCollectSample}
                             orderTest={test}
                             onSuccess={async () => {
+                                await refetchTests();
+                                await OrdersRef.current?.refetchOrders?.();
+                            }}
+                        />
+
+                        <BulkCollectSampleModal
+                            open={openBulkSampleModal}
+                            setOpen={setOpenBulkSampleModal}
+                            orderId={order?.id}
+                            selectedTests={collectableTests.filter(
+                                (t: any) => selectedRows.includes(t.id)
+                            )}
+                            onSuccess={async () => {
+                                setSelectedRows([]);
+
                                 await refetchTests();
                                 await OrdersRef.current?.refetchOrders?.();
                             }}

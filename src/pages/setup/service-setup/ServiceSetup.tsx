@@ -29,6 +29,7 @@ import {
   useLazyGetServicesByCategoryQuery,
   useLazyGetServicesByCodeQuery,
   useLazyGetServicesByNameQuery,
+  useLazyGetServicesByStatusQuery
 } from '@/services/setup/serviceService';
 import { newService } from '@/types/model-types-constructor-new';
 import { PolicyAssignment, Service } from '@/types/model-types-new';
@@ -84,6 +85,7 @@ const ServiceSetup: React.FC = () => {
   const [fetchByCategory] = useLazyGetServicesByCategoryQuery();
   const [fetchByCode] = useLazyGetServicesByCodeQuery();
   const [fetchByName] = useLazyGetServicesByNameQuery();
+  const [fetchByStatus] = useLazyGetServicesByStatusQuery();
   const [fetchByFacility] = useLazyGetServicesQuery(); // lazy for /by-facility/{facilityId}
 
   // Enums + Facilities
@@ -113,6 +115,8 @@ const ServiceSetup: React.FC = () => {
         return (svc.code || '').toLowerCase().includes(String(value).toLowerCase());
       case 'name':
         return (svc.name || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'status':
+        return Boolean(svc.isActive) === Boolean(value);
       default:
         return true;
     }
@@ -180,6 +184,7 @@ const ServiceSetup: React.FC = () => {
     { label: 'Category', value: 'category' },
     { label: 'Name', value: 'name' },
     { label: 'Code', value: 'code' },
+    { label: 'Status', value: 'status' },
   ];
 
   // New
@@ -442,11 +447,12 @@ const ServiceSetup: React.FC = () => {
     size = paginationParams.size,
     sort?: string
   ) => {
-    if (!value && value !== 0) return undefined;
-    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
+    if (value === null || value === undefined || value === '') return undefined;
+
+    const effectiveSort =
+      sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
 
     if (fieldName === 'facilityId') {
-      // by facility (uses getServices endpoint)
       return await fetchByFacility({
         facilityId: Number(value),
         page,
@@ -461,10 +467,28 @@ const ServiceSetup: React.FC = () => {
         sort: effectiveSort,
       }).unwrap();
     } else if (fieldName === 'code') {
-      return await fetchByCode({ code: value, page, size, sort: effectiveSort }).unwrap();
+      return await fetchByCode({
+        code: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
     } else if (fieldName === 'name') {
-      return await fetchByName({ name: value, page, size, sort: effectiveSort }).unwrap();
+      return await fetchByName({
+        name: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'status') {
+      return await fetchByStatus({
+        isActive: Boolean(value),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
     }
+
     return undefined;
   };
 
@@ -487,10 +511,11 @@ const ServiceSetup: React.FC = () => {
     size = filterPagination.size,
     sort = filterPagination.sort
   ) => {
-    if (!value && value !== 0) {
+    if (value === null || value === undefined || value === '') {
       resetToUnfiltered();
       return;
     }
+
     try {
       const resp = await runFilterQuery(fieldName, value, page, size, sort);
       setFilteredData(resp?.data ?? []);
@@ -687,6 +712,24 @@ const ServiceSetup: React.FC = () => {
           searchable={false}
         />
       );
+    } else if (selectedFilter === 'status') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: true },
+            { label: 'Inactive', value: false },
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          searchable={false}
+        />
+      );
     } else {
       dynamicInput = (
         <MyInput
@@ -710,17 +753,29 @@ const ServiceSetup: React.FC = () => {
           fieldName="filter"
           fieldType="select"
           record={recordOfFilter}
-          setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
+          setRecord={(updated: any) =>
+            setRecordOfFilter({
+              filter: updated.filter,
+              value: '',
+            })
+          }
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
           width="170px"
         />
+
         {dynamicInput}
+
         <MyButton
           color="var(--deep-blue)"
           onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
+            const isEmptyValue =
+              recordOfFilter.value === null ||
+              recordOfFilter.value === undefined ||
+              recordOfFilter.value === '';
+
+            if (isEmptyValue) {
               resetToUnfiltered();
             } else {
               handleFilterChange(

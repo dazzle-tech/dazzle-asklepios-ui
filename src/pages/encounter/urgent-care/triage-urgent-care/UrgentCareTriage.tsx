@@ -48,6 +48,7 @@ import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
 import '../styles.less';
 import AddPaymentModal from './component/AddPaymentModal';
 import PatientWritBandPrintLabelButton from './PatientWritBandPrintLabelButton';
+import UserDateCell from '@/components/UserDateCell';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -460,10 +461,10 @@ const UrgentCareTriage = () => {
     return d;
   }, []);
 
-  const [dateFilter, setDateFilter] = useState({
+  const [dateFilter, setDateFilter] = useState(() => ({
     fromDate: lastWeekDefault,
     toDate: new Date()
-  });
+  }));
 
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [patientSearchResetToken, setPatientSearchResetToken] = useState(0);
@@ -1534,7 +1535,18 @@ const handleCancelEncounter = async () => {
         );
       },
       expandable: false
-    }
+    },
+     {
+      key: 'createdBy',
+      title: 'CREATED BY',
+        expandable: true,
+      render: (row: any) => {
+       
+        const login = row?.createdBy ;
+
+        return <UserDateCell login={login} date={row?.createdAt} />;
+      }
+    },
   ];
 
   const pageIndex = page;

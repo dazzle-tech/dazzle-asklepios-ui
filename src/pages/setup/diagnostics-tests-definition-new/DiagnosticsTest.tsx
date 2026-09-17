@@ -14,6 +14,7 @@ import {
   useLazyGetDiagnosticTestsByNameQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
+  useLazyGetDiagnosticTestsByInternalCodeQuery,
   useUpdateDiagnosticTestMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
@@ -92,6 +93,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     useToggleDiagnosticTestActiveMutation();
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
+  const [diagnosticTestByInternalCode] = useLazyGetDiagnosticTestsByInternalCodeQuery();
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
@@ -212,7 +214,8 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       const payload = {
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
-        shortName:diagnosticsTest.name?.trim(),
+        shortName: diagnosticsTest.name?.trim(),
+        hl7IntegrationCode: diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -328,12 +331,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         );
         return;
       }
-       console.log("Diagnostic test short",diagnosticsTest.shortName)
       const payload = {
         id: diagnosticsTest.id,
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
         shortName: diagnosticsTest.shortName?.trim(),
+        hl7IntegrationCode: diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -405,7 +408,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
       const newActiveStatus = !currentItem.isActive;
 
-      
+
       await toggleDiagnosticTestActive(id).unwrap();
 
       setDiagnosticsTest(prev => ({
@@ -418,9 +421,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           prev.map(item =>
             item.id === id
               ? {
-                  ...item,
-                  isActive: newActiveStatus
-                }
+                ...item,
+                isActive: newActiveStatus
+              }
               : item
           )
         );
@@ -523,6 +526,14 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           sort,
           _cb: cacheBuster
         }).unwrap();
+      } else if (field === 'internalCode') {
+        response = await diagnosticTestByInternalCode({
+          internalCode: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
       } else {
         setIsFiltered(false);
         setFilteredTotal(0);
@@ -561,7 +572,8 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   // Available fields for filtering
   const filterFields = [
     { label: 'Type', value: 'type' },
-    { label: 'Name', value: 'name' }
+    { label: 'Name', value: 'name' },
+    { label: 'Internal Code', value: 'internalCode' }
   ];
 
   // Header page setUp
@@ -726,7 +738,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       title: <Translate>Name</Translate>,
       render: rowData => <p>{rowData?.name}</p>
     },
-     {
+    {
       key: 'shortName',
       title: <Translate>Short Name</Translate>,
       render: rowData => <p>{rowData?.shortName}</p>
@@ -871,6 +883,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   useEffect(() => {
     if (!openProfileModal) {
       setOpenNormalRangesDirectly(false);
+      setSelectedProfile(null);
     }
   }, [openProfileModal]);
 

@@ -30,8 +30,10 @@ export const conjureValuesFromEnumList = (
 };
 
 export const fromCamelCaseToDBName = word => {
+  if (word == null) return '';
+  const text = String(word);
   let final = '';
-  for (const char of word) {
+  for (const char of text) {
     if (char === char.toUpperCase() && char !== char.toLowerCase()) {
       final += '_' + char.toLowerCase();
     } else {
@@ -166,11 +168,9 @@ export const addFilterToListRequest = (
   return listRequest;
 };
 
-export const camelCaseToLabel = (input: string): string => {
-  // Replace capital letters with space followed by the lowercase letter
-  const result = input.replace(/([A-Z])/g, ' $1');
-
-  // Capitalize the first letter and trim any leading spaces
+export const camelCaseToLabel = (input?: string | null): string => {
+  if (input == null || input === '') return '';
+  const result = String(input).replace(/([A-Z])/g, ' $1');
   return (
     result.charAt(0).toUpperCase() + result.slice(1).replace('Lkey', '').replace(' Key', '')
   ).trim();

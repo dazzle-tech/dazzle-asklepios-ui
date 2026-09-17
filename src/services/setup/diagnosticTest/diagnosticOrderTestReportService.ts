@@ -2,11 +2,50 @@ import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
-type PagedParams = {
-  page: number;
-  size: number;
-  sort?: string;
+export type RadiologyReportIdsFilterParams = {
+  id?: number;
+
+  orderIdIn?: number[];
+  orderTestId?: number;
+
+  severity?: string;
+
+  approvedBy?: string;
+  rejectedBy?: string;
+  reviewBy?: string;
+  reviewed?: boolean;
+
+  approvedDateFrom?: string;
+  approvedDateTo?: string;
+
+  rejectedDateFrom?: string;
+  rejectedDateTo?: string;
+
+  reviewDateFrom?: string;
+  reviewDateTo?: string;
+
+  processingStatusIn?: string[];
+  processingStatusNotIn?: string[];
+
+  imageStatusIn?: string[];
+  imageStatusNotIn?: string[];
+
+  createdDateFrom?: string;
+  createdDateTo?: string;
+
+  lastModifiedDateFrom?: string;
+  lastModifiedDateTo?: string;
+
+  fromDepartmentIn?: number[];
+
+  patientName?: string;
+  mrn?: string;
+
+  patientIdIn?: number[];
+
+  orderNumber?: string;
 };
+
 
 type LinkMap = {
   next?: string | null;
@@ -247,6 +286,15 @@ export const diagnosticOrderTestReportService = createApi({
         }),
         invalidatesTags: ["RadiologyReport"],
       }),
+
+    getDiagnosticOrderTestReportsIds: builder.query<
+      number[],RadiologyReportIdsFilterParams >({
+      query: (params) => ({
+        url: "/api/patient/radiology/reports/ids",
+        method: "GET",
+        params,
+      }),
+    }),
   }),
 });
 
@@ -271,5 +319,6 @@ export const {
   useLazyGetStudyImageLinkByReportIdQuery,
   useFilterRadiologyReportResultsQuery,
   useLazyFilterRadiologyReportResultsQuery,
-  useBulkToggleReviewDiagnosticOrderTestReportMutation
+  useBulkToggleReviewDiagnosticOrderTestReportMutation,
+  useLazyGetDiagnosticOrderTestReportsIdsQuery
 } = diagnosticOrderTestReportService;

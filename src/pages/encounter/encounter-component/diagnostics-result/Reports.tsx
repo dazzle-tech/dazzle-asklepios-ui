@@ -18,14 +18,16 @@ import {
   useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
-  useFilterRadiologyReportsQuery
+  PacsStudyDTO,
+  useFilterRadiologyReportsQuery,
+  useLazyGetStudyImageLinkByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import {
   useLazyGetDiagnosticTestByIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines, faImage } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -33,7 +35,31 @@ import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import RadiologyReportButton from './RadiologyReportButton';
 import UserDateCell from '@/components/UserDateCell';
+import { useDispatch } from 'react-redux';
+import StudyImageViewerModal from '@/pages/rad-module/radiologist-worklist/StudyImageViewrModal';
 
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+  const status = e?.status || e?.originalStatus || e?.data?.status;
+
+  const message = e?.data?.message || e?.data?.detail || e?.error || fallbackMsg;
+
+  if (status === 400 || status === 409 || status === 422) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
+};
 const startOfDay = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -62,7 +88,9 @@ const Reports = ({ patient }) => {
   const [selectedReportIds, setSelectedReportIds] = useState<number[]>([]);
   const [selectedReportForAttachments, setSelectedReportForAttachments] =
     useState<any>(null);
+const [openStudiesModal, setOpenStudiesModal] = useState(false);
 
+const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [orderDate, setOrderDate] = useState({
     fromDate: today,
     toDate: today
@@ -72,7 +100,8 @@ const Reports = ({ patient }) => {
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
-
+ const [fetchStudyImageLinkByReportId] =
+    useLazyGetStudyImageLinkByReportIdQuery();
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -184,7 +213,41 @@ const handleSelectReport = (
     );
   }
 };
+const handleViewImage = async (reportId: number) => {
+  try {
+    const response =
+      await fetchStudyImageLinkByReportId(reportId).unwrap();
 
+    if (!response?.length) {
+      dispatch(
+        notify({
+          msg: 'No study found for this report',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (response.length === 1) {
+      window.open(
+        response[0].link,
+        '_blank',
+        'noopener,noreferrer'
+      );
+      return;
+    }
+
+    setStudies(response);
+    setOpenStudiesModal(true);
+
+  } catch (e) {
+    notifyFromApiError(
+      dispatch,
+      e,
+      'Failed to load radiology image'
+    );
+  }
+};
 
   const reportColumns: ColumnConfig[] = [
     {
@@ -235,33 +298,24 @@ const handleSelectReport = (
           ? new Date(rowData.createdDate).toLocaleString()
           : ''
     },
-    {
-      key: 'report',
-      title: <Translate>Report</Translate>,
-      render: (rowData: any) => {
-        const isSelected = selectedReport?.id === rowData.id;
-
-        return (
-          <HStack spacing={10}>
-            <FontAwesomeIcon
-              icon={faFileLines}
-              style={{
-                cursor: 'pointer',
-                color: isSelected ? '#1675e0' : '#666'
-              }}
-              onClick={() => {
-                setSelectedReport(rowData);
-              }}
-            />
-            {isSelected && (
-              <span style={{ color: '#1675e0', fontSize: 12 }}>
-                Selected
-              </span>
-            )}
-          </HStack>
-        );
-      }
-    },
+     {
+          key: 'report',
+          title: <Translate>REPORT</Translate>,
+          render: (rowData: any) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    
+              <FontAwesomeIcon
+                icon={faFileLines}
+                style={{ cursor: 'pointer', color: '#a4a4a4' }}
+                onClick={() => {
+                  setSelectedReport(rowData);
+                  setOpenReportModal(true);
+                }}
+              />
+            </div>
+          )
+        },
+    
     {
       key: 'comment',
       title: 'COMMENTS',
@@ -293,6 +347,25 @@ const handleSelectReport = (
       title: <Translate>REPORT STATUS</Translate>,
       render: (rowData: any) => formatEnumString(rowData.processingStatus)
     },
+    {
+      key :'image',
+      title:<Translate>Image</Translate>,
+
+     render:(rowData: any) => {
+     return <Whisper speaker={<Tooltip>View X-Ray Image</Tooltip>}>
+                    <span>
+                      <FontAwesomeIcon
+                        icon={faImage}
+                        className="icon-radiologist-worklist-size"
+                        style={{
+                          cursor: 'pointer',
+                          opacity: 1,
+                          color: '#1675e0'
+                        }}
+                        onClick={() => handleViewImage(rowData.id)}
+                      />
+                    </span>
+                  </Whisper>}},
     {
       key: 'attachment',
       title: <Translate>ATTACHMENT</Translate>,
@@ -457,18 +530,18 @@ const handleSelectReport = (
         disabled
       />
 
-      {openReportModal && selectedReport && (
-        <AddReportModal
-          key={selectedReport.id}
-          open={openReportModal}
-          setOpen={closeModal}
-          report={selectedReport}
-          setReport={setSelectedReport}
-          disableEdit
-          disableDefaultTemplate
-        />
-      )}
 
+ {openReportModal && selectedReport && (
+    <AddReportModal
+      key={selectedReport.id}
+      open={openReportModal}
+      setOpen={setOpenReportModal}
+      report={selectedReport}
+      setReport={setSelectedReport}
+      disableEdit
+      disableDefaultTemplate
+    />
+  )}
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
@@ -486,6 +559,11 @@ const handleSelectReport = (
             />
           )
         }
+      />
+      <StudyImageViewerModal
+        open={openStudiesModal}
+        onClose={() => setOpenStudiesModal(false)}
+        studies={studies}
       />
     </>
   );

@@ -138,6 +138,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { stimulsoftReportService } from './services/reports/stimulsoftReportService';
 import { userStickyNotesService } from './services/userStickyNotes/userStickyNotes';
 import { BillingService } from './services/billing/BillingService';
 import { PriceListItemService } from './services/billing/PriceListItemService';
@@ -237,6 +238,7 @@ import { eligibilityApi } from './services/waseel-integration/eligibilityService
 import { preAuthorizationApi } from './services/waseel-integration/preAuthorizationService';
 import { claimApi } from './services/waseel-integration/claimService';
 import { insuranceReceivablesApi } from './services/billing/insuranceReceivablesService';
+import { claimSettlementApi } from './services/billing/claimSettlementService';
 import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
 import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
 import { systemConfigService } from '@/services/systemConfigService';
@@ -247,16 +249,24 @@ import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupS
 import { coverageManagementService } from '@/services/setup/coverageManagement/coverageManagementService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
-import {billingConfigurationService} from './services/billing/billingConfigurationService';
-import {financialDocumentNumberingService} from './services/billing/financialDocumentNumberingService';
+import { billingConfigurationService } from './services/billing/billingConfigurationService';
+import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
-
-
-  import { billingTransactionService } from './services/billing/billingTransactionService';
-  import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
-  import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
-  import { patientFinancialStatementService } from './services/billing/patientFinancialStatementService';
+import { patientFinancialStatementService } from './services/billing/patientFinancialStatementService';
+import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
+import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
+import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
+import { billingTransactionService } from './services/billing/billingTransactionService';
+import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
+import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
+import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
+import { dischargeReportService } from './services/ai-services/dischargeReportService';
+import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -306,7 +316,8 @@ export const store = configureStore({
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
     [documentManagementService.reducerPath]: documentManagementService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
-
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
+    [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -498,6 +509,7 @@ export const store = configureStore({
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+    [stimulsoftReportService.reducerPath]: stimulsoftReportService.reducer,
 
     // sticky notes
     [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
@@ -536,6 +548,7 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+     [dischargeReportService.reducerPath]: dischargeReportService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
     [progressNoteService.reducerPath]: progressNoteService.reducer,
     [patientProcedureService.reducerPath]: patientProcedureService.reducer,
@@ -571,6 +584,8 @@ export const store = configureStore({
 
     [medicationValidationService.reducerPath]: medicationValidationService.reducer,
 
+     [autoPopulationService.reducerPath]: autoPopulationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -596,6 +611,7 @@ export const store = configureStore({
     [patientAdministrativeWarningsService.reducerPath]:
       patientAdministrativeWarningsService.reducer,
     [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+    [flaccPainSacoreService.reducerPath]: flaccPainSacoreService.reducer,
 
     // setup - room and bed management
     [roomService.reducerPath]: roomService.reducer,
@@ -615,25 +631,29 @@ export const store = configureStore({
     [preAuthorizationApi.reducerPath]: preAuthorizationApi.reducer,
     [claimApi.reducerPath]: claimApi.reducer,
     [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
+    [claimSettlementApi.reducerPath]: claimSettlementApi.reducer,
     [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
-  [systemConfigService.reducerPath]: systemConfigService.reducer,
+    [systemConfigService.reducerPath]: systemConfigService.reducer,
 
-  [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
+    [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
     [TpaDefinitionService.reducerPath]: TpaDefinitionService.reducer,
     [coverageManagementService.reducerPath]: coverageManagementService.reducer,
 
-  [priceListSetupService.reducerPath]: priceListSetupService.reducer,
-  [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
-  [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
-  [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
-  [taxService.reducerPath]: taxService.reducer,
-  [discountService.reducerPath]: discountService.reducer,
-
-  [billingTransactionService.reducerPath]:billingTransactionService.reducer,
-  [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
-  [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
-  [patientFinancialStatementService.reducerPath]: patientFinancialStatementService.reducer,
+    [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+    [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
+    [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+    [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
+    [taxService.reducerPath]: taxService.reducer,
+    [discountService.reducerPath]: discountService.reducer,
+    [billingTransactionService.reducerPath]: billingTransactionService.reducer,
+    [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
+    [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
+    [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
+    [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
+    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -751,6 +771,7 @@ export const store = configureStore({
         appointmentWaitingListService.middleware,
         ReportTemplateService.middleware,
         DiagnosticTestTemplateService.middleware,
+        stimulsoftReportService.middleware,
         userStickyNotesService.middleware,
         referralRequestService.middleware,
         PayorService.middleware,
@@ -843,6 +864,7 @@ export const store = configureStore({
         preAuthorizationApi.middleware,
         claimApi.middleware,
         insuranceReceivablesApi.middleware,
+        claimSettlementApi.middleware,
         PayorPlanCoverageClassService.middleware,
         waseelSbsSetupService.middleware,
         sickLeaveReportService.middleware,
@@ -861,7 +883,18 @@ export const store = configureStore({
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
         financialDocumentAdjustmentService.middleware,
-        patientFinancialStatementService.middleware
+        patientFinancialStatementService.middleware,
+        flaccPainSacoreService.middleware,
+        PointOfSaleCheckInService.middleware,
+        PointOfSaleConfigurationService.middleware,
+        PointOfSaleTransactionService.middleware,
+        pointOfSaleWebhookLogService.middleware,
+        financialDocumentAdjustmentService.middleware,
+        patientTimelineService.middleware,
+        autoPopulationService.middleware,
+        dischargeReportService.middleware,
+         ocrParsingService.middleware,
+        labInterpretationService.middleware
       ) as any
 });
 

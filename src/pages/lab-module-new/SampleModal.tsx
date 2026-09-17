@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Panel } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
-
+import {
+  faVialCircleCheck,
+  faBan
+} from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -14,7 +16,8 @@ import { formatDateWithoutSeconds } from '@/utils';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import {
   useCreateCollectedSampleMutation,
-  useGetCollectedSamplesByOrderTestIdQuery
+  useGetCollectedSamplesByOrderTestIdQuery,
+  useRejectCollectedSampleMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 
 import { useGetLaboratoryByTestIdQuery } from '@/services/setup/diagnosticTest/laboratoryService';
@@ -91,11 +94,42 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
   });
 
   const [createCollectedSample] = useCreateCollectedSampleMutation();
+  const [rejectCollectedSample] = useRejectCollectedSampleMutation();
 
   const { data: samplesPage, refetch: refetchSamples } = useGetCollectedSamplesByOrderTestIdQuery(
     { orderTestId: orderTest?.id, page: 0, size: 20 },
     { skip: !orderTest?.id }
   );
+
+  const handleRejectSample = async (rowData: any) => {
+    if (!rowData?.id) return;
+
+    if (rowData?.rejected === true) {
+      return;
+    }
+
+    try {
+      await rejectCollectedSample(rowData.id).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Sample rejected successfully',
+          sev: 'success',
+        })
+      );
+
+      await refetchSamples();
+
+      onSuccess?.();
+    } catch (e: any) {
+      dispatch(
+        notify({
+          msg: getApiErrorMessage(e, 'Unable to reject sample.'),
+          sev: 'warning',
+        })
+      );
+    }
+  };
 
  const handleSaveSample = async () => {
   const status = orderTest?.processingStatus;
@@ -251,12 +285,79 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
       flexGrow: 1
     },
     {
+      key: 'rejected',
+      dataKey: 'rejected',
+      title: <Translate>REJECTED</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <span
+          style={{
+            color: rowData?.rejected ? '#d32f2f' : 'inherit',
+          }}
+        >
+          {rowData?.rejected ? 'YES' : 'NO'}
+        </span>
+      )  
+    },
+    {
       key: 'expiryDate',
       dataKey: 'expiryDate',
       title: <Translate>EXPIRY DATE</Translate>,
       flexGrow: 2,
       render: (rowData: any) =>
         rowData.expiryDate ? formatDateWithoutSeconds(rowData.expiryDate) : '—'
+    },
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      flexGrow: 1,
+      align: 'center',
+      render: (rowData: any) => {
+        const isRejected = rowData?.rejected === true;
+
+        const canReject =
+          orderTest?.processingStatus ===
+          DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
+
+        if (!canReject) {
+          return null;
+        }
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip>
+                {isRejected ? 'Sample already rejected' : 'Reject Sample'}
+              </Tooltip>
+            }
+          >
+            <span
+              onClick={() => {
+                if (isRejected) return;
+                handleRejectSample(rowData);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                color: '#646262d4',
+                cursor: isRejected ? 'not-allowed' : 'pointer',
+                opacity: isRejected ? 0.4 : 1,
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faBan}
+                size="xl"
+              />
+            </span>
+          </Whisper>
+        );
+      }
     }
   ];
 

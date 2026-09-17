@@ -88,13 +88,28 @@ const PrescriptionTable = ({
     {
       key: 'medicationName',
       dataKey: 'medicationsId',
-      title: <Translate> Medication Name</Translate>,
+      title: <Translate>Medication Name</Translate>,
       flexGrow: 2,
       render: (rowData: any) => {
-        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        return genericMedicationListResponse?.data?.find(
-          (item: any) => String(item.id) === String(medId)
-        )?.name;
+        // Other Medication
+        if (rowData?.otherMedicationName?.trim()) {
+          return rowData.otherMedicationName.trim();
+        }
+
+        // Normal Medication
+        const medId =
+          rowData?.medicationsId ??
+          rowData?.genericMedicationsId;
+
+        if (!medId) {
+          return '-';
+        }
+
+        return (
+          genericMedicationListResponse?.data?.find(
+            (item: any) => String(item.id) === String(medId)
+          )?.name ?? '-'
+        );
       }
     },
     {
@@ -102,6 +117,8 @@ const PrescriptionTable = ({
       title: 'Instructions',
       flexGrow: 3,
       render: (rowData: any) => {
+              console.log('rowData : ', rowData);
+
         const type = String(rowData.instructionsType ?? rowData.instructionsTypeLkey ?? '');
 
         if (type === 'PRE_DEFINED_INSTRUCTIONS' || type === '3010591042600262') {
@@ -301,7 +318,7 @@ const PrescriptionTable = ({
   const tableButtons = (
     <div className="bt-div">
       <div className="bt-right">
-        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
+        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)} className="show-cancelled">
           Show cancelled
         </Checkbox>
       </div>

@@ -1,11 +1,10 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyLabel from '@/components/MyLabel';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Form, Row, Slider } from 'rsuite';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Col, Row, } from 'rsuite';
 
 import type { PainAssessment as PainAssessmentModel } from '@/types/model-types-new';
 import { newPainAssessment } from '@/types/model-types-constructor-new';
@@ -19,6 +18,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 
 import './styles.less';
+import NumericSlider from '@/components/NumericSlider';
+import FacesSlider from '@/components/FacesSlider';
+import FlaccComponent from '@/components/PatientFlaccComponent';
+import { useGetLatestActiveFLACCPainScaleByEncounterQuery } from '@/services/encounters/flaccPainSacoreService';
 
 type PainAssessmentProps = {
   patientId: number;
@@ -38,9 +41,10 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   title = 'Pain Assessment'
 }) => {
   const dispatch = useAppDispatch();
-
+  const skipFlaccSyncRef = useRef(false);
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
   const severityEnumResponse = useEnumOptions('Severity', { exclude: ['CRITICAL'] });
+  const painAssessmentTypes = useEnumOptions('PainAssessmentTypes');
 
   const painLevelEnum = useEnumOptions('PainLevel', {
     labelOverrides: {
@@ -84,6 +88,12 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   const minLevel = painLevelSteps[0]?.n ?? 0;
   const maxLevel = painLevelSteps[painLevelSteps.length - 1]?.n ?? 10;
 
+  const {
+    data: latestFlacc
+  } = useGetLatestActiveFLACCPainScaleByEncounterQuery(
+    encounterId,
+    { skip: !encounterId }
+  );
   // API
   const [createPainAssessment] = useCreatePainAssessmentMutation();
   const { data: latestByEncounter } = useGetLatestPainAssessmentByEncounterIdQuery(
@@ -120,14 +130,68 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     const match = String(painLevel).match(/LEVEL_(\d+)/);
     const level = match ? Number(match[1]) : NaN;
     if (!Number.isFinite(level)) return null;
-    if (level >= 0 && level <= 3) return 'MILD_MINOR';
+    if (level === 0) return 'NOTHING';
+    if (level > 0 && level <= 3) return 'MILD_MINOR';
     if (level >= 4 && level <= 7) return 'MODERATE';
     if (level >= 8 && level <= 10) return 'SEVERE';
     return null;
   };
 
+  const flaccPainLevelToSeverity: Record<string, string> = {
+    NO_PAIN: 'NOTHING',
+    MILD_PAIN: 'MILD_MINOR',
+    MODERATE_PAIN: 'MODERATE',
+    SEVERE_PAIN: 'SEVERE',
+  };
+
+  useEffect(() => {
+    const type = record?.painAssessmentType;
+
+    if (type === 'FLACC') {
+      if (skipFlaccSyncRef.current) {
+        skipFlaccSyncRef.current = false;
+        return;
+      }
+
+      if (!latestFlacc) {
+        setRecord(prev =>
+          prev.painLevel === undefined && prev.painDegree === undefined
+            ? prev
+            : { ...prev, painLevel: undefined, painDegree: undefined }
+        );
+        return;
+      }
+
+      const nextPainDegree = flaccPainLevelToSeverity[latestFlacc.painLevel] ?? null;
+      const nextPainLevel = `LEVEL_${latestFlacc.totalScore}` as any;
+
+      setRecord(prev =>
+        prev.painDegree === nextPainDegree && prev.painLevel === nextPainLevel
+          ? prev
+          : { ...prev, painDegree: nextPainDegree, painLevel: nextPainLevel }
+      );
+      return;
+    }
+
+    if (type === 'NUMERIC' || type === 'FACES') {
+      setRecord(prev => {
+        const nextSeverity = getSeverityFromPainLevel((prev as any)?.painLevel);
+        return prev.painDegree === nextSeverity ? prev : { ...prev, painDegree: nextSeverity };
+      });
+    }
+  }, [
+    record?.painAssessmentType,
+    record?.painLevel,
+    latestFlacc?.painLevel,
+    latestFlacc?.totalScore,
+  ]);
+
   useEffect(() => {
     if (!latestByEncounter) return;
+
+    if ((latestByEncounter as any)?.painAssessmentType === 'FLACC') {
+      skipFlaccSyncRef.current = true;
+    }
 
     setRecord(prev => ({
       ...prev,
@@ -142,24 +206,21 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     }));
   }, [latestByEncounter, patientId, encounterId]);
 
-  useEffect(() => {
-    const nextSeverity = getSeverityFromPainLevel((record as any)?.painLevel);
-    setRecord(prev =>
-      prev.painDegree === nextSeverity ? prev : { ...prev, painDegree: nextSeverity }
-    );
-  }, [(record as any)?.painLevel]);
 
   const createPayload = useMemo(() => {
-    return {
-      patientId,
-      encounterId,
-      painDegree: record.painDegree ?? null,
-      painDescription: record.painDescription ?? null,
-      painPattern: (record as any)?.painPattern ?? null,
-      painLevel: (record as any)?.painLevel ?? null,
-      isActive: typeof record.isActive === 'boolean' ? record.isActive : true
-    };
-  }, [record, patientId, encounterId]);
+  const isFlacc = (record as any)?.painAssessmentType === 'FLACC';
+
+  return {
+    patientId,
+    encounterId,
+    painDegree: record.painDegree ?? null,
+    painDescription: isFlacc ? null : record.painDescription ?? null,
+    painPattern: isFlacc ? null : (record as any)?.painPattern ?? null,
+    painLevel: (record as any)?.painLevel ?? null,
+    painAssessmentType: (record as any)?.painAssessmentType ?? null,
+    isActive: typeof record.isActive === 'boolean' ? record.isActive : true
+  };
+}, [record, patientId, encounterId]);
 
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
@@ -311,76 +372,112 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
               />
             </Col>
 
-            <Col md={12}>
-              <MyInput
-                disabled={disabled}
-                width="100%"
-                fieldLabel="Pain Pattern"
-                fieldType="select"
-                fieldName="painPattern"
-                selectData={painPatternLovQueryResponse?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+            {record?.painAssessmentType !== 'FLACC' && (
+              <Col md={12}>
+                <MyInput
+                  disabled={disabled}
+                  width="100%"
+                  fieldLabel="Pain Pattern"
+                  fieldType="select"
+                  fieldName="painPattern"
+                  selectData={painPatternLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
 
-                selectDataValue="key"
-                record={record}
-                setRecord={setRecord}
-                searchable={false}
-              />
-            </Col>
-          </Row>
-
-          <Row className="pain-assessment__row">
-            <Col md={12}>
-              <div className="pain-assessment__slider">
-                <MyLabel label={`Pain Level (${painLevelValue}-${maxLevel})`} required />
-                <div className="pain-assessment__sliderTrack">
-                  <Slider
-                    value={painLevelValue}
-                    onChange={value => {
-                      const v = Number(value ?? minLevel);
-                      const enumItem = painLevelSteps.find(x => x.n === v);
-                      const enumValue = enumItem?.value ?? `LEVEL_${v}`;
-
-                      setRecord(prev => ({
-                        ...prev,
-                        painLevel: enumValue as any
-                      }));
-                    }}
-                    min={minLevel}
-                    max={maxLevel}
-                    step={1}
-                    progress
-                    disabled={disabled}
-                  />
-
-                  <div
-                    className="pain-assessment__sliderFill"
-                    style={{
-                      width: `${
-                        ((painLevelValue - minLevel) / Math.max(1, maxLevel - minLevel)) * 100
-                      }%`,
-                      backgroundColor: getTrackColor(painLevelValue)
-                    }}
-                  />
-                </div>
-              </div>
-            </Col>
+                  selectDataValue="key"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={false}
+                />
+              </Col>
+            )}
           </Row>
 
           <Row className="pain-assessment__row">
             <Col md={24}>
               <MyInput
-                fieldType="textarea"
+                fieldType="select"
                 width="100%"
-                fieldLabel="Pain Description"
-                fieldName="painDescription"
+                fieldLabel="Pain Assessment Type"
+                selectData={painAssessmentTypes ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={record}
                 setRecord={setRecord}
+                fieldName="painAssessmentType"
                 disabled={disabled}
+                required
               />
             </Col>
           </Row>
+
+          {record?.painAssessmentType === 'NUMERIC' ? (
+            <Row className="pain-assessment__row">
+              <Col md={24}>
+                <NumericSlider
+                  label="Pain Level"
+                  value={painLevelValue}
+                  min={minLevel}
+                  max={maxLevel}
+                  required
+                  disabled={disabled}
+                  getTrackColor={getTrackColor}
+                  onChange={value => {
+                    const enumItem = painLevelSteps.find(x => x.n === value);
+                    const enumValue = enumItem?.value ?? `LEVEL_${value}`;
+
+                    setRecord(prev => ({
+                      ...prev,
+                      painLevel: enumValue as any,
+                    }));
+                  }}
+                />
+              </Col>
+            </Row>
+          ) : record?.painAssessmentType === 'FACES' ? (
+            <Row className="pain-assessment__row">
+              <Col md={24}>
+                <FacesSlider
+                  title={`Pain Level (${painLevelValue}-${maxLevel})`}
+                  value={painLevelValue}
+                  disabled={disabled}
+                  getTrackColor={getTrackColor}
+                  onChange={value => {
+                    const enumItem = painLevelSteps.find(x => x.n === value);
+                    const enumValue = enumItem?.value ?? `LEVEL_${value}`;
+
+                    setRecord(prev => ({
+                      ...prev,
+                      painLevel: enumValue as any,
+                    }));
+                  }}
+                />
+              </Col>
+            </Row>
+          ) : record?.painAssessmentType === 'FLACC' ? (
+            <Row className="pain-assessment__row">
+              <Col md={24}>
+                <FlaccComponent />
+              </Col>
+            </Row>
+          ) : null}
+
+
+          {record?.painAssessmentType !== 'FLACC' && (
+            <Row className="pain-assessment__row">
+              <Col md={24}>
+                <MyInput
+                  fieldType="textarea"
+                  width="100%"
+                  fieldLabel="Pain Description"
+                  fieldName="painDescription"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={disabled}
+                />
+              </Col>
+            </Row>
+          )}
         </div>
       }
     />

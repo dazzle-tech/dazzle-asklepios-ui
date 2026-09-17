@@ -175,6 +175,7 @@ export const {
   useCreateOrGetPatientPrescriptionMutation,
   useGetPatientPrescriptionByIdQuery,
   useGetPatientPrescriptionQuery,
+  useLazyGetPatientPrescriptionQuery,
   useUpdatePatientPrescriptionMutation,
   useSubmitPatientPrescriptionMutation,
   useCancelPatientPrescriptionMutation,

@@ -105,12 +105,17 @@ export type BulkRejectDTO = {
 export type DiagnosticOrderTestResultBulkCreateDTO = {
   results: DiagnosticOrderTestResultCreateDTO[];
 };
+export type DiagnosticOrderTestResultIdsFilterParams = Omit<
+  DiagnosticOrderTestResultFilterParams,
+  "page" | "size" | "sort"
+>;
+
 /* ================= Service ================= */
 
 export const diagnosticOrderTestResultService = createApi({
   reducerPath: "diagnosticOrderTestResultApi",
   baseQuery: BaseQuery,
-  tagTypes: ["DiagnosticOrderTestResult"],
+  tagTypes: ["DiagnosticOrderTestResult", "LabResultLog"],
 
   endpoints: (builder) => ({
 
@@ -166,7 +171,7 @@ export const diagnosticOrderTestResultService = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: ["DiagnosticOrderTestResult"],
+      invalidatesTags: ["DiagnosticOrderTestResult", "LabResultLog"],
     }),
 
     /* 🔹 Toggle Review */
@@ -304,6 +309,7 @@ export const diagnosticOrderTestResultService = createApi({
         url: `/api/patient/lab-result-logs/by-result/${resultId}`,
         method: "GET",
       }),
+      providesTags: ["LabResultLog"],
     }),
 
     rejectDiagnosticOrderTestResult: builder.mutation<
@@ -352,8 +358,19 @@ export const diagnosticOrderTestResultService = createApi({
         }),
         invalidatesTags: ["DiagnosticOrderTestResult"],
       }),
+    getDiagnosticOrderTestResultIds: builder.query<
+      number[],
+      DiagnosticOrderTestResultIdsFilterParams
+    >({
+      query: (params) => ({
+        url: "/api/patient/diagnostic-order-tests-results/ids",
+        method: "GET",
+        params,
+      }),
+    }),
 
   }),
+
 });
 
 /* ================= Hooks ================= */
@@ -374,4 +391,7 @@ export const {
   useGetLabResultLogsByResultIdQuery,
   useBulkCreateDiagnosticOrderTestResultMutation,
   useBulkToggleReviewDiagnosticOrderTestResultMutation,
+  useGetDiagnosticOrderTestResultIdsQuery,
+  useLazyFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } = diagnosticOrderTestResultService;

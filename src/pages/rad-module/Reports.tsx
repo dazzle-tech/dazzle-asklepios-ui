@@ -21,7 +21,8 @@ import {
 import {
     useBulkToggleReviewDiagnosticOrderTestReportMutation,
     useFilterRadiologyReportsQuery,
-    useReviewRadiologyReportMutation
+    useReviewRadiologyReportMutation,
+    useLazyGetDiagnosticOrderTestReportsIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import {
     useLazyGetDiagnosticTestByIdQuery
@@ -125,7 +126,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     });
 
     const [orderIdFilter, setOrderIdFilter] = useState('');
-
+    const [getReportIds] =
+        useLazyGetDiagnosticOrderTestReportsIdsQuery();
     const [
         createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
 
@@ -216,8 +218,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
 
 
     const [reviewReport] = useReviewRadiologyReportMutation();
-   const [bulkToggleReviewDiagnosticOrderTestReport] =
-  useBulkToggleReviewDiagnosticOrderTestReportMutation();
+    const [bulkToggleReviewDiagnosticOrderTestReport] =
+        useBulkToggleReviewDiagnosticOrderTestReportMutation();
     const handleReview = async (row: any) => {
         try {
             await reviewReport({
@@ -362,13 +364,30 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             );
         }
     };
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
-        } else {
-            setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
-        }
-    };
+    // const handleSelectAll = (checked: boolean) => {
+    //     if (checked) {
+    //         setSelectedRows(prev => Array.from(new Set([...prev, ...allRowIds])));
+    //     } else {
+    //         setSelectedRows(prev => prev.filter(id => !allRowIds.includes(id)));
+    //     }
+    // };
+    const handleSelectAll = async (checked: boolean) => {
+
+    if (!checked) {
+        setSelectedRows([]);
+        return;
+    }
+
+    try {
+
+        const ids = await getReportIds(queryParams).unwrap();
+
+        setSelectedRows(ids);
+
+    } catch (error) {
+        console.error("Failed to load report ids", error);
+    }
+};
 
     const handleCheckboxChange = (rowId: number) => {
         setSelectedRows(prev =>
@@ -506,7 +525,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 )
             },
         ],
-        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds ,isAllSelected,isSomeSelected,selectedRows]
+        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds, isAllSelected, isSomeSelected, selectedRows]
     );
 
     const resetFilters = () => {

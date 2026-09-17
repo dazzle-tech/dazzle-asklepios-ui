@@ -181,7 +181,7 @@ const Allergies = (props: AllergiesProps) => {
         return (
           <MdModeEdit
             title="Edit"
-            className="icons-style"
+            className="icons-style view-only-action-edit-delete-encounter"
             size={24}
             fill="var(--primary-gray)"
             onClick={e => {
@@ -387,8 +387,8 @@ const Allergies = (props: AllergiesProps) => {
   return (
     <div
       dir={dir}
-      className={clsx({ 'disabled-panel': edit })}
-      style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+      // className={clsx({ 'disabled-panel': edit })}
+      // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
     >
 
       <div className="container-of-table-and-section-patient-allergy">

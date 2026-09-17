@@ -407,15 +407,6 @@ const Details = ({
   const hasMoreSearchedProcedures =
     searchedProcedureByFacility?.links?.next != null;
 
-  console.log('🚀 PROCEDURE PAGINATION STATE', {
-    procedureSearch,
-    procedureSearchPage,
-    hasMoreSearchedProcedures,
-    searchedTotalCount: searchedProcedureByFacility?.totalCount,
-    searchedNext: searchedProcedureByFacility?.links?.next,
-    searchedDataLength: searchedProcedureByFacility?.data?.length,
-  });
-
 
   const handleLoadMoreProcedures = () => {
     if (hasMoreProcedures && !procedureByFacilityLoading) {

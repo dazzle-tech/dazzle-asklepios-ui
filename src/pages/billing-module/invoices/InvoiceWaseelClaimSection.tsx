@@ -61,7 +61,7 @@ const InvoiceWaseelClaimSection: React.FC<InvoiceWaseelClaimSectionProps> = ({ i
 
   const handleSubmit = async () => {
     try {
-      const result = await submitClaim(invoice.id).unwrap();
+      const result = await submitClaim({ financialDocumentId: invoice.id }).unwrap();
       dispatch(
         notify({
           msg:

@@ -24,6 +24,7 @@ import {
 import {
   useCreateQuickAppointmentMutation
 } from '@/services/appointment/appointmentService';
+import { useLazyIsPatientAgeAllowedQuery } from '@/services/security/departmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
@@ -134,14 +135,16 @@ const PatientQuickAppointment = ({
 
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({
     ...newPatientEncounter,
-    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-    facilityId: Number(localReferral?.toFacilityId ?? 0),
-    departmentId: Number(localReferral?.toDepartmentId ?? 0),
+    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0) || null,
+    facilityId: Number(localReferral?.toFacilityId ?? 0) || null,
+    departmentId: Number(localReferral?.toDepartmentId ?? 0) || null,
     encounterDate: new Date()
   });
 
   const [isReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
+  const [isPatientAgeAllowed, setIsPatientAgeAllowed] = useState(false);
+  const [isCheckingPatientAge, setIsCheckingPatientAge] = useState(false);
   const [validationResult, setValidationResult] = useState<any>({});
 
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
@@ -156,10 +159,64 @@ const PatientQuickAppointment = ({
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
   const [createQuickAppointment] = useCreateQuickAppointmentMutation();
+  const [checkPatientAgeAllowed] = useLazyIsPatientAgeAllowedQuery();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
   const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
 
   const didAcceptReferralRef = useRef(false);
+
+  useEffect(() => {
+    console.log('Checking patient age for department:', localEncounter?.departmentId, 'and patient:', localPatient);
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    const rawDateOfBirth = localPatient?.dateOfBirth ?? localPatient?.dob;
+    const parsedDateOfBirth = rawDateOfBirth ? new Date(rawDateOfBirth) : null;
+    const dateOfBirth =
+      parsedDateOfBirth && !Number.isNaN(parsedDateOfBirth.getTime())
+        ? parsedDateOfBirth.toISOString().split('T')[0]
+        : '';
+
+    if (!departmentId || !dateOfBirth) {
+      setIsPatientAgeAllowed(false);
+      setIsCheckingPatientAge(false);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsCheckingPatientAge(true);
+    setIsPatientAgeAllowed(false);
+
+    checkPatientAgeAllowed({ departmentId, dateOfBirth })
+      .unwrap()
+      .then((isAllowed: boolean) => {
+        if (!isCurrent) return;
+
+        setIsPatientAgeAllowed(isAllowed);
+
+        if (!isAllowed) {
+          dispatch(
+            notify({
+              msg: 'Patient age is not allowed for the selected department',
+              sev: 'warning'
+            })
+          );
+        }
+      })
+      .catch(() => {
+        if (isCurrent) setIsPatientAgeAllowed(false);
+      })
+      .finally(() => {
+        if (isCurrent) setIsCheckingPatientAge(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [
+    checkPatientAgeAllowed,
+    localEncounter?.departmentId,
+    localPatient?.dateOfBirth,
+    localPatient?.dob
+  ]);
 
   const [paymentDraft, setPaymentDraft] = useState<modelTypes.PatientPayments & any>({
     ...newPatientPayments,
@@ -266,6 +323,10 @@ const PatientQuickAppointment = ({
   };
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
+    if (!isPatientAgeAllowed) {
+      dispatch(notify({ msg: 'Patient age is not allowed for the selected department', sev: 'warning' }));
+      return;
+    }
 
     const patientId = Number(localPatient?.id );
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
@@ -356,6 +417,8 @@ const PatientQuickAppointment = ({
     });
     setValidationResult({});
     setIsEncounterSaved(false);
+    setIsPatientAgeAllowed(false);
+    setIsCheckingPatientAge(false);
     setIsPaymentSaved(false);
     paymentRef.current?.clear?.();
     setPaymentDraft({
@@ -476,7 +539,12 @@ const PatientQuickAppointment = ({
                 Clear
               </MyButton>
               <MyButton
-                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
+                disabled={
+                  encounterReadOnly ||
+                  localPatient?.patientStatus === 'MERGED' ||
+                  isCheckingPatientAge ||
+                  !isPatientAgeAllowed
+                }
                 onClick={handleSave}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >

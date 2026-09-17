@@ -30,7 +30,7 @@ const MyModal = ({
   handleCancelFunction = () => {},
   modalColor = 'var(--primary-blue)',
   initialStep = 0,
-  enforceFocus = true,
+  enforceFocus = false,
   /** If it returns false (or a Promise that resolves false), the step does not advance. */
   onBeforeNext
 }: {
@@ -109,19 +109,22 @@ const MyModal = ({
       </Modal.Header>
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
-        <MyStepper
-          activeStep={activeStep}
-          stepsList={steps.map((step, index) => ({
-            key: index,
-            value: <Translate>{step.title}</Translate>,
-            description: step.description || '',
-            customIcon: step.icon ? step.icon : null,
-            isError: step.isError || false
-          }))}
-          modalColor={modalColor}
-        />
-
-        <br />
+        {steps.length > 0 && (
+          <>
+            <MyStepper
+              activeStep={activeStep}
+              stepsList={steps.map((step, index) => ({
+                key: index,
+                value: <Translate>{step.title}</Translate>,
+                description: step.description || '',
+                customIcon: step.icon ? step.icon : null,
+                isError: step.isError || false
+              }))}
+              modalColor={modalColor}
+            />
+            <br />
+          </>
+        )}
 
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}
       </Modal.Body>

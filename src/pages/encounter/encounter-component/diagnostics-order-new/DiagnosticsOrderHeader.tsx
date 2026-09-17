@@ -94,7 +94,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     setRecallFavoriteModal
   } = props;
 
-  const orderId = orders?.id ?? orders?.key ?? null;
+  const orderId = orders?.id ?? null;
 
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -140,7 +140,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               loading={isFetching}
               onClick={handleSaveOrders}
               prefixIcon={() => <PlusIcon />}
-              disabled={hasOpenOrder || isNurse}
+              disabled={hasOpenOrder || isNurse || edit}
             >
               New Order
             </MyButton>
@@ -167,8 +167,10 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         </div>
 
         {/* Row 2 - Filters */}
-        <div className="header-second-row filter-form-disable-fix">
-          <Form fluid layout="inline">
+        <div
+         className="header-second-row filter-form-disable-fix"
+         >
+          <Form fluid layout="inline"  className="filter-form-disable-fix">
             <MyInput
               column
               width={160}
@@ -230,13 +232,13 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <FontAwesomeIcon icon={faVial} /> Request New TestSetup
           </MyButton> */}
 
-          <MyButton disabled={isSubmitDisabled} onClick={() => setRecallFavoriteModal(true)}>
+          <MyButton disabled={isSubmitDisabled || edit} onClick={() => setRecallFavoriteModal(true)}>
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
           </MyButton>
 
           <MyButton
             onClick={() => setOpenValidationSummaryModal(true)}
-            disabled={isSubmitDisabled || isNurse}
+            disabled={isSubmitDisabled || isNurse || edit}
             prefixIcon={() => <CheckIcon />}
           >
             Sign &amp; Submit
@@ -251,23 +253,23 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
       <Row>
         <div className="top-container">
           <div className="buttons-sect">
-            <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)}>
+            <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)} className="show-cancelled">
             <Translate>Show Canceled</Translate>
             </Checkbox>
 
-            <MyButton disabled={isSubmitDisabled || isNurse} onClick={() => setOpenTestsModal(true)}>
+            <MyButton disabled={isSubmitDisabled || isNurse || edit} onClick={() => setOpenTestsModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> <Translate>Add Test</Translate>
             </MyButton>
 
             <MyButton
-              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)}
+              disabled={isNurse || (orders.id  ? selectedRows.length === 0 : true)  || edit}
               prefixIcon={() => <CloseOutlineIcon />}
               onClick={OpenConfirmDeleteModel}
             >
               Cancel
             </MyButton>
 
-            <MyButton disabled={isNurse || selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
+            <MyButton disabled={isSubmitDisabled ||isNurse || selectedRows.length === 0 || edit} onClick={() => setBulkDepartmentModalOpen(true)}>
               Assign Department
             </MyButton>
           </div>

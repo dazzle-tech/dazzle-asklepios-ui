@@ -1,11 +1,186 @@
 import React from 'react';
 import moment from 'moment';
+import momentHijri from 'moment-hijri';
 import { Calendar as BigCalendar, Views } from 'react-big-calendar';
-import { Button, ButtonGroup, Calendar as RsCalendar, Panel, Text } from 'rsuite';
+import {
+  Button,
+  ButtonGroup,
+  Calendar as RsCalendar,
+  Panel,
+  Text,
+  SelectPicker
+} from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import TodayAppointmentsList from './TodayAppointmentsList';
 import WaitingListPanel from './WaitingListPanel';
 import Translate from '@/components/Translate';
+
+
+type HijriCalendarProps = {
+  value: Date;
+  onChange: (date: Date) => void;
+};
+
+  const HijriCalendar = ({ value, onChange }: HijriCalendarProps) => {
+    const currentHijri = momentHijri(value).locale('en');
+
+        const [viewMonth, setViewMonth] = React.useState(
+    momentHijri(value).locale('en').startOf('iMonth')    );
+
+    React.useEffect(() => {
+      setViewMonth(
+        momentHijri(value).locale('en').startOf('iMonth')
+      );
+    }, [value]);
+
+    const year = viewMonth.iYear();
+    const month = viewMonth.iMonth();
+
+    const daysInMonth = viewMonth.clone().endOf('iMonth').iDate();
+
+    const firstDay = viewMonth.clone().startOf('iMonth').day();
+
+    const days = Array.from({ length: firstDay + daysInMonth }, (_, index) => {
+      if (index < firstDay) return null;
+
+      const day = index - firstDay + 1;
+
+      return viewMonth.clone().iDate(day);
+    });
+
+const previousMonth = () => {
+  setViewMonth(prev =>
+    prev.clone().locale('en').subtract(1, 'iMonth')
+  );
+};
+
+const nextMonth = () => {
+  setViewMonth(prev =>
+    prev.clone().locale('en').add(1, 'iMonth')
+  );
+};
+
+    const isSelected = (date: moment.Moment) => {
+      return date.format('iYYYY/iMM/iDD') === currentHijri.format('iYYYY/iMM/iDD');
+    };
+
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return (
+      <div
+        style={{
+          padding: '8px',
+          border: '1px solid var(--rs-border-primary)',
+          borderRadius: '6px',
+          background: 'var(--rs-bg-card)'
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '10px'
+          }}
+        >
+          <Button
+            appearance="subtle"
+            size="xs"
+            onClick={previousMonth}
+          >
+            ‹
+          </Button>
+
+          <Text strong>
+            {viewMonth.format('iMMMM iYYYY')}
+          </Text>
+
+          <Button
+            appearance="subtle"
+            size="xs"
+            onClick={nextMonth}
+          >
+            ›
+          </Button>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 2,
+            marginBottom: 4
+          }}
+        >
+          {weekDays.map(day => (
+            <div
+              key={day}
+              style={{
+                textAlign: 'center',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '4px 0',
+                opacity: 0.7
+              }}
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Days */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 2
+          }}
+        >
+          {days.map((day, index) => {
+            if (!day) {
+              return <div key={`empty-${index}`} />;
+            }
+
+            const selected = isSelected(day);
+
+            return (
+              <Button
+                key={day.format('iYYYY-iMM-iDD')}
+                appearance={selected ? 'primary' : 'subtle'}
+                size="xs"
+                onClick={() => {
+                  const gregorianDate = day.toDate();
+
+                  onChange(gregorianDate);
+                }}
+                style={{
+                  minWidth: 0,
+                  width: '100%',
+                  height: 30,
+                  padding: 0
+                }}
+              >
+                {day.locale('en').format('iD')}
+              </Button>
+            );
+          })}
+        </div>
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: '1px solid var(--rs-border-primary)',
+            textAlign: 'center'
+          }}
+        >
+          <Text muted style={{ fontSize: 12 }}>
+            {currentHijri.locale('en').format('iDD/iMM/iYYYY')}
+          </Text>
+        </div>
+      </div>
+    );
+  };
 
 type Props = {
   calendarKey: string;
@@ -42,6 +217,8 @@ type Props = {
   waitingListDepartmentId?: number | null;
   departmentOptions?: any[];
   onWaitingListBooked?: () => void | Promise<void>;
+  dateType: 'GREGORIAN' | 'HIJRI';
+  setDateType: (type: 'GREGORIAN' | 'HIJRI') => void;
 };
 
 const ScheduleContentGrid = ({
@@ -78,6 +255,8 @@ const ScheduleContentGrid = ({
   facilityId,
   waitingListDepartmentId,
   departmentOptions,
+  dateType,
+  setDateType,
   onWaitingListBooked
 }: Props) => {
   const calendarEvents = React.useMemo(() => {
@@ -96,7 +275,7 @@ const ScheduleContentGrid = ({
         ...resource,
         key,
         resourceId: key,
-        resourceName:<Translate>{String(resource?.resourceName ?? resource?.name ?? `Resource ${key}`)}</Translate> 
+        resourceName: <Translate>{String(resource?.resourceName ?? resource?.name ?? `Resource ${key}`)}</Translate>
       });
     });
 
@@ -107,11 +286,11 @@ const ScheduleContentGrid = ({
       if (!key || resourcesByKey.has(key)) return;
       const name = String(
         appt?.tooltipResourceName ??
-          appt?.appointmentData?.resourceName ??
-          appt?.appointmentData?.departmentName ??
-          appt?.appointmentData?.resource?.resourceName ??
-          appt?.appointmentData?.resource?.name ??
-          `Resource ${key}`
+        appt?.appointmentData?.resourceName ??
+        appt?.appointmentData?.departmentName ??
+        appt?.appointmentData?.resource?.resourceName ??
+        appt?.appointmentData?.resource?.name ??
+        `Resource ${key}`
       ).trim();
       resourcesByKey.set(key, { key, resourceName: name });
     });
@@ -347,18 +526,56 @@ const ScheduleContentGrid = ({
               </Button>
             </ButtonGroup>
           </div>
-          <RsCalendar
-            value={rightPanelDate}
-            onChange={(d: Date | null) => {
-              if (d) {
-                setRightPanelDate(d);
-                setCurrentCalendarDate(d);
-                setCalendarDate(d);
-              }
-            }}
-            compact
-            className="appointments-sidebar-calendar"
-          />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+              <SelectPicker
+                cleanable={false}
+                searchable={false}
+                value={dateType}
+                data={[
+                  {
+                    label: 'Gregorian',
+                    value: 'GREGORIAN'
+                  },
+                  {
+                    label: 'Hijri',
+                    value: 'HIJRI'
+                  }
+                ]}
+                onChange={(value: 'GREGORIAN' | 'HIJRI' | null) => {
+                  if (!value) return;
+
+                  setDateType(value);
+                }}
+                style={{ width: '100%' }}
+                placeholder="Date Type"
+              />
+
+              {dateType === 'GREGORIAN' ? (
+                <RsCalendar
+                  value={rightPanelDate}
+                  onChange={(d: Date | null) => {
+                    if (d) {
+                      setRightPanelDate(d);
+                      setCurrentCalendarDate(d);
+                      setCalendarDate(d);
+                    }
+                  }}
+                  compact
+                  className="appointments-sidebar-calendar"
+                />
+              ) : (
+              <HijriCalendar
+                value={rightPanelDate}
+                onChange={(d: Date) => {
+                  setRightPanelDate(d);
+                  setCurrentCalendarDate(d);
+                  setCalendarDate(d);
+                }}
+              />
+              )}
+
+            </div>
         </div>
 
         <TodayAppointmentsList

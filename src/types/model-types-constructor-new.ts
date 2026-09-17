@@ -24,7 +24,11 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
-  admin: false
+  admin: false,
+
+  allowOngoingVisit: false,
+  canUnDischargeUrgentCare: false,
+  canUnCompleteEncounter: false,
 };
 
 // ------------------- Candidate -------------------
@@ -60,6 +64,11 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  ageSpecific: false,
+  fromAge: null,
+  fromAgeUnit: null,
+  toAge: null,
+  toAgeUnit: null,
   workingDays: []
 };
 // ------------------- Facility -------------------
@@ -335,7 +344,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   name: '',
   shortName:'',
   internalCode: '',
-
+ hl7IntegrationCode:'',
   ageSpecific: false,
   ageGroupList: [],
 
@@ -2324,6 +2333,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
   activeIngredientId: null,
+  otherMedicationName: null,
   instructionsType: null,
   instructions: null,
   dose: null,
@@ -2756,7 +2766,7 @@ export const newConsultation: modelTypes.Consultation = {
   consultantSpeciality: null,
   consultationMethod: '',
   practitionerId: null,
-  consultationLevel: 'ROUTINE',
+  consultationLevel: null,
   consultationContent: '',
   notes: null,
   extraDocument: null,
@@ -2961,6 +2971,7 @@ export const newPainAssessment: modelTypes.PainAssessment = {
 
   painDegree: null,
   painLevel: null,
+  painAssessmentType: null,
   painDescription: null,
 
   isActive: true,
@@ -3507,8 +3518,10 @@ export type WaseelItemMappingSearchParams = {
   page: number;
   size: number;
   sort?: string;
-  search?: string;
   itemType?: string;
+  itemName?: string;
+  itemCode?: string;
+  sbsCode?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };
@@ -3778,7 +3791,9 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   invoiceTotalAmount: 0,
   invoicePaidAmount: 0,
   invoiceOutstandingAmount: 0,
-  items: []
+  items: [],
+  coverageType: null,
+  patientInsuranceId: null
 };
 
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
@@ -4058,3 +4073,15 @@ export const newNotificationSearchDTO: modelTypes.NotificationSearchDTO = {
   dateFrom: null,
   dateTo: null,
 };
+
+export const newTimelineResponse: modelTypes.TimelineResponse = {
+  request_id: '',
+  timeline: [],
+  summary: '',
+  processing_metadata: {
+    model: '',
+    timestamp: '',
+    input_fields_count: 0,
+    timeline_event_count: 0
+  }
+}

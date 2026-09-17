@@ -48,7 +48,7 @@ import {
   initialListRequestAllValues
 } from '@/types/types';
 import LaboratoryReportButton from './LaboratoryReportButton';
-
+import LabInterpretationAI from './LabInterpretationAI';
 type Props = {
   patient: any;
 };
@@ -303,19 +303,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     let unit = '';
     let normalRangeValue = ' ';
 
-      console.log('NORMAL RANGE DEBUG:', {
-        resultId: r.id,
-        orderTestId: r.orderTestId,
-        profileTestId: r.profileTestId,
-        testName: profile?.name,
-        resultType,
-        resultValueNumber: r.resultValueNumber,
-        resultValueText: r.resultValueText,
-        viewNormalRange: r.viewNormalRange,
-        normalRangeValue: r.normalRangeValue,
-        marker: r.marker,
-        viewMarker: r.viewMarker
-      });
 
       if (resultType === 'LOV') {
         value = resolveLovDisplayValue(
@@ -581,6 +568,7 @@ normalRangeValue =
         handleSendMessage={{}}
         disabled
       />
+       <LabInterpretationAI patientId={patientId} />
     </Panel>
   );
 });

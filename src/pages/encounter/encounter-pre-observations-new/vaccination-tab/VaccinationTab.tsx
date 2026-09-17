@@ -439,7 +439,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         render: (row: any) =>
           (row as any)?.reviewedAt ? (
             <>
-              {(row as any)?.reviewedBy}
+              {(row as any)?.reviewedById}
               <br />
               <span className="date-table-style">{formatDateWithoutSeconds((row as any).reviewedAt)}</span>{' '}
             </>

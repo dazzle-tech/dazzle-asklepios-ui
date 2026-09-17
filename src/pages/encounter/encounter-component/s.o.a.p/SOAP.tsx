@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 
 import {
+  useGetEncounterAuditQuery,
   useGetEncounterByIdQuery,
   useUpdateEncounterMutation
 } from '@/services/encounters/patientEncounterService';
@@ -27,17 +28,25 @@ import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/s
 import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
-
+import FieldAuditHistoryModal from './FieldAuditHistory';
+import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
+import AutoPopulationResults from './AutoPopulationResults';
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('1');
   const outletContext = useOutletContext<any>();
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedAuditField, setSelectedAuditField] = useState('');
 
   const patient = props.patient || location.state?.patient || outletContext?.patient;
   const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
 
   const viewMode = props.viewMode ?? location.state?.viewMode ?? outletContext?.viewMode;
+  const [caseSummary, setCaseSummary] = useState({ "caseSummary": null })
+  const [showAutoPopulationResults, setShowAutoPopulationResults] = useState(false);
+  const [autoPopulate, { data: autoPopulationResult, isLoading: isAutoPopulating, isError: isAutoPopulationError }] =
+    useAutoPopulateMutation();
 
   const edit =
     viewMode === 'readOnly' || (props.edit ?? location.state?.edit ?? outletContext?.edit ?? false);
@@ -60,6 +69,13 @@ const SOAP = props => {
       refetchOnFocus: true
     }
   );
+
+  const {
+  data: encounterAudit = []
+} = useGetEncounterAuditQuery(
+  { id: encounterId },
+  { skip: !encounterId }
+);
 
   const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
@@ -103,80 +119,89 @@ const SOAP = props => {
     physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null
   });
 
-  const saveChanges = async () => {
-    if (!localEncounter?.chiefComplaint?.trim()) {
+  
+const saveChanges = async () => {
+  if (!localEncounter?.chiefComplaint?.trim()) {
+    dispatch(
+      notify({
+        msg: 'Chief Complaint cannot be empty.',
+        sev: 'warning',
+      })
+    );
+    return;
+  }
+  // Don't resave if no changes
+    if (localEncounter?.chiefComplaint?.trim().trim() === (encounterFromServer?.chiefComplaint ?? '').trim()) {
+      return;
+    }
+  try {
+    const idToUpdate = localEncounter?.id ?? encounterId;
+
+    if (!idToUpdate) {
       dispatch(
         notify({
-          msg: 'Chief Complaint cannot be empty.',
-          sev: 'warning'
+          msg: 'No encounter id to update',
+          sev: 'error',
         })
       );
       return;
     }
 
-    try {
-      const idToUpdate = localEncounter?.id ?? encounterId;
+    const payload = {
+      ...toEncounterPayload(localEncounter),
+      physicalExaminationSummery:
+        encounterFromServer?.physicalExaminationSummery ?? null,
+    };
 
-      if (!idToUpdate) {
-        dispatch(
-          notify({
-            msg: 'No encounter id to update',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const payload = {
-        ...toEncounterPayload(localEncounter),
-        physicalExaminationSummery:
-          encounterFromServer?.physicalExaminationSummery ?? null
-      };
-
-      if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
-        dispatch(
-          notify({
-            msg: 'Missing required fields: patientId / facilityId / departmentId',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      if (
-        payload.encounterReason === 'FOLLOW_UP' &&
-        !payload.followUpEncounterId
-      ) {
-        dispatch(
-          notify({
-            msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
-            sev: 'error'
-          })
-        );
-        return;
-      }
-
-      const updatedEncounter = await updateEncounter({
-        id: idToUpdate,
-        body: payload
-      }).unwrap();
-
-      setLocalEncounter(updatedEncounter);
-
+    if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
       dispatch(
         notify({
-          msg: 'Saved Successfully',
-          sev: 'success'
+          msg: 'Missing required fields: patientId / facilityId / departmentId',
+          sev: 'error',
         })
       );
-    } catch {
-      dispatch(
-        notify({
-          msg: 'Save Failed',
-          sev: 'error'
-        })
-      );
+      return;
     }
+
+    if (
+      payload.encounterReason === 'FOLLOW_UP' &&
+      !payload.followUpEncounterId
+    ) {
+      dispatch(
+        notify({
+          msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
+          sev: 'error',
+        })
+      );
+      return;
+    }
+
+    const updatedEncounter = await updateEncounter({
+      id: idToUpdate,
+      body: payload,
+    }).unwrap();
+
+    setLocalEncounter(updatedEncounter);
+
+    dispatch(
+      notify({
+        msg: 'Saved Successfully',
+        sev: 'success',
+      })
+    );
+  } catch (e: any) {
+    dispatch(
+      notify({
+        msg: e?.data?.detail || e?.data?.message || 'Save Failed',
+        sev: 'error',
+      })
+    );
+  }
+};
+
+  const openAuditHistory = (fieldName: string) => {
+   setSelectedAuditField(fieldName);
+   setAuditModalOpen(true);
   };
 
   const savePhysicalExamination = async () => {
@@ -234,6 +259,53 @@ const SOAP = props => {
     }
   };
 
+   const handleCaseSummary = async () => {
+    try {
+      if (!caseSummary.caseSummary?.trim()) {
+        dispatch(
+          notify({
+            msg: 'Please enter case summary text',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!patient?.id) {
+        dispatch(
+          notify({
+            msg: 'Patient id is missing',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      setShowAutoPopulationResults(true);
+
+      await autoPopulate({
+        userText: caseSummary.caseSummary,
+        patientId: patient.id
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Auto population completed successfully',
+          sev: 'success'
+        })
+      );
+
+    } catch (error) {
+      console.log("error: ", error)
+      dispatch(
+        notify({
+          msg: 'Auto population failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const tabData = [
     {
       title: 'Visit Details',
@@ -241,8 +313,31 @@ const SOAP = props => {
         <div
           className={clsx('column-container', { 'disabled-panel': edit })}
           style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
-        >
-             <div className="top-section">
+        >    
+              <div className="top-section">
+            <div style={{ marginBottom: '16px' }}>
+              <SectionContainer
+                title={<Translate>Case Summary</Translate>}
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="95px"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="caseSummary"
+                      record={caseSummary}
+                      setRecord={setCaseSummary}
+                    />
+                  </Form>
+                }
+                action={
+                  <MyButton size="small" onClick={handleCaseSummary} loading={isAutoPopulating}>
+                    Auto Populate
+                  </MyButton>
+                }
+              />
+            </div>
                 <div style={{ marginBottom: '16px' }}>
                   <SectionContainer
                     title={<Translate>Chief Complaint </Translate>}
@@ -256,6 +351,11 @@ const SOAP = props => {
                           fieldName="chiefComplaint"
                           record={localEncounter}
                           setRecord={setLocalEncounter}
+                          onBlur={() => {
+                            if (!edit) {
+                              saveChanges(true);
+                            }
+                          }}
                         />
 
                         {/* <MyInput
@@ -274,9 +374,17 @@ const SOAP = props => {
                       </Form>
                     }
                     action={
-                      <MyButton size="small" onClick={saveChanges}>
+                      <>
+                      <MyButton
+                        size="small"
+                        onClick={() => openAuditHistory('chiefComplaint')}
+                      >
+                         History
+                      </MyButton>
+                      <MyButton size="small" onClick={() => saveChanges(false)}>
                         Save
                       </MyButton>
+                      </>
                     }
                   />
                 </div>
@@ -286,6 +394,8 @@ const SOAP = props => {
                     encounter={localEncounter}
                     setEncounter={setLocalEncounter}
                     disabled={edit}
+                    onShowHistory={() => openAuditHistory('historyOfPresentIllness')}
+
                   />
                 </div>
                 <div style={{ marginBottom: '16px' }}>
@@ -302,13 +412,23 @@ const SOAP = props => {
                           fieldName="physicalExaminationSummery"
                           record={localEncounter}
                           setRecord={setLocalEncounter}
+                         
+                          onBlur={() => savePhysicalExamination()}
                         />
                       </Form>
                     }
                     action={
+                      <>
+                      <MyButton
+                        size="small"
+                        onClick={() => openAuditHistory('physicalExaminationSummery')}
+                      >
+                        History
+                      </MyButton>
                       <MyButton size="small" onClick={savePhysicalExamination}>
                         Save
                       </MyButton>
+                      </>
                     }
                   />
                 </div>
@@ -353,14 +473,15 @@ const SOAP = props => {
       title: 'Physical Examination & Findings',
       content: (
         <div
-          className={clsx('column-container', { 'disabled-panel': edit })}
-          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          className={clsx('column-container',
+            )}
         >
           <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} setEncounter={setLocalEncounter} />
         </div>
       )
     }
   ];
+  
 
   useEffect(() => {
     if (isLoading || isFetching) dispatch(showSystemLoader());
@@ -378,6 +499,19 @@ const SOAP = props => {
   return (
     <div className="patient-summary-container">
       <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy />
+      <AutoPopulationResults
+        open={showAutoPopulationResults}
+        setOpen={setShowAutoPopulationResults}
+        result={autoPopulationResult}
+        isLoading={isAutoPopulating}
+        isError={isAutoPopulationError}
+      />
+      <FieldAuditHistoryModal
+        open={auditModalOpen}
+        setOpen={setAuditModalOpen}
+        audit={encounterAudit}
+        fieldName={selectedAuditField}
+/>
     </div>
   );
 };

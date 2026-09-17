@@ -31,8 +31,10 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyNestedTable from '@/components/MyNestedTable';
-import { Form } from 'rsuite';
+import { Form, Modal, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import MedicationAdministrationModal from './MedicationAdministrationModal';
+import MedicationAdministrationLogs from './MedicationAdministrationLogs';
 
 type MedicationOrderRow = {
   id: number;
@@ -177,7 +179,13 @@ const MedicationRecord = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: any) => state?.auth?.user);
 
+  const [administerModalOpen, setAdministerModalOpen] = useState(false);
 
+  const [administrationModalOpen, setAdministrationModalOpen] =
+    useState(false);
+
+  const [selectedOrderId, setSelectedOrderId] =
+    useState<number | null>(null);
   const today = new Date();
 
   const weekAgo = new Date();
@@ -447,8 +455,6 @@ const MedicationRecord = () => {
     return map;
   }, [roaOptions]);
 
-  const [administerOrder, { isLoading: administering }] =
-    useAdministerUccMedicationOrderMutation();
 
   const [discardOrder, { isLoading: discarding }] =
     useDiscardUccMedicationOrderMutation();
@@ -456,34 +462,7 @@ const MedicationRecord = () => {
   const [doubleCheckOrder, { isLoading: doubleChecking }] =
     useDoubleCheckUccMedicationOrderMutation();
 
-  const handleAdminister = async (row: MedicationOrderRow) => {
-    try {
-      const isHighAlert = Boolean(
-        row?.isHighAlert ?? activeIngredientMap[row?.activeIngredientId || 0]?.highAlert
-      );
 
-      await administerOrder(row.id).unwrap();
-
-      dispatch(
-        notify({
-          msg: isHighAlert
-            ? 'Medication moved to Waiting Double Check successfully'
-            : 'Medication administered successfully',
-          sev: 'success'
-        })
-      );
-
-      await refetchOrdered();
-      await refetchAdmin();
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.detail || 'Administer failed',
-          sev: 'error'
-        })
-      );
-    }
-  };
 
   const handleDiscard = async () => {
     if (!selectedRow?.id) return;
@@ -632,23 +611,23 @@ const MedicationRecord = () => {
         )
       },
       {
-    key: 'highAlert',
-    title: <Translate>HIGH ALERT</Translate>,
-    width: 80,
-    align: 'center',
-    render: (row: MedicationOrderRow) => {
-        const isHighAlert =
+        key: 'highAlert',
+        title: <Translate>HIGH ALERT</Translate>,
+        width: 80,
+        align: 'center',
+        render: (row: MedicationOrderRow) => {
+          const isHighAlert =
             row?.isHighAlert ??
             activeIngredientMap[row?.activeIngredientId || 0]?.highAlert;
 
-        return isHighAlert ? (
+          return isHighAlert ? (
             <FontAwesomeIcon
-                icon={faTriangleExclamation}
-                className="medication-record-order-icons-size-high-alert"
-                color="red" 
+              icon={faTriangleExclamation}
+              className="medication-record-order-icons-size-high-alert"
+              color="red"
             />
-        ) : null;
-    }
+          ) : null;
+        }
       },
       {
         key: 'instructions',
@@ -670,93 +649,94 @@ const MedicationRecord = () => {
         render: (row: any) =>
           formatEnumString(row.status)
       },
+
       {
         key: 'actions',
         title: <Translate>ACTIONS</Translate>,
         width: 120,
         align: 'center',
-        render: (row: MedicationOrderRow) => {
+     render: (row: MedicationOrderRow) => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12
+      }}
+    >
+      {row.status === 'SUBMITTED' && (
+        <>
+        <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Administer</Translate>
+              </Tooltip>
+            }
+          >
+            <CheckRoundIcon
+            className="medication-record-order-icons-size"
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setSelectedOrderId(row.id);
+              setAdministrationModalOpen(true);
+            }}
+          />
+          </Whisper>
+          
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Discard</Translate>
+              </Tooltip>
+            }
+          >
+           <FontAwesomeIcon
+            icon={faXmark}
+            className="medication-record-order-icons-size"
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setSelectedRow(row);
+              setCancelObject({
+                discardReason: ''
+              });
+              setOpenDiscardModal(true);
+            }}
+          />
+          </Whisper>
+          
+        </>
+      )}
 
-          if (row.status === 'SUBMITTED') {
-            return (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 12
-                }}
-              >
+      {row.status === 'WAITING_DOUBLE_CHECK' && (
+        <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Double Check</Translate>
+              </Tooltip>
+            }
+          >
+           <FontAwesomeIcon
+          icon={faCheckDouble}
+          className="medication-record-order-icons-size"
+          style={{
+            cursor: 'pointer'
+          }}
+          onClick={() => handleDoubleCheck(row)}
+        />
+          </Whisper>
+        
+      )}
 
-                <CheckRoundIcon
-                  className="medication-record-order-icons-size"
-                  style={{
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => handleAdminister(row)}
-                />
-
-                <FontAwesomeIcon
-                  icon={faXmark}
-                  className="medication-record-order-icons-size"
-                  style={{
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setCancelObject({
-                      discardReason: ''
-                    });
-                    setOpenDiscardModal(true);
-                  }}
-                />
-
-              </div>
-            );
-          }
-
-
-          if (row.status === 'WAITING_DOUBLE_CHECK') {
-
-            const currentUser = user?.login || user?.username;
-
-            const isSameUser =
-              row.administeredBy &&
-              currentUser &&
-              row.administeredBy.toLowerCase() ===
-              currentUser.toLowerCase();
-
-
-            return (
-              <FontAwesomeIcon
-                icon={faCheckDouble}
-                className="medication-record-order-icons-size"
-                style={{
-                  cursor: isSameUser
-                    ? 'not-allowed'
-                    : 'pointer',
-                  opacity: isSameUser ? 0.4 : 1
-                }}
-                onClick={() => {
-                  if (isSameUser) {
-                    dispatch(
-                      notify({
-                        msg:
-                          'Double check must be done by another user',
-                        sev: 'warning'
-                      })
-                    );
-                    return;
-                  }
-
-                  handleDoubleCheck(row);
-                }}
-              />
-            );
-          }
-
-
-          return null;
-        }
+      <MedicationAdministrationLogs
+        order={row}
+      />
+    </div>
+  );
+}
       }
 
     ],
@@ -775,7 +755,6 @@ const MedicationRecord = () => {
     orderedFetching ||
     adminLoading ||
     adminFetching ||
-    administering ||
     discarding ||
     doubleChecking;
 
@@ -931,7 +910,15 @@ const MedicationRecord = () => {
         title="Discard Medication"
         required={true}
       />
-
+      <MedicationAdministrationModal
+        orderId={selectedOrderId}
+        open={administrationModalOpen}
+        setOpen={setAdministrationModalOpen}
+        onSuccess={async () => {
+          await refetchOrdered();
+          await refetchAdmin();
+        }}
+      />
     </div>
   );
 };

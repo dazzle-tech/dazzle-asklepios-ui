@@ -1,9 +1,12 @@
-import ChatModal from '@/components/ChatModal';
-import MyTable from '@/components/MyTable';
-import Translate from '@/components/Translate';
 import CancellationModal from '@/components/CancellationModal';
+import ChatModal from '@/components/ChatModal';
+import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import LovValueCell from '@/components/LovValueCell';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
@@ -17,16 +20,18 @@ import {
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+
 import {
   useGetLovAllValuesQuery,
   useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faArrowDown,
@@ -36,11 +41,12 @@ import {
   faDiagramPredecessor,
   faFileLines,
   faPenToSquare,
-  faPrint,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, {
   forwardRef,
   useEffect,
@@ -48,24 +54,19 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import { FaChartLine } from 'react-icons/fa';
 import {
-  Button,
   Checkbox,
   HStack,
   Panel,
   Tooltip,
   Whisper
 } from 'rsuite';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { FaChartLine } from 'react-icons/fa';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
 import EditResultModal from './EditResultModal';
 import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
-import MyButton from '@/components/MyButton/MyButton';
-import UserDateCell from '@/components/UserDateCell/UserDateCell';
-import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -75,7 +76,6 @@ type Props = {
   setTest: (test: any) => void;
   refetchAllLabData: () => Promise<void>;
 };
-
 type PaginationParams = {
   page: number;
   size: number;
@@ -155,16 +155,12 @@ const Result = forwardRef<any, Props>(
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
     const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
-    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
-    const allTests = allTestsResponse?.data ?? [];
-    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
-    const allLabs = allLabsResponse?.data ?? [];
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-    const allProfiles = profilesResponse?.data ?? [];
+    const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIdsResponse }] =
+      useLazyGetDiagnosticTestsByIdsQuery();
+    const [fetchLaboratoriesByTestIds, { data: labsByTestIds }] =
+      useLazyGetLaboratoriesByTestIdsQuery();
+    const [getProfilesByIds, { data: profilesResponse }] =
+      useGetDiagnosticTestProfilesByIdsMutation();
 
     const [fetchNormalRangesByProfileTestId] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
     const [approveResult] = useApproveDiagnosticOrderTestResultMutation();
@@ -173,9 +169,7 @@ const Result = forwardRef<any, Props>(
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
 
-    const testsMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
-    const labByTestIdMap = useMemo(() => new Map(allLabs.map(l => [l.testId, l])), [allLabs]);
-    const profilesMap = useMemo(() => new Map(allProfiles.map(p => [p.id, p])), [allProfiles]);
+   
 
     const {
       data: resultsResponse,
@@ -205,6 +199,70 @@ const Result = forwardRef<any, Props>(
           .filter((id, i, arr) => arr.indexOf(id) === i),
       [results]
     );
+
+    const profilesMap = useMemo(
+      () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
+      [profilesResponse]
+    );
+ const testIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIdsResponse ?? []).map((test: any) => [test.id, test])),
+      [diagnosticTestsByIdsResponse]
+    );
+    const labTestIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const labByTestIdMap = useMemo(
+      () => new Map((labsByTestIds ?? []).map((lab: any) => [lab.testId, lab])),
+      [labsByTestIds]
+    );
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      getProfilesByIds(profileTestIds)
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [getProfilesByIds, profileTestIds]);
+
+    useEffect(() => {
+      if (!testIds.length) return;
+
+      fetchDiagnosticTestsByIds({ ids: testIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchDiagnosticTestsByIds, testIds]);
+
+    useEffect(() => {
+      if (!labTestIds.length) return;
+
+      fetchLaboratoriesByTestIds({ testIds: labTestIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchLaboratoriesByTestIds, labTestIds]);
 
     const {
       data: resultNotesResponse,
@@ -280,11 +338,11 @@ const resolveResultDisplay = (row: any) => {
     profile?.resultType?.toUpperCase()?.trim();
 
   if (resultType === 'LOV') {
-    return resolveLovDisplayValue(
-      profile,
-      row.resultValueText,
-      lovDefinitions,
-      allLovValues
+    return (
+      <LovValueCell
+        valueKey={row.resultValueText}
+        listOfValueId={profile.listOfValueId}
+      />
     );
   }
 
@@ -662,11 +720,11 @@ const resolveResultDisplay = (row: any) => {
 
           if (hasViewRange) {
             if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                row.viewNormalRange,
-                lovDefinitions,
-                allLovValues
+              return (
+                <LovValueCell
+                  valueKey={row.viewNormalRange}
+                  listOfValueId={profile.listOfValueId}
+                />
               );
             }
 

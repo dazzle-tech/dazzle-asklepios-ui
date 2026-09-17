@@ -84,12 +84,13 @@ const DepartmentSwitcher = ({
   const {
     data: activeDepartmentsResponse,
     isLoading,
-    isFetching
+    isFetching,
+    refetch
   } = useGetActiveUserDepartmentsByUserQuery(
     { userId: userId as number, facilityId: facilityKey },
     {
       skip: !openedOnce || !userId || !selectedFacilityId,
-      refetchOnMountOrArgChange: false
+      refetchOnMountOrArgChange: true
     }
   );
 
@@ -156,7 +157,12 @@ const DepartmentSwitcher = ({
       const showLoading = isLoading || isFetching;
 
       return (
-        <Popover ref={ref} className={className} style={{ left, top, width }} full>
+        <Popover
+          ref={ref}
+          className={className}
+          style={{ left, top, width, zIndex: 2000000 }}
+          full
+        >
           <div
             style={{
               padding: '8px 12px',
@@ -326,7 +332,11 @@ const DepartmentSwitcher = ({
       trigger={trigger}
       open={controlled ? open : undefined}
       onOpen={() => {
-        setOpenedOnce(true);
+        if (openedOnce) {
+          void refetch();
+        } else {
+          setOpenedOnce(true);
+        }
         onOpen?.();
       }}
       onClose={onClose}

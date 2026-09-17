@@ -46,6 +46,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   const dir = isRTL ? 'rtl' : 'ltr';
 
   const DayOfWeek = useEnumOptions('DayOfWeek');
+  const ageUnitOptions = useEnumOptions('AgeUnit');
   const [showMedicalSheetsInfo, setShowMedicalSheetsInfo] = useState(false);
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -78,6 +79,8 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
     }));
   };
 
+
+
   useEffect(() => {
     if (!department?.appointable) {
       setDepartment(prev => ({
@@ -95,6 +98,18 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
       setAddDefaultMedicalSheets(false);
     }
   }, [department?.hasMedicalSheets]);
+
+  useEffect(() => {
+    if (!department?.ageSpecific) {
+      setDepartment(prev => ({
+        ...prev,
+        fromAge: null,
+        fromAgeUnit: null,
+        toAge: null,
+        toAgeUnit: null,
+      }));
+    }
+  }, [department?.ageSpecific]);
 
 const defaultMedicalSheetsInfo = (
   <Popover title="Default Medical Sheets">
@@ -390,6 +405,63 @@ const defaultNurseMedicalSheetsInfo = (
           />
 
         </>
+      )}
+
+      <MyInput
+        column
+        fieldLabel="Age Specific"
+        fieldType="checkbox"
+        fieldName="ageSpecific"
+        record={department}
+        setRecord={setDepartment}
+      />
+
+      {department?.ageSpecific && (
+        <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="fromAge"
+            record={department}
+            setRecord={setDepartment}
+            width={350}
+          />
+
+          <MyInput
+            column
+            fieldLabel="From Age Unit"
+            fieldName="fromAgeUnit"
+            fieldType="select"
+            selectData={ageUnitOptions ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={department}
+            setRecord={setDepartment}
+            width={350}
+          />
+
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="toAge"
+            record={department}
+            setRecord={setDepartment}
+            width={350}
+          />
+
+          <MyInput
+            column
+            fieldLabel="To Age Unit"
+            fieldName="toAgeUnit"
+            fieldType="select"
+            selectData={ageUnitOptions ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={department}
+            setRecord={setDepartment}
+            width={350}
+          />
+        </div>
       )}
 
       <div style={{ width: '100%', marginTop: '12px' }}>

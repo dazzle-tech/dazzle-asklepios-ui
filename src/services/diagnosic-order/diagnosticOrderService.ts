@@ -114,25 +114,28 @@ export const diagnosticOrderService = createApi({
       ],
     }),
 
-    getOrdersByEncounter: builder.query<
-      PagedResult<DiagnosticOrder>,
-      { encounterId: number; status?: string } & PageableParams
-    >({
-      query: ({ encounterId, ...params }) => ({
-        url: `/api/patient/diagnostic-orders/by-encounter/{encounterId}`,
-        method: 'GET',
-        params,
-      }),
-      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
-        data: (response ?? []).map(mapDiagnosticOrder),
-        totalCount: Number(
-          meta?.response?.headers?.get('X-Total-Count') ?? 0
-        ),
-      }),
-      providesTags: (_r, _e, { encounterId }) => [
-        { type: 'DiagnosticOrder', id: `encounter-${encounterId}` },
-      ],
-    }),
+getOrdersByEncounter: builder.query<
+  PagedResult<DiagnosticOrder>,
+  { encounterId: number; status?: string } & PageableParams
+>({
+  query: ({ encounterId, ...params }) => ({
+    url: `/api/patient/diagnostic-orders/by-encounter/${encounterId}`,
+    method: 'GET',
+    params,
+  }),
+  transformResponse: (
+    response: DiagnosticOrder[],
+    meta
+  ): PagedResult<DiagnosticOrder> => ({
+    data: (response ?? []).map(mapDiagnosticOrder),
+    totalCount: Number(
+      meta?.response?.headers?.get('X-Total-Count') ?? 0
+    ),
+  }),
+  providesTags: (_r, _e, { encounterId }) => [
+    { type: 'DiagnosticOrder', id: `encounter-${encounterId}` },
+  ],
+}),
 
     getOrdersByPatientAndEncounter: builder.query<
       PagedResult<DiagnosticOrder>,

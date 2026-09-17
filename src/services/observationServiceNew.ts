@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
 import { NurseSummaryReportVM } from '@/types/model-types-new';
-
 export const observationServiceNew = createApi({
   reducerPath: 'observationService',
   baseQuery: BaseQuery,
@@ -53,5 +52,5 @@ export const {
   useLazyGetNurseSummaryReportQuery,
   useLazyGetNurseSummaryReportPdfQuery,
   useLazyGetVisitReportQuery,
-  useLazyGetVisitReportPdfQuery
+  useLazyGetVisitReportPdfQuery,
 } = observationServiceNew;
