@@ -58,6 +58,7 @@ const Lab = () => {
   const [departmentFilter, setDepartmentFilter] = useState<any>({
     fromDepartmentIdIn: null
   });
+  const [orderTests, setOrderTests] = useState<any[]>([]);
   useEffect(() => {
     dispatch(setPageCode('Lab'));
     dispatch(setDivContent('Clinical Laboratory'));
@@ -284,7 +285,9 @@ const Lab = () => {
           fecthSample={fecthSample}
           loading={globalLoading}
           refetchAllLabData={refetchAllLabData}
+        
           onTestsLoaded={(tests: any[]) => {
+            setOrderTests(tests ?? []);
             const selectedDate = new Date(dateFilter.fromDate);
 
             const selectedYear = selectedDate.getFullYear();
@@ -302,6 +305,7 @@ const Lab = () => {
             });
 
             setVisibleTests(filtered);
+
           }}
         />
       )
@@ -372,6 +376,7 @@ const Lab = () => {
                       selectedPatient={selectedPatient}
                       departmentFilter={departmentFilter}
                       filters={tablefilters}
+                      orderTests={orderTests}
                     />
 
                   <MyTab
