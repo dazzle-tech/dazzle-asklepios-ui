@@ -122,14 +122,14 @@ const Tests = forwardRef<any, Props>(
       isFetching: isNotesFetching,
       refetch: refetchNotes
     } = useGetNotesByOrderTestIdQuery(
-  selectedNoteTestId
-    ? {
-        orderTestId: selectedNoteTestId,
-        page: 0,
-        size: 100
-      }
-    : skipToken
-);
+      selectedNoteTestId
+        ? {
+          orderTestId: selectedNoteTestId,
+          page: 0,
+          size: 100
+        }
+        : skipToken
+    );
 
 
     const [createNote, { isLoading: isSendingNote }] =
@@ -175,7 +175,9 @@ const Tests = forwardRef<any, Props>(
     );
 
     const orderTests = testsResponse?.data ?? [];
-
+    useEffect(() => {
+      onTestsLoaded?.(testsResponse?.data ?? []);
+    }, [testsResponse?.data, onTestsLoaded]);
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
@@ -800,7 +802,7 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) => <PrintSampleLabelAction rowData={rowData} />
       },
-      
+
       {
         key: 'acceptedatby',
         dataKey: '',
@@ -921,8 +923,8 @@ const Tests = forwardRef<any, Props>(
             width={200}
             placeholder="Select Category"
             selectData={labCatLovQueryResponse?.object}
-             selectDataLabel="lovDisplayVale"
- disableByField='isValid'
+            selectDataLabel="lovDisplayVale"
+            disableByField='isValid'
 
             selectDataValue="key"
             record={testKeyFilter}
@@ -963,7 +965,7 @@ const Tests = forwardRef<any, Props>(
               onRowsPerPageChange={e =>
                 setPaginationParams(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))
               }
-              
+
               onSortChange={(column, type) => {
                 const invalidSortFields = ['action', 'check', 'collectsample', 'print'];
 

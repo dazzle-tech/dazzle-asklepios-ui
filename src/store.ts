@@ -264,6 +264,7 @@ import { autoPopulationService } from './services/auto-Population/autoPopulation
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
+import { refreshHl7EventsService } from './services/refreshHl7EventsService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -315,6 +316,7 @@ export const store = configureStore({
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
