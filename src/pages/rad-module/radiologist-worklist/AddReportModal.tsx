@@ -272,35 +272,37 @@ const severityOptions = useEnumOptions('Severity');
                 setRecord={setReport}
             />
 
-            <MyInput
-                width="100%"
-                disabled={isDisabled}
-                fieldName="radiologistInformation"
-                fieldLabel="Radiologist Information"
-                fieldType="textarea"
-                record={report}
-                setRecord={setReport}
-            />
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <MyInput
+                  width="100%"
+                  disabled={isDisabled}
+                  fieldName="radiologistInformation"
+                  fieldLabel="Radiologist Information"
+                  fieldType="textarea"
+                  record={report}
+                  setRecord={setReport}
+              />
 
-            <MyInput
-                width="100%"
-                disabled={isDisabled}
-                fieldName="criticalFindings"
-                fieldLabel="Critical Findings"
-                fieldType="textarea"
-                record={report}
-                setRecord={setReport}
-            />
+              <MyInput
+                  width="100%"
+                  disabled={isDisabled}
+                  fieldName="criticalFindings"
+                  fieldLabel="Critical Findings"
+                  fieldType="textarea"
+                  record={report}
+                  setRecord={setReport}
+              />
 
-            <MyInput
-                width="100%"
-                disabled={isDisabled}
-                fieldName="radiologistComments"
-                fieldLabel="Radiologist Comments"
-                fieldType="textarea"
-                record={report}
-                setRecord={setReport}
-            />
+              <MyInput
+                  width="100%"
+                  disabled={isDisabled}
+                  fieldName="radiologistComments"
+                  fieldLabel="Radiologist Comments"
+                  fieldType="textarea"
+                  record={report}
+                  setRecord={setReport}
+              />
+            </div>
 
           </Form>
 
