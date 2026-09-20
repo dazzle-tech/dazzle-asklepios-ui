@@ -124,7 +124,10 @@ const severityOptions = useEnumOptions('Severity');
         reportId: report.id,
         body: {
           report: htmlContent,
-          severity: report.severity
+          severity: report.severity,
+          radiologistInformation: report.radiologistInformation,
+          criticalFindings: report.criticalFindings,
+          radiologistComments: report.radiologistComments
         }
       }).unwrap();
 
@@ -265,6 +268,36 @@ const severityOptions = useEnumOptions('Severity');
                 selectData={severityOptions ?? []}
                 selectDataLabel="label"
                 selectDataValue="value"
+                record={report}
+                setRecord={setReport}
+            />
+
+            <MyInput
+                width="100%"
+                disabled={isDisabled}
+                fieldName="radiologistInformation"
+                fieldLabel="Radiologist Information"
+                fieldType="textarea"
+                record={report}
+                setRecord={setReport}
+            />
+
+            <MyInput
+                width="100%"
+                disabled={isDisabled}
+                fieldName="criticalFindings"
+                fieldLabel="Critical Findings"
+                fieldType="textarea"
+                record={report}
+                setRecord={setReport}
+            />
+
+            <MyInput
+                width="100%"
+                disabled={isDisabled}
+                fieldName="radiologistComments"
+                fieldLabel="Radiologist Comments"
+                fieldType="textarea"
                 record={report}
                 setRecord={setReport}
             />
