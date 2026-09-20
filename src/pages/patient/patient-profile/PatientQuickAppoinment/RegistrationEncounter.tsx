@@ -670,7 +670,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
-        required
+        required={localEncounter?.encounterType !== 'EMERGENCY'}
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
