@@ -53,11 +53,11 @@ const PatientSearch = ({
   const [triggerFn, setTriggerFn] = useState<any>(null);
 
   const searchCriteriaOptions = [
-    { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-    { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
-    { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
-    { label: <Translate>Date of Birth</Translate>, value: 'dob' },
-    { label: <Translate>Full Name</Translate>, value: 'fullName' }
+    { label: 'MRN', value: 'patientMrn' },
+    { label: 'Archiving Number', value: 'archivingNumber' },
+    { label: 'Primary Phone Number', value: 'phoneNumber' },
+    { label: 'Date of Birth', value: 'dob' },
+    { label: 'Full Name', value: 'fullName' }
   ];
 
   const filteredPatients = useMemo(() => {
