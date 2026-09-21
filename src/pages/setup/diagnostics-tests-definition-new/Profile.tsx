@@ -671,7 +671,7 @@ const Profile = ({
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
-      mainSize="xs"
+      mainSize="md"
       childSize="sm"
     />
   );
