@@ -74,7 +74,7 @@ const AddReportModal = ({
 
   const [updateReport] = useUpdateRadiologyReportMutation();
 
-const severityOptions = useEnumOptions('Severity');
+  const severityOptions = useEnumOptions('Severity');
 
   const { data: readyTemplatesResponse } =
     useGetActiveReportTemplatesQuery({
@@ -83,8 +83,8 @@ const severityOptions = useEnumOptions('Severity');
       sort: 'name,asc'
     });
 
-    const diagnosticTestId = orderTest?.testId;
-    const encounterId = order?.encounterId;
+  const diagnosticTestId = orderTest?.testId;
+  const encounterId = order?.encounterId;
 
 
   const { data: defaultTemplate } =
@@ -235,122 +235,131 @@ const severityOptions = useEnumOptions('Severity');
     defaultApplied
   ]);
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-  <div dir={dir}>
-    <MyModal
-      title="Add Report"
-      open={open}
-      setOpen={setOpen}
-      steps={[
-        { title: 'Report', icon: <FontAwesomeIcon icon={faFileLines} /> }
-      ]}
-      actionButtonFunction={isDisabled ? () => { } : handleSave}
-      isDisabledActionBtn={isDisabled}
-      size="40vw"
-      bodyheight="65vh"
-      content={
-        <div dir={dir}>
-        <div className='add-report-modal-radiologist-work-list'>
-          <Form fluid>
-            <MyInput
-                width="12vw"
-                disabled={isDisabled}
-                fieldName="severity"
-                fieldLabel="Severity"
-                fieldType="select"
-                selectData={severityOptions ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={report}
-                setRecord={setReport}
-            />
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <MyInput
-                  width="100%"
-                  disabled={isDisabled}
-                  fieldName="radiologistInformation"
-                  fieldLabel="Radiologist Information"
-                  fieldType="textarea"
-                  record={report}
-                  setRecord={setReport}
-              />
-
-              <MyInput
-                  width="100%"
-                  disabled={isDisabled}
-                  fieldName="criticalFindings"
-                  fieldLabel="Critical Findings"
-                  fieldType="textarea"
-                  record={report}
-                  setRecord={setReport}
-              />
-
-              <MyInput
-                  width="100%"
-                  disabled={isDisabled}
-                  fieldName="radiologistComments"
-                  fieldLabel="Radiologist Comments"
-                  fieldType="textarea"
-                  record={report}
-                  setRecord={setReport}
-              />
-            </div>
+    <div dir={dir}>
+      <MyModal
+        title="Add Report"
+        open={open}
+        setOpen={setOpen}
+        steps={[
+          { title: 'Report', icon: <FontAwesomeIcon icon={faFileLines} /> }
+        ]}
+        actionButtonFunction={isDisabled ? () => { } : handleSave}
+        isDisabledActionBtn={isDisabled}
+        size="40vw"
+        bodyheight="65vh"
+        content={
+          <div dir={dir}>
+              <Row>
+                <Col md={24}>
+                  <Form fluid>
+                    <MyInput
+                      width="12vw"
+                      disabled={isDisabled}
+                      fieldName="severity"
+                      fieldLabel="Severity"
+                      fieldType="select"
+                      selectData={severityOptions ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={report}
+                      setRecord={setReport}
+                    />
+                  </Form>
+                </Col>
+              </Row>
 
 
-          </Form>
+              <Row>
+                <Col md={24}>
+                  <Form fluid>
+                    {!isDisabled && (<MyInput
+                      fieldName="selectReadyTemplate"
+                      fieldLabel="Choose Ready Template"
+                      fieldType="select"
+                      selectData={templateOptions}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      width="12vw"
+                      record={{ selectReadyTemplate: null }}
+                      setRecord={(rec) =>
+                        handleChooseTemplate(rec.selectReadyTemplate)
+                      }
+                    />)}
+                    <MyInput
+                      width="100%"
+                      fieldName="radiologistInformation"
+                      fieldLabel="Radiologist Information"
+                      fieldType="text"
+                      record={report}
+                      setRecord={setReport}
+                      disabled={true}
+                    />
+                  </Form>
+                </Col>
+              </Row>
 
-          {!isDisabled && (
+            {/* Editor */}
+            <Row>
+              <Col md={24}>
+                <Editor
+                  editorState={editorState}
+                  onEditorStateChange={handleEditorChange}
+                  readOnly={isDisabled}
+                  placeholder="Write your report here..."
+                  editorStyle={{
+                    minHeight: '60vh',
+                    overflow: 'auto',
+                    width: '100%',
+                    border: '1px solid var(--rs-border-primary)',
+                    padding: '8px'
+                  }}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={24}>
                 <Form fluid>
                   <MyInput
-                    fieldName="selectReadyTemplate"
-                    fieldLabel="Choose Ready Template"
-                    fieldType="select"
-                    selectData={templateOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    width="12vw"
-                    record={{ selectReadyTemplate: null }}
-                    setRecord={(rec) =>
-                      handleChooseTemplate(rec.selectReadyTemplate)
-                    }
+                    width="100%"
+                    fieldName="criticalFindings"
+                    fieldLabel="Critical Findings"
+                    fieldType="textarea"
+                    record={report}
+                    setRecord={setReport}
+                    disabled={true}
                   />
                 </Form>
-          )}
-
-        </div>
-
-          {/* Editor */}
-          <Row>
-            <Col md={24}>
-              <Editor
-                editorState={editorState}
-                onEditorStateChange={handleEditorChange}
-                readOnly={isDisabled}
-                placeholder="Write your report here..."
-                editorStyle={{
-                  minHeight: '60vh',
-                  overflow: 'auto',
-                  width: '100%',
-                  border: '1px solid var(--rs-border-primary)',
-                  padding: '8px'
-                }}
-              />
-            </Col>
-          </Row>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={24}>
+                <Form fluid>
+                  <MyInput
+                    width="100%"
+                    fieldName="radiologistComments"
+                    fieldLabel="Radiologist Comments"
+                    fieldType="textarea"
+                    record={report}
+                    setRecord={setReport}
+                    disabled={true}
+                  />
+                </Form>
+              </Col>
+            </Row>
 
 
-        </div>
-      }
-    />
-  </div>
+          </div>
+        }
+      />
+    </div>
   );
 };
 
