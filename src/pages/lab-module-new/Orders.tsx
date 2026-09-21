@@ -317,7 +317,7 @@ const Orders = forwardRef<any, OrdersProps>(
           return (
             <Whisper
               placement="top"
-              speaker={<Tooltip>Refresh HL7</Tooltip>}
+              speaker={<Tooltip>Refresh Order</Tooltip>}
             >
               <span>
                 <FontAwesomeIcon
