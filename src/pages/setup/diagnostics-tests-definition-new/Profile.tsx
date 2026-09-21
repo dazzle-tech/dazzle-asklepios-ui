@@ -206,7 +206,7 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
       hideActionBtn
       size="lg"
       bodyheight="75vh"
-      content={(
+      content={
         <div dir={dir}>
           <Form fluid>
             <ProfileSection
@@ -252,7 +252,7 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
             />
           </Form>
         </div>
-      )}
+      }
     />
   );
 };
