@@ -16,7 +16,8 @@ type Props = {
 
   label?: string;
   disabled?: boolean;
-
+  required?: boolean;
+  compact?: boolean;
   pageSize?: number;
 };
 
@@ -25,6 +26,8 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   setDiagnosisId,
   label = "Diagnosis",
   disabled = false,
+  required = false,
+  compact = false,
   pageSize = 15,
 }) => {
   // --- search UI ---
@@ -199,13 +202,15 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
     <div className="icd10-search">
       {/* Search input */}
       <Row className="icd10-search__row">
-        <Text className="icd10-search__label">{label}</Text>
+        <Text className="icd10-search__label">
+          {label}
+          {required ? <span className="icd10-search__required"> *</span> : null}
+        </Text>
 
         <Col md={24}>
           <div className="icd10-search__field" ref={dropdownRef}>
             <InputGroup inside className="icd10-search__inputGroup">
               <Input
-                required
                 placeholder="Search ICD-10 (min 3 chars) - Press Enter"
                 value={keyword}
                 onChange={(v) => {
@@ -312,22 +317,39 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         </Col>
       </Row>
 
-      {/* Selected details as disabled textarea */}
+      {/* Selected details */}
       <Row className="icd10-search__selectedRow">
         <Col md={24}>
-          <Input
-            as="textarea"
-            rows={4}
-            disabled
-            value={
-              isByIdLoading
-                ? "Loading..."
-                : display.code
-                ? `${display.code}${display.desc ? " - " + display.desc : ""}`
-                : ""
-            }
-            className="icd10-search__selected"
-          />
+          {compact ? (
+            <div
+              className={`icd10-search__summary${display.code ? " icd10-search__summary--selected" : ""}`}
+            >
+              {isByIdLoading ? (
+                "Loading..."
+              ) : display.code ? (
+                <>
+                  <strong>{display.code}</strong>
+                  {display.desc ? ` — ${display.desc}` : ""}
+                </>
+              ) : (
+                "No diagnosis selected"
+              )}
+            </div>
+          ) : (
+            <Input
+              as="textarea"
+              rows={4}
+              disabled
+              value={
+                isByIdLoading
+                  ? "Loading..."
+                  : display.code
+                  ? `${display.code}${display.desc ? " - " + display.desc : ""}`
+                  : ""
+              }
+              className="icd10-search__selected"
+            />
+          )}
         </Col>
       </Row>
     </div>

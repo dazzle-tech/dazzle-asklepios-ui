@@ -99,6 +99,11 @@ margin-bottom: 0.4vw;}
   text-transform: uppercase;
 }
 
+.nphies-payer-row-actions {
+  flex-wrap: nowrap;
+  min-width: 170px;
+}
+
 .payer-link-tpas-hint {
   margin: 0 0 0.8vw;
   color: var(--primary-gray, #5f6368);
@@ -122,4 +127,447 @@ margin-bottom: 0.4vw;}
   color: var(--deep-blue, #1976d2);
   font-size: 13px;
   font-weight: 600;
+}
+
+.payer-setup-tabs {
+  .rs-nav {
+    margin-bottom: 0.8vw;
+  }
+}
+
+.payer-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+  padding-bottom: 1vw;
+}
+
+.payer-dashboard-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1vw;
+  align-items: flex-start;
+  padding: 1.1vw 1.2vw;
+  border-radius: 6px;
+  background: var(--extra-light-blue, #f4f7fc);
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+}
+
+.payer-dashboard-kicker {
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-title {
+  margin: 0.2vw 0 0.35vw;
+  font-size: 22px;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-copy {
+  margin: 0;
+  max-width: 52vw;
+  color: var(--primary-gray);
+  line-height: 1.45;
+}
+
+.payer-dashboard-refresh {
+  border: 0;
+  border-radius: 4px;
+  padding: 0.45vw 1vw;
+  background: var(--primary-blue);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payer-dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.8vw;
+}
+
+.payer-dashboard-kpi {
+  position: relative;
+  overflow: hidden;
+  padding: 0.85vw 0.9vw;
+  border-radius: 6px;
+  background: var(--rs-bg-card, #fff);
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+}
+
+.payer-dashboard-kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--primary-blue);
+}
+
+.payer-dashboard-kpi--purple::before {
+  background: var(--primary-purple);
+}
+
+.payer-dashboard-kpi--info::before {
+  background: var(--deep-blue);
+}
+
+.payer-dashboard-kpi--success::before {
+  background: var(--primary-green);
+}
+
+.payer-dashboard-kpi--warning::before {
+  background: var(--primary-orange);
+}
+
+.payer-dashboard-kpi-label,
+.payer-dashboard-kpi-hint {
+  color: var(--primary-gray);
+  font-size: var(--small-font-size, 12px);
+}
+
+.payer-dashboard-kpi-value {
+  margin: 0.25vw 0;
+  font-size: var(--largest-font-size, 24px);
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-banner {
+  padding: 0.7vw 1vw;
+  border-radius: 4px;
+  background: var(--light-orange);
+  color: var(--primary-orange);
+  font-weight: 600;
+}
+
+.payer-dashboard-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 1vw;
+  min-height: 520px;
+}
+
+.payer-dashboard-master,
+.payer-dashboard-detail {
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+  border-radius: 6px;
+  background: var(--rs-bg-card, #fff);
+}
+
+.payer-dashboard-master {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.payer-dashboard-master-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  padding: 0.8vw;
+  border-bottom: 1px solid var(--rs-border-primary, #e5e5ea);
+
+  .rs-input {
+    width: 100%;
+    border-radius: 4px;
+  }
+}
+
+.payer-dashboard-kind-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4vw;
+}
+
+.payer-dashboard-kind {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4vw;
+  border: 1px solid var(--rs-border-primary, #d7d7de);
+  background: var(--rs-bg-card, #fff);
+  color: var(--primary-gray);
+  border-radius: 4px;
+  padding: 0.45vw 0.7vw;
+  font-size: var(--small-font-size, 12px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payer-dashboard-kind span {
+  min-width: 22px;
+  padding: 0 4px;
+  text-align: center;
+  border-radius: 4px;
+  background: var(--extra-light-blue, #f4f7fc);
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-kind.is-active {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: #fff;
+}
+
+.payer-dashboard-kind.is-active span {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.payer-dashboard-master-items {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0.35vw;
+}
+
+.payer-dashboard-master-items.is-loading {
+  opacity: 0.6;
+}
+
+.payer-dashboard-master-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.7vw 0.8vw;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 3px 0 0 transparent;
+}
+
+.payer-dashboard-master-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.payer-dashboard-master-item-top strong {
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-master-item-top em {
+  flex-shrink: 0;
+  font-style: normal;
+  font-size: var(--smallest-font-size, 11px);
+  font-weight: 700;
+  color: var(--primary-gray);
+}
+
+.payer-dashboard-master-item-name {
+  color: var(--dark-blue-gray, #2d3b4c);
+  font-size: var(--regular-font-size, 14px);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.payer-dashboard-master-item:hover {
+  background: var(--one-health-theme-hover);
+}
+
+.payer-dashboard-master-item.is-selected {
+  background: var(--one-health-theme-hover);
+  box-shadow: inset 3px 0 0 var(--primary-blue);
+}
+
+.payer-dashboard-detail {
+  min-width: 0;
+  padding: 1vw 1.1vw 1.2vw;
+}
+
+.payer-dashboard-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8vw;
+  margin-bottom: 0.7vw;
+}
+
+.payer-dashboard-code {
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-detail h3 {
+  margin: 0.15vw 0 0.25vw;
+  font-size: 20px;
+  color: var(--primary-blue);
+}
+
+.payer-dashboard-meta,
+.payer-dashboard-card-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4vw;
+  align-items: center;
+}
+
+.payer-dashboard-meta {
+  color: var(--primary-gray);
+  font-size: var(--small-font-size, 12px);
+}
+
+.payer-dashboard-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--rs-border-primary, #d7d7de);
+  border-radius: 4px;
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  color: var(--primary-blue);
+  background: var(--extra-light-blue, #f4f7fc);
+}
+
+.payer-dashboard-status {
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  color: var(--primary-red);
+}
+
+.payer-dashboard-status.is-active {
+  color: var(--primary-green);
+}
+
+.payer-dashboard-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+
+  > div {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 0.6vw;
+    padding: 0.7vw 0.85vw;
+    border-bottom: 1px solid var(--rs-border-primary, #eef0f3);
+  }
+
+  dt {
+    margin: 0;
+    font-size: var(--small-font-size, 12px);
+    color: var(--primary-gray);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--primary-blue);
+    font-weight: 600;
+    word-break: break-word;
+  }
+}
+
+.payer-dashboard-block {
+  margin-top: 0.9vw;
+}
+
+.payer-dashboard-block-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--small-font-size, 12px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-gray);
+  margin-bottom: 0.4vw;
+}
+
+.payer-dashboard-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+}
+
+.payer-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.55vw 0.7vw;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: var(--smallest-font-size, 11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--primary-gray);
+    background: var(--table-header-bg);
+    border-bottom: 1px solid var(--rs-border-primary, #e5e5ea);
+  }
+
+  td {
+    font-size: var(--regular-font-size, 14px);
+    color: var(--primary-blue);
+    border-bottom: 1px solid var(--rs-border-primary, #eef0f3);
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tr.is-clickable {
+    cursor: pointer;
+  }
+
+  tr.is-clickable:hover td {
+    background: var(--one-health-theme-hover);
+  }
+}
+
+.payer-dashboard-muted {
+  font-size: var(--regular-font-size, 14px);
+  color: var(--primary-gray);
+  padding: 0.6vw 0.2vw;
+}
+
+.payer-dashboard-empty,
+.payer-dashboard-empty-card {
+  padding: 2vw 1vw;
+  text-align: center;
+  color: var(--primary-gray);
+}
+
+.payer-dashboard-empty-card {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--rs-border-primary, #d7d7de);
+  background: var(--extra-light-blue, #f4f7fc);
+}
+
+@media (max-width: 1200px) {
+  .payer-dashboard-kpis,
+  .payer-dashboard-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .payer-dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .payer-dashboard-kpis,
+  .payer-dashboard-hero {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
 }

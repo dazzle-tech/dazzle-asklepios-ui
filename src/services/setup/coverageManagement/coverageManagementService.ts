@@ -66,8 +66,16 @@ export type CoverageContract = {
   priceListEffectiveTo?: string | null;
   parentPayerId?: number | null;
   parentPayerName?: string | null;
-  className?: string;
+  classId?: number | null;
+  className?: string | null;
   approvalCoverageCompany?: string | null;
+  isActive?: boolean;
+};
+
+export type CoverageClass = {
+  id?: number;
+  coverageContractId?: number;
+  name?: string;
   isActive?: boolean;
 };
 
@@ -235,7 +243,6 @@ const toContractPayload = (body: CoverageContract) => ({
   insurancePayerId: body.insurancePayerId,
   priceListSetupId: body.priceListSetupId,
   parentPayerId: body.parentPayerId,
-  className: body.className,
   approvalCoverageCompany: body.approvalCoverageCompany || null,
   isActive: body.isActive
 });
@@ -288,6 +295,9 @@ export const normalizeCoverageContract = (
     policyNumber: firstDefined(row.policyNumber, row.policy_number),
     insurancePayerId,
     insurancePayerName: firstDefined(row.insurancePayerName, row.insurance_payer_name),
+    parentPayerId: firstDefined(row.parentPayerId, row.parent_payer_id),
+    parentPayerName: firstDefined(row.parentPayerName, row.parent_payer_name) ?? '',
+    classId: firstDefined(row.classId, row.class_id),
     className: firstDefined(row.className, row.class_name),
     priceListName: firstDefined(row.priceListName, row.price_list_name),
     isActive: firstDefined(row.isActive, row.is_active) ?? row.isActive,
@@ -334,6 +344,7 @@ export const coverageManagementService = createApi({
   baseQuery: BaseQuery,
   tagTypes: [
     'CoverageContract',
+    'CoverageClass',
     'CoverageCopayment',
     'CoverageTerm',
     'CoverageTermItem',
@@ -350,7 +361,6 @@ export const coverageManagementService = createApi({
         companyId?: number;
         insurancePayerId?: number;
         isActive?: boolean;
-        className?: string;
         search?: string;
       }
     >({
@@ -493,20 +503,56 @@ export const coverageManagementService = createApi({
       }),
       transformResponse: toLookupPagedResult
     }),
-    listCopayments: builder.query<
-      PagedResult<CoverageCopayment>,
+    listCoverageClasses: builder.query<
+      PagedResult<CoverageClass>,
       PagedParams & { contractId: number; isActive?: boolean }
     >({
       query: ({ contractId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/copayments`,
+        url: `/api/setup/coverage-contracts/${contractId}/classes`,
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
+      }),
+      transformResponse: (res: CoverageClass[], meta) => toPagedResult(res, meta),
+      providesTags: ['CoverageClass']
+    }),
+    createCoverageClass: builder.mutation<CoverageClass, CoverageClass>({
+      query: body => ({
+        url: '/api/setup/coverage-classes',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['CoverageClass']
+    }),
+    updateCoverageClass: builder.mutation<CoverageClass, CoverageClass>({
+      query: body => ({
+        url: '/api/setup/coverage-classes',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['CoverageClass']
+    }),
+    toggleCoverageClassActive: builder.mutation<CoverageClass, number>({
+      query: id => ({ url: `/api/setup/coverage-classes/${id}/toggle-active`, method: 'PATCH' }),
+      invalidatesTags: ['CoverageClass']
+    }),
+    listCopayments: builder.query<
+      PagedResult<CoverageCopayment>,
+      PagedParams & { classId: number; isActive?: boolean }
+    >({
+      query: ({ classId, page, size, sort = 'id,desc', isActive }) => ({
+        url: `/api/setup/coverage-classes/${classId}/copayments`,
         params: { page, size, sort, isActive }
       }),
       transformResponse: (res: CoverageCopayment[], meta) => toPagedResult(res, meta),
       providesTags: ['CoverageCopayment']
     }),
-    saveCopayment: builder.mutation<CoverageCopayment, { contractId: number; body: CoverageCopayment }>({
-      query: ({ contractId, body }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/copayments`,
+    saveCopayment: builder.mutation<CoverageCopayment, { classId: number; body: CoverageCopayment }>({
+      query: ({ classId, body }) => ({
+        url: `/api/setup/coverage-classes/${classId}/copayments`,
         method: body.id ? 'PUT' : 'POST',
         body
       }),
@@ -514,18 +560,18 @@ export const coverageManagementService = createApi({
     }),
     listTerms: builder.query<
       PagedResult<CoverageTerm>,
-      PagedParams & { contractId: number; termType: string; isActive?: boolean }
+      PagedParams & { classId: number; termType: string; isActive?: boolean }
     >({
-      query: ({ contractId, termType, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/terms`,
+      query: ({ classId, termType, page, size, sort = 'id,desc', isActive }) => ({
+        url: `/api/setup/coverage-classes/${classId}/terms`,
         params: { page, size, sort, termType, isActive }
       }),
       transformResponse: (res: CoverageTerm[], meta) => toPagedResult(res, meta),
       providesTags: ['CoverageTerm']
     }),
-    saveTerm: builder.mutation<CoverageTerm, { contractId: number; body: CoverageTerm }>({
-      query: ({ contractId, body }) => ({
-        url: `/api/setup/coverage-contracts/${contractId}/terms`,
+    saveTerm: builder.mutation<CoverageTerm, { classId: number; body: CoverageTerm }>({
+      query: ({ classId, body }) => ({
+        url: `/api/setup/coverage-classes/${classId}/terms`,
         method: body.id ? 'PUT' : 'POST',
         body
       }),
@@ -536,7 +582,7 @@ export const coverageManagementService = createApi({
       PagedParams & { termId: number; isActive?: boolean }
     >({
       query: ({ termId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/terms/${termId}/items`,
+        url: `/api/setup/coverage-classes/terms/${termId}/items`,
         params: {
           page,
           size,
@@ -549,7 +595,7 @@ export const coverageManagementService = createApi({
     }),
     saveTermItem: builder.mutation<CoverageTermItem, { termId: number; body: CoverageTermItem }>({
       query: ({ termId, body }) => ({
-        url: `/api/setup/coverage-contracts/terms/${termId}/items`,
+        url: `/api/setup/coverage-classes/terms/${termId}/items`,
         method: body.id ? 'PUT' : 'POST',
         body
       }),
@@ -557,12 +603,12 @@ export const coverageManagementService = createApi({
     }),
     listDiscounts: builder.query<
       PagedResult<CoverageDiscount>,
-      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
+      PagedParams & { classId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+      query: ({ classId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/discounts`
-          : `/api/setup/coverage-contracts/${contractId}/discounts`,
+          : `/api/setup/coverage-classes/${classId}/discounts`,
         params: {
           page,
           size,
@@ -575,12 +621,12 @@ export const coverageManagementService = createApi({
     }),
     createDiscount: builder.mutation<
       CoverageDiscount,
-      { contractId?: number; tpaId?: number; body: CoverageDiscount }
+      { classId?: number; tpaId?: number; body: CoverageDiscount }
     >({
-      query: ({ contractId, tpaId, body }) => ({
+      query: ({ classId, tpaId, body }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/discounts`
-          : `/api/setup/coverage-contracts/${contractId}/discounts`,
+          : `/api/setup/coverage-classes/${classId}/discounts`,
         method: 'POST',
         body
       }),
@@ -595,12 +641,12 @@ export const coverageManagementService = createApi({
     }),
     listExclusions: builder.query<
       PagedResult<CoverageExclusion>,
-      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
+      PagedParams & { classId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+      query: ({ classId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
-          : `/api/setup/coverage-contracts/${contractId}/exclusions`,
+          : `/api/setup/coverage-classes/${classId}/exclusions`,
         params: {
           page,
           size,
@@ -613,12 +659,12 @@ export const coverageManagementService = createApi({
     }),
     createExclusion: builder.mutation<
       CoverageExclusion,
-      { contractId?: number; tpaId?: number; body: CoverageExclusion }
+      { classId?: number; tpaId?: number; body: CoverageExclusion }
     >({
-      query: ({ contractId, tpaId, body }) => ({
+      query: ({ classId, tpaId, body }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
-          : `/api/setup/coverage-contracts/${contractId}/exclusions`,
+          : `/api/setup/coverage-classes/${classId}/exclusions`,
         method: 'POST',
         body
       }),
@@ -633,12 +679,12 @@ export const coverageManagementService = createApi({
     }),
     listPreApprovals: builder.query<
       PagedResult<CoveragePreApproval>,
-      PagedParams & { contractId?: number; tpaId?: number; isActive?: boolean }
+      PagedParams & { classId?: number; tpaId?: number; isActive?: boolean }
     >({
-      query: ({ contractId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
+      query: ({ classId, tpaId, page, size, sort = 'id,desc', isActive }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/pre-approvals`
-          : `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
+          : `/api/setup/coverage-classes/${classId}/pre-approvals`,
         params: { page, size, sort, isActive }
       }),
       transformResponse: (res: CoveragePreApproval[], meta) => toPagedResult(res, meta),
@@ -646,12 +692,12 @@ export const coverageManagementService = createApi({
     }),
     savePreApproval: builder.mutation<
       CoveragePreApproval,
-      { contractId?: number; tpaId?: number; body: CoveragePreApproval }
+      { classId?: number; tpaId?: number; body: CoveragePreApproval }
     >({
-      query: ({ contractId, tpaId, body }) => ({
+      query: ({ classId, tpaId, body }) => ({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/pre-approvals`
-          : `/api/setup/coverage-contracts/${contractId}/pre-approvals`,
+          : `/api/setup/coverage-classes/${classId}/pre-approvals`,
         method: body.id ? 'PUT' : 'POST',
         body
       }),
@@ -662,7 +708,7 @@ export const coverageManagementService = createApi({
       PagedParams & { preApprovalId: number; isActive?: boolean }
     >({
       query: ({ preApprovalId, page, size, sort = 'id,desc', isActive }) => ({
-        url: `/api/setup/coverage-contracts/pre-approvals/${preApprovalId}/items`,
+        url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
         params: { page, size, sort, isActive }
       }),
       transformResponse: (res: CoveragePreApprovalItem[], meta) => toPagedResult(res, meta),
@@ -673,7 +719,7 @@ export const coverageManagementService = createApi({
       { preApprovalId: number; body: CoveragePreApprovalItem }
     >({
       query: ({ preApprovalId, body }) => ({
-        url: `/api/setup/coverage-contracts/pre-approvals/${preApprovalId}/items`,
+        url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
         method: 'POST',
         body
       }),
@@ -706,6 +752,10 @@ export const {
   useCreateCoverageContractMutation,
   useUpdateCoverageContractMutation,
   useToggleCoverageContractActiveMutation,
+  useListCoverageClassesQuery,
+  useCreateCoverageClassMutation,
+  useUpdateCoverageClassMutation,
+  useToggleCoverageClassActiveMutation,
   useSearchCoverageCompaniesQuery,
   useSearchCoverageInsurancePayersQuery,
   useSearchCoverageTpaInsurancePayersQuery,

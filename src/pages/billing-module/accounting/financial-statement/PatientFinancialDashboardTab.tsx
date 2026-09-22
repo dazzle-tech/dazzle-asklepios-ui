@@ -57,15 +57,14 @@ const PatientFinancialDashboardTab: React.FC<PatientFinancialDashboardTabProps> 
   const [selectedEncounterId, setSelectedEncounterId] = useState<number | null>(null);
   const paging = useStatementTablePaging(10);
 
-  const { data, isFetching, isError } = useGetPatientFinancialDashboardQuery(
+  const { data, isFetching, isLoading, isError } = useGetPatientFinancialDashboardQuery(
     {
       patientId: patientId as number,
       page: paging.page,
       size: paging.rowsPerPage
     },
     {
-      skip: patientId == null,
-      refetchOnMountOrArgChange: true
+      skip: patientId == null
     }
   );
 
@@ -105,7 +104,7 @@ const PatientFinancialDashboardTab: React.FC<PatientFinancialDashboardTabProps> 
     );
   }
 
-  if (isFetching && data == null) {
+  if ((isLoading || isFetching) && data == null) {
     return (
       <div className="pfs-empty">
         <Loader content="Loading accounting dashboard..." />

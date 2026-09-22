@@ -14,12 +14,14 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import CoverageContractEditor from './CoverageContractEditor';
+import CoverageClassTable from './CoverageClassTable';
 import CoverageRulePanels from './CoverageRulePanels';
 import { emptyContract, notifyError, notifySuccess, approvalCoverageCompanyLabel } from './coverageHelpers';
 import {
   useSearchCoverageCompaniesQuery,
   useSearchCoverageContractsQuery,
   useToggleCoverageContractActiveMutation,
+  type CoverageClass,
   type CoverageContract
 } from '@/services/setup/coverageManagement/coverageManagementService';
 import './styles.less';
@@ -27,17 +29,16 @@ import './styles.less';
 const CoverageManagement = () => {
   const dispatch = useAppDispatch();
   const guarantorTypes = useEnumOptions('GuarantorType');
-  const classNames = useEnumOptions('CoverageClassName');
   const [headerOpen, setHeaderOpen] = useState(false);
   const [headerRecord, setHeaderRecord] = useState<CoverageContract>(emptyContract());
   const [selected, setSelected] = useState<CoverageContract>(emptyContract());
+  const [selectedClass, setSelectedClass] = useState<CoverageClass | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 15, sort: 'id,desc' });
   const [filter, setFilter] = useState({
     guarantorType: '',
     companyId: undefined as number | undefined,
-    className: '',
     search: '',
     isActive: '' as boolean | ''
   });
@@ -57,7 +58,6 @@ const CoverageManagement = () => {
     ...paginationParams,
     guarantorType: applied.guarantorType || undefined,
     companyId: applied.companyId,
-    className: applied.className || undefined,
     search: applied.search || undefined,
     ...(typeof applied.isActive === 'boolean' ? { isActive: applied.isActive } : {})
   });
@@ -90,7 +90,10 @@ const CoverageManagement = () => {
         onRowsPerPageChange={(e: any) =>
           setPaginationParams(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))
         }
-        onRowClick={(row: CoverageContract) => setSelected(row)}
+        onRowClick={(row: CoverageContract) => {
+          setSelected(row);
+          setSelectedClass(null);
+        }}
         rowClassName={(row: CoverageContract) => (selected.id && selected.id === row.id ? 'selected-row' : '')}
         filters={
           <Form fluid className="form-of-filters-set-up">
@@ -120,16 +123,6 @@ const CoverageManagement = () => {
               placeholder="Company"
               showLabel={false}
               width="180px"
-            />
-            <MyInput
-              width="140px"
-              fieldType="select"
-              fieldName="className"
-              record={filter}
-              setRecord={setFilter}
-              selectData={classNames}
-              showLabel={false}
-              placeholder="Class"
             />
             <MyInput
               width="140px"
@@ -196,12 +189,6 @@ const CoverageManagement = () => {
             render: (row: CoverageContract) => approvalCoverageCompanyLabel(row.approvalCoverageCompany)
           },
           { key: 'insurancePayerName', title: <Translate>Insurance Name</Translate>, flexGrow: 2 },
-          {
-            key: 'className',
-            title: <Translate>Class</Translate>,
-            flexGrow: 1,
-            render: (row: CoverageContract) => formatEnumString(row.className)
-          },
           { key: 'priceListName', title: <Translate>Price List</Translate>, flexGrow: 2 },
           { key: 'startDate', title: <Translate>Start date</Translate>, flexGrow: 1 },
           { key: 'endDate', title: <Translate>End Date</Translate>, flexGrow: 1 },
@@ -223,6 +210,7 @@ const CoverageManagement = () => {
                   onClick={event => {
                     event.stopPropagation();
                     setSelected(row);
+                    setSelectedClass(null);
                     openHeader(row);
                   }}
                 />
@@ -259,18 +247,39 @@ const CoverageManagement = () => {
       />
 
       {selected.id ? (
-        <CoverageRulePanels
-          key={`${selected.id}-${Boolean(selected.isActive)}`}
-          contractId={Number(selected.id)}
-          readOnly={!selected.isActive}
+        <CoverageClassTable
+          key={selected.id}
+          contract={selected}
+          selected={selectedClass}
+          onSelect={setSelectedClass}
         />
+      ) : null}
+
+      {selected.id && selectedClass?.id ? (
+        <div className="coverage-class-rules">
+          <div className="coverage-class-rules-caption">
+            <Translate>Rules for class</Translate> {selectedClass.name}
+          </div>
+          <CoverageRulePanels
+            key={`${selectedClass.id}-${Boolean(selectedClass.isActive)}`}
+            classId={Number(selectedClass.id)}
+            readOnly={!selected.isActive || !selectedClass.isActive}
+          />
+        </div>
+      ) : selected.id ? (
+        <div className="coverage-class-empty">
+          <Translate>Select a class to manage the seven coverage tabs.</Translate>
+        </div>
       ) : null}
 
       <CoverageContractEditor
         open={headerOpen}
         setOpen={setHeaderOpen}
         contract={headerRecord}
-        onSaved={saved => setSelected(saved)}
+        onSaved={saved => {
+          setSelected(saved);
+          setSelectedClass(null);
+        }}
       />
 
       <DeletionConfirmationModal

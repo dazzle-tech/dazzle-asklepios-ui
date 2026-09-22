@@ -49,7 +49,67 @@ import {
 
 import { formatBillingItemType } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 
+const PROCESSING_STATUS_LABELS: Record<string, string> = {
+  NEW: 'New',
+  SUBMITTED: 'Submitted',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Rejected',
+  SAMPLE_COLLECTED: 'Sample collected',
+  SAMPLE_REPEAT: 'Sample repeat',
+  PATIENT_ARRIVED: 'Patient arrived',
+  EXAM_DONE: 'Exam done',
+  RESULT_READY: 'Result ready',
+  RESULT_APPROVED: 'Result approved',
+  RESULT_REJECTED: 'Result rejected',
+  PARTIALLY: 'Partial',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled'
+};
 
+const formatProcessingStatus = (status?: string | null) => {
+  const normalized = String(status ?? '').trim().toUpperCase();
+  if (!normalized) {
+    return '-';
+  }
+  return PROCESSING_STATUS_LABELS[normalized] ?? formatBillingChargeStatus(normalized);
+};
+
+const clinicalStatusColor = (
+  status?: string | null
+): 'green' | 'blue' | 'orange' | 'red' | undefined => {
+  switch (String(status ?? '').toUpperCase()) {
+    case 'COMPLETED':
+    case 'RESULT_APPROVED':
+    case 'RESULT_READY':
+    case 'EXAM_DONE':
+    case 'CONFIRMED':
+    case 'READY':
+    case 'SENT':
+      return 'green';
+    case 'CANCELLED':
+    case 'REJECTED':
+    case 'RESULT_REJECTED':
+    case 'ALL_REJECTED':
+      return 'red';
+    case 'SAMPLE_COLLECTED':
+    case 'SAMPLE_REPEAT':
+    case 'ACCEPTED':
+    case 'ALL_ACCEPTED':
+    case 'IN_PROGRESS':
+    case 'STARTED':
+    case 'PATIENT_ARRIVED':
+    case 'PARTIALLY':
+      return 'orange';
+    case 'NEW':
+    case 'REQUESTED':
+    case 'DRAFT':
+    case 'SUBMITTED':
+    case 'WAITING_PRE_AUTHORIZATION':
+      return 'blue';
+    default:
+      return undefined;
+  }
+};
 
 type BillingChargesTableProps = {
   rows: UnifiedBillingChargeRow[];
@@ -323,6 +383,28 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 220,
 
       render: (row: UnifiedBillingChargeRow) => row.itemName
+
+    },
+
+    {
+
+      key: 'clinicalStatus',
+
+      title: 'Processing status',
+
+      width: 140,
+
+      render: (row: UnifiedBillingChargeRow) => {
+        if (!row.clinicalStatus) {
+          return '-';
+        }
+
+        return (
+          <Tag size="sm" color={clinicalStatusColor(row.clinicalStatus)}>
+            {formatProcessingStatus(row.clinicalStatus)}
+          </Tag>
+        );
+      }
 
     },
 

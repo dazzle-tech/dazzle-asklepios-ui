@@ -20,6 +20,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyTab from '@/components/MyTab';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -60,6 +61,7 @@ import {
 
 import AddEditPriceListSetup from './AddEditPriceListSetup';
 import PriceListSetupItems from './PriceListSetupItems';
+import PriceListItemDashboard from './PriceListItemDashboard';
 
 import './styles.less';
 
@@ -102,6 +104,8 @@ const PriceListSetup: React.FC = () => {
     cloneSourceId,
     setCloneSourceId
   ] = useState<number | undefined>();
+
+  const [activeTab, setActiveTab] = useState('1');
 
   const [width, setWidth] = useState(
     typeof window !== 'undefined'
@@ -649,40 +653,56 @@ const PriceListSetup: React.FC = () => {
 
   return (
     <Panel dir={dir}>
-      <MyTable
-        data={tableData}
-        totalCount={totalCount}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={selectedRowClass}
-        onRowClick={row => {
-          if (headerModalOpen || itemsModalOpen) {
-            return;
-          }
+      <MyTab
+        className="price-list-setup-tabs"
+        activeTab={activeTab}
+        setActiveTab={key => setActiveTab(String(key))}
+        data={[
+          {
+            title: 'Price Lists',
+            content: (
+              <MyTable
+                data={tableData}
+                totalCount={totalCount}
+                loading={isFetching}
+                columns={tableColumns}
+                rowClassName={selectedRowClass}
+                onRowClick={row => {
+                  if (headerModalOpen || itemsModalOpen) {
+                    return;
+                  }
 
-          setSelectedPriceList(row);
-        }}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={
-          handleRowsPerPageChange
-        }
-        tableButtons={
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => (
-                <AddOutlineIcon />
-              )}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="125px"
-              disabled={!facilityId}
-            >
-              Add New
-            </MyButton>
-          </div>
-        }
+                  setSelectedPriceList(row);
+                }}
+                page={paginationParams.page}
+                rowsPerPage={paginationParams.size}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={
+                  handleRowsPerPageChange
+                }
+                tableButtons={
+                  <div className="container-of-add-new-button">
+                    <MyButton
+                      prefixIcon={() => (
+                        <AddOutlineIcon />
+                      )}
+                      color="var(--deep-blue)"
+                      onClick={handleNew}
+                      width="125px"
+                      disabled={!facilityId}
+                    >
+                      Add New
+                    </MyButton>
+                  </div>
+                }
+              />
+            )
+          },
+          {
+            title: 'Item Dashboard',
+            content: <PriceListItemDashboard active={activeTab === '2'} />
+          }
+        ]}
       />
 
       <AddEditPriceListSetup

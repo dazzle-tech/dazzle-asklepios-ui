@@ -198,6 +198,110 @@ export const INVOICE_PRINT_CSS = `
     font-size: 11px;
     font-weight: 600;
   }
+
+  .invoice-print--unofficial {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .invoice-print--unofficial .invoice-print__header {
+    border-bottom-color: #b45309;
+  }
+
+  .invoice-print--unofficial .invoice-print__brand {
+    color: #92400e;
+  }
+
+  .invoice-print__unofficial-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 2px solid #b45309;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .invoice-print__unofficial-banner strong {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .invoice-print__unofficial-banner span {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #78350f;
+  }
+
+  .invoice-print__stamp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 86px;
+    min-height: 72px;
+    padding: 6px;
+    border: 2px solid #b45309;
+    border-radius: 6px;
+    color: #b45309;
+    background: #fff7ed;
+    text-align: center;
+    transform: rotate(-8deg);
+  }
+
+  .invoice-print__stamp-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .invoice-print__stamp-sub {
+    margin-top: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .invoice-print__watermark {
+    position: absolute;
+    inset: 28% 0 auto;
+    text-align: center;
+    font-size: 64px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(180, 83, 9, 0.08);
+    transform: rotate(-18deg);
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  .invoice-print--unofficial > *:not(.invoice-print__watermark) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .invoice-print__status--estimate {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .invoice-print__total-row--due {
+    color: #b45309;
+  }
+
+  .invoice-print__footer--unofficial {
+    color: #92400e;
+    font-weight: 600;
+  }
 `;
 
 export const INVOICE_PRINT_PAGE_CSS = `

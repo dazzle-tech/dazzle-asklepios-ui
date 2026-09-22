@@ -1500,6 +1500,9 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
 
   tpaIds: [],
   tpas: [],
+  childCompanyIds: [],
+  childCompanies: [],
+  parentCompany: null,
 
   createdDate: null,
   lastModifiedDate: null

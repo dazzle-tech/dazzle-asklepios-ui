@@ -14,9 +14,51 @@
   grid-column: 1 / -1;
   min-width: 0;
 
-  .dropdown-list {
+  .dropdown-list,
+  .icd10-search__dropdown {
     z-index: 30;
   }
+}
+
+.coverage-icd10-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--primary-gray, #6b7280);
+}
+
+.coverage-class-block,
+.coverage-class-rules {
+  margin-top: 1.1vw;
+}
+
+.coverage-class-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.8vw;
+  margin-bottom: 0.8vw;
+}
+
+.coverage-class-title,
+.coverage-class-rules-caption {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.coverage-class-title-name,
+.coverage-class-title-code {
+  color: var(--primary-blue);
+}
+
+.coverage-class-rules-caption {
+  margin: 0 0 0.7vw;
+}
+
+.coverage-class-empty {
+  margin-top: 1.1vw;
+  color: var(--primary-gray);
 }
 
 .coverage-rules {

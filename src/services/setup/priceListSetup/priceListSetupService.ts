@@ -5,11 +5,21 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
   ClonePriceListSetupRequest,
+  PriceListItemDashboard,
+  PriceListItemDashboardCard,
+  PriceListItemDashboardPage,
   PriceListItemType,
   PriceListSetup,
   PriceListSetupItem,
   PriceListSetupItemImportResult
 } from '@/types/model-types-new';
+
+export type PriceListItemDashboardQuery = {
+  search?: string;
+  itemType?: PriceListItemType;
+  page?: number;
+  size?: number;
+};
 
 export type Id = number | string;
 
@@ -648,6 +658,63 @@ export const priceListSetupService = createApi({
           id: priceListSetupId
         }
       ]
+    }),
+
+    getPriceListItemDashboard: builder.query<PriceListItemDashboard, void>({
+      query: () => ({
+        url: '/api/setup/price-list-setups/item-dashboard',
+        method: 'GET'
+      }),
+      transformResponse: (res: any): PriceListItemDashboard => {
+        const body =
+          res?.summary || Array.isArray(res?.priceLists) ? res : (res?.data ?? {});
+        return {
+          summary: body.summary ?? null,
+          priceLists: Array.isArray(body.priceLists) ? body.priceLists : []
+        };
+      },
+      providesTags: ['PriceListSetup', 'PriceListSetupItem']
+    }),
+
+    getPriceListItemDashboardItems: builder.query<
+      PriceListItemDashboardPage,
+      PriceListItemDashboardQuery
+    >({
+      query: (params = {}) => ({
+        url: '/api/setup/price-list-setups/item-dashboard/items',
+        method: 'GET',
+        params: {
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+          ...(params.search ? { search: params.search } : {}),
+          ...(params.itemType ? { itemType: params.itemType } : {})
+        }
+      }),
+      transformResponse: (res: any): PriceListItemDashboardPage => {
+        const body = Array.isArray(res?.content) ? res : (res?.data ?? {});
+        return {
+          content: Array.isArray(body.content) ? body.content : [],
+          page: Number(body.page ?? 0),
+          size: Number(body.size ?? 20),
+          totalElements: Number(body.totalElements ?? 0),
+          totalPages: Number(body.totalPages ?? 0)
+        };
+      },
+      providesTags: ['PriceListSetupItem']
+    }),
+
+    getPriceListItemDashboardCard: builder.query<
+      PriceListItemDashboardCard,
+      { itemType: PriceListItemType; sourceId: number }
+    >({
+      query: ({ itemType, sourceId }) => ({
+        url: `/api/setup/price-list-setups/item-dashboard/items/${encodeURIComponent(
+          itemType
+        )}/${encodeURIComponent(String(sourceId))}`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) => (res?.itemType && res?.sourceId != null ? res : res?.data),
+      providesTags: ['PriceListSetupItem']
     })
   })
 });
@@ -679,5 +746,9 @@ export const {
 
   useLazyDownloadPriceListSetupItemsTemplateQuery,
   useLazyExportPriceListSetupItemsQuery,
-  useImportPriceListSetupItemsMutation
+  useImportPriceListSetupItemsMutation,
+
+  useGetPriceListItemDashboardQuery,
+  useGetPriceListItemDashboardItemsQuery,
+  useGetPriceListItemDashboardCardQuery
 } = priceListSetupService;

@@ -65,7 +65,7 @@ const CoverageContractTermsSummary = ({
           <div className="coverage-contract-summary__body">
             <div>
               Contract {data.contract?.code || '-'} · Policy {data.contract?.policyNumber || insurance?.policyNumber} ·
-              Class {formatEnumString(data.contract?.className) || insurance?.policyClassName || '-'}
+              Class {data.contract?.className || insurance?.policyClassName || '-'}
             </div>
             {isWaseel ? (
               <div>

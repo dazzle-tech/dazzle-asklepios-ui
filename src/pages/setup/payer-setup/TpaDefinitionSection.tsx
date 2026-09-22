@@ -43,7 +43,7 @@ const initialTpaFilter = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const TpaDefinitionSection = () => {
+const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) => {
   const dispatch = useAppDispatch();
 
   const [selectedTpa, setSelectedTpa] = useState<TpaDefinition>({ ...newTpaDefinition });
@@ -538,15 +538,17 @@ const TpaDefinitionSection = () => {
 
   return (
     <div className="payer-setup-section">
-      <div className="payer-setup-section-title">
-        <Translate>TPA Definition</Translate>
-      </div>
+      {hideTitle ? null : (
+        <div className="payer-setup-section-title">
+          <Translate>TPA Definition</Translate>
+        </div>
+      )}
       <MyTable
         data={activeResponse?.data ?? []}
         totalCount={activeResponse?.totalCount ?? 0}
         loading={isFetching}
         columns={tableColumns}
-        height={280}
+        height={hideTitle ? 420 : 280}
         onRowClick={rowData =>
           setSelectedTpa({
             ...rowData,

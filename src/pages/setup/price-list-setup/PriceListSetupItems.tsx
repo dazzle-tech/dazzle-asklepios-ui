@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react';
 
@@ -8,16 +9,15 @@ import { Form } from 'rsuite';
 
 import {
   MdDelete,
-  MdModeEdit,
-  MdPriceChange
+  MdModeEdit
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
 
-import ChildModal from '@/components/ChildModal';
 import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 
@@ -251,13 +251,14 @@ const PriceListSetupItems: React.FC<Props> = ({
   const isInsurancePriceList =
     priceListType === 'INSURANCE';
 
+  const isSelfPayPriceList =
+    priceListType === 'SELF_PAY';
+
   const encounterTypeOptions = useEnumOptions('EncounterType', { exclude: ['ALL'] });
   const visitTypeOptions = [
     { label: 'All', value: 'ALL' },
     ...(encounterTypeOptions ?? [])
   ];
-
-  const categoryOptions = useEnumOptions('ServiceCategory');
 
   const [
     childModalOpen,
@@ -289,6 +290,13 @@ const PriceListSetupItems: React.FC<Props> = ({
     importModalOpen,
     setImportModalOpen
   ] = useState(false);
+
+  const [
+    tableHeight,
+    setTableHeight
+  ] = useState(560);
+
+  const itemsPageRef = useRef<HTMLDivElement>(null);
 
   const [
     paginationParams,
@@ -363,6 +371,48 @@ const PriceListSetupItems: React.FC<Props> = ({
 
     return () => clearTimeout(timer);
   }, [selectSearch]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let frame = 0;
+    let observer: ResizeObserver | undefined;
+
+    const measure = (node: HTMLDivElement) => {
+      const header = node.querySelector('.price-list-items-header');
+      const filters = node.querySelector('.my-table-filters');
+      const pagination = node.querySelector('.MuiTablePagination-root');
+      const used =
+        (header instanceof HTMLElement ? header.offsetHeight : 0) +
+        (filters instanceof HTMLElement ? filters.offsetHeight : 0) +
+        (pagination instanceof HTMLElement ? pagination.offsetHeight : 56) +
+        8;
+
+      setTableHeight(Math.max(360, node.clientHeight - used));
+    };
+
+    const attach = () => {
+      const node = itemsPageRef.current;
+
+      if (!node) {
+        frame = window.requestAnimationFrame(attach);
+        return;
+      }
+
+      measure(node);
+      observer = new ResizeObserver(() => measure(node));
+      observer.observe(node);
+    };
+
+    attach();
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [open]);
 
   /*
    * Existing price-list items.
@@ -1709,8 +1759,9 @@ const PriceListSetupItems: React.FC<Props> = ({
         ).trim(),
 
       nonStandardCode:
-        selectedItem.nonStandardCode == null
-          || String(selectedItem.nonStandardCode).trim() === ''
+        isSelfPayPriceList ||
+        selectedItem.nonStandardCode == null ||
+        String(selectedItem.nonStandardCode).trim() === ''
           ? null
           : String(selectedItem.nonStandardCode).trim(),
 
@@ -1905,18 +1956,22 @@ const PriceListSetupItems: React.FC<Props> = ({
           </Translate>
       },
 
-      {
-        key: 'nonStandardCode',
-        title:
-          <Translate>
-            Non Standard Code
-          </Translate>,
-        render: (
-          row:
-            PriceListSetupItem
-        ) =>
-          row.nonStandardCode || '-'
-      },
+      ...(isSelfPayPriceList
+        ? []
+        : [
+            {
+              key: 'nonStandardCode',
+              title:
+                <Translate>
+                  Non Standard Code
+                </Translate>,
+              render: (
+                row:
+                  PriceListSetupItem
+              ) =>
+                row.nonStandardCode || '-'
+            }
+          ]),
 
       {
         key: 'itemName',
@@ -1942,13 +1997,6 @@ const PriceListSetupItems: React.FC<Props> = ({
               row.itemType
             )
             : ''
-      },
-
-      {
-        key: 'category',
-        title: <Translate>Category</Translate>,
-        render: (row: PriceListSetupItem) =>
-          row.category ? formatEnumString(row.category) : '-'
       },
 
       {
@@ -2095,153 +2143,137 @@ const PriceListSetupItems: React.FC<Props> = ({
     ];
 
   const childForm = () => (
-    <Form fluid>
-      <div className="price-list-two-columns">
+    <Form fluid className="price-list-item-form">
+      <MyInput
+        required
+        disabled={isEditItem}
+        width="100%"
+        fieldLabel="Item Type"
+        fieldType="select"
+        fieldName="itemType"
+        selectData={typeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={selectedItem}
+        setRecord={
+          handleItemTypeChange
+        }
+        searchable={false}
+      />
+
+      {isInsurancePriceList ? (
         <MyInput
-          required
-          disabled={isEditItem}
-          width="100%"
-          fieldLabel="Item Type"
-          fieldType="select"
-          fieldName="itemType"
-          selectData={typeOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={selectedItem}
-          setRecord={
-            handleItemTypeChange
+          key={
+            selectedItem.itemType ||
+            'no-item-type'
           }
-          searchable={false}
+          required
+          width="100%"
+          fieldLabel="Waseel Item Mapping"
+          fieldType="selectPagination"
+          fieldName="waseelItemMappingId"
+          selectData={mappingSelectData}
+          selectDataLabel="displayName"
+          selectDataValue="id"
+          record={selectedItem}
+          setRecord={updatedItem => {
+            setSelectedItem(updatedItem);
+          }}
+          searchable
+          searchKeyWard={mappingSearch}
+          setSearchKeyWard={setMappingSearch}
+          loading={loadingMappings}
+          hasMore={hasMoreMappings}
+          onFetchMore={handleFetchMoreMappings}
+          onSelectItem={handleMappingSelected}
+          disabled={!selectedItem.itemType}
+          placeholder={
+            !selectedItem.itemType
+              ? 'Select item type first'
+              : 'Select Waseel mapping'
+          }
+          menuMaxHeight={380}
         />
+      ) : (
+        directItemSelectConfig && (
+          <MyInput
+            key={
+              selectedItem.itemType ||
+              'no-item-type'
+            }
+            required
+            width="100%"
+            fieldLabel={
+              directItemSelectConfig.fieldLabel
+            }
+            fieldType="selectPagination"
+            fieldName="sourceId"
+            selectData={directSelectData}
+            selectDataLabel="displayName"
+            selectDataValue="id"
+            record={selectedItem}
+            setRecord={updatedItem => {
+              setSelectedItem(updatedItem);
 
-        {isInsurancePriceList ? (
-          <div className="price-list-mapping-field">
-            <MyInput
-              key={
-                selectedItem.itemType ||
-                'no-item-type'
-              }
-              required
-              width="100%"
-              fieldLabel="Waseel Item Mapping"
-              fieldType="selectPagination"
-              fieldName="waseelItemMappingId"
-              selectData={mappingSelectData}
-              selectDataLabel="displayName"
-              selectDataValue="id"
-              record={selectedItem}
-              setRecord={updatedItem => {
-                setSelectedItem(updatedItem);
-              }}
-              searchable
-              searchKeyWard={mappingSearch}
-              setSearchKeyWard={setMappingSearch}
-              loading={loadingMappings}
-              hasMore={hasMoreMappings}
-              onFetchMore={handleFetchMoreMappings}
-              onSelectItem={handleMappingSelected}
-              disabled={!selectedItem.itemType}
-              placeholder={
-                !selectedItem.itemType
-                  ? 'Select item type first'
-                  : 'Select Waseel mapping'
-              }
-              menuMaxHeight={380}
-            />
-          </div>
-        ) : (
-          directItemSelectConfig && (
-            <MyInput
-              key={
-                selectedItem.itemType ||
-                'no-item-type'
-              }
-              required
-              width="100%"
-              fieldLabel={
-                directItemSelectConfig.fieldLabel
-              }
-              fieldType="selectPagination"
-              fieldName="sourceId"
-              selectData={directSelectData}
-              selectDataLabel="displayName"
-              selectDataValue="id"
-              record={selectedItem}
-              setRecord={updatedItem => {
-                setSelectedItem(updatedItem);
-
-                const selected =
-                  directItemSelectConfig.selectData.find(
-                    item =>
-                      Number(item.id) ===
-                      Number(updatedItem.sourceId)
-                  );
-
-                handleDirectItemSelected(
-                  selected || null
+              const selected =
+                directItemSelectConfig.selectData.find(
+                  item =>
+                    Number(item.id) ===
+                    Number(updatedItem.sourceId)
                 );
-              }}
-              searchable
 
-              searchKeyWard={selectSearch}
-              setSearchKeyWard={handleSelectSearch}
+              handleDirectItemSelected(
+                selected || null
+              );
+            }}
+            searchable
+            searchKeyWard={selectSearch}
+            setSearchKeyWard={handleSelectSearch}
+            loading={
+              directItemSelectConfig.loading
+            }
+            hasMore={
+              directItemSelectConfig.hasMore
+            }
+            onFetchMore={
+              directItemSelectConfig.onFetchMore
+            }
+            onSelectItem={selected => {
+              setSelectedDirectItem(selected);
+              handleDirectItemSelected(selected);
+            }}
+            disabled={!selectedItem.itemType}
+            placeholder={
+              !selectedItem.itemType
+                ? 'Select item type first'
+                : `Select ${directItemSelectConfig.fieldLabel}`
+            }
+            menuMaxHeight={380}
+          />
+        )
+      )}
 
-              loading={
-                directItemSelectConfig.loading
-              }
-              hasMore={
-                directItemSelectConfig.hasMore
-              }
-              onFetchMore={
-                directItemSelectConfig.onFetchMore
-              }
+      <MyInput
+        required
+        disabled
+        width="100%"
+        fieldLabel="Item Code"
+        fieldName="itemCode"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
 
-              onSelectItem={selected => {
-                setSelectedDirectItem(selected);
-                handleDirectItemSelected(selected);
-              }}
+      <MyInput
+        required
+        disabled
+        width="100%"
+        fieldLabel="Item Name"
+        fieldName="itemName"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
 
-              disabled={!selectedItem.itemType}
-
-              placeholder={
-                !selectedItem.itemType
-                  ? 'Select item type first'
-                  : `Select ${directItemSelectConfig.fieldLabel}`
-              }
-
-              menuMaxHeight={380}
-            />
-          )
-        )}
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        <MyInput
-          required
-          disabled
-          width="100%"
-          fieldLabel="Item Code"
-          fieldName="itemCode"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-
-        <MyInput
-          required
-          disabled
-          width="100%"
-          fieldLabel="Item Name"
-          fieldName="itemName"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
+      {!isSelfPayPriceList && (
         <MyInput
           width="100%"
           fieldLabel="Non Standard Code"
@@ -2249,152 +2281,117 @@ const PriceListSetupItems: React.FC<Props> = ({
           record={selectedItem}
           setRecord={setSelectedItem}
         />
-      </div>
+      )}
 
       {isInsurancePriceList && (
         <>
-          <br />
-
-          <div className="price-list-two-columns">
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="Source ID"
-              fieldType="number"
-              fieldName="sourceId"
-              record={selectedItem}
-              setRecord={setSelectedItem}
-            />
-
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Catalog ID"
-              fieldType="number"
-              fieldName="sbsCatalogId"
-              record={selectedItem}
-              setRecord={setSelectedItem}
-            />
-          </div>
-
-          <br />
-
-          <div className="price-list-two-columns">
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Code"
-              fieldName="sbsCode"
-              record={
-                selectedMapping ?? {}
-              }
-              setRecord={() => { }}
-            />
-
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Description"
-              fieldName="sbsDescription"
-              record={
-                selectedMapping ?? {}
-              }
-              setRecord={() => { }}
-            />
-          </div>
-        </>
-      )}
-
-      <div className="price-list-two-columns">
-        <MyInput
-          width="100%"
-          fieldLabel="Category"
-          fieldType="select"
-          fieldName="category"
-          selectData={categoryOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-          searchable={false}
-        />
-
-        <MyInput
-          required={!isInsurancePriceList}
-          disabled={Boolean(selectedItem.visitTypeLocked)}
-          width="100%"
-          fieldLabel="Visit Type"
-          fieldType="select"
-          fieldName="visitType"
-          selectData={visitTypeOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-          searchable={false}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Price"
-          fieldType="number"
-          fieldName="unitPrice"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-
-        <MyInput
-          width="100%"
-          fieldLabel="Cost"
-          fieldType="number"
-          fieldName="cost"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Discount Percentage"
-          fieldType="number"
-          fieldName="discountPercentage"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        {isInsurancePriceList && (
           <MyInput
+            disabled
             width="100%"
-            fieldLabel="Requires PreAuthorization"
-            fieldType="checkbox"
-            fieldName="requiresPreAuthorization"
+            fieldLabel="Source ID"
+            fieldType="number"
+            fieldName="sourceId"
             record={selectedItem}
             setRecord={setSelectedItem}
           />
-        )}
 
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Catalog ID"
+            fieldType="number"
+            fieldName="sbsCatalogId"
+            record={selectedItem}
+            setRecord={setSelectedItem}
+          />
+
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Code"
+            fieldName="sbsCode"
+            record={
+              selectedMapping ?? {}
+            }
+            setRecord={() => { }}
+          />
+
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Description"
+            fieldName="sbsDescription"
+            record={
+              selectedMapping ?? {}
+            }
+            setRecord={() => { }}
+          />
+        </>
+      )}
+
+      <MyInput
+        required={!isInsurancePriceList}
+        disabled={Boolean(selectedItem.visitTypeLocked)}
+        width="100%"
+        fieldLabel="Visit Type"
+        fieldType="select"
+        fieldName="visitType"
+        selectData={visitTypeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+        searchable={false}
+      />
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Price"
+        fieldType="number"
+        fieldName="unitPrice"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
+
+      <MyInput
+        width="100%"
+        fieldLabel="Cost"
+        fieldType="number"
+        fieldName="cost"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Discount Percentage"
+        fieldType="number"
+        fieldName="discountPercentage"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
+
+      {isInsurancePriceList && (
         <MyInput
           width="100%"
-          fieldLabel="Active"
+          fieldLabel="Requires PreAuthorization"
           fieldType="checkbox"
-          fieldName="isActive"
+          fieldName="requiresPreAuthorization"
           record={selectedItem}
           setRecord={setSelectedItem}
         />
-      </div>
+      )}
+
+      <MyInput
+        width="100%"
+        fieldLabel="Active"
+        fieldType="checkbox"
+        fieldName="isActive"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
     </Form>
   );
 
@@ -2446,7 +2443,7 @@ const PriceListSetupItems: React.FC<Props> = ({
   );
 
   const mainContent = () => (
-    <div>
+    <div className="price-list-items-page" ref={itemsPageRef}>
       <div className="price-list-items-header">
         <div>
           <strong>
@@ -2498,7 +2495,7 @@ const PriceListSetupItems: React.FC<Props> = ({
       </div>
 
       <MyTable
-        height={470}
+        height={tableHeight}
         loading={isFetching}
         data={tableData}
         totalCount={
@@ -2553,80 +2550,67 @@ const PriceListSetupItems: React.FC<Props> = ({
       ? 'rtl'
       : 'ltr';
 
+  const closeItemsPage = (value: boolean) => {
+    setOpen(value);
+
+    if (!value) {
+      setChildModalOpen(false);
+      setSearchFilters({
+        search: '',
+        itemType: null
+      });
+      setAppliedFilters({});
+
+      setSelectedItem({
+        ...newPriceListSetupItem
+      });
+
+      resetAllDropdowns();
+    }
+  };
+
   return (
     <>
-      <ChildModal
+      <MyModal
         open={open}
-        setOpen={value => {
-          setOpen(value);
-
-          if (!value) {
-            setChildModalOpen(false);
-            setSearchFilters({
-              search: '',
-              itemType: null
-            });
-            setAppliedFilters({});
-
-            setSelectedItem({
-              ...newPriceListSetupItem
-            });
-
-            resetAllDropdowns();
-          }
-        }}
-        showChild={
-          childModalOpen
-        }
-        setShowChild={
-          setChildModalOpen
-        }
+        setOpen={closeItemsPage}
         title="Price List Items"
-        mainContent={
+        size="full"
+        bodyheight="auto"
+        hideActionBtn
+        hideBack
+        customClassName="price-list-items-page-modal"
+        content={
           <div dir={dir}>
             {mainContent()}
           </div>
         }
-        actionChildButtonFunction={
-          handleSave
-        }
-        hideActionBtn
-        childTitle={
+      />
+
+      <MyModal
+        open={childModalOpen}
+        setOpen={setChildModalOpen}
+        title={
           selectedItem.id
             ? 'Edit Price List Item'
             : 'Add Price List Item'
         }
-        childContent={
-          <div dir={dir}>
-            {childForm()}
-          </div>
-        }
-        mainSize="md"
-        childSize="xs"
+        size="lg"
+        bodyheight="auto"
+        hideBack
+        customClassName="price-list-item-form-modal"
+        actionButtonFunction={handleSave}
         actionButtonLabel={
           selectedItem.id
             ? 'Save'
             : 'Add'
         }
-        isDisabledActionChildBtn={
-          actionLoading
+        isDisabledActionBtn={actionLoading}
+        content={
+          <div dir={dir}>
+            {childForm()}
+          </div>
         }
-        mainStep={[
-          {
-            title:
-              'Price List Items',
-            icon:
-              <MdPriceChange />
-          }
-        ]}
-        childStep={[
-          {
-            title:
-              'Item Details',
-            icon:
-              <MdPriceChange />
-          }
-        ]}
       />
 
       <DeletionConfirmationModal

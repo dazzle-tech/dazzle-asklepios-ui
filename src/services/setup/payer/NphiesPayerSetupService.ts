@@ -1,7 +1,12 @@
 import { BaseQuery } from '@/newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import { createApi } from '@reduxjs/toolkit/dist/query/react';
-import type { NphiesPayer } from '@/types/model-types-new';
+import type {
+  NphiesPayer,
+  PayerDashboardInsuranceCard,
+  PayerDashboardTpaCard,
+  PayerRelationshipDashboard
+} from '@/types/model-types-new';
 
 type PagedParams = {
   page: number;
@@ -118,6 +123,44 @@ export const NphiesPayerService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'NphiesPayer', id }]
     }),
 
+    getPayerRelationshipDashboard: builder.query<PayerRelationshipDashboard, string | void>({
+      query: (search = '') => ({
+        url: '/api/setup/nphies-payers/relationship-dashboard',
+        method: 'GET',
+        params: String(search).trim() ? { search: String(search).trim() } : undefined
+      }),
+      transformResponse: (res: any): PayerRelationshipDashboard => {
+        const body =
+          Array.isArray(res?.insurances) || Array.isArray(res?.tpas) || res?.summary
+            ? res
+            : (res?.data ?? {});
+        return {
+          summary: body.summary ?? null,
+          insurances: Array.isArray(body.insurances) ? body.insurances : [],
+          tpas: Array.isArray(body.tpas) ? body.tpas : []
+        };
+      },
+      providesTags: ['NphiesPayer', 'TpaDefinition']
+    }),
+
+    getPayerRelationshipInsurance: builder.query<PayerDashboardInsuranceCard, number>({
+      query: id => ({
+        url: `/api/setup/nphies-payers/relationship-dashboard/insurances/${id}`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) => res?.id ? res : res?.data,
+      providesTags: (_result, _error, id) => [{ type: 'NphiesPayer', id }]
+    }),
+
+    getPayerRelationshipTpa: builder.query<PayerDashboardTpaCard, number>({
+      query: id => ({
+        url: `/api/setup/nphies-payers/relationship-dashboard/tpas/${id}`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) => res?.id ? res : res?.data,
+      providesTags: (_result, _error, id) => [{ type: 'TpaDefinition', id }]
+    }),
+
     getActiveNphiesPayers: builder.query<NphiesPayer[], void>({
       query: () => ({
         url: '/api/setup/nphies-payers/active',
@@ -139,6 +182,25 @@ export const NphiesPayerService = createApi({
       transformResponse: (res: any) =>
         Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
       providesTags: ['NphiesPayer', 'TpaDefinition']
+    }),
+
+    getAvailableChildCompaniesForPayer: builder.query<
+      Array<{
+        id: number;
+        nphiesId: string;
+        nameEn: string;
+        nameAr?: string | null;
+        isActive: boolean;
+      }>,
+      number | string
+    >({
+      query: id => ({
+        url: `/api/setup/nphies-payers/${id}/available-child-companies`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) =>
+        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
+      providesTags: ['NphiesPayer']
     }),
 
     createNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
@@ -168,6 +230,18 @@ export const NphiesPayerService = createApi({
       invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 
+    updateNphiesPayerChildCompanies: builder.mutation<
+      NphiesPayer,
+      { id: number | string; childCompanyIds: number[] }
+    >({
+      query: ({ id, childCompanyIds }) => ({
+        url: `/api/setup/nphies-payers/${id}/child-companies`,
+        method: 'PATCH',
+        body: { childCompanyIds }
+      }),
+      invalidatesTags: ['NphiesPayer']
+    }),
+
     toggleNphiesPayerActive: builder.mutation<NphiesPayer, number | string>({
       query: id => ({
         url: `/api/setup/nphies-payers/${id}/toggle-active`,
@@ -193,9 +267,14 @@ export const {
   useLazyGetNphiesPayersByNameArQuery,
 
   useGetNphiesPayerByIdQuery,
+  useGetPayerRelationshipDashboardQuery,
+  useGetPayerRelationshipInsuranceQuery,
+  useGetPayerRelationshipTpaQuery,
   useGetAvailableTpasForPayerQuery,
+  useGetAvailableChildCompaniesForPayerQuery,
   useCreateNphiesPayerMutation,
   useUpdateNphiesPayerMutation,
   useUpdateNphiesPayerTpasMutation,
+  useUpdateNphiesPayerChildCompaniesMutation,
   useToggleNphiesPayerActiveMutation
 } = NphiesPayerService;

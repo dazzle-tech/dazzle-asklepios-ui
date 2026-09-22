@@ -298,6 +298,14 @@ export const MODULES: Module[] =
           navPath: "price-list-setup"
         },
         {
+          name: "Item Price Dashboard",
+          code: "PRICE_LIST_SETUP",
+          description: "Compare item prices across facility price lists",
+          icon: "FaListAlt",
+          viewOrder: 26.5,
+          navPath: "price-list-item-dashboard"
+        },
+        {
           name: "Billing Rule Setup",
           code: "BILLING_RULE_SETUP",
           description: "Billing Rule Setup",

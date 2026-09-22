@@ -287,6 +287,7 @@ import SystemConfiguration from './pages/system-configurations/system-configurat
 import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import { PriceListItemDashboardPage } from './pages/setup/price-list-setup/PriceListItemDashboard';
 import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
@@ -968,6 +969,7 @@ const App = () => {
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
               <Route path="/price-list-setup" element={<PriceListSetup />} />
+              <Route path="/price-list-item-dashboard" element={<PriceListItemDashboardPage />} />
               <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
                <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
                <Route path="/financial-document-numbering" element={<FinancialDocumentNumberingSetup />} />

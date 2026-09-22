@@ -84,6 +84,23 @@ export function approvalCoverageCompanyOptions(enumOptions: { value: string; lab
   return enumOptions.length ? enumOptions : APPROVAL_COVERAGE_COMPANY_OPTIONS;
 }
 
+export function formatLinkedInsuranceLabel(company?: {
+  nphiesId?: string | null;
+  nameEn?: string | null;
+  nameAr?: string | null;
+  name?: string | null;
+} | null) {
+  if (!company) {
+    return '';
+  }
+  const code = String(company.nphiesId ?? '').trim();
+  const name = String(company.nameEn ?? company.name ?? company.nameAr ?? '').trim();
+  if (code && name) {
+    return `${code} — ${name}`;
+  }
+  return name || code;
+}
+
 export function approvalCoverageCompanyLabel(value?: string | null) {
   if (!value) {
     return '-';
@@ -131,6 +148,14 @@ export function useStatusFilter() {
   };
 }
 
+export function coverageHeaderName(contract?: {
+  companyName?: string | null;
+  insurancePayerName?: string | null;
+  policyNumber?: string | null;
+} | null) {
+  return String(contract?.companyName || contract?.insurancePayerName || contract?.policyNumber || '').trim();
+}
+
 export function emptyContract(): any {
   return {
     guarantorType: '',
@@ -141,7 +166,7 @@ export function emptyContract(): any {
     insurancePayerId: undefined,
     priceListSetupId: undefined,
     parentPayerId: undefined,
-    className: '',
+    parentPayerName: '',
     approvalCoverageCompany: '',
     isActive: true,
     startDate: null,

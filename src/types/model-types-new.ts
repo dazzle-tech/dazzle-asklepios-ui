@@ -2029,6 +2029,9 @@ export interface NphiesPayer {
 
   tpaIds?: number[];
   tpas?: LinkedTpa[];
+  childCompanyIds?: number[];
+  childCompanies?: LinkedInsuranceCompany[];
+  parentCompany?: LinkedInsuranceCompany | null;
 
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
@@ -2038,6 +2041,14 @@ export interface LinkedTpa {
   id: number;
   tpaCode: string;
   name: string;
+  isActive: boolean;
+}
+
+export interface LinkedInsuranceCompany {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
   isActive: boolean;
 }
 
@@ -2072,6 +2083,94 @@ export interface TpaLinkedInsuranceCompany {
   nameEn: string;
   nameAr?: string | null;
   isActive: boolean;
+}
+
+export interface PayerDashboardSummary {
+  insuranceCount: number;
+  tpaCount: number;
+  parentCompanyCount: number;
+  childCompanyCount: number;
+  insurancesWithContracts: number;
+  insurancesWithPriceLists: number;
+  tpasWithContracts: number;
+}
+
+export interface PayerDashboardLinkedParty {
+  id: number;
+  code?: string | null;
+  name?: string | null;
+  isActive?: boolean | null;
+}
+
+export interface PayerDashboardPriceList {
+  id: number;
+  name: string;
+  status?: string | null;
+  type?: string | null;
+  isActive?: boolean | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+}
+
+export interface PayerDashboardContract {
+  id: number;
+  code?: string | null;
+  policyNumber?: string | null;
+  guarantorType?: string | null;
+  className?: string | null;
+  isActive?: boolean | null;
+  insurancePayerId?: number | null;
+  insurancePayerName?: string | null;
+  priceListSetupId?: number | null;
+  priceListName?: string | null;
+}
+
+export interface PayerDashboardInsuranceListItem {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
+  role: 'PARENT' | 'CHILD' | 'STANDALONE' | string;
+}
+
+export interface PayerDashboardTpaListItem {
+  id: number;
+  tpaCode: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface PayerDashboardInsuranceCard {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
+  approvalCoverageCompany?: string | null;
+  facilityName?: string | null;
+  role: 'PARENT' | 'CHILD' | 'STANDALONE' | string;
+  parent?: PayerDashboardLinkedParty | null;
+  childCompanies: PayerDashboardLinkedParty[];
+  tpas: PayerDashboardLinkedParty[];
+  priceLists: PayerDashboardPriceList[];
+  contracts: PayerDashboardContract[];
+}
+
+export interface PayerDashboardTpaCard {
+  id: number;
+  tpaCode: string;
+  name: string;
+  isActive: boolean;
+  approvalCoverageCompany?: string | null;
+  insuranceCompanies: PayerDashboardLinkedParty[];
+  contracts: PayerDashboardContract[];
+}
+
+export interface PayerRelationshipDashboard {
+  summary: PayerDashboardSummary | null;
+  insurances: PayerDashboardInsuranceListItem[];
+  tpas: PayerDashboardTpaListItem[];
 }
 
 export interface PayorPlanItem {
@@ -4220,6 +4319,7 @@ export type PatientServiceAndProduct = {
   netAmount?: number | null;
   patientShareAmount?: number | null;
   insuranceShareAmount?: number | null;
+  clinicalStatus?: string | null;
 };
 
 export enum ServiceSource {
@@ -5802,6 +5902,117 @@ export type PriceListSetupItemImportResult = {
   errors: PriceListSetupItemImportError[];
 };
 
+export type PriceListItemCoverageStatus = 'COMPLETE' | 'PARTIAL' | string;
+export type PriceListItemPresence = 'PRESENT' | 'MISSING' | 'INACTIVE' | string;
+
+export interface PriceListItemDashboardSummary {
+  priceListCount: number;
+  uniqueItemCount: number;
+  completeItemCount: number;
+  partialItemCount: number;
+  byItemType: PriceListItemDashboardTypeCount[];
+}
+
+export interface PriceListItemDashboardTypeCount {
+  itemType: PriceListItemType;
+  itemCount: number;
+}
+
+export interface PriceListItemDashboardPage {
+  content: PriceListItemDashboardCatalogItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PriceListItemDashboardCatalogItem {
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  nonStandardCode?: string | null;
+  presentInCount: number;
+  missingFromCount: number;
+  coverageStatus: PriceListItemCoverageStatus;
+  coveragePercent: number;
+  minUnitPrice?: number | string | null;
+  maxUnitPrice?: number | string | null;
+  hasPriceVariance: boolean;
+}
+
+export interface PriceListItemDashboardColumn {
+  id: number;
+  name: string;
+  shortName?: string | null;
+  description?: string | null;
+  type?: PriceListSetupType | string | null;
+  status?: PriceListSetupStatus | string | null;
+  isActive?: boolean | null;
+  currency?: string | null;
+  versionNumber?: number | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  facilityId?: number | null;
+  facilityName?: string | null;
+  appliesToAllFacilities?: boolean | null;
+  payerId?: number | null;
+  payerName?: string | null;
+  nphiesPayerId?: number | null;
+  nphiesPayerName?: string | null;
+}
+
+export interface PriceListItemDashboardEntry {
+  id: number;
+  priceListSetupId: number;
+  waseelItemMappingId?: number | null;
+  sbsCatalogId?: number | null;
+  itemCode?: string | null;
+  nonStandardCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  visitType?: string | null;
+  unitPrice?: number | string | null;
+  cost?: number | string | null;
+  discountPercentage?: number | string | null;
+  netPrice?: number | string | null;
+  isActive?: boolean | null;
+  requiresPreAuthorization?: boolean | null;
+  visitTypeLocked?: boolean | null;
+  createdDate?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PriceListItemDashboardCoverage {
+  priceList: PriceListItemDashboardColumn;
+  present: boolean;
+  presence: PriceListItemPresence;
+  entries: PriceListItemDashboardEntry[];
+}
+
+export interface PriceListItemDashboardCard {
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  nonStandardCode?: string | null;
+  presentInCount: number;
+  missingFromCount: number;
+  coverageStatus: PriceListItemCoverageStatus;
+  coveragePercent: number;
+  hasPriceVariance: boolean;
+  minUnitPrice?: number | string | null;
+  maxUnitPrice?: number | string | null;
+  priceLists: PriceListItemDashboardCoverage[];
+}
+
+export interface PriceListItemDashboard {
+  summary: PriceListItemDashboardSummary | null;
+  priceLists: PriceListItemDashboardColumn[];
+}
+
 export enum BillingTrigger {
   ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
   TREATMENT_STARTED = 'TREATMENT_STARTED',
@@ -6440,6 +6651,7 @@ export type EncounterBillingItemSummary = {
   status: BillingChargeLineStatus;
   chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
+  clinicalStatus?: string | null;
 };
 
 export type WaseelBenefitDetail = {

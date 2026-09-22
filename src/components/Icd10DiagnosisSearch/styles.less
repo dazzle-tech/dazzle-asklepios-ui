@@ -39,6 +39,11 @@
     margin-bottom: 6px;
   }
 
+  &__required {
+    color: var(--primary-red, #d32f2f);
+    font-weight: 700;
+  }
+
   &__inputGroup {
     height: 36px;
 
@@ -149,6 +154,26 @@
     margin-top: 8px;
   }
 
+  &__summary {
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    background: var(--extra-light-blue, #f4fbfb);
+    color: var(--primary-gray, #888);
+    font-size: 13px;
+    line-height: 1.4;
+
+    &--selected {
+      color: inherit;
+      background: #fff;
+    }
+
+    strong {
+      color: var(--primary-blue, #006264);
+    }
+  }
+
   &__selected {
     resize: none !important;
     border-radius: 10px;
@@ -173,6 +198,20 @@
 
     &__desc {
       color: rgba(255, 255, 255, 0.75);
+    }
+
+    &__summary {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.65);
+
+      &--selected {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      strong {
+        color: var(--primary-blue, #5ec8cb);
+      }
     }
 
     &__inputGroup .rs-input-group-btn .rs-btn {

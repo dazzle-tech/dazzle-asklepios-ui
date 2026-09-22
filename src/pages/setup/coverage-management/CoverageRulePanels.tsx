@@ -14,7 +14,7 @@ import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
 import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
-import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import {
   useCreateDiscountMutation,
   useCreateExclusionMutation,
@@ -48,24 +48,18 @@ const CoverageIcd10Field = ({
   required?: boolean;
 }) => (
   <div className="coverage-icd10-field">
-    <Icd10Search
-      object={record}
-      setOpject={updater => {
-        setRecord((prev: any) => {
-          const next = typeof updater === 'function' ? updater(prev) : updater;
-          const raw = next?.diagnosisId;
-          const diagnosisId = raw == null || raw === '' ? null : Number(raw);
-          return {
-            ...next,
-            diagnosisId: Number.isFinite(diagnosisId as number) ? diagnosisId : null
-          };
-        });
-      }}
-      fieldName="diagnosisId"
+    <Icd10DiagnosisSearch
+      diagnosisId={record?.diagnosisId ?? null}
+      setDiagnosisId={id => setRecord({ ...record, diagnosisId: id })}
       label="Diagnosis"
-      mode="singleICD10"
       required={required}
+      compact
     />
+    <p className="coverage-icd10-hint">
+      <Translate>
+        Selecting a parent code (for example A00) applies this rule to every diagnosis under it (A00.0, A00.1, …).
+      </Translate>
+    </p>
   </div>
 );
 
@@ -76,7 +70,7 @@ const statusOptions = [
 
 const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
 
-const CoverageRulePanels = ({ contractId, readOnly }: { contractId: number; readOnly?: boolean }) => {
+const CoverageRulePanels = ({ classId, readOnly }: { classId: number; readOnly?: boolean }) => {
   const [tab, setTab] = useState('copayment');
 
   return (
@@ -91,13 +85,13 @@ const CoverageRulePanels = ({ contractId, readOnly }: { contractId: number; read
         <Nav.Item eventKey="preApproval">Pre-Approval</Nav.Item>
       </Nav>
 
-      {tab === 'copayment' && <CopaymentPanel contractId={contractId} readOnly={readOnly} />}
+      {tab === 'copayment' && <CopaymentPanel classId={classId} readOnly={readOnly} />}
       {(tab === 'COVERAGE' || tab === 'LIMIT' || tab === 'CASH_LIMIT') && (
-        <TermPanel key={tab} contractId={contractId} termType={tab} readOnly={readOnly} />
+        <TermPanel key={tab} classId={classId} termType={tab} readOnly={readOnly} />
       )}
-      {tab === 'discount' && <DiscountPanel contractId={contractId} readOnly={readOnly} />}
-      {tab === 'exclusion' && <ExclusionPanel contractId={contractId} readOnly={readOnly} />}
-      {tab === 'preApproval' && <PreApprovalPanel contractId={contractId} readOnly={readOnly} />}
+      {tab === 'discount' && <DiscountPanel classId={classId} readOnly={readOnly} />}
+      {tab === 'exclusion' && <ExclusionPanel classId={classId} readOnly={readOnly} />}
+      {tab === 'preApproval' && <PreApprovalPanel classId={classId} readOnly={readOnly} />}
     </div>
   );
 };
@@ -152,7 +146,7 @@ const RuleToolbar = ({
   </div>
 );
 
-const CopaymentPanel = ({ contractId, readOnly }: { contractId: number; readOnly?: boolean }) => {
+const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boolean }) => {
   const dispatch = useAppDispatch();
   const encounterTypes = useEnumOptions('EncounterType');
   const valueTypes = useEnumOptions('InsuranceCoverageType');
@@ -160,12 +154,12 @@ const CopaymentPanel = ({ contractId, readOnly }: { contractId: number; readOnly
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState<any>({});
-  const { data, isFetching } = useListCopaymentsQuery({ contractId, isActive, ...paging });
+  const { data, isFetching } = useListCopaymentsQuery({ classId, isActive, ...paging });
   const [save] = useSaveCopaymentMutation();
 
   const saveRow = async () => {
     try {
-      await save({ contractId, body: record }).unwrap();
+      await save({ classId, body: record }).unwrap();
       notifySuccess(dispatch, 'Co-payment saved');
       setOpen(false);
     } catch (error: any) {
@@ -232,7 +226,7 @@ const CopaymentPanel = ({ contractId, readOnly }: { contractId: number; readOnly
   );
 };
 
-const TermPanel = ({ contractId, termType, readOnly }: { contractId: number; termType: string; readOnly?: boolean }) => {
+const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType: string; readOnly?: boolean }) => {
   const dispatch = useAppDispatch();
   const diagnosisScopes = useEnumOptions('CoverageDiagnosisScope');
   const periodTypes = useEnumOptions('CoveragePeriodBasis');
@@ -266,7 +260,7 @@ const TermPanel = ({ contractId, termType, readOnly }: { contractId: number; ter
     { facilityId: Number(record.facilityId), page: departmentLookup.page, size: 15, search: departmentLookup.appliedSearch },
     { skip: !open || !record.facilityId }
   );
-  const { data, isFetching } = useListTermsQuery({ contractId, termType, isActive, ...paging });
+  const { data, isFetching } = useListTermsQuery({ classId, termType, isActive, ...paging });
   const itemsQuery = useListTermItemsQuery(
     { termId: Number(selectedTerm?.id), page: 0, size: 10 },
     { skip: !hasReadings || !selectedTerm?.id }
@@ -285,7 +279,7 @@ const TermPanel = ({ contractId, termType, readOnly }: { contractId: number; ter
   const persistTerm = async () => {
     try {
       await saveTerm({
-        contractId,
+        classId,
         body: {
           ...record,
           termType,
@@ -551,11 +545,11 @@ const TermPanel = ({ contractId, termType, readOnly }: { contractId: number; ter
 };
 
 const DiscountPanel = ({
-  contractId,
+  classId,
   tpaId,
   readOnly
 }: {
-  contractId?: number;
+  classId?: number;
   tpaId?: number;
   readOnly?: boolean;
 }) => {
@@ -566,7 +560,7 @@ const DiscountPanel = ({
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState<any>({});
-  const owner = tpaId ? { tpaId } : { contractId: Number(contractId) };
+  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
   const { data, isFetching } = useListDiscountsQuery({
     ...owner,
     ...(typeof isActive === 'boolean' ? { isActive } : {}),
@@ -680,11 +674,11 @@ const exclusionTypeOptions = [
 ];
 
 const ExclusionPanel = ({
-  contractId,
+  classId,
   tpaId,
   readOnly
 }: {
-  contractId?: number;
+  classId?: number;
   tpaId?: number;
   readOnly?: boolean;
 }) => {
@@ -695,7 +689,7 @@ const ExclusionPanel = ({
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState<any>({});
-  const owner = tpaId ? { tpaId } : { contractId: Number(contractId) };
+  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
   const { data, isFetching } = useListExclusionsQuery({
     ...owner,
     ...(typeof isActive === 'boolean' ? { isActive } : {}),
@@ -866,11 +860,11 @@ const ExclusionPanel = ({
 };
 
 const PreApprovalPanel = ({
-  contractId,
+  classId,
   tpaId,
   readOnly
 }: {
-  contractId?: number;
+  classId?: number;
   tpaId?: number;
   readOnly?: boolean;
 }) => {
@@ -895,7 +889,7 @@ const PreApprovalPanel = ({
     { skip: !open || record.approvalScope !== 'DEPARTMENT' || !record.facilityId }
   );
   const services = useSearchCoverageServicesQuery({ page: serviceLookup.page, size: 15, search: serviceLookup.appliedSearch }, { skip: !itemOpen || item.itemType !== 'SERVICE' });
-  const owner = tpaId ? { tpaId } : { contractId: Number(contractId) };
+  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
   const { data, isFetching } = useListPreApprovalsQuery({ ...owner, isActive, ...paging });
   const itemsQuery = useListPreApprovalItemsQuery(
     { preApprovalId: Number(selected?.id), isActive: true, page: 0, size: 10 },

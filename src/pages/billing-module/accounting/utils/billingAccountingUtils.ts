@@ -58,6 +58,7 @@ export type UnifiedBillingChargeRow = {
   preAuthorizationStatus?: string | null;
   preAuthorizationRequired?: boolean | null;
   isBilled: boolean;
+  clinicalStatus?: string | null;
 };
 
 export type RowPaymentStatus = 'SETTLED' | 'RESERVED' | 'PARTIAL' | 'UNPAID';
@@ -1900,7 +1901,8 @@ export const mapSummaryItemToRow = (
         preAuthorizationRequired?: boolean | null;
       }
     )?.preAuthorizationRequired ?? null,
-  isBilled: item.chargeLineId != null
+  isBilled: item.chargeLineId != null,
+  clinicalStatus: item.clinicalStatus ?? linkedPsp?.clinicalStatus ?? null
 };
 };
 
@@ -1915,6 +1917,7 @@ export const mapPspItemToRow = (
     itemCode?: string | null;
     itemName?: string | null;
     priceSource?: string | null;
+    clinicalStatus?: string | null;
   };
 
   const netAmount =
@@ -1949,7 +1952,8 @@ export const mapPspItemToRow = (
     chargedAt: rowAny.createdDate ?? null,
     preAuthorizationStatus: rowAny.preAuthorizationStatus ?? null,
     preAuthorizationRequired: rowAny.preAuthorizationRequired ?? null,
-    isBilled: row.isBilled
+    isBilled: row.isBilled,
+    clinicalStatus: rowAny.clinicalStatus ?? null
   };
 };
 

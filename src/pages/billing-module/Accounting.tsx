@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getHeight } from 'rsuite/esm/DOMHelper';
 import { Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet } from '@fortawesome/free-solid-svg-icons';
+import { faPrint, faWallet } from '@fortawesome/free-solid-svg-icons';
 
 import { newApPatient } from '@/types/model-types-constructor';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 
@@ -28,6 +28,9 @@ import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
 import BillingTimeline from './accounting/components/BillingTimeline';
 import BillingChargesTable from './accounting/components/BillingChargesTable';
+import ChargeEstimatePrintModal from './accounting/components/ChargeEstimatePrintModal';
+import { buildChargeEstimatePrintData } from './accounting/utils/chargeEstimatePrintUtils';
+import type { ChargeEstimatePrintData } from './accounting/utils/chargeEstimatePrintUtils';
 import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
@@ -49,6 +52,7 @@ import BillingPendingQueueModal from './BillingPendingQueueModal';
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
+  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
 
   const location = useLocation();
 
@@ -72,6 +76,10 @@ const Accounting: React.FC = () => {
     receipt: PaymentReceiptData | null;
     autoPrint?: boolean;
   }>({ open: false, receipt: null, autoPrint: false });
+  const [chargeEstimatePrint, setChargeEstimatePrint] = useState<{
+    open: boolean;
+    estimate: ChargeEstimatePrintData | null;
+  }>({ open: false, estimate: null });
   const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
   const [canCloseCalculation, setCanCloseCalculation] = useState(true);
   const [billingRefreshPending, setBillingRefreshPending] = useState(false);
@@ -119,6 +127,27 @@ const Accounting: React.FC = () => {
     usePayRejectedPreAuthorizationItemAsCashMutation();
   const [cloneRejectedPreAuthorizationItem] =
     useCloneRejectedPreAuthorizationItemMutation();
+
+  const facilityPrintInfo = useMemo(
+    () => ({
+      name:
+        selectedFacility?.name ??
+        selectedFacility?.facilityName ??
+        'Healthcare Facility',
+      address:
+        selectedFacility?.facilityAddress ??
+        selectedFacility?.address ??
+        undefined,
+      vatRegistrationNumber:
+        selectedFacility?.vatRegistrationNumber ??
+        selectedFacility?.vatNumber ??
+        undefined,
+      providerId:
+        selectedFacility?.providerId ??
+        (selectedFacility?.id != null ? String(selectedFacility.id) : undefined)
+    }),
+    [selectedFacility]
+  );
 
   const displayedPatientInsurances = useMemo(
     () =>
@@ -189,6 +218,7 @@ const Accounting: React.FC = () => {
               receipt: null,
               autoPrint: false
           });
+          setChargeEstimatePrint({ open: false, estimate: null });
           setPreAuthActionLoadingId(null);
           setCanCloseCalculation(true);
           setBillingRefreshPending(false);
@@ -207,6 +237,7 @@ const Accounting: React.FC = () => {
           receipt: null,
           autoPrint: false
       });
+      setChargeEstimatePrint({ open: false, estimate: null });
       setPreAuthActionLoadingId(null);
       setCanCloseCalculation(true);
       setBillingRefreshPending(false);
@@ -214,6 +245,7 @@ const Accounting: React.FC = () => {
 
   useEffect(() => {
     setSelectedChargeRowIds([]);
+    setChargeEstimatePrint({ open: false, estimate: null });
   }, [selectedEncounterId]);
 
   useEffect(() => {
@@ -262,6 +294,7 @@ const Accounting: React.FC = () => {
     setDepositModalOpen(false);
     setCollectPaymentModalOpen(false);
     setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setChargeEstimatePrint({ open: false, estimate: null });
     setPreAuthActionLoadingId(null);
     setCanCloseCalculation(true);
     setBillingRefreshPending(false);
@@ -459,6 +492,48 @@ const Accounting: React.FC = () => {
     [chargeRows, selectedChargeRowIds]
   );
 
+  const selectedInsurance = useMemo(
+    () =>
+      displayedPatientInsurances.find(insurance => {
+        const insuranceId = Number(
+          insurance?.id ?? (insurance as { patientInsuranceId?: number })?.patientInsuranceId
+        );
+        return (
+          selectedInsuranceId != null &&
+          Number.isFinite(insuranceId) &&
+          insuranceId === Number(selectedInsuranceId)
+        );
+      }) ?? null,
+    [displayedPatientInsurances, selectedInsuranceId]
+  );
+
+  const handlePrintChargeEstimate = () => {
+    if (!chargeRows.length) {
+      dispatch(
+        notify({
+          msg: 'No services or products to print for this encounter.',
+          sev: 'info'
+        })
+      );
+      return;
+    }
+
+    setChargeEstimatePrint({
+      open: true,
+      estimate: buildChargeEstimatePrintData({
+        rows: chargeRows,
+        patient,
+        encounter: selectedEncounter,
+        encounterDetails: encounterInvoiceDetails,
+        facility: facilityPrintInfo,
+        coverageType,
+        insurance: selectedInsurance,
+        encounterId: selectedEncounterId,
+        currency: summary.currency ?? facilityCurrency
+      })
+    });
+  };
+
   const departmentId = useMemo(
     () =>
       toNumber(
@@ -655,10 +730,20 @@ const Accounting: React.FC = () => {
 
             <div className="billing-accounting__panel">
               <div className="billing-accounting__panel-title">
-                All services & products
-                <span className="billing-accounting__badge">
-                  Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
-                </span>
+                <div className="billing-accounting__panel-title-main">
+                  All services & products
+                  <span className="billing-accounting__badge">
+                    Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
+                  </span>
+                </div>
+                <MyButton
+                  appearance="ghost"
+                  prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+                  disabled={billingWorkspaceLoading || chargeRows.length === 0}
+                  onClick={handlePrintChargeEstimate}
+                >
+                  Print unofficial estimate
+                </MyButton>
               </div>
               <PreAuthorizationBillingControls
                 visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
@@ -736,6 +821,7 @@ const Accounting: React.FC = () => {
       handleClonePreAuthorization,
       handleConvertRejectedToCash,
       handlePayRejectedAsCash,
+      handlePrintChargeEstimate,
       handleRefreshPreAuthorization,
       loadingEncounters,
       loadingPsp,
@@ -929,6 +1015,11 @@ const Accounting: React.FC = () => {
                 autoPrint: false
               })
             }
+          />
+          <ChargeEstimatePrintModal
+            open={chargeEstimatePrint.open}
+            estimate={chargeEstimatePrint.estimate}
+            onClose={() => setChargeEstimatePrint({ open: false, estimate: null })}
           />
 
 

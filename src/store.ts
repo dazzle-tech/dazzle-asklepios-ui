@@ -649,6 +649,7 @@ export const store = configureStore({
     [billingTransactionService.reducerPath]: billingTransactionService.reducer,
     [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
     [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [patientFinancialStatementService.reducerPath]: patientFinancialStatementService.reducer,
     [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,

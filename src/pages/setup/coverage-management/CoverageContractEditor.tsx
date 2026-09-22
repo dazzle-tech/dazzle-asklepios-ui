@@ -5,11 +5,10 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
-import { emptyContract, notifyError, notifySuccess, notifyWarning, APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from './coverageHelpers';
+import { emptyContract, notifyError, notifySuccess, notifyWarning, APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions, formatLinkedInsuranceLabel } from './coverageHelpers';
 import {
   useCreateCoverageContractMutation,
   useSearchCoverageCompaniesQuery,
-  useSearchCoverageInsurancePayersQuery,
   useSearchCoveragePriceListsQuery,
   useSearchCoverageTpaInsurancePayersQuery,
   useUpdateCoverageContractMutation,
@@ -18,6 +17,7 @@ import {
   type CoverageContract,
   type CoverageLookupItem
 } from '@/services/setup/coverageManagement/coverageManagementService';
+import { useGetNphiesPayerByIdQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 type Props = {
   open: boolean;
@@ -31,7 +31,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
   const [record, setRecord] = useState<CoverageContract>({ ...emptyContract(), ...contract });
   const guarantorTypes = useEnumOptions('GuarantorType');
   const coverageBasis = useEnumOptions('CoverageBasis');
-  const classNames = useEnumOptions('CoverageClassName');
   const approvalCoverageCompanies = approvalCoverageCompanyOptions(
     useEnumOptions('ApprovalCoverageCompany', {
       labelOverrides: APPROVAL_COVERAGE_COMPANY_LABELS
@@ -39,7 +38,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
   );
   const companyLookup = useLookupPaging(`${record.guarantorType || ''}`);
   const tpaInsuranceLookup = useLookupPaging(String(record.companyId || ''));
-  const parentLookup = useLookupPaging('parent');
   const priceListLookup = useLookupPaging(String(record.insurancePayerId || ''));
   const isTpa = record.guarantorType === 'TPA';
   const selectedInsuranceId = record.insurancePayerId || (!isTpa ? record.companyId : undefined);
@@ -63,14 +61,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     },
     { skip: !open || !isTpa || !record.companyId }
   );
-  const parentPayers = useSearchCoverageInsurancePayersQuery(
-    {
-      page: parentLookup.page,
-      size: 15,
-      search: parentLookup.appliedSearch
-    },
-    { skip: !open }
-  );
   const priceLists = useSearchCoveragePriceListsQuery(
     {
       nphiesPayerId: Number(selectedInsuranceId),
@@ -81,14 +71,66 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     { skip: !open || !selectedInsuranceId }
   );
 
+  const { currentData: selectedNphiesPayer, isFetching: isParentPayerLoading } = useGetNphiesPayerByIdQuery(
+    selectedInsuranceId as number,
+    { skip: !open || !selectedInsuranceId, refetchOnMountOrArgChange: true }
+  );
+
   const [createContract] = useCreateCoverageContractMutation();
   const [updateContract] = useUpdateCoverageContractMutation();
+
+  const clearPriceListFields = {
+    priceListSetupId: undefined,
+    priceListName: undefined,
+    startDate: null as string | null,
+    endDate: null as string | null
+  };
+
+  const clearParentFields = {
+    parentPayerId: null as number | null,
+    parentPayerName: ''
+  };
 
   useEffect(() => {
     if (open) {
       setRecord(normalizeCoverageContract({ ...emptyContract(), ...contract }));
     }
   }, [open, contract]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    if (!selectedInsuranceId) {
+      setRecord(previous => ({
+        ...previous,
+        ...clearParentFields
+      }));
+      return;
+    }
+    const fetchedMatchesSelected =
+      selectedNphiesPayer != null && Number(selectedNphiesPayer.id) === Number(selectedInsuranceId);
+    if (!fetchedMatchesSelected) {
+      return;
+    }
+    const parent = selectedNphiesPayer.parentCompany ?? null;
+    const parentPayerId = parent?.id ?? null;
+    const parentPayerName = formatLinkedInsuranceLabel(parent);
+    setRecord(previous => {
+      const previousInsuranceId = previous.insurancePayerId || (previous.guarantorType !== 'TPA' ? previous.companyId : undefined);
+      if (Number(previousInsuranceId) !== Number(selectedNphiesPayer.id)) {
+        return previous;
+      }
+      if (previous.parentPayerId === parentPayerId && previous.parentPayerName === parentPayerName) {
+        return previous;
+      }
+      return {
+        ...previous,
+        parentPayerId,
+        parentPayerName
+      };
+    });
+  }, [open, selectedInsuranceId, selectedNphiesPayer]);
 
   const applyPriceListSelection = (priceListId?: number, selectedItem?: CoverageLookupItem | null) => {
     const selected =
@@ -107,13 +149,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     }));
   };
 
-  const clearPriceListFields = {
-    priceListSetupId: undefined,
-    priceListName: undefined,
-    startDate: null as string | null,
-    endDate: null as string | null
-  };
-
   const saveHeader = async () => {
     if (
       !record.guarantorType ||
@@ -122,9 +157,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
       !record.policyNumber ||
       !record.coverageBasis ||
       !record.insurancePayerId ||
-      !record.priceListSetupId ||
-      !record.parentPayerId ||
-      !record.className
+      !record.priceListSetupId
     ) {
       notifyWarning(dispatch, 'Please complete the required beneficiary details');
       return;
@@ -167,7 +200,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 companyName: undefined,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields
+                ...clearPriceListFields,
+                ...clearParentFields
               })
             }
             selectData={guarantorTypes}
@@ -184,7 +218,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   ...next,
                   insurancePayerId: next.companyId,
                   insurancePayerName: undefined,
-                  ...clearPriceListFields
+                  ...clearPriceListFields,
+                  ...clearParentFields
                 });
                 return;
               }
@@ -192,7 +227,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 ...next,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields
+                ...clearPriceListFields,
+                ...clearParentFields
               });
             }}
             result={companies}
@@ -209,7 +245,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   companyName: item?.name,
                   insurancePayerId: item?.id,
                   insurancePayerName: item?.name,
-                  ...clearPriceListFields
+                  ...clearPriceListFields,
+                  ...clearParentFields
                 }));
                 return;
               }
@@ -219,7 +256,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 companyName: item?.name,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields
+                ...clearPriceListFields,
+                ...clearParentFields
               }));
             }}
           />
@@ -243,16 +281,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             selectData={coverageBasis}
           />
           <MyInput
-            required
-            width="100%"
-            fieldLabel="Class Name"
-            fieldType="select"
-            fieldName="className"
-            record={record}
-            setRecord={setRecord}
-            selectData={classNames}
-          />
-          <MyInput
             width="100%"
             fieldLabel="Approval Coverage Co."
             fieldType="select"
@@ -272,7 +300,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
               setRecord={(next: CoverageContract) =>
                 setRecord({
                   ...next,
-                  ...clearPriceListFields
+                  ...clearPriceListFields,
+                  ...clearParentFields
                 })
               }
               result={tpaInsurances}
@@ -287,7 +316,8 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   ...previous,
                   insurancePayerId: item?.id,
                   insurancePayerName: item?.name,
-                  ...clearPriceListFields
+                  ...clearPriceListFields,
+                  ...clearParentFields
                 }));
               }}
             />
@@ -346,17 +376,21 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             setRecord={setRecord}
             disabled
           />
-          <CoveragePagedSelect
-            required
-            fieldName="parentPayerId"
+          <MyInput
+            disabled
+            width="100%"
             fieldLabel="Parent Name"
+            fieldName="parentPayerName"
             record={record}
             setRecord={setRecord}
-            result={parentPayers}
-            page={parentLookup.page}
-            setPage={parentLookup.setPage}
-            search={parentLookup.search}
-            setSearch={parentLookup.setSearch}
+            loading={isParentPayerLoading}
+            placeholder={
+              !selectedInsuranceId
+                ? 'Filled from the selected insurance company'
+                : isParentPayerLoading
+                  ? 'Loading parent insurance...'
+                  : 'No parent insurance linked'
+            }
           />
         </Form>
       }
