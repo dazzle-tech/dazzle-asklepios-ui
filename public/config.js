@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 
   tenantId: "1",
   tenantSecurityToken: "4994",
-  stimulsoftProxyUrl: "",
+  stimulsoftProxyUrl: "/proxy",
   stimulsoftLicenseKey: "6vJhGtLLLz2GNviWmUTrhSqnOItdDwjBylQzQcAOiHn9ra6B7L/WLSvNB/6pzc7v23PZ0FDX1CxOXv/jmPZjt0hLNd" + 
 "gRVVXrajiYKwq8N4JrxS3VOz8v52E38H1HDHamyp04wwrktq7m1QAvDKtcjQ/hErt2mG/9AbHRx6usSpL206racpe2" + 
 "6sWMZPn7HxV1YMQNab5XZHdvK9jiAS9mLOP+YizvLc8DV9xYjU5fKGQPlHX3Ja0EsgQe9mfNpdbTGoG5Dl7q2SWoo/" + 

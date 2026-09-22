@@ -6,20 +6,32 @@ import {
   setActiveStimulsoftReport,
   tryFulfillStimulsoftApiRequest,
 } from './stimulsoftApiProxy';
+import {
+  applyStimulsoftAppearanceTheme,
+  applyStimulsoftDashboardColorMode,
+  hideStimulsoftDashboardParameterControls,
+  type StimulsoftUiMode,
+} from './stimulsoftViewerTheme';
+import './stimulsoftViewerHost.less';
 
 type Props = {
   templateJson: string;
   params?: Record<string, string>;
   sessionKey: string | number;
   height?: string | number;
+  uiMode?: StimulsoftUiMode;
+  hideDashboardParameterControls?: boolean;
   onError?: (message: string) => void;
 };
 
-const applyViewerExportOptions = (options: any) => {
+const applyViewerExportOptions = (Stimulsoft: any, options: any) => {
   if (options.appearance) {
     options.appearance.scrollbarsMode = true;
     options.appearance.fullScreenMode = false;
     options.appearance.showTooltips = true;
+    if ('autoHideScrollbars' in options.appearance) {
+      options.appearance.autoHideScrollbars = false;
+    }
   }
   if (options.toolbar) {
     options.toolbar.visible = true;
@@ -30,6 +42,12 @@ const applyViewerExportOptions = (options: any) => {
     options.toolbar.showSaveButton = true;
     options.toolbar.showBookmarksButton = true;
     options.toolbar.showParametersButton = false;
+    options.toolbar.zoom = 100;
+    const viewMode = Stimulsoft?.Viewer?.StiWebViewMode;
+    if (viewMode && options.toolbar.viewMode != null) {
+      options.toolbar.viewMode =
+        viewMode.Continuous ?? viewMode.SinglePage ?? options.toolbar.viewMode;
+    }
   }
   if (!options.exports) return;
   const flags: Array<[string, boolean]> = [
@@ -61,17 +79,21 @@ const StimulsoftViewerHost = ({
   params = {},
   sessionKey,
   height = 'calc(100vh - 260px)',
+  uiMode = 'light',
+  hideDashboardParameterControls = false,
   onError,
 }: Props) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
   const [status, setStatus] = useState('Loading report…');
+  const paramsSignature = JSON.stringify(params);
   const boxStyle = {
     width: '100%' as const,
     height,
     minHeight: 280,
     position: 'relative' as const,
+    overflow: 'auto' as const,
   };
 
   useEffect(() => {
@@ -97,7 +119,12 @@ const StimulsoftViewerHost = ({
         }
 
         const options = new Stimulsoft.Viewer.StiViewerOptions();
-        applyViewerExportOptions(options);
+        applyViewerExportOptions(Stimulsoft, options);
+        applyStimulsoftAppearanceTheme(Stimulsoft, options, uiMode);
+        applyStimulsoftDashboardColorMode(Stimulsoft, report, uiMode);
+        if (hideDashboardParameterControls) {
+          hideStimulsoftDashboardParameterControls(Stimulsoft, report);
+        }
 
         viewer = new Stimulsoft.Viewer.StiViewer(
           options,
@@ -140,9 +167,9 @@ const StimulsoftViewerHost = ({
         hostRef.current.innerHTML = '';
       }
     };
-    // sessionKey is the remount trigger; params are captured for that session.
+    // paramsSignature remounts the viewer when department/facility filters change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, templateJson]);
+  }, [sessionKey, templateJson, uiMode, paramsSignature, hideDashboardParameterControls]);
 
   return (
     <div style={boxStyle}>
@@ -151,7 +178,13 @@ const StimulsoftViewerHost = ({
       ) : null}
       <div
         ref={hostRef}
-        className="stimulsoft-viewer-host"
+        className={`stimulsoft-viewer-host stimulsoft-viewer-host--${
+          uiMode === 'dark' ? 'dark' : 'light'
+        }${
+          hideDashboardParameterControls
+            ? ' stimulsoft-viewer-host--hide-params'
+            : ''
+        }`}
         style={{ width: '100%', height: '100%', minHeight: 280 }}
       />
     </div>

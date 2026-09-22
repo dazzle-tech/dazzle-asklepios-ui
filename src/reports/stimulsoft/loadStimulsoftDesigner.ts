@@ -1,11 +1,11 @@
 ﻿import config from '../../../app-config';
 import { installStimulsoftApiInterceptor, patchStimulsoftHttp } from './stimulsoftApiProxy';
-import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 const ENGINE_FILES = [
   '/stimulsoft/stimulsoft.reports.pack.js',
+  '/stimulsoft/stimulsoft.dashboards.pack.js',
   '/stimulsoft/stimulsoft.viewer.pack.js',
 ];
 
@@ -16,11 +16,74 @@ const SCRIPT_FILES = [
 
 let loadPromise: Promise<any> | null = null;
 let enginePromise: Promise<any> | null = null;
+let hostPrototypeGuardInstalled = false;
+
+const stimulsoftHostPrototypes = () =>
+  typeof window === 'undefined'
+    ? []
+    : [
+        Object.prototype,
+        Array.prototype,
+        Date.prototype,
+        String.prototype,
+        Number.prototype,
+        Boolean.prototype,
+      ];
+
+const isStimulsoftHostSymbol = (key: PropertyKey) =>
+  typeof key === 'symbol' && String(key).toLowerCase().includes('stimulsoft');
+
+/**
+ * Stimulsoft attaches an enumerable Symbol(stimulsoft) to built-in prototypes.
+ * lodash omitBy/pickBy then hands that symbol to rsuite DatePicker as a key,
+ * which crashes with `key.startsWith is not a function`.
+ */
+const hideStimulsoftHostSymbols = () => {
+  stimulsoftHostPrototypes().forEach(proto => {
+    Object.getOwnPropertySymbols(proto).forEach(symbol => {
+      if (!isStimulsoftHostSymbol(symbol)) return;
+      const descriptor = Object.getOwnPropertyDescriptor(proto, symbol);
+      if (!descriptor?.enumerable) return;
+      try {
+        Object.defineProperty(proto, symbol, {
+          ...descriptor,
+          enumerable: false,
+        });
+      } catch {
+        /* already sealed */
+      }
+    });
+  });
+};
+
+const installStimulsoftHostPrototypeGuard = () => {
+  if (hostPrototypeGuardInstalled || typeof window === 'undefined') return;
+  hostPrototypeGuardInstalled = true;
+
+  const originalDefineProperty = Object.defineProperty;
+  Object.defineProperty = ((
+    obj: any,
+    key: PropertyKey,
+    descriptor: PropertyDescriptor
+  ) => {
+    if (
+      descriptor &&
+      isStimulsoftHostSymbol(key) &&
+      stimulsoftHostPrototypes().includes(obj)
+    ) {
+      descriptor = { ...descriptor, enumerable: false };
+    }
+    return originalDefineProperty.call(Object, obj, key, descriptor);
+  }) as typeof Object.defineProperty;
+
+  hideStimulsoftHostSymbols();
+};
 
 const finishEngine = (Stimulsoft: any) => {
   if (!Stimulsoft?.Report?.StiReport) {
     throw new Error('Stimulsoft engine did not initialize.');
   }
+  hideStimulsoftHostSymbols();
   applyLicense(Stimulsoft);
   applyStimulsoftWebServer(Stimulsoft);
   installStimulsoftErrorGuards();
@@ -34,6 +97,7 @@ const loadScript = (src: string) =>
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
       if ((existing as HTMLScriptElement).dataset.loaded === 'true') {
+        hideStimulsoftHostSymbols();
         resolve();
         return;
       }
@@ -51,31 +115,129 @@ const loadScript = (src: string) =>
     script.async = false;
     script.onload = () => {
       script.dataset.loaded = 'true';
+      hideStimulsoftHostSymbols();
       resolve();
     };
     script.onerror = () =>
       reject(
         new Error(
-          `Failed to load ${src}. Run npm install so webpack can copy Stimulsoft pack scripts into public/stimulsoft.`
+          `Failed to load ${src}. Run npm install so webpack can copy Stimulsoft pack scripts (including dashboards) into public/stimulsoft.`
         )
       );
     document.body.appendChild(script);
   });
 
-const applyLicense = (Stimulsoft: any) => {
-  const key = config.stimulsoftLicenseKey;
-  if (!key || !Stimulsoft?.Base?.StiLicense) return;
-  Stimulsoft.Base.StiLicense.Key = key;
+const productList = (licenseKey: any): any[] => {
+  const products = licenseKey?.products;
+  if (!products) return [];
+  if (Array.isArray(products)) return products;
+  if (Array.isArray(products.list)) return products.list;
+  const count = Number(products.count ?? 0);
+  if (typeof products.getByIndex === 'function' && count > 0) {
+    const items: any[] = [];
+    for (let i = 0; i < count; i += 1) items.push(products.getByIndex(i));
+    return items;
+  }
+  return [];
+};
+
+const mergeLicenseProducts = (target: any, source: any) => {
+  if (!target || !source) return;
+  const have = new Set(
+    productList(target).map((item: any) => item?.ident ?? item?.Ident)
+  );
+  productList(source).forEach((product: any) => {
+    const ident = product?.ident ?? product?.Ident;
+    if (ident == null || have.has(ident)) return;
+    have.add(ident);
+    const products = target.products;
+    if (typeof products?.add === 'function') products.add(product);
+    else if (Array.isArray(products)) products.push(product);
+    else if (Array.isArray(products?.list)) products.list.push(product);
+  });
+};
+
+const assignLicenseString = (license: any, value: string) => {
+  if (!license || !value) return;
+  try {
+    if (typeof license.setNewLicenseKey === 'function') {
+      license.setNewLicenseKey(value, false);
+    }
+  } catch {
+    /* try the public setters next */
+  }
+  try {
+    license.key = value;
+  } catch {
+    /* Dashboards.JS samples use lowercase key */
+  }
+  try {
+    license.Key = value;
+  } catch {
+    /* Reports.JS / C# style */
+  }
+};
+
+export const applyLicense = (Stimulsoft: any) => {
+  const license = Stimulsoft?.Base?.StiLicense;
+  if (!license) return;
+
+  const reportKey = String(
+    window.APP_CONFIG?.stimulsoftLicenseKey || config.stimulsoftLicenseKey || ''
+  ).trim();
+  const dashboardKey = String(
+    window.APP_CONFIG?.stimulsoftDashboardLicenseKey ||
+      config.stimulsoftDashboardLicenseKey ||
+      ''
+  ).trim();
+
+  const LicenseKey = Stimulsoft.Base?.Licenses?.StiLicenseKey;
+  const decode = (raw: string) => {
+    if (!raw || typeof LicenseKey?.get2 !== 'function') return null;
+    try {
+      return LicenseKey.get2(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const reportLic = decode(reportKey);
+  const dashboardLic = decode(dashboardKey);
+  const dashboardsLicensed = () =>
+    Stimulsoft.Base?.Licenses?.StiLicenseKeyValidator?.isValidOnDbsJS?.() === true;
+
+  // Two complete keys cannot be concatenated (that JSON-parses as one license).
+  // Decode both and merge product idents so Reports.JS + Dashboards.JS are valid.
+  if (reportLic && dashboardLic) {
+    mergeLicenseProducts(reportLic, dashboardLic);
+    assignLicenseString(license, reportKey);
+    license.licenseKey = reportLic;
+    if (!dashboardsLicensed() && dashboardKey) {
+      mergeLicenseProducts(dashboardLic, reportLic);
+      assignLicenseString(license, dashboardKey);
+      license.licenseKey = dashboardLic;
+    }
+    return;
+  }
+
+  // Dashboards.JS trial watermark is tied to the DbsJs product. Prefer that key
+  // when only one of the two can be applied.
+  if (dashboardKey) {
+    assignLicenseString(license, dashboardKey);
+    if (dashboardLic) license.licenseKey = dashboardLic;
+    return;
+  }
+  if (reportKey) assignLicenseString(license, reportKey);
 };
 
 /**
- * Point SQL / remote-data adapter calls at a same-origin /proxy.
- * Webpack-dev-server (or Spring Boot / nginx in production) must host that path.
+ * Point SQL adapter calls at a same-origin /proxy (Node or Java data adapter).
+ * REST JSON sources keep using /api and are handled by stimulsoftApiProxy.
  */
 export const applyStimulsoftWebServer = (Stimulsoft: any) => {
   const webServer = Stimulsoft?.StiOptions?.WebServer;
   if (!webServer) return;
-  webServer.url = config.stimulsoftProxyUrl || '';
+  webServer.url = config.stimulsoftProxyUrl || '/proxy';
   if (typeof config.stimulsoftEncryptData === 'boolean') {
     webServer.encryptData = config.stimulsoftEncryptData;
   }
@@ -84,23 +246,31 @@ export const applyStimulsoftWebServer = (Stimulsoft: any) => {
   }
 };
 
-/** Forward the HIS JWT on Stimulsoft adapter POSTs through /proxy. */
+/**
+ * Do not put the HIS JWT on SQL adapter POSTs. Adding it on every designer
+ * event duplicated Authorization/id_token until Node returned HTTP 431.
+ * REST /api calls still get the JWT from the XHR interceptor.
+ */
 export const attachStimulsoftProxyHeaders = (report: any) => {
-  const headers = getStimulsoftAuthHeaders();
-  if (!report || headers.length === 0) return;
+  if (!report) return;
+  const isAuth = (key?: string) =>
+    ['authorization', 'id_token'].includes(String(key || '').toLowerCase());
+  const dropAuth = (items: { key?: string }[]) =>
+    items.filter(item => !isAuth(item?.key));
 
   const existing = report.httpHeadersContainer;
-  if (existing && typeof existing.add === 'function') {
-    headers.forEach(header => existing.add(header));
+  if (!existing) return;
+
+  if (Array.isArray(existing)) {
+    report.httpHeadersContainer = dropAuth(existing);
     return;
   }
-  const withoutAuth = Array.isArray(existing)
-    ? existing.filter(
-        (item: { key?: string }) =>
-          !['authorization', 'id_token'].includes(String(item?.key).toLowerCase())
-      )
-    : [];
-  report.httpHeadersContainer = [...withoutAuth, ...headers];
+  const list = existing.list ?? existing.items;
+  if (Array.isArray(list)) {
+    const kept = dropAuth(list);
+    list.length = 0;
+    kept.forEach((item: { key?: string }) => list.push(item));
+  }
 };
 
 const isStimulsoftInternalError = (error: unknown) => {
@@ -114,7 +284,9 @@ const isStimulsoftInternalError = (error: unknown) => {
     stack.includes('StiMobileDesigner.FindMousePosOnSvgPage') ||
     stack.includes('ZoomPage') ||
     stack.includes('ConvertPixelToUnit') ||
-    stack.includes('FindMousePosOnSvgPage') ||
+    stack.includes('getElementAttributesAsync') ||
+    stack.includes('StiReportHelper') ||
+    message.includes("reading 'bottom'") ||
     message.includes("reading 'reportUnit'") ||
     message.includes("reading 'forEach'") ||
     message.includes("reading 'repaint'")
@@ -307,6 +479,7 @@ const ensureViewer = async (Stimulsoft: any) => {
  */
 export const loadStimulsoftEngine = (): Promise<any> => {
   installStimulsoftApiInterceptor();
+  installStimulsoftHostPrototypeGuard();
 
   if (window.Stimulsoft?.Report?.StiReport) {
     return Promise.resolve(finishEngine(window.Stimulsoft));
@@ -342,8 +515,10 @@ export const loadStimulsoftViewer = async (): Promise<any> =>
 export const loadStimulsoftDesigner = (): Promise<any> => {
   // Patch fetch/XHR before Stimulsoft scripts capture the native functions.
   installStimulsoftApiInterceptor();
+  installStimulsoftHostPrototypeGuard();
 
   if (window.Stimulsoft?.Designer?.StiDesigner) {
+    hideStimulsoftHostSymbols();
     applyLicense(window.Stimulsoft);
     applyStimulsoftWebServer(window.Stimulsoft);
     installStimulsoftErrorGuards();
@@ -369,6 +544,7 @@ export const loadStimulsoftDesigner = (): Promise<any> => {
         }
         applyLicense(Stimulsoft);
         applyStimulsoftWebServer(Stimulsoft);
+        hideStimulsoftHostSymbols();
         installStimulsoftErrorGuards();
         patchStimulsoftHttp(Stimulsoft);
         patchStimulsoftDesignerRuntime(Stimulsoft);

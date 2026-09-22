@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -19,7 +20,9 @@ import {
 import {
   StimulsoftReportTemplate,
   parseDepartmentIds,
+  parseUserIds,
   serializeDepartmentIds,
+  serializeUserIds,
   useCreateStimulsoftReportTemplateMutation,
   useLazyGetStimulsoftDesignerSchemaQuery,
   useLazyGetStimulsoftReportTemplateByIdQuery,
@@ -27,9 +30,14 @@ import {
 } from '@/services/reports/stimulsoftReportService';
 import type { StimulsoftDesignerHostHandle } from '@/reports/stimulsoft/StimulsoftDesignerHost';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import {
+  StimulsoftDesignerMode,
+  templateTypeFromMode,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetUsersBasicQuery } from '@/services/userService';
 import './styles.less';
 
 const StimulsoftDesignerHost = React.lazy(
@@ -47,20 +55,39 @@ const EMPTY_DETAILS = {
   facilityId: null as number | null,
   departmentIds: [] as number[],
   module: '',
+  jobRole: '',
+  userIds: [] as number[],
 };
 
-const STEPS = [
-  {
-    title: 'Details',
-    description: 'Report name, facility and module',
-    icon: 1,
-  },
-  {
-    title: 'Design',
-    description: 'Layout the report template',
-    icon: 2,
-  },
-];
+const STEPS_BY_MODE: Record<
+  StimulsoftDesignerMode,
+  { title: string; description: string; icon: number }[]
+> = {
+  report: [
+    {
+      title: 'Details',
+      description: 'Report name, facility and module',
+      icon: 1,
+    },
+    {
+      title: 'Design',
+      description: 'Layout the report template',
+      icon: 2,
+    },
+  ],
+  dashboard: [
+    {
+      title: 'Details',
+      description: 'Dashboard name, facility and audience',
+      icon: 1,
+    },
+    {
+      title: 'Design',
+      description: 'Layout the dashboard template',
+      icon: 2,
+    },
+  ],
+};
 
 type Details = typeof EMPTY_DETAILS;
 
@@ -76,6 +103,8 @@ const mapTemplateToDetails = (template?: StimulsoftReportTemplate | null): Detai
   facilityId: toFacilityId(template),
   departmentIds: parseDepartmentIds(template?.departmentIds),
   module: template?.module ?? '',
+  jobRole: template?.jobRole ?? '',
+  userIds: parseUserIds(template?.userIds),
 });
 
 const MountWhenVisible = ({
@@ -113,16 +142,19 @@ type Props = {
   setOpen: (open: boolean) => void;
   initialData?: StimulsoftReportTemplate | null;
   onSaved?: () => void;
+  mode?: StimulsoftDesignerMode;
 };
 
 const DesignStep = ({
   code,
   templateJson,
   designerRef,
+  mode,
 }: {
   code: string;
   templateJson?: string | null;
   designerRef: React.MutableRefObject<StimulsoftDesignerHostHandle | null>;
+  mode: StimulsoftDesignerMode;
 }) => {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,6 +226,7 @@ const DesignStep = ({
         ref={designerRef}
         templateJson={templateJson}
         schema={schema}
+        mode={mode}
         height="calc(100vh - 320px)"
       />
     </React.Suspense>
@@ -205,6 +238,7 @@ const StimulsoftReportTemplateModal = ({
   setOpen,
   initialData,
   onSaved,
+  mode = 'report',
 }: Props) => {
   const dispatch = useDispatch();
   const designerRef = useRef<StimulsoftDesignerHostHandle | null>(null);
@@ -218,6 +252,46 @@ const StimulsoftReportTemplateModal = ({
   const [createTemplate] = useCreateStimulsoftReportTemplateMutation();
   const [updateTemplate] = useUpdateStimulsoftReportTemplateMutation();
   const moduleOptions = useEnumOptions('Modules');
+  const jobRoles = useEnumOptions('JobRole');
+  const selectedJobRole =
+    mode === 'dashboard' ? String(details.jobRole || '').trim() : '';
+  const { data: usersResponse, isFetching: usersLoading } =
+    useGetUsersBasicQuery(
+      {
+        page: 0,
+        size: 500,
+        sort: 'firstName,asc',
+        jobRole: selectedJobRole,
+      },
+      { skip: !selectedJobRole }
+    );
+  const userOptions = useMemo(() => {
+    const rows = Array.isArray(usersResponse?.data) ? usersResponse.data : [];
+    const options = rows
+      .map((user: { id?: number; firstName?: string; lastName?: string; login?: string }) => {
+        const id = Number(user?.id);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        const name = [user?.firstName, user?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        return {
+          id,
+          label: name || user?.login || `User ${id}`,
+        };
+      })
+      .filter((option): option is { id: number; label: string } =>
+        Boolean(option)
+      );
+
+    const known = new Set(options.map(option => option.id));
+    details.userIds.forEach(id => {
+      if (!known.has(id)) {
+        options.push({ id, label: `User ${id}` });
+      }
+    });
+    return options;
+  }, [details.userIds, usersResponse]);
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse)
     ? facilityListResponse
@@ -276,12 +350,12 @@ const StimulsoftReportTemplateModal = ({
       dispatch(notify({ msg: 'Please enter a template code.', sev: 'warning' }));
       return false;
     }
-    if (!details.module) {
+    if (mode !== 'dashboard' && !details.module) {
       dispatch(notify({ msg: 'Please select a module.', sev: 'warning' }));
       return false;
     }
     return true;
-  }, [details.code, details.module, details.name, dispatch]);
+  }, [details.code, details.module, details.name, dispatch, mode]);
 
   const handleBeforeNext = useCallback(
     async (activeStep: number) => {
@@ -314,7 +388,16 @@ const StimulsoftReportTemplateModal = ({
         departmentIds: selectedFacilityId
           ? serializeDepartmentIds(details.departmentIds)
           : '',
-        module: details.module || null,
+        module: mode === 'dashboard' ? null : details.module || null,
+        templateType: templateTypeFromMode(mode),
+        ...(mode === 'dashboard'
+          ? {
+              jobRole: details.jobRole || null,
+              userIds: details.jobRole
+                ? serializeUserIds(details.userIds)
+                : '',
+            }
+          : {}),
       };
 
       if (savedId) {
@@ -331,8 +414,11 @@ const StimulsoftReportTemplateModal = ({
       details.description,
       details.departmentIds,
       details.facilityId,
+      details.jobRole,
       details.module,
       details.name,
+      details.userIds,
+      mode,
       savedId,
       selectedFacilityId,
       templateJson,
@@ -357,14 +443,24 @@ const StimulsoftReportTemplateModal = ({
       setSaving(true);
       await persist(json);
       dispatch(
-        notify({ msg: 'Report template saved successfully', sev: 'success' })
+        notify({
+          msg:
+            mode === 'dashboard'
+              ? 'Dashboard template saved successfully'
+              : 'Report template saved successfully',
+          sev: 'success',
+        })
       );
       onSaved?.();
       setOpen(false);
     } catch (err: any) {
       dispatch(
         notify({
-          msg: err?.data?.message || 'Failed to save report template',
+          msg:
+            err?.data?.message ||
+            (mode === 'dashboard'
+              ? 'Failed to save dashboard template'
+              : 'Failed to save report template'),
           sev: 'error',
         })
       );
@@ -372,7 +468,7 @@ const StimulsoftReportTemplateModal = ({
     } finally {
       setSaving(false);
     }
-  }, [dispatch, onSaved, persist, setOpen, templateJson]);
+  }, [dispatch, mode, onSaved, persist, setOpen, templateJson]);
 
   return (
     <MyModal
@@ -380,15 +476,23 @@ const StimulsoftReportTemplateModal = ({
       setOpen={setOpen}
       title={
         isEdit ? (
-          <Translate>Edit Report Template</Translate>
+          <Translate>
+            {mode === 'dashboard'
+              ? 'Edit Dashboard Template'
+              : 'Edit Report Template'}
+          </Translate>
         ) : (
-          <Translate>New Report Template</Translate>
+          <Translate>
+            {mode === 'dashboard'
+              ? 'New Dashboard Template'
+              : 'New Report Template'}
+          </Translate>
         )
       }
       size="full"
       bodyheight="calc(100vh - 240px)"
       enforceFocus={false}
-      steps={STEPS}
+      steps={STEPS_BY_MODE[mode]}
       onBeforeNext={handleBeforeNext}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
@@ -427,7 +531,7 @@ const StimulsoftReportTemplateModal = ({
                 </Col>
               </Row>
               <Row gutter={24}>
-                <Col xs={24} md={12}>
+                <Col xs={24} md={mode === 'dashboard' ? 24 : 12}>
                   <MyInput
                     column
                     width="100%"
@@ -451,22 +555,24 @@ const StimulsoftReportTemplateModal = ({
                     searchable
                   />
                 </Col>
-                <Col xs={24} md={12}>
-                  <MyInput
-                    column
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Module"
-                    fieldName="module"
-                    selectData={moduleOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={details}
-                    setRecord={setDetails}
-                    required
-                    searchable
-                  />
-                </Col>
+                {mode !== 'dashboard' && (
+                  <Col xs={24} md={12}>
+                    <MyInput
+                      column
+                      width="100%"
+                      fieldType="select"
+                      fieldLabel="Module"
+                      fieldName="module"
+                      selectData={moduleOptions}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={details}
+                      setRecord={setDetails}
+                      required
+                      searchable
+                    />
+                  </Col>
+                )}
               </Row>
               {!!selectedFacilityId && (
                 <Row gutter={24}>
@@ -487,6 +593,58 @@ const StimulsoftReportTemplateModal = ({
                       setRecord={setDetails}
                     />
                   </Col>
+                </Row>
+              )}
+              {mode === 'dashboard' && (
+                <Row gutter={24}>
+                  <Col xs={24} md={selectedJobRole ? 12 : 24}>
+                    <MyInput
+                      column
+                      width="100%"
+                      fieldType="select"
+                      fieldLabel="Job Role"
+                      fieldName="jobRole"
+                      selectData={jobRoles ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={details}
+                      setRecord={next => {
+                        const nextRole = next.jobRole
+                          ? String(next.jobRole)
+                          : '';
+                        const roleChanged =
+                          nextRole !== String(details.jobRole || '');
+                        setDetails(
+                          roleChanged
+                            ? { ...next, jobRole: nextRole, userIds: [] }
+                            : { ...next, jobRole: nextRole }
+                        );
+                      }}
+                      searchable
+                      cleanable
+                      isEnum
+                      placeholder="All users"
+                    />
+                  </Col>
+                  {!!selectedJobRole && (
+                    <Col xs={24} md={12}>
+                      <MyInput
+                        column
+                        width="100%"
+                        fieldType="checkPicker"
+                        fieldLabel="Users"
+                        fieldName="userIds"
+                        selectData={userOptions}
+                        selectDataLabel="label"
+                        selectDataValue="id"
+                        placeholder="All users with this role"
+                        loading={usersLoading}
+                        searchable
+                        record={details}
+                        setRecord={setDetails}
+                      />
+                    </Col>
+                  )}
                 </Row>
               )}
               <Row gutter={24}>
@@ -514,6 +672,7 @@ const StimulsoftReportTemplateModal = ({
               code={details.code.trim()}
               templateJson={templateJson}
               designerRef={designerRef}
+              mode={mode}
             />
           </MountWhenVisible>
         </>

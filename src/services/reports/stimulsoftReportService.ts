@@ -4,8 +4,18 @@ import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 import { DesignerSchema } from '@/reports/stimulsoft/reportDesignerSchema';
 import { normalizeStimulsoftTemplateJson } from '@/reports/stimulsoft/reportPrintParameters';
+import {
+  isStimulsoftDashboardTemplate,
+  type StimulsoftTemplateType,
+} from '@/reports/stimulsoft/stimulsoftDesignerMode';
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  timestamp?: number;
+  templateType?: StimulsoftTemplateType;
+};
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -39,6 +49,11 @@ export type StimulsoftReportTemplate = {
   facilityId?: number | null;
   departmentIds?: string | null;
   module?: string | null;
+  templateType?: StimulsoftTemplateType | null;
+  /** Empty means the dashboard is visible to every user. */
+  jobRole?: string | null;
+  /** Comma-separated user ids. Empty means every user of jobRole. */
+  userIds?: string | number[] | null;
 };
 
 /**
@@ -54,6 +69,9 @@ export type StimulsoftReportTemplateWriteVM = {
   facilityId?: number | null;
   departmentIds?: string | null;
   module?: string | null;
+  templateType?: StimulsoftTemplateType | null;
+  jobRole?: string | null;
+  userIds?: string | null;
 };
 
 /**
@@ -128,6 +146,36 @@ export const serializeDepartmentIds = (ids?: number[] | null): string =>
     .filter(id => Number.isFinite(id) && id > 0)
     .join(',');
 
+export const parseUserIds = parseDepartmentIds;
+export const serializeUserIds = serializeDepartmentIds;
+
+type DashboardAudience = {
+  jobRole?: string | null;
+  userId?: number | null;
+};
+
+/**
+ * No job role: every user.
+ * Job role only: users with that role.
+ * Job role plus user ids: only those users.
+ */
+export const matchesDashboardAudience = (
+  template: StimulsoftReportTemplate,
+  viewer: DashboardAudience
+) => {
+  const requiredRole = String(template.jobRole ?? '').trim();
+  if (!requiredRole) return true;
+
+  const allowedUserIds = parseUserIds(template.userIds);
+  if (allowedUserIds.length > 0) {
+    const viewerId = Number(viewer.userId);
+    return Number.isFinite(viewerId) && allowedUserIds.includes(viewerId);
+  }
+
+  const viewerRole = String(viewer.jobRole ?? '').trim();
+  return viewerRole.toUpperCase() === requiredRole.toUpperCase();
+};
+
 const mapPagedTemplates = (response: unknown, meta: any): PagedResult<StimulsoftReportTemplate> => {
   const headers = meta?.response?.headers;
   const headerTotal = Number(headers?.get('X-Total-Count') ?? 0);
@@ -172,6 +220,40 @@ const unwrapTemplate = (response: unknown): StimulsoftReportTemplate => {
     return nested as StimulsoftReportTemplate;
   }
   return body as StimulsoftReportTemplate;
+};
+
+type TemplateContext = {
+  module?: string | null;
+  facilityId?: number | null;
+  departmentId?: number | null;
+};
+
+const matchesTemplateContext = (
+  template: StimulsoftReportTemplate,
+  arg: TemplateContext
+) => {
+  if (template.isActive === false) return false;
+  if (
+    arg.module &&
+    template.module &&
+    String(template.module).toUpperCase() !== String(arg.module).toUpperCase()
+  ) {
+    return false;
+  }
+  if (
+    arg.facilityId &&
+    template.facilityId &&
+    Number(template.facilityId) !== Number(arg.facilityId)
+  ) {
+    return false;
+  }
+  if (arg.departmentId && template.departmentIds) {
+    const ids = parseDepartmentIds(template.departmentIds);
+    if (ids.length > 0 && !ids.includes(Number(arg.departmentId))) {
+      return false;
+    }
+  }
+  return true;
 };
 
 const noStoreGet = (url: string, params: Record<string, unknown> = {}) => ({
@@ -245,8 +327,13 @@ export const stimulsoftReportService = createApi({
       PagedResult<StimulsoftReportTemplate>,
       PagedParams
     >({
-      query: ({ page, size, sort = 'id,desc' }) =>
-        noStoreGet('/api/analytics/reports/templates', { page, size, sort }),
+      query: ({ page, size, sort = 'id,desc', templateType }) =>
+        noStoreGet('/api/analytics/reports/templates', {
+          page,
+          size,
+          sort,
+          templateType,
+        }),
       transformResponse: mapPagedTemplates,
       serializeQueryArgs: ({ endpointName, queryArgs }) => {
         const { timestamp, ...rest } = queryArgs;
@@ -260,10 +347,10 @@ export const stimulsoftReportService = createApi({
       PagedResult<StimulsoftReportTemplate>,
       { name: string } & PagedParams
     >({
-      query: ({ name, page, size, sort }) =>
+      query: ({ name, page, size, sort, templateType }) =>
         noStoreGet(
           `/api/analytics/reports/templates/by-name/${encodeURIComponent(name)}`,
-          { page, size, sort }
+          { page, size, sort, templateType }
         ),
       transformResponse: mapPagedTemplates,
       serializeQueryArgs: ({ endpointName, queryArgs }) => {
@@ -410,6 +497,7 @@ export const stimulsoftReportService = createApi({
           facilityId,
           departmentId,
           isActive: true,
+          templateType: 'REPORT',
           page: 0,
           size: 200,
           sort: 'name,asc',
@@ -417,29 +505,53 @@ export const stimulsoftReportService = createApi({
       transformResponse: (response: unknown, meta: any, arg) => {
         const mapped = mapPagedTemplates(response, meta);
         return mapped.data.filter(template => {
-          if (template.isActive === false) return false;
-          if (
-            arg.module &&
-            template.module &&
-            String(template.module).toUpperCase() !== String(arg.module).toUpperCase()
-          ) {
+          if (String(template.templateType ?? '').toUpperCase() === 'DASHBOARD') {
             return false;
           }
+          if (isStimulsoftDashboardTemplate(template)) return false;
           if (!template.module) return false;
+          return matchesTemplateContext(template, arg);
+        });
+      },
+      providesTags: ['StimulsoftReportTemplate'],
+      forceRefetch: () => true,
+    }),
+
+    getViewableStimulsoftDashboards: builder.query<
+      StimulsoftReportTemplate[],
+      {
+        facilityId?: number | null;
+        departmentId?: number | null;
+        jobRole?: string | null;
+        userId?: number | null;
+      }
+    >({
+      query: ({ facilityId, departmentId }) =>
+        noStoreGet('/api/analytics/reports/templates', {
+          facilityId,
+          departmentId,
+          isActive: true,
+          templateType: 'DASHBOARD',
+          page: 0,
+          size: 200,
+          sort: 'name,asc',
+        }),
+      transformResponse: (response: unknown, meta: any, arg) => {
+        const mapped = mapPagedTemplates(response, meta);
+        return mapped.data.filter(template => {
+          if (String(template.templateType ?? '').toUpperCase() === 'REPORT') {
+            return false;
+          }
           if (
-            arg.facilityId &&
-            template.facilityId &&
-            Number(template.facilityId) !== Number(arg.facilityId)
+            String(template.templateType ?? '').toUpperCase() !== 'DASHBOARD' &&
+            !isStimulsoftDashboardTemplate(template)
           ) {
             return false;
           }
-          if (arg.departmentId && template.departmentIds) {
-            const ids = parseDepartmentIds(template.departmentIds);
-            if (ids.length > 0 && !ids.includes(Number(arg.departmentId))) {
-              return false;
-            }
-          }
-          return true;
+          return (
+            matchesTemplateContext(template, arg) &&
+            matchesDashboardAudience(template, arg)
+          );
         });
       },
       providesTags: ['StimulsoftReportTemplate'],
@@ -459,4 +571,5 @@ export const {
   useLazyPrintStimulsoftReportPdfQuery,
   useGetPrintableStimulsoftReportsQuery,
   useLazyGetPrintableStimulsoftReportsQuery,
+  useGetViewableStimulsoftDashboardsQuery,
 } = stimulsoftReportService;

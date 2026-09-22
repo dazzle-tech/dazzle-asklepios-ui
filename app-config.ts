@@ -21,10 +21,11 @@ const config = {
     window.APP_CONFIG?.tenantSecurityToken || '4994',
   stimulsoftLicenseKey: window.APP_CONFIG?.stimulsoftLicenseKey || '',
   /**
-   * Same-origin path in webpack dev. JSON REST sources use /api via the
-   * webpack proxy; keep this empty unless you use Stimulsoft SQL adapter.
+   * Same-origin SQL adapter URL. REST /api sources stay on the HIS proxy.
+   * Webpack forwards /proxy to stimulsoft-data-adapter
+   * (`npm run stimulsoft:adapter`).
    */
-  stimulsoftProxyUrl: window.APP_CONFIG?.stimulsoftProxyUrl || '',
+  stimulsoftProxyUrl: window.APP_CONFIG?.stimulsoftProxyUrl || '/proxy',
   stimulsoftEncryptData: window.APP_CONFIG?.stimulsoftEncryptData,
 };
 

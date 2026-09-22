@@ -40,17 +40,20 @@ copyStimulsoftAssets();
 
 /**
  * Same-origin Stimulsoft / HIS API proxy for local `webpack serve`.
- * Designer JSON sources call /api/... ; SQL adapter calls /proxy.
- * Webpack forwards both to Spring Boot with the browser JWT.
+ * REST JSON sources: /api → Spring Boot (HIS).
+ * SQL Test Connection / queries: /proxy → Node stimulsoft-data-adapter (:9615).
  *
- * Spring Boot: STIMULSOFT_PROXY_TARGET=http://localhost:8080
- * Node adapter: STIMULSOFT_PROXY_TARGET=http://localhost:9615
- *               STIMULSOFT_PROXY_STRIP_PATH=true
+ * HIS:  STIMULSOFT_PROXY_TARGET=http://localhost:8080
+ * SQL:  STIMULSOFT_SQL_ADAPTER_URL=http://localhost:9615
+ * Java adapter on Spring: STIMULSOFT_SQL_ADAPTER_URL=http://localhost:8080
+ *                         STIMULSOFT_PROXY_STRIP_PATH=false
  */
-const stimulsoftProxyTarget =
+const hisApiProxyTarget =
   process.env.STIMULSOFT_PROXY_TARGET || 'http://localhost:8080';
-const stimulsoftProxyStripPath =
-  process.env.STIMULSOFT_PROXY_STRIP_PATH === 'true';
+const sqlAdapterTarget =
+  process.env.STIMULSOFT_SQL_ADAPTER_URL || 'http://localhost:9615';
+const sqlAdapterStripPath =
+  process.env.STIMULSOFT_PROXY_STRIP_PATH !== 'false';
 
 const forwardHisAuthHeaders = (proxyReq, req) => {
   const authorization = req.headers.authorization || req.headers.Authorization;
@@ -64,7 +67,7 @@ const forwardHisAuthHeaders = (proxyReq, req) => {
 };
 
 const hisApiProxyOptions = {
-  target: stimulsoftProxyTarget,
+  target: hisApiProxyTarget,
   changeOrigin: true,
   secure: false,
   logLevel: 'warn',
@@ -122,11 +125,16 @@ module.exports = {
     },
     proxy: [
       {
-        context: ['/api', '/proxy'],
+        context: ['/api'],
         ...hisApiProxyOptions,
-        ...(stimulsoftProxyStripPath
-          ? { pathRewrite: { '^/proxy': '/' } }
-          : {}),
+      },
+      {
+        context: ['/proxy'],
+        target: sqlAdapterTarget,
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'warn',
+        ...(sqlAdapterStripPath ? { pathRewrite: { '^/proxy': '' } } : {}),
       },
     ],
     setupMiddlewares: middlewares => {
