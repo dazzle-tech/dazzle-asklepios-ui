@@ -68,15 +68,24 @@ function resolvePersonName(person: any): string {
 /** Spring @RequestParam LocalDate expects yyyy-MM-dd. */
 function toLocalDateParam(value: unknown): string {
   if (value == null || value === '') return '';
+
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return moment(value).format('YYYY-MM-DD');
+    return moment(value)
+      .locale('en')
+      .format('YYYY-MM-DD');
   }
+
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (!trimmed) return '';
+
     const parsed = moment(trimmed);
-    return parsed.isValid() ? parsed.format('YYYY-MM-DD') : trimmed.slice(0, 10);
+
+    return parsed.isValid()
+      ? parsed.locale('en').format('YYYY-MM-DD')
+      : trimmed.slice(0, 10);
   }
+
   return String(value);
 }
 
