@@ -325,15 +325,18 @@ const AddToWaitingListModal = ({
     if (Number.isFinite(practitionerId) && practitionerId > 0) body.practitionerId = practitionerId;
 
     if (record.priority) body.priority = record.priority;
-    if (record.preferredDate) {
-      body.preferredDate = moment(record.preferredDate).format('YYYY-MM-DD');
-    }
+      if (record.preferredDate) {
+        body.preferredDate = moment(record.preferredDate)
+          .locale('en')
+          .format('YYYY-MM-DD');
+      }
     if (record.reason?.trim()) body.reason = record.reason.trim();
     if (record.notes?.trim()) body.notes = record.notes.trim();
 
     dispatch(showSystemLoader());
     try {
       await createWaitingList(body).unwrap();
+
       dispatch(notify({ msg: 'Patient added to waiting list.', sev: 'success' }));
       handleClose();
       await onCreated?.({ departmentId: deptId });
