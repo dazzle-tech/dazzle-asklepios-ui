@@ -55,7 +55,7 @@ const EMPTY_DETAILS = {
   facilityId: null as number | null,
   departmentIds: [] as number[],
   module: '',
-  jobRole: '',
+  jobRole: null as string | null,
   userIds: [] as number[],
 };
 
@@ -103,7 +103,7 @@ const mapTemplateToDetails = (template?: StimulsoftReportTemplate | null): Detai
   facilityId: toFacilityId(template),
   departmentIds: parseDepartmentIds(template?.departmentIds),
   module: template?.module ?? '',
-  jobRole: template?.jobRole ?? '',
+  jobRole: template?.jobRole ? String(template.jobRole) : null,
   userIds: parseUserIds(template?.userIds),
 });
 
@@ -260,14 +260,26 @@ const StimulsoftReportTemplateModal = ({
       {
         page: 0,
         size: 500,
-        sort: 'firstName,asc',
+        sort: 'id,asc',
         jobRole: selectedJobRole,
       },
       { skip: !selectedJobRole }
     );
   const userOptions = useMemo(() => {
-    const rows = Array.isArray(usersResponse?.data) ? usersResponse.data : [];
+    const payload = usersResponse?.data;
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.content)
+        ? payload.content
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+    const role = selectedJobRole.toUpperCase();
     const options = rows
+      .filter((user: { jobRole?: string | null }) => {
+        const userRole = String(user?.jobRole ?? '').trim().toUpperCase();
+        return !userRole || userRole === role;
+      })
       .map((user: { id?: number; firstName?: string; lastName?: string; login?: string }) => {
         const id = Number(user?.id);
         if (!Number.isFinite(id) || id <= 0) return null;
@@ -291,7 +303,7 @@ const StimulsoftReportTemplateModal = ({
       }
     });
     return options;
-  }, [details.userIds, usersResponse]);
+  }, [details.userIds, selectedJobRole, usersResponse]);
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse)
     ? facilityListResponse
@@ -596,56 +608,62 @@ const StimulsoftReportTemplateModal = ({
                 </Row>
               )}
               {mode === 'dashboard' && (
-                <Row gutter={24}>
-                  <Col xs={24} md={selectedJobRole ? 12 : 24}>
-                    <MyInput
-                      column
-                      width="100%"
-                      fieldType="select"
-                      fieldLabel="Job Role"
-                      fieldName="jobRole"
-                      selectData={jobRoles ?? []}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      record={details}
-                      setRecord={next => {
-                        const nextRole = next.jobRole
-                          ? String(next.jobRole)
-                          : '';
-                        const roleChanged =
-                          nextRole !== String(details.jobRole || '');
-                        setDetails(
-                          roleChanged
-                            ? { ...next, jobRole: nextRole, userIds: [] }
-                            : { ...next, jobRole: nextRole }
-                        );
-                      }}
-                      searchable
-                      cleanable
-                      isEnum
-                      placeholder="All users"
-                    />
-                  </Col>
-                  {!!selectedJobRole && (
+                <>
+                  <Row gutter={24}>
                     <Col xs={24} md={12}>
                       <MyInput
                         column
                         width="100%"
-                        fieldType="checkPicker"
-                        fieldLabel="Users"
-                        fieldName="userIds"
-                        selectData={userOptions}
+                        fieldType="select"
+                        fieldLabel="Job Role"
+                        fieldName="jobRole"
+                        selectData={jobRoles ?? []}
                         selectDataLabel="label"
-                        selectDataValue="id"
-                        placeholder="All users with this role"
-                        loading={usersLoading}
+                        selectDataValue="value"
+                        record={{
+                          ...details,
+                          jobRole: details.jobRole || null,
+                        }}
+                        setRecord={next => {
+                          const nextRole = next.jobRole
+                            ? String(next.jobRole)
+                            : null;
+                          const roleChanged = nextRole !== (details.jobRole || null);
+                          setDetails({
+                            ...next,
+                            jobRole: nextRole,
+                            userIds: roleChanged ? [] : next.userIds ?? [],
+                          });
+                        }}
                         searchable
-                        record={details}
-                        setRecord={setDetails}
+                        cleanable
+                        isEnum
+                        placeholder="Select"
                       />
                     </Col>
+                  </Row>
+                  {!!selectedJobRole && (
+                    <Row gutter={24}>
+                      <Col xs={24}>
+                        <MyInput
+                          column
+                          width="100%"
+                          fieldType="checkPicker"
+                          fieldLabel="Users"
+                          fieldName="userIds"
+                          selectData={userOptions}
+                          selectDataLabel="label"
+                          selectDataValue="id"
+                          placeholder="All users with this role"
+                          loading={usersLoading}
+                          searchable
+                          record={details}
+                          setRecord={setDetails}
+                        />
+                      </Col>
+                    </Row>
                   )}
-                </Row>
+                </>
               )}
               <Row gutter={24}>
                 <Col xs={24}>

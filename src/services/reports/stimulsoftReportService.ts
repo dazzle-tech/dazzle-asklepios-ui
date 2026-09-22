@@ -149,33 +149,6 @@ export const serializeDepartmentIds = (ids?: number[] | null): string =>
 export const parseUserIds = parseDepartmentIds;
 export const serializeUserIds = serializeDepartmentIds;
 
-type DashboardAudience = {
-  jobRole?: string | null;
-  userId?: number | null;
-};
-
-/**
- * No job role: every user.
- * Job role only: users with that role.
- * Job role plus user ids: only those users.
- */
-export const matchesDashboardAudience = (
-  template: StimulsoftReportTemplate,
-  viewer: DashboardAudience
-) => {
-  const requiredRole = String(template.jobRole ?? '').trim();
-  if (!requiredRole) return true;
-
-  const allowedUserIds = parseUserIds(template.userIds);
-  if (allowedUserIds.length > 0) {
-    const viewerId = Number(viewer.userId);
-    return Number.isFinite(viewerId) && allowedUserIds.includes(viewerId);
-  }
-
-  const viewerRole = String(viewer.jobRole ?? '').trim();
-  return viewerRole.toUpperCase() === requiredRole.toUpperCase();
-};
-
 const mapPagedTemplates = (response: unknown, meta: any): PagedResult<StimulsoftReportTemplate> => {
   const headers = meta?.response?.headers;
   const headerTotal = Number(headers?.get('X-Total-Count') ?? 0);
@@ -526,34 +499,18 @@ export const stimulsoftReportService = createApi({
         userId?: number | null;
       }
     >({
-      query: ({ facilityId, departmentId }) =>
-        noStoreGet('/api/analytics/reports/templates', {
+      query: ({ facilityId, departmentId, jobRole, userId }) =>
+        noStoreGet('/api/analytics/reports/dashboards', {
           facilityId,
           departmentId,
-          isActive: true,
-          templateType: 'DASHBOARD',
+          jobRole,
+          userId,
           page: 0,
           size: 200,
           sort: 'name,asc',
         }),
-      transformResponse: (response: unknown, meta: any, arg) => {
-        const mapped = mapPagedTemplates(response, meta);
-        return mapped.data.filter(template => {
-          if (String(template.templateType ?? '').toUpperCase() === 'REPORT') {
-            return false;
-          }
-          if (
-            String(template.templateType ?? '').toUpperCase() !== 'DASHBOARD' &&
-            !isStimulsoftDashboardTemplate(template)
-          ) {
-            return false;
-          }
-          return (
-            matchesTemplateContext(template, arg) &&
-            matchesDashboardAudience(template, arg)
-          );
-        });
-      },
+      transformResponse: (response: unknown, meta: any) =>
+        mapPagedTemplates(response, meta).data,
       providesTags: ['StimulsoftReportTemplate'],
       forceRefetch: () => true,
     }),
