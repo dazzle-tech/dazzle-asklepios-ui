@@ -12,23 +12,28 @@ const isProduction = process.env.NODE_ENV === 'production';
  * Copy Stimulsoft designer/viewer scripts into public/ so they are served as
  * static files and never enter the webpack application bundle.
  * Missing files are skipped (e.g. if the npm package is not installed).
+ * Prefer Dashboards.JS so reports, dashboards, viewer, and designer stay on
+ * the same product version.
  */
 function copyStimulsoftAssets() {
-  const srcRoot = path.resolve(__dirname, 'node_modules/stimulsoft-reports-js');
   const dest = path.resolve(__dirname, 'public/stimulsoft');
-  if (!fs.existsSync(srcRoot)) {
-    return;
-  }
   fs.mkdirSync(dest, { recursive: true });
-  const candidates = [
-    ['Scripts/stimulsoft.reports.pack.js', 'stimulsoft.reports.pack.js'],
-    ['Scripts/stimulsoft.viewer.pack.js', 'stimulsoft.viewer.pack.js'],
-    ['Scripts/stimulsoft.designer.pack.js', 'stimulsoft.designer.pack.js'],
+  const packageRoots = [
+    path.resolve(__dirname, 'node_modules/stimulsoft-dashboards-js'),
+    path.resolve(__dirname, 'node_modules/stimulsoft-reports-js'),
   ];
-  for (const [from, to] of candidates) {
-    const src = path.join(srcRoot, from);
-    const out = path.join(dest, to);
-    if (!fs.existsSync(src)) continue;
+  const files = [
+    'stimulsoft.reports.pack.js',
+    'stimulsoft.dashboards.pack.js',
+    'stimulsoft.viewer.pack.js',
+    'stimulsoft.designer.pack.js',
+  ];
+  for (const file of files) {
+    const src = packageRoots
+      .map(root => path.join(root, 'Scripts', file))
+      .find(candidate => fs.existsSync(candidate));
+    if (!src) continue;
+    const out = path.join(dest, file);
     const srcMtime = fs.statSync(src).mtimeMs;
     const shouldCopy = !fs.existsSync(out) || fs.statSync(out).mtimeMs < srcMtime;
     if (shouldCopy) {

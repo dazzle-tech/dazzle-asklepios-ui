@@ -80,7 +80,8 @@ const isProtectedAppApi = (url: string): boolean => {
 
 /**
  * RTK Query fetch() to backendBaseURL. Must not be rewritten or have Stimulsoft
- * report variables injected — that emptied the department switcher.
+ * report variables injected — that emptied the department switcher and kept
+ * report lists on the previous department until a refresh.
  */
 const isAppBackendFetch = (url: string): boolean => {
   if (isProtectedAppApi(url)) return true;

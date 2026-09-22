@@ -275,7 +275,12 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
-    if (!localEncounter?.practitionerId) missingFields.push('Practitioner');
+    if (
+      localEncounter?.encounterType !== 'EMERGENCY' &&
+      !localEncounter?.practitionerId
+    ) {
+      missingFields.push('Practitioner');
+    }
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
     if (!localEncounter?.priorityLevel) missingFields.push('Priority');
     if (!localEncounter?.encounterDate) missingFields.push('Date');

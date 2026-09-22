@@ -640,13 +640,13 @@ const handleViewImage = async (reportId: number) => {
               : !!reportContent;
 
           const isSevere =
-            String(row?.severity ?? '').toUpperCase() === 'SEVERE';
+            String(row?.severity ?? '').toUpperCase() === 'CRITICAL';
 
           return (
             <Whisper
               speaker={
                 <Tooltip>
-                  {isSevere ? 'Critical Result - Severe' : 'Add Report'}
+                  {isSevere ? 'Critical Result - Critical' : 'Add Report'}
                 </Tooltip>
               }
             >

@@ -2,19 +2,19 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } 
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppSelector } from '@/hooks';
+import { useAppSelector, useAppDispatch } from '@/hooks';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { formatEnumString } from '@/utils';
-
-import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
+import { faLandMineOn, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
 import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
 import PrintOrderSampleLabelAction from './PrintOrderSampleLabelAction';
-
+import { useRefreshHl7EventsMutation } from '../../services/refreshHl7EventsService';
+import { notify } from '@/utils/uiReducerActions';
 type OrdersProps = {
   order: any;
   setOrder: (order: any) => void;
@@ -27,6 +27,7 @@ type OrdersProps = {
   departmentFilter?: any;
   selectedPatient?: any;
   filters?: React.ReactNode;
+  orderTests?: any[];
 };
 
 const Orders = forwardRef<any, OrdersProps>(
@@ -38,8 +39,11 @@ const Orders = forwardRef<any, OrdersProps>(
     orderNumberFilter,
     selectedPatient,
     departmentFilter,
-    filters
+    filters,
+    orderTests
   }, ref) => {
+    const dispatch = useAppDispatch();
+
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
@@ -60,17 +64,7 @@ const Orders = forwardRef<any, OrdersProps>(
       order?.encounterId ? { encounterId: order.encounterId } : skipToken
     );
 
-    const diagnosisMap = useMemo(() => {
-      const map: Record<number, any> = {};
 
-      (diagnosesList ?? []).forEach((d: any) => {
-        if (d?.id != null) {
-          map[d.id] = d;
-        }
-      });
-
-      return map;
-    }, [diagnosesList]);
 
     const fromDateParam = useMemo(() => {
       if (!dateFilter?.fromDate) return undefined;
@@ -96,7 +90,36 @@ const Orders = forwardRef<any, OrdersProps>(
       selectedPatient?.id,
       departmentFilter?.fromDepartmentIdIn
     ]);
+    const [refreshHl7Events, { isLoading: isRefreshing }] =
+      useRefreshHl7EventsMutation();
 
+
+    const handleRefreshHl7 = async () => {
+      if (!order?.encounterId) {
+        return;
+      }
+
+      try {
+        await refreshHl7Events({
+          encounterId: order.encounterId,
+          orderTestIds: orderTests?.map(t => t.id) ?? [],
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'HL7 events refreshed successfully',
+            sev: 'success'
+          })
+        );
+      } catch (e) {
+        dispatch(
+          notify({
+            msg: 'Failed to refresh HL7 events',
+            sev: 'error'
+          })
+        );
+      }
+    };
     const {
       data: ordersResponse,
       isFetching,
@@ -282,6 +305,32 @@ const Orders = forwardRef<any, OrdersProps>(
         width: 30,
         render: (rowData: any) => <PrintOrderSampleLabelAction rowData={rowData} />
       },
+      {
+        key: 'refresh',
+        title: <Translate>REFRESH</Translate>,
+        width: 100,
+        render: (rowData: any) => {
+          if (rowData.id !== order?.id) {
+            return null;
+          }
+
+          return (
+            <Whisper
+              placement="top"
+              speaker={<Tooltip>Refresh Order</Tooltip>}
+            >
+              <span>
+                <FontAwesomeIcon
+                  icon={faSync}
+                  className="refresh-icon-style"
+                  spin={isRefreshing}
+                  onClick={handleRefreshHl7}
+                />
+              </span>
+            </Whisper>
+          );
+        }
+      }
 
     ];
 
@@ -292,6 +341,7 @@ const Orders = forwardRef<any, OrdersProps>(
 
     return (
       <div dir={dir}>
+
         <MyTable
           data={ordersList}
           columns={tableColumns}

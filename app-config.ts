@@ -5,6 +5,7 @@ declare global {
       tenantId?: string;
       tenantSecurityToken?: string;
       stimulsoftLicenseKey?: string;
+      stimulsoftDashboardLicenseKey?: string;
       stimulsoftProxyUrl?: string;
       stimulsoftEncryptData?: boolean;
     };
@@ -20,6 +21,8 @@ const config = {
   tenantSecurityToken:
     window.APP_CONFIG?.tenantSecurityToken || '4994',
   stimulsoftLicenseKey: window.APP_CONFIG?.stimulsoftLicenseKey || '',
+  stimulsoftDashboardLicenseKey:
+    window.APP_CONFIG?.stimulsoftDashboardLicenseKey || '',
   /**
    * Same-origin SQL adapter URL. REST /api sources stay on the HIS proxy.
    * Webpack forwards /proxy to stimulsoft-data-adapter

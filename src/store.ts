@@ -263,6 +263,8 @@ import { patientTimelineService } from './services/patients/patientTimelineServi
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
+import { refreshHl7EventsService } from './services/refreshHl7EventsService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -314,6 +316,7 @@ export const store = configureStore({
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -647,7 +650,8 @@ export const store = configureStore({
     [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
-    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer
+    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -884,7 +888,8 @@ export const store = configureStore({
         patientTimelineService.middleware,
         autoPopulationService.middleware,
         dischargeReportService.middleware,
-         ocrParsingService.middleware
+         ocrParsingService.middleware,
+        labInterpretationService.middleware
       ) as any
 });
 
