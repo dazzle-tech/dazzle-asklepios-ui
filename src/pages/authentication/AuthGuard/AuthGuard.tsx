@@ -75,6 +75,12 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return null;
   }
 
+  const storedToken = localStorage.getItem('id_token');
+
+  if (!isPublicPage && !token && !storedToken) {
+    return null;
+  }
+
   return <>{children}</>;
 };
 
