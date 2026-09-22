@@ -15,6 +15,7 @@ import { calculateAgeFormat } from '@/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
+import MyDateHijriInput from '@/components/MyDateHijriInput/MyDateHijriInput';
 
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
@@ -129,7 +130,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
-      <MyInput
+      <MyDateHijriInput
         width={350}
         vr={validationResult}
         column
@@ -139,7 +140,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
-        allowNull
       />
       <div>
         Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
