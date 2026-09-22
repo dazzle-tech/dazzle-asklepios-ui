@@ -137,6 +137,44 @@ export const hideStimulsoftDashboardParameterControls = (
   }
 };
 
+/** Tall enough to place full-size charts and scroll, instead of the 600px default. */
+const MIN_DASHBOARD_PAGE_HEIGHT = 2400;
+
+/**
+ * StretchXY scales the whole dashboard into the window, so charts shrink to fit.
+ * StretchX keeps the designed height and lets the page scroll.
+ * StiDashboardContentAlignment.StretchX === 4.
+ */
+export const applyDashboardScrollLayout = (Stimulsoft: any, report: any) => {
+  const pages = report?.pages;
+  if (!pages) return;
+  const stretchX =
+    Stimulsoft?.Report?.Dashboard?.StiDashboardContentAlignment?.StretchX ?? 4;
+  const count = Number(pages.count ?? pages.list?.length ?? 0);
+  for (let i = 0; i < count; i++) {
+    const page = pages.getByIndex?.(i) ?? pages.list?.[i];
+    if (!page?.isDashboard) continue;
+    try {
+      page.contentAlignment = stretchX;
+    } catch {
+      /* read-only */
+    }
+    try {
+      page.altContentAlignment = stretchX;
+    } catch {
+      /* read-only */
+    }
+    const height = Number(page.height);
+    if (!Number.isFinite(height) || height < MIN_DASHBOARD_PAGE_HEIGHT) {
+      try {
+        page.height = MIN_DASHBOARD_PAGE_HEIGHT;
+      } catch {
+        /* read-only */
+      }
+    }
+  }
+};
+
 export const applyStimulsoftDashboardColorMode = (
   Stimulsoft: any,
   report: any,

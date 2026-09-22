@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs');
+const net = require('net');
 const path = require('path');
+const { spawn } = require('child_process');
  
 const express = require('express');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -45,17 +47,68 @@ copyStimulsoftAssets();
 
 /**
  * Same-origin Stimulsoft / HIS API proxy for local `webpack serve`.
- * Designer JSON sources call /api/... ; SQL adapter calls /proxy.
- * Webpack forwards both to Spring Boot with the browser JWT.
+ * REST JSON sources: /api → Spring Boot (HIS).
+ * SQL Test Connection / queries: /proxy → Node stimulsoft-data-adapter (:9615).
  *
- * Spring Boot: STIMULSOFT_PROXY_TARGET=http://localhost:8080
- * Node adapter: STIMULSOFT_PROXY_TARGET=http://localhost:9615
- *               STIMULSOFT_PROXY_STRIP_PATH=true
+ * HIS:  STIMULSOFT_PROXY_TARGET=http://localhost:8080
+ * SQL:  STIMULSOFT_SQL_ADAPTER_URL=http://localhost:9615
+ * Java adapter on Spring: STIMULSOFT_SQL_ADAPTER_URL=http://localhost:8080
+ *                         STIMULSOFT_PROXY_STRIP_PATH=false
  */
-const stimulsoftProxyTarget =
+const hisApiProxyTarget =
   process.env.STIMULSOFT_PROXY_TARGET || 'http://localhost:8080';
-const stimulsoftProxyStripPath =
-  process.env.STIMULSOFT_PROXY_STRIP_PATH === 'true';
+const sqlAdapterPort = Number(process.env.STIMULSOFT_SQL_ADAPTER_PORT || 9615);
+const sqlAdapterTarget =
+  process.env.STIMULSOFT_SQL_ADAPTER_URL ||
+  `http://localhost:${sqlAdapterPort}`;
+const sqlAdapterStripPath =
+  process.env.STIMULSOFT_PROXY_STRIP_PATH !== 'false';
+
+/**
+ * Designer SQL (including PostgreSQL Test Connection) posts to /proxy.
+ * Webpack forwards that to the Node data adapter. Start it with the dev
+ * server when the target is this machine, so Test Connection is not
+ * ECONNREFUSED on :9615.
+ */
+let sqlAdapterChild = null;
+function ensureStimulsoftSqlAdapter() {
+  let target;
+  try {
+    target = new URL(sqlAdapterTarget);
+  } catch {
+    return;
+  }
+  const local =
+    target.hostname === 'localhost' || target.hostname === '127.0.0.1';
+  if (!local || String(target.port || '80') !== String(sqlAdapterPort)) return;
+
+  const probe = net.connect({ host: '127.0.0.1', port: sqlAdapterPort });
+  const start = () => {
+    if (sqlAdapterChild) return;
+    sqlAdapterChild = spawn(
+      process.execPath,
+      [path.resolve(__dirname, 'scripts/stimulsoft-data-adapter.js')],
+      {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          STIMULSOFT_SQL_ADAPTER_PORT: String(sqlAdapterPort),
+        },
+      }
+    );
+    sqlAdapterChild.on('exit', () => {
+      sqlAdapterChild = null;
+    });
+    const stop = () => {
+      if (sqlAdapterChild && !sqlAdapterChild.killed) sqlAdapterChild.kill();
+    };
+    process.once('exit', stop);
+    process.once('SIGINT', stop);
+    process.once('SIGTERM', stop);
+  };
+  probe.on('connect', () => probe.end());
+  probe.on('error', start);
+}
 
 const forwardHisAuthHeaders = (proxyReq, req) => {
   const authorization = req.headers.authorization || req.headers.Authorization;
@@ -69,7 +122,7 @@ const forwardHisAuthHeaders = (proxyReq, req) => {
 };
 
 const hisApiProxyOptions = {
-  target: stimulsoftProxyTarget,
+  target: hisApiProxyTarget,
   changeOrigin: true,
   secure: false,
   logLevel: 'warn',
@@ -127,14 +180,20 @@ module.exports = {
     },
     proxy: [
       {
-        context: ['/api', '/proxy'],
+        context: ['/api'],
         ...hisApiProxyOptions,
-        ...(stimulsoftProxyStripPath
-          ? { pathRewrite: { '^/proxy': '/' } }
-          : {}),
+      },
+      {
+        context: ['/proxy'],
+        target: sqlAdapterTarget,
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'warn',
+        ...(sqlAdapterStripPath ? { pathRewrite: { '^/proxy': '' } } : {}),
       },
     ],
     setupMiddlewares: middlewares => {
+      ensureStimulsoftSqlAdapter();
       // Serve public/ (including Stimulsoft pack scripts) before
       // webpack-dev-middleware. Otherwise /stimulsoft/*.pack.js waits for the
       // ~100MB app bundle and the designer <script> tag times out.

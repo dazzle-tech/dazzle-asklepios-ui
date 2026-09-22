@@ -35,6 +35,8 @@ const Dashboard = () => {
   const departmentId =
     selectedDepartment?.departmentId ?? selectedDepartment?.id ?? null;
   const facilityId = selectedDepartment?.facilityId ?? null;
+  const viewerUserId = authSlice?.user?.id ?? null;
+  const viewerJobRole = authSlice?.user?.jobRole ?? null;
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [templateJson, setTemplateJson] = useState<string | null>(null);
@@ -47,7 +49,12 @@ const Dashboard = () => {
 
   const { data: dashboards = [], isFetching } =
     useGetViewableStimulsoftDashboardsQuery(
-      { facilityId, departmentId },
+      {
+        facilityId,
+        departmentId,
+        jobRole: viewerJobRole,
+        userId: viewerUserId,
+      },
       { refetchOnMountOrArgChange: true }
     );
   const [loadTemplate] = useLazyGetStimulsoftReportTemplateByIdQuery();

@@ -209,14 +209,30 @@ const StimulsoftReportTemplateList = ({
         return named || '—';
       },
     },
-    {
-      key: 'module',
-      title: 'Module',
-      dataKey: 'module',
-      width: 160,
-      render: (row: StimulsoftReportTemplate) =>
-        row.module ? formatEnumString(row.module) : '—',
-    },
+    ...(mode === 'dashboard'
+      ? []
+      : [
+          {
+            key: 'module',
+            title: 'Module',
+            dataKey: 'module',
+            width: 160,
+            render: (row: StimulsoftReportTemplate) =>
+              row.module ? formatEnumString(row.module) : '—',
+          },
+        ]),
+    ...(mode === 'dashboard'
+      ? [
+          {
+            key: 'jobRole',
+            title: 'Job Role',
+            dataKey: 'jobRole',
+            width: 160,
+            render: (row: StimulsoftReportTemplate) =>
+              row.jobRole ? formatEnumString(row.jobRole) : 'All users',
+          },
+        ]
+      : []),
     {
       key: 'status',
       title: 'Status',

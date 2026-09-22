@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -19,7 +20,9 @@ import {
 import {
   StimulsoftReportTemplate,
   parseDepartmentIds,
+  parseUserIds,
   serializeDepartmentIds,
+  serializeUserIds,
   useCreateStimulsoftReportTemplateMutation,
   useLazyGetStimulsoftDesignerSchemaQuery,
   useLazyGetStimulsoftReportTemplateByIdQuery,
@@ -34,6 +37,7 @@ import {
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetUsersBasicQuery } from '@/services/userService';
 import './styles.less';
 
 const StimulsoftDesignerHost = React.lazy(
@@ -51,6 +55,8 @@ const EMPTY_DETAILS = {
   facilityId: null as number | null,
   departmentIds: [] as number[],
   module: '',
+  jobRole: null as string | null,
+  userIds: [] as number[],
 };
 
 const STEPS_BY_MODE: Record<
@@ -72,7 +78,7 @@ const STEPS_BY_MODE: Record<
   dashboard: [
     {
       title: 'Details',
-      description: 'Dashboard name, facility and module',
+      description: 'Dashboard name, facility and audience',
       icon: 1,
     },
     {
@@ -97,6 +103,8 @@ const mapTemplateToDetails = (template?: StimulsoftReportTemplate | null): Detai
   facilityId: toFacilityId(template),
   departmentIds: parseDepartmentIds(template?.departmentIds),
   module: template?.module ?? '',
+  jobRole: template?.jobRole ? String(template.jobRole) : null,
+  userIds: parseUserIds(template?.userIds),
 });
 
 const MountWhenVisible = ({
@@ -244,6 +252,58 @@ const StimulsoftReportTemplateModal = ({
   const [createTemplate] = useCreateStimulsoftReportTemplateMutation();
   const [updateTemplate] = useUpdateStimulsoftReportTemplateMutation();
   const moduleOptions = useEnumOptions('Modules');
+  const jobRoles = useEnumOptions('JobRole');
+  const selectedJobRole =
+    mode === 'dashboard' ? String(details.jobRole || '').trim() : '';
+  const { data: usersResponse, isFetching: usersLoading } =
+    useGetUsersBasicQuery(
+      {
+        page: 0,
+        size: 500,
+        sort: 'id,asc',
+        jobRole: selectedJobRole,
+      },
+      { skip: !selectedJobRole }
+    );
+  const userOptions = useMemo(() => {
+    const payload = usersResponse?.data;
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.content)
+        ? payload.content
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+    const role = selectedJobRole.toUpperCase();
+    const options = rows
+      .filter((user: { jobRole?: string | null }) => {
+        const userRole = String(user?.jobRole ?? '').trim().toUpperCase();
+        return !userRole || userRole === role;
+      })
+      .map((user: { id?: number; firstName?: string; lastName?: string; login?: string }) => {
+        const id = Number(user?.id);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        const name = [user?.firstName, user?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        return {
+          id,
+          label: name || user?.login || `User ${id}`,
+        };
+      })
+      .filter((option): option is { id: number; label: string } =>
+        Boolean(option)
+      );
+
+    const known = new Set(options.map(option => option.id));
+    details.userIds.forEach(id => {
+      if (!known.has(id)) {
+        options.push({ id, label: `User ${id}` });
+      }
+    });
+    return options;
+  }, [details.userIds, selectedJobRole, usersResponse]);
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse)
     ? facilityListResponse
@@ -302,12 +362,12 @@ const StimulsoftReportTemplateModal = ({
       dispatch(notify({ msg: 'Please enter a template code.', sev: 'warning' }));
       return false;
     }
-    if (!details.module) {
+    if (mode !== 'dashboard' && !details.module) {
       dispatch(notify({ msg: 'Please select a module.', sev: 'warning' }));
       return false;
     }
     return true;
-  }, [details.code, details.module, details.name, dispatch]);
+  }, [details.code, details.module, details.name, dispatch, mode]);
 
   const handleBeforeNext = useCallback(
     async (activeStep: number) => {
@@ -340,8 +400,16 @@ const StimulsoftReportTemplateModal = ({
         departmentIds: selectedFacilityId
           ? serializeDepartmentIds(details.departmentIds)
           : '',
-        module: details.module || null,
+        module: mode === 'dashboard' ? null : details.module || null,
         templateType: templateTypeFromMode(mode),
+        ...(mode === 'dashboard'
+          ? {
+              jobRole: details.jobRole || null,
+              userIds: details.jobRole
+                ? serializeUserIds(details.userIds)
+                : '',
+            }
+          : {}),
       };
 
       if (savedId) {
@@ -358,8 +426,10 @@ const StimulsoftReportTemplateModal = ({
       details.description,
       details.departmentIds,
       details.facilityId,
+      details.jobRole,
       details.module,
       details.name,
+      details.userIds,
       mode,
       savedId,
       selectedFacilityId,
@@ -473,7 +543,7 @@ const StimulsoftReportTemplateModal = ({
                 </Col>
               </Row>
               <Row gutter={24}>
-                <Col xs={24} md={12}>
+                <Col xs={24} md={mode === 'dashboard' ? 24 : 12}>
                   <MyInput
                     column
                     width="100%"
@@ -497,22 +567,24 @@ const StimulsoftReportTemplateModal = ({
                     searchable
                   />
                 </Col>
-                <Col xs={24} md={12}>
-                  <MyInput
-                    column
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Module"
-                    fieldName="module"
-                    selectData={moduleOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={details}
-                    setRecord={setDetails}
-                    required
-                    searchable
-                  />
-                </Col>
+                {mode !== 'dashboard' && (
+                  <Col xs={24} md={12}>
+                    <MyInput
+                      column
+                      width="100%"
+                      fieldType="select"
+                      fieldLabel="Module"
+                      fieldName="module"
+                      selectData={moduleOptions}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={details}
+                      setRecord={setDetails}
+                      required
+                      searchable
+                    />
+                  </Col>
+                )}
               </Row>
               {!!selectedFacilityId && (
                 <Row gutter={24}>
@@ -534,6 +606,64 @@ const StimulsoftReportTemplateModal = ({
                     />
                   </Col>
                 </Row>
+              )}
+              {mode === 'dashboard' && (
+                <>
+                  <Row gutter={24}>
+                    <Col xs={24} md={12}>
+                      <MyInput
+                        column
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Job Role"
+                        fieldName="jobRole"
+                        selectData={jobRoles ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        record={{
+                          ...details,
+                          jobRole: details.jobRole || null,
+                        }}
+                        setRecord={next => {
+                          const nextRole = next.jobRole
+                            ? String(next.jobRole)
+                            : null;
+                          const roleChanged = nextRole !== (details.jobRole || null);
+                          setDetails({
+                            ...next,
+                            jobRole: nextRole,
+                            userIds: roleChanged ? [] : next.userIds ?? [],
+                          });
+                        }}
+                        searchable
+                        cleanable
+                        isEnum
+                        placeholder="Select"
+                      />
+                    </Col>
+                  </Row>
+                  {!!selectedJobRole && (
+                    <Row gutter={24}>
+                      <Col xs={24}>
+                        <MyInput
+                          column
+                          width="100%"
+                          fieldType="checkPicker"
+                          fieldLabel="Users"
+                          fieldName="userIds"
+                          selectData={userOptions}
+                          selectDataLabel="label"
+                          selectDataValue="id"
+                          placeholder="All users with this role"
+                          loading={usersLoading}
+                          searchable
+                          record={details}
+                          setRecord={setDetails}
+                        />
+                      </Col>
+                    </Row>
+                  )}
+                </>
               )}
               <Row gutter={24}>
                 <Col xs={24}>

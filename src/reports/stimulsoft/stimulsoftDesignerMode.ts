@@ -65,6 +65,11 @@ export const applyStimulsoftDesignerModeOptions = (
     if (appearance.showFileMenuNewReport !== undefined) {
       appearance.showFileMenuNewReport = !isDashboard;
     }
+    // PageWidth (50) fits the canvas to the window width and scrolls the height.
+    // PageHeight would shrink every chart to fit the screen.
+    if (isDashboard) {
+      appearance.zoom = 50;
+    }
   }
 
   if (toolbar) {

@@ -1,6 +1,5 @@
 ﻿import config from '../../../app-config';
 import { installStimulsoftApiInterceptor, patchStimulsoftHttp } from './stimulsoftApiProxy';
-import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
 export { getStimulsoftAuthHeaders } from './stimulsoftAuth';
 
@@ -232,13 +231,13 @@ export const applyLicense = (Stimulsoft: any) => {
 };
 
 /**
- * Point SQL / remote-data adapter calls at a same-origin /proxy.
- * Webpack-dev-server (or Spring Boot / nginx in production) must host that path.
+ * Point SQL adapter calls at a same-origin /proxy (Node or Java data adapter).
+ * REST JSON sources keep using /api and are handled by stimulsoftApiProxy.
  */
 export const applyStimulsoftWebServer = (Stimulsoft: any) => {
   const webServer = Stimulsoft?.StiOptions?.WebServer;
   if (!webServer) return;
-  webServer.url = config.stimulsoftProxyUrl || '';
+  webServer.url = config.stimulsoftProxyUrl || '/proxy';
   if (typeof config.stimulsoftEncryptData === 'boolean') {
     webServer.encryptData = config.stimulsoftEncryptData;
   }
@@ -247,23 +246,31 @@ export const applyStimulsoftWebServer = (Stimulsoft: any) => {
   }
 };
 
-/** Forward the HIS JWT on Stimulsoft adapter POSTs through /proxy. */
+/**
+ * Do not put the HIS JWT on SQL adapter POSTs. Adding it on every designer
+ * event duplicated Authorization/id_token until Node returned HTTP 431.
+ * REST /api calls still get the JWT from the XHR interceptor.
+ */
 export const attachStimulsoftProxyHeaders = (report: any) => {
-  const headers = getStimulsoftAuthHeaders();
-  if (!report || headers.length === 0) return;
+  if (!report) return;
+  const isAuth = (key?: string) =>
+    ['authorization', 'id_token'].includes(String(key || '').toLowerCase());
+  const dropAuth = (items: { key?: string }[]) =>
+    items.filter(item => !isAuth(item?.key));
 
   const existing = report.httpHeadersContainer;
-  if (existing && typeof existing.add === 'function') {
-    headers.forEach(header => existing.add(header));
+  if (!existing) return;
+
+  if (Array.isArray(existing)) {
+    report.httpHeadersContainer = dropAuth(existing);
     return;
   }
-  const withoutAuth = Array.isArray(existing)
-    ? existing.filter(
-        (item: { key?: string }) =>
-          !['authorization', 'id_token'].includes(String(item?.key).toLowerCase())
-      )
-    : [];
-  report.httpHeadersContainer = [...withoutAuth, ...headers];
+  const list = existing.list ?? existing.items;
+  if (Array.isArray(list)) {
+    const kept = dropAuth(list);
+    list.length = 0;
+    kept.forEach((item: { key?: string }) => list.push(item));
+  }
 };
 
 const isStimulsoftInternalError = (error: unknown) => {
