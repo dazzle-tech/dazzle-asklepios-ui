@@ -1,5 +1,6 @@
 ﻿import config from '../../../app-config';
 import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
+import { applyDashboardScrollLayout } from './stimulsoftViewerTheme';
 
 const PATH_FIELDS = ['pathData', 'path', 'url', 'connectionString'] as const;
 
@@ -953,6 +954,73 @@ const hasVariable = (report: any, name: string): boolean => {
   return Boolean(findVariable(report, name));
 };
 
+const sqlParameterNames = (query: string): string[] => {
+  const names: string[] = [];
+  String(query || '').replace(/@([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name: string) => {
+    if (!names.some(item => normalizeVarName(item) === normalizeVarName(name))) {
+      names.push(name);
+    }
+    return _match;
+  });
+  return names;
+};
+
+const parameterItems = (parameters: any): any[] => {
+  if (!parameters) return [];
+  if (Array.isArray(parameters)) return parameters;
+  if (Array.isArray(parameters.list)) return parameters.list;
+  if (Array.isArray(parameters.values)) return parameters.values;
+  return [];
+};
+
+const parameterMatches = (item: { name?: string }, name: string) => {
+  const itemName = normalizeVarName(String(item?.name || '').replace(/^@/, ''));
+  return itemName === normalizeVarName(name);
+};
+
+const isDateParam = (name: string) =>
+  /^(startDate|endDate|fromDate|toDate|date)$/i.test(name);
+
+/**
+ * JSON dates are filled into /api URLs. A PostgreSQL query only receives a
+ * value when @name is a command parameter. Preview creates startDate/endDate
+ * in memory, so they are missing from the dictionary and from the SQL command.
+ * Copy the same values onto any @parameter the query already names.
+ */
+const applySqlVariableParameters = (report: any, args: any) => {
+  const query = String(args?.queryString || '');
+  if (!query.includes('@')) return;
+  if (isHisApiPath(query) || isHisApiPath(args?.connectionString)) return;
+  const database = String(args?.database || '');
+  if (/json|xml|excel|csv/i.test(database)) return;
+
+  const names = sqlParameterNames(query);
+  if (!names.length) return;
+
+  const existing = parameterItems(args.parameters);
+  const next = Array.isArray(args?.parameters) ? args.parameters : existing.slice();
+
+  names.forEach(name => {
+    const value = getVariableValue(report, name) ?? defaultForVariable(name);
+    if (value == null || value === '') return;
+    const found = next.find(item => parameterMatches(item, name));
+    if (found) {
+      if (found.value == null || found.value === '') found.value = value;
+      return;
+    }
+    next.push({
+      name,
+      value,
+      // Keep ISO dates as strings so PostgreSQL casts them in the session
+      // timezone. typeGroup "datetime" would parse them as UTC midnight.
+      typeGroup: 'string',
+      typeName: isDateParam(name) ? 'DateTime' : 'String',
+    });
+  });
+
+  args.parameters = next;
+};
+
 const ensureVariablesFromApiPaths = (Stimulsoft: any, report: any) => {
   if (!Stimulsoft?.Report?.Dictionary?.StiVariable || !report?.dictionary?.variables) {
     return;
@@ -1093,6 +1161,7 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
   installStimulsoftApiInterceptor();
   patchStimulsoftHttp(Stimulsoft);
   ensureVariablesFromApiPaths(Stimulsoft, report);
+  applyDashboardScrollLayout(Stimulsoft, report);
   listDatabases(report).forEach(applyAuthHeadersToDatabase);
 };
 
@@ -1104,5 +1173,6 @@ export const prepareStimulsoftDataRequest = (report: any, args: any) => {
   attachPrepareVariables(processReport);
   listDatabases(processReport).forEach(applyAuthHeadersToDatabase);
   rewritePathFields(args, value => resolveHisApiUrl(value, processReport));
+  applySqlVariableParameters(processReport, args);
   attachStimulsoftRequestAuth(args);
 };
