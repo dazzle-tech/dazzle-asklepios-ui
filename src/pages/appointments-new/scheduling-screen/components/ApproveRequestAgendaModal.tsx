@@ -197,6 +197,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                         Time
                       </th>
                       <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: `1px solid ${colors.tableHeadBorder}` }}>Event</th>
+                      <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: `1px solid ${colors.tableHeadBorder}` }}>Resource Name</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -244,6 +245,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
                               <span style={{ color: colors.eventText }}>Available appointment</span>
                             </div>
                           </td>
+                            <td style={{ padding: '10px 12px', color: colors.timeCellColor, fontWeight: 600 }}>{slot?.resourceName}</td>
                         </tr>
                       );
                     })}
