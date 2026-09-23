@@ -135,7 +135,7 @@ const NormalRangeSection = ({
         <br />
         <div className="container-of-two-fields-diagnostic">
           <div className="container-of-field-diagnostic">
-            <MyInput fieldName="ageFrom" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+            <MyInput fieldName="ageFrom" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
           </div>
           <div className="container-of-field-diagnostic">
             <MyInput fieldName="ageFromUnit" fieldType="select" selectData={ageUnit ?? []} selectDataLabel="label" selectDataValue="value" record={normalRange} setRecord={setNormalRange} width="100%" />
@@ -144,7 +144,7 @@ const NormalRangeSection = ({
         <br />
         <div className="container-of-two-fields-diagnostic">
           <div className="container-of-field-diagnostic">
-            <MyInput fieldName="ageTo" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+            <MyInput fieldName="ageTo" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
           </div>
           <div className="container-of-field-diagnostic">
             <MyInput fieldName="ageToUnit" fieldType="select" selectData={ageUnit ?? []} selectDataLabel="label" selectDataValue="value" record={normalRange} setRecord={setNormalRange} width="100%" />
@@ -165,16 +165,16 @@ const NormalRangeSection = ({
         )}
         {resultType === 'NUMBER' && normalRange.normalRangeType === 'RANGE' && (
           <div className="range-from-to-diagnostic">
-            <div className="range-diagnostic"><MyInput fieldName="rangeFrom" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" /></div>
+            <div className="range-diagnostic"><MyInput fieldName="rangeFrom" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" /></div>
             <label>-</label>
-            <div className="range-diagnostic"><MyInput fieldName="rangeTo" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" /></div>
+            <div className="range-diagnostic"><MyInput fieldName="rangeTo" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" /></div>
           </div>
         )}
         {resultType === 'NUMBER' && normalRange.normalRangeType === 'LESS_THAN' && (
-          <MyInput fieldLabel="Less Than" fieldName="rangeTo" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+          <MyInput fieldLabel="Less Than" fieldName="rangeTo" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
         )}
         {resultType === 'NUMBER' && normalRange.normalRangeType === 'MORE_THAN' && (
-          <MyInput fieldLabel="More Than" fieldName="rangeFrom" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+          <MyInput fieldLabel="More Than" fieldName="rangeFrom" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
         )}
         {resultType === 'LOV' && (
           <>
@@ -187,15 +187,15 @@ const NormalRangeSection = ({
           <MyInput fieldName="criticalValue" fieldType="checkbox" record={normalRange} setRecord={setNormalRange} width="100%" />
         )}
         {normalRange.criticalValue && normalRange.normalRangeType === 'LESS_THAN' && (
-          <MyInput fieldLabel="More Than" fieldName="criticalValueMoreThan" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+          <MyInput fieldLabel="More Than" fieldName="criticalValueMoreThan" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
         )}
         {normalRange.criticalValue && normalRange.normalRangeType === 'MORE_THAN' && (
-          <MyInput fieldLabel="Less Than" fieldName="criticalValueLessThan" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" />
+          <MyInput fieldLabel="Less Than" fieldName="criticalValueLessThan" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" />
         )}
         {normalRange.criticalValue && normalRange.normalRangeType === 'RANGE' && (
           <div className="container-of-two-fields-diagnostic">
-            <div className="container-of-field-diagnostic"><MyInput fieldLabel="Less Than" fieldName="criticalValueLessThan" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" /></div>
-            <div className="container-of-field-diagnostic"><MyInput fieldLabel="More Than" fieldName="criticalValueMoreThan" fieldType="number" record={normalRange} setRecord={setNormalRange} width="100%" /></div>
+            <div className="container-of-field-diagnostic"><MyInput fieldLabel="Less Than" fieldName="criticalValueLessThan" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" /></div>
+            <div className="container-of-field-diagnostic"><MyInput fieldLabel="More Than" fieldName="criticalValueMoreThan" fieldType="number" allowDecimal record={normalRange} setRecord={setNormalRange} width="100%" /></div>
           </div>
         )}
       </div>
