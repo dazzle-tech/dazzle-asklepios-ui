@@ -679,6 +679,29 @@ const ReviewResults = forwardRef<any, any>(
             />
           )
         },
+       {
+        key: 'approvedAt',
+        title: <Translate>APPROVED AT / BY</Translate>,
+        expandable: true,
+        render: (row: any) => (
+          <UserDateCell
+            login={row.approvedBy}
+            date={row.approvedDate}
+          />
+        )
+      },
+     
+      {
+        key: 'createdAt',
+        title: <Translate>CREATED AT / BY</Translate>,
+        expandable: true,
+        render: (row: any) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
+        )
+      }
       ],
       [patientsMap, normalizedResults, isAllSelected, isSomeSelected, selectedRows]
     );

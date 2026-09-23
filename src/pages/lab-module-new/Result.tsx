@@ -950,7 +950,18 @@ const resolveResultDisplay = (row: any) => {
         render: (row: any) => (
           <UserDateCell
             login={row.approvedBy}
-            date={row.approvedAt}
+            date={row.approvedDate}
+          />
+        )
+      },
+      {
+        key: 'createdAt',
+        title: <Translate>CREATED AT / BY</Translate>,
+        expandable: true,
+        render: (row: any) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
           />
         )
       }
