@@ -33,25 +33,18 @@ import {
   useFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import {
-  useGenerateLabResultsPdfMutation
-} from '@/services/setup/resultReportApi';
-import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import {
-  initialListRequest,
-  initialListRequestAllValues
-} from '@/types/types';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+
 import LaboratoryReportButton from './LaboratoryReportButton';
 import LabInterpretationAI from './LabInterpretationAI';
+import LovValueCell from '@/components/LovValueCell';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 type Props = {
   patient: any;
 };
+const isLovProfile = (profile?: any) =>
+  profile?.resultType?.toUpperCase() === 'LOV';
 
 const startOfDay = (date: Date) => {
   const d = new Date(date);
@@ -191,6 +184,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     data: response,
     isFetching: isResultsFetching
   } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
+    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: notesResponse } = useGetNotesByResultIdQuery(
     openNotesModal && selectedResultId ? selectedResultId : skipToken
@@ -199,46 +193,46 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const results = response?.data ?? [];
   const totalCount = response?.totalCount ?? 0;
 
-  const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-    page: 0,
-    size: 10000
-  });
+  const profileIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          results
+            .map((result: any) => result.profileTestId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [results]
+  );
+
+  const [fetchProfilesByIds, { data: profilesResponse }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
+
+  useEffect(() => {
+    if (profileIds.length > 0) {
+      fetchProfilesByIds(profileIds);
+    }
+  }, [profileIds, fetchProfilesByIds]);
 
   const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map((p: any) => [p.id, p]) ?? []),
+    () => new Map(profilesResponse?.map((profile: any) => [profile.id, profile]) ?? []),
     [profilesResponse]
   );
 
-  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+    const resolveUnitDisplay = (row: any) => {
+      const profile = row.profile;
+      if (!profile || isLovProfile(profile)) return null;
 
-  const { data: allLovValues } =
-    useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+      if (!profile.resultUnit) return null;
 
-  const { data: lovDefinitions } =
-    useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+      const unit = valueUnitLov?.object?.find(
+        (u: any) => String(u.key) === String(profile.resultUnit)
+      )?.lovDisplayVale;
 
-  const resolveLovDisplayValue = (lovId: any, key: any) => {
-    const fallback = "—";
+      return unit || null;
+    };
 
-
-    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
-      return key;
-    }
-
-    const lovDef = lovDefinitions.object.find(
-      (d: any) => String(d.key) === String(lovId)
-    );
-
-    if (!lovDef?.lovCode) return key;
-
-    return (
-      allLovValues.object.find(
-        (v: any) =>
-          String(v.lovCode) === String(lovDef.lovCode) &&
-          String(v.key) === String(key)
-      )?.lovDisplayVale ?? fallback
-    );
-  };
 
   const orderTestIds = useMemo(
     () => results.map((r: any) => r.orderTestId).filter(Boolean),
@@ -261,18 +255,32 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     [orderTests]
   );
 
-  const {
-    data: allTestsResponse,
-    isFetching: isAllTestsFetching
-  } = useGetAllDiagnosticTestsQuery(
-    patientId ? { page: 0, size: 10000 } : skipToken
+  const testIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          orderTests
+            .map((orderTest: any) => orderTest.testId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [orderTests]
   );
 
-  const allTests = allTestsResponse?.data ?? [];
+  const {
+    data: diagnosticTests = [],
+    isFetching: isAllTestsFetching
+  } = useGetDiagnosticTestsByIdsQuery(
+    { ids: testIds },
+    {
+      skip: testIds.length === 0
+    }
+  );
 
   const testMap = useMemo(
-    () => new Map(allTests.map((t: any) => [t.id, t])),
-    [allTests]
+    () => new Map(diagnosticTests.map((test: any) => [test.id, test])),
+    [diagnosticTests]
   );
 
 
@@ -296,60 +304,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
     const profile = profilesMap.get(r.profileTestId);
 
-    const resultType =
-      profile?.resultType?.toUpperCase()?.trim();
-
-    let value = '';
-    let unit = '';
-    let normalRangeValue = ' ';
-
-
-      if (resultType === 'LOV') {
-        value = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.resultValueText
-        );
-
-        const rawNormalRange =
-          r.viewNormalRange?.trim()
-            ? r.viewNormalRange
-            : r.normalRangeValue?.trim()
-              ? r.normalRangeValue
-              : '';
-
-        normalRangeValue = rawNormalRange
-          ? resolveLovDisplayValue(
-              profile?.listOfValueId,
-              rawNormalRange
-            )
-          : ' ';
-      } else if (resultType === 'TEXT') {
-
-      value = r.resultValueText ?? '';
-      normalRangeValue = ' ';
-
-    } else {
-
-      value =
-        r.resultValueNumber !== null &&
-        r.resultValueNumber !== undefined
-          ? String(r.resultValueNumber)
-          : '';
-
-      unit =
-        valueUnitLov?.object?.find(
-          (u: any) =>
-            String(u.key) ===
-            String(test?.defaultProfileResultUnit)
-        )?.lovDisplayVale ?? '';
-
-normalRangeValue =
-  r.viewNormalRange?.trim()
-    ? r.viewNormalRange
-    : r.normalRangeValue?.trim()
-      ? r.normalRangeValue
-      : ' ';
-        }
 
     return {
       ...r,
@@ -357,9 +311,6 @@ normalRangeValue =
       orderNumber: order?.orderNumber ?? '',
       testName: profile?.name ?? ' ',
       profile,
-      resultValue: value,
-      unit,
-      normalRange: normalRangeValue
     };
   });
 }, [
@@ -367,10 +318,8 @@ normalRangeValue =
   orderTestMap,
   orderMap,
   testMap,
-  profilesMap,
-  valueUnitLov,
-  lovDefinitions,
-  allLovValues
+  profilesMap
+
 ]);
 
   const allSelected =
@@ -429,39 +378,63 @@ normalRangeValue =
       title: <Translate>TEST NAME</Translate>,
       render: (row: any) => row.testName
     },
-   {
-  key: 'result',
-  title: <Translate>TEST RESULT, UNIT</Translate>,
-  render: (row: any) => {
-    const resultType =
-      row?.profile?.resultType?.toUpperCase()?.trim();
+      {
+              key: 'resultValue',
+              title: <Translate>RESULT VALUE</Translate>,
+              render: (row: any) => {
+                const profile = row.profile;
+    
+                const value = row.resultValueNumber ?? row.resultValueText ?? '';
+    
+                if (isLovProfile(profile)) {
+                  return (
+                    <LovValueCell
+                      valueKey={value}
+                    />
+                  );
+                }
+    
+                const unit = resolveUnitDisplay(row);
+    
+                return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
+              }
+            },
 
-    const hasValue =
-      row.resultValue !== null &&
-      row.resultValue !== undefined &&
-      row.resultValue !== '';
-
-    const showUnit =
-      resultType === 'NUMBER';
-
-    return (
-      <>
-        <span>{row.resultValue}</span>
-
-        {hasValue && showUnit && row.unit && (
-          <span style={{ marginLeft: 6, color: '#666' }}>
-            {row.unit}
-          </span>
-        )}
-      </>
-    );
-  }
-},
     {
-      key: 'normalRange',
-      title: <Translate>NORMAL RANGE</Translate>,
-      render: (row: any) => row.normalRange ?? '-'
-    },
+              key: 'normalRange',
+              title: <Translate>NORMAL RANGE</Translate>,
+              render: (row: any) => {
+                const profile = row.profile;
+                const hasViewRange =
+                  row.normalRangeValue && row.normalRangeValue.trim() !== '';
+    
+                const hasMinMaxRange =
+                  row.minValue !== null &&
+                  row.minValue !== undefined &&
+                  row.maxValue !== null &&
+                  row.maxValue !== undefined;
+    
+                if (hasViewRange) {
+                  if (isLovProfile(profile)) {
+                    return (
+                      <LovValueCell
+                        valueKey={String(row.normalRangeValue)}
+                      />
+                    );
+                  }
+    
+                  const unit = resolveUnitDisplay(row);
+                  return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
+                }
+    
+                if (hasMinMaxRange) {
+                  const unit = resolveUnitDisplay(row);
+                  return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
+                }
+    
+                return ' ';
+              }
+            },
     {
       key: 'marker',
       title: <Translate>MARKER</Translate>,

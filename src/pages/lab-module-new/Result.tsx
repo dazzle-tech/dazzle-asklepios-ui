@@ -1,12 +1,12 @@
 import CancellationModal from '@/components/CancellationModal';
 import ChatModal from '@/components/ChatModal';
+import LovValueCell from '@/components/LovValueCell';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
-import LovValueCell from '@/components/LovValueCell';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
@@ -25,12 +25,9 @@ import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnostic
 import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 
 import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -85,35 +82,6 @@ type PaginationParams = {
 const isLovProfile = (profile?: any) =>
   profile?.resultType?.toUpperCase() === 'LOV';
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
-
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === String(key)
-    )?.lovDisplayVale ?? key
-  );
-};
 
 const Result = forwardRef<any, Props>(
   ({ order, loading, setTest, refetchAllLabData }, ref) => {
@@ -153,8 +121,6 @@ const Result = forwardRef<any, Props>(
     const [normalRangesMap, setNormalRangesMap] = useState<Record<number, any[]>>({});
 
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-    const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
     const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIdsResponse }] =
       useLazyGetDiagnosticTestsByIdsQuery();
     const [fetchLaboratoriesByTestIds, { data: labsByTestIds }] =
@@ -341,7 +307,6 @@ const resolveResultDisplay = (row: any) => {
     return (
       <LovValueCell
         valueKey={row.resultValueText}
-        listOfValueId={profile.listOfValueId}
       />
     );
   }
@@ -702,6 +667,7 @@ const resolveResultDisplay = (row: any) => {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
+          console.log('row', row);
           const profile = row.profile;
           const isText =
             profile?.resultType?.toUpperCase() === 'TEXT';
@@ -711,7 +677,7 @@ const resolveResultDisplay = (row: any) => {
           }
           const hasViewRange =
             row.viewNormalRange && row.viewNormalRange.trim() !== '';
-
+   
           const hasMinMaxRange =
             row.minValue !== null &&
             row.minValue !== undefined &&
@@ -723,7 +689,6 @@ const resolveResultDisplay = (row: any) => {
               return (
                 <LovValueCell
                   valueKey={row.viewNormalRange}
-                  listOfValueId={profile.listOfValueId}
                 />
               );
             }

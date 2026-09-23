@@ -561,7 +561,6 @@ const ReviewResults = forwardRef<any, any>(
               return (
                 <LovValueCell
                   valueKey={value}
-                  listOfValueId={profile.listOfValueId}
                 />
               );
             }
@@ -590,7 +589,6 @@ const ReviewResults = forwardRef<any, any>(
                 return (
                   <LovValueCell
                     valueKey={String(row.normalRangeValue)}
-                    listOfValueId={profile.listOfValueId}
                   />
                 );
               }

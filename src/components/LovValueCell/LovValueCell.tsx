@@ -1,69 +1,49 @@
 import React, { useMemo } from 'react';
-import { useGetLovAllValuesQuery, useGetLovsQuery } from '@/services/setupService';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { useGetLovValuesBulkByKeysQuery } from '@/services/setupService';
 
 type Props = {
   valueKey?: string | number | null;
-  lovCode?: string | number | null;
-  listOfValueId?: string | number | null;
   fallback?: React.ReactNode;
 };
 
 const LovValueCell = ({
   valueKey,
-  lovCode,
-  listOfValueId,
   fallback = '-'
 }: Props) => {
-  const { data: lovDefinitions } = useGetLovsQuery({
-    ...initialListRequest,
-    pageSize: 1000
+  const keys = useMemo(
+    () =>
+      String(valueKey ?? '')
+        .split(',')
+        .map(key => key.trim())
+        .filter(Boolean),
+    [valueKey]
+  );
+
+  const { data } = useGetLovValuesBulkByKeysQuery(keys, {
+    skip: keys.length === 0
   });
-
-  const { data: allLovValues } = useGetLovAllValuesQuery({
-    ...initialListRequestAllValues
-  });
-
-  const resolvedLovCode = useMemo(() => {
-    if (lovCode != null && lovCode !== '') {
-      return String(lovCode);
-    }
-
-    if (listOfValueId == null || listOfValueId === '') {
-      return null;
-    }
-
-    const lovDef = lovDefinitions?.object?.find(
-      (item: any) => String(item.key) === String(listOfValueId)
-    );
-
-    return lovDef?.lovCode ? String(lovDef.lovCode) : null;
-  }, [lovCode, listOfValueId, lovDefinitions]);
 
   const displayValue = useMemo(() => {
-    if (valueKey == null || valueKey === '') {
+    if (keys.length === 0) {
       return fallback;
     }
 
-    const values = allLovValues?.object ?? [];
-    const matchingValues = resolvedLovCode
-      ? values.filter(
-          (item: any) =>
-            String(item.lovCode ?? item.code ?? item.key) === String(resolvedLovCode)
-        )
-      : values;
+    const values = data?.object ?? [];
 
-    const matchedItem = matchingValues.find(
-      (item: any) => String(item.key) === String(valueKey)
-    );
+    const labels = keys.map(key => {
+      const item = values.find(
+        (value: any) => String(value.key) === String(key)
+      );
 
-    return (
-      matchedItem?.lovDisplayVale ??
-      matchedItem?.lovDisplayValue ??
-      valueKey ??
-      fallback
-    );
-  }, [allLovValues, fallback, resolvedLovCode, valueKey]);
+      return (
+        item?.lovDisplayValue ??
+        item?.lovDisplayVale ??
+        key
+      );
+    });
+
+    return labels.join(', ');
+  }, [data, fallback, keys]);
 
   return <>{displayValue}</>;
 };

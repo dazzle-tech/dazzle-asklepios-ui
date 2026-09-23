@@ -17,25 +17,22 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 
 import {
-  useGetAllDiagnosticTestProfilesQuery
+  useGetDiagnosticTestProfilesByIdsMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
-import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetLaboratoriesByIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+
 import { Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowDown, faArrowUp, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import UserDateCell from '@/components/UserDateCell';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import LovValueCell from '@/components/LovValueCell';
 
 interface Props {
   patient: any;
@@ -44,37 +41,7 @@ interface Props {
 const isLovProfile = (profile?: any) =>
   profile?.resultType?.toUpperCase() === 'LOV';
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
 
-  const normalizedKey = String(key);
-
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === normalizedKey
-    )?.lovDisplayVale ?? key
-  );
-};
 
 const LaboratoryTable: React.FC<Props> = ({ patient }) => {
   const [page, setPage] = useState(0);
@@ -86,46 +53,44 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
 
-  const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-    page: 0,
-    size: 10000,
-    sort: 'id,asc'
-  });
-
-  const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({
-    page: 0,
-    size: 10000
-  });
-
-  const { data: labsResponse } = useGetAllLaboratoriesQuery({
-    page: 0,
-    size: 10000
-  });
+  const [fetchTestsByIds, { data: testsResponse }] =
+    useLazyGetDiagnosticTestsByIdsQuery();
+  const [fetchLabsByIds, { data: labsResponse }] =
+    useLazyGetLaboratoriesByIdsQuery();
+  const [fetchProfilesByIds, { data: profilesResponse }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
 
   const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: labCatLovQueryResponse } =
     useGetLovValuesByCodeQuery('LAB_CATEGORIES');
 
-  const { data: allLovValues } = useGetLovAllValuesQuery({
-    ...initialListRequestAllValues
-  });
 
-  const { data: lovDefinitions } = useGetLovsQuery({
-    ...initialListRequest,
-    pageSize: 1000
-  });
-
-  const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map((p: any) => [p.id, p]) ?? []),
-    [profilesResponse]
+  const diagnosticTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Object.values(orderTestsMap)
+            .map((test: any) => test?.testId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [orderTestsMap]
   );
+
+  useEffect(() => {
+    if (diagnosticTestIds.length > 0) {
+      fetchTestsByIds({ ids: diagnosticTestIds });
+      fetchLabsByIds({ ids: diagnosticTestIds });
+    }
+  }, [diagnosticTestIds, fetchTestsByIds, fetchLabsByIds]);
 
   const testsMap = useMemo(
-    () => new Map(allTestsResponse?.data?.map((t: any) => [t.id, t]) ?? []),
-    [allTestsResponse]
+    () => new Map(testsResponse?.map((test: any) => [test.id, test]) ?? []),
+    [testsResponse]
   );
 
-  const labs = labsResponse?.data ?? [];
+  const labs = labsResponse ?? [];
 
   const labByTestIdMap = useMemo(
     () => new Map(labs.map((lab: any) => [lab.testId, lab])),
@@ -188,6 +153,30 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
   const results = resultsResponse?.data ?? [];
   const totalCount = resultsResponse?.totalCount ?? 0;
 
+  const profileIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          results
+            .map((result: any) => result.profileTestId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [results]
+  );
+
+  useEffect(() => {
+    if (profileIds.length > 0) {
+      fetchProfilesByIds(profileIds);
+    }
+  }, [profileIds, fetchProfilesByIds]);
+
+  const profilesMap = useMemo(
+    () => new Map(profilesResponse?.map((profile: any) => [profile.id, profile]) ?? []),
+    [profilesResponse]
+  );
+
   useEffect(() => {
     results.forEach((r: any) => {
       if (r.orderTestId && !orderTestsMap[String(r.orderTestId)]) {
@@ -199,7 +188,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
               [String(test.id)]: test
             }));
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     });
   }, [results, orderTestsMap, fetchOrderTestById]);
@@ -217,7 +206,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
               [String(order.id)]: order
             }));
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     });
   }, [orderTestsMap, ordersMap, fetchOrderById]);
@@ -340,20 +329,22 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       title: <Translate>RESULT</Translate>,
       render: (row: any) => {
         const profile = row._profile;
-        const value = row.resultValueNumber ?? row.resultValueText ?? '';
+        const value =
+          row.resultValueNumber ??
+          row.resultValueText ??
+          '';
+
         if (isLovProfile(profile)) {
-          return resolveLovDisplayValue(
-            profile,
-            value,
-            lovDefinitions,
-            allLovValues
+          return (
+            <LovValueCell
+              valueKey={String(value)}
+            />
           );
         }
 
         const unit = resolveUnitDisplay(row);
-        const resultText = `${value ?? ''}${unit ? ` ${unit}` : ''}`;
 
-        return resultText || '-';
+        return `${value ?? ''}${unit ? ` ${unit}` : ''}` || '-';
       }
     },
     {
@@ -363,8 +354,8 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
         const profile = row._profile;
 
         const hasViewRange =
-          row.viewNormalRange != null &&
-          String(row.viewNormalRange).trim() !== '';
+          row.normalRangeValue != null &&
+          String(row.normalRangeValue).trim() !== '';
 
         const hasMinMaxRange =
           row.minValue !== null &&
@@ -374,16 +365,16 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
         if (hasViewRange) {
           if (isLovProfile(profile)) {
-            return resolveLovDisplayValue(
-              profile,
-              String(row.viewNormalRange),
-              lovDefinitions,
-              allLovValues
+            return (
+              <LovValueCell
+                valueKey={String(row.normalRangeValue)}
+              />
             );
           }
 
           const unit = resolveUnitDisplay(row);
-          return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
+
+          return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
         }
 
         if (hasMinMaxRange) {
