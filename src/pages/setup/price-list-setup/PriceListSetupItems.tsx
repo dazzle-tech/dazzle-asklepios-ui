@@ -86,7 +86,6 @@ import type {
   PriceListItemType,
   PriceListSetupItem,
   PriceListSetupType,
-  PriceListVisitType,
   PricingMethod,
   SavePriceListSetupItemRequest,
   WaseelItemMapping
@@ -253,12 +252,6 @@ const PriceListSetupItems: React.FC<Props> = ({
 
   const isSelfPayPriceList =
     priceListType === 'SELF_PAY';
-
-  const encounterTypeOptions = useEnumOptions('EncounterType', { exclude: ['ALL'] });
-  const visitTypeOptions = [
-    { label: 'All', value: 'ALL' },
-    ...(encounterTypeOptions ?? [])
-  ];
 
   const [
     childModalOpen,
@@ -1657,14 +1650,6 @@ const PriceListSetupItems: React.FC<Props> = ({
       return 'Item name is required.';
     }
 
-
-    if (
-      !isInsurancePriceList &&
-      !selectedItem.visitType
-    ) {
-      return 'Visit type is required.';
-    }
-
     if (
       selectedItem.unitPrice ===
       undefined ||
@@ -1770,28 +1755,10 @@ const PriceListSetupItems: React.FC<Props> = ({
           selectedItem.itemName
         ).trim(),
 
-      category:
-        selectedItem.category ||
-        undefined,
-
-      visitType:
-        selectedItem.visitType &&
-        selectedItem.visitType !== 'ALL'
-          ? (selectedItem.visitType as PriceListVisitType)
-          : undefined,
-
       unitPrice:
         Number(
           selectedItem.unitPrice
         ),
-
-      cost:
-        selectedItem.cost ===
-          undefined ||
-        selectedItem.cost ===
-          null
-          ? undefined
-          : Number(selectedItem.cost),
 
       discountPercentage:
         Number(
@@ -2000,29 +1967,12 @@ const PriceListSetupItems: React.FC<Props> = ({
       },
 
       {
-        key: 'visitType',
-        title: <Translate>Visit Type</Translate>,
-        render: (row: PriceListSetupItem) =>
-          row.visitType && row.visitType !== 'ALL'
-            ? formatEnumString(row.visitType)
-            : 'All'
-      },
-
-      {
         key: 'unitPrice',
         title:
           <Translate>
             Price
           </Translate>,
         align: 'center'
-      },
-
-      {
-        key: 'cost',
-        title: <Translate>Cost</Translate>,
-        align: 'center',
-        render: (row: PriceListSetupItem) =>
-          row.cost ?? '-'
       },
 
       {
@@ -2330,35 +2280,11 @@ const PriceListSetupItems: React.FC<Props> = ({
       )}
 
       <MyInput
-        required={!isInsurancePriceList}
-        disabled={Boolean(selectedItem.visitTypeLocked)}
-        width="100%"
-        fieldLabel="Visit Type"
-        fieldType="select"
-        fieldName="visitType"
-        selectData={visitTypeOptions}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={selectedItem}
-        setRecord={setSelectedItem}
-        searchable={false}
-      />
-
-      <MyInput
         required
         width="100%"
         fieldLabel="Price"
         fieldType="number"
         fieldName="unitPrice"
-        record={selectedItem}
-        setRecord={setSelectedItem}
-      />
-
-      <MyInput
-        width="100%"
-        fieldLabel="Cost"
-        fieldType="number"
-        fieldName="cost"
         record={selectedItem}
         setRecord={setSelectedItem}
       />

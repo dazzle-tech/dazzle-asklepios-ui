@@ -5972,14 +5972,11 @@ export interface PriceListItemDashboardEntry {
   nonStandardCode?: string | null;
   itemName?: string | null;
   category?: string | null;
-  visitType?: string | null;
   unitPrice?: number | string | null;
-  cost?: number | string | null;
   discountPercentage?: number | string | null;
   netPrice?: number | string | null;
   isActive?: boolean | null;
   requiresPreAuthorization?: boolean | null;
-  visitTypeLocked?: boolean | null;
   createdDate?: string | null;
   lastModifiedDate?: string | null;
 }

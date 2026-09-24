@@ -409,21 +409,9 @@ const EntryDetails = ({
     <dl>
       <div>
         <dt>
-          <Translate>Visit type</Translate>
-        </dt>
-        <dd>{entry.visitType ? formatEnumString(entry.visitType) : '—'}</dd>
-      </div>
-      <div>
-        <dt>
           <Translate>Discount</Translate>
         </dt>
         <dd>{entry.discountPercentage == null ? '—' : `${entry.discountPercentage}%`}</dd>
-      </div>
-      <div>
-        <dt>
-          <Translate>Cost</Translate>
-        </dt>
-        <dd>{money(entry.cost)}</dd>
       </div>
       <div>
         <dt>
