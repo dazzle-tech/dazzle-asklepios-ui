@@ -19,9 +19,9 @@ const NeonatesPainAssessment = () => {
       <Tabs.Tab eventKey="flacc" title={<Translate>FLACC Pain Scale</Translate>}>
         <Flacc />
       </Tabs.Tab>
-      <Tabs.Tab eventKey="neonatal" title={<Translate>Neonatal Pain Scale</Translate>}>
+      {/* <Tabs.Tab eventKey="neonatal" title={<Translate>Neonatal Pain Scale</Translate>}>
         <Neonatal />
-      </Tabs.Tab>
+      </Tabs.Tab> */}
     </Tabs>
       </div>
   );
