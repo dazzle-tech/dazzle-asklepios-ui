@@ -28,11 +28,13 @@ import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnostic
 import { useLazyGetLaboratoriesByIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 
 import { Tooltip, Whisper } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowDown, faArrowUp, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import UserDateCell from '@/components/UserDateCell';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import LovValueCell from '@/components/LovValueCell';
+import LaboratoryReportButton from '@/pages/encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 
 interface Props {
   patient: any;
@@ -46,6 +48,7 @@ const isLovProfile = (profile?: any) =>
 const LaboratoryTable: React.FC<Props> = ({ patient }) => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
+  const [selectedResultIds, setSelectedResultIds] = useState<number[]>([]);
 
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
@@ -276,7 +279,47 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     labByTestIdMap
   ]);
 
+  const allRowsSelected =
+    normalizedResults.length > 0 &&
+    normalizedResults.every((row: any) => selectedResultIds.includes(row.id));
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedResultIds((previous) =>
+        Array.from(new Set([...previous, ...normalizedResults.map((row: any) => row.id)]))
+      );
+    } else {
+      const currentPageIds = normalizedResults.map((row: any) => row.id);
+      setSelectedResultIds((previous) =>
+        previous.filter((id) => !currentPageIds.includes(id))
+      );
+    }
+  };
+
   const columns: ColumnConfig[] = [
+    {
+      key: 'select',
+      title: (
+        <Checkbox
+          checked={allRowsSelected}
+          onChange={(_, checked) => handleSelectAll(checked)}
+        />
+      ),
+      width: 60,
+      align: 'center',
+      render: (row: any) => (
+        <Checkbox
+          checked={selectedResultIds.includes(row.id)}
+          onChange={(_, checked) => {
+            setSelectedResultIds((previous) =>
+              checked
+                ? Array.from(new Set([...previous, row.id]))
+                : previous.filter((id) => id !== row.id)
+            );
+          }}
+        />
+      )
+    },
     {
       key: 'visitId',
       title: <Translate>VISIT ID</Translate>,
@@ -387,10 +430,15 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     }
   ];
 
+  const tableButtons = (
+    <LaboratoryReportButton resultIds={selectedResultIds} />
+  );
+
   return (
     <MyTable
       columns={columns}
       data={normalizedResults}
+      tableButtons={tableButtons}
       loading={isFetching}
       page={page}
       rowsPerPage={size}
