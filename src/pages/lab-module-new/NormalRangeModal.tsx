@@ -92,6 +92,10 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
             : '-';
         }
 
+        if (profileTest?.resultType === 'TEXT') {
+          return r.resultText ?? '-';
+        }
+
         return '-';
       }
     },

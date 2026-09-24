@@ -55,13 +55,65 @@ const DiagnosticTestNormalRangeTable = ({
       )
     },
     {
-      key: 'lovValues',
-      title: <Translate>LOV Values</Translate>,
+      key: 'normalRange',
+      title: <Translate>Normal Range</Translate>,
       render: rowData => {
-        const names = (rowData.lovKeys ?? [])
-          .map(key => lovValues?.object?.find(value => String(value.key) === String(key))?.lovDisplayVale)
-          .filter(Boolean);
-        return <span>{names.length ? names.join(', ') : '-'}</span>;
+        const type = (rowData.resultType ?? resultType)?.toUpperCase();
+
+        if (type === 'LOV') {
+          const names = (rowData.lovKeys ?? [])
+            .map(key => lovValues?.object?.find(value => String(value.key) === String(key))?.lovDisplayVale)
+            .filter(Boolean);
+
+          return <span>{names.length ? names.join(', ') : '-'}</span>;
+        }
+
+        if (type === 'NUMBER') {
+          switch (rowData.normalRangeType) {
+            case 'RANGE':
+              return <span>{rowData.rangeFrom ?? '-'} - {rowData.rangeTo ?? '-'}</span>;
+            case 'LESS_THAN':
+              return <span>&lt; {rowData.rangeTo ?? '-'}</span>;
+            case 'MORE_THAN':
+              return <span>&gt; {rowData.rangeFrom ?? '-'}</span>;
+            default:
+              return <span>-</span>;
+          }
+        }
+
+        return <span>{rowData.resultText ?? '-'}</span>;
+      }
+    },
+    {
+      key: 'criticalValue',
+      title: <Translate>Critical Value</Translate>,
+      render: rowData => {
+        if (!rowData.criticalValue) return <span>-</span>;
+
+        const hasLessThan =
+          rowData.criticalValueLessThan !== null &&
+          rowData.criticalValueLessThan !== undefined;
+        const hasMoreThan =
+          rowData.criticalValueMoreThan !== null &&
+          rowData.criticalValueMoreThan !== undefined;
+
+        if (hasLessThan && hasMoreThan) {
+          return (
+            <span>
+              &lt; {rowData.criticalValueLessThan} OR &gt; {rowData.criticalValueMoreThan}
+            </span>
+          );
+        }
+
+        if (hasLessThan) {
+          return <span>&lt; {rowData.criticalValueLessThan}</span>;
+        }
+
+        if (hasMoreThan) {
+          return <span>&gt; {rowData.criticalValueMoreThan}</span>;
+        }
+
+        return <span>-</span>;
       }
     },
     {
