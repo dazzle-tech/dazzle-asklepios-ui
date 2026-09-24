@@ -18,7 +18,7 @@ const LovValueCell = ({
         .filter(Boolean),
     [valueKey]
   );
-
+console.log("keys:", keys)
   const { data } = useGetLovValuesBulkByKeysQuery(keys, {
     skip: keys.length === 0
   });
@@ -36,7 +36,6 @@ const LovValueCell = ({
       );
 
       return (
-        item?.lovDisplayValue ??
         item?.lovDisplayVale ??
         key
       );

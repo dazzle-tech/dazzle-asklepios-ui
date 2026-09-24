@@ -667,7 +667,6 @@ const resolveResultDisplay = (row: any) => {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
-          console.log('row', row);
           const profile = row.profile;
           const isText =
             profile?.resultType?.toUpperCase() === 'TEXT';
@@ -683,7 +682,8 @@ const resolveResultDisplay = (row: any) => {
             row.minValue !== undefined &&
             row.maxValue !== null &&
             row.maxValue !== undefined;
-
+            console.log('hasViewRange', hasViewRange);
+            console.log("isLovProfile", isLovProfile(profile));
           if (hasViewRange) {
             if (isLovProfile(profile)) {
               return (
