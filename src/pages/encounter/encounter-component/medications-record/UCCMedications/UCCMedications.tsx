@@ -31,6 +31,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import MedicationAdministrationModal from '@/pages/encounter/urgent-care/MedicationAdministrationModal';
 import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
 import { Tooltip, Whisper } from 'rsuite';
+import { useLocation } from 'react-router-dom';
 
 type Props = {
   patient: any;
@@ -138,8 +139,10 @@ const formatDate = (date: any) => {
   return d.toISOString().split('T')[0];
 };
 
-const UCCMedications = ({ patient }: Props) => {
+const UCCMedications = ({ patient, ...props }: Props) => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const edit = props.edit ?? location.state?.edit ?? false;
   const [administrationModalOpen, setAdministrationModalOpen] =
     useState(false);
 
@@ -441,9 +444,19 @@ const UCCMedications = ({ patient }: Props) => {
                   }
                 >
                   <CheckRoundIcon
-                    className="medication-record-order-icons-size"
-                    style={{ cursor: 'pointer' }}
+                    className="icons-style medication-record-order-icons-size"
+                    style={{
+                      cursor:
+                        edit
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity:
+                        edit
+                          ? 0.5
+                          : 1
+                    }}
                     onClick={() => {
+                      if(edit) return
                       setSelectedOrderId(row.id);
                       setAdministrationModalOpen(true);
                     }}
@@ -461,9 +474,19 @@ const UCCMedications = ({ patient }: Props) => {
                 >
                   <FontAwesomeIcon
                     icon={faXmark}
-                    className="medication-record-order-icons-size"
-                    style={{ cursor: 'pointer' }}
+                    className="icons-style medication-record-order-icons-size"
+                    style={{
+                      cursor:
+                        edit
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity:
+                        edit
+                          ? 0.5
+                          : 1
+                    }}
                     onClick={() => {
+                      if(edit) return
                       setSelectedRow(row);
                       setCancelObject({
                         discardReason: ''

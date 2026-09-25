@@ -678,7 +678,7 @@ const editDisabled =
                 <MyButton
                   disabled={
                     isNurse ||
-                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
+                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED' || edit
                   }
                   onClick={() => setOpenConfirmCancelModel(true)}
                 >
@@ -695,8 +695,9 @@ const editDisabled =
                 </Checkbox>
               </div>
 
-              <div className={clsx('bt-right-2', { 'disabled-panel': edit || isNurse })}>
+              <div className={clsx('bt-right-2')}>
                 <MyButton
+                  disabled={edit || isNurse}
                   onClick={() => {
                     handleClear();
                     setModalKey(prev => prev + 1);

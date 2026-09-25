@@ -175,11 +175,11 @@ const FlaccComponent = ({ ...props }) => {
       await refetch();
     } catch (error: any) {
       dispatch(
-                notify({
-                  msg: extractErrorMessage(error) || 'Failed to cancel FLACC record',
-                  sev: 'warning',
-                })
-              );
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to cancel FLACC record',
+          sev: 'warning',
+        })
+      );
     }
   };
 
@@ -230,7 +230,7 @@ const FlaccComponent = ({ ...props }) => {
       render: (row: FLACCPainScale) =>
         conjureValueBasedOnKeyFromListOfValues(
           cryFlaccLovQueryResponse?.object ?? [],
-          row?.cry?? '',
+          row?.cry ?? '',
           'lovDisplayVale'
         ) ?? '-'
     },
@@ -302,13 +302,17 @@ const FlaccComponent = ({ ...props }) => {
           size={24}
           fill="var(--primary-gray)"
           className="icons-style"
-          style={{ cursor: row.status === 'ACTIVE' ? 'pointer' : 'not-allowed' }}
-          onClick={() =>{ 
-            if (row.status === 'ACTIVE') {
-            handleEdit(row)
+          style={{
+            cursor:
+              props?.disabled || row.status !== 'ACTIVE'
+                ? 'not-allowed'
+                : 'pointer',
+          }}
+          onClick={() => {
+            if (!props?.disabled && row.status === 'ACTIVE') {
+              handleEdit(row);
             }
-          }
-          }
+          }}
         />
       )
     }
@@ -331,7 +335,7 @@ const FlaccComponent = ({ ...props }) => {
           disabled={
             !selectedRecord ||
             selectedRecord.status === 'CANCELLED' ||
-            isCancelling
+            isCancelling || props?.disabled
           }
           onClick={handleCancel}
         >
@@ -339,7 +343,7 @@ const FlaccComponent = ({ ...props }) => {
           <Translate>Cancel</Translate>
         </MyButton>
 
-        <MyButton onClick={handleAdd}>
+        <MyButton onClick={handleAdd} disabled={props?.disabled}>
           <FontAwesomeIcon icon={faPlus} />
           <Translate>Add</Translate>
         </MyButton>
