@@ -142,7 +142,7 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
         </div>
       }
     >
-      <Form fluid className="disabled-panel">
+      <Form fluid>
         <div className="main-details-consultion-page-container">
           <SectionContainer
             title={<Translate>Choose Consultant</Translate>}

@@ -183,15 +183,15 @@ const edit = viewMode === 'readOnly'
                 className="view-only-action-edit-delete-encounter"
                 size={22}
                 onClick={() => {
-                  if (row.cancelledDate) return;
+                  if (row.cancelledDate || edit) return;
 
                   setSelectedNote(row);
                   setOpenAddModal(true);
                 }}
                 style={{
-                  cursor: row.cancelledDate ? 'not-allowed' : 'pointer',
-                  color: row.cancelledDate ? '#ccc' : 'gray',
-                  opacity: row.cancelledDate ? 0.5 : 1
+                  cursor: row.cancelledDate || edit ? 'not-allowed' : 'pointer',
+                  color: row.cancelledDate || edit ? '#ccc' : 'gray',
+                  opacity: row.cancelledDate || edit ? 0.5 : 1
                 }}
               />
 
@@ -232,8 +232,7 @@ const edit = viewMode === 'readOnly'
 
   return (
     <div
-      dir={dir}
-      className={edit ? 'disabled-panel' : ''}>
+      dir={dir}>
         
       <AddProgressNotes
         open={openAddModal}
@@ -249,7 +248,7 @@ const edit = viewMode === 'readOnly'
         <MyButton
           onClick={() => setPopupCancelOpen(true)}
           prefixIcon={() => <CloseOutlineIcon />}
-          disabled={!selectedNote?.id || selectedNote?.cancelledDate}
+          disabled={!selectedNote?.id || selectedNote?.cancelledDate || edit}
         >
           <Translate>Cancel</Translate>
         </MyButton>
@@ -275,6 +274,7 @@ const edit = viewMode === 'readOnly'
               setOpenAddModal(true);
             }}
             prefixIcon={() => <PlusIcon />}
+            disabled={edit}
           >
             Add
           </MyButton>

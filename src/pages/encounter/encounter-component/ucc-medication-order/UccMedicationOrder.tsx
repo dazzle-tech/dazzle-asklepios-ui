@@ -380,11 +380,11 @@ const updatePayload = {
               icon={faPenToSquare}
               className="ucc-medication-order-icons-size"
               style={{
-                cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-                opacity: row?.status === 'NEW' ? 1 : 0.4
+                cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
               }}
               onClick={() => {
-                if (row?.status !== 'NEW') return;
+                if (edit || row?.status !== 'NEW') return;
                 setEditRow(row);
 
                 setTimeout(() => {
@@ -405,11 +405,11 @@ const updatePayload = {
             <CheckRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
+              cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
             }}
             onClick={() => {
-              if (row?.status !== 'NEW') return;
+              if (edit || row?.status !== 'NEW') return;
               handleSubmit(row);
             }}
           />
@@ -426,11 +426,11 @@ const updatePayload = {
             <WarningRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
+              cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
             }}
             onClick={() => {
-              if (row?.status !== 'NEW') return;
+              if (edit || row?.status !== 'NEW') return;
               setSelectedCancelId(row.id);
               setOpenCancel(true);
             }}
@@ -443,7 +443,7 @@ const updatePayload = {
 
   
   return (
-    <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
+    <div>
       <MyTable
         height={450}
         data={rows}
@@ -453,7 +453,7 @@ const updatePayload = {
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         tableButtons={
-          <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />}>
+          <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />} disabled={edit}>
             Add
           </MyButton>
         }

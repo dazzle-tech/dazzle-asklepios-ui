@@ -397,7 +397,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
         title={<Text className="font-style">Refills and Parameters to Monitor</Text>}
         content={
           <Form fluid>
-            <MyTagInput tags={record.parametersToMonitor?.split(',') ?? []} setTags={noop} />
+            <MyTagInput tags={record.parametersToMonitor?.split(',') ?? []} setTags={noop} disabled/>
 
           
           </Form>

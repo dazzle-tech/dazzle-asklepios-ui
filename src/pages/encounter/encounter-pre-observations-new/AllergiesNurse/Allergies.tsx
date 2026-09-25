@@ -153,8 +153,8 @@ const Allergies = (props: AllergiesProps) => {
             rowData?.status === 'CANCELLED'
               ? '#969fb0'
               : rowData?.status === 'RESOLVED'
-              ? '#800080'
-              : '#45b887'
+                ? '#800080'
+                : '#45b887'
           }
           contant={<Translate>{formatEnumString(rowData?.status)}</Translate>}
         />
@@ -186,14 +186,22 @@ const Allergies = (props: AllergiesProps) => {
             fill="var(--primary-gray)"
             onClick={e => {
               e.stopPropagation();
-              if (isPast || rowData.status !== 'ACTIVE') return;
+
+              if (edit || isPast || rowData.status !== 'ACTIVE') return;
+
               setAllerges(rowData);
               setOpenDetailsModal(true);
               setOpenToAdd(false);
             }}
             style={{
-              cursor: isPast || rowData.status !== 'ACTIVE' ? 'not-allowed' : 'pointer',
-              opacity: isPast || rowData.status !== 'ACTIVE' ? 0.5 : 1
+              cursor:
+                edit || isPast || rowData.status !== 'ACTIVE'
+                  ? 'not-allowed'
+                  : 'pointer',
+              opacity:
+                edit || isPast || rowData.status !== 'ACTIVE'
+                  ? 0.5
+                  : 1
             }}
           />
         );
@@ -334,61 +342,61 @@ const Allergies = (props: AllergiesProps) => {
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  const tablebuttons = (      <div className="bt-div-2">
-        <div className="bt-left-2">
-          <MyButton
-            prefixIcon={() => <CloseOutlineIcon />}
-            onClick={() => setOpenCancellationReasonModel(true)}
-            disabled={!allerges?.id || allerges?.status === 'CANCELLED' || props?.readonly}
-          >
-            Cancel
-          </MyButton>
+  const tablebuttons = (<div className="bt-div-2">
+    <div className="bt-left-2">
+      <MyButton
+        prefixIcon={() => <CloseOutlineIcon />}
+        onClick={() => setOpenCancellationReasonModel(true)}
+        disabled={!allerges?.id || allerges?.status === 'CANCELLED' || props?.readonly || edit}
+      >
+        Cancel
+      </MyButton>
 
-          <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-            onClick={() => setOpenConfirmResolvedModel(true)}
-            disabled={
-              !allerges?.id || allerges?.status === 'RESOLVED' || allerges?.status === 'CANCELLED' || props?.readonly
-            }
-          >
-            Resolved
-          </MyButton>
+      <MyButton
+        prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+        onClick={() => setOpenConfirmResolvedModel(true)}
+        disabled={
+          !allerges?.id || allerges?.status === 'RESOLVED' || allerges?.status === 'CANCELLED' || props?.readonly || edit
+        }
+      >
+        Resolved
+      </MyButton>
 
-          <MyButton
-            prefixIcon={() => <ReloadIcon />}
-            onClick={() => setOpenConfirmUndoResolvedModel(true)}
-            disabled={
-              !allerges?.id || allerges?.status === 'ACTIVE' || allerges?.status === 'CANCELLED' || props?.readonly
-            }
-          >
-            Undo Resolved
-          </MyButton>
+      <MyButton
+        prefixIcon={() => <ReloadIcon />}
+        onClick={() => setOpenConfirmUndoResolvedModel(true)}
+        disabled={
+          !allerges?.id || allerges?.status === 'ACTIVE' || allerges?.status === 'CANCELLED' || props?.readonly || edit
+        }
+      >
+        Undo Resolved
+      </MyButton>
 
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)} className="show-cancelled">
-            <Translate>Show Cancelled</Translate>
-          </Checkbox>
-        </div>
+      <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)} className="show-cancelled">
+        <Translate>Show Cancelled</Translate>
+      </Checkbox>
+    </div>
 
-        <div className="bt-right-2">
-          <MyButton
-            disabled={edit || props?.readonly}
-            prefixIcon={() => <PlusIcon />}
-            onClick={() => {
-              handleClear();
-              setOpenDetailsModal(true);
-              setOpenToAdd(true);
-            }}
-          >
-            Add Allergy
-          </MyButton>
-        </div>
-      </div>);
+    <div className="bt-right-2">
+      <MyButton
+        disabled={edit || props?.readonly || edit}
+        prefixIcon={() => <PlusIcon />}
+        onClick={() => {
+          handleClear();
+          setOpenDetailsModal(true);
+          setOpenToAdd(true);
+        }}
+      >
+        Add Allergy
+      </MyButton>
+    </div>
+  </div>);
 
   return (
     <div
       dir={dir}
-      // className={clsx({ 'disabled-panel': edit })}
-      // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+    // className={clsx({ 'disabled-panel': edit })}
+    // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
     >
 
       <div className="container-of-table-and-section-patient-allergy">

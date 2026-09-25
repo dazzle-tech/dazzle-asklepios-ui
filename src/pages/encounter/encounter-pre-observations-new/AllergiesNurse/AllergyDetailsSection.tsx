@@ -64,9 +64,6 @@ const AllergyDetailsSection = ({
             content={
                 <div
                 dir={dir}
-                    className={clsx({
-                        'disabled-panel': edit || allerges.statusLvalue?.valueCode === 'ARS_CANCEL'
-                    })}
                 >
                     <Form fluid >
                         <Form fluid layout='inline'>
