@@ -90,6 +90,12 @@ export type CoverageCopayment = {
   isActive?: boolean;
 };
 
+export type CoverageDiagnosisRef = {
+  diagnosisId: number;
+  diagnosisCode?: string | null;
+  diagnosisName?: string | null;
+};
+
 export type CoverageTerm = {
   id?: number;
   termType?: string;
@@ -97,6 +103,8 @@ export type CoverageTerm = {
   diagnosisId?: number | null;
   diagnosisCode?: string | null;
   diagnosisName?: string | null;
+  diagnoses?: CoverageDiagnosisRef[];
+  diagnosisIds?: number[];
   facilityId?: number;
   facilityName?: string;
   allDepartments?: boolean;
@@ -146,6 +154,8 @@ export type CoverageExclusion = {
   diagnosisId?: number | null;
   diagnosisCode?: string | null;
   diagnosisName?: string | null;
+  diagnoses?: CoverageDiagnosisRef[];
+  diagnosisIds?: number[];
   encounterType?: string;
   excludedResult?: string;
   isActive?: boolean;
@@ -173,6 +183,8 @@ export type CoveragePreApprovalItem = {
   diagnosisId?: number | null;
   diagnosisCode?: string | null;
   diagnosisName?: string | null;
+  diagnoses?: CoverageDiagnosisRef[];
+  diagnosisIds?: number[];
   isActive?: boolean;
 };
 
@@ -231,6 +243,7 @@ export type CoveragePreApprovalReading = {
   serviceId?: number | null;
   allDiagnoses?: boolean;
   diagnosisId?: number | null;
+  diagnosisIds?: number[] | null;
 };
 
 const toContractPayload = (body: CoverageContract) => ({

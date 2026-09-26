@@ -230,9 +230,53 @@ export function exclusionTypeLabel(row: any) {
   return row?.exclusionType === 'DIAGNOSIS' ? 'Diagnosis' : 'Category';
 }
 
+export function diagnosisIdsOf(row: any): number[] {
+  const fromList = Array.isArray(row?.diagnoses)
+    ? row.diagnoses
+        .map((item: any) => Number(item?.diagnosisId ?? item))
+        .filter((id: number) => Number.isFinite(id))
+    : [];
+  if (fromList.length) {
+    return Array.from(new Set(fromList));
+  }
+  if (Array.isArray(row?.diagnosisIds)) {
+    return Array.from(
+      new Set(row.diagnosisIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id)))
+    );
+  }
+  if (row?.diagnosisId != null && row.diagnosisId !== '') {
+    return [Number(row.diagnosisId)];
+  }
+  return [];
+}
+
+export function diagnosisLabel(row: any): string {
+  if (row?.allDiagnoses) {
+    return 'All diagnoses';
+  }
+  const names = Array.isArray(row?.diagnoses)
+    ? row.diagnoses
+        .map((item: any) => item?.diagnosisCode || item?.diagnosisName)
+        .filter(Boolean)
+    : [];
+  if (names.length) {
+    return names.join(', ');
+  }
+  return row?.diagnosisName || row?.diagnosisCode || '-';
+}
+
+export function withSelectedDiagnoses(record: any, ids: number[]) {
+  return {
+    ...record,
+    diagnosisIds: ids,
+    diagnoses: ids.map(diagnosisId => ({ diagnosisId })),
+    diagnosisId: ids[0] ?? null
+  };
+}
+
 export function exclusionResultLabel(row: any) {
   if (row?.exclusionType === 'DIAGNOSIS') {
-    return row.diagnosisName || (row.allDiagnoses ? 'All diagnoses' : '-');
+    return diagnosisLabel(row);
   }
   if (row?.serviceName) {
     return row.serviceName;

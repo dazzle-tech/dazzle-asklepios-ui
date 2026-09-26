@@ -13,7 +13,7 @@ import { formatEnumString } from '@/utils';
 import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
-import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
+import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, withSelectedDiagnoses } from './coverageHelpers';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import {
   useCreateDiscountMutation,
@@ -49,15 +49,16 @@ const CoverageIcd10Field = ({
 }) => (
   <div className="coverage-icd10-field">
     <Icd10DiagnosisSearch
-      diagnosisId={record?.diagnosisId ?? null}
-      setDiagnosisId={id => setRecord({ ...record, diagnosisId: id })}
-      label="Diagnosis"
+      multiple
+      diagnosisIds={diagnosisIdsOf(record)}
+      setDiagnosisIds={ids => setRecord(withSelectedDiagnoses(record, ids))}
+      label="Specific diagnoses"
       required={required}
       compact
     />
     <p className="coverage-icd10-hint">
       <Translate>
-        Selecting a parent code (for example A00) applies this rule to every diagnosis under it (A00.0, A00.1, …).
+        Add as many specific diagnoses as needed. Selecting a parent code (for example A00) applies this rule to the whole group under it (A00.0, A00.1, …).
       </Translate>
     </p>
   </div>
@@ -277,13 +278,19 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
   }, [allEncounterTypes, departments.data, record.departmentId]);
 
   const persistTerm = async () => {
+    const selectedDiagnoses = diagnosisIdsOf(record);
+    if (record.diagnosisScope === 'SPECIFIC_DIAGNOSIS' && !selectedDiagnoses.length) {
+      notifyWarning(dispatch, 'Select at least one specific diagnosis');
+      return;
+    }
     try {
       await saveTerm({
         classId,
         body: {
           ...record,
           termType,
-          diagnosisId: record.diagnosisId == null || record.diagnosisId === '' ? null : Number(record.diagnosisId),
+          diagnoses: selectedDiagnoses.map(diagnosisId => ({ diagnosisId })),
+          diagnosisId: selectedDiagnoses[0] ?? null,
           diagnosisCode: record.diagnosisCode || null,
           allDepartments: !record.departmentId || Number(record.departmentId) === 0,
           departmentId: !record.departmentId || Number(record.departmentId) === 0 ? null : record.departmentId
@@ -401,6 +408,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
         rowClassName={(row: any) => (selectedTerm?.id === row.id ? 'selected-row' : '')}
         columns={[
           { key: 'diagnosisScope', title: 'Coverage Type', flexGrow: 2, render: (row: any) => formatEnumString(row.diagnosisScope) },
+          { key: 'diagnosisName', title: 'Diagnoses', flexGrow: 3, render: (row: any) => row.diagnosisScope === 'SPECIFIC_DIAGNOSIS' ? diagnosisLabel(row) : 'All' },
           { key: 'facilityName', title: 'Facility', flexGrow: 2 },
           { key: 'departmentName', title: 'Department', flexGrow: 2 },
           { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
@@ -710,9 +718,9 @@ const ExclusionPanel = ({
     if (
       record.exclusionType === 'DIAGNOSIS' &&
       !record.allDiagnoses &&
-      (record.diagnosisId == null || record.diagnosisId === '')
+      !diagnosisIdsOf(record).length
     ) {
-      notifyWarning(dispatch, 'Diagnosis is required');
+      notifyWarning(dispatch, 'Select at least one diagnosis');
       return;
     }
     const billingItemType =
@@ -739,9 +747,13 @@ const ExclusionPanel = ({
           serviceId: Number.isFinite(itemId as number) ? itemId : null,
           serviceName: itemId ? record.itemName || null : null,
           allDiagnoses: record.exclusionType === 'DIAGNOSIS' ? Boolean(record.allDiagnoses) : false,
+          diagnoses:
+            record.exclusionType === 'DIAGNOSIS' && !record.allDiagnoses
+              ? diagnosisIdsOf(record).map(diagnosisId => ({ diagnosisId }))
+              : [],
           diagnosisId:
             record.exclusionType === 'DIAGNOSIS' && !record.allDiagnoses
-              ? record.diagnosisId
+              ? diagnosisIdsOf(record)[0] ?? null
               : null,
           encounterType: record.encounterType,
           excludedResult: record.excludedResult
@@ -829,7 +841,9 @@ const ExclusionPanel = ({
                   itemId: null,
                   itemName: null,
                   allDiagnoses: false,
-                  diagnosisId: null
+                  diagnosisId: null,
+                  diagnoses: [],
+                  diagnosisIds: []
                 });
                 return;
               }
@@ -910,8 +924,22 @@ const PreApprovalPanel = ({
   };
 
   const persistItem = async () => {
+    const selectedDiagnoses = diagnosisIdsOf(item);
+    if (item.itemType === 'DIAGNOSIS' && !item.allDiagnoses && !selectedDiagnoses.length) {
+      notifyWarning(dispatch, 'Select at least one diagnosis');
+      return;
+    }
     try {
-      await createItem({ preApprovalId: Number(selected.id), body: item }).unwrap();
+      await createItem({
+        preApprovalId: Number(selected.id),
+        body: {
+          ...item,
+          diagnoses: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses
+            ? selectedDiagnoses.map(diagnosisId => ({ diagnosisId }))
+            : [],
+          diagnosisId: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses ? selectedDiagnoses[0] ?? null : null
+        }
+      }).unwrap();
       notifySuccess(dispatch, 'Pre-approval item added');
       setItemOpen(false);
     } catch (error: any) {
@@ -973,7 +1001,7 @@ const PreApprovalPanel = ({
             height={220}
             columns={[
               { key: 'itemType', title: 'Pre Approval type', flexGrow: 2, render: (row: any) => formatEnumString(row.itemType) },
-              { key: 'serviceName', title: 'Scope', flexGrow: 3, render: (row: any) => row.serviceName || row.diagnosisName || formatEnumString(row.serviceCategory) || 'All' },
+              { key: 'serviceName', title: 'Scope', flexGrow: 3, render: (row: any) => row.serviceName || diagnosisLabel(row) || formatEnumString(row.serviceCategory) || 'All' },
               { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
               {
                 key: 'actions',
