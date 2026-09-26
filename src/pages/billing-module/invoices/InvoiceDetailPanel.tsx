@@ -59,6 +59,7 @@ type InvoiceDetailPanelProps = {
   canCreateDebitNote?: boolean;
   canCreateDiscountCreditNote?: boolean;
   onPrintInvoice?: () => void;
+  onPrintDetailedInvoice?: () => void;
   onPrintAdjustment?: (adjustment: FinancialDocumentAdjustment) => void;
   onCreateCreditNote?: () => void;
   onCreateDebitNote?: () => void;
@@ -108,6 +109,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
   canCreateDebitNote = false,
   canCreateDiscountCreditNote = false,
   onPrintInvoice,
+  onPrintDetailedInvoice,
   onPrintAdjustment,
   onCreateCreditNote,
   onCreateDebitNote,
@@ -365,6 +367,16 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                 <FontAwesomeIcon icon={faPrint} /> Print
               </MyButton>
             ) : null}
+            {onPrintDetailedInvoice ? (
+              <MyButton
+                size="sm"
+                appearance="ghost"
+                disabled={printDisabled}
+                onClick={onPrintDetailedInvoice}
+              >
+                <FontAwesomeIcon icon={faFileInvoiceDollar} /> Credit invoice
+              </MyButton>
+            ) : null}
             {onCreateCreditNote ? (
               <MyButton
                 size="sm"
@@ -372,7 +384,7 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
                 disabled={!canCreateCreditNote}
                 onClick={onCreateCreditNote}
               >
-                <FontAwesomeIcon icon={faMinusCircle} /> Credit
+                <FontAwesomeIcon icon={faMinusCircle} /> Credit note
               </MyButton>
             ) : null}
             {onCreateDiscountCreditNote ? (

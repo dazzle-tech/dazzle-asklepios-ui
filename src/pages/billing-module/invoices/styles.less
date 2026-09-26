@@ -59,6 +59,20 @@
     line-height: 1.5;
   }
 
+  &__report-actions {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+
+    .rs-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+  }
+
   &__accounts-layout {
     display: flex;
     flex-direction: column;
@@ -681,6 +695,40 @@
       font-size: 13px;
       line-height: 1.5;
     }
+  }
+}
+
+.credit-invoice-modal {
+  &.rs-modal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .rs-modal-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .rs-modal-dialog {
+    width: min(96vw, 1400px) !important;
+    max-width: 96vw !important;
+    margin: 12px auto !important;
+  }
+
+  .rs-modal-content {
+    max-height: 94vh;
+  }
+
+  .rs-modal-body {
+    background: #eef2f6;
+    height: 82vh !important;
+    max-height: 82vh !important;
+  }
+
+  .invoice-print-modal__paper {
+    max-height: none;
   }
 }
 

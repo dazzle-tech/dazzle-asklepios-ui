@@ -50,6 +50,8 @@ import {
   normalizeBillingError,
   resolvePatientId
 } from '../utils/billingAccountingUtils';
+import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import { formatEnumString } from '@/utils';
 
 type PatientIssuedDocumentsTabProps = {
   patient?: any;
@@ -93,6 +95,13 @@ const resolveEncounterLabel = (document: PatientFinancialInvoice) => {
 const PatientIssuedDocumentsTab: React.FC<PatientIssuedDocumentsTabProps> = ({ patient }) => {
   const dispatch = useAppDispatch();
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
+  const facilityId =
+    useAppSelector(state => state.auth?.selectedDepartment?.facilityId) ??
+    selectedFacility?.id ??
+    null;
+  const { data: facilityDetails } = useGetFacilityByIdQuery(facilityId as number | string, {
+    skip: facilityId == null
+  });
   const patientId = resolvePatientId(patient);
   const financialDocumentTypes = useFinancialDocumentTypes();
 
@@ -125,26 +134,59 @@ const PatientIssuedDocumentsTab: React.FC<PatientIssuedDocumentsTabProps> = ({ p
     [financialDocumentTypes.options]
   );
 
-  const facilityPrintInfo = useMemo(
-    () => ({
+  const facilityPrintInfo = useMemo(() => {
+    const facilityRecord = facilityDetails ?? selectedFacility;
+    const countryLabel = facilityRecord?.countryName
+      ? formatEnumString(String(facilityRecord.countryName))
+      : '';
+    const composedAddress = [
+      facilityRecord?.districtName,
+      countryLabel,
+      facilityRecord?.streetAddress,
+      facilityRecord?.postalCode
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    const rawAddress =
+      facilityRecord?.facilityAddress ||
+      composedAddress ||
+      facilityRecord?.address ||
+      undefined;
+    const address = rawAddress
+      ? String(rawAddress)
+          .split(',')
+          .map(part => {
+            const trimmed = part.trim();
+            if (!trimmed) return '';
+            if (/^[A-Z0-9]+(?:_[A-Z0-9]+)+$/.test(trimmed)) {
+              return formatEnumString(trimmed);
+            }
+            return trimmed;
+          })
+          .filter(Boolean)
+          .join(', ')
+      : undefined;
+
+    return {
       name:
-        selectedFacility?.name ??
-        selectedFacility?.facilityName ??
+        facilityRecord?.name ??
+        facilityRecord?.facilityName ??
         'Healthcare Facility',
-      address:
-        selectedFacility?.facilityAddress ??
-        selectedFacility?.address ??
-        undefined,
+      address,
       vatRegistrationNumber:
-        selectedFacility?.vatRegistrationNumber ??
-        selectedFacility?.vatNumber ??
+        facilityRecord?.vatRegistrationNumber ??
+        facilityRecord?.vatNumber ??
         undefined,
       providerId:
-        selectedFacility?.providerId ??
-        (selectedFacility?.id != null ? String(selectedFacility.id) : undefined)
-    }),
-    [selectedFacility]
-  );
+        facilityRecord?.providerId != null &&
+        String(facilityRecord.providerId).trim() !== ''
+          ? String(facilityRecord.providerId).trim()
+          : facilityRecord?.code != null && String(facilityRecord.code).trim() !== ''
+            ? String(facilityRecord.code).trim()
+            : undefined
+    };
+  }, [facilityDetails, selectedFacility]);
 
   const {
     data: documents = [],

@@ -11,8 +11,7 @@ import {
   useGetAllFacilitiesQuery,
   useUpdateFacilityMutation
 } from '@/services/security/facilityService';
-import { ApAddresses, ApDepartment } from '@/types/model-types';
-import { newApAddresses } from '@/types/model-types-constructor';
+import { ApDepartment } from '@/types/model-types';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { CreateFacility, Facility } from '@/types/model-types-new';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -37,7 +36,6 @@ const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
   const [createFacility, setCreateFacility] = useState<CreateFacility>({ ...newCreateFacility });
-  const [address, setAddress] = useState<ApAddresses>({ ...newApAddresses });
   const [departments, setDepartments] = useState<ApDepartment[]>([]);
   const [popupOpen, setPopupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -102,7 +100,6 @@ useEffect(() => {
 
   // Handle click on Add New Button
   const handleNew = () => {
-    setAddress(newApAddresses);
     setCreateFacility({ ...newCreateFacility });
     setDepartments([]);
     setIsEditing(false);
@@ -434,7 +431,6 @@ const handleSave = async () => {
             rowClassName={isSelected}
             onRowClick={rowData => {
               setFacility(rowData);
-              setAddress(rowData.address || newApAddresses);
               setDepartments(Array.isArray(rowData.department) ? rowData.department : []);
             }}
             sortColumn={listRequest.sortBy}
@@ -482,8 +478,6 @@ const handleSave = async () => {
             setOpen={setPopupOpen}
             facility={isEditing ? facility : createFacility}
             setFacility={isEditing ? setFacility : setCreateFacility}
-            address={address}
-            setAddress={setAddress}
             handleSave={isEditing ? handleUpdate : handleSave}
             width={width}
           />

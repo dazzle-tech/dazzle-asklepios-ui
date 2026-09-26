@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 
 import MyModal from '@/components/MyModal/MyModal';
@@ -32,6 +32,8 @@ const getDefaultDateRange = () => {
         toDate
     };
 };
+
+const EMPTY_ROWS: any[] = [];
 
 const BillingPendingQueueModal: React.FC<BillingPendingQueueModalProps> = ({
     open,
@@ -118,14 +120,24 @@ const BillingPendingQueueModal: React.FC<BillingPendingQueueModalProps> = ({
         });
     };
 
-    const rows = pendingQueueData?.data ?? [];
+    const rows = pendingQueueData?.data ?? EMPTY_ROWS;
     const totalCount = pendingQueueData?.totalCount ?? 0;
+    const rowIdsKey = useMemo(
+        () => rows.map((row: any) => row?.id).filter(Boolean).join(','),
+        [rows]
+    );
 
     useEffect(() => {
-        if (!rows.length) {
-            setBillingData({});
+        if (!open) {
             return;
         }
+
+        if (!rowIdsKey) {
+            setBillingData(prev => (Object.keys(prev).length === 0 ? prev : {}));
+            return;
+        }
+
+        let cancelled = false;
 
         const loadBillingData = async () => {
             const billingResults = await Promise.all(
@@ -155,6 +167,10 @@ const BillingPendingQueueModal: React.FC<BillingPendingQueueModalProps> = ({
                 })
             );
 
+            if (cancelled) {
+                return;
+            }
+
             const nextBillingData: Record<number, any> = {};
 
             billingResults.forEach(result => {
@@ -167,7 +183,11 @@ const BillingPendingQueueModal: React.FC<BillingPendingQueueModalProps> = ({
         };
 
         loadBillingData();
-    }, [rows, getEncounterBillingSummary]);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [open, rowIdsKey, getEncounterBillingSummary]);
 
     const handlePatientSearchClick = () => {
         setPage(0);

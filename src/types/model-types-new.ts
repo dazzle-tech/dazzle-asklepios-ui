@@ -128,7 +128,14 @@ export interface Facility {
   defaultLabDepartmentName?: string | null;
   defaultRadDepartmentName?: string | null;
   approvingDiagnosticTestSettlePayment?: boolean;
-  
+  vatRegistrationNumber?: string | null;
+  countryId?: number | null;
+  countryName?: string | null;
+  districtId?: number | null;
+  districtName?: string | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
+  facilityAddress?: string | null;
 }
 
 export interface CreateFacility {
@@ -147,6 +154,11 @@ export interface CreateFacility {
   defaultLabDepartmentId?: number | null;
   defaultRadDepartmentId?: number | null;
   approvingDiagnosticTestSettlePayment?: boolean;
+  vatRegistrationNumber?: string | null;
+  countryId?: number | null;
+  districtId?: number | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
 }
 
 export interface Role {
