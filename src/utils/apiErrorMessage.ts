@@ -341,12 +341,10 @@ export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
     'Effective start date is required for an active price list.',
   'tax.notFound':
     'The selected tax was not found.',
-  'item.duplicateVisitType':
-    'This service is already configured for the selected visit type on this price list.',
+  'item.duplicate':
+    'This service is already configured on this price list.',
   'item.duplicateInPriceList':
-    'This catalog item is already on the selected price list. Use a different visit type or price list header.',
-  'visitType.locked':
-    'Visit / encounter type cannot be changed after the service has been used for a patient.',
+    'This catalog item is already on the selected price list.',
   'catalog.inactive':
     'Only active services from Service Definition can be added to a price list.',
   'itemCode.duplicate':
