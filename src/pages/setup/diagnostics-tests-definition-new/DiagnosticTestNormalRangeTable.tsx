@@ -70,7 +70,7 @@ const DiagnosticTestNormalRangeTable = ({
       key: 'normalRange',
       title: <Translate>Normal Range</Translate>,
       render: rowData => {
-        const type = (rowData.resultType ?? resultType)?.toUpperCase();
+      const type = (rowData.profileResultType ?? rowData.resultType ?? resultType)?.toUpperCase();
 
         if (type === 'LOV') {
           const names = (rowData.lovKeys ?? [])
