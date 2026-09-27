@@ -9,6 +9,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCheckDouble,
+  faTriangleExclamation,
   faXmark
 } from '@fortawesome/free-solid-svg-icons';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
@@ -63,6 +64,9 @@ type MedicationOrderRow = {
 
   createdBy?: string;
   createdDate?: string;
+
+  doubleCheckedBy?: string | null;
+  doubleCheckedDate?: string | null;
 
   administeredBy?: string;
   administeredDate?: string;
@@ -412,6 +416,19 @@ const UCCMedications = ({ patient, ...props }: Props) => {
       )
     },
     {
+      key: 'highAlert',
+      title: <Translate>HIGH ALERT</Translate>,
+      minWidth: 120,
+      align: 'center',
+      render: (row: MedicationOrderRow) =>
+        row.isHighAlert && (
+          <FontAwesomeIcon
+            icon={faTriangleExclamation}
+            color="red"
+          />
+        )
+    },
+    {
       key: 'status',
       title: (
         <Translate>STATUS</Translate>
@@ -528,6 +545,24 @@ const UCCMedications = ({ patient, ...props }: Props) => {
           </div>
         );
       }
+    },
+    {
+    key: 'doubleSignByAt',
+    title: <Translate>DOUBLE SIGN BY/AT</Translate>,
+    minWidth: 220,
+    expandable: true,
+    render: (row: MedicationOrderRow) =>
+      row.doubleCheckedBy || row.doubleCheckedDate ? (
+        <>
+          <UserFullName login={row.doubleCheckedBy ?? undefined} />
+          <br />
+          {row.doubleCheckedDate
+            ? formatDateWithoutSeconds(row.doubleCheckedDate)
+            : '-'}
+        </>
+      ) : (
+        '-'
+      )
     }
   ];
 
