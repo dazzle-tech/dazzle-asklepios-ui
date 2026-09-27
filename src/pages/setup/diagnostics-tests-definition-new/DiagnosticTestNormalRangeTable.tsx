@@ -1,5 +1,5 @@
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MdDelete, MdEdit } from 'react-icons/md';
 
 import MyButton from '@/components/MyButton/MyButton';
@@ -11,31 +11,43 @@ import { newDiagnosticTestNormalRange } from '@/types/model-types-constructor-ne
 import { DiagnosticTestNormalRange } from '@/types/model-types-new';
 import { initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
+import { FaUndo } from 'react-icons/fa';
 
 interface Props {
   profileId?: number;
   testId?: number;
   resultType?: string;
+  refreshKey: number;
   onAdd: (range: DiagnosticTestNormalRange) => void;
   onEdit: (range: DiagnosticTestNormalRange) => void;
-  onDelete: (range: DiagnosticTestNormalRange) => void;
+  onToggleActive: (range: DiagnosticTestNormalRange) => void;
 }
 
 const DiagnosticTestNormalRangeTable = ({
   profileId,
   testId,
   resultType,
+  refreshKey,
   onAdd,
   onEdit,
-  onDelete
+  onToggleActive
 }: Props) => {
   const [selectedRow, setSelectedRow] = useState<DiagnosticTestNormalRange>();
   const [pagination, setPagination] = useState({ page: 0, size: 5 });
-  const { data: normalRangeResponse, isFetching } =
+  const { data: normalRangeResponse, isFetching, refetch } =
     useGetDiagnosticTestNormalRangesByProfileTestIdQuery(
       { profileTestId: profileId, page: pagination.page, size: pagination.size },
       { skip: !profileId }
     );
+  const previousRefreshKey = useRef(refreshKey);
+
+  useEffect(() => {
+    if (previousRefreshKey.current !== refreshKey && profileId) {
+      refetch();
+    }
+    previousRefreshKey.current = refreshKey;
+  }, [refreshKey, profileId, refetch]);
+
   const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
   const columns = [
@@ -58,7 +70,7 @@ const DiagnosticTestNormalRangeTable = ({
       key: 'normalRange',
       title: <Translate>Normal Range</Translate>,
       render: rowData => {
-        const type = (rowData.resultType ?? resultType)?.toUpperCase();
+      const type = (rowData.profileResultType ?? rowData.resultType ?? resultType)?.toUpperCase();
 
         if (type === 'LOV') {
           const names = (rowData.lovKeys ?? [])
@@ -132,12 +144,23 @@ const DiagnosticTestNormalRangeTable = ({
             fill="var(--primary-gray)"
             onClick={() => onEdit({ ...newDiagnosticTestNormalRange, ...rowData })}
           />
-          <MdDelete
-            size={22}
-            className="icons-style"
-            fill="var(--primary-pink)"
-            onClick={() => onDelete(rowData)}
-          />
+           {rowData?.isActive ? (
+                  <MdDelete
+                    title="Deactivate"
+                    size={24}
+                    fill="var(--primary-pink)"
+                    className="icons-style"
+                    onClick={() => onToggleActive(rowData)}
+                  />
+                ) : (
+                  <FaUndo
+                    title="Activate"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    className="icons-style"
+                    onClick={() => onToggleActive(rowData)}
+                  />
+                )}
         </div>
       )
     }
