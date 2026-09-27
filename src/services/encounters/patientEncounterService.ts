@@ -808,6 +808,16 @@ export const patientEncounterService = createApi({
           ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
+    assignNurse: builder.mutation<void, { encounterId: Id; nurseId: Id }>({
+  query: ({ encounterId, nurseId }) => ({
+    url: `/api/patient/encounter/${encounterId}/assigned-nurse/${nurseId}`,
+    method: 'PUT',
+  }),
+  invalidatesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientEncounter', id: encounterId },
+    'PatientEncounter',
+  ],
+}),
   }),
 
 });
@@ -861,5 +871,6 @@ export const {
   useLazyGetEncounterListQuery,
   useReopenEncounterMutation,
   useGetEncounterAuditQuery,
-  useLazyGetEncounterAuditQuery
+  useLazyGetEncounterAuditQuery,
+  useAssignNurseMutation
 } = patientEncounterService;
