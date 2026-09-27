@@ -307,6 +307,22 @@ submitUccMedicationOrderGroup: builder.mutation<
       ],
     }),
    
+    updateUccMedicationOrderGroup: builder.mutation<
+      modelTypes.PatientUccMedicationOrder[],
+      {
+        orderGroupId: Id;
+        data: modelTypes.PatientUccMedicationOrder;
+      }
+    >({
+      query: ({ orderGroupId, data }) => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}`,
+        method: 'PUT',
+        body: data
+      }),
+
+      invalidatesTags: ['UccMedicationOrder']
+    }),
+
    
 
   }),
@@ -323,7 +339,7 @@ export const {
 
   useSubmitUccMedicationOrderMutation,
   useSubmitUccMedicationOrderGroupMutation,
-
+  useUpdateUccMedicationOrderGroupMutation,
   useAdministerUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,

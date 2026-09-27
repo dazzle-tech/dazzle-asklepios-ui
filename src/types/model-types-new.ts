@@ -4518,6 +4518,7 @@ export interface VitalSigns {
   temperature?: number | null;
   oxygenSaturation?: number | null;
   respiratoryRate?: number | null;
+  fastingBloodGlucose?: string | null;
 
   isTriage?: boolean | null;
   isActive: boolean;
@@ -4526,9 +4527,7 @@ export interface VitalSigns {
 
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
-
 }
-
 export interface BodyMeasurements {
   id?: number;
 

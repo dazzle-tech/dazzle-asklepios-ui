@@ -240,10 +240,10 @@ console.log('unitLov', unitLov);
     };
 
     try {
-      if (editRow?.id) {
+      if (editRow?.orderGroupId) {
         onAdd({
           ...payload,
-          id: editRow.id,
+          orderGroupId: editRow.orderGroupId,
           isEdit: true
         });
       } else {

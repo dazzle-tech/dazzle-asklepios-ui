@@ -317,8 +317,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
 
       dispatch(
         notify({
-          msg:
-            'Medication double checked successfully',
+          msg: 'Medication double checked successfully',
           sev: 'success'
         })
       );
@@ -326,11 +325,14 @@ const UCCMedications = ({ patient, ...props }: Props) => {
       refetchOrdered();
       refetchAdmin();
     } catch (e: any) {
+      const errorMessage =
+        e?.data?.detail === 'same_user_double_check'
+          ? 'Double-check must be performed by another user'
+          : e?.data?.detail || 'Double check failed';
+
       dispatch(
         notify({
-          msg:
-            e?.data?.detail ||
-            'Double check failed',
+          msg: errorMessage,
           sev: 'error'
         })
       );
