@@ -1207,6 +1207,7 @@ export interface DentalAction {
 export interface DiagnosticTestNormalRange {
   id?: number;
   testId: number;
+  isActive?: boolean;
 
   gender?: string;
   ageFrom?: number;
