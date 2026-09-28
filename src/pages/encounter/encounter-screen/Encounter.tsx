@@ -347,6 +347,8 @@ const handleGoBack = () => {
     navigate('/ER-department');
   } else if (currentFromPage === 'Urgent_Care_List') {
     navigate('/urgent-care-department-list');
+  } else if (currentFromPage === 'OpdVisitList') {
+    navigate('/opd-visit-list');
   } else if (currentFromPage === 'PatientsLists') {
     navigate('/patients-list');
   } else {
