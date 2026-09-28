@@ -18,6 +18,11 @@ import type {
 } from './invoicePrintUtils';
 import type { InvoicePrintChargeContext } from './useInvoicePrintLookups';
 import { buildInvoicePrintDataFromIssuedInvoice } from './invoicePrintUtils';
+import {
+  CREDIT_INVOICE_GROUP_ORDER,
+  classifyCreditInvoiceGroup,
+  type CreditInvoiceGroupInput
+} from './creditInvoiceGroups';
 
 export type InsuranceCreditPrintLine = {
   serviceDate: string;
@@ -33,8 +38,18 @@ export type InsuranceCreditPrintLine = {
   vatAmount: number;
   patientAmount: number;
   sponsorAmount: number;
-  /** Checkout Type label used for section grouping (Service / Laboratory / …). */
+  /** Section header: Service, Laboratory, Radiology, and so on. */
   groupTitle: string;
+  /** Same Service Type label shown on the standard invoice. */
+  serviceType?: string | null;
+  chargeLineId?: number | null;
+  patientServiceProductId?: number | null;
+  billingItemType?: string | null;
+  serviceSource?: string | null;
+  diagnosticTestId?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  brandMedicationId?: number | null;
 };
 
 export type InsuranceCreditPrintGroup = {
@@ -71,27 +86,9 @@ export type InsuranceCreditPrintData = {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const GROUP_ORDER = [
-  'Service',
-  'Services',
-  'Laboratory',
-  'Radiology',
-  'Pathology',
-  'Procedure',
-  'Pharmacy Consumable',
-  'Pharmacy Medicine'
-];
-
 type ChargeTypeRef = {
   billingItemType?: string | null;
   source?: string | null;
-};
-
-type GroupHints = {
-  diagnosticTestId?: number | null;
-  serviceId?: number | null;
-  procedureId?: number | null;
-  brandMedicationId?: number | null;
 };
 
 const readBillingItemType = (...values: Array<unknown>) => {
@@ -119,152 +116,6 @@ const readServiceSource = (...values: Array<unknown>) => {
   }
   return null;
 };
-
-/** Map raw Checkout Type / Source to the section header shown on the credit invoice. */
-const titleFromCheckoutType = (raw?: string | null) => {
-  const type = String(raw ?? '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '_');
-  if (!type || type === '-' || type === 'UNDEFINED') return null;
-  if (type === 'LABORATORY' || type.includes('LABORATORY')) return 'Laboratory';
-  if (type === 'RADIOLOGY' || type.includes('RADIOLOGY')) return 'Radiology';
-  if (type === 'PATHOLOGY' || type.includes('PATHOLOGY')) return 'Pathology';
-  if (type === 'PROCEDURE' || type.includes('PROCEDURE')) return 'Procedure';
-  if (
-    type === 'MEDICATION' ||
-    type.includes('MEDICATION') ||
-    type.includes('MEDICINE') ||
-    type.includes('PHARMACY')
-  ) {
-    return 'Pharmacy Medicine';
-  }
-  if (type.includes('DIAGNOSTIC')) return 'Laboratory';
-  if (type === 'SERVICE' || type === 'CONSULTATION' || type.includes('CONSULT')) {
-    return 'Service';
-  }
-  // Already-formatted labels from print utils ("Laboratory", "Service", …)
-  if (type === 'LABORATORY' || raw === 'Laboratory') return 'Laboratory';
-  if (raw === 'Service' || raw === 'Services') return 'Service';
-  return null;
-};
-
-const titleFromCheckoutSource = (raw?: string | null) => {
-  const source = String(raw ?? '').trim().toUpperCase();
-  if (!source || source === 'BILLING_ENGINE') return null;
-  if (source === 'LABORATORY') return 'Laboratory';
-  if (source === 'RADIOLOGY') return 'Radiology';
-  if (source === 'PATHOLOGY') return 'Pathology';
-  if (source === 'PROCEDURE' || source === 'DENTAL_PROCEDURE') return 'Procedure';
-  if (source === 'PRESCRIPTION') return 'Pharmacy Medicine';
-  if (
-    source === 'ENCOUNTER_DEFAULT_SERVICE' ||
-    source === 'CONSULTATION_PORTAL' ||
-    source === 'SERVICE_AND_PRODUCT'
-  ) {
-    return 'Service';
-  }
-  return null;
-};
-
-const titleFromNameOrCode = (name?: string | null, code?: string | null) => {
-  const label = String(name ?? '').toLowerCase();
-  const codeText = String(code ?? '').toUpperCase();
-
-  if (
-    label.includes('radiolog') ||
-    label.includes('radiograph') ||
-    label.includes('x-ray') ||
-    label.includes('xray') ||
-    label.includes('ct scan') ||
-    label.includes('mri') ||
-    codeText.startsWith('585')
-  ) {
-    return 'Radiology';
-  }
-
-  if (
-    label.includes('laboratory') ||
-    label.includes('measurement of') ||
-    label.includes('blood count') ||
-    label.includes('(cbc)') ||
-    label.includes(' cbc') ||
-    label.includes('creatinine') ||
-    label.includes('amino transferase') ||
-    label.includes('alanine') ||
-    label.includes('aspartate') ||
-    label.includes('hemoglobin') ||
-    label.includes('haemoglobin') ||
-    label.includes('patholog') ||
-    codeText.startsWith('730') ||
-    codeText.startsWith('731')
-  ) {
-    return label.includes('patholog') ? 'Pathology' : 'Laboratory';
-  }
-
-  return null;
-};
-
-/**
- * Group titles follow the same Type / Source classification shown in
- * Checkout & settlement (BillingChargesTable Type column).
- */
-const groupTitleFor = (
-  billingItemType?: string | null,
-  serviceSource?: string | null,
-  name?: string | null,
-  serviceType?: string | null,
-  hints?: GroupHints,
-  code?: string | null
-) => {
-  // 1) Exact Checkout Type
-  const fromType =
-    titleFromCheckoutType(billingItemType) || titleFromCheckoutType(serviceType);
-  // Specialty types always win
-  if (
-    fromType &&
-    fromType !== 'Service' &&
-    fromType !== 'Services'
-  ) {
-    return fromType;
-  }
-
-  // 2) Checkout Source (Lab source wins even if Type was Service)
-  const fromSource = titleFromCheckoutSource(serviceSource);
-  if (fromSource && fromSource !== 'Service') {
-    return fromSource;
-  }
-
-  // 3) PSP identity hints
-  if (hints?.diagnosticTestId != null) {
-    return titleFromNameOrCode(name, code) === 'Radiology' ? 'Radiology' : 'Laboratory';
-  }
-  if (hints?.procedureId != null) return 'Procedure';
-  if (hints?.brandMedicationId != null) return 'Pharmacy Medicine';
-
-  // 4) Name / code heuristics (covers SERVICE-typed lab & rad lines)
-  const fromName = titleFromNameOrCode(name, code);
-  if (fromName) return fromName;
-
-  // 5) Generic service
-  if (fromType === 'Service' || fromSource === 'Service' || hints?.serviceId != null) {
-    return 'Service';
-  }
-
-  return 'Service';
-};
-
-/**
- * Public classifier used when building and when rendering the credit invoice.
- */
-export const classifyInsuranceCreditGroupTitle = (
-  billingItemType?: string | null,
-  serviceSource?: string | null,
-  name?: string | null,
-  serviceType?: string | null,
-  hints?: GroupHints,
-  code?: string | null
-) => groupTitleFor(billingItemType, serviceSource, name, serviceType, hints, code);
 
 const buildChargeTypeIndex = (chargeRows?: Array<{
   chargeLineId?: number | null;
@@ -537,10 +388,18 @@ const buildLine = ({
 
 const withGroupTitle = (
   line: InsuranceCreditPrintLine,
-  title: string
+  title: string,
+  context?: CreditInvoiceGroupInput
 ): InsuranceCreditPrintLine => ({
   ...line,
-  groupTitle: title || line.groupTitle || 'Service'
+  groupTitle: title || line.groupTitle || 'Service',
+  serviceType: context?.serviceType ?? line.serviceType ?? null,
+  billingItemType: context?.billingItemType ?? line.billingItemType ?? null,
+  serviceSource: context?.serviceSource ?? line.serviceSource ?? null,
+  diagnosticTestId: context?.diagnosticTestId ?? line.diagnosticTestId ?? null,
+  serviceId: context?.serviceId ?? line.serviceId ?? null,
+  procedureId: context?.procedureId ?? line.procedureId ?? null,
+  brandMedicationId: context?.brandMedicationId ?? line.brandMedicationId ?? null
 });
 
 const sumLines = (lines?: Array<InsuranceCreditPrintLine | null | undefined> | null) =>
@@ -585,11 +444,11 @@ const groupLines = (entries: Array<{ title: string; line: InsuranceCreditPrintLi
 
   return [...grouped.entries()]
     .sort(([left], [right]) => {
-      const leftIndex = GROUP_ORDER.indexOf(left);
-      const rightIndex = GROUP_ORDER.indexOf(right);
+      const leftIndex = CREDIT_INVOICE_GROUP_ORDER.indexOf(left);
+      const rightIndex = CREDIT_INVOICE_GROUP_ORDER.indexOf(right);
       return (
-        (leftIndex === -1 ? GROUP_ORDER.length : leftIndex) -
-        (rightIndex === -1 ? GROUP_ORDER.length : rightIndex)
+        (leftIndex === -1 ? CREDIT_INVOICE_GROUP_ORDER.length : leftIndex) -
+        (rightIndex === -1 ? CREDIT_INVOICE_GROUP_ORDER.length : rightIndex)
       );
     })
     .map(([title, lines]) => ({ title, lines }));
@@ -686,47 +545,50 @@ const creditLinesFromBillingItems = (
       const fallbackPatient =
         patientAmount <= 0 && sponsorAmount <= 0 ? money(item.netAmount) : patientAmount;
 
-      const title = groupTitleFor(
-        readBillingItemType(
+      const classification: CreditInvoiceGroupInput = {
+        billingItemType: readBillingItemType(
           chargeRef?.billingItemType,
           item.billingItemType,
           itemAny.billing_item_type,
           psp?.billingItemType
         ),
-        readServiceSource(
+        serviceSource: readServiceSource(
           chargeRef?.source,
           psp?.serviceSource,
           item.serviceSource,
           itemAny.service_source
         ),
-        description,
-        null,
-        {
-          diagnosticTestId: psp?.diagnosticTestId,
-          serviceId: psp?.serviceId,
-          procedureId: psp?.procedureId,
-          brandMedicationId: psp?.brandMedicationId
-        },
-        code
-      );
+        name: description,
+        code,
+        diagnosticTestId: psp?.diagnosticTestId,
+        serviceId: psp?.serviceId,
+        procedureId: psp?.procedureId,
+        brandMedicationId: psp?.brandMedicationId
+      };
+      const title = classifyCreditInvoiceGroup(classification);
 
       return {
         title,
-        line: withGroupTitle(
-          buildLine({
-            serviceDate: item.chargedAt || psp?.createdDate || fallbackDate,
-            code,
-            description,
-            quantity,
-            unitPrice: money(item.unitPrice) || (quantity > 0 ? gross / quantity : 0),
-            gross,
-            discount,
-            vatAmount,
-            patientAmount: fallbackPatient,
-            sponsorAmount
-          }),
-          title
-        )
+        line: {
+          ...withGroupTitle(
+            buildLine({
+              serviceDate: item.chargedAt || psp?.createdDate || fallbackDate,
+              code,
+              description,
+              quantity,
+              unitPrice: money(item.unitPrice) || (quantity > 0 ? gross / quantity : 0),
+              gross,
+              discount,
+              vatAmount,
+              patientAmount: fallbackPatient,
+              sponsorAmount
+            }),
+            title,
+            classification
+          ),
+          chargeLineId: item.chargeLineId ?? null,
+          patientServiceProductId: item.patientServiceProductId ?? null
+        }
       };
     });
 };
@@ -805,22 +667,26 @@ const creditLinesFromPrintItems = (
       code: item.serviceCode || billingItem?.priceListItemCode || billingItem?.itemCode
     });
 
-    const title = groupTitleFor(
-      readBillingItemType(
+    const classification: CreditInvoiceGroupInput = {
+      billingItemType: readBillingItemType(
         chargeRef?.billingItemType,
         billingItem?.billingItemType,
         item.serviceType
       ),
-      readServiceSource(chargeRef?.source, billingItem?.serviceSource),
-      item.serviceName,
-      item.serviceType,
-      undefined,
-      item.serviceCode || billingItem?.priceListItemCode || billingItem?.itemCode
-    );
+      serviceSource: readServiceSource(chargeRef?.source, billingItem?.serviceSource),
+      serviceType: item.serviceType,
+      name: item.serviceName,
+      code: item.serviceCode || billingItem?.priceListItemCode || billingItem?.itemCode
+    };
+    const title = classifyCreditInvoiceGroup(classification);
 
     return {
       title,
-      line: withGroupTitle(creditLineFromPrintItem(item, billingItem, serviceDate), title)
+      line: withGroupTitle(
+        creditLineFromPrintItem(item, billingItem, serviceDate),
+        title,
+        classification
+      )
     };
   });
 };
@@ -913,31 +779,29 @@ const creditLinesFromInvoiceItems = (
       line.vatPercent = Number(taxRate);
     }
 
-    const title = groupTitleFor(
-      readBillingItemType(
+    const classification: CreditInvoiceGroupInput = {
+      billingItemType: readBillingItemType(
         chargeRef?.billingItemType,
         billingItem?.billingItemType,
         psp?.billingItemType
       ),
-      readServiceSource(
+      serviceSource: readServiceSource(
         chargeRef?.source,
         psp?.serviceSource,
         billingItem?.serviceSource
       ),
-      description,
-      null,
-      {
-        diagnosticTestId: psp?.diagnosticTestId,
-        serviceId: psp?.serviceId,
-        procedureId: psp?.procedureId,
-        brandMedicationId: psp?.brandMedicationId
-      },
-      code
-    );
+      name: description,
+      code,
+      diagnosticTestId: psp?.diagnosticTestId,
+      serviceId: psp?.serviceId,
+      procedureId: psp?.procedureId,
+      brandMedicationId: psp?.brandMedicationId
+    };
+    const title = classifyCreditInvoiceGroup(classification);
 
     return {
       title,
-      line: withGroupTitle(line, title)
+      line: withGroupTitle(line, title, classification)
     };
   });
 };
@@ -968,14 +832,13 @@ const creditLinesFromChargeRows = (
       const patientAmount = money(row.patientAmount);
       const sponsorAmount = money(row.insuranceAmount);
 
-      const title = groupTitleFor(
-        row.billingItemType,
-        row.source,
-        description,
-        null,
-        null,
-        row.itemCode
-      );
+      const classification: CreditInvoiceGroupInput = {
+        billingItemType: row.billingItemType,
+        serviceSource: row.source,
+        name: description,
+        code: row.itemCode
+      };
+      const title = classifyCreditInvoiceGroup(classification);
 
       return {
         title,
@@ -992,10 +855,53 @@ const creditLinesFromChargeRows = (
             patientAmount,
             sponsorAmount
           }),
-          title
+          title,
+          classification
         )
       };
     });
+
+const matchCode = (value?: string | null) =>
+  String(value ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+
+const matchName = (value?: string | null) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+/** Service Type labels from the standard invoice, keyed the same way the credit lines are shown. */
+const indexInvoiceServiceTypes = (items?: InvoicePrintLineItem[] | null) => {
+  const byCode = new Map<string, string>();
+  const byName = new Map<string, string>();
+
+  (items ?? []).forEach(item => {
+    const type = String(item?.serviceType ?? '').trim();
+    if (!type || type === '-') {
+      return;
+    }
+
+    const code = matchCode(item.serviceCode);
+    const name = matchName(item.serviceName);
+    if (code) {
+      byCode.set(code, type);
+    }
+    if (name) {
+      byName.set(name, type);
+    }
+  });
+
+  return { byCode, byName };
+};
+
+const lookupInvoiceServiceType = (
+  index: ReturnType<typeof indexInvoiceServiceTypes>,
+  code?: string | null,
+  name?: string | null
+) => index.byCode.get(matchCode(code)) || index.byName.get(matchName(name)) || null;
 
 export const buildInsuranceCreditPrintData = ({
   invoice,
@@ -1085,55 +991,47 @@ export const buildInsuranceCreditPrintData = ({
     entries = creditLinesFromChargeRows(safeChargeRows, fallbackDate);
   }
 
-  const specialty = new Set([
-    'Laboratory',
-    'Radiology',
-    'Pathology',
-    'Procedure',
-    'Pharmacy Consumable',
-    'Pharmacy Medicine'
-  ]);
-
   const chargeIndex = buildChargeTypeIndex(safeChargeRows);
+  const invoiceServiceTypes = indexInvoiceServiceTypes(resolvedPrintData?.items);
 
   const mergedEntries = entries
     .filter(entry => entry?.line != null)
     .map(entry => {
       const chargeRef = resolveChargeTypeRef(chargeIndex, {
+        chargeLineId: entry.line.chargeLineId,
+        patientServiceProductId: entry.line.patientServiceProductId,
         code: entry.line.code
       });
-      const fromCharge = groupTitleFor(
+      const billingItemType = readBillingItemType(
         chargeRef?.billingItemType,
-        chargeRef?.source,
-        entry.line.description,
-        null,
-        null,
-        entry.line.code
+        entry.line.billingItemType
       );
-      const firstTitle = entry.title || entry.line.groupTitle || 'Service';
-      const descTitle =
-        groupTitleFor(
-          null,
-          null,
-          entry.line.description,
-          null,
-          null,
-          entry.line.code
-        ) || 'Service';
-
-      const title = specialty.has(fromCharge)
-        ? fromCharge
-        : specialty.has(firstTitle)
-          ? firstTitle
-          : specialty.has(descTitle)
-            ? descTitle
-            : firstTitle === 'Services'
-              ? 'Service'
-              : firstTitle;
+      const serviceSource = readServiceSource(chargeRef?.source, entry.line.serviceSource);
+      const serviceType =
+        lookupInvoiceServiceType(
+          invoiceServiceTypes,
+          entry.line.code,
+          entry.line.description
+        ) || entry.line.serviceType;
+      const title = classifyCreditInvoiceGroup({
+        serviceType,
+        billingItemType,
+        serviceSource,
+        name: entry.line.description,
+        code: entry.line.code,
+        diagnosticTestId: entry.line.diagnosticTestId,
+        serviceId: entry.line.serviceId,
+        procedureId: entry.line.procedureId,
+        brandMedicationId: entry.line.brandMedicationId
+      });
 
       return {
         title,
-        line: withGroupTitle(entry.line, title)
+        line: withGroupTitle(entry.line, title, {
+          serviceType: serviceType || title,
+          billingItemType,
+          serviceSource
+        })
       };
     });
 

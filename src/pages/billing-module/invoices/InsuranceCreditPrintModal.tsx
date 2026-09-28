@@ -6,8 +6,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppSelector } from '@/hooks';
 
+import { classifyCreditInvoiceGroup } from './creditInvoiceGroups';
 import {
-  classifyInsuranceCreditGroupTitle,
   sumInsuranceCreditLines,
   type InsuranceCreditPrintData,
   type InsuranceCreditPrintLine
@@ -50,6 +50,7 @@ const ARABIC_LABELS: Record<string, string> = {
   DATE: 'تاريخ',
   CODE: 'الشفرة',
   SERVICE_DESCRIPTION: 'وصف الخدمة',
+  TYPE: 'النوع',
   QTY: 'كمية',
   UNIT_PRICE: 'سعر الوحدة',
   GROSS: 'اجمالي المبلغ',
@@ -158,7 +159,9 @@ const amountCells = (
   </>
 );
 
-const TEXT_HEADERS = new Set(['Date', 'Code', 'Service Description']);
+const COLUMN_COUNT = 14;
+
+const TEXT_HEADERS = new Set(['Date', 'Code', 'Service Description', 'Type']);
 
 const HeaderCell = ({ label, secondary }: { label: string; secondary: string }) => (
   <th className={TEXT_HEADERS.has(label) ? 'col-text' : 'num'}>
@@ -167,126 +170,37 @@ const HeaderCell = ({ label, secondary }: { label: string; secondary: string }) 
   </th>
 );
 
-const GROUP_ORDER = [
-  'Service',
-  'Laboratory',
-  'Radiology',
-  'Pathology',
-  'Procedure',
-  'Pharmacy Consumable',
-  'Pharmacy Medicine'
-];
-
-/**
- * Local, dependency-free classifier so Lab/Rad never collapse into Service
- * even if the utils import is stale during HMR.
- */
-const classifyLineGroupTitle = (line: InsuranceCreditPrintLine) => {
-  const stored = String(line?.groupTitle ?? '').trim();
-  const label = String(line?.description ?? '').toLowerCase();
-  const code = String(line?.code ?? '')
-    .trim()
-    .toUpperCase();
-
-  if (
-    label.includes('radiolog') ||
-    label.includes('radiograph') ||
-    label.includes('x-ray') ||
-    label.includes('xray') ||
-    label.includes('ct scan') ||
-    label.includes('mri') ||
-    code.startsWith('585')
-  ) {
-    return 'Radiology';
-  }
-
-  if (
-    label.includes('laboratory') ||
-    label.includes('measurement of') ||
-    label.includes('blood count') ||
-    label.includes('(cbc)') ||
-    label.includes(' cbc') ||
-    label.includes('creatinine') ||
-    label.includes('amino transferase') ||
-    label.includes('alanine') ||
-    label.includes('aspartate') ||
-    label.includes('hemoglobin') ||
-    label.includes('haemoglobin') ||
-    label.includes('patholog') ||
-    code.startsWith('730') ||
-    code.startsWith('731') ||
-    code.startsWith('732')
-  ) {
-    return label.includes('patholog') ? 'Pathology' : 'Laboratory';
-  }
-
-  if (
-    stored === 'Laboratory' ||
-    stored === 'Radiology' ||
-    stored === 'Pathology' ||
-    stored === 'Procedure' ||
-    stored === 'Pharmacy Medicine' ||
-    stored === 'Pharmacy Consumable'
-  ) {
-    return stored;
-  }
-
-  try {
-    const fromUtils = classifyInsuranceCreditGroupTitle(
-      null,
-      null,
-      line?.description,
-      null,
-      undefined,
-      line?.code
-    );
-    if (fromUtils && fromUtils !== 'Service' && fromUtils !== 'Services') {
-      return fromUtils;
-    }
-  } catch {
-    /* local rules above already applied */
-  }
-
-  if (stored === 'Services') return 'Service';
-  return stored || 'Service';
-};
-
-const regroupCreditLines = (lines: InsuranceCreditPrintLine[]) => {
-  const grouped = new Map<string, InsuranceCreditPrintLine[]>();
-  const safeLines = (lines ?? []).filter(Boolean);
-
-  safeLines.forEach(line => {
-    const title = classifyLineGroupTitle(line);
-    const current = grouped.get(title) ?? [];
-    current.push(line);
-    grouped.set(title, current);
+const classifyLineGroupTitle = (line: InsuranceCreditPrintLine) =>
+  classifyCreditInvoiceGroup({
+    serviceType: line?.serviceType,
+    billingItemType: line?.billingItemType,
+    serviceSource: line?.serviceSource,
+    name: line?.description,
+    code: line?.code,
+    diagnosticTestId: line?.diagnosticTestId,
+    serviceId: line?.serviceId,
+    procedureId: line?.procedureId,
+    brandMedicationId: line?.brandMedicationId
   });
 
-  const regrouped = [...grouped.entries()]
-    .sort(([left], [right]) => {
-      const leftIndex = GROUP_ORDER.indexOf(left);
-      const rightIndex = GROUP_ORDER.indexOf(right);
-      return (
-        (leftIndex === -1 ? GROUP_ORDER.length : leftIndex) -
-        (rightIndex === -1 ? GROUP_ORDER.length : rightIndex)
-      );
-    })
-    .map(([title, groupLines]) => ({ title, lines: groupLines ?? [] }))
-    .filter(group => group.lines.length > 0);
-
-  if (regrouped.length === 0 && safeLines.length > 0) {
-    return [{ title: 'Service', lines: safeLines }];
+const sectionTitleForLine = (line: InsuranceCreditPrintLine) => {
+  const invoiceType = String(line?.serviceType ?? '').trim();
+  if (invoiceType && invoiceType !== '-' && invoiceType !== 'Service' && invoiceType !== 'Services') {
+    return invoiceType;
   }
 
-  return regrouped;
+  const classified = classifyLineGroupTitle(line);
+  if (classified && classified !== 'Service' && classified !== 'Services') {
+    return classified;
+  }
+
+  return invoiceType || classified || 'Service';
 };
 
 const CreditDocument: React.FC<{
   data: InsuranceCreditPrintData;
   secondary: (label: string) => string;
 }> = ({ data, secondary }) => {
-  // Recompute every render (no useMemo) so grouping cannot stick to a stale
-  // "Service-only" result after HMR / cached data.
   const fromGroups = Array.isArray(data?.groups) ? data.groups.filter(Boolean) : [];
   const fromGroupLines = fromGroups.flatMap(group =>
     Array.isArray(group?.lines) ? group.lines.filter(Boolean) : []
@@ -297,14 +211,13 @@ const CreditDocument: React.FC<{
       : Array.isArray(data?.lines)
         ? data.lines.filter(Boolean)
         : [];
-  const groups = regroupCreditLines(flatLines);
-  const allLines = groups.flatMap(group => group.lines ?? []);
-  const grand = sumInsuranceCreditLines(allLines);
+  const grand = sumInsuranceCreditLines(flatLines);
 
   const columns = [
     'Date',
     'Code',
     'Service Description',
+    'Type',
     'Qty',
     'Unit Price',
     'Gross',
@@ -318,7 +231,7 @@ const CreditDocument: React.FC<{
   ].map(label => ({ label, secondary: secondary(label) }));
 
   return (
-    <div className="credit-invoice" data-credit-group-count={groups.length}>
+    <div className="credit-invoice">
       <div className="credit-invoice__sheet">
         {data.facilityName ? (
           <div className="credit-invoice__facility">{data.facilityName}</div>
@@ -402,6 +315,7 @@ const CreditDocument: React.FC<{
             <col className="col-date" />
             <col className="col-code" />
             <col className="col-desc" />
+            <col className="col-type" />
             <col className="col-qty" />
             <col className="col-money" />
             <col className="col-money" />
@@ -421,57 +335,48 @@ const CreditDocument: React.FC<{
             </tr>
           </thead>
           <tbody>
-            {groups.length === 0 ? (
+            {flatLines.length === 0 ? (
               <tr>
-                <td className="credit-invoice__empty" colSpan={13}>
+                <td className="credit-invoice__empty" colSpan={COLUMN_COUNT}>
                   No service lines available.
                 </td>
               </tr>
             ) : (
-              groups.map(group => {
-                const groupLines = Array.isArray(group.lines) ? group.lines : [];
-                const subtotal = sumInsuranceCreditLines(groupLines);
-                return (
-                  <React.Fragment key={`grp-${group.title}-${groupLines.length}`}>
-                    <tr className="credit-invoice__group">
-                      <td colSpan={13}>{group.title}</td>
-                    </tr>
-                    {groupLines.map((line, index) => (
-                      <tr
-                        key={`${group.title}-${line.code}-${line.description}-${index}`}
-                        data-group-title={classifyLineGroupTitle(line)}
-                      >
-                        <td className="col-text">{line.serviceDate}</td>
-                        <td className="col-text">{line.code}</td>
-                        <td className="col-text">{line.description}</td>
-                        <td className="num">{line.quantityLabel}</td>
-                        <td className="num">{formatAmount(line.unitPrice)}</td>
-                        {amountCells(line)}
-                      </tr>
-                    ))}
-                    <tr className="credit-invoice__subtotal">
-                      <td colSpan={5} className="label">
-                        {secondary('Sub Total') !== 'Sub Total'
-                          ? `Sub Total ${secondary('Sub Total')} (SAR)`
-                          : 'Sub Total (SAR)'}
-                      </td>
-                      {amountCells({ ...subtotal, vatPercent: null })}
-                    </tr>
-                  </React.Fragment>
-                );
-              })
+              flatLines.map((line, index) => (
+                <tr key={`${line.code}-${line.description}-${index}`}>
+                  <td className="col-text">{line.serviceDate}</td>
+                  <td className="col-text">{line.code}</td>
+                  <td className="col-text">{line.description}</td>
+                  <td className="col-text">{sectionTitleForLine(line)}</td>
+                  <td className="num">{line.quantityLabel}</td>
+                  <td className="num">{formatAmount(line.unitPrice)}</td>
+                  {amountCells(line)}
+                </tr>
+              ))
             )}
-            {allLines.length > 0 ? (
+            {flatLines.length > 0 ? (
+              <tr className="credit-invoice__subtotal">
+                <td colSpan={6} className="label">
+                  {secondary('Sub Total') !== 'Sub Total'
+                    ? `Sub Total ${secondary('Sub Total')} (SAR)`
+                    : 'Sub Total (SAR)'}
+                </td>
+                {amountCells({ ...grand, vatPercent: null })}
+              </tr>
+            ) : null}
+          </tbody>
+          {flatLines.length > 0 ? (
+            <tfoot>
               <tr className="credit-invoice__grand">
-                <td colSpan={5} className="label">
+                <td colSpan={6} className="label">
                   {secondary('Total') !== 'Total'
                     ? `Total ${secondary('Total')} (SAR)`
                     : 'Total (SAR)'}
                 </td>
                 {amountCells({ ...grand, vatPercent: null })}
               </tr>
-            ) : null}
-          </tbody>
+            </tfoot>
+          ) : null}
         </table>
 
         <div className="credit-invoice__page">Page 1 of 1</div>
@@ -488,7 +393,7 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
   const secondary = useSecondaryLabel();
 
-  const handlePrint = useCallback(async () => {
+  const handlePrint = useCallback(() => {
     if (!printRef.current || !data) {
       return;
     }
@@ -500,46 +405,39 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
     const printTitle = fileNo
       ? `Out-Patient Invoice Credit - Detailed - ${fileNo}`
       : 'Out-Patient Invoice Credit - Detailed';
+    const escapedTitle = printTitle
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
 
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.opacity = '0';
-    iframe.style.pointerEvents = 'none';
-    document.body.appendChild(iframe);
-
-    const printDocument = iframe.contentDocument ?? iframe.contentWindow?.document;
-    if (!printDocument || !iframe.contentWindow) {
-      document.body.removeChild(iframe);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
       return;
     }
 
-    printDocument.open();
-    printDocument.write(`
+    printWindow.document.open();
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${printTitle}</title>
+          <meta charset="utf-8" />
+          <title>${escapedTitle}</title>
           <style>${INSURANCE_CREDIT_PRINT_PAGE_CSS}</style>
         </head>
         <body>${printRef.current.innerHTML}</body>
       </html>
     `);
-    printDocument.close();
+    printWindow.document.close();
+    printWindow.document.title = printTitle;
 
-    const cleanup = () => {
-      if (iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
+    const closeWindow = () => {
+      printWindow.close();
     };
-
-    iframe.contentWindow.onafterprint = cleanup;
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-    window.setTimeout(cleanup, 2000);
+    printWindow.onafterprint = closeWindow;
+    window.setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 50);
   }, [data]);
 
   const setOpen = useCallback(

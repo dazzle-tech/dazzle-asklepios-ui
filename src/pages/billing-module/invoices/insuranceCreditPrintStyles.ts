@@ -91,7 +91,8 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
 
   .credit-invoice__table col.col-date { width: 5.5%; }
   .credit-invoice__table col.col-code { width: 7%; }
-  .credit-invoice__table col.col-desc { width: 15%; }
+  .credit-invoice__table col.col-desc { width: 13%; }
+  .credit-invoice__table col.col-type { width: 7%; }
   .credit-invoice__table col.col-qty { width: 3.5%; }
   .credit-invoice__table col.col-money { width: 6.5%; }
   .credit-invoice__table col.col-money-wide { width: 8.5%; }
@@ -145,12 +146,13 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
   }
 
   .credit-invoice__group td {
-    padding-top: 10px;
-    padding-bottom: 3px;
+    padding-top: 8px;
+    padding-bottom: 4px;
     font-weight: 700;
     text-align: left;
     border-top: 1px solid #111;
-    font-size: 10px;
+    background: #f2f2f2;
+    font-size: 11px;
   }
 
   .credit-invoice__group:first-child td {
@@ -202,12 +204,19 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
 export const INSURANCE_CREDIT_PRINT_PAGE_CSS = `
   @page {
     size: A4 landscape;
-    margin: 8mm;
+    margin: 0mm;
+  }
+
+  @media print {
+    @page {
+      size: A4 landscape;
+      margin: 0mm;
+    }
   }
 
   html, body {
     margin: 0;
-    padding: 0;
+    padding: 8mm;
     background: #fff;
   }
 
