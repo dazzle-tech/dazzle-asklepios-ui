@@ -307,6 +307,90 @@ export const patientEncounterService = createApi({
           : ['PatientEncounter'],
     }),
 
+
+    filterOpdEncounters: builder.query<
+      PagedResult<PatientEncounter>,
+      {
+        facilityId: Id;
+        fromDate?: string;
+        toDate?: string;
+        statuses?: string | string[];
+        statusIn?: string[];
+        patientName?: string;
+        mrn?: string;
+        encounterNumber?: string;
+        encounterReasons?: string[];
+        chiefComplaint?: string;
+        priorities?: string[];
+        practitionerId?: Id;
+      } & PagedParams
+    >({
+      query: ({
+        facilityId,
+        fromDate,
+        toDate,
+        statuses,
+        statusIn,
+        patientName,
+        mrn,
+        encounterNumber,
+        encounterReasons,
+        chiefComplaint,
+        priorities,
+        practitionerId,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => {
+        const src = statuses ?? statusIn;
+
+        const statusesCsv = Array.isArray(src)
+          ? src.join(',')
+          : src;
+
+        return {
+          url: `/api/patient/encounter/opd`,
+          method: 'GET',
+          params: {
+            facilityId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterNumber,
+            encounterReasons,
+            chiefComplaint,
+            priorities,
+            practitionerId,
+            page,
+            size,
+            sort
+          }
+        };
+      },
+
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : response?.content ?? [];
+
+        return mapPaged(rows, meta);
+      },
+
+      providesTags: res =>
+        res
+          ? [
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id
+            })),
+            'PatientEncounter'
+          ]
+          : ['PatientEncounter']
+    }),
+
+
     getEncounterList: builder.query<
       PagedResult<EncounterListVM>,
       {
@@ -421,12 +505,12 @@ export const patientEncounterService = createApi({
       providesTags: res =>
         res
           ? [
-              ...res.data.map(e => ({
-                type: 'PatientEncounter' as const,
-                id: e.id,
-              })),
-              'PatientEncounter',
-            ]
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id,
+            })),
+            'PatientEncounter',
+          ]
           : ['PatientEncounter'],
     }),
 
@@ -507,12 +591,12 @@ export const patientEncounterService = createApi({
       providesTags: res =>
         res
           ? [
-              ...res.data.map(e => ({
-                type: 'PatientEncounter' as const,
-                id: e.id,
-              })),
-              'PatientEncounter',
-            ]
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id,
+            })),
+            'PatientEncounter',
+          ]
           : ['PatientEncounter'],
     }),
 
@@ -690,7 +774,7 @@ export const patientEncounterService = createApi({
       ],
     }),
 
-    
+
     getEncounterAudit: builder.query<PatientEncounterFieldAudit[], { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/audit`,
@@ -829,6 +913,9 @@ export const {
 
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
+
+  useFilterOpdEncountersQuery,
+  useLazyFilterOpdEncountersQuery,
 
   useSearchEncountersQuery,
   useLazySearchEncountersQuery,
