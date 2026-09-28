@@ -87,7 +87,6 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
       if (profile.id != null) {
         const { isActive, isDefault, ...body } = profile;
         await updateProfile({ id: profile.id, body: { ...body, testId: diagnosticsTest.id } }).unwrap();
-        setNormalRangeTableRefreshKey(previous => previous + 1);
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       } else {
         const { id, isActive, isDefault, ...body } = profile;
@@ -97,6 +96,9 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
         dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
       }
       await refetchProfiles();
+      if (profile.id != null) {
+        setNormalRangeTableRefreshKey(previous => previous + 1);
+      }
     } catch (error: any) {
       const message =
         error?.data?.properties?.message || error?.data?.message || error?.data?.detail || 'Unexpected error';

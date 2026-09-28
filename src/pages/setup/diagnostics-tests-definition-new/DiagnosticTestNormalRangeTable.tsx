@@ -43,6 +43,7 @@ const DiagnosticTestNormalRangeTable = ({
 
   useEffect(() => {
     if (previousRefreshKey.current !== refreshKey && profileId) {
+      setSelectedRow(undefined);
       refetch();
     }
     previousRefreshKey.current = refreshKey;
