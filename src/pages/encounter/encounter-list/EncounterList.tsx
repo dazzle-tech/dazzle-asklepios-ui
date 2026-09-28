@@ -1534,6 +1534,7 @@ const EncounterList = () => {
           facilityId={selectedDepartment?.facilityId}
           departmentId={departmentId}
         />
+        
 
         <CollectSambleModal
           open={openCollectSampleModal}
