@@ -113,22 +113,23 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     setMeanArterialPressureValue(null);
   }, [vitalSigns?.bloodPressureSystolic, vitalSigns?.bloodPressureDiastolic]);
 
-  const vitalSignsCreatePayload = useMemo(() => {
-    return {
-      patientId,
-      encounterId,
-      bloodPressureSystolic: vitalSigns.bloodPressureSystolic ?? null,
-      bloodPressureDiastolic: vitalSigns.bloodPressureDiastolic ?? null,
-      measurementSite: vitalSigns.measurementSite ?? null,
-      heartRate: vitalSigns.heartRate ?? null,
-      temperature: vitalSigns.temperature ?? null,
-      oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
-      respiratoryRate: vitalSigns.respiratoryRate ?? null,
-      isTriage,
-      isActive: typeof vitalSigns.isActive === 'boolean' ? vitalSigns.isActive : true,
-      notes: vitalSigns.notes ?? null
-    };
-  }, [vitalSigns, patientId, encounterId, isTriage]);
+const vitalSignsCreatePayload = useMemo(() => {
+  return {
+    patientId,
+    encounterId,
+    bloodPressureSystolic: vitalSigns.bloodPressureSystolic ?? null,
+    bloodPressureDiastolic: vitalSigns.bloodPressureDiastolic ?? null,
+    measurementSite: vitalSigns.measurementSite ?? null,
+    heartRate: vitalSigns.heartRate ?? null,
+    temperature: vitalSigns.temperature ?? null,
+    oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
+    respiratoryRate: vitalSigns.respiratoryRate ?? null,
+    fastingBloodGlucose: vitalSigns.fastingBloodGlucose ?? null,
+    isTriage,
+    isActive: typeof vitalSigns.isActive === 'boolean' ? vitalSigns.isActive : true,
+    notes: vitalSigns.notes ?? null
+  };
+}, [vitalSigns, patientId, encounterId, isTriage]);
 
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
@@ -161,6 +162,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
         temperature: 'Temperature',
         oxygenSaturation: 'Oxygen Saturation',
         respiratoryRate: 'Respiratory Rate',
+        fastingBloodGlucose: 'Fasting Blood Glucose',
         isTriage: 'Triage',
         isActive: 'Active',
         notes: 'Notes',
@@ -416,6 +418,18 @@ const [openGraphsModal, setOpenGraphsModal] = useState(false);
               rightAddonwidth={45}
               fieldName="respiratoryRate"
               fieldLabel="R.R"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+            />
+          </div>
+
+          <div className="margin-bot-10">
+            <MyInput
+              width="100%"
+              fieldType="text"
+              fieldLabel="Fasting Blood Glucose"
+              fieldName="fastingBloodGlucose"
               record={vitalSigns}
               setRecord={setVitalSigns}
               disabled={disabled}
