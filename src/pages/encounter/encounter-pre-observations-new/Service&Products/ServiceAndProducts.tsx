@@ -14,7 +14,7 @@ import {
 } from '@/services/encounters/patientServicesAndProductsService';
 import { useGetEncounterBillingSummaryQuery } from '@/services/billing/billingTransactionService';
 import { isBillingChargeFinalized } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
-import { formatEnumString } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newPatientServiceAndProduct } from '@/types/model-types-constructor-new';
 
 import { useLazyGetServicesBulkByIdsQuery } from '@/services/setup/serviceService';
@@ -394,6 +394,24 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         </div>
       ),
     },
+     {
+            key: 'createdBy',
+            title: 'Created By\\At',
+            dataKey: 'createdBy',
+            width: 160,
+            render: row => (
+              <>
+                {row.createdBy}
+                <br />
+                <span className="date-table-style">
+                            {row?.createdDate
+                              ? formatDateWithoutSeconds(row.createdDate)
+                              : '-'}
+                          </span>
+              </>
+            ),
+            expandable: true
+          },
   ];
 
   useEffect(() => {

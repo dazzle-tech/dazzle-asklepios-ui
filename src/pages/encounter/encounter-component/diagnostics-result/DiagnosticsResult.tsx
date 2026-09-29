@@ -18,25 +18,19 @@ const tabData = [
   {
     title: 'Results',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
-        <Result patient={patient} />
-      </div>
+      <Result patient={patient} />
     )
   },
   {
     title: 'Reports',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
         <Reports patient={patient} />
-      </div>
     )
   },
   {
     title: 'Laboratory Result Comparison',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
         <LaboratoryResultComparison patient={patient} />
-      </div>
     )
   }
 ];

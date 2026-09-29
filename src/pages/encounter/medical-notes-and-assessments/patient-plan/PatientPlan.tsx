@@ -194,10 +194,10 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       title={title}
       action={
         <>
-        <MyButton onClick={() => openAuditHistory('treatmentPlan')} disabled={disabled || isFetchingLatest || isSaving}>
+        <MyButton onClick={() => openAuditHistory('treatmentPlan')} disabled={isFetchingLatest || isSaving}>
           Plan History
            </MyButton>
-           <MyButton onClick={() => openAuditHistory('goals')} disabled={disabled || isFetchingLatest || isSaving}>
+           <MyButton onClick={() => openAuditHistory('goals')} disabled={isFetchingLatest || isSaving}>
           Goal History
            </MyButton>
         <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>

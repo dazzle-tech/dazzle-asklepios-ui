@@ -785,21 +785,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  React.useEffect(() => {
-    const patientWithUrl = localPatient as any;
+  useEffect(() => {
+  const patientWithUrl = localPatient as any;
 
-    if (patientWithUrl?.profilePictureUrl) {
-      setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      return;
-    }
-
-    if (profilePictureTicket && profilePictureTicket.url && !isError) {
-      setPatientImageUrl(profilePictureTicket.url);
-      return;
-    }
-
+  if (!localPatient?.id) {
     setPatientImageUrl('');
-  }, [localPatient, profilePictureTicket, isError]);
+    return;
+  }
+
+  if (patientWithUrl?.profilePictureUrl) {
+    setPatientImageUrl(patientWithUrl.profilePictureUrl);
+    return;
+  }
+
+  if (profilePictureTicket?.url && !isError) {
+    setPatientImageUrl(profilePictureTicket.url);
+    return;
+  }
+
+  setPatientImageUrl('');
+}, [localPatient, profilePictureTicket, isError]);
 
   useEffect(() => {
     if (

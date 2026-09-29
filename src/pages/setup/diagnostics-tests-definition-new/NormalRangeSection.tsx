@@ -1,5 +1,5 @@
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Divider, Input } from 'rsuite';
 import { MdEdit } from 'react-icons/md';
 
@@ -20,8 +20,9 @@ interface NormalRangeSectionProps {
   normalRange: DiagnosticTestNormalRange;
   setNormalRange: React.Dispatch<React.SetStateAction<DiagnosticTestNormalRange>>;
   formKey: number;
+  refreshKey: number;
   onSave: () => void;
-  onDelete: () => void;
+  onToggleActive: () => void;
   deleteModalOpen: boolean;
   setDeleteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -32,13 +33,15 @@ const NormalRangeSection = ({
   normalRange,
   setNormalRange,
   formKey,
+  refreshKey,
   onSave,
-  onDelete,
+  onToggleActive,
   deleteModalOpen,
   setDeleteModalOpen
 }: NormalRangeSectionProps) => {
   const [lovCode, setLovCode] = useState('');
   const [editorKey, setEditorKey] = useState(0);
+  const previousLovId = useRef(profile.listOfValueId);
   const gender = useEnumOptions('Gender');
   const condition = useEnumOptions('Condition');
   const ageUnit = useEnumOptions('AgeUnit');
@@ -55,6 +58,21 @@ const NormalRangeSection = ({
     );
     setLovCode(selectedLov?.lovCode ?? '');
   }, [lovListResponse, profile.listOfValueId]);
+
+  useEffect(() => {
+    if (
+      resultType === 'LOV' &&
+      previousLovId.current !== undefined &&
+      previousLovId.current !== profile.listOfValueId
+    ) {
+      setNormalRange(previous => ({
+        ...previous,
+        lovKeys: []
+      }));
+    }
+
+    previousLovId.current = profile.listOfValueId;
+  }, [profile.listOfValueId, resultType, setNormalRange]);
 
   useEffect(() => {
     if (Array.isArray(normalRange.lovKeys) || normalRange.lovKeys == null) return;
@@ -112,9 +130,10 @@ const NormalRangeSection = ({
         profileId={profile.id}
         testId={testId}
         resultType={profile.resultType}
+        refreshKey={refreshKey}
         onAdd={startNewRange}
         onEdit={selectRange}
-        onDelete={range => {
+        onToggleActive={range => {
           selectRange(range);
           setDeleteModalOpen(true);
         }}
@@ -205,7 +224,13 @@ const NormalRangeSection = ({
           Save
         </MyButton>
       </div>
-      <DeletionConfirmationModal open={deleteModalOpen} setOpen={setDeleteModalOpen} itemToDelete="Normal Range" actionButtonFunction={onDelete} actionType="Delete" />
+      <DeletionConfirmationModal
+        open={deleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        itemToDelete="Normal Range"
+        actionButtonFunction={onToggleActive}
+        actionType={normalRange.isActive === false ? 'reactivate' : 'deactivate'}
+      />
     </section>
   );
 };

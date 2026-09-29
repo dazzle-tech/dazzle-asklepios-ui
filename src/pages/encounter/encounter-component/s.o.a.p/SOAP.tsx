@@ -311,8 +311,8 @@ const saveChanges = async () => {
       title: 'Visit Details',
       content: (
         <div
-          className={clsx('column-container', { 'disabled-panel': edit })}
-          style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          // className={clsx('column-container', { 'disabled-panel': edit })}
+          // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >    
               <div className="top-section">
             <div style={{ marginBottom: '16px' }}>
@@ -328,11 +328,12 @@ const saveChanges = async () => {
                       fieldName="caseSummary"
                       record={caseSummary}
                       setRecord={setCaseSummary}
+                      disabled={edit}
                     />
                   </Form>
                 }
                 action={
-                  <MyButton size="small" onClick={handleCaseSummary} loading={isAutoPopulating}>
+                  <MyButton size="small" onClick={handleCaseSummary} loading={isAutoPopulating} disabled={edit}>
                     Auto Populate
                   </MyButton>
                 }
@@ -356,6 +357,7 @@ const saveChanges = async () => {
                               saveChanges(true);
                             }
                           }}
+                          disabled={edit}
                         />
 
                         {/* <MyInput
@@ -381,7 +383,7 @@ const saveChanges = async () => {
                       >
                          History
                       </MyButton>
-                      <MyButton size="small" onClick={() => saveChanges(false)}>
+                      <MyButton size="small" onClick={() => saveChanges(false)} disabled={edit}>
                         Save
                       </MyButton>
                       </>
@@ -414,6 +416,7 @@ const saveChanges = async () => {
                           setRecord={setLocalEncounter}
                          
                           onBlur={() => savePhysicalExamination()}
+                          disabled={edit}
                         />
                       </Form>
                     }
@@ -425,7 +428,7 @@ const saveChanges = async () => {
                       >
                         History
                       </MyButton>
-                      <MyButton size="small" onClick={savePhysicalExamination}>
+                      <MyButton size="small" onClick={savePhysicalExamination} disabled={edit}>
                         Save
                       </MyButton>
                       </>
@@ -443,18 +446,19 @@ const saveChanges = async () => {
                     patient={patient}
                     encounter={localEncounter}
                     onDiagnosisSaved={onDiagnosisSaved}
+                    disabled={edit}
                   />
                 </div>
               }
             /></div>
 
           <div style={{ marginBottom: '16px' }}>
-            <EncounterAssessmentSection patient={patient} encounterId={localEncounter?.id} />
+            <EncounterAssessmentSection patient={patient} encounterId={localEncounter?.id}  disabled={edit}/>
           </div>
           <div className="last-section-clinical-visit">
             <div className="half-width-section">
               <div style={{ marginBottom: '16px' }}>
-                <PatientPlan patient={patient} localEncounter={localEncounter} />
+                <PatientPlan patient={patient} localEncounter={localEncounter}  disabled={edit} />
               </div>
             </div>
             <div className="half-width-section">

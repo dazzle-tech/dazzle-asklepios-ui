@@ -457,7 +457,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           ) : record?.painAssessmentType === 'FLACC' ? (
             <Row className="pain-assessment__row">
               <Col md={24}>
-                <FlaccComponent />
+                <FlaccComponent disabled={disabled}/>
               </Col>
             </Row>
           ) : null}

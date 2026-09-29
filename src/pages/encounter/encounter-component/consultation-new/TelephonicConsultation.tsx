@@ -344,7 +344,7 @@ const TelephonicConsultation = props => {
         <MyButton
           prefixIcon={() => <BlockIcon />}
           onClick={() => setIsCancelModalOpen(true)}
-          disabled={selectedConsultations.length === 0 || isNurse}
+          disabled={selectedConsultations.length === 0 || isNurse || edit}
         >
           Cancel
         </MyButton>
@@ -354,8 +354,9 @@ const TelephonicConsultation = props => {
         </Checkbox>
       </div>
 
-      <div className={clsx('bt-right-2', { 'disabled-panel': isEditMode || isNurse })}>
+      <div className={clsx('bt-right-2')}>
         <MyButton
+          disabled={isEditMode || isNurse}
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
             setActiveConsultation(null);

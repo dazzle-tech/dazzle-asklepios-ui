@@ -96,10 +96,10 @@ export const diagnosticTestNormalRangeService = createApi({
       ],
     }),
 
-    deleteDiagnosticTestNormalRange: builder.mutation<void, number>({
+    toggleDiagnosticTestNormalRangeActive: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/api/setup/diagnostic-test-normal-ranges/${id}`,
-        method: "DELETE",
+        url: `/api/setup/diagnostic-test-normal-ranges/${id}/toggle-active`,
+        method: "PATCH",
       }),
       invalidatesTags: ["DiagnosticTestNormalRange"],
     }),
@@ -122,6 +122,6 @@ export const {
   useGetDiagnosticTestNormalRangeByIdQuery,
   useCreateDiagnosticTestNormalRangeMutation,
   useUpdateDiagnosticTestNormalRangeMutation,
-  useDeleteDiagnosticTestNormalRangeMutation,
+  useToggleDiagnosticTestNormalRangeActiveMutation,
   useGetLovsByNormalRangeIdQuery
 } = diagnosticTestNormalRangeService;

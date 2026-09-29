@@ -168,7 +168,7 @@ const EncounterModalContent: React.FC<Props> = ({ patient, encounter }) => {
   };
 
   return (
-    <div className="modal-view-only">
+    <div>
       <UNSAFE_LocationContext.Provider value={fakeLocationCtx}>
         <UNSAFE_RouteContext.Provider value={fakeRouteCtx}>
           <Encounter

@@ -79,8 +79,10 @@ type PaginationParams = {
   sort: string;
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 
 const Result = forwardRef<any, Props>(
@@ -297,11 +299,8 @@ const Result = forwardRef<any, Props>(
       }
     };
 const resolveResultDisplay = (row: any) => {
-  const profile = row.profile;
-  if (!profile) return ' ';
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return ' ';
 
   if (resultType === 'LOV') {
     return (
@@ -320,7 +319,7 @@ const resolveResultDisplay = (row: any) => {
 
    const resolveUnitDisplay = (row: any) => {
   const profile = row.profile;
-  if (!profile || isLovProfile(profile)) return null;
+    if (!profile || isLovProfile(row)) return null;
 
   if (!profile.resultUnit) return null;
 
@@ -394,12 +393,8 @@ const resolveResultDisplay = (row: any) => {
     // ─────────────────────────────────────────────────────────────────────────
 
   const isResultEmpty = (row: any) => {
-  const profile = row.profile;
-
-  if (!profile) return true;
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return true;
 
   if (resultType === 'LOV' || resultType === 'TEXT') {
     return (
@@ -633,9 +628,7 @@ const resolveResultDisplay = (row: any) => {
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
         render: (row: any) => {
-
-          const isText =
-            row?.profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
@@ -667,9 +660,7 @@ const resolveResultDisplay = (row: any) => {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
-          const profile = row.profile;
-          const isText =
-            profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
@@ -682,10 +673,8 @@ const resolveResultDisplay = (row: any) => {
             row.minValue !== undefined &&
             row.maxValue !== null &&
             row.maxValue !== undefined;
-            console.log('hasViewRange', hasViewRange);
-            console.log("isLovProfile", isLovProfile(profile));
           if (hasViewRange) {
-            if (isLovProfile(profile)) {
+            if (isLovProfile(row)) {
               return (
                 <LovValueCell
                   valueKey={row.viewNormalRange}
@@ -1123,6 +1112,7 @@ const resolveResultDisplay = (row: any) => {
                 : []
             }
             profileTestId={selectedResult?.profileTestId ?? null}
+            resultTypeAtEntry={selectedResult?.resultTypeAtEntry}
           />
 
           <MyModal

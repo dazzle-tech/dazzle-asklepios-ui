@@ -12,7 +12,7 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import {
   useCreateDiagnosticTestNormalRangeMutation,
-  useDeleteDiagnosticTestNormalRangeMutation,
+  useToggleDiagnosticTestNormalRangeActiveMutation,
   useUpdateDiagnosticTestNormalRangeMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -36,6 +36,7 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
   });
   const [searchKeyword, setSearchKeyword] = useState('');
   const [normalRangeFormKey, setNormalRangeFormKey] = useState(0);
+  const [normalRangeTableRefreshKey, setNormalRangeTableRefreshKey] = useState(0);
   const [profileConfirmationOpen, setProfileConfirmationOpen] = useState(false);
   const [normalRangeDeleteOpen, setNormalRangeDeleteOpen] = useState(false);
   const [pagination, setPagination] = useState({ page: 0, size: 5, sort: 'id,asc' });
@@ -45,7 +46,7 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
   const [toggleProfileActive] = useToggleDiagnosticTestActiveMutation();
   const [createNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
   const [updateNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
-  const [deleteNormalRange] = useDeleteDiagnosticTestNormalRangeMutation();
+  const [toggleNormalRangeActive] = useToggleDiagnosticTestNormalRangeActiveMutation();
 
   const { data: unitsResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: lovResponse } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
@@ -95,6 +96,9 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
         dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
       }
       await refetchProfiles();
+      if (profile.id != null) {
+        setNormalRangeTableRefreshKey(previous => previous + 1);
+      }
     } catch (error: any) {
       const message =
         error?.data?.properties?.message || error?.data?.message || error?.data?.detail || 'Unexpected error';
@@ -185,13 +189,33 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
     }
   };
 
-  const removeNormalRange = () => {
+  const toggleNormalRangeStatus = () => {
+    if (normalRange.id == null) {
+      dispatch(notify({ msg: 'Select a saved normal range first', sev: 'warning' }));
+      return;
+    }
+
     setNormalRangeDeleteOpen(false);
-    deleteNormalRange(normalRange.id)
+    toggleNormalRangeActive(normalRange.id)
       .unwrap()
       .then(() => {
         setNormalRange({ ...newDiagnosticTestNormalRange });
-        dispatch(notify({ msg: 'Deleted Successfully ', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: normalRange.isActive === false
+              ? 'Normal Range Activated Successfully'
+              : 'Normal Range Deactivated Successfully',
+            sev: 'success'
+          })
+        );
+      })
+      .catch((error: any) => {
+        const message =
+          error?.data?.properties?.message ||
+          error?.data?.message ||
+          error?.data?.detail ||
+          'Failed to change normal range status';
+        dispatch(notify({ msg: message.replace(/^error\./, ''), sev: 'error' }));
       });
   };
 
@@ -236,8 +260,9 @@ const Profile = ({ open, setOpen, diagnosticsTest, selectedProfile }) => {
                 normalRange={normalRange}
                 setNormalRange={setNormalRange}
                 formKey={normalRangeFormKey}
+                refreshKey={normalRangeTableRefreshKey}
                 onSave={saveNormalRange}
-                onDelete={removeNormalRange}
+                onToggleActive={toggleNormalRangeStatus}
                 deleteModalOpen={normalRangeDeleteOpen}
                 setDeleteModalOpen={setNormalRangeDeleteOpen}
               />

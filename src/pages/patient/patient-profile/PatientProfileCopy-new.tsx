@@ -315,108 +315,122 @@ const PatientProfile = () => {
     setOpenCchiDocumentPopup(true);
   };
 
+  const DEFAULT_MARITAL_STATUS = '4522615684622822';
+  const DEFAULT_OCCUPATION = '4522587492044507';
+
+  const applyPatientDefaults = (patient: Patient): Patient => ({
+    ...patient,
+    maritalStatus: patient.maritalStatus || DEFAULT_MARITAL_STATUS,
+    occupation: patient.occupation || DEFAULT_OCCUPATION
+  });
+
   const handleSave = async () => {
-    const nameError = validatePatientNameFields(localPatient);
+    const patientToSave = applyPatientDefaults(localPatient);
+
+    setLocalPatient(patientToSave);
+
+    const nameError = validatePatientNameFields(patientToSave);
+
     if (nameError) {
       dispatch(notify({ msg: nameError, sev: 'warning' }));
       return;
     }
 
-    try {
-      if (localPatient?.id) {
-        const updated = await updatePatient({
-          id: localPatient.id,
-          data: buildPatientSavePayload(localPatient)
+      try {
+        if (localPatient?.id) {
+          const updated = await updatePatient({
+            id: localPatient.id,
+            data: buildPatientSavePayload(localPatient)
+          }).unwrap();
+
+          setLocalPatient(updated);
+          dispatch(setPatient(updated));
+          setValidationResult(undefined);
+          setRefetchData(true);
+
+          dispatch(
+            notify({
+              msg: 'Patient Updated Successfully',
+              sev: 'success'
+            })
+          );
+
+          if (searchRef.current) {
+            setTimeout(() => {
+              searchRef.current?.();
+            }, 500);
+          }
+
+          return;
+        }
+
+        const duplicationResponse = await checkDuplication({
+          dto: {
+            ruleId: selectedFacility?.ruleId,
+            dateOfBirth: localPatient?.dateOfBirth
+              ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
+              : null,
+            gender: localPatient?.sexAtBirth,
+            firstName: localPatient?.firstName,
+            lastName: localPatient?.lastName,
+            documentNo: '',
+            mobileNumber: localPatient?.primaryMobileNumber
+          },
+          page: 0,
+          size: 20
         }).unwrap();
 
-        setLocalPatient(updated);
-        dispatch(setPatient(updated));
+        if (duplicationResponse?.length > 0) {
+          setPatientList(duplicationResponse);
+          setOpenPatientsDuplicateModal(true);
+          return;
+        }
+
+        const patientBeforeSave = { ...localPatient };
+
+        const saved = await addPatient(buildPatientSavePayload(localPatient)).unwrap();
+
+        setLocalPatient(saved);
+        dispatch(setPatient(saved));
         setValidationResult(undefined);
         setRefetchData(true);
 
         dispatch(
           notify({
-            msg: 'Patient Updated Successfully',
+            msg: 'Patient Saved Successfully',
             sev: 'success'
           })
         );
+
+        if (shouldOpenCchiDocumentAfterSave(patientBeforeSave, cchiDocument)) {
+          openCchiDocumentModalAfterSave();
+        }
 
         if (searchRef.current) {
           setTimeout(() => {
             searchRef.current?.();
           }, 500);
         }
+      } catch (err: any) {
+        const msg = toHumanBackendError(err, {
+          firstName: 'First Name',
+          secondName: 'Second Name',
+          thirdName: 'Third Name',
+          lastName: 'Last Name',
+          firstNameSecondaryLang: 'First Name (Secondary Language)',
+          secondNameSecondaryLang: 'Second Name (Secondary Language)',
+          thirdNameSecondaryLang: 'Third Name (Secondary Language)',
+          lastNameSecondaryLang: 'Last Name (Secondary Language)',
+          dateOfBirth: 'Date of Birth',
+          primaryMobileNumber: 'Primary Mobile Number',
+          sexAtBirth: 'Sex At Birth',
+          nationality: 'Nationality',
+          medicalRecordNumber: 'Medical Record Number'
+        });
 
-        return;
+        dispatch(notify({ msg, sev: 'warning' }));
       }
-
-      const duplicationResponse = await checkDuplication({
-        dto: {
-          ruleId: selectedFacility?.ruleId,
-          dateOfBirth: localPatient?.dateOfBirth
-            ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
-            : null,
-          gender: localPatient?.sexAtBirth,
-          firstName: localPatient?.firstName,
-          lastName: localPatient?.lastName,
-          documentNo: '',
-          mobileNumber: localPatient?.primaryMobileNumber
-        },
-        page: 0,
-        size: 20
-      }).unwrap();
-
-      if (duplicationResponse?.length > 0) {
-        setPatientList(duplicationResponse);
-        setOpenPatientsDuplicateModal(true);
-        return;
-      }
-
-      const patientBeforeSave = { ...localPatient };
-
-      const saved = await addPatient(buildPatientSavePayload(localPatient)).unwrap();
-
-      setLocalPatient(saved);
-      dispatch(setPatient(saved));
-      setValidationResult(undefined);
-      setRefetchData(true);
-
-      dispatch(
-        notify({
-          msg: 'Patient Saved Successfully',
-          sev: 'success'
-        })
-      );
-
-      if (shouldOpenCchiDocumentAfterSave(patientBeforeSave, cchiDocument)) {
-        openCchiDocumentModalAfterSave();
-      }
-
-      if (searchRef.current) {
-        setTimeout(() => {
-          searchRef.current?.();
-        }, 500);
-      }
-    } catch (err: any) {
-      const msg = toHumanBackendError(err, {
-        firstName: 'First Name',
-        secondName: 'Second Name',
-        thirdName: 'Third Name',
-        lastName: 'Last Name',
-        firstNameSecondaryLang: 'First Name (Secondary Language)',
-        secondNameSecondaryLang: 'Second Name (Secondary Language)',
-        thirdNameSecondaryLang: 'Third Name (Secondary Language)',
-        lastNameSecondaryLang: 'Last Name (Secondary Language)',
-        dateOfBirth: 'Date of Birth',
-        primaryMobileNumber: 'Primary Mobile Number',
-        sexAtBirth: 'Sex At Birth',
-        nationality: 'Nationality',
-        medicalRecordNumber: 'Medical Record Number'
-      });
-
-      dispatch(notify({ msg, sev: 'warning' }));
-    }
-  };
+    };
 
   const handleClear = () => {
     setLocalPatient({ ...newPatient });
@@ -581,6 +595,7 @@ const PatientProfile = () => {
           refetchData={refetchData}
           setRefetchData={setRefetchData}
           searchRef={searchRef}
+          showButton={true}
         />
       </div>
 

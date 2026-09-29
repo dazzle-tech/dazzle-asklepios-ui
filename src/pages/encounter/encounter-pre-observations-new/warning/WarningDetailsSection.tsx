@@ -24,9 +24,6 @@ const WarningDetailsSection = ({
             title="Warning Details"
             content={
                 <div
-                    className={clsx({
-                        'disabled-panel': edit || warning.statusLvalue?.valueCode === 'ARS_CANCEL'
-                    })}
                 >
                     <Form fluid >
                         <Row className="rows-gap">

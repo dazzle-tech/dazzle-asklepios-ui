@@ -7,6 +7,7 @@ import {
   useCountActiveBedsQuery,
   useCountBedsByStatusQuery,
   useGetBedsByDepartmentIdQuery,
+  useGetActiveAssignmentsByBedIdsQuery,
   useMarkBedAsOutOfServiceMutation,
   useMarkBedAsReadyMutation
 } from '@/services/setup/room/bedService';
@@ -83,6 +84,31 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
 
   const bedsData = bedsResponse?.data ?? [];
 
+  const occupiedBedIds = bedsData
+    .filter((bed: any) => bed?.status === 'OCCUPIED')
+    .map((bed: any) => bed.id);
+
+  const {
+    data: activeBedAssignments = [],
+    isFetching: isFetchingAssignments
+  } = useGetActiveAssignmentsByBedIdsQuery(
+    {
+      bedIds: occupiedBedIds
+    },
+    {
+      skip: occupiedBedIds.length === 0
+    }
+  );
+
+  const assignmentByBedId = new Map(
+    activeBedAssignments.map((assignment: any) => [
+      assignment.bedId,
+      assignment
+    ])
+  );
+
+
+
   const handleChangeToOutService = (bed: any) => {
     markBedAsOutOfService({ id: bed?.id })
       .unwrap()
@@ -137,13 +163,26 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
         } else if (status === 'IN_CLEANING') {
           color = '#ff8902ff';
         }
-
         return (
           <MyBadgeStatus
             color={color}
             contant={formatEnumString(status)}
           />
         );
+      }
+    },
+    {
+      key: 'patientName',
+      title: <Translate>Patient Name</Translate>,
+      fullText: true,
+      render: rowData => {
+        if (rowData?.status !== 'OCCUPIED') {
+          return '-';
+        }
+
+        const assignment: any = assignmentByBedId.get(rowData.id);
+
+        return assignment?.patientName || '-';
       }
     },
     {
@@ -252,7 +291,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
         height={400}
         data={bedsData}
         columns={tableColumns}
-        loading={isFetching || isLoading}
+        loading={isFetching || isLoading || isFetchingAssignments}
         page={bedPagination.page}
         rowsPerPage={bedPagination.size}
         totalCount={bedsResponse?.totalCount ?? 0}

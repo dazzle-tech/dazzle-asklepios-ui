@@ -70,6 +70,8 @@ const Prescriptions = ({ patient }) => {
         return "";
     };
 
+
+
     const tableColumns = [
         {
             key: "prescriptionId",

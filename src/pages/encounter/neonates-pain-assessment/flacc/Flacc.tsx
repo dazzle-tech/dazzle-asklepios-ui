@@ -5,7 +5,7 @@ import FlaccComponent from '@/components/PatientFlaccComponent';
 
 const Flacc = ({ ...props }) => {
   const location = useLocation();
-
+   const edit = props.edit ?? location.state?.edit ?? false;
   const patient = props.patient ?? location.state?.patient ?? {};
   const encounter = props.encounter ?? location.state?.encounter ?? {};
 
@@ -14,7 +14,7 @@ const Flacc = ({ ...props }) => {
 
   return (
     <div dir={dir}>
-      <FlaccComponent patient={patient} encounter={encounter} />
+      <FlaccComponent patient={patient} encounter={encounter} disabled={edit}/>
     </div>
   );
 };

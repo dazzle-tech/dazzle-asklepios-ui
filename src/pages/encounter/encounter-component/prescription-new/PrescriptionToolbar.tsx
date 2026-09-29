@@ -88,9 +88,9 @@ const PrescriptionToolbar = ({
         </Form>
       </div>
 
-      <div className={clsx('bt-right', { 'disabled-panel': edit })}>
+      <div className={clsx('bt-right')}>
 
-        <MyButton loading={isLoadingPrescriptions}>
+        <MyButton loading={isLoadingPrescriptions} disabled={edit}>
           <Translate>Validate with Gallon Reasoner</Translate>
         </MyButton>
 

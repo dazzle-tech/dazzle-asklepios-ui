@@ -1,5 +1,5 @@
 import MyTab from '@/components/MyTab';
-import Prescriptions from '@/pages/encounter/encounter-component/medications-record/Prescriptions';
+import PrescritionEmr from './PrescritionEmr/PrescritionEmr';
 import React from 'react';
 
 interface Props {
@@ -7,20 +7,18 @@ interface Props {
 }
 
 const MedicationsRecord: React.FC<Props> = ({ patient }) => {
-
   if (!patient?.id) return null;
 
   const tabData = [
     {
       title: 'Prescriptions',
       content: (
-        <Prescriptions
-          patient={patient}/>
+        <PrescritionEmr patient={patient} />
       )
-    },
+    }
   ];
 
-  return <MyTab data={tabData} lazy/>;
+  return <MyTab data={tabData} lazy />;
 };
 
 export default MedicationsRecord;

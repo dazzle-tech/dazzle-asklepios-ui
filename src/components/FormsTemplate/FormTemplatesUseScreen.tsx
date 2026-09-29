@@ -106,9 +106,10 @@ const resolveNumericId = (entity: any): number | null => {
   return Number.isNaN(n) ? null : n;
 };
 
-const FormTemplatesUseScreen = () => {
+const FormTemplatesUseScreen = (props) => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const edit = props.edit ?? location.state?.edit ?? false;
   const mode = useSelector((state: any) => state.ui.mode);
   const authSlice = useAppSelector((s) => s.auth);
   const reduxPatient = useAppSelector((s) => s.patient.patient);
@@ -558,6 +559,7 @@ const FormTemplatesUseScreen = () => {
             color="var(--deep-blue)"
             width="90px"
             onClick={() => handleOpenUseTemplate(row)}
+            disabled={edit}
           >
             Use
           </MyButton>
@@ -598,7 +600,21 @@ const FormTemplatesUseScreen = () => {
             size={22}
             fill="var(--primary-gray)"
             className="icons-style"
-            onClick={() => handleOpenEdit(row)}
+            style={{
+              cursor: edit
+                ? 'not-allowed'
+                : 'pointer',
+
+              opacity: edit
+                ? 0.5
+                : 1
+            }}
+            onClick={
+              () => { 
+                if (edit) return 
+                handleOpenEdit(row) 
+                   }}
+
           />
           <MdDownload
             title="Download PDF"
