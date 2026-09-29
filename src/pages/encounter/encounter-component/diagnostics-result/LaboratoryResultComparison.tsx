@@ -150,15 +150,15 @@ const LaboratoryResultComparison: React.FC<Props> = ({
 
 
 
-    const resolveUnitDisplay = (profile: any) => {
+    const resolveUnitDisplay = (profile: any, resultType?: string) => {
         if (!profile) return null;
 
-        const resultType =
-            profile?.resultType?.toUpperCase()?.trim();
+        const resolvedType =
+            (resultType ?? profile?.resultType)?.toUpperCase()?.trim();
 
         if (
-            resultType === 'LOV' ||
-            resultType === 'TEXT'
+            resolvedType === 'LOV' ||
+            resolvedType === 'TEXT'
         ) {
             return null;
         }
@@ -223,10 +223,10 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     );
 
     const resultType =
-        profile?.resultType?.toUpperCase()?.trim();
+        (result?.resultTypeAtEntry ?? profile?.resultType)?.toUpperCase()?.trim();
 
     const unit =
-        resolveUnitDisplay(profile);
+        resolveUnitDisplay(profile, resultType);
 
     return (
         <div

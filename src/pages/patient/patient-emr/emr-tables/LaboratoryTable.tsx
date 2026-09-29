@@ -40,8 +40,12 @@ interface Props {
   patient: any;
 }
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) => {
+  const resultTypeAtEntry = row?.resultTypeAtEntry?.trim();
+  return (resultTypeAtEntry || row?._profile?.resultType)?.toUpperCase()?.trim();
+};
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 
 
@@ -107,7 +111,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   const resolveUnitDisplay = (row: any) => {
     const profile = row._profile;
-    if (!profile || isLovProfile(profile)) return null;
+    if (!profile || isLovProfile(row)) return null;
 
     const unit = valueUnitLov?.object?.find(
       (u: any) => String(u.key) === String(profile.resultUnit)
@@ -377,7 +381,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
           row.resultValueText ??
           '';
 
-        if (isLovProfile(profile)) {
+        if (isLovProfile(row)) {
           return (
             <LovValueCell
               valueKey={String(value)}
@@ -407,7 +411,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
           row.maxValue !== undefined;
 
         if (hasViewRange) {
-          if (isLovProfile(profile)) {
+          if (isLovProfile(row)) {
             return (
               <LovValueCell
                 valueKey={String(row.normalRangeValue)}
