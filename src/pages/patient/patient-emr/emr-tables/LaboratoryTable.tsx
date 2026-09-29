@@ -4,7 +4,8 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import {
-  useFilterDiagnosticOrderTestResultsQuery
+  useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
@@ -156,6 +157,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   const { data: resultsResponse, isFetching } =
     useFilterDiagnosticOrderTestResultsQuery(queryParams);
+  const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
   const results = resultsResponse?.data ?? [];
   const totalCount = resultsResponse?.totalCount ?? 0;
@@ -287,16 +289,27 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     normalizedResults.length > 0 &&
     normalizedResults.every((row: any) => selectedResultIds.includes(row.id));
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedResultIds((previous) =>
-        Array.from(new Set([...previous, ...normalizedResults.map((row: any) => row.id)]))
-      );
-    } else {
-      const currentPageIds = normalizedResults.map((row: any) => row.id);
+  const handleSelectAll = async (checked: boolean) => {
+    const currentPageIds = normalizedResults.map((row: any) => row.id);
+
+    if (!checked) {
       setSelectedResultIds((previous) =>
         previous.filter((id) => !currentPageIds.includes(id))
       );
+      return;
+    }
+
+    if (!orderIds.length) return;
+
+    try {
+      const ids = await getAllResultIds({
+        orderIdIn: orderIds,
+        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
+      }).unwrap();
+
+      setSelectedResultIds(ids);
+    } catch (e) {
+      console.error(e);
     }
   };
 

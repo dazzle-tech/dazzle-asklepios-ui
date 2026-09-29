@@ -18,7 +18,8 @@ import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, HStack, Message, Panel, Tooltip, useToaster, Whisper } from 'rsuite';
 
 import {
-  useFilterDiagnosticOrderTestResultsQuery
+  useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
@@ -186,6 +187,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     data: response,
     isFetching: isResultsFetching
   } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
+  const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: notesResponse } = useGetNotesByResultIdQuery(
@@ -328,11 +330,45 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     normalizedResults.length > 0 &&
     normalizedResults.every(row => selectedRows.includes(row.id));
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(normalizedResults.map(row => row.id));
-    } else {
-      setSelectedRows([]);
+  const handleSelectAll = async (checked: boolean) => {
+    const currentPageIds = normalizedResults.map(row => row.id);
+
+    if (!checked) {
+      setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
+      return;
+    }
+
+    if (!orderIds.length) return;
+
+    try {
+      const idsParams: any = {
+        orderIdIn: orderIds,
+        processingStatus: 'RESULT_APPROVED',
+        reviewed: true
+      };
+
+      if (showAbnormal) {
+        idsParams.markerIn = [
+          'UPPER_LIMIT',
+          'LOWER_LIMIT',
+          'ABNORMAL_MARKER',
+          'CRITICAL_UPPER',
+          'CRITICAL_LOWER'
+        ];
+      }
+
+      if (dateFilter.fromDate) {
+        idsParams.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
+      }
+
+      if (dateFilter.toDate) {
+        idsParams.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
+      }
+
+      const ids = await getAllResultIds(idsParams).unwrap();
+      setSelectedRows(ids);
+    } catch (e) {
+      console.error(e);
     }
   };
 

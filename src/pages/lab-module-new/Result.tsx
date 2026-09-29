@@ -50,6 +50,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState
 } from 'react';
 import { FaChartLine } from 'react-icons/fa';
@@ -991,10 +992,14 @@ const resolveResultDisplay = (row: any) => {
       });
     }, [fetchNormalRangesByProfileTestId, normalRangesMap, profileTestIds]);
 
+    const previousOrderId = useRef(order?.id);
+
     useEffect(() => {
-      const currentIds = normalizedResults.map(r => r.id);
-      setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
-    }, [normalizedResults]);
+      if (previousOrderId.current !== order?.id) {
+        setSelectedResultIds([]);
+        previousOrderId.current = order?.id;
+      }
+    }, [order?.id]);
 
 
 
