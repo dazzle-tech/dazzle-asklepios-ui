@@ -43,8 +43,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 type Props = {
   patient: any;
 };
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 const startOfDay = (date: Date) => {
   const d = new Date(date);
@@ -222,7 +224,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
+      if (!profile || isLovProfile(row)) return null;
 
       if (!profile.resultUnit) return null;
 
@@ -386,7 +388,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     
                 const value = row.resultValueNumber ?? row.resultValueText ?? '';
     
-                if (isLovProfile(profile)) {
+                if (isLovProfile(row)) {
                   return (
                     <LovValueCell
                       valueKey={value}
@@ -415,7 +417,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
                   row.maxValue !== undefined;
     
                 if (hasViewRange) {
-                  if (isLovProfile(profile)) {
+                  if (isLovProfile(row)) {
                     return (
                       <LovValueCell
                         valueKey={String(row.normalRangeValue)}

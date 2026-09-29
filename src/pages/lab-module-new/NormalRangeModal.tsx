@@ -12,9 +12,10 @@ type Props = {
   setOpen: (v: boolean) => void;
   ranges: any[];
   profileTestId: number | null;
+  resultTypeAtEntry?: string;
 };
 
-const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
+const NormalRangeModal = ({ open, setOpen, ranges, profileTestId, resultTypeAtEntry }: Props) => {
 
   const [getProfilesByIds, { data: profileTests, isLoading }] =
     useGetDiagnosticTestProfilesByIdsMutation();
@@ -70,7 +71,9 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
       title: <Translate>RANGE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (profileTest?.resultType === 'NUMBER') {
+        const resultType = (resultTypeAtEntry ?? profileTest?.resultType)?.toUpperCase()?.trim();
+
+        if (resultType === 'NUMBER') {
           switch (r.normalRangeType) {
             case 'RANGE':
               return `${r.rangeFrom ?? '-'} - ${r.rangeTo ?? '-'}`;
@@ -86,13 +89,13 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
           }
         }
 
-        if (profileTest?.resultType === 'LOV') {
+        if (resultType === 'LOV') {
           return Array.isArray(r.lovKeys) && r.lovKeys.length
             ? resolveLovKeysDisplay(r.lovKeys)
             : '-';
         }
 
-        if (profileTest?.resultType === 'TEXT') {
+        if (resultType === 'TEXT') {
           return r.resultText ?? '-';
         }
 

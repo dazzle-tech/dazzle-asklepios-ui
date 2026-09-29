@@ -96,8 +96,10 @@ const renderMarker = (marker?: string) => {
   }
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?._profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 const ReviewResults = forwardRef<any, any>(
   ({ loading, setTest, setPatient, setEncounter }, ref) => {
@@ -397,7 +399,7 @@ const ReviewResults = forwardRef<any, any>(
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
+      if (!profile || isLovProfile(row)) return null;
 
       if (!profile.resultUnit) return null;
 
@@ -557,7 +559,7 @@ const ReviewResults = forwardRef<any, any>(
 
             const value = row.resultValueNumber ?? row.resultValueText ?? '';
 
-            if (isLovProfile(profile)) {
+            if (isLovProfile(row)) {
               return (
                 <LovValueCell
                   valueKey={value}
@@ -585,7 +587,7 @@ const ReviewResults = forwardRef<any, any>(
               row.maxValue !== undefined;
 
             if (hasViewRange) {
-              if (isLovProfile(profile)) {
+              if (isLovProfile(row)) {
                 return (
                   <LovValueCell
                     valueKey={String(row.normalRangeValue)}
