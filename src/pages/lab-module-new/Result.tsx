@@ -17,6 +17,7 @@ import {
   useBulkApproveDiagnosticOrderTestResultMutation,
   useBulkRejectDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
@@ -136,6 +137,7 @@ const Result = forwardRef<any, Props>(
     const [bulkApproveResults] = useBulkApproveDiagnosticOrderTestResultMutation();
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
+    const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
    
 
@@ -557,13 +559,25 @@ const resolveResultDisplay = (row: any) => {
     };
 
 
-    const handleToggleSelectAll = (checked: boolean) => {
-      const allRowIds = normalizedResults.map(row => row.id);
+    const handleToggleSelectAll = async (checked: boolean) => {
+      const currentPageIds = normalizedResults.map(row => row.id);
 
-      if (checked) {
-        setSelectedResultIds(prev => Array.from(new Set([...prev, ...allRowIds])));
-      } else {
-        setSelectedResultIds(prev => prev.filter(id => !allRowIds.includes(id)));
+      if (!checked) {
+        setSelectedResultIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+        return;
+      }
+
+      if (!order?.id) return;
+
+      try {
+        const ids = await getAllResultIds({
+          orderIdIn: order.id,
+          ...(categoryFilter.value ? { category: categoryFilter.value } : {})
+        }).unwrap();
+
+        setSelectedResultIds(ids);
+      } catch (e) {
+        console.error(e);
       }
     };
     const columns: ColumnConfig[] = [
