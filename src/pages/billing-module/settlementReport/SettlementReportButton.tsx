@@ -21,6 +21,7 @@ type AppliedFilters = {
   encounterType: string | null;
   fromDate: string;
   toDate: string;
+  settlementNo: string | null;
 };
 
 type Props = {
@@ -89,6 +90,9 @@ const SettlementReportButton = ({
 
           toDate:
             appliedFilters.toDate,
+
+          settlementNo:
+            appliedFilters.settlementNo,
 
           page: 0,
 

@@ -9,10 +9,16 @@ export type ClaimSettlementSearchParams = {
   encounterType?: string | null;
   fromDate?: string | null;
   toDate?: string | null;
+  settlementNo?: string | null;
   page?: number;
   size?: number;
   sort?: string;
 };
+
+export type SettlementNumberParams = Pick<
+  ClaimSettlementSearchParams,
+  'payerNphiesId' | 'encounterType' | 'fromDate' | 'toDate'
+>;
 
 export type ClaimSettlementPage = {
   content: ClaimSettlementRowResponse[];
@@ -74,6 +80,7 @@ export const claimSettlementApi = createApi({
           encounterType: params?.encounterType || undefined,
           fromDate: params?.fromDate || undefined,
           toDate: params?.toDate || undefined,
+          settlementNo: params?.settlementNo || undefined,
           page: params?.page ?? 0,
           size: params?.size ?? 10,
           sort: params?.sort ?? 'id,desc'
@@ -111,7 +118,30 @@ export const claimSettlementApi = createApi({
       },
       providesTags: ['ClaimSettlements']
     }),
-  
+
+    getSettlementNumbers: builder.query<string[], SettlementNumberParams | void>({
+      query: params => ({
+        url: '/api/patient/billing/claim-settlements/numbers',
+        method: 'GET',
+        params: {
+          payerNphiesId: params?.payerNphiesId || undefined,
+          encounterType: params?.encounterType || undefined,
+          fromDate: params?.fromDate || undefined,
+          toDate: params?.toDate || undefined
+        }
+      }),
+      transformResponse: (response: unknown): string[] => {
+        const body = Array.isArray(response)
+          ? response
+          : Array.isArray((response as { data?: unknown })?.data)
+            ? (response as { data: unknown[] }).data
+            : [];
+
+        return body.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      },
+      providesTags: ['ClaimSettlements']
+    }),
+
     generateSettlementPdf: builder.mutation<
       Blob,
       {
@@ -133,6 +163,10 @@ export const claimSettlementApi = createApi({
     })
   })
 });
-export const { useGetClaimSettlementsQuery ,useLazyGetClaimSettlementsQuery
-,useGenerateSettlementPdfMutation} = claimSettlementApi;
+export const {
+  useGetClaimSettlementsQuery,
+  useLazyGetClaimSettlementsQuery,
+  useGetSettlementNumbersQuery,
+  useGenerateSettlementPdfMutation
+} = claimSettlementApi;
   
