@@ -1,10 +1,12 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppSelector } from '@/hooks';
+import { useBranding } from '@/hooks/useBranding';
+import { useGetSystemConfigDetailsQuery } from '@/services/systemConfigService';
 
 import { classifyCreditInvoiceGroup } from './creditInvoiceGroups';
 import {
@@ -197,10 +199,106 @@ const sectionTitleForLine = (line: InsuranceCreditPrintLine) => {
   return invoiceType || classified || 'Service';
 };
 
+const PUBLIC_LOGO_HOSTS = [
+  'https://asklepios.sfo3.cdn.digitaloceanspaces.com',
+  'https://asklepios.sfo3.digitaloceanspaces.com'
+];
+
+const collectLogoCandidates = (values: Array<string | null | undefined>) => {
+  const urls: string[] = [];
+  const add = (value?: string | null) => {
+    const text = String(value ?? '').trim();
+    if (
+      !text ||
+      text === '-' ||
+      text === 'null' ||
+      text === '/clinicle.png' ||
+      text.endsWith('/clinicle.png')
+    ) {
+      return;
+    }
+    if (!urls.includes(text)) {
+      urls.push(text);
+    }
+  };
+
+  values.forEach(value => {
+    const raw = String(value ?? '').trim();
+    if (!raw || raw === '-' || raw === 'null') {
+      return;
+    }
+
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) {
+      add(raw);
+      return;
+    }
+
+    const key = raw.replace(/^\/+/, '');
+    if (key.startsWith('config/')) {
+      PUBLIC_LOGO_HOSTS.forEach(host => add(`${host}/${key}`));
+    }
+  });
+
+  return urls;
+};
+
+const useFirstWorkingImage = (candidates: string[]) => {
+  const [src, setSrc] = useState('');
+  const signature = candidates.join('\n');
+
+  useEffect(() => {
+    let cancelled = false;
+    setSrc('');
+
+    const attempt = (index: number) => {
+      if (cancelled) {
+        return;
+      }
+      const next = candidates[index];
+      if (!next) {
+        return;
+      }
+
+      const image = new Image();
+      image.onload = () => {
+        if (!cancelled) {
+          setSrc(next);
+        }
+      };
+      image.onerror = () => attempt(index + 1);
+      image.src = next;
+    };
+
+    attempt(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [signature, candidates]);
+
+  return src;
+};
+
+const CreditLogo = ({ src }: { src: string }) => {
+  if (!src) {
+    return null;
+  }
+
+  return (
+    <img
+      className="credit-invoice__logo"
+      src={src}
+      alt=""
+      style={{ display: 'block', width: 92, height: 64, objectFit: 'contain' }}
+    />
+  );
+};
+
 const CreditDocument: React.FC<{
   data: InsuranceCreditPrintData;
+  logoSrc: string;
   secondary: (label: string) => string;
-}> = ({ data, secondary }) => {
+}> = ({ data, logoSrc, secondary }) => {
   const fromGroups = Array.isArray(data?.groups) ? data.groups.filter(Boolean) : [];
   const fromGroupLines = fromGroups.flatMap(group =>
     Array.isArray(group?.lines) ? group.lines.filter(Boolean) : []
@@ -233,10 +331,18 @@ const CreditDocument: React.FC<{
   return (
     <div className="credit-invoice">
       <div className="credit-invoice__sheet">
-        {data.facilityName ? (
-          <div className="credit-invoice__facility">{data.facilityName}</div>
-        ) : null}
-        <div className="credit-invoice__title">Out-Patient Invoice Credit - Detailed</div>
+        <div className="credit-invoice__masthead">
+          <div className="credit-invoice__brand">
+            <CreditLogo src={logoSrc} />
+          </div>
+          <div className="credit-invoice__center">
+            <div className="credit-invoice__brand-name">{data.facilityName}</div>
+            <div className="credit-invoice__title">Out-Patient Invoice Credit - Detailed</div>
+          </div>
+          <div className="credit-invoice__brand credit-invoice__brand--end">
+            <CreditLogo src={logoSrc} />
+          </div>
+        </div>
 
         <div className="credit-invoice__identity">
           <div>
@@ -392,6 +498,23 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const secondary = useSecondaryLabel();
+  const branding = useBranding();
+  const { data: configRows } = useGetSystemConfigDetailsQuery(undefined, { skip: !open });
+  const logoCandidates = useMemo(() => {
+    const rows = Array.isArray(configRows) ? configRows : [];
+    const readConfig = (key: string) =>
+      rows.find(row => String(row.configKey) === key)?.configValue;
+
+    return collectLogoCandidates([
+      readConfig('SYSTEM_LOGO'),
+      readConfig('SIDEBAR_LOGO'),
+      ...(data?.logoUrls ?? []),
+      data?.logoUrl,
+      branding.logo,
+      branding.sidebarLogo
+    ]);
+  }, [branding.logo, branding.sidebarLogo, configRows, data?.logoUrl, data?.logoUrls]);
+  const logoSrc = useFirstWorkingImage(logoCandidates);
 
   const handlePrint = useCallback(() => {
     if (!printRef.current || !data) {
@@ -430,14 +553,28 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
     printWindow.document.close();
     printWindow.document.title = printTitle;
 
+    const images = Array.from(printWindow.document.images);
+    const ready = Promise.all(
+      images.map(
+        image =>
+          image.complete
+            ? Promise.resolve()
+            : new Promise<void>(resolve => {
+                image.onload = () => resolve();
+                image.onerror = () => resolve();
+              })
+      )
+    );
     const closeWindow = () => {
       printWindow.close();
     };
     printWindow.onafterprint = closeWindow;
-    window.setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 50);
+    void ready.then(() => {
+      window.setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 50);
+    });
   }, [data]);
 
   const setOpen = useCallback(
@@ -450,7 +587,7 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
     [onClose, open]
   );
 
-  if (!data) {
+  if (!open) {
     return null;
   }
 
@@ -458,7 +595,11 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={`Out-Patient Invoice Credit — ${data.invoiceNo}`}
+      title={
+        data?.invoiceNo
+          ? `Out-Patient Invoice Credit — ${data.invoiceNo}`
+          : 'Out-Patient Invoice Credit'
+      }
       size="96vw"
       bodyheight="82vh"
       position="center"
@@ -468,17 +609,22 @@ const InsuranceCreditPrintModal: React.FC<InsuranceCreditPrintModalProps> = ({
       handleCancelFunction={onClose}
       actionButtonLabel="Print credit invoice"
       actionButtonFunction={handlePrint}
-      content={() => (
-        <>
-          <style>{INSURANCE_CREDIT_PRINT_CSS}</style>
-          <div className="invoice-print-modal__paper" ref={printRef}>
-            <CreditDocument data={data} secondary={secondary} />
-          </div>
-        </>
-      )}
+      content={() =>
+        data ? (
+          <>
+            <style>{INSURANCE_CREDIT_PRINT_CSS}</style>
+            <div className="invoice-print-modal__paper" ref={printRef}>
+              <CreditDocument data={data} logoSrc={logoSrc} secondary={secondary} />
+            </div>
+          </>
+        ) : (
+          <div className="credit-invoice__loading">Loading credit invoice...</div>
+        )
+      }
       footerButtons={
         <MyButton
           appearance="primary"
+          disabled={!data}
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
           onClick={() => {
             void handlePrint();

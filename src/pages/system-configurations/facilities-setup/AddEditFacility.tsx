@@ -228,15 +228,6 @@ const AddEditFacility = ({
               />
             </Row>
             <Row>
-              <MyInput
-                fieldName="vatRegistrationNumber"
-                fieldLabel="Company VAT No"
-                record={facility}
-                setRecord={setFacility}
-                width="100%"
-              />
-            </Row>
-            <Row>
               <Col md={12}>
                 <MyInput
                   fieldLabel="Default Lab Department"

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Panel, Tag, Text } from 'rsuite';
 
@@ -138,6 +138,7 @@ import { FINANCIAL_DOCUMENT_NUMBERING_ERROR_MAP } from '@/pages/setup/financial-
 import { notify } from '@/utils/uiReducerActions';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useBranding } from '@/hooks/useBranding';
 
 import {
 
@@ -344,8 +345,14 @@ const Invoices: React.FC<InvoicesProps> = ({
   const { data: facilityDetails } = useGetFacilityByIdQuery(facilityId as number | string, {
     skip: facilityId == null
   });
+  const { logo: systemLogo, sidebarLogo } = useBranding();
   const facilityPrintInfo = useMemo(() => {
     const facilityRecord = facilityDetails ?? selectedFacility;
+    const facilityExtras = facilityRecord as Record<string, unknown> | null | undefined;
+    const readText = (value: unknown) => {
+      const text = String(value ?? '').trim();
+      return text && text !== '-' && text !== 'null' ? text : '';
+    };
     const countryLabel = facilityRecord?.countryName
       ? formatEnumString(String(facilityRecord.countryName))
       : '';
@@ -378,16 +385,24 @@ const Invoices: React.FC<InvoicesProps> = ({
           .join(', ')
       : undefined;
 
+    const logoUrls = [systemLogo, sidebarLogo]
+      .map(readText)
+      .filter((url, index, list) => Boolean(url) && list.indexOf(url) === index);
+
     return {
       name:
         facilityRecord?.name ??
         facilityRecord?.facilityName ??
         'Healthcare Facility',
+      nameAr: readText(
+        facilityExtras?.arabicName ??
+          facilityExtras?.nameAr ??
+          facilityExtras?.nameSecondary ??
+          facilityExtras?.secondaryName
+      ),
+      logoUrls,
+      logoUrl: logoUrls[0] ?? '',
       address,
-      vatRegistrationNumber:
-        facilityRecord?.vatRegistrationNumber ??
-        facilityRecord?.vatNumber ??
-        undefined,
       providerId:
         facilityRecord?.providerId != null &&
         String(facilityRecord.providerId).trim() !== ''
@@ -396,7 +411,7 @@ const Invoices: React.FC<InvoicesProps> = ({
             ? String(facilityRecord.code).trim()
             : undefined
     };
-  }, [facilityDetails, selectedFacility]);
+  }, [facilityDetails, selectedFacility, sidebarLogo, systemLogo]);
 
   const patientId = resolvePatientId(patient);
 
@@ -430,6 +445,7 @@ const Invoices: React.FC<InvoicesProps> = ({
     open: boolean;
     data: InsuranceCreditPrintData | null;
   }>({ open: false, data: null });
+  const creditPrintRequestRef = useRef(0);
 
   const [pendingInvoicePrint, setPendingInvoicePrint] = useState<{
 
@@ -1415,13 +1431,18 @@ const Invoices: React.FC<InvoicesProps> = ({
     }
   };
 
+  const closeCreditPrintModal = () => {
+    creditPrintRequestRef.current += 1;
+    setCreditPrintModal({ open: false, data: null });
+  };
+
   const handlePrintDetailedInvoice = async (invoice: PatientFinancialInvoice) => {
-    if (!printLookupsReady) {
-      return;
-    }
+    const requestId = creditPrintRequestRef.current + 1;
+    creditPrintRequestRef.current = requestId;
+    setCreditPrintModal({ open: true, data: null });
 
     try {
-      const [lineItems, matchingEncounterDetails] = await Promise.all([
+      const [lineItemsResult, encounterDetailsResult] = await Promise.allSettled([
         selectedInvoice?.id === invoice.id && invoiceLineItems.length > 0
           ? Promise.resolve(invoiceLineItems)
           : fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
@@ -1430,11 +1451,67 @@ const Invoices: React.FC<InvoicesProps> = ({
           : fetchEncounterDetailsForPrint(invoice.encounterId).unwrap()
       ]);
 
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
+      if (lineItemsResult.status === 'rejected') {
+        throw lineItemsResult.reason;
+      }
+
+      const lineItems = Array.isArray(lineItemsResult.value) ? lineItemsResult.value : [];
+      const matchingEncounterDetails =
+        encounterDetailsResult.status === 'fulfilled' ? encounterDetailsResult.value : null;
+
       const eligibility =
         matchingEncounterDetails?.encounterId === selectedEncounterId
           ? eligibilitySnapshot ?? encounterDetails?.eligibilitySnapshot ?? null
           : matchingEncounterDetails?.eligibilitySnapshot ?? null;
 
+      const cachedChargeContext = resolveChargeContextForInvoice(invoice);
+      const cachedBillingItems =
+        invoice.encounterId === printEncounterId
+          ? (billingSummary?.items ?? [])
+          : [];
+
+      setCreditPrintModal({
+        open: true,
+        data: buildInsuranceCreditPrintData({
+          invoice: {
+            ...invoice,
+            documentNumber: resolveInvoiceDisplayNumber(invoice)
+          },
+          lineItems,
+          encounterDetails: matchingEncounterDetails,
+          eligibilitySnapshot: eligibility,
+          patient,
+          facility: facilityPrintInfo,
+          billingItems: cachedBillingItems,
+          pspRows: [],
+          doctorName: '',
+          insurance: null,
+          episodeNo: resolveInvoiceVisitNumber(
+            invoice,
+            matchingEncounterDetails,
+            billableVisits
+          ),
+          chargeContext: cachedChargeContext,
+          printData: buildInvoicePrintDataFromIssuedInvoice({
+            invoice: {
+              ...invoice,
+              documentNumber: resolveInvoiceDisplayNumber(invoice)
+            },
+            lineItems,
+            encounterDetails: matchingEncounterDetails,
+            eligibilitySnapshot: eligibility,
+            patient,
+            facility: facilityPrintInfo,
+            chargeContext: cachedChargeContext
+          })
+        })
+      });
+
+      try {
       const [billingResult, servicesResult, encounterResult, insuranceResult] =
         await Promise.allSettled([
           // Always refresh billing summary so patient/sponsor shares are complete.
@@ -1530,6 +1607,10 @@ const Invoices: React.FC<InvoicesProps> = ({
         chargeContext: resolvedChargeContext
       });
 
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
       setCreditPrintModal({
         open: true,
         data: buildInsuranceCreditPrintData({
@@ -1555,7 +1636,15 @@ const Invoices: React.FC<InvoicesProps> = ({
           printData
         })
       });
+      } catch {
+        // The invoice is already open. A later lookup failure should not close it.
+      }
     } catch (error: any) {
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
+      setCreditPrintModal({ open: false, data: null });
       dispatch(
         notify({
           msg: extractApiErrorMessage(error, INVOICE_GENERATION_ERROR_MAP),
@@ -2107,7 +2196,6 @@ const Invoices: React.FC<InvoicesProps> = ({
           <MyButton
             appearance="ghost"
             size="sm"
-            disabled={!printLookupsReady}
             title="Out-patient credit invoice"
             onClick={event => {
               event.stopPropagation();
@@ -2590,7 +2678,7 @@ const Invoices: React.FC<InvoicesProps> = ({
       <InsuranceCreditPrintModal
         open={creditPrintModal.open}
         data={creditPrintModal.data}
-        onClose={() => setCreditPrintModal({ open: false, data: null })}
+        onClose={closeCreditPrintModal}
       />
 
       <InvoicePrintModal

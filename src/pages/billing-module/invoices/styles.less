@@ -700,21 +700,14 @@
 
 .credit-invoice-modal {
   &.rs-modal {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .rs-modal-wrapper {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    width: min(96vw, 1400px);
+    max-width: calc(100vw - 24px);
   }
 
   .rs-modal-dialog {
-    width: min(96vw, 1400px) !important;
-    max-width: 96vw !important;
-    margin: 12px auto !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 12px auto;
   }
 
   .rs-modal-content {
@@ -730,6 +723,15 @@
   .invoice-print-modal__paper {
     max-height: none;
   }
+}
+
+.credit-invoice__loading {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-size: 14px;
 }
 
 .invoice-print-modal {

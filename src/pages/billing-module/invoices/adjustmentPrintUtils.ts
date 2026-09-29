@@ -30,7 +30,6 @@ export type AdjustmentPrintData = {
   visitDate?: string;
   facilityName: string;
   facilityAddress?: string;
-  vatRegistrationNumber?: string;
   qrCodePayload: string;
   patientName: string;
   patientMrn: string;
@@ -74,7 +73,6 @@ const buildQrCodePayload = ({
   documentDate,
   originalInvoiceNumber,
   facilityName,
-  vatRegistrationNumber,
   netAmount
 }: {
   documentType: AdjustmentPrintData['documentType'];
@@ -82,7 +80,6 @@ const buildQrCodePayload = ({
   documentDate: string;
   originalInvoiceNumber: string;
   facilityName: string;
-  vatRegistrationNumber?: string;
   netAmount: number;
 }) =>
   [
@@ -90,7 +87,6 @@ const buildQrCodePayload = ({
     `Original Invoice: ${originalInvoiceNumber}`,
     `Date: ${documentDate}`,
     `Facility: ${facilityName}`,
-    vatRegistrationNumber ? `VAT: ${vatRegistrationNumber}` : null,
     `Net: ${netAmount.toFixed(2)}`
   ]
     .filter(Boolean)
@@ -387,14 +383,12 @@ export const buildAdjustmentPrintData = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       documentType,
       documentNumber: adjustment.documentNumber,
       documentDate,
       originalInvoiceNumber,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount
     }),
     patientName,

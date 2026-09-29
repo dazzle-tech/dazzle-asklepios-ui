@@ -42,7 +42,6 @@ export type InvoicePrintData = {
   visitDate?: string;
   facilityName: string;
   facilityAddress?: string;
-  vatRegistrationNumber?: string;
   qrCodePayload: string;
   patientName: string;
   patientMrn: string;
@@ -75,9 +74,11 @@ export type InvoicePrintData = {
 
 export type FacilityPrintInfo = {
   name: string;
+  nameAr?: string;
   address?: string;
-  vatRegistrationNumber?: string;
   providerId?: string;
+  logoUrl?: string;
+  logoUrls?: string[];
 };
 
 const formatMoneyValue = (value?: number) => Number(value ?? 0);
@@ -153,14 +154,12 @@ const buildQrCodePayload = ({
   invoiceNumber,
   invoiceDate,
   facilityName,
-  vatRegistrationNumber,
   netAmount,
   taxAmount
 }: {
   invoiceNumber: string;
   invoiceDate: string;
   facilityName: string;
-  vatRegistrationNumber?: string;
   netAmount: number;
   taxAmount: number;
 }) =>
@@ -168,7 +167,6 @@ const buildQrCodePayload = ({
     `Invoice: ${invoiceNumber}`,
     `Date: ${invoiceDate}`,
     `Facility: ${facilityName}`,
-    vatRegistrationNumber ? `VAT: ${vatRegistrationNumber}` : null,
     `Net: ${netAmount.toFixed(2)}`,
     `Tax: ${taxAmount.toFixed(2)}`
   ]
@@ -532,12 +530,10 @@ export const buildInvoicePrintDataFromEncounter = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
@@ -630,12 +626,10 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),

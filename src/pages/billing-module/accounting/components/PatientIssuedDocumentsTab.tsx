@@ -174,10 +174,6 @@ const PatientIssuedDocumentsTab: React.FC<PatientIssuedDocumentsTabProps> = ({ p
         facilityRecord?.facilityName ??
         'Healthcare Facility',
       address,
-      vatRegistrationNumber:
-        facilityRecord?.vatRegistrationNumber ??
-        facilityRecord?.vatNumber ??
-        undefined,
       providerId:
         facilityRecord?.providerId != null &&
         String(facilityRecord.providerId).trim() !== ''

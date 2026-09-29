@@ -62,17 +62,11 @@ const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
         <div className="invoice-print__header-main">
           <div className="invoice-print__brand">{invoice.facilityName}</div>
           <div className="invoice-print__subtitle">{invoiceTypeLabel(invoice.invoiceType)}</div>
-          {(invoice.facilityAddress || invoice.vatRegistrationNumber) && (
+          {invoice.facilityAddress ? (
             <div className="invoice-print__facility-meta">
-              {invoice.facilityAddress ? <span>{invoice.facilityAddress}</span> : null}
-              {invoice.facilityAddress && invoice.vatRegistrationNumber ? (
-                <span className="invoice-print__facility-meta-sep"> · </span>
-              ) : null}
-              {invoice.vatRegistrationNumber ? (
-                <span>VAT: {invoice.vatRegistrationNumber}</span>
-              ) : null}
+              <span>{invoice.facilityAddress}</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="invoice-print__meta">

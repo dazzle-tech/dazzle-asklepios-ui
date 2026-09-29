@@ -371,7 +371,6 @@ const InvoiceDetailPanel: React.FC<InvoiceDetailPanelProps> = ({
               <MyButton
                 size="sm"
                 appearance="ghost"
-                disabled={printDisabled}
                 onClick={onPrintDetailedInvoice}
               >
                 <FontAwesomeIcon icon={faFileInvoiceDollar} /> Credit invoice

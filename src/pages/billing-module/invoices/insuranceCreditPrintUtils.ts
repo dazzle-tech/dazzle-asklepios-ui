@@ -59,6 +59,9 @@ export type InsuranceCreditPrintGroup = {
 
 export type InsuranceCreditPrintData = {
   facilityName: string;
+  facilityNameAr: string;
+  logoUrl: string;
+  logoUrls: string[];
   fileNo: string;
   patientName: string;
   patientNameAr: string;
@@ -297,29 +300,6 @@ const formatArabicName = (patient?: any) =>
 const displayText = (value?: string | number | null) => {
   const text = String(value ?? '').trim();
   return text && text !== '-' ? text : '';
-};
-
-/** Formats enum-like tokens (e.g. SAUDI_ARABIA → Saudi Arabia) inside an address. */
-const formatFacilityAddress = (value?: string | null) => {
-  const text = displayText(value);
-  if (!text) {
-    return '';
-  }
-
-  return text
-    .split(',')
-    .map(part => {
-      const trimmed = part.trim();
-      if (!trimmed) {
-        return '';
-      }
-      if (/^[A-Z0-9]+(?:_[A-Z0-9]+)+$/.test(trimmed)) {
-        return formatEnumString(trimmed);
-      }
-      return trimmed;
-    })
-    .filter(Boolean)
-    .join(', ');
 };
 
 const vatPercent = (vatAmount: number, netBeforeVat: number) => {
@@ -598,13 +578,16 @@ const creditLineFromPrintItem = (
   billingItem?: EncounterBillingItemSummary | null,
   serviceDate?: string | null
 ): InsuranceCreditPrintLine => {
-  const taxRate = item.appliedTaxes?.find(tax => tax.rate != null)?.rate;
   const patientAmount =
     money(billingItem?.patientResponsibilityAmount) || money(item.patientShare);
   const sponsorAmount =
     money(billingItem?.insuranceResponsibilityAmount) ||
     money(item.insuranceShare) ||
     (patientAmount > 0 ? 0 : money(item.amount));
+
+  const taxRate = Array.isArray(item.appliedTaxes)
+    ? item.appliedTaxes.find(tax => tax?.rate != null)?.rate
+    : undefined;
 
   const line = buildLine({
     serviceDate: billingItem?.chargedAt || serviceDate,
@@ -760,7 +743,9 @@ const creditLinesFromInvoiceItems = (
       money(billingItem?.insuranceResponsibilityAmount) ||
       money(item.netAmount);
 
-    const taxRate = item.appliedTaxes?.find(tax => tax.rate != null)?.rate;
+    const taxRate = Array.isArray(item.appliedTaxes)
+      ? item.appliedTaxes.find(tax => tax?.rate != null)?.rate
+      : undefined;
     const line = buildLine({
       serviceDate: billingItem?.chargedAt || psp?.createdDate || fallbackDate,
       code,
@@ -1049,6 +1034,9 @@ export const buildInsuranceCreditPrintData = ({
 
   return {
     facilityName: facility.name || resolvedPrintData?.facilityName || '',
+    facilityNameAr: displayText(facility.nameAr),
+    logoUrl: displayText(facility.logoUrl),
+    logoUrls: (facility.logoUrls ?? []).map(url => displayText(url)).filter(Boolean),
     fileNo:
       encounterDetails?.patient?.medicalRecordNumber ||
       patient?.medicalRecordNumber ||
@@ -1072,12 +1060,8 @@ export const buildInsuranceCreditPrintData = ({
       patient?.phoneNumber ||
       resolvedPrintData?.mobileNumber ||
       '',
-    companyVatNo:
-      displayText(facility.vatRegistrationNumber) ||
-      displayText(resolvedPrintData?.vatRegistrationNumber),
-    companyAddress: formatFacilityAddress(
-      facility.address || resolvedPrintData?.facilityAddress
-    ),
+    companyVatNo: '',
+    companyAddress: '',
     invoiceNo: invoice.documentNumber || resolvedPrintData?.invoiceNumber || '',
     invoiceIssueDate: formatIssueDate(invoice.createdDate || resolvedPrintData?.invoiceDate),
     invoiceIssueTime: formatIssueTime(invoice.createdDate || resolvedPrintData?.invoiceDate),
@@ -1095,7 +1079,7 @@ export const buildInsuranceCreditPrintData = ({
     expiryDate: formatExpiryDate(eligibilitySnapshot?.expiryDate || insurance?.expirationDate),
     claimFormNo: displayText(invoice.claimReference || resolvedPrintData?.claimReference),
     episodeNo: episode,
-    sellerId: displayText(facility.providerId || resolvedPrintData?.providerId),
+    sellerId: '',
     groups: groups.length > 0 ? groups : lines.length > 0 ? [{ title: 'Service', lines }] : [],
     lines
   };

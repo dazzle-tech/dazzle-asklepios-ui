@@ -14,21 +14,60 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
     padding: 14px 16px 10px;
   }
 
-  .credit-invoice__facility {
+  .credit-invoice__masthead {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) 110px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid #111;
+  }
+
+  .credit-invoice__brand {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .credit-invoice__brand--end {
+    justify-content: flex-end;
+  }
+
+  .credit-invoice__center {
+    min-width: 0;
     text-align: center;
-    font-size: 12px;
+  }
+
+  .credit-invoice__logo-frame {
+    flex: 0 0 auto;
+    width: 92px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .credit-invoice__logo {
+    display: block;
+    width: 92px;
+    height: 64px;
+    object-fit: contain;
+  }
+
+  .credit-invoice__brand-name {
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    line-height: 1.3;
   }
 
   .credit-invoice__title {
-    margin: 2px 0 10px;
-    padding-bottom: 4px;
-    border-bottom: 1.5px solid #111;
+    margin: 2px 0 0;
     text-align: center;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
+    line-height: 1.3;
   }
 
   .credit-invoice__identity {
