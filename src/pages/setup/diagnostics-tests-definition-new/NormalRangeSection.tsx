@@ -41,6 +41,7 @@ const NormalRangeSection = ({
 }: NormalRangeSectionProps) => {
   const [lovCode, setLovCode] = useState('');
   const [editorKey, setEditorKey] = useState(0);
+  const [showEditor, setShowEditor] = useState(false);
   const previousLovId = useRef(profile.listOfValueId);
   const gender = useEnumOptions('Gender');
   const condition = useEnumOptions('Condition');
@@ -88,6 +89,7 @@ const NormalRangeSection = ({
   useEffect(() => {
     setEditorKey(previous => previous + 1);
     setNormalRange(createRangeState());
+    setShowEditor(false);
   }, [profile.id, profile.resultType, testId]);
 
   const createRangeState = (range?: DiagnosticTestNormalRange) => ({
@@ -108,6 +110,7 @@ const NormalRangeSection = ({
   const startNewRange = () => {
     setEditorKey(previous => previous + 1);
     setNormalRange(createRangeState());
+    setShowEditor(true);
   };
 
   const selectRange = (range: DiagnosticTestNormalRange) => {
@@ -115,6 +118,7 @@ const NormalRangeSection = ({
     setNormalRange({
       ...createRangeState(range)
     });
+    setShowEditor(true);
   };
 
   const selectedLov = lovValuesResponse?.object?.find(
@@ -138,6 +142,8 @@ const NormalRangeSection = ({
           setDeleteModalOpen(true);
         }}
       />
+      {showEditor && (
+      <>
       <Divider>
         <Translate>{normalRange.id ? 'Edit Normal Range' : 'Add Normal Range'}</Translate>
       </Divider>
@@ -224,6 +230,8 @@ const NormalRangeSection = ({
           Save
         </MyButton>
       </div>
+      </>
+      )}
       <DeletionConfirmationModal
         open={deleteModalOpen}
         setOpen={setDeleteModalOpen}
