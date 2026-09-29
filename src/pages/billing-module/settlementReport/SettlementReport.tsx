@@ -14,8 +14,7 @@ import { getSettlementColumns } from './settlementColumns';
 import './styles.less';
 import {
   useGetClaimSettlementsQuery,
-  useLazyGetClaimSettlementsQuery,
-  useGenerateSettlementPdfMutation
+  useGetSettlementNumbersQuery
 } from '@/services/billing/claimSettlementService';
 import SettlementReportButton from './SettlementReportButton';
 
@@ -24,6 +23,7 @@ type AppliedFilters = {
   encounterType: string | null;
   fromDate: string;
   toDate: string;
+  settlementNo: string | null;
 };
 
 const SettlementReportPanel: React.FC = () => {
@@ -31,6 +31,7 @@ const SettlementReportPanel: React.FC = () => {
 
   const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
   const [encounterType, setEncounterType] = useState<string | null>(null);
+  const [settlementNo, setSettlementNo] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters | null>(null);
   const [page, setPage] = useState(0);
@@ -38,6 +39,14 @@ const SettlementReportPanel: React.FC = () => {
 
   const canSearch = Boolean(payerNphiesId && dateRange?.[0] && dateRange?.[1]);
   const hasAppliedFilters = appliedFilters != null;
+  const settlementNumberFilters = canSearch
+    ? {
+        payerNphiesId,
+        encounterType,
+        fromDate: toStartOfDayIso(dateRange?.[0]),
+        toDate: toExclusiveEndIso(dateRange?.[1])
+      }
+    : undefined;
 
   const encounterTypeOptions = useEnumOptions('EncounterType');
 
@@ -55,12 +64,16 @@ const SettlementReportPanel: React.FC = () => {
     [nphiesPayerListResponse]
   );
 
+  const { data: settlementNumbers = [], isFetching: isSettlementNumbersLoading } =
+    useGetSettlementNumbersQuery(settlementNumberFilters, { skip: !canSearch });
+
   const { data, isLoading, isFetching } = useGetClaimSettlementsQuery(
     {
       payerNphiesId: appliedFilters?.payerNphiesId,
       encounterType: appliedFilters?.encounterType,
       fromDate: appliedFilters?.fromDate,
       toDate: appliedFilters?.toDate,
+      settlementNo: appliedFilters?.settlementNo,
       page,
       size: rowsPerPage,
       sort: 'id,desc'
@@ -71,6 +84,10 @@ const SettlementReportPanel: React.FC = () => {
   const rows: ClaimSettlementRowResponse[] = data?.content ?? [];
   const totalCount = data?.totalElements ?? 0;
   const columns = useMemo(() => getSettlementColumns(), []);
+  const settlementNumberOptions = useMemo(
+    () => settlementNumbers.map(number => ({ label: number, value: number })),
+    [settlementNumbers]
+  );
 
   const handleSearch = () => {
     if (!payerNphiesId || !dateRange?.[0] || !dateRange?.[1]) {
@@ -87,7 +104,8 @@ const SettlementReportPanel: React.FC = () => {
       payerNphiesId,
       encounterType,
       fromDate: toStartOfDayIso(dateRange[0]) as string,
-      toDate: toExclusiveEndIso(dateRange[1]) as string
+      toDate: toExclusiveEndIso(dateRange[1]) as string,
+      settlementNo
     });
     setPage(0);
   };
@@ -95,6 +113,7 @@ const SettlementReportPanel: React.FC = () => {
   const handleReset = () => {
     setPayerNphiesId(null);
     setEncounterType(null);
+    setSettlementNo(null);
     setDateRange(null);
     setAppliedFilters(null);
     setPage(0);
@@ -133,7 +152,10 @@ const SettlementReportPanel: React.FC = () => {
                 <SelectPicker
                   data={insuranceCompanyOptions}
                   value={payerNphiesId}
-                  onChange={value => setPayerNphiesId(value)}
+                  onChange={value => {
+                    setPayerNphiesId(value);
+                    setSettlementNo(null);
+                  }}
                   searchable
                   cleanable
                   loading={isPayersLoading}
@@ -151,7 +173,10 @@ const SettlementReportPanel: React.FC = () => {
                 </span>
                 <DateRangePicker
                   value={dateRange}
-                  onChange={value => setDateRange(value)}
+                  onChange={value => {
+                    setDateRange(value);
+                    setSettlementNo(null);
+                  }}
                   placement="bottomStart"
                   placeholder="Select date range"
                   cleanable
@@ -169,10 +194,32 @@ const SettlementReportPanel: React.FC = () => {
                   labelKey="label"
                   valueKey="value"
                   value={encounterType}
-                  onChange={value => setEncounterType(value)}
+                  onChange={value => {
+                    setEncounterType(value);
+                    setSettlementNo(null);
+                  }}
                   searchable
                   cleanable
                   placeholder="All encounter types"
+                  block
+                  container={() => document.body}
+                  menuMaxHeight={280}
+                />
+              </div>
+
+              <div className="sr-field">
+                <span className="sr-field__label">
+                  <Translate>Settlement No</Translate>
+                </span>
+                <SelectPicker
+                  data={settlementNumberOptions}
+                  value={settlementNo}
+                  onChange={value => setSettlementNo(value)}
+                  searchable
+                  cleanable
+                  disabled={!canSearch}
+                  loading={isSettlementNumbersLoading}
+                  placeholder="All settlement numbers"
                   block
                   container={() => document.body}
                   menuMaxHeight={280}

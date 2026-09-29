@@ -42,7 +42,6 @@ export type InvoicePrintData = {
   visitDate?: string;
   facilityName: string;
   facilityAddress?: string;
-  vatRegistrationNumber?: string;
   qrCodePayload: string;
   patientName: string;
   patientMrn: string;
@@ -75,9 +74,87 @@ export type InvoicePrintData = {
 
 export type FacilityPrintInfo = {
   name: string;
+  nameAr?: string;
   address?: string;
-  vatRegistrationNumber?: string;
+  addressEn?: string;
+  addressParts?: FacilityAddressParts;
   providerId?: string;
+  logoUrl?: string;
+  logoUrls?: string[];
+};
+
+export type FacilityAddressParts = {
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
+const readAddressPart = (value: unknown) => {
+  const text = String(value ?? '').trim();
+  if (!text || text === '-' || text === 'null') return '';
+  return text;
+};
+
+const englishCountryLabel = (countryName?: string | null) => {
+  const raw = readAddressPart(countryName);
+  if (!raw) return '';
+  if (/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/.test(raw)) {
+    return raw
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return raw;
+};
+
+export const buildFacilityAddressParts = (facility?: {
+  countryName?: string | null;
+  districtName?: string | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
+} | null): FacilityAddressParts => ({
+  street: readAddressPart(facility?.streetAddress),
+  city: readAddressPart(facility?.districtName),
+  postalCode: readAddressPart(facility?.postalCode),
+  country: readAddressPart(facility?.countryName)
+});
+
+export const buildFacilityAddress = (parts: FacilityAddressParts) =>
+  [
+    parts.street,
+    [parts.city, parts.postalCode].filter(Boolean).join(' '),
+    englishCountryLabel(parts.country)
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+const toTranslationKey = (value: string) =>
+  value.normalize('NFD').replace(/\s+/g, '_').toUpperCase();
+
+/** Arabic address from the system translation dictionary; untranslated parts are left out. */
+export const buildFacilityAddressAr = (
+  parts: FacilityAddressParts | undefined,
+  arabic: Record<string, string> | undefined
+) => {
+  if (!parts || !arabic) return '';
+
+  const translate = (value: string) => {
+    if (!value) return '';
+    return (
+      arabic[value]?.trim() ||
+      arabic[toTranslationKey(value)]?.trim() ||
+      arabic[toTranslationKey(englishCountryLabel(value))]?.trim() ||
+      ''
+    );
+  };
+
+  const street = translate(parts.street);
+  const city = translate(parts.city);
+  const country = translate(parts.country);
+  const cityLine = [city, city ? parts.postalCode : ''].filter(Boolean).join(' ');
+
+  return [street, cityLine, country].filter(Boolean).join('\n');
 };
 
 const formatMoneyValue = (value?: number) => Number(value ?? 0);
@@ -153,14 +230,12 @@ const buildQrCodePayload = ({
   invoiceNumber,
   invoiceDate,
   facilityName,
-  vatRegistrationNumber,
   netAmount,
   taxAmount
 }: {
   invoiceNumber: string;
   invoiceDate: string;
   facilityName: string;
-  vatRegistrationNumber?: string;
   netAmount: number;
   taxAmount: number;
 }) =>
@@ -168,7 +243,6 @@ const buildQrCodePayload = ({
     `Invoice: ${invoiceNumber}`,
     `Date: ${invoiceDate}`,
     `Facility: ${facilityName}`,
-    vatRegistrationNumber ? `VAT: ${vatRegistrationNumber}` : null,
     `Net: ${netAmount.toFixed(2)}`,
     `Tax: ${taxAmount.toFixed(2)}`
   ]
@@ -532,12 +606,10 @@ export const buildInvoicePrintDataFromEncounter = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
@@ -630,12 +702,10 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
