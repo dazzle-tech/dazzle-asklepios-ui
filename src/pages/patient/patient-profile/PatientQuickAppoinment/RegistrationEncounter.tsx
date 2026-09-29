@@ -33,6 +33,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './style.less';
 import clsx from 'clsx';
 
+const CLINIC_EXCLUDED_ENCOUNTER_REASONS = ['URGENT_VISIT'];
+
 const formatSpecialtyLabel = (value?: string | null) => {
   if (!value) return '';
   return value
@@ -68,7 +70,12 @@ const RegistrationEncounter = ({
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT']
   });
-  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason', {
+    exclude:
+      !isReadOnly && localEncounter?.encounterType === 'CLINIC'
+        ? CLINIC_EXCLUDED_ENCOUNTER_REASONS
+        : undefined
+  });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
@@ -417,6 +424,22 @@ useEffect(() => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localEncounter?.departmentId]);
+
+  useEffect(() => {
+    if (isReadOnly) return;
+    if (localEncounter?.encounterType !== 'CLINIC') return;
+    if (localEncounter?.encounterReason !== 'URGENT_VISIT') return;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (prevEncounter?.encounterReason !== 'URGENT_VISIT') return prevEncounter;
+      return { ...prevEncounter, encounterReason: null };
+    });
+  }, [
+    isReadOnly,
+    localEncounter?.encounterType,
+    localEncounter?.encounterReason,
+    setLocalEncounter
+  ]);
 
   useEffect(() => {
     if (localEncounter?.encounterType) return;

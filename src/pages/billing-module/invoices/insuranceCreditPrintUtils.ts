@@ -12,6 +12,7 @@ import type {
 import { formatEnumString } from '@/utils';
 
 import type {
+  FacilityAddressParts,
   FacilityPrintInfo,
   InvoicePrintData,
   InvoicePrintLineItem
@@ -52,6 +53,21 @@ export type InsuranceCreditPrintLine = {
   brandMedicationId?: number | null;
 };
 
+/** Static payer company block until insurance master data is wired. */
+export const STATIC_INVOICE_COMPANY = {
+  name: 'TAWUNIYA COOPERATIVE INSURANCE',
+  nameAr: 'التعاونية للتأمين',
+  address: [
+    'المركز الرئيسي',
+    'هاتف: +966-11-2525800',
+    'بريد إلكتروني: vatinvoice@tawuniya.com',
+    'طريق الثمامة التخصصي - حي الربيع - الرياض 11632',
+    'Al Thumama Road Riyadh 11632 Riyadh Saudi Arabia'
+  ].join('\n'),
+  crNumber: '1010061695',
+  vatNumber: '300002788500003'
+};
+
 export type InsuranceCreditPrintGroup = {
   title: string;
   lines: InsuranceCreditPrintLine[];
@@ -60,6 +76,8 @@ export type InsuranceCreditPrintGroup = {
 export type InsuranceCreditPrintData = {
   facilityName: string;
   facilityNameAr: string;
+  facilityAddressEn: string;
+  facilityAddressParts?: FacilityAddressParts;
   logoUrl: string;
   logoUrls: string[];
   fileNo: string;
@@ -1035,6 +1053,8 @@ export const buildInsuranceCreditPrintData = ({
   return {
     facilityName: facility.name || resolvedPrintData?.facilityName || '',
     facilityNameAr: displayText(facility.nameAr),
+    facilityAddressEn: displayText(facility.addressEn),
+    facilityAddressParts: facility.addressParts,
     logoUrl: displayText(facility.logoUrl),
     logoUrls: (facility.logoUrls ?? []).map(url => displayText(url)).filter(Boolean),
     fileNo:

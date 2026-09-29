@@ -9,7 +9,9 @@ import { useBranding } from '@/hooks/useBranding';
 import { useGetSystemConfigDetailsQuery } from '@/services/systemConfigService';
 
 import { classifyCreditInvoiceGroup } from './creditInvoiceGroups';
+import { buildFacilityAddressAr } from './invoicePrintUtils';
 import {
+  STATIC_INVOICE_COMPANY,
   sumInsuranceCreditLines,
   type InsuranceCreditPrintData,
   type InsuranceCreditPrintLine
@@ -38,7 +40,10 @@ const ARABIC_LABELS: Record<string, string> = {
   NATIONAL_ID: 'الهوية الوطنية',
   CONTACT: 'رقم التواصل',
   COMPANY_VAT_NO: 'الرقم الضريبي للمنشأة',
+  COMPANY_NAME: 'اسم الشركة',
   COMPANY_ADDRESS: 'عنوان الشركة',
+  CR_NUMBER: 'رقم السجل التجاري',
+  VAT_NUMBER: 'الرقم الضريبي',
   INVOICE_NO: 'رقم الفاتورة',
   INVOICE_ISSUE_DATE: 'تاريخ الفاتورة',
   INVOICE_ISSUE_TIME: 'وقت إصدار الفاتورة',
@@ -299,6 +304,13 @@ const CreditDocument: React.FC<{
   logoSrc: string;
   secondary: (label: string) => string;
 }> = ({ data, logoSrc, secondary }) => {
+  const translations = useAppSelector(state => state.ui.translations) as unknown as
+    | Record<string, Record<string, string> | undefined>
+    | undefined;
+  const facilityAddressAr = buildFacilityAddressAr(
+    data.facilityAddressParts,
+    translations?.ar ?? translations?.AR
+  );
   const fromGroups = Array.isArray(data?.groups) ? data.groups.filter(Boolean) : [];
   const fromGroupLines = fromGroups.flatMap(group =>
     Array.isArray(group?.lines) ? group.lines.filter(Boolean) : []
@@ -332,15 +344,18 @@ const CreditDocument: React.FC<{
     <div className="credit-invoice">
       <div className="credit-invoice__sheet">
         <div className="credit-invoice__masthead">
-          <div className="credit-invoice__brand">
-            <CreditLogo src={logoSrc} />
+          <div className="credit-invoice__address">
+            {data.facilityAddressEn}
           </div>
-          <div className="credit-invoice__center">
+          <div className="credit-invoice__brand">
+            <div className="credit-invoice__logo-frame">
+              <CreditLogo src={logoSrc} />
+            </div>
             <div className="credit-invoice__brand-name">{data.facilityName}</div>
             <div className="credit-invoice__title">Out-Patient Invoice Credit - Detailed</div>
           </div>
-          <div className="credit-invoice__brand credit-invoice__brand--end">
-            <CreditLogo src={logoSrc} />
+          <div className="credit-invoice__address credit-invoice__address--ar" dir="rtl">
+            {facilityAddressAr}
           </div>
         </div>
 
@@ -371,10 +386,10 @@ const CreditDocument: React.FC<{
               {data.contact}
             </Field>
             <Field label="Company VAT No" secondary={secondary('Company VAT No')}>
-              {data.companyVatNo}
+              {STATIC_INVOICE_COMPANY.vatNumber}
             </Field>
             <Field label="Company Address" secondary={secondary('Company Address')}>
-              {data.companyAddress}
+              {STATIC_INVOICE_COMPANY.address}
             </Field>
           </div>
           <div>

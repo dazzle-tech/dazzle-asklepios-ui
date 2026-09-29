@@ -99,6 +99,8 @@ import { useFinancialDocumentTypes } from './invoices/useFinancialDocumentTypes'
 
 import {
 
+  buildFacilityAddress,
+  buildFacilityAddressParts,
   buildInvoicePrintDataFromIssuedInvoice,
 
   type InvoicePrintData
@@ -388,12 +390,15 @@ const Invoices: React.FC<InvoicesProps> = ({
     const logoUrls = [systemLogo, sidebarLogo]
       .map(readText)
       .filter((url, index, list) => Boolean(url) && list.indexOf(url) === index);
+    const addressParts = buildFacilityAddressParts(facilityRecord);
 
     return {
       name:
         facilityRecord?.name ??
         facilityRecord?.facilityName ??
         'Healthcare Facility',
+      addressEn: buildFacilityAddress(addressParts),
+      addressParts,
       nameAr: readText(
         facilityExtras?.arabicName ??
           facilityExtras?.nameAr ??

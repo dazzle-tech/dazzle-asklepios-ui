@@ -16,9 +16,10 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
 
   .credit-invoice__masthead {
     display: grid;
-    grid-template-columns: 110px minmax(0, 1fr) 110px;
-    align-items: center;
-    gap: 12px;
+    direction: ltr;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: 16px;
     margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1.5px solid #111;
@@ -26,27 +27,32 @@ export const INSURANCE_CREDIT_PRINT_CSS = `
 
   .credit-invoice__brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    min-width: 0;
-  }
-
-  .credit-invoice__brand--end {
-    justify-content: flex-end;
-  }
-
-  .credit-invoice__center {
-    min-width: 0;
+    gap: 4px;
     text-align: center;
   }
 
+  .credit-invoice__address {
+    min-width: 0;
+    padding-top: 4px;
+    font-size: 11px;
+    line-height: 1.45;
+    text-align: left;
+    white-space: pre-line;
+  }
+
+  .credit-invoice__address--ar {
+    text-align: right;
+  }
+
   .credit-invoice__logo-frame {
-    flex: 0 0 auto;
-    width: 92px;
-    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 92px;
+    height: 64px;
+    margin: 0 auto 2px;
   }
 
   .credit-invoice__logo {
