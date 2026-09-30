@@ -7107,6 +7107,7 @@ export interface PendingClaimInvoiceResponse {
   claimSubType?: string | null;
   matchingItemCount?: number | null;
   matchingNetAmount?: number | null;
+  selectable?: boolean | null;
 }
 
 export interface ClaimBatchSubmitResponse {

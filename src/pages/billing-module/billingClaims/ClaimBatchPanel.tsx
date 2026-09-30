@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Checkbox, DateRangePicker, Form, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, DateRangePicker, Form, Tag, Tooltip, Whisper } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -30,6 +30,12 @@ import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 type ClaimBatchPanelProps = {
   onSubmitted?: () => void;
 };
+
+const UNAPPROVED_RESULT_LABEL = 'Result not approved';
+const UNAPPROVED_RESULT_MESSAGE =
+  'Select is locked because a test result on this invoice is not Result Approved.';
+
+const isSelectableInvoice = (row: PendingClaimInvoiceResponse) => row.selectable !== false;
 
 const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const dispatch = useAppDispatch();
@@ -100,6 +106,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   };
 
   const rows = useMemo(() => pendingInvoices ?? [], [pendingInvoices]);
+  const selectableInvoiceIds = useMemo(
+    () =>
+      rows
+        .filter(isSelectableInvoice)
+        .map(row => row.financialDocumentId)
+        .filter((id): id is number => id != null),
+    [rows]
+  );
 
   const toggleRow = (invoiceId: number) => {
     setSelectedInvoiceIds(current =>
@@ -110,16 +124,15 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   };
 
   const toggleAll = () => {
-    const ids = rows
-      .map(row => row.financialDocumentId)
-      .filter((id): id is number => id != null);
-
-    if (selectedInvoiceIds.length === ids.length) {
+    if (
+      selectableInvoiceIds.length > 0 &&
+      selectedInvoiceIds.length === selectableInvoiceIds.length
+    ) {
       setSelectedInvoiceIds([]);
       return;
     }
 
-    setSelectedInvoiceIds(ids);
+    setSelectedInvoiceIds(selectableInvoiceIds);
   };
 
   const handleSearch = () => {
@@ -195,11 +208,15 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       key: 'select',
       title: (
         <Checkbox
-          checked={rows.length > 0 && selectedInvoiceIds.length === rows.length}
-          indeterminate={
-            selectedInvoiceIds.length > 0 && selectedInvoiceIds.length < rows.length
+          checked={
+            selectableInvoiceIds.length > 0 &&
+            selectedInvoiceIds.length === selectableInvoiceIds.length
           }
-          disabled={!rows.length}
+          indeterminate={
+            selectedInvoiceIds.length > 0 &&
+            selectedInvoiceIds.length < selectableInvoiceIds.length
+          }
+          disabled={!selectableInvoiceIds.length}
           onChange={toggleAll}
         />
       ),
@@ -210,11 +227,50 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           return null;
         }
 
-        return (
+        const checkbox = (
           <Checkbox
             checked={selectedInvoiceIds.includes(invoiceId)}
+            disabled={!isSelectableInvoice(row)}
             onChange={() => toggleRow(invoiceId)}
           />
+        );
+
+        if (isSelectableInvoice(row)) {
+          return checkbox;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
+          >
+            <span>{checkbox}</span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'selectionReason',
+      title: 'Selection',
+      width: 170,
+      render: (row: PendingClaimInvoiceResponse) => {
+        if (isSelectableInvoice(row)) {
+          return '-';
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
+          >
+            <span>
+              <Tag color="red" size="sm">
+                {UNAPPROVED_RESULT_LABEL}
+              </Tag>
+            </span>
+          </Whisper>
         );
       }
     },
