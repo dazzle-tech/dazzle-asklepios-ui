@@ -239,6 +239,12 @@ const SettlementReportPanel: React.FC = () => {
                     selectedInsuranceCompany?.label ?? ''
                   }
                 />
+                <SettlementReportButton
+                  appliedFilters={appliedFilters}
+                  insuranceCompanyName={selectedInsuranceCompany?.label ?? ''}
+                  groupBySettlement
+                  buttonLabel="Print by Settlement"
+                />
               </div>
             </div>
           </div>
