@@ -1,8 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import LovValueCell from '@/components/LovValueCell';
 import Translate from '@/components/Translate';
-import { useGetLovAllValuesQuery } from '@/services/setupService';
-import { initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
 import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import React, { useEffect } from 'react';
@@ -25,26 +24,6 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId, resultTypeAtEn
     }
   }, [profileTestId]);
   const profileTest = profileTests?.[0];
-  // list of value new function
-  const { data: allLovValues } =
-    useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-
-  const resolveLovKeysDisplay = (lovKeys?: string[]) => {
-    if (!Array.isArray(lovKeys) || !lovKeys.length) return ' ';
-    if (!allLovValues?.object) return ' ';
-
-    return lovKeys
-      .map(key =>
-        allLovValues.object.find(
-          v => String(v.key) === String(key)
-        )?.lovDisplayVale
-      )
-      .filter(Boolean)
-      .join(', ') || ' ';
-  };
-
-
-
   const columns = [
     {
       key: 'gender',
@@ -90,9 +69,9 @@ const NormalRangeModal = ({ open, setOpen, ranges, profileTestId, resultTypeAtEn
         }
 
         if (resultType === 'LOV') {
-          return Array.isArray(r.lovKeys) && r.lovKeys.length
-            ? resolveLovKeysDisplay(r.lovKeys)
-            : '-';
+          return Array.isArray(r.lovKeys) && r.lovKeys.length ? (
+            <LovValueCell valueKey={r.lovKeys.join(',')} />
+          ) : '-';
         }
 
         if (resultType === 'TEXT') {

@@ -1127,7 +1127,9 @@ const resolveResultDisplay = (row: any) => {
             setOpen={setOpenNormalRangeModal}
             ranges={
               selectedResult
-                ? normalRangesMap[selectedResult.profileTestId] ?? []
+                ? (normalRangesMap[selectedResult.profileTestId] ?? []).filter(
+                    (range: any) => range.isActive === true
+                  )
                 : []
             }
             profileTestId={selectedResult?.profileTestId ?? null}
