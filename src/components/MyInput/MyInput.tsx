@@ -64,8 +64,12 @@ const focusNextField = (e: any) => {
   }
 };
 
+const toFieldTestId = (fieldName: string) =>
+  `test-id-${fieldName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
+
 type MyInputProps = {
   fieldName: string;
+  testId?: string;
   fieldType?:
   | 'text'
   | 'password'
@@ -151,6 +155,7 @@ type MyInputProps = {
 
 const MyInput = ({
   fieldName,
+  testId,
   fieldType = 'text',
   record,
   rightAddonwidth = null,
@@ -3124,6 +3129,7 @@ onBlur={() => {
   return (
     <Form.Group
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
+      data-testid={testId ?? toFieldTestId(fieldName)}
     >
       <Form.ControlLabel>
         {showLabel && (
