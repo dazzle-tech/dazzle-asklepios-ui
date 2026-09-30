@@ -108,9 +108,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<any>({
-    fromDate: null,
-    toDate: null
+  const [dateFilter, setDateFilter] = useState<any>(() => {
+    const toDate = new Date();
+    const fromDate = new Date(toDate);
+    fromDate.setDate(fromDate.getDate() - 14);
+
+    return { fromDate, toDate };
   });
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
