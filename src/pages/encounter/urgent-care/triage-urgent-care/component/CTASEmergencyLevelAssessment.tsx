@@ -24,7 +24,17 @@ const CTASEmergencyLevelAssessment = ({
 }: EmergencyLevelAssessmentProps) => {
     const dispatch = useAppDispatch();
 
-    const emergencyLevelEnum = useEnumOptions('EmergencyLevel');
+    const emergencyLevelEnum = useEnumOptions('EmergencyLevel'
+        , {
+    labelOverrides: {
+        RESUSCITATION: 'Level 1 - Resuscitation',
+        EMERGENT: 'Level 2 - Emergent',
+        URGENT: 'Level 3 - Urgent',
+        LESS_URGENT: 'Level 4 - Less Urgent',
+        NON_URGENT: 'Level 5 - Non-Urgent',
+    }
+}
+);
 
     const isBlank = (v: any) => v == null || String(v).trim() === "";
     const handleSave = () => {
