@@ -5,4 +5,6 @@ envsubst \
   < /usr/share/nginx/html/config.template.js \
   > /usr/share/nginx/html/config.js
 
+node /opt/sql-adapter/scripts/stimulsoft-data-adapter.js &
+
 exec nginx -g 'daemon off;'
