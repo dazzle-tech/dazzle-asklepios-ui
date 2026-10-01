@@ -537,16 +537,19 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
         notify({ msg: `Cancel ${selectedRows.length} tests successfully`, sev: 'success' })
       );
       setSelectedRows([]);
-      setSelectedRows([]);
       CloseConfirmDeleteModel();
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
-    } catch (e) {
+    } catch (e: any) {
       const msg = extractErrorMessage(e) || 'Cancel failed';
-      dispatch(notify({ msg, sev: 'error' }));
+      const isWarning =
+        e?.data?.params === 'test_already_started' ||
+        msg.toLowerCase().includes('already started') ||
+        e?.status === 400 ||
+        e?.data?.status === 400;
+      dispatch(notify({ msg, sev: isWarning ? 'warning' : 'error' }));
     }
-
-  }
+  };
   // const handleCancle = async () => {
   //   console.log("Selected Rows",selectedRows)
   //   try {
