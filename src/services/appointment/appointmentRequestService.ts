@@ -91,6 +91,13 @@ export const appointmentRequestService = createApi({
         method: 'DELETE'
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'AppointmentRequest', id }, 'AppointmentRequest']
+    }),
+
+    countRequestedAppointmentRequests: builder.query<number, void>({
+      query: () => ({
+        url: '/api/patient/appointment-requests/count/requested'
+      }),
+      providesTags: ['AppointmentRequest']
     })
   })
 });
@@ -103,6 +110,8 @@ export const {
   useGetAppointmentRequestsQuery,
   useLazyGetAppointmentRequestsQuery,
   useCancelAppointmentRequestMutation,
-  useDeleteAppointmentRequestMutation
+  useDeleteAppointmentRequestMutation,
+  useCountRequestedAppointmentRequestsQuery,
+  useLazyCountRequestedAppointmentRequestsQuery
 } = appointmentRequestService;
 
