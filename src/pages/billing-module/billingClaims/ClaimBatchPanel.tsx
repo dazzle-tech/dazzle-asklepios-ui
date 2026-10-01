@@ -37,18 +37,32 @@ const UNAPPROVED_RESULT_MESSAGE =
 
 const isSelectableInvoice = (row: PendingClaimInvoiceResponse) => row.selectable !== false;
 
+const toIsoDateString = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const dispatch = useAppDispatch();
   const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
   const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
   const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(currentMonthToTodayRange);
+  const [encounterDateRange, setEncounterDateRange] = useState<[Date, Date] | null>(null);
   const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
   const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
   const [appliedClaimType, setAppliedClaimType] = useState<string | null>(null);
   const [appliedClaimSubType, setAppliedClaimSubType] = useState<string | null>(null);
   const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
+  const [appliedEncounterDateFrom, setAppliedEncounterDateFrom] = useState<string | null>(null);
+  const [appliedEncounterDateTo, setAppliedEncounterDateTo] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
@@ -61,7 +75,9 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       fromDate: appliedFromDate,
       toDate: appliedToDate,
       claimType: appliedClaimType,
-      claimSubType: appliedClaimSubType
+      claimSubType: appliedClaimSubType,
+      encounterDateFrom: appliedEncounterDateFrom,
+      encounterDateTo: appliedEncounterDateTo
     },
     {
       skip:
@@ -159,6 +175,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     setAppliedClaimSubType(claimSubType);
     setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
     setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
+    setAppliedEncounterDateFrom(toIsoDateString(encounterDateRange?.[0]));
+    setAppliedEncounterDateTo(toIsoDateString(encounterDateRange?.[1]));
     setSelectedInvoiceIds([]);
   };
 
@@ -286,6 +304,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       width: 100,
       render: (row: PendingClaimInvoiceResponse) => row?.encounter?.encounterNumber ?? '-'
     },
+      {
+      key :'encounterDate',
+      title: 'Encounter Date',
+      width: 150,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.encounter?.createdDate ? formatDateWithoutSeconds(String(row.encounter.createdDate)) : '-'
+    },
+  
     {
       key: 'encounterType',
       title: 'Visit type',
@@ -345,6 +371,7 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) =>
         row.createdDate ? formatDateWithoutSeconds(String(row.createdDate)) : '-'
     },
+  
      {
       key: 'actions',
       title: ' ',
@@ -397,89 +424,114 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
 
       <Form fluid className="claims-batch-filters-form">
         <div className="claims-batch-filters">
-          <MyInput
-            fieldLabel="Payor"
-            fieldName="payerNphiesId"
-            fieldType="select"
-            selectData={payorOptions}
-            selectDataLabel="label"
-            selectDataValue="nphiesId"
-            record={{ payerNphiesId }}
-            setRecord={(value: { payerNphiesId: number | string | null }) =>
-              setPayerNphiesId(
-                value.payerNphiesId == null || value.payerNphiesId === ''
-                  ? null
-                  : String(value.payerNphiesId).trim()
-              )
-            }
-            cleanable
-            loading={isNphiesPayersLoading}
-            placeholder={
-              isNphiesPayersLoading
-                ? 'Loading payors...'
-                : payorOptions.length === 0
-                  ? 'No payors found'
-                  : 'Select payor'
-            }
-            width="280px"
-          />
 
-          <MyInput
-            fieldLabel="Type"
-            fieldName="claimType"
-            fieldType="select"
-            selectData={WASEEL_CLAIM_TYPE_OPTIONS}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={{ claimType }}
-            setRecord={handleClaimTypeChange}
-            searchable={false}
-            cleanable={false}
-            placeholder="Select type"
-            width="180px"
-          />
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      minWidth: '280px'
+    }}
+  >
+    <MyInput
+      fieldLabel="Payor"
+      fieldName="payerNphiesId"
+      fieldType="select"
+      selectData={payorOptions}
+      selectDataLabel="label"
+      selectDataValue="nphiesId"
+      record={{ payerNphiesId }}
+      setRecord={(value: { payerNphiesId: number | string | null }) =>
+        setPayerNphiesId(
+          value.payerNphiesId == null || value.payerNphiesId === ''
+            ? null
+            : String(value.payerNphiesId).trim()
+        )
+      }
+      cleanable
+      loading={isNphiesPayersLoading}
+      placeholder={
+        isNphiesPayersLoading
+          ? 'Loading payors...'
+          : payorOptions.length === 0
+            ? 'No payors found'
+            : 'Select payor'
+      }
+      width="280px"
+    />
 
-          <MyInput
-            fieldLabel="Sub Type"
-            fieldName="claimSubType"
-            fieldType="select"
-            selectData={subTypeOptions}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={{ claimSubType }}
-            setRecord={(value: { claimSubType: string | null }) =>
-              setClaimSubType(value.claimSubType)
-            }
-            searchable={false}
-            cleanable={false}
-            disabled={!isProfessionalClaimType(claimType)}
-            placeholder="Select sub type"
-            width="180px"
-          />
+    <div className="claims-batch-filters__dates">
+      <span className="claims-batch-filters__label">
+        Encounter Period
+      </span>
+      <DateRangePicker
+        value={encounterDateRange}
+        onChange={value => setEncounterDateRange(value)}
+        placement="bottomStart"
+        placeholder="Select encounter period"
+        cleanable
+        style={{ width: 280 }}
+      />
+    </div>
+  </div>
 
-          <div className="claims-batch-filters__dates">
-            <span className="claims-batch-filters__label">Period</span>
-            <DateRangePicker
-              value={dateRange}
-              onChange={value => setDateRange(value)}
-              placement="bottomStart"
-              placeholder="Select period"
-            />
-          </div>
+  <MyInput
+    fieldLabel="Type"
+    fieldName="claimType"
+    fieldType="select"
+    selectData={WASEEL_CLAIM_TYPE_OPTIONS}
+    selectDataLabel="label"
+    selectDataValue="value"
+    record={{ claimType }}
+    setRecord={handleClaimTypeChange}
+    searchable={false}
+    cleanable={false}
+    placeholder="Select type"
+    width="180px"
+  />
 
-          <MyButton appearance="primary" onClick={handleSearch}>
-            Search invoices
-          </MyButton>
+  <MyInput
+    fieldLabel="Sub Type"
+    fieldName="claimSubType"
+    fieldType="select"
+    selectData={subTypeOptions}
+    selectDataLabel="label"
+    selectDataValue="value"
+    record={{ claimSubType }}
+    setRecord={(value: { claimSubType: string | null }) =>
+      setClaimSubType(value.claimSubType)
+    }
+    searchable={false}
+    cleanable={false}
+    disabled={!isProfessionalClaimType(claimType)}
+    placeholder="Select sub type"
+    width="180px"
+  />
 
-          <MyButton
-            appearance="primary"
-            loading={submitting}
-            disabled={!selectedInvoiceIds.length || submitting}
-            onClick={handleSubmitBatch}
-          >
-            Submit selected ({selectedInvoiceIds.length})
-          </MyButton>
-        </div>
+  <div className="claims-batch-filters__dates">
+    <span className="claims-batch-filters__label">Period</span>
+    <DateRangePicker
+      value={dateRange}
+      onChange={value => setDateRange(value)}
+      placement="bottomStart"
+      placeholder="Select period"
+    />
+  </div>
+
+  <MyButton appearance="primary" onClick={handleSearch}>
+    Search invoices
+  </MyButton>
+
+  <MyButton
+    appearance="primary"
+    loading={submitting}
+    disabled={!selectedInvoiceIds.length || submitting}
+    onClick={handleSubmitBatch}
+  >
+    Submit selected ({selectedInvoiceIds.length})
+  </MyButton>
+
+</div>
       </Form>
 
       <div className="bc-table-wrap">
@@ -562,7 +614,6 @@ const toExclusiveEndIso = (date?: Date | null) => {
   end.setHours(0, 0, 0, 0);
   end.setDate(end.getDate() + 1);
   return end.toISOString();
-
 };
 
 const calculateAge = (dateOfBirth?: string | Date | null) => {
