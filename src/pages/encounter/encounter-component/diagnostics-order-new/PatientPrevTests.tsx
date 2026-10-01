@@ -175,6 +175,12 @@ const queryParams =
         title: <Translate>STATUS</Translate>,
         flexGrow: 1,
         render: (row: any) => formatEnumString(row.status)
+      },
+      {
+        key: 'processingStatus',
+        title: <Translate>PROCESSING STATUS</Translate>,
+        flexGrow: 1,
+        render: (row: any) => formatEnumString(row.processingStatus)
       }
     ];
 
@@ -239,6 +245,16 @@ const queryParams =
             searchable={false}
           />
         )}
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', height: '100%', marginTop: 22 }}>
+          <Checkbox
+            className="show-cancelled"
+            checked={showCancelled}
+            onChange={(_, checked) => setShowCancelled(checked)}
+          >
+            <Translate>Show Cancelled</Translate>
+          </Checkbox>
+        </div>
       </Form>
     );
 
@@ -263,16 +279,7 @@ const queryParams =
     const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-      <>
       <div dir={dir}>
-        <Checkbox
-         className="show-cancelled"
-          checked={showCancelled}
-          onChange={(_, checked) => setShowCancelled(checked)}
-        >
-                <Translate>Show Cancelled</Translate>
-        </Checkbox>
-
         <MyTable
           loading={isLoading}
           data={normalizedRows}
@@ -285,7 +292,6 @@ const queryParams =
           onRowsPerPageChange={handleRowsPerPageChange}
         />
       </div>
-      </>
     );
   }
 );

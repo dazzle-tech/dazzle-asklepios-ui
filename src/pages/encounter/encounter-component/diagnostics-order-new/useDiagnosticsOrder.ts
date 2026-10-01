@@ -138,7 +138,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 100,
+    size: 1000,
     sort: 'id,asc',
     // timestamp: Date.now()
 
@@ -227,13 +227,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
   const [leftItems, setLeftItems] = useState<any[]>([]);
+  const prevOpenTestsModalRef = React.useRef(false);
 
   useEffect(() => {
-    if (openTestsModal) {
-      setLeftItems(testsList);
+    if (openTestsModal && !prevOpenTestsModalRef.current) {
       setSelectedTestsList([]);
     }
-  }, [openTestsModal, testsList]);
+    prevOpenTestsModalRef.current = openTestsModal;
+  }, [openTestsModal]);
 
   useEffect(() => {
     const selectedIds = new Set(selectedTestsList.map(t => t.id ?? t.key));

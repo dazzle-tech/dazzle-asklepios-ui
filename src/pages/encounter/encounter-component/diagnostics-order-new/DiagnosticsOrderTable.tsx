@@ -189,6 +189,14 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       render: (rowData: any) => <>{formatEnumString(rowData.status)}</>
     },
     {
+      key: 'processingStatus',
+      dataKey: 'processingStatus',
+      title: <Translate>PROCESSING STATUS</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => <>{formatEnumString(rowData.processingStatus)}</>
+    },
+    {
       key: 'receivedDepartmentId',
       dataKey: 'receivedDepartmentId',
       title: <Translate>RECEIVED Department</Translate>,
