@@ -304,14 +304,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       width: 100,
       render: (row: PendingClaimInvoiceResponse) => row?.encounter?.encounterNumber ?? '-'
     },
-      {
-      key :'encounterDate',
+    {
+      key: 'encounterDate',
       title: 'Encounter Date',
       width: 150,
       render: (row: PendingClaimInvoiceResponse) =>
         row.encounter?.createdDate ? formatDateWithoutSeconds(String(row.encounter.createdDate)) : '-'
     },
-  
+
     {
       key: 'encounterType',
       title: 'Visit type',
@@ -371,8 +371,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) =>
         row.createdDate ? formatDateWithoutSeconds(String(row.createdDate)) : '-'
     },
-  
-     {
+
+    {
       key: 'actions',
       title: ' ',
       render: (row: PendingClaimInvoiceResponse) => {
@@ -393,11 +393,11 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
                 <MyButton
                   size="small"
                   backgroundColor="violet"
-                  onClick={ () => {
-                      setEmrEncounter(row?.encounter);
-                      setEmrPatient(row?.patient);
-                      setOpenEMRModal(true);
-                   
+                  onClick={() => {
+                    setEmrEncounter(row?.encounter);
+                    setEmrPatient(row?.patient);
+                    setOpenEMRModal(true);
+
                   }}
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
@@ -423,115 +423,125 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       </div>
 
       <Form fluid className="claims-batch-filters-form">
-        <div className="claims-batch-filters">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: '12px',
+            flexWrap: 'wrap',
+            marginBottom: '12px'
+          }}
+        >
+          <div style={{ width: '260px' }}>
+            <MyInput
+              fieldLabel="Payor"
+              width="100%"
+              fieldName="payerNphiesId"
+              fieldType="select"
+              selectData={payorOptions}
+              selectDataLabel="label"
+              selectDataValue="nphiesId"
+              record={{ payerNphiesId }}
+              setRecord={(value: { payerNphiesId: number | string | null }) =>
+                setPayerNphiesId(
+                  value.payerNphiesId == null || value.payerNphiesId === ''
+                    ? null
+                    : String(value.payerNphiesId).trim()
+                )
+              }
+              cleanable
+              loading={isNphiesPayersLoading}
+            />
+          </div>
 
-  <div
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-      minWidth: '280px'
-    }}
-  >
-    <MyInput
-      fieldLabel="Payor"
-      fieldName="payerNphiesId"
-      fieldType="select"
-      selectData={payorOptions}
-      selectDataLabel="label"
-      selectDataValue="nphiesId"
-      record={{ payerNphiesId }}
-      setRecord={(value: { payerNphiesId: number | string | null }) =>
-        setPayerNphiesId(
-          value.payerNphiesId == null || value.payerNphiesId === ''
-            ? null
-            : String(value.payerNphiesId).trim()
-        )
-      }
-      cleanable
-      loading={isNphiesPayersLoading}
-      placeholder={
-        isNphiesPayersLoading
-          ? 'Loading payors...'
-          : payorOptions.length === 0
-            ? 'No payors found'
-            : 'Select payor'
-      }
-      width="280px"
-    />
+          <div style={{ minWidth: '140px' }}>
+            <MyInput
+              fieldLabel="Type"
+              fieldName="claimType"
+              fieldType="select"
+              selectData={WASEEL_CLAIM_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimType }}
+              setRecord={handleClaimTypeChange}
+              searchable={false}
+              cleanable={false}
+            />
+          </div>
 
-    <div className="claims-batch-filters__dates">
-      <span className="claims-batch-filters__label">
-        Encounter Period
-      </span>
-      <DateRangePicker
-        value={encounterDateRange}
-        onChange={value => setEncounterDateRange(value)}
-        placement="bottomStart"
-        placeholder="Select encounter period"
-        cleanable
-        style={{ width: 280 }}
-      />
-    </div>
-  </div>
+          <div style={{ minWidth: '180px' }}>
+            <MyInput
+              fieldLabel="Sub Type"
+              fieldName="claimSubType"
+              fieldType="select"
+              selectData={subTypeOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimSubType }}
+              setRecord={(value: { claimSubType: string | null }) =>
+                setClaimSubType(value.claimSubType)
+              }
+              searchable={false}
+              cleanable={false}
+              disabled={!isProfessionalClaimType(claimType)}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Period
+            </label>
 
-  <MyInput
-    fieldLabel="Type"
-    fieldName="claimType"
-    fieldType="select"
-    selectData={WASEEL_CLAIM_TYPE_OPTIONS}
-    selectDataLabel="label"
-    selectDataValue="value"
-    record={{ claimType }}
-    setRecord={handleClaimTypeChange}
-    searchable={false}
-    cleanable={false}
-    placeholder="Select type"
-    width="180px"
-  />
+            <DateRangePicker
+              value={dateRange}
+              onChange={value => setDateRange(value)}
+              placement="bottomStart"
+              size="sm"
+              style={{ width: '220px' }}
+            />
+          </div>
 
-  <MyInput
-    fieldLabel="Sub Type"
-    fieldName="claimSubType"
-    fieldType="select"
-    selectData={subTypeOptions}
-    selectDataLabel="label"
-    selectDataValue="value"
-    record={{ claimSubType }}
-    setRecord={(value: { claimSubType: string | null }) =>
-      setClaimSubType(value.claimSubType)
-    }
-    searchable={false}
-    cleanable={false}
-    disabled={!isProfessionalClaimType(claimType)}
-    placeholder="Select sub type"
-    width="180px"
-  />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Encounter Period
+            </label>
 
-  <div className="claims-batch-filters__dates">
-    <span className="claims-batch-filters__label">Period</span>
-    <DateRangePicker
-      value={dateRange}
-      onChange={value => setDateRange(value)}
-      placement="bottomStart"
-      placeholder="Select period"
-    />
-  </div>
+            <DateRangePicker
+              value={encounterDateRange}
+              onChange={value => setEncounterDateRange(value)}
+              placement="bottomStart"
+              cleanable
+              size="sm"
+              style={{ width: '220px' }}
+              container={() => document.body}
+            />
+          </div>
 
-  <MyButton appearance="primary" onClick={handleSearch}>
-    Search invoices
-  </MyButton>
+          <MyButton
+            appearance="primary"
+            onClick={handleSearch}
+          >
+            Search
+          </MyButton>
 
-  <MyButton
-    appearance="primary"
-    loading={submitting}
-    disabled={!selectedInvoiceIds.length || submitting}
-    onClick={handleSubmitBatch}
-  >
-    Submit selected ({selectedInvoiceIds.length})
-  </MyButton>
-
-</div>
+          <MyButton
+            appearance="primary"
+            loading={submitting}
+            disabled={!selectedInvoiceIds.length || submitting}
+            onClick={handleSubmitBatch}
+          >
+            Submit ({selectedInvoiceIds.length})
+          </MyButton>
+        </div>
       </Form>
 
       <div className="bc-table-wrap">
@@ -539,10 +549,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           columns={columns}
           data={rows}
           loading={isFetching}
-          height={280}
+          height={320}
           totalCount={rows.length}
         />
-         <MyModal
+        <MyModal
           open={openEMRModal}
           setOpen={setOpenEMRModal}
           title="Electronic Medical Record"
