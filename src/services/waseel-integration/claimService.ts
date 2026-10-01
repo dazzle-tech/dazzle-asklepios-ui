@@ -24,15 +24,13 @@ type PagedResult<T> = {
   links?: ReturnType<typeof parseLinkHeader>;
 };
 
-const mapPaged = (
+const mapPaged = <T,>(
   response: any,
   meta: { response?: { headers?: Headers } }
-): PagedResult<ClaimTrackingResponse> => {
+): PagedResult<T> => {
   const headers = meta?.response?.headers;
 
-  const rows: ClaimTrackingResponse[] = Array.isArray(response)
-    ? response
-    : response?.content ?? [];
+  const rows: T[] = Array.isArray(response) ? response : response?.content ?? [];
 
   const totalCount =
     Number(headers?.get('X-Total-Count')) ||
@@ -58,7 +56,7 @@ export const claimApi = createApi({
         method: 'GET',
         params: { page, size, sort }
       }),
-      transformResponse: mapPaged,
+      transformResponse: mapPaged<ClaimTrackingResponse>,
       providesTags: ['ClaimTracking']
     }),
 
@@ -145,7 +143,7 @@ export const claimApi = createApi({
     }),
 
     getPendingClaimInvoices: builder.query<
-      PendingClaimInvoiceResponse[],
+      PagedResult<PendingClaimInvoiceResponse>,
       {
         payorId?: number | null;
         payerNphiesId?: string | null;
@@ -155,6 +153,8 @@ export const claimApi = createApi({
         claimSubType?: string | null;
         encounterDateFrom?: string | null;
         encounterDateTo?: string | null;
+        page: number;
+        size: number;
       }
     >({
       query: ({
@@ -165,7 +165,9 @@ export const claimApi = createApi({
         claimType,
         claimSubType,
         encounterDateFrom,
-        encounterDateTo
+        encounterDateTo,
+        page,
+        size
       }) => ({
         url: '/api/patient/internal/waseel/claims/pending-invoices',
         method: 'GET',
@@ -177,9 +179,12 @@ export const claimApi = createApi({
           ...(claimType ? { claimType } : {}),
           ...(claimSubType ? { claimSubType } : {}),
           ...(encounterDateFrom ? { encounterDateFrom } : {}),
-          ...(encounterDateTo ? { encounterDateTo } : {})
+          ...(encounterDateTo ? { encounterDateTo } : {}),
+          page,
+          size
         }
       }),
+      transformResponse: mapPaged<PendingClaimInvoiceResponse>,
       providesTags: ['ClaimTracking']
     }),
 
