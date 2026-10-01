@@ -153,9 +153,20 @@ export const claimApi = createApi({
         toDate?: string | null;
         claimType?: string | null;
         claimSubType?: string | null;
+        encounterDateFrom?: string | null;
+        encounterDateTo?: string | null;
       }
     >({
-      query: ({ payorId, payerNphiesId, fromDate, toDate, claimType, claimSubType }) => ({
+      query: ({
+        payorId,
+        payerNphiesId,
+        fromDate,
+        toDate,
+        claimType,
+        claimSubType,
+        encounterDateFrom,
+        encounterDateTo
+      }) => ({
         url: '/api/patient/internal/waseel/claims/pending-invoices',
         method: 'GET',
         params: {
@@ -164,7 +175,9 @@ export const claimApi = createApi({
           ...(fromDate ? { fromDate } : {}),
           ...(toDate ? { toDate } : {}),
           ...(claimType ? { claimType } : {}),
-          ...(claimSubType ? { claimSubType } : {})
+          ...(claimSubType ? { claimSubType } : {}),
+          ...(encounterDateFrom ? { encounterDateFrom } : {}),
+          ...(encounterDateTo ? { encounterDateTo } : {})
         }
       }),
       providesTags: ['ClaimTracking']
