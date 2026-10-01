@@ -143,6 +143,14 @@ module.exports = {
   devServer: {
     host: '0.0.0.0',
     port: 3100,
+    // HIS JWT / cookies on /proxy otherwise make Node answer 431, which
+    // Stimulsoft displays as "Connection error: Connection error".
+    server: {
+      type: 'http',
+      options: {
+        maxHeaderSize: 1024 * 1024,
+      },
+    },
     hot: true,
     liveReload: false,
     allowedHosts: 'all',
