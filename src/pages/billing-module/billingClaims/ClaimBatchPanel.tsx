@@ -64,11 +64,13 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const [appliedEncounterDateFrom, setAppliedEncounterDateFrom] = useState<string | null>(null);
   const [appliedEncounterDateTo, setAppliedEncounterDateTo] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
   const [openEMRModal, setOpenEMRModal] = useState(false);
 
-  const { data: pendingInvoices = [], isFetching, refetch } = useGetPendingClaimInvoicesQuery(
+  const { data: pendingInvoicesPage, isFetching, refetch } = useGetPendingClaimInvoicesQuery(
     {
       payorId: appliedPayorId,
       payerNphiesId: appliedPayerNphiesId,
@@ -77,7 +79,9 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       claimType: appliedClaimType,
       claimSubType: appliedClaimSubType,
       encounterDateFrom: appliedEncounterDateFrom,
-      encounterDateTo: appliedEncounterDateTo
+      encounterDateTo: appliedEncounterDateTo,
+      page,
+      size: rowsPerPage
     },
     {
       skip:
@@ -121,7 +125,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     }
   };
 
-  const rows = useMemo(() => pendingInvoices ?? [], [pendingInvoices]);
+  const rows = pendingInvoicesPage?.data ?? [];
+  const totalCount = pendingInvoicesPage?.totalCount ?? 0;
   const selectableInvoiceIds = useMemo(
     () =>
       rows
@@ -130,6 +135,9 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
         .filter((id): id is number => id != null),
     [rows]
   );
+  const selectedOnPageCount = selectableInvoiceIds.filter(id =>
+    selectedInvoiceIds.includes(id)
+  ).length;
 
   const toggleRow = (invoiceId: number) => {
     setSelectedInvoiceIds(current =>
@@ -140,15 +148,16 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   };
 
   const toggleAll = () => {
-    if (
-      selectableInvoiceIds.length > 0 &&
-      selectedInvoiceIds.length === selectableInvoiceIds.length
-    ) {
-      setSelectedInvoiceIds([]);
+    const pageIds = new Set(selectableInvoiceIds);
+    const allPageSelected =
+      selectableInvoiceIds.length > 0 && selectedOnPageCount === selectableInvoiceIds.length;
+
+    if (allPageSelected) {
+      setSelectedInvoiceIds(current => current.filter(id => !pageIds.has(id)));
       return;
     }
 
-    setSelectedInvoiceIds(selectableInvoiceIds);
+    setSelectedInvoiceIds(current => [...new Set([...current, ...selectableInvoiceIds])]);
   };
 
   const handleSearch = () => {
@@ -178,6 +187,7 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     setAppliedEncounterDateFrom(toIsoDateString(encounterDateRange?.[0]));
     setAppliedEncounterDateTo(toIsoDateString(encounterDateRange?.[1]));
     setSelectedInvoiceIds([]);
+    setPage(0);
   };
 
   const handleSubmitBatch = async () => {
@@ -228,11 +238,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
         <Checkbox
           checked={
             selectableInvoiceIds.length > 0 &&
-            selectedInvoiceIds.length === selectableInvoiceIds.length
+            selectedOnPageCount === selectableInvoiceIds.length
           }
           indeterminate={
-            selectedInvoiceIds.length > 0 &&
-            selectedInvoiceIds.length < selectableInvoiceIds.length
+            selectedOnPageCount > 0 && selectedOnPageCount < selectableInvoiceIds.length
           }
           disabled={!selectableInvoiceIds.length}
           onChange={toggleAll}
@@ -550,7 +559,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           data={rows}
           loading={isFetching}
           height={320}
-          totalCount={rows.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
         />
         <MyModal
           open={openEMRModal}
