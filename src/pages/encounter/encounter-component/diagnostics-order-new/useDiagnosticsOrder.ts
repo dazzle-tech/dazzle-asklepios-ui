@@ -67,12 +67,25 @@ const extractErrorMessage = (error: any) => {
 
   const data = error?.data;
 
+  if (typeof data === 'string' && data.trim()) {
+    return data;
+  }
+
+  if (
+    data?.params === 'test_already_started' ||
+    data?.detail?.toLowerCase()?.includes('already started') ||
+    data?.message?.toLowerCase()?.includes('already started')
+  ) {
+    return data?.detail || data?.message || 'Cannot cancel because this test has already started';
+  }
+
   let msg =
-    data?.messageKey ||
-    data?.properties?.messageKey ||
-    data?.properties?.message ||
-    data?.message ||
     data?.detail ||
+    data?.message ||
+    data?.properties?.message ||
+    (data?.title && data?.title !== 'Bad Request' ? data?.title : undefined) ||
+    data?.properties?.messageKey ||
+    data?.messageKey ||
     data?.title ||
     error?.error ||
     'Operation failed';
