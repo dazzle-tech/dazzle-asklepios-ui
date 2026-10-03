@@ -8,6 +8,7 @@ import BodyMeasurements from './BodyMeasurements';
 import PatientObservationsComplaints from './PatientObservationsComplaints';
 import PainAssessment from './PainAssessment';
 import AdditionalMeasurements from './AdditionalMeasurements';
+import SepsisEarlyDetection from './SepsisEarlyDetection';
 import { Patient, PatientEncounter } from '@/types/model-types-new';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
@@ -116,6 +117,11 @@ console.log(localPatient);
                 />
               </Col>
             </Row>
+          </Col>
+        </Row>
+        <Row style={{ marginTop: 16 }}>
+          <Col md={24}>
+            <SepsisEarlyDetection patientId={Number(localPatient?.id)} />
           </Col>
         </Row>
       </Form>

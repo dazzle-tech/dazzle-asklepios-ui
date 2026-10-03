@@ -156,6 +156,7 @@ import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
+import { sepsisEarlyDetectionService } from './services/ai-services/sepsisEarlyDetectionService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { patientProblemService } from './services/patients/patientProblemService';
@@ -516,6 +517,7 @@ export const store = configureStore({
     //AI Services
     // AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
+    [sepsisEarlyDetectionService.reducerPath]: sepsisEarlyDetectionService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
@@ -726,6 +728,7 @@ export const store = configureStore({
         priceListAttributesService.middleware,
         prescriptionPService.middleware,
         clinicalSummaryService.middleware,
+        sepsisEarlyDetectionService.middleware,
         clinicalRecommendationsService.middleware,
         medicationTestOrdersValidationService.middleware,
         patientProblemService.middleware,
