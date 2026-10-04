@@ -9,12 +9,14 @@ import AddSocialHistory from './AddSocialHistory';
 import {
   useCancelSocialHistoryMutation,
   useDeleteSocialHistoryMutation,
-  useGetSocialHistoryQuery
+  useGetSocialHistoryQuery,
+  useAddSocialHistoryMutation,
+  useUpdateSocialHistoryMutation
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { Form } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -25,11 +27,15 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
-const SocialHistory = ({ patient, edit, toShowData = false }) => {
+const SocialHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] = useState<number | null>(null);
   const [previewRow, setPreviewRow] = useState<any>(null);
 
   const [openCancelModal, setOpenCancelModal] = useState(false);
@@ -52,7 +58,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
-  const { data, isFetching } = useGetSocialHistoryQuery(
+  const { data, isFetching, refetch } = useGetSocialHistoryQuery(
     {
       patientId,
       page,
@@ -81,7 +87,82 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     setPreviewRow(prev => (prev?.id === row.id ? null : row));
   };
 
+  const [addSocialHistory, { isLoading: isSavingFreeText }] =
+    useAddSocialHistoryMutation();
+  const [updateSocialHistory, { isLoading: isUpdatingFreeText }] =
+    useUpdateSocialHistoryMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    if (!isValidPatientId) {
+      dispatch(notify({ msg: 'Invalid patient.', sev: 'error' }));
+      return;
+    }
+
+    const payload = {
+      patientId,
+      isCurrentSmoker: null,
+      smokeStartDate: null,
+      cigaretteAmount: null,
+      cigaretteType: null,
+      isPreviousSmoker: null,
+      smokeQuitDate: null,
+      exposureToSecondHandSmoke: null,
+      alcoholConsumption: null,
+      typeOfAlcohol: null,
+      alcoholSinceWhen: null,
+      substanceUse: null,
+      route: null,
+      frequency: null,
+      physicalLimitation: null,
+      diagnosedEatingDisorders: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateSocialHistory({
+          ...payload,
+          id: editingFreeTextId
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await addSocialHistory(payload).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
   const handleEdit = (row: any) => {
+    if (row?.patientIsFree === true) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({
+        freeText: row.freeText || ''
+      });
+      return;
+    }
+
     const formData = {
       id: row.id,
       patientId: row.patientId,
@@ -165,9 +246,57 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
 
   const columns = [
     {
+      key: 'freeText',
+      title: (
+        <div style={{ minWidth: 350, width: '100%' }}>
+          <Translate>FREE TEXT</Translate>
+        </div>
+      ),
+      minWidth: 350,
+      flexGrow: 3,
+      render: (row: any) => {
+        if (row?.patientIsFree !== true) {
+          return '-';
+        }
+
+        const text = row?.freeText?.trim() || '-';
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 500,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {text}
+              </Tooltip>
+            }
+          >
+            <div
+              style={{
+                display: 'block',
+                width: '100%',
+                minWidth: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {text}
+            </div>
+          </Whisper>
+        );
+      }
+    },
+    {
       key: 'isCurrentSmoker',
       title: 'CURRENT SMOKER',
-      render: r => (r.isCurrentSmoker ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.isCurrentSmoker ? 'Yes' : 'No')
     },
     {
       key: 'smokeStartDate',
@@ -179,7 +308,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     {
       key: 'isPreviousSmoker',
       title: 'PREVIOUS SMOKER',
-      render: r => (r.isPreviousSmoker ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.isPreviousSmoker ? 'Yes' : 'No')
     },
     {
       key: 'smokeQuitDate',
@@ -189,7 +318,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     {
       key: 'alcoholConsumption',
       title: 'ALCOHOL',
-      render: r => (r.alcoholConsumption ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.alcoholConsumption ? 'Yes' : 'No')
     },
     {
       key: 'status',
@@ -216,7 +345,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
       key: 'ExposureToSecondHandSmoke',
       title: 'SECOND HAND SMOKE',
       expandable: true,
-      render: r => (r.exposureToSecondHandSmoke ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.exposureToSecondHandSmoke ? 'Yes' : 'No')
     },
     {
       key: 'createdDate',
@@ -347,22 +476,60 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
         <SectionContainer
           title="Social History"
           action={
-            !toShowData && (
-              <MyButton
-                disabled={edit}
-                prefixIcon={() => <PlusIcon />}
-                onClick={() => {
-                  setEditData(null);
-                  setOpen(true);
-                }}
-              >
-                Add
-              </MyButton>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {!toShowData && (
+                <MyButton
+                  disabled={edit}
+                  prefixIcon={() => <PlusIcon />}
+                  onClick={() => {
+                    setEditData(null);
+                    setOpen(true);
+                  }}
+                >
+                  Add
+                </MyButton>
+              )}
 
-            )
+              {showFreeText && (
+                <MyButton
+                  disabled={
+                    edit ||
+                    isSavingFreeText ||
+                    isUpdatingFreeText ||
+                    !freeTextRecord.freeText?.trim()
+                  }
+                  onClick={handleSaveFreeText}
+                >
+                  {isSavingFreeText || isUpdatingFreeText
+                    ? 'Saving...'
+                    : editingFreeTextId !== null
+                      ? 'Update'
+                      : 'Save'}
+                </MyButton>
+              )}
+            </div>
           }
           content={
             <div dir={dir}>
+              {showFreeText && (
+                <Form
+                  fluid
+                  formValue={freeTextRecord}
+                  onChange={(value: any) => setFreeTextRecord(value)}
+                >
+                  <div style={{ marginBottom: 20, width: '100%' }}>
+                    <MyInput
+                      fieldType="textarea"
+                      fieldLabel="Free Text"
+                      fieldName="freeText"
+                      record={freeTextRecord}
+                      setRecord={setFreeTextRecord}
+                      disabled={edit || isSavingFreeText || isUpdatingFreeText}
+                      width="100%"
+                    />
+                  </div>
+                </Form>
+              )}
 
               
                 <div className="margin-bottom-10 show-cancelled">
@@ -396,7 +563,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                 }}
               />
 
-              {previewRow && (
+              {previewRow && previewRow.patientIsFree !== true && (
                 <div ref={previewRef} className="margin-top-20">
                   <SectionContainer
                     title="Social History Details"

@@ -31,28 +31,56 @@ const handleCrudError = (err: any, dispatch: any) => {
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const normalizeMsg = (msg: string) => {
       const m = (msg || '').toLowerCase();
+
       if (m.includes('must not be null')) return 'is required';
       if (m.includes('must not be blank')) return 'must not be blank';
       if (m.includes('size must be between')) return 'length is out of range';
       if (m.includes('must be greater')) return 'value is too small';
       if (m.includes('must be less')) return 'value is too large';
-      if (m.includes('must be a date in the past or in the present')) return 'cannot be a future date';
+      if (m.includes('must be a date in the past or in the present')) {
+        return 'cannot be a future date';
+      }
+
       return msg || 'invalid value';
     };
 
-    const lines = data.fieldErrors.map((fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`);
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`
+    );
 
-    dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'warning' }));
+    dispatch(
+      notify({
+        msg:
+          `Please fix the following fields:\n${lines.join('\n')}` +
+          suffix,
+        sev: 'warning'
+      })
+    );
+
     return;
   }
 
   const messageProp: string = data?.message || '';
-  const humanMsg = data?.detail || data?.title || messageProp || 'Unexpected error';
+  const humanMsg =
+    data?.detail ||
+    data?.title ||
+    messageProp ||
+    'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'warning'
+    })
+  );
 };
 
-const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
+const AddCurrentMedication = ({
+  open,
+  setOpen,
+  initialData,
+  patient
+}) => {
   const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState<CurrentMedicationForm>({
@@ -62,18 +90,24 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
     dosage: null,
     unit: null,
     frequency: null,
-    startDate: null
+    startDate: null,
+    patientIsFree: false,
+    freeText: null
   });
 
   const [startDateResetKey, setStartDateResetKey] = useState(0);
 
-  const [addCurrentMedication] = useAddCurrentMedicationMutation();
-  const [updateCurrentMedication] = useUpdateCurrentMedicationMutation();
+  const [addCurrentMedication] =
+    useAddCurrentMedicationMutation();
 
-  const { data: activeIngredientsResponse } = useGetActiveIngredientsQuery({
-    page: 0,
-    size: 1000
-  });
+  const [updateCurrentMedication] =
+    useUpdateCurrentMedicationMutation();
+
+  const { data: activeIngredientsResponse } =
+    useGetActiveIngredientsQuery({
+      page: 0,
+      size: 1000
+    });
 
   const unitOptions = useEnumOptions('UOM');
   const frequencyOptions = useEnumOptions('MedFrequency');
@@ -90,7 +124,9 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: false,
+        freeText: null
       });
     } else {
       setFormData({
@@ -100,20 +136,33 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
         dosage: null,
         unit: null,
         frequency: null,
-        startDate: null
+        startDate: null,
+        patientIsFree: false,
+        freeText: null
       });
     }
+
     setStartDateResetKey(prev => prev + 1);
   }, [initialData, open, patient?.id]);
 
   const handleSave = async () => {
     if (!formData.activeIngredientId) {
-      dispatch(notify({ msg: 'Medication is required', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Medication is required',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
     if (!formData.startDate) {
-      dispatch(notify({ msg: 'Start Date is required', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Start Date is required',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
@@ -126,11 +175,20 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
           dosage: formData.dosage,
           unit: formData.unit,
           frequency: formData.frequency,
-          startDate: formData.startDate
+          startDate: formData.startDate,
+          patientIsFree: false,
+          freeText: null
         };
 
         await updateCurrentMedication(payload).unwrap();
-        dispatch(notify({ msg: 'Medication updated successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Medication updated successfully',
+            sev: 'success'
+          })
+        );
+
         setOpen(false);
       } else {
         const payload: CurrentMedicationCreate = {
@@ -139,11 +197,20 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
           dosage: formData.dosage,
           unit: formData.unit,
           frequency: formData.frequency,
-          startDate: formData.startDate
+          startDate: formData.startDate,
+          patientIsFree: false,
+          freeText: null
         };
-        console.log('Adding current medication with payload:', payload);
+
         await addCurrentMedication(payload).unwrap();
-        dispatch(notify({ msg: 'Medication added successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Medication added successfully',
+            sev: 'success'
+          })
+        );
+
         setFormData({
           id: undefined,
           patientId: Number(patient?.id),
@@ -151,8 +218,11 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
           dosage: null,
           unit: null,
           frequency: null,
-          startDate: null
+          startDate: null,
+          patientIsFree: false,
+          freeText: null
         });
+
         setStartDateResetKey(prev => prev + 1);
       }
     } catch (err) {
@@ -167,7 +237,6 @@ const AddCurrentMedication = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid className="fields-container">
       <Row gutter={16}>
-        {/* Medication */}
         <Col md={12}>
           <MyInput
             width="100%"

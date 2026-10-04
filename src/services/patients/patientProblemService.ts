@@ -17,6 +17,20 @@ type PagedResult<T> = {
   links?: any;
 };
 
+
+type PatientProblemCreateRequest = {
+  patientId: number;
+  condition?: string | null;
+  dateOfDiagnosis?: string | Date | null;
+  conditionStatus?: string | null;
+  type?: string | null;
+  dateOfResolution?: string | Date | null;
+  byPatient?: boolean | null;
+  sourceOfInformation?: string | null;
+  patientIsFree: boolean;
+  freeText?: string | null;
+};
+
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -58,7 +72,10 @@ export const patientProblemService = createApi({
     }),
 
     /* CREATE */
-    addPatientProblem: builder.mutation<PatientProblem, PatientProblem>({
+    addPatientProblem: builder.mutation<
+      PatientProblem,
+      PatientProblemCreateRequest
+    >({
       query: body => ({
         url: '/api/patient/problems',
         method: 'POST',

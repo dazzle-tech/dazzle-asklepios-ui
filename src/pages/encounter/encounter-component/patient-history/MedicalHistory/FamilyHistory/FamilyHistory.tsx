@@ -18,7 +18,9 @@ import AddFamilyHistory from './AddFamilyHistory';
 
 import {
   useCancelFamilyHistoryMutation,
-  useGetFamilyHistoryQuery
+  useGetFamilyHistoryQuery,
+  useAddFamilyHistoryMutation,
+  useUpdateFamilyHistoryMutation
 } from '@/services/patients/familyHistoryService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
@@ -26,11 +28,17 @@ import './familyHistory.less';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
-const FamilyHistory = ({ patient, edit, toShowData = false }) => {
+import { Form, Tooltip, Whisper } from 'rsuite';
+
+const FamilyHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] = useState<number | null>(null);
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -47,7 +55,10 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
     cancellationReason: ''
   });
 
-  const { data: familyHistoryData, isLoading } = useGetFamilyHistoryQuery({
+  const patientId = Number(patient?.id);
+  const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
+
+  const { data: familyHistoryData, isLoading, refetch } = useGetFamilyHistoryQuery({
     patientId: Number(patient?.id),
     showCancelled,
     page,
@@ -64,7 +75,69 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   const relations = useEnumOptions('Relations');
 
   // ACTIONS
+  const [addFamilyHistory, { isLoading: isSavingFreeText }] =
+    useAddFamilyHistoryMutation();
+  const [updateFamilyHistory, { isLoading: isUpdatingFreeText }] =
+    useUpdateFamilyHistoryMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    if (!isValidPatientId) {
+      dispatch(notify({ msg: 'Invalid patient.', sev: 'error' }));
+      return;
+    }
+
+    const payload = {
+      patientId,
+      condition: null,
+      relation: null,
+      inheritedDiseases: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateFamilyHistory({
+          ...payload,
+          id: editingFreeTextId
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await addFamilyHistory(payload).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
   const handleEdit = (row: any) => {
+    if (row?.patientIsFree === true) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({
+        freeText: row.freeText || ''
+      });
+      return;
+    }
     setSelectedRow(row);
     setOpen(true);
   };
@@ -123,6 +196,54 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   // TABLE COLUMNS
   const columns = [
     {
+      key: 'freeText',
+      title: (
+        <div style={{ minWidth: 350, width: '100%' }}>
+          <Translate>FREE TEXT</Translate>
+        </div>
+      ),
+      minWidth: 350,
+      flexGrow: 3,
+      render: (row: any) => {
+        if (!row?.patientIsFree) {
+          return '-';
+        }
+
+        const text = row?.freeText?.trim() || '-';
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 500,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {text}
+              </Tooltip>
+            }
+          >
+            <div
+              style={{
+                display: 'block',
+                width: '100%',
+                minWidth: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {text}
+            </div>
+          </Whisper>
+        );
+      }
+    },
+    {
       key: 'condition',
       title: 'CONDITION',
       flexGrow: 4,
@@ -139,7 +260,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
       key: 'inheritedDiseases',
       title: 'INHERITED DISEASES',
       flexGrow: 3,
-      render: row => (row.inheritedDiseases ? 'Yes' : 'No')
+      render: row => (row.patientIsFree === true ? '-' : row.inheritedDiseases ? 'Yes' : 'No')
     },
     {
       key: 'status',
@@ -279,22 +400,59 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
     <div className="medical-container-div">
       <SectionContainer
         action={
-          !toShowData && (
-            <MyButton
-              disabled={edit}
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setSelectedRow(null);
-                setOpen(true);
-              }}
-            >
-              Add
-            </MyButton>
-          )
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {!toShowData && (
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  setSelectedRow(null);
+                  setOpen(true);
+                }}
+              >
+                Add
+              </MyButton>
+            )}
+
+            {showFreeText && (
+              <MyButton
+                disabled={
+                  edit ||
+                  isSavingFreeText ||
+                  isUpdatingFreeText ||
+                  !freeTextRecord.freeText?.trim()
+                }
+                onClick={handleSaveFreeText}
+              >
+                {isSavingFreeText || isUpdatingFreeText
+                  ? 'Saving...'
+                  : editingFreeTextId !== null
+                    ? 'Update'
+                    : 'Save'}
+              </MyButton>
+            )}
+          </div>
         }
         title="Family History"
         content={
           <>
+            {showFreeText && (
+              <Form
+                fluid
+                formValue={freeTextRecord}
+                onChange={(value: any) => setFreeTextRecord(value)}
+              >
+                <MyInput
+                  fieldType="textarea"
+                  fieldLabel="Free Text"
+                  fieldName="freeText"
+                  record={freeTextRecord}
+                  setRecord={setFreeTextRecord}
+                  disabled={edit || isSavingFreeText || isUpdatingFreeText}
+                  width="100%"
+                />
+              </Form>
+            )}
            
               <div className="margin-bottom-10 show-cancelled">
                 <MyInput

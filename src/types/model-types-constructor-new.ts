@@ -3384,6 +3384,8 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   dateOfResolution: null,
   byPatient: true,
   sourceOfInformation: null,
+  patientIsFree: false,
+  freeText: null,
   status: 'ACTIVE',
   cancelledBy: null,
   cancelledDate: null,

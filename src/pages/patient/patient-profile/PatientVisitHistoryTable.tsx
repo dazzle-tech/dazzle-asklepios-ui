@@ -27,7 +27,7 @@ import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import EncounterCancellationModal from './EncounterCancellationModal';
 import {
   useGetPractitionersBulkMutation,
   useGetPractitionersBySpecialityAndDepartmentQuery,
@@ -53,6 +53,7 @@ import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentSer
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const EMPTY_ENCOUNTERS: any[] = [];
 
@@ -61,8 +62,15 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
   const getTooltipContainer = () => document.body;
 
+    const encounterCancellationReasonOptions = useEnumOptions('EncounterCancellationReason');
+
+
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState({
+    reason: '',
+    otherReason: ''
+  });
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [openReassignModal, setOpenReassignModal] = useState(false);
   const [actionsMenuKey, setActionsMenuKey] = useState(0);
@@ -164,26 +172,55 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     }
   }, [encounterRefetchTrigger, refetch]);
 
-  const handleCancel = async () => {
-    if (!selectedVisit) return;
+    const handleCancel = async () => {
+      if (!selectedVisit) return;
 
-    try {
-      await cancelEncounter({ id: selectedVisit.id }).unwrap();
-      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-      setOpenCancelModal(false);
-      refetch();
-    } catch (err: any) {
-      const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
-        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
-      };
+      try {
+        await cancelEncounter({
+          id: selectedVisit.id,
+          reason: cancelObject.reason,
+          otherReason:
+            cancelObject.reason === 'OTHER'
+              ? cancelObject.otherReason.trim()
+              : null
+        }).unwrap();
 
-      const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+        dispatch(
+          notify({
+            msg: 'Cancelled Successfully',
+            sev: 'success'
+          })
+        );
 
-      dispatch(notify({ msg, sev: 'error' }));
-    }
-  };
+        setOpenCancelModal(false);
+
+        setCancelObject({
+          reason: '',
+          otherReason: ''
+        });
+
+        refetch();
+      } catch (err: any) {
+        const errorMap: Record<string, string> = {
+          'error.cancel.notAllowed.rule':
+            'Cancellation is not allowed for the current encounter status.',
+          'error.cancel.notAllowed.hasObservation':
+            'Cannot cancel encounter with observations',
+          'error.cancel.reason.required':
+            'Cancellation reason is required',
+          'error.cancel.otherReason.required':
+            'Other cancellation reason is required'
+        };
+
+        const backendMessage = err?.data?.message;
+
+        const msg =
+          errorMap[backendMessage] ||
+          'Error cancelling encounter';
+
+        dispatch(notify({ msg, sev: 'error' }));
+      }
+    };
 
   const handleComplete = async (row: any) => {
     try {
@@ -549,18 +586,24 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           ) : null}
 
           {canCancel ? (
-            <Dropdown.Item
-              onClick={() => {
-                closeActionsMenu();
-                setSelectedVisit(row);
-                setOpenCancelModal(true);
-              }}
-            >
-              <div className="visit-history__dropdown-item visit-history__dropdown-item--danger">
-                <FontAwesomeIcon icon={faRectangleXmark} />
-                <Translate>Cancel Encounter</Translate>
-              </div>
-            </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => {
+              closeActionsMenu();
+              setSelectedVisit(row);
+
+              setCancelObject({
+                reason: '',
+                otherReason: ''
+              });
+
+              setOpenCancelModal(true);
+            }}
+          >
+            <div className="visit-history__dropdown-item visit-history__dropdown-item--danger">
+              <FontAwesomeIcon icon={faRectangleXmark} />
+              <Translate>Cancel Encounter</Translate>
+            </div>
+          </Dropdown.Item>
           ) : null}
         </Dropdown.Menu>
       </Popover>
@@ -680,13 +723,12 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           height={580}
         />
 
-        <DeletionConfirmationModal
+        <EncounterCancellationModal
           open={openCancelModal}
           setOpen={setOpenCancelModal}
-          actionButtonFunction={handleCancel}
-          confirmationQuestion="Cancel this encounter?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
+          handleCancel={handleCancel}
+          object={cancelObject}
+          setObject={setCancelObject}
         />
 
         <EncounterDischarge
