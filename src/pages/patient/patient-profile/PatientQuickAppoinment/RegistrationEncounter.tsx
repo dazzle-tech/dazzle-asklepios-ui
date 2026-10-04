@@ -32,7 +32,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import './style.less';
 import clsx from 'clsx';
-
+import { formatDateWithoutSeconds } from '@/utils';
+import { FaRegUser, FaRegCalendarAlt} from 'react-icons/fa';
 const CLINIC_EXCLUDED_ENCOUNTER_REASONS = ['URGENT_VISIT'];
 
 const formatSpecialtyLabel = (value?: string | null) => {
@@ -886,6 +887,43 @@ useEffect(() => {
           />
         </div>
       </div>
+      <div className="encounter-audit-info">
+  <div className="encounter-audit-title">
+    <span>Audit Information</span>
+  </div>
+
+  <div className="encounter-audit-content">
+    <div className="audit-item">
+      <div className="audit-icon">
+        <FaRegUser  />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created By</span>
+        <span className="audit-value">
+          {localEncounter?.createdBy || '-'}
+        </span>
+      </div>
+    </div>
+
+    <div className="audit-divider" />
+
+    <div className="audit-item">
+      <div className="audit-icon">
+         <FaRegCalendarAlt />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created At</span>
+        <span className="audit-value">
+          {localEncounter?.createdDate
+            ? formatDateWithoutSeconds(localEncounter.createdDate)
+            : '-'}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
     </Form>
   </div>
   );
