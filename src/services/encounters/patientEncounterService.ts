@@ -159,6 +159,7 @@ export const patientEncounterService = createApi({
         hasOrder?: boolean;
         isObserved?: boolean;
         practitionerId?: Id;
+        sortByPriority?: boolean
       } & PagedParams
     >({
       query: ({
@@ -176,6 +177,7 @@ export const patientEncounterService = createApi({
         hasOrder,
         isObserved,
         practitionerId,
+        sortByPriority,
         page,
         size,
         sort = 'id,desc'
@@ -200,6 +202,7 @@ export const patientEncounterService = createApi({
             hasOrder,
             isObserved,
             practitionerId,
+            sortByPriority,
             page,
             size,
             sort
