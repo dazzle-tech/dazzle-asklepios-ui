@@ -568,10 +568,11 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    cancelEncounter: builder.mutation<PatientEncounter, { id: Id }>({
-      query: ({ id }) => ({
+    cancelEncounter: builder.mutation<PatientEncounter, { id: Id; cancellationReason?: string }>({
+      query: ({ id, cancellationReason }) => ({
         url: `/api/patient/encounter/${id}/cancel`,
-        method: 'POST'
+        method: 'POST',
+        ...(cancellationReason ? { body: { cancellationReason } } : {})
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),

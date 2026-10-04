@@ -867,6 +867,30 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
   };
 
+  const createNewOrder = async () => {
+    const createPayload: DiagnosticOrderCreateDTO = {
+      patientId,
+      encounterId,
+      labStatus: DiagnosticStatus.NEW,
+      radStatus: DiagnosticStatus.NEW,
+      fromDepartmentId: selectedDepartment?.departmentId,
+      fromFacilityId: selectedDepartment?.facilityId
+    };
+
+    const response = await createOrder(createPayload).unwrap();
+    setOrders(response);
+
+    dispatch(
+      notify({
+        msg: `New Order Created (ID: ${response?.orderNumber ?? response?.id})`,
+        sev: 'success'
+      })
+    );
+
+    await ordersRefetch();
+    return response;
+  };
+
   const handleSaveOrders = async () => {
     setLoading(true);
 
@@ -876,27 +900,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
 
     try {
-      const createPayload: DiagnosticOrderCreateDTO = {
-        patientId,
-        encounterId,
-        labStatus: DiagnosticStatus.NEW,
-        radStatus: DiagnosticStatus.NEW,
-        fromDepartmentId: selectedDepartment?.departmentId,
-        fromFacilityId: selectedDepartment?.facilityId
-      };
-
-      const response = await createOrder(createPayload).unwrap();
-      setOrders(response);
+      await createNewOrder();
       setOpenTestsModal(true);
-
-      dispatch(
-        notify({
-          msg: `New Order Created (ID: ${response?.orderNumber ?? response?.id})`,
-          sev: 'success'
-        })
-      );
-
-      await ordersRefetch();
     } catch (error) {
       console.error('Create order failed:', error);
       dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
@@ -990,8 +995,49 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     setRescheduleAppointmentsModalOpen(true);
   };
 
-  const handleRecallFavoriteTest = async (t: any) => {
-    const _orderId = orders?.id;
+  const isDraftOrder = (o: any) => o?.status === 'NEW' || o?.saveDraft === true;
+
+  // recall into the open draft order if there is one, otherwise create a new order first
+  const handleRecallFavoriteTests = async (tests: any[]) => {
+    if (!tests?.length) return;
+
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return;
+    }
+
+    let targetOrderId = orders?.id && isDraftOrder(orders) ? orders.id : null;
+
+    if (!targetOrderId) {
+      const draftOrder = ordersList.find(isDraftOrder);
+      if (draftOrder) {
+        setOrders(draftOrder);
+        targetOrderId = draftOrder.id;
+      }
+    }
+
+    if (!targetOrderId) {
+      try {
+        setLoading(true);
+        const newOrder = await createNewOrder();
+        targetOrderId = newOrder?.id;
+      } catch (error) {
+        console.error('Create order failed:', error);
+        dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // sequential: each test may open the uncovered-as-cash confirmation
+    for (const t of tests) {
+      await handleRecallFavoriteTest(t, targetOrderId);
+    }
+  };
+
+  const handleRecallFavoriteTest = async (t: any, targetOrderId?: number) => {
+    const _orderId = targetOrderId ?? orders?.id;
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
@@ -1189,6 +1235,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     handleEdit,
     handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
+    handleRecallFavoriteTests,
 
     // helpers
     normalizeOrderTest,

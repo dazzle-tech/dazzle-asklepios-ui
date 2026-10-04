@@ -241,7 +241,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                 New Order
               </MyButton>
 
-              <MyButton disabled={isSubmitDisabled || edit} onClick={() => setRecallFavoriteModal(true)}>
+              <MyButton disabled={edit} onClick={() => setRecallFavoriteModal(true)}>
                 <FontAwesomeIcon icon={faStar} /> Recall Favorite
               </MyButton>
 

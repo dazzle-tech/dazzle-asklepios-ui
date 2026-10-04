@@ -68,6 +68,7 @@ import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew'
 // NEW: same practitioner-by-department hook used in AddResourceModal
 import { useGetPractitionerByUserIdQuery, useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
+import ApprovedResultsCell from './ApprovedResultsCell';
 import DoctorAppoitmentsView from './appointments';
 import Translate from '@/components/Translate';
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
@@ -637,6 +638,33 @@ const EncounterList = () => {
       }
     });
   };
+  const handleGoToDiagnosticsOrder = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    const isClosed = encounterData?.status?.toUpperCase() === 'CLOSED';
+
+    navigate('/encounter/diagnostics-order', {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: isClosed,
+        ...(isClosed ? { viewMode: 'readOnly' } : {})
+      }
+    });
+  };
+
   const handleReopen = async (encounterId: number) => {
     try {
       await reopenEncounter({ id: encounterId }).unwrap();
@@ -906,6 +934,17 @@ const EncounterList = () => {
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
+    },
+    {
+      key: 'approvedResults',
+      title: 'APPROVED RESULTS',
+      render: (row: any) => (
+        <ApprovedResultsCell
+          encounterId={row?.id}
+          patientId={row?.patient?.id}
+          onGoToDiagnosticsOrder={() => handleGoToDiagnosticsOrder(row)}
+        />
+      )
     },
     {
       key: 'priorityLevel',
