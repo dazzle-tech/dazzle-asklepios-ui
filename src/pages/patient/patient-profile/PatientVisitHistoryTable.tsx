@@ -5,6 +5,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import CancellationModal from '@/components/CancellationModal';
 
 import {
   useGetEncountersByPatientQuery,
@@ -119,7 +120,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const encounters = data?.data ?? EMPTY_ENCOUNTERS;
 
-  const [cancelEncounter, { isLoading: isCancelling }] = useCancelEncounterMutation();
+  const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
   const [reassignPractitioner, { isLoading: isReassigning }] = useReassignPractitionerMutation();
 
@@ -694,34 +695,16 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           height={580}
         />
 
-        <MyModal
+        <CancellationModal
           open={openCancelModal}
           setOpen={handleCloseCancel}
           title="Cancel Encounter"
-          size="sm"
-          actionButtonLabel="Cancel Encounter"
-          cancelButtonLabel="Close"
-          actionButtonFunction={handleCancel}
-          actionButtonLoading={isCancelling}
-          isDisabledActionBtn={isCancelling || !cancelForm.cancellationReason?.trim()}
-          content={
-            <Form fluid>
-              <p style={{ marginBottom: 12 }}>
-                <Translate>Cancel this encounter?</Translate>
-              </p>
-              <MyInput
-                required
-                column
-                width="100%"
-                fieldType="textarea"
-                fieldLabel="Cancellation Reason / Notes"
-                fieldName="cancellationReason"
-                record={cancelForm}
-                setRecord={setCancelForm}
-                placeholder="Enter the reason for cancellation and any relevant information"
-              />
-            </Form>
-          }
+          fieldLabel="Cancellation Reason / Notes"
+          fieldName="cancellationReason"
+          object={cancelForm}
+          setObject={setCancelForm}
+          handleCancle={handleCancel}
+          required
         />
 
         <EncounterDischarge
