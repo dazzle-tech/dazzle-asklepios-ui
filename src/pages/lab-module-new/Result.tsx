@@ -1,12 +1,12 @@
 import CancellationModal from '@/components/CancellationModal';
 import ChatModal from '@/components/ChatModal';
+import LovValueCell from '@/components/LovValueCell';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
-import LovValueCell from '@/components/LovValueCell';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
@@ -17,6 +17,7 @@ import {
   useBulkApproveDiagnosticOrderTestResultMutation,
   useBulkRejectDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
@@ -25,12 +26,9 @@ import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnostic
 import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 
 import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -52,6 +50,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState
 } from 'react';
 import { FaChartLine } from 'react-icons/fa';
@@ -82,38 +81,11 @@ type PaginationParams = {
   sort: string;
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === String(key)
-    )?.lovDisplayVale ?? key
-  );
-};
 
 const Result = forwardRef<any, Props>(
   ({ order, loading, setTest, refetchAllLabData }, ref) => {
@@ -153,8 +125,6 @@ const Result = forwardRef<any, Props>(
     const [normalRangesMap, setNormalRangesMap] = useState<Record<number, any[]>>({});
 
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-    const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
     const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIdsResponse }] =
       useLazyGetDiagnosticTestsByIdsQuery();
     const [fetchLaboratoriesByTestIds, { data: labsByTestIds }] =
@@ -168,6 +138,7 @@ const Result = forwardRef<any, Props>(
     const [bulkApproveResults] = useBulkApproveDiagnosticOrderTestResultMutation();
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
+    const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
    
 
@@ -331,17 +302,13 @@ const Result = forwardRef<any, Props>(
       }
     };
 const resolveResultDisplay = (row: any) => {
-  const profile = row.profile;
-  if (!profile) return ' ';
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return ' ';
 
   if (resultType === 'LOV') {
     return (
       <LovValueCell
         valueKey={row.resultValueText}
-        listOfValueId={profile.listOfValueId}
       />
     );
   }
@@ -355,7 +322,7 @@ const resolveResultDisplay = (row: any) => {
 
    const resolveUnitDisplay = (row: any) => {
   const profile = row.profile;
-  if (!profile || isLovProfile(profile)) return null;
+    if (!profile || isLovProfile(row)) return null;
 
   if (!profile.resultUnit) return null;
 
@@ -429,12 +396,8 @@ const resolveResultDisplay = (row: any) => {
     // ─────────────────────────────────────────────────────────────────────────
 
   const isResultEmpty = (row: any) => {
-  const profile = row.profile;
-
-  if (!profile) return true;
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return true;
 
   if (resultType === 'LOV' || resultType === 'TEXT') {
     return (
@@ -597,13 +560,25 @@ const resolveResultDisplay = (row: any) => {
     };
 
 
-    const handleToggleSelectAll = (checked: boolean) => {
-      const allRowIds = normalizedResults.map(row => row.id);
+    const handleToggleSelectAll = async (checked: boolean) => {
+      const currentPageIds = normalizedResults.map(row => row.id);
 
-      if (checked) {
-        setSelectedResultIds(prev => Array.from(new Set([...prev, ...allRowIds])));
-      } else {
-        setSelectedResultIds(prev => prev.filter(id => !allRowIds.includes(id)));
+      if (!checked) {
+        setSelectedResultIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+        return;
+      }
+
+      if (!order?.id) return;
+
+      try {
+        const ids = await getAllResultIds({
+          orderIdIn: order.id,
+          ...(categoryFilter.value ? { category: categoryFilter.value } : {})
+        }).unwrap();
+
+        setSelectedResultIds(ids);
+      } catch (e) {
+        console.error(e);
       }
     };
     const columns: ColumnConfig[] = [
@@ -668,9 +643,7 @@ const resolveResultDisplay = (row: any) => {
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
         render: (row: any) => {
-
-          const isText =
-            row?.profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
@@ -702,28 +675,24 @@ const resolveResultDisplay = (row: any) => {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
-          const profile = row.profile;
-          const isText =
-            profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
           }
           const hasViewRange =
             row.viewNormalRange && row.viewNormalRange.trim() !== '';
-
+   
           const hasMinMaxRange =
             row.minValue !== null &&
             row.minValue !== undefined &&
             row.maxValue !== null &&
             row.maxValue !== undefined;
-
           if (hasViewRange) {
-            if (isLovProfile(profile)) {
+            if (isLovProfile(row)) {
               return (
                 <LovValueCell
                   valueKey={row.viewNormalRange}
-                  listOfValueId={profile.listOfValueId}
                 />
               );
             }
@@ -950,7 +919,18 @@ const resolveResultDisplay = (row: any) => {
         render: (row: any) => (
           <UserDateCell
             login={row.approvedBy}
-            date={row.approvedAt}
+            date={row.approvedDate}
+          />
+        )
+      },
+      {
+        key: 'createdAt',
+        title: <Translate>CREATED AT / BY</Translate>,
+        expandable: true,
+        render: (row: any) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
           />
         )
       }
@@ -1012,10 +992,14 @@ const resolveResultDisplay = (row: any) => {
       });
     }, [fetchNormalRangesByProfileTestId, normalRangesMap, profileTestIds]);
 
+    const previousOrderId = useRef(order?.id);
+
     useEffect(() => {
-      const currentIds = normalizedResults.map(r => r.id);
-      setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
-    }, [normalizedResults]);
+      if (previousOrderId.current !== order?.id) {
+        setSelectedResultIds([]);
+        previousOrderId.current = order?.id;
+      }
+    }, [order?.id]);
 
 
 
@@ -1143,10 +1127,13 @@ const resolveResultDisplay = (row: any) => {
             setOpen={setOpenNormalRangeModal}
             ranges={
               selectedResult
-                ? normalRangesMap[selectedResult.profileTestId] ?? []
+                ? (normalRangesMap[selectedResult.profileTestId] ?? []).filter(
+                    (range: any) => range.isActive === true
+                  )
                 : []
             }
             profileTestId={selectedResult?.profileTestId ?? null}
+            resultTypeAtEntry={selectedResult?.resultTypeAtEntry}
           />
 
           <MyModal

@@ -892,9 +892,10 @@ const handleGoBack = () => {
   );
 
   const visibleSheets = React.useMemo(() => {
-    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code)).filter(ms =>
-      ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
-    );
+    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code))
+      // Referral Request is shown as a tab inside Consultation
+      .filter(ms => !(ms.code === 'REFERRAL_REQUEST' && allowedSheetCodes.has('CONSULTATION')))
+      .filter(ms => ms.name.toLowerCase().includes(searchTerm.term.toLowerCase()));
   }, [allowedSheetCodes, searchTerm.term]);
 
   const headersMap = React.useMemo(() => {

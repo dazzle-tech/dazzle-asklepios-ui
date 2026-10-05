@@ -24,6 +24,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
 import { InputPicker } from 'rsuite';
 import { MdCalendarToday } from 'react-icons/md';
+import moment from 'moment';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -63,8 +64,12 @@ const focusNextField = (e: any) => {
   }
 };
 
+const toFieldTestId = (fieldName: string) =>
+  `test-id-${fieldName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
+
 type MyInputProps = {
   fieldName: string;
+  testId?: string;
   fieldType?:
   | 'text'
   | 'password'
@@ -150,6 +155,7 @@ type MyInputProps = {
 
 const MyInput = ({
   fieldName,
+  testId,
   fieldType = 'text',
   record,
   rightAddonwidth = null,
@@ -191,6 +197,15 @@ const MyInput = ({
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [localSearch, setLocalSearch] = useState('');
+
+  const normalizeDigits = (value: string) =>
+    value
+      .replace(/[٠-٩]/g, d =>
+        String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+      )
+      .replace(/[۰-۹]/g, d =>
+        String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+      );
 
 
   const allowEnterNewLine = props.allowEnterNewLine ?? true;
@@ -386,15 +401,37 @@ const MyInput = ({
 
     if (fieldType === 'date') {
       if (typeof value === 'string') {
-        setRecord({ ...record, [fieldName]: value || null });
+        const normalizedValue = normalizeDigits(value);
+
+        setRecord({
+          ...record,
+          [fieldName]: normalizedValue || null
+        });
+
         return;
       }
 
-      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
-      setRecord({ ...record, [fieldName]: dateStr });
+      if (value instanceof Date) {
+        const normalizedValue = normalizeDigits(
+          dayjs(value).format('YYYY-MM-DD')
+        );
+
+        setRecord({
+          ...record,
+          [fieldName]: normalizedValue
+        });
+
+        return;
+      }
+
+      setRecord({
+        ...record,
+        [fieldName]: null
+      });
+
       return;
     }
-
+    
     if (fieldType === 'number') {
       if (value === '' || value === null || value === undefined) {
         setRecord({ ...record, [fieldName]: null });
@@ -3093,6 +3130,7 @@ onBlur={() => {
   return (
     <Form.Group
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
+      data-testid={testId ?? toFieldTestId(fieldName)}
     >
       <Form.ControlLabel>
         {showLabel && (

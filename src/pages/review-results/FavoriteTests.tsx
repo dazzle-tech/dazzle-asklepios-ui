@@ -21,7 +21,11 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import MyInput from '@/components/MyInput';
 
-const FavoriteTests: React.FC = () => {
+interface FavoriteTestsProps {
+  isModal?: boolean;
+}
+
+const FavoriteTests: React.FC<FavoriteTestsProps> = ({ isModal = false }) => {
   const [favoriteTestIds, setFavoriteTestIds] = useState<number[]>([]);
   const mode = useAppSelector((state) => state.ui.mode);
   const dispatch = useDispatch();
@@ -144,6 +148,8 @@ const hasMore =
 
 
   useEffect(() => {
+    if (isModal) return;
+
     dispatch(setPageCode('REVIEW_RESULTS'));
     dispatch(setDivContent('Favorite Test'));
 
@@ -151,7 +157,7 @@ const hasMore =
       dispatch(setPageCode(''));
       dispatch(setDivContent(' '));
     };
-  }, [dispatch]);
+  }, [dispatch, isModal]);
 
 
 

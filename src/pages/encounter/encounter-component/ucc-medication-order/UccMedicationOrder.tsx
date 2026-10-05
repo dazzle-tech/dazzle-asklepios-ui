@@ -20,7 +20,7 @@ import {
   useSubmitUccMedicationOrderGroupMutation,
   useCancelUccMedicationOrderMutation,
   useCreateUccMedicationOrderMutation,
-  useUpdateUccMedicationOrderMutation,
+  useUpdateUccMedicationOrderGroupMutation,
   useSubmitUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
@@ -74,7 +74,7 @@ const {
   const [submitOrder] = useSubmitUccMedicationOrderMutation();
   const [cancelOrder] = useCancelUccMedicationOrderMutation();
   const [createOrder] = useCreateUccMedicationOrderMutation();
-  const [updateOrder] = useUpdateUccMedicationOrderMutation();
+  const [updateOrderGroup] = useUpdateUccMedicationOrderGroupMutation();
 
   const { data: activeIngredientsAll } = useGetActiveIngredientsQuery({
     page: 0,
@@ -94,24 +94,25 @@ const {
 
   const handleAdd = async (data: any) => {
     try {
-      if (data?.isEdit && data?.id) {
-        const { id, isEdit, ...payload } = data;
+      if (data?.isEdit && data?.orderGroupId) {
+        const { orderGroupId, isEdit, ...payload } = data;
 
-const updatePayload = {
-  id,
-  activeIngredientId: payload.activeIngredientId,
-  instructionType: payload.instructionType,
-  instructionText: payload.instructionText,
-  dose: payload.dose,
-  doseUnit: payload.doseUnit,
-  route: payload.route,
-  frequencyNumber: payload.frequencyNumber,
-  frequencyUnit: payload.frequencyUnit,
-  duration: payload.duration,
-  startTime: payload.startTime
-};
-        await updateOrder({
-          id,
+        const updatePayload = {
+          id: orderGroupId,
+          activeIngredientId: payload.activeIngredientId,
+          instructionType: payload.instructionType,
+          instructionText: payload.instructionText,
+          dose: payload.dose,
+          doseUnit: payload.doseUnit,
+          route: payload.route,
+          frequencyNumber: payload.frequencyNumber,
+          frequencyUnit: payload.frequencyUnit,
+          duration: payload.duration,
+          startTime: payload.startTime
+        };
+
+        await updateOrderGroup({
+          orderGroupId,
           data: updatePayload
         }).unwrap();
 
@@ -123,6 +124,7 @@ const updatePayload = {
         );
       } else {
         await createOrder(data).unwrap();
+
         dispatch(
           notify({
             msg: 'Medication Added Successfully',
@@ -145,26 +147,23 @@ const updatePayload = {
 
   const handleSubmit = async (row: any) => {
     try {
+      const isHighAlert =
+        !!ingredientMap[row?.activeIngredientId]?.highAlert;
+
       await submitOrderGroup({
         orderGroupId: row.orderGroupId,
-        isHighAlert: !!row.isHighAlert
+        isHighAlert
       }).unwrap();
 
       dispatch(
         notify({
-          msg: 'Medication Order Submitted Successfully',
+          msg: 'Medication Submitted Successfully',
           sev: 'success'
         })
       );
 
-      setSelectedIds(prev =>
-        prev.filter(id => id !== row.orderGroupId)
-      );
-
       await refetch();
     } catch (error: any) {
-      console.log(error);
-
       dispatch(
         notify({
           msg: error?.data?.detail || 'Submit failed',
@@ -380,11 +379,11 @@ const updatePayload = {
               icon={faPenToSquare}
               className="ucc-medication-order-icons-size"
               style={{
-                cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-                opacity: row?.status === 'NEW' ? 1 : 0.4
+                cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
               }}
               onClick={() => {
-                if (row?.status !== 'NEW') return;
+                if (edit || row?.status !== 'NEW') return;
                 setEditRow(row);
 
                 setTimeout(() => {
@@ -405,11 +404,11 @@ const updatePayload = {
             <CheckRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
+              cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
             }}
             onClick={() => {
-              if (row?.status !== 'NEW') return;
+              if (edit || row?.status !== 'NEW') return;
               handleSubmit(row);
             }}
           />
@@ -426,11 +425,11 @@ const updatePayload = {
             <WarningRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
-              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
-              opacity: row?.status === 'NEW' ? 1 : 0.4
+              cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
+                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
             }}
             onClick={() => {
-              if (row?.status !== 'NEW') return;
+              if (edit || row?.status !== 'NEW') return;
               setSelectedCancelId(row.id);
               setOpenCancel(true);
             }}
@@ -443,7 +442,7 @@ const updatePayload = {
 
   
   return (
-    <div className={clsx({ 'disabled-panel': edit })} style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}>
+    <div>
       <MyTable
         height={450}
         data={rows}
@@ -453,7 +452,7 @@ const updatePayload = {
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         tableButtons={
-          <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />}>
+          <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />} disabled={edit}>
             Add
           </MyButton>
         }

@@ -52,6 +52,8 @@ const StimulsoftReportDesignerPage = ({
     facilityId: null as number | null,
     departmentIds: '' as string,
     module: '' as string | null,
+    jobRole: '' as string,
+    userIds: '' as string,
   });
   const [templateJson, setTemplateJson] = useState<string | null>(null);
   const [schema, setSchema] = useState<DesignerSchema>(getLocalDesignerSchema());
@@ -134,6 +136,13 @@ const StimulsoftReportDesignerPage = ({
             facilityId: template.facilityId ?? null,
             departmentIds: template.departmentIds ?? '',
             module: template.module ?? '',
+            jobRole: template.jobRole ?? '',
+            userIds:
+              typeof template.userIds === 'string'
+                ? template.userIds
+                : Array.isArray(template.userIds)
+                  ? template.userIds.join(',')
+                  : '',
           });
           setTemplateJson(
             normalizeStimulsoftTemplateJson(template) || null
@@ -182,8 +191,14 @@ const StimulsoftReportDesignerPage = ({
           isActive: true,
           facilityId: current.facilityId,
           departmentIds: current.departmentIds,
-          module: current.module || null,
+          module: mode === 'dashboard' ? null : current.module || null,
           templateType: templateTypeFromMode(mode),
+          ...(mode === 'dashboard'
+            ? {
+                jobRole: current.jobRole || null,
+                userIds: current.jobRole ? current.userIds || '' : '',
+              }
+            : {}),
         };
 
         if (savedIdRef.current) {

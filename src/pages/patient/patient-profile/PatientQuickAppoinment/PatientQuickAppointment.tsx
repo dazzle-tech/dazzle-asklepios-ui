@@ -166,8 +166,12 @@ const PatientQuickAppointment = ({
   const didAcceptReferralRef = useRef(false);
 
   useEffect(() => {
-    console.log('Checking patient age for department:', localEncounter?.departmentId, 'and patient:', localPatient);
     const departmentId = Number(localEncounter?.departmentId ?? 0);
+    if (localPatient?.isUnknown === true) {
+     setIsPatientAgeAllowed(true);
+     setIsCheckingPatientAge(false);
+     return;
+    }
     const rawDateOfBirth = localPatient?.dateOfBirth ?? localPatient?.dob;
     const parsedDateOfBirth = rawDateOfBirth ? new Date(rawDateOfBirth) : null;
     const dateOfBirth =
@@ -215,7 +219,8 @@ const PatientQuickAppointment = ({
     checkPatientAgeAllowed,
     localEncounter?.departmentId,
     localPatient?.dateOfBirth,
-    localPatient?.dob
+    localPatient?.dob,
+    localPatient?.isUnknown
   ]);
 
   const [paymentDraft, setPaymentDraft] = useState<modelTypes.PatientPayments & any>({
@@ -275,7 +280,12 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
-    if (!localEncounter?.practitionerId) missingFields.push('Practitioner');
+    if (
+      localEncounter?.encounterType !== 'EMERGENCY' &&
+      !localEncounter?.practitionerId
+    ) {
+      missingFields.push('Practitioner');
+    }
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
     if (!localEncounter?.priorityLevel) missingFields.push('Priority');
     if (!localEncounter?.encounterDate) missingFields.push('Date');

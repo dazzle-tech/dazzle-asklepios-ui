@@ -60,7 +60,7 @@ const UccMedicationOrderAddModal = ({
 console.log('unitLov', unitLov);
 
   const roaOptions = useEnumOptions('RouteOfAdministration');
-
+  const frequencyUnitOptions = useEnumOptions('FrequencyList');
   const { data: classData } = useGetMedicationCategoryClassByClassIdQuery(
     selectedActiveIngredient?.drugClassId,
     { skip: !selectedActiveIngredient?.drugClassId }
@@ -240,10 +240,10 @@ console.log('unitLov', unitLov);
     };
 
     try {
-      if (editRow?.id) {
+      if (editRow?.orderGroupId) {
         onAdd({
           ...payload,
-          id: editRow.id,
+          orderGroupId: editRow.orderGroupId,
           isEdit: true
         });
       } else {
@@ -424,16 +424,7 @@ console.log('unitLov', unitLov);
                   width="12vw"
                   fieldType="select"
                   fieldLabel="Frequency Unit"
-                  selectData={[
-                    {
-                      value: 'MINUTES',
-                      label: 'Minutes'
-                    },
-                    {
-                      value: 'HOURS',
-                      label: 'Hours'
-                    }
-                  ]}
+                  selectData={frequencyUnitOptions}
                   selectDataLabel="label"
                   selectDataValue="value"
                   fieldName="frequencyUnit"

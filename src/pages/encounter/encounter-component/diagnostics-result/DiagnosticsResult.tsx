@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Result from './Result';
 import Reports from './Reports';
+import ResultsAndReports from './ResultsAndReports';
 import LaboratoryResultComparison from './LaboratoryResultComparison';
 import { useAppSelector } from '@/hooks';
 import MyTab from '@/components/MyTab';
@@ -16,27 +17,27 @@ const DiagnosticsResult = props => {
     
 const tabData = [
   {
+    title: 'Results & Reports',
+    content: (
+      <ResultsAndReports patient={patient} />
+    )
+  },
+  {
     title: 'Results',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
-        <Result patient={patient} />
-      </div>
+      <Result patient={patient} />
     )
   },
   {
     title: 'Reports',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
         <Reports patient={patient} />
-      </div>
     )
   },
   {
     title: 'Laboratory Result Comparison',
     content: (
-      <div className={edit ? 'disabled-panel' : ''}>
         <LaboratoryResultComparison patient={patient} />
-      </div>
     )
   }
 ];

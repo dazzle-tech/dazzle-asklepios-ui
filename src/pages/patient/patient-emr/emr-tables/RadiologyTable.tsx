@@ -32,6 +32,7 @@ import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileLines, faImage } from '@fortawesome/free-solid-svg-icons';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
+import RadiologyReportButton from '@/pages/encounter/encounter-component/diagnostics-result/RadiologyReportButton';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 import UserDateCell from '@/components/UserDateCell';
@@ -441,10 +442,15 @@ const handleViewImage = async (reportId: number) => {
 
   ];
 
+  const tableButtons = (
+    <RadiologyReportButton reportId={selectedReport?.id} />
+  );
+
   return (<>
     <MyTable
       columns={columns}
       data={reports}
+      tableButtons={tableButtons}
       loading={isFetching}
       page={page}
       rowsPerPage={rowsPerPage}

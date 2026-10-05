@@ -20,6 +20,14 @@ type PageableParams = {
   sort?: string;
 };
 
+type DiagnosticOrderTestFilterParams = {
+  encounterIdIn?: number[];
+  patientIdIn?: number[];
+  resultConfirmed?: boolean;
+  isReviewed?: boolean;
+  [key: string]: any;
+};
+
 type PagedResult<T> = {
   data: T[];
   totalCount: number;
@@ -108,7 +116,7 @@ export const diagnosticOrderTestService = createApi({
 
     filterDiagnosticOrderTests: builder.query<
       PagedResult<DiagnosticOrderTest>,
-      Record<string, any> & PageableParams
+      DiagnosticOrderTestFilterParams & PageableParams
     >({
       query: params => ({
         url: '/api/patient/diagnostic-order-tests',
@@ -166,6 +174,17 @@ export const diagnosticOrderTestService = createApi({
       ],
     }),
 
+    confirmDiagnosticOrderTest: builder.mutation<DiagnosticOrderTest, number>({
+      query: id => ({
+        url: `/api/patient/diagnostic-order-tests/${id}/confirm`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'DiagnosticOrderTest', id },
+        'DiagnosticOrderTest',
+      ],
+    }),
+
     rejectDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
       { id: number; body: { rejectedReason: string } }
@@ -192,6 +211,18 @@ export const diagnosticOrderTestService = createApi({
       invalidatesTags: ['DiagnosticOrderTest'],
     }),
 
+
+    bulkConfirmDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkIdsDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-confirm',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
 
     bulkRejectDiagnosticOrderTests: builder.mutation<
       void,
@@ -286,9 +317,11 @@ export const {
   useMarkReadyMutation,
   useReviewDiagnosticOrderTestMutation,
   useApproveDiagnosticOrderTestMutation,
+  useConfirmDiagnosticOrderTestMutation,
   useRejectDiagnosticOrderTestMutation,
   useCancelDiagnosticOrderTestMutation,
   useBulkAcceptDiagnosticOrderTestsMutation,
+  useBulkConfirmDiagnosticOrderTestsMutation,
   useBulkRejectDiagnosticOrderTestsMutation,
   useBulkCancelDiagnosticOrderTestsMutation,
   useUndoAcceptDiagnosticOrderTestMutation,

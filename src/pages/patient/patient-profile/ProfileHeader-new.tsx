@@ -85,6 +85,7 @@ import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 interface ProfileHeaderProps {
   localPatient: Patient;
   handleSave: () => void;
+  isSaving?: boolean;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
   validationResult: any;
@@ -104,6 +105,7 @@ interface ProfileHeaderProps {
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
   handleSave,
+  isSaving = false,
   handleClear,
   setVisitHistoryModel,
   setQuickAppointmentModel,
@@ -785,21 +787,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  React.useEffect(() => {
-    const patientWithUrl = localPatient as any;
+  useEffect(() => {
+  const patientWithUrl = localPatient as any;
 
-    if (patientWithUrl?.profilePictureUrl) {
-      setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      return;
-    }
-
-    if (profilePictureTicket && profilePictureTicket.url && !isError) {
-      setPatientImageUrl(profilePictureTicket.url);
-      return;
-    }
-
+  if (!localPatient?.id) {
     setPatientImageUrl('');
-  }, [localPatient, profilePictureTicket, isError]);
+    return;
+  }
+
+  if (patientWithUrl?.profilePictureUrl) {
+    setPatientImageUrl(patientWithUrl.profilePictureUrl);
+    return;
+  }
+
+  if (profilePictureTicket?.url && !isError) {
+    setPatientImageUrl(profilePictureTicket.url);
+    return;
+  }
+
+  setPatientImageUrl('');
+}, [localPatient, profilePictureTicket, isError]);
 
   useEffect(() => {
     if (
@@ -1011,7 +1018,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
-                disabled={!!localPatient?.id && localPatient?.patientStatus === 'MERGED'}
+                loading={isSaving}
+                disabled={isSaving || (!!localPatient?.id && localPatient?.patientStatus === 'MERGED')}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>

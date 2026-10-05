@@ -9,6 +9,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCheckDouble,
+  faTriangleExclamation,
   faXmark
 } from '@fortawesome/free-solid-svg-icons';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
@@ -31,6 +32,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import MedicationAdministrationModal from '@/pages/encounter/urgent-care/MedicationAdministrationModal';
 import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
 import { Tooltip, Whisper } from 'rsuite';
+import { useLocation } from 'react-router-dom';
 
 type Props = {
   patient: any;
@@ -62,6 +64,9 @@ type MedicationOrderRow = {
 
   createdBy?: string;
   createdDate?: string;
+
+  doubleCheckedBy?: string | null;
+  doubleCheckedDate?: string | null;
 
   administeredBy?: string;
   administeredDate?: string;
@@ -138,8 +143,10 @@ const formatDate = (date: any) => {
   return d.toISOString().split('T')[0];
 };
 
-const UCCMedications = ({ patient }: Props) => {
+const UCCMedications = ({ patient, ...props }: Props) => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const edit = props.edit ?? location.state?.edit ?? false;
   const [administrationModalOpen, setAdministrationModalOpen] =
     useState(false);
 
@@ -314,8 +321,7 @@ const UCCMedications = ({ patient }: Props) => {
 
       dispatch(
         notify({
-          msg:
-            'Medication double checked successfully',
+          msg: 'Medication double checked successfully',
           sev: 'success'
         })
       );
@@ -323,11 +329,14 @@ const UCCMedications = ({ patient }: Props) => {
       refetchOrdered();
       refetchAdmin();
     } catch (e: any) {
+      const errorMessage =
+        e?.data?.detail === 'same_user_double_check'
+          ? 'Double-check must be performed by another user'
+          : e?.data?.detail || 'Double check failed';
+
       dispatch(
         notify({
-          msg:
-            e?.data?.detail ||
-            'Double check failed',
+          msg: errorMessage,
           sev: 'error'
         })
       );
@@ -407,6 +416,19 @@ const UCCMedications = ({ patient }: Props) => {
       )
     },
     {
+      key: 'highAlert',
+      title: <Translate>HIGH ALERT</Translate>,
+      minWidth: 120,
+      align: 'center',
+      render: (row: MedicationOrderRow) =>
+        row.isHighAlert && (
+          <FontAwesomeIcon
+            icon={faTriangleExclamation}
+            color="red"
+          />
+        )
+    },
+    {
       key: 'status',
       title: (
         <Translate>STATUS</Translate>
@@ -441,9 +463,19 @@ const UCCMedications = ({ patient }: Props) => {
                   }
                 >
                   <CheckRoundIcon
-                    className="medication-record-order-icons-size"
-                    style={{ cursor: 'pointer' }}
+                    className="icons-style medication-record-order-icons-size"
+                    style={{
+                      cursor:
+                        edit
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity:
+                        edit
+                          ? 0.5
+                          : 1
+                    }}
                     onClick={() => {
+                      if(edit) return
                       setSelectedOrderId(row.id);
                       setAdministrationModalOpen(true);
                     }}
@@ -461,9 +493,19 @@ const UCCMedications = ({ patient }: Props) => {
                 >
                   <FontAwesomeIcon
                     icon={faXmark}
-                    className="medication-record-order-icons-size"
-                    style={{ cursor: 'pointer' }}
+                    className="icons-style medication-record-order-icons-size"
+                    style={{
+                      cursor:
+                        edit
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity:
+                        edit
+                          ? 0.5
+                          : 1
+                    }}
                     onClick={() => {
+                      if(edit) return
                       setSelectedRow(row);
                       setCancelObject({
                         discardReason: ''
@@ -503,6 +545,24 @@ const UCCMedications = ({ patient }: Props) => {
           </div>
         );
       }
+    },
+    {
+    key: 'doubleSignByAt',
+    title: <Translate>DOUBLE SIGN BY/AT</Translate>,
+    minWidth: 220,
+    expandable: true,
+    render: (row: MedicationOrderRow) =>
+      row.doubleCheckedBy || row.doubleCheckedDate ? (
+        <>
+          <UserFullName login={row.doubleCheckedBy ?? undefined} />
+          <br />
+          {row.doubleCheckedDate
+            ? formatDateWithoutSeconds(row.doubleCheckedDate)
+            : '-'}
+        </>
+      ) : (
+        '-'
+      )
     }
   ];
 

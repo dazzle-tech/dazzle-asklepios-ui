@@ -49,11 +49,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
   const [description, setDescription] = useState('');
 
-  const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
-
-  const filteredLovData = useMemo(() => {
-    return lovData?.object?.filter((lov: any) => lov.valueCode !== 'ADWR_DNR') ?? [];
-  }, [lovData]);
+const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
   const { data: warnings, isLoading } = useGetWarningsByPatientIdQuery(
     { patientId: localPatient.id! },
@@ -268,10 +264,9 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         fieldLabel="Warning Type"
         fieldType="select"
         fieldName="warningType"
-        selectData={filteredLovData ?? []}
-         selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
+        selectData={lovData?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField='isValid'
         selectDataValue="key"
         record={{ warningType }}
         setRecord={(val: any) => setWarningType(val.warningType)}

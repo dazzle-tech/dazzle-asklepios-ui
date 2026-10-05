@@ -32,6 +32,9 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import './style.less';
 import clsx from 'clsx';
+import { formatDateWithoutSeconds } from '@/utils';
+import { FaRegUser, FaRegCalendarAlt} from 'react-icons/fa';
+const CLINIC_EXCLUDED_ENCOUNTER_REASONS = ['URGENT_VISIT'];
 
 const formatSpecialtyLabel = (value?: string | null) => {
   if (!value) return '';
@@ -68,7 +71,12 @@ const RegistrationEncounter = ({
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT', 'ALL']
   });
-  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason', {
+    exclude:
+      !isReadOnly && localEncounter?.encounterType === 'CLINIC'
+        ? CLINIC_EXCLUDED_ENCOUNTER_REASONS
+        : undefined
+  });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
@@ -419,6 +427,22 @@ useEffect(() => {
   }, [localEncounter?.departmentId]);
 
   useEffect(() => {
+    if (isReadOnly) return;
+    if (localEncounter?.encounterType !== 'CLINIC') return;
+    if (localEncounter?.encounterReason !== 'URGENT_VISIT') return;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (prevEncounter?.encounterReason !== 'URGENT_VISIT') return prevEncounter;
+      return { ...prevEncounter, encounterReason: null };
+    });
+  }, [
+    isReadOnly,
+    localEncounter?.encounterType,
+    localEncounter?.encounterReason,
+    setLocalEncounter
+  ]);
+
+  useEffect(() => {
     if (localEncounter?.encounterType) return;
 
     setDeptPage(0);
@@ -670,7 +694,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
-        required
+        required={localEncounter?.encounterType !== 'EMERGENCY'}
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
@@ -863,6 +887,43 @@ useEffect(() => {
           />
         </div>
       </div>
+      <div className="encounter-audit-info">
+  <div className="encounter-audit-title">
+    <span>Audit Information</span>
+  </div>
+
+  <div className="encounter-audit-content">
+    <div className="audit-item">
+      <div className="audit-icon">
+        <FaRegUser  />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created By</span>
+        <span className="audit-value">
+          {localEncounter?.createdBy || '-'}
+        </span>
+      </div>
+    </div>
+
+    <div className="audit-divider" />
+
+    <div className="audit-item">
+      <div className="audit-icon">
+         <FaRegCalendarAlt />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created At</span>
+        <span className="audit-value">
+          {localEncounter?.createdDate
+            ? formatDateWithoutSeconds(localEncounter.createdDate)
+            : '-'}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
     </Form>
   </div>
   );

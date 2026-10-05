@@ -84,6 +84,13 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
       }
     },
     {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      render: (rowData: PatientAdministrativeWarningsResponseVM) => {
+        return <span>{rowData?.description ?? '-'}</span>;
+      }
+    },
+    {
       key: '',
       title: <Translate>Created By/At</Translate>,
       render: (rowData: any) => {
@@ -99,6 +106,7 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
       }
     }
   ];
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {

@@ -181,6 +181,7 @@ const DentalProcedures = props => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
+   const edit = props.edit ?? location.state?.edit ?? false;
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
@@ -578,12 +579,9 @@ const DentalProcedures = props => {
         render: (row: DentalProcedureResponseVM) => (
           <FontAwesomeIcon
             icon={faPen}
-            style={{
-              cursor: row.cancelled ? 'not-allowed' : 'pointer',
-              color: row.cancelled ? '#ccc' : 'var(--primary-gray)'
-            }}
+            style={{ cursor: edit || row.cancelled ? 'not-allowed' : 'pointer', color: edit || row.cancelled ? '#ccc' : 'var(--primary-gray)' }}
             onClick={() => {
-              if (row.cancelled) return;
+              if (row.cancelled || edit) return;
               openEditModal(row);
             }}
           />
@@ -641,6 +639,7 @@ const DentalProcedures = props => {
                     setCancelForm({ cancellationReason: '' });
                     setCancelModalOpen(true);
                   }}
+                  disabled={edit}
                 >
                   <Translate>Cancel</Translate>
                 </MyButton>
@@ -654,6 +653,7 @@ const DentalProcedures = props => {
                 <MyButton
                   onClick={openAddModal}
                   prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+                  disabled={edit}
                 >
                   <Translate>Add Dental Procedure</Translate>
                 </MyButton>

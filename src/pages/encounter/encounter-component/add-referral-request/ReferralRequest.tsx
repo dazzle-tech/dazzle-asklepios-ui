@@ -411,12 +411,22 @@ const ReferralRequest = () => {
       align: 'center',
       render: (rowData: any) => (
         <MdModeEdit
-        className="view-only-action-edit-delete-encounter"
-          className="icons-style"
+          className="icons-style view-only-action-edit-delete-encounter"
+          style={{
+            cursor:
+              edit
+                ? 'not-allowed'
+                : 'pointer',
+            opacity:
+              edit
+                ? 0.5
+                : 1
+          }}
           title="Edit"
           size={24}
           fill="var(--primary-gray)"
           onClick={e => {
+            if(edit) return
             e.stopPropagation();
             setReferral({ ...rowData });
             setOpenPopup(true);
@@ -438,92 +448,92 @@ const ReferralRequest = () => {
 
   const listsLoading = isFacilitiesLoading || isFacilitiesFetching || departmentsLoading;
   const pageLoading = isFetching || listsLoading;
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir} className={edit ? 'disabled-panel' : ''}>
-    <Panel dir={dir}>
-      <div style={{ position: 'relative' }}>
-        {listsLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 10,
-              background: 'rgba(255,255,255,0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 8
-            }}
-          >
-            <Loader size="md" content="Loading data..." vertical />
-          </div>
-        )}
-
-        <MyTable
-          data={tableData}
-          totalCount={totalCount}
-          loading={pageLoading}
-          columns={tableColumns}
-          rowClassName={isSelected}
-          onRowClick={(rowData: any) => {
-            setReferral(rowData);
-          }}
-          page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={(e: any) => {
-            const newSize = Number(e.target.value);
-            setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
-          }}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          tableButtons={
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setReferral({ ...newReferralRequest });
-                setOpenPopup(true);
+    <div dir={dir}>
+      <Panel dir={dir}>
+        <div style={{ position: 'relative' }}>
+          {listsLoading && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 10,
+                background: 'rgba(255,255,255,0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8
               }}
-              width="109px"
-              disabled={listsLoading}
             >
-              Add New
-            </MyButton>
-          }
-        />
-      </div>
+              <Loader size="md" content="Loading data..." vertical />
+            </div>
+          )}
 
-      <AddEditReferralRequest
-        open={openPopup}
-        setOpen={setOpenPopup}
-        referral={referral}
-        setReferral={setReferral}
-        handleSave={handleSave}
-        width={width}
-      />
-      <CancellationModal
-        open={openCancelModal}
-        setOpen={setOpenCancelModal}
-        object={cancelObject}
-        setObject={setCancelObject}
-        handleCancle={() => setOpenCancelModal(false)}
-        title="Cancel Referral"
-        fieldLabel="Reason for cancellation"
-        fieldName="cancelReason"
-      />
-    </Panel>
-  </div>
+          <MyTable
+            data={tableData}
+            totalCount={totalCount}
+            loading={pageLoading}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            onRowClick={(rowData: any) => {
+              setReferral(rowData);
+            }}
+            page={paginationParams.page}
+            rowsPerPage={paginationParams.size}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={(e: any) => {
+              const newSize = Number(e.target.value);
+              setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
+            }}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            tableButtons={
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={() => {
+                  setReferral({ ...newReferralRequest });
+                  setOpenPopup(true);
+                }}
+                width="109px"
+                disabled={listsLoading || edit}
+              >
+                Add New
+              </MyButton>
+            }
+          />
+        </div>
+
+        <AddEditReferralRequest
+          open={openPopup}
+          setOpen={setOpenPopup}
+          referral={referral}
+          setReferral={setReferral}
+          handleSave={handleSave}
+          width={width}
+        />
+        <CancellationModal
+          open={openCancelModal}
+          setOpen={setOpenCancelModal}
+          object={cancelObject}
+          setObject={setCancelObject}
+          handleCancle={() => setOpenCancelModal(false)}
+          title="Cancel Referral"
+          fieldLabel="Reason for cancellation"
+          fieldName="cancelReason"
+        />
+      </Panel>
+    </div>
   );
 };
 

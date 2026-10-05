@@ -29,6 +29,7 @@ import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery }
 import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { PhoneNumberInput } from '@/components';
+import MyDateHijriInput from '@/components/MyDateHijriInput/MyDateHijriInput';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -466,127 +467,169 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
     return true;
   };
 
-  const handleSave = async () => {
-    if (!validateMandatoryFields()) {
+const handleSave = async () => {
+  if (!validateMandatoryFields()) {
+    return;
+  }
+
+  if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
+    if (!selectedFacilityId || !selectedDepartmentId) {
+      dispatch(
+        notify({
+          msg: 'Please select a department before saving.',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
+    // Practitioner is optional only for EMERGENCY
+    if (encounterType !== 'EMERGENCY' && !selectedPractitionerId) {
+      dispatch(
+        notify({
+          msg: 'Please select a practitioner before saving.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+  }
+
+  try {
+    let savedPatient: Patient;
+
+    if (isUnknown) {
+      const payload: Patient = {
+        ...localPatient,
+        isUnknown: true,
+        isVerified: false,
+        isCompletedPatient: false,
+        lastName: null as any,
+        firstName: null as any,
+        sexAtBirth: null as any,
+        dateOfBirth: null as any,
+        primaryMobileNumber: null as any,
+        securityAccessLevel:
+          localPatient.securityAccessLevel !== undefined
+            ? localPatient.securityAccessLevel
+            : null
+      };
+
+      savedPatient = await addUnknownPatient(payload as any).unwrap();
+    } else {
+      const payload: Patient = {
+        ...localPatient,
+        isCompletedPatient: false,
+        lastName: localPatient.lastName || '.',
+        isUnknown: false,
+        securityAccessLevel:
+          localPatient.securityAccessLevel !== undefined
+            ? localPatient.securityAccessLevel
+            : null
+      };
+
+      savedPatient = await addPatient(payload).unwrap();
+    }
+    
     if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
-      if (!selectedFacilityId || !selectedDepartmentId) {
-        dispatch(
-          notify({
-            msg: 'Please select a department before saving.',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
+      const facilityId = Number(selectedFacilityId);
+      const departmentId = Number(selectedDepartmentId);
 
-      if (!selectedPractitionerId) {
-        dispatch(
-          notify({
-            msg: 'Please select a practitioner before saving.',
-            sev: 'warning'
-          })
+      const practitionerId = selectedPractitionerId
+        ? Number(selectedPractitionerId)
+        : 0;
+
+      const hasPractitioner = practitionerId > 0;
+
+      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        facilityId,
+        departmentId,
+
+        // If practitioner exists -> practitioner resource
+        // Otherwise -> department resource
+        resourceType: (
+          hasPractitioner ? 'PRACTITIONER' : 'DEPARTMENT'
+        ) as modelTypes.TemplateType,
+
+        resourceId: hasPractitioner
+          ? practitionerId
+          : departmentId,
+
+        patientId: Number(savedPatient.id ?? 0),
+
+        service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+        priority: 'NORMAL',
+
+        defaultServiceId: null,
+
+        defaultPractitionerId: hasPractitioner
+          ? practitionerId
+          : null,
+
+        reason: null,
+        note: null,
+        followUpEncounterId: null,
+        originType: null,
+        originName: null
+      };
+
+      try {
+        await createQuickAppointment(payload).unwrap();
+        dispatch(setRefetchEncounter(true));
+      } catch (encounterError: any) {
+        handleCrudError(
+          encounterError,
+          dispatch,
+          ENCOUNTER_ERROR_MAP
         );
         return;
       }
     }
 
-    try {
-      let savedPatient: Patient;
+    // =========================
+    // Finish
+    // =========================
+    setLocalPatient(savedPatient);
 
-      if (isUnknown) {
-        const payload: Patient = {
-          ...localPatient,
-          isUnknown: true,
-          isVerified: false,
-          isCompletedPatient: false,
-          lastName: null as any,
-          firstName: null as any,
-          sexAtBirth: null as any,
-          dateOfBirth: null as any,
-          primaryMobileNumber: null as any,
-          securityAccessLevel:
-            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
-        };
-
-        savedPatient = await addUnknownPatient(payload as any).unwrap();
-      } else {
-        const payload: Patient = {
-          ...localPatient,
-          isCompletedPatient: false,
-          lastName: localPatient.lastName || '.',
-          isUnknown: false,
-          securityAccessLevel:
-            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
-        };
-
-        savedPatient = await addPatient(payload).unwrap();
-      }
-
-      if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
-        const facilityId = selectedFacilityId;
-        const departmentId = selectedDepartmentId;
-        const practitionerId = Number(selectedPractitionerId ?? 0);
-
-        const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
-          facilityId: Number(facilityId),
-          departmentId: Number(departmentId),
-          resourceType: 'PRACTITIONER' as modelTypes.TemplateType,
-          resourceId: practitionerId,
-          patientId: Number(savedPatient.id ?? 0),
-          service: 'URGENT_VISIT' as modelTypes.EncounterReason,
-          priority: 'NORMAL',
-          defaultServiceId: null,
-          defaultPractitionerId: practitionerId,
-          reason: null,
-          note: null,
-          followUpEncounterId: null,
-          originType: null,
-          originName: null
-        };
-
-        try {
-          await createQuickAppointment(payload).unwrap();
-          dispatch(setRefetchEncounter(true));
-        } catch (encounterError: any) {
-          handleCrudError(encounterError, dispatch, ENCOUNTER_ERROR_MAP);
-          return;
-        }
-      }
-
-      setLocalPatient(savedPatient);
-
-      if (typeof setPatient === 'function') {
-        setPatient(savedPatient);
-      }
-
-      setOpen(false);
-      handleClearModal();
-
-      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
-    } catch (err: any) {
-      const msg = toHumanBackendError(err, {
-        firstName: 'First Name',
-        secondName: 'Second Name',
-        lastName: 'Last Name',
-        dateOfBirth: 'Date of Birth',
-        primaryMobileNumber: 'Primary Mobile Number',
-        sexAtBirth: 'Gender',
-        email: 'Email',
-        nationality: 'Nationality',
-        documentId: 'Document ID',
-        medicalRecordNumber: 'Medical Record Number'
-      });
-
-      dispatch(notify({ msg, sev: 'warning' }));
-
-      if (err?.data?.validationResult) {
-        setValidationResult(err.data.validationResult);
-      }
+    if (typeof setPatient === 'function') {
+      setPatient(savedPatient);
     }
-  };
+
+    setOpen(false);
+    handleClearModal();
+
+    dispatch(
+      notify({
+        msg: 'Patient added successfully',
+        sev: 'success'
+      })
+    );
+  } catch (err: any) {
+    const msg = toHumanBackendError(err, {
+      firstName: 'First Name',
+      secondName: 'Second Name',
+      lastName: 'Last Name',
+      dateOfBirth: 'Date of Birth',
+      primaryMobileNumber: 'Primary Mobile Number',
+      sexAtBirth: 'Gender',
+      email: 'Email',
+      nationality: 'Nationality',
+      documentId: 'Document ID',
+      medicalRecordNumber: 'Medical Record Number'
+    });
+
+    dispatch(
+      notify({
+        msg,
+        sev: 'warning'
+      })
+    );
+
+    if (err?.data?.validationResult) {
+      setValidationResult(err.data.validationResult);
+    }
+  }
+};
 
   const quickPatientContent = useMemo(
     () => (
@@ -664,7 +707,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           width="100%"
         />
 
-        <MyInput
+        <MyDateHijriInput
           required
           vr={validationResult}
           column
@@ -715,33 +758,39 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
             <MyInput
               width="100%"
-              required
+              required={encounterType !== 'EMERGENCY'}
               column
               fieldType="selectPagination"
-              fieldLabel="Department"
-              fieldName="departmentId"
-              selectData={allDepartments}
-              selectDataLabel="name"
+              fieldLabel="Practitioner"
+              fieldName="practitionerId"
+              selectData={allPractitioners}
+              selectDataLabel={['firstName', 'lastName']}
               selectDataValue="id"
-              record={{ departmentId: selectedDepartmentId }}
+              record={{ practitionerId: selectedPractitionerId }}
               setRecord={(record: any) => {
-                if (record.departmentId !== undefined) {
-                  setSelectedDepartmentId(record.departmentId);
+                if (record.practitionerId !== undefined) {
+                  setSelectedPractitionerId(
+                    record.practitionerId === null || record.practitionerId === ''
+                      ? null
+                      : Number(record.practitionerId)
+                  );
                 }
               }}
               searchable
-              disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
-              loading={isDepartmentsFetching}
-              hasMore={deptHasMore}
+              disabled={!selectedDepartmentId}
+              loading={isPractitionersFetching}
+              hasMore={practHasMore}
               onFetchMore={() => {
-                if (deptList?.links?.next) {
-                  const { page } = extractPaginationFromLink(deptList.links.next);
-                  setDeptPage(page);
+                if (practitionersList?.links?.next) {
+                  const { page } = extractPaginationFromLink(
+                    practitionersList.links.next
+                  );
+                  setPractPage(page);
                 }
               }}
             />
 
-            <MyInput
+            {/* <MyInput
               width="100%"
               required
               column
@@ -771,7 +820,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
                   setPractPage(page);
                 }
               }}
-            />
+            /> */}
           </>
         )}
         </div>

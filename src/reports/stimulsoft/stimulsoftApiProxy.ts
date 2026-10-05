@@ -1,5 +1,6 @@
 ﻿import config from '../../../app-config';
 import { getStimulsoftAuthHeaders } from './stimulsoftAuth';
+import { applyDashboardScrollLayout } from './stimulsoftViewerTheme';
 
 const PATH_FIELDS = ['pathData', 'path', 'url', 'connectionString'] as const;
 
@@ -41,6 +42,24 @@ const hisPathname = (value?: string | null): string => {
 const isHisApiPath = (value?: string | null): boolean =>
   hisPathname(value).startsWith('/api/');
 
+/** Node/Java SQL adapter. Must not carry the HIS JWT (HTTP 431 on /proxy). */
+const isSqlAdapterUrl = (value?: string | null): boolean => {
+  if (!value) return false;
+  const trimmed = String(value).trim();
+  if (!trimmed) return false;
+  if (
+    trimmed === '/proxy' ||
+    trimmed.startsWith('/proxy/') ||
+    trimmed.startsWith('/proxy?')
+  ) {
+    return true;
+  }
+  const parsed = tryUrl(trimmed);
+  if (!parsed) return false;
+  if (parsed.port === '9615') return true;
+  return parsed.pathname === '/proxy' || parsed.pathname.startsWith('/proxy/');
+};
+
 const backendRequestHost = (): string => {
   const backend = String(config.backendBaseURL || '').replace(/\/$/, '');
   if (!backend) return '';
@@ -51,25 +70,37 @@ const backendRequestHost = (): string => {
   }
 };
 
-/**
- * RTK Query already calls backendBaseURL with JWT. Those must not be rewritten
- * or have Stimulsoft report variables injected — that emptied the department
- * switcher and kept report lists on the previous department until a refresh.
- */
-const isAppBackendRequest = (url: string): boolean => {
+/** Catalog/setup APIs owned by the React app — never rewrite or inject report vars. */
+const isProtectedAppApi = (url: string): boolean => {
   const path = hisPathname(url);
-  if (/\/api\/setup\//i.test(path)) return true;
-  if (/\/api\/analytics\/reports\/templates(?:\/|$|\?)/i.test(path)) return true;
+  return (
+    /\/api\/setup\//i.test(path) ||
+    /\/api\/analytics\/reports\/templates(?:\/|$|\?)/i.test(path)
+  );
+};
+
+/**
+ * RTK Query fetch() to backendBaseURL. Must not be rewritten or have Stimulsoft
+ * report variables injected — that emptied the department switcher and kept
+ * report lists on the previous department until a refresh.
+ */
+const isAppBackendFetch = (url: string): boolean => {
+  if (isProtectedAppApi(url)) return true;
   const parsed = tryUrl(url);
   if (!parsed) return false;
   const backendHost = backendRequestHost();
   return Boolean(backendHost && parsed.host === backendHost);
 };
 
-const shouldRewriteStimulsoftGet = (method: string, url: string): boolean =>
-  String(method || 'GET').toUpperCase() === 'GET' &&
-  isHisApiPath(url) &&
-  !isAppBackendRequest(url);
+const isGet = (method: string) => String(method || 'GET').toUpperCase() === 'GET';
+
+/** fetch: skip backend-host GETs so RTK Query keeps its own JWT/URL. */
+const shouldRewriteStimulsoftFetch = (method: string, url: string): boolean =>
+  isGet(method) && isHisApiPath(url) && !isAppBackendFetch(url);
+
+/** XHR is Stimulsoft. Rewrite HIS GETs, including full backend URLs, onto /api. */
+const shouldRewriteStimulsoftXhr = (method: string, url: string): boolean =>
+  isGet(method) && isHisApiPath(url) && !isProtectedAppApi(url);
 
 const toIsoDate = (date: Date) => {
   const year = date.getFullYear();
@@ -588,17 +619,43 @@ const applyAuthHeadersToXhr = (xhr: XMLHttpRequest) => {
   });
 };
 
+const headerItems = (
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+): { key?: string; value?: string }[] => {
+  if (Array.isArray(headers)) return headers;
+  if (Array.isArray((headers as { list?: unknown })?.list)) {
+    return (headers as { list: { key?: string; value?: string }[] }).list;
+  }
+  if (Array.isArray((headers as { items?: unknown })?.items)) {
+    return (headers as { items: { key?: string; value?: string }[] }).items;
+  }
+  return [];
+};
+
+const stripAuthHeaders = (
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+) =>
+  headerItems(headers).filter(
+    item => !AUTH_HEADER_NAMES.has(String(item?.key).toLowerCase())
+  );
+
 const mergeAuthHeadersList = (
   headers?: { key?: string; value?: string }[]
 ) => {
   const authHeaders = getStimulsoftAuthHeaders();
-  const existing = Array.isArray(headers) ? headers : [];
-  return [
-    ...existing.filter(
-      item => !AUTH_HEADER_NAMES.has(String(item?.key).toLowerCase())
-    ),
-    ...authHeaders,
-  ];
+  return [...stripAuthHeaders(headers), ...authHeaders];
+};
+
+const headersForStimulsoftHttp = (
+  url: string,
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+) => {
+  if (!isSqlAdapterUrl(url)) return mergeAuthHeadersList(headerItems(headers));
+  // A HIS JWT on /proxy makes Node answer HTTP 431. Stimulsoft then shows
+  // "Connection error: Connection error" and drops the real status.
+  return stripAuthHeaders(headers).filter(
+    item => String(item?.value ?? '').length < 4000
+  );
 };
 
 const resolveHttpFilePath = (filePath: string) => {
@@ -634,7 +691,7 @@ export const patchStimulsoftHttp = (Stimulsoft?: any) => {
           url,
           binary,
           contentType,
-          mergeAuthHeadersList(headers),
+          headersForStimulsoftHttp(url, headers),
           ...rest
         );
       } catch (error) {
@@ -669,7 +726,7 @@ export const patchStimulsoftHttp = (Stimulsoft?: any) => {
           url,
           binary,
           contentType,
-          mergeAuthHeadersList(headers),
+          headersForStimulsoftHttp(url, headers),
           ...rest
         );
       } catch (error) {
@@ -678,6 +735,28 @@ export const patchStimulsoftHttp = (Stimulsoft?: any) => {
         callback?.(emptyHttpBody(binary));
       }
     };
+  }
+
+  if (typeof Http.sendAsync === 'function' && !Http.sendAsync.__stiSqlHeaders) {
+    const originalSendAsync = Http.sendAsync.bind(Http);
+    const sendAsync = function sendAsync(
+      method: string,
+      url: string,
+      body?: string,
+      headers?: { key?: string; value?: string }[],
+      ...rest: unknown[]
+    ) {
+      const resolved = resolveHttpFilePath(url);
+      return originalSendAsync(
+        method,
+        resolved,
+        body,
+        headersForStimulsoftHttp(resolved, headers),
+        ...rest
+      );
+    };
+    (sendAsync as { __stiSqlHeaders?: boolean }).__stiSqlHeaders = true;
+    Http.sendAsync = sendAsync;
   }
 
   if (typeof Http.send === 'function') {
@@ -695,7 +774,7 @@ export const patchStimulsoftHttp = (Stimulsoft?: any) => {
           method,
           resolved,
           body,
-          mergeAuthHeadersList(headers),
+          headersForStimulsoftHttp(resolved, headers),
           ...rest
         );
         if (
@@ -751,7 +830,7 @@ export const installStimulsoftApiInterceptor = () => {
     rest: unknown[]
   ) {
     const raw = String(url);
-    const rewrite = shouldRewriteStimulsoftGet(method, raw);
+    const rewrite = shouldRewriteStimulsoftXhr(method, raw);
     const resolved = rewrite ? resolveHisApiRequestUrl(raw) : raw;
     const flagged = xhr as XMLHttpRequest & {
       __stiHisApi?: boolean;
@@ -760,10 +839,45 @@ export const installStimulsoftApiInterceptor = () => {
     flagged.__stiUrl = resolved;
     flagged.__stiHisApi =
       !skipAuth(method) &&
-      rewrite &&
+      !isSqlAdapterUrl(raw) &&
+      !isSqlAdapterUrl(resolved) &&
       (isHisApiPath(raw) || isHisApiPath(resolved));
     const result = nativeOpen.call(xhr, method, resolved, ...(rest as []));
-    if (flagged.__stiHisApi) applyAuthHeadersToXhr(xhr);
+    if (isSqlAdapterUrl(raw) || isSqlAdapterUrl(resolved)) {
+      const nativeSetHeader = xhr.setRequestHeader.bind(xhr);
+      xhr.setRequestHeader = (key: string, value: string) => {
+        if (AUTH_HEADER_NAMES.has(String(key).toLowerCase())) return;
+        if (String(value ?? '').length >= 4000) return;
+        return nativeSetHeader(key, value);
+      };
+      xhr.addEventListener('readystatechange', () => {
+        if (xhr.readyState !== 4 || xhr.status === 200 || xhr.status === 0) return;
+        const notice = `HTTP ${xhr.status} ${String(
+          xhr.responseText || xhr.statusText || ''
+        ).slice(0, 300)}`;
+        const body = JSON.stringify({
+          success: false,
+          notice,
+          checkVersion: false,
+        });
+        try {
+          Object.defineProperty(xhr, 'status', { configurable: true, value: 200 });
+          Object.defineProperty(xhr, 'statusText', {
+            configurable: true,
+            value: 'OK',
+          });
+          Object.defineProperty(xhr, 'responseText', {
+            configurable: true,
+            value: body,
+          });
+          Object.defineProperty(xhr, 'response', { configurable: true, value: body });
+        } catch {
+          // status can stay read-only; the designer then keeps the generic message
+        }
+      });
+    } else if (flagged.__stiHisApi) {
+      applyAuthHeadersToXhr(xhr);
+    }
     return result;
   };
 
@@ -778,28 +892,37 @@ export const installStimulsoftApiInterceptor = () => {
     };
     if (flagged.__stiHisApi) {
       applyAuthHeadersToXhr(xhr);
+      const neutralize401 = () => {
+        if (xhr.status !== 401) return;
+        try {
+          Object.defineProperty(xhr, 'status', {
+            configurable: true,
+            value: 200,
+          });
+          Object.defineProperty(xhr, 'statusText', {
+            configurable: true,
+            value: 'OK',
+          });
+          Object.defineProperty(xhr, 'responseText', {
+            configurable: true,
+            value: '[]',
+          });
+          Object.defineProperty(xhr, 'response', {
+            configurable: true,
+            value: '[]',
+          });
+        } catch {
+          // some browsers keep status read-only
+        }
+      };
+      xhr.addEventListener('readystatechange', () => {
+        if (xhr.readyState === 4) neutralize401();
+      });
+      const result = nativeSend.call(xhr, body);
+      neutralize401();
+      return result;
     }
-    const result = nativeSend.call(xhr, body);
-    if (flagged.__stiHisApi && xhr.status === 401) {
-      try {
-        Object.defineProperty(xhr, 'status', { configurable: true, value: 200 });
-        Object.defineProperty(xhr, 'statusText', {
-          configurable: true,
-          value: 'OK',
-        });
-        Object.defineProperty(xhr, 'responseText', {
-          configurable: true,
-          value: '[]',
-        });
-        Object.defineProperty(xhr, 'response', {
-          configurable: true,
-          value: '[]',
-        });
-      } catch {
-        // some browsers keep status read-only
-      }
-    }
-    return result;
+    return nativeSend.call(xhr, body);
   };
 
   XMLHttpRequest.prototype.open = function (
@@ -859,7 +982,7 @@ export const installStimulsoftApiInterceptor = () => {
     // Also leave the app's own backend GETs alone (department switcher, report
     // catalogs). Stimulsoft must not rewrite those onto the UI origin or inject
     // the currently open report's departmentId.
-    if (!shouldRewriteStimulsoftGet(method, originalUrl)) {
+    if (!shouldRewriteStimulsoftFetch(method, originalUrl)) {
       return originals.fetch(input as RequestInfo, init);
     }
 
@@ -898,6 +1021,73 @@ const placeholdersIn = (value: string): string[] => {
 
 const hasVariable = (report: any, name: string): boolean => {
   return Boolean(findVariable(report, name));
+};
+
+const sqlParameterNames = (query: string): string[] => {
+  const names: string[] = [];
+  String(query || '').replace(/@([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name: string) => {
+    if (!names.some(item => normalizeVarName(item) === normalizeVarName(name))) {
+      names.push(name);
+    }
+    return _match;
+  });
+  return names;
+};
+
+const parameterItems = (parameters: any): any[] => {
+  if (!parameters) return [];
+  if (Array.isArray(parameters)) return parameters;
+  if (Array.isArray(parameters.list)) return parameters.list;
+  if (Array.isArray(parameters.values)) return parameters.values;
+  return [];
+};
+
+const parameterMatches = (item: { name?: string }, name: string) => {
+  const itemName = normalizeVarName(String(item?.name || '').replace(/^@/, ''));
+  return itemName === normalizeVarName(name);
+};
+
+const isDateParam = (name: string) =>
+  /^(startDate|endDate|fromDate|toDate|date)$/i.test(name);
+
+/**
+ * JSON dates are filled into /api URLs. A PostgreSQL query only receives a
+ * value when @name is a command parameter. Preview creates startDate/endDate
+ * in memory, so they are missing from the dictionary and from the SQL command.
+ * Copy the same values onto any @parameter the query already names.
+ */
+const applySqlVariableParameters = (report: any, args: any) => {
+  const query = String(args?.queryString || '');
+  if (!query.includes('@')) return;
+  if (isHisApiPath(query) || isHisApiPath(args?.connectionString)) return;
+  const database = String(args?.database || '');
+  if (/json|xml|excel|csv/i.test(database)) return;
+
+  const names = sqlParameterNames(query);
+  if (!names.length) return;
+
+  const existing = parameterItems(args.parameters);
+  const next = Array.isArray(args?.parameters) ? args.parameters : existing.slice();
+
+  names.forEach(name => {
+    const value = getVariableValue(report, name) ?? defaultForVariable(name);
+    if (value == null || value === '') return;
+    const found = next.find(item => parameterMatches(item, name));
+    if (found) {
+      if (found.value == null || found.value === '') found.value = value;
+      return;
+    }
+    next.push({
+      name,
+      value,
+      // Keep ISO dates as strings so PostgreSQL casts them in the session
+      // timezone. typeGroup "datetime" would parse them as UTC midnight.
+      typeGroup: 'string',
+      typeName: isDateParam(name) ? 'DateTime' : 'String',
+    });
+  });
+
+  args.parameters = next;
 };
 
 const ensureVariablesFromApiPaths = (Stimulsoft: any, report: any) => {
@@ -1040,6 +1230,7 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
   installStimulsoftApiInterceptor();
   patchStimulsoftHttp(Stimulsoft);
   ensureVariablesFromApiPaths(Stimulsoft, report);
+  applyDashboardScrollLayout(Stimulsoft, report);
   listDatabases(report).forEach(applyAuthHeadersToDatabase);
 };
 
@@ -1051,5 +1242,6 @@ export const prepareStimulsoftDataRequest = (report: any, args: any) => {
   attachPrepareVariables(processReport);
   listDatabases(processReport).forEach(applyAuthHeadersToDatabase);
   rewritePathFields(args, value => resolveHisApiUrl(value, processReport));
+  applySqlVariableParameters(processReport, args);
   attachStimulsoftRequestAuth(args);
 };

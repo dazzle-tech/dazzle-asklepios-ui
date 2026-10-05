@@ -53,7 +53,7 @@ console.log(localPatient);
 }, [dispatch]);
 
   return (
-    <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div ref={ref as any} className={clsx('basuc-div')}>
       <Form fluid>
         <Row>
           <Col md={12}>
@@ -61,7 +61,7 @@ console.log(localPatient);
               <Col md={24}>
                 <PatientObservationsComplaints
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}
@@ -73,7 +73,7 @@ console.log(localPatient);
               <Col md={24}>
                 <VitalSigns
                   width="28vw"
-                  disabled={false}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number(localPatient.id)}
                   encounterId={Number(localEncounter.id)}
                   encounter={localEncounter}
@@ -86,7 +86,7 @@ console.log(localPatient);
               <Col md={24}>
                 <BodyMeasurements
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patient={localPatient}
                   patientId={Number(localPatient?.id)}
                   encounterId={Number(localEncounter?.id)}
@@ -98,7 +98,7 @@ console.log(localPatient);
               <Col md={24}>
                 <PainAssessment
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}
@@ -109,7 +109,7 @@ console.log(localPatient);
               <Col md={24}>
                 <AdditionalMeasurements
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patient={localPatient as any}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}

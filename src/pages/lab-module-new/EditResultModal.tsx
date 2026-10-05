@@ -192,6 +192,7 @@ const EditResultModal = ({
                   fieldName="resultValueNumber"
                   fieldType="number"
                   label="RESULT"
+                  allowDecimal
                   record={form}
                   setRecord={setForm}
                   width="20vw"

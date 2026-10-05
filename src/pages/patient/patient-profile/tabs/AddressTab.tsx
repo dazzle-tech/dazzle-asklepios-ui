@@ -383,6 +383,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
   const resetLocationState = () => {
     setAddress({
       ...newAddress,
+      id: undefined,
       patientId,
       locationJson: {
         country: null,
@@ -396,9 +397,10 @@ const AddressTab: React.FC<AddressTabProps> = ({
       areaId: null
     });
 
-    setBlockServerHydration(false);
+    setBlockServerHydration(true);
     setHasHydratedFromCchi(false);
 
+    setCountrySearch('');
     setDistrictSearch('');
     setCommunitySearch('');
     setAreaSearch('');
@@ -412,7 +414,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
     setDistrictCache([]);
     setCommunityCache([]);
     setAreaCache([]);
-    setCountrySearch('');
+
     setSelectedCountry(null);
 
     setRefreshToken(prev => prev + 1);
@@ -850,23 +852,38 @@ const AddressTab: React.FC<AddressTabProps> = ({
   };
 
 
+  const ensureSelectedItem = <T extends { id?: number | null }>(
+    cache: T[],
+    selected?: T | null
+  ): T[] => {
+    if (!selected?.id) return cache;
 
-
-  const countrySelectData = (() => {
-    if (!selectedCountry?.id) {
-      return countryCache;
-    }
-
-    const exists = countryCache.some(
-      item => String(item?.id) === String(selectedCountry.id)
+    const exists = cache.some(
+      item => String(item.id) === String(selected.id)
     );
 
-    if (exists) {
-      return countryCache;
-    }
+    return exists ? cache : [selected, ...cache];
+  };
 
-    return [selectedCountry, ...countryCache];
-  })();
+  const countrySelectData = ensureSelectedItem(
+    countryCache,
+    selectedCountry
+  );
+
+  const districtSelectData = ensureSelectedItem(
+    districtCache,
+    address.locationJson?.district as SimpleDistrict | null
+  );
+
+  const communitySelectData = ensureSelectedItem(
+    communityCache,
+    address.locationJson?.community as SimpleCommunity | null
+  );
+
+  const areaSelectData = ensureSelectedItem(
+    areaCache,
+    address.locationJson?.area as SimpleArea | null
+  );
 
   return (
     <>
@@ -1001,7 +1018,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 fieldLabel="District"
                 fieldType="selectPagination"
                 fieldName="districtId"
-                selectData={districtCache}
+                selectData={districtSelectData}
                 selectDataLabel="name"
                 selectDataValue="id"
                 record={{
@@ -1077,7 +1094,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 fieldLabel="Community"
                 fieldType="selectPagination"
                 fieldName="communityId"
-                selectData={communityCache}
+                selectData={communitySelectData}
                 selectDataLabel="name"
                 selectDataValue="id"
                 record={{
@@ -1144,7 +1161,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
                 fieldLabel="Area"
                 fieldType="selectPagination"
                 fieldName="areaId"
-                selectData={areaCache}
+                selectData={areaSelectData}
                 selectDataLabel="name"
                 selectDataValue="id"
                 record={{

@@ -35,6 +35,9 @@ import { ApAttachment } from '@/types/model-types';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
+  useGetEncounterCoverageQuery
+} from '@/services/encounters/patientEncounterService';
+import {
   faFileWaveform,
   faHandDots,
   faIdCard,
@@ -95,6 +98,15 @@ const {
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
   const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
+
+  const { data: encounterCoverage } = useGetEncounterCoverageQuery(
+  {
+    encounterId: encounter?.id
+  },
+  {
+    skip: !encounter?.id
+  }
+);
 
   const toNumber = (v: any) => {
     const n = Number(v);
@@ -510,6 +522,17 @@ const getAllergenName = (allergy: any) => {
   const documentNumberText = textOr(primaryDocument?.number, textOr(patient?.documentNo, ''));
   const primaryDiagnosisNotFound = primaryDiagnosisError?.status === 404;
 
+const coverageTypeRaw = String(
+  encounterCoverage?.coverageType ?? ''
+).toUpperCase();
+
+const coverageTypeLabel =
+  coverageTypeRaw === 'INSURANCE'
+    ? 'Insured'
+    : coverageTypeRaw === 'SELF_PAY'
+      ? 'Self Pay'
+      : '-';
+
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -863,6 +886,18 @@ const getAllergenName = (allergy: any) => {
               )}
             </span>
           </Text>
+          <div className="info-section">
+
+          <div className="info-column">
+              <Text className="info-label">
+                <Translate>Coverage Type</Translate>
+              </Text>
+
+              <Text className="info-value">
+                <Translate>{coverageTypeLabel || '-'}</Translate>
+              </Text>
+            </div>
+          </div>
 
           {encounter?.encounterType !== 'INPATIENT' && (
             <div className="details-sections">

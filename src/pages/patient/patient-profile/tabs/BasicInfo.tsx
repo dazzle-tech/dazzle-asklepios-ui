@@ -1,3 +1,4 @@
+import MyDateHijriInput from '@/components/MyDateHijriInput/MyDateHijriInput';
 import MyInput from '@/components/MyInput';
 import clsx from 'clsx';
 import React from 'react';
@@ -64,7 +65,7 @@ const BasicInfo = ({
         searchable={false}
         width={170}
       />
-      <MyInput
+      <MyDateHijriInput
         required
         vr={validationResult}
         column

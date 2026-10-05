@@ -11,7 +11,8 @@ const MyTagInput = ({
   onClearAll,
   labelText = '',
   width = '100%',
-  fontSize = '22px'
+  fontSize = '22px',
+  disabled = false
 }) => {
   const inputValueRef = React.useRef('');
 
@@ -66,6 +67,7 @@ const MyTagInput = ({
           multiple
           freeSolo
           fullWidth
+          disabled={disabled}
           disableClearable
           options={[]}
           value={cleanTags}
@@ -79,7 +81,7 @@ const MyTagInput = ({
                   key={key}
                   label={option}
                   {...tagProps}
-                  onDelete={() => handleDelete(option)}
+                   onDelete={disabled ? undefined : () => handleDelete(option)}
                   sx={{
                     margin: '2px',
                     '.MuiChip-deleteIcon': {
@@ -130,7 +132,7 @@ const MyTagInput = ({
           )}
         />
 
-        {cleanTags.length > 0 && (
+        {cleanTags.length > 0 && !disabled && (
           <button
             onClick={handleClearAll}
             style={{

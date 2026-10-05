@@ -190,7 +190,7 @@ const DiagnosticsOrder = (props: any) => {
         handleCancle={vm.handleCancle}
         orderTestRefetch={vm.orderTestRefetch}
         setSelectedRows={vm.setSelectedRows}
-        handleRecallFavoriteTest={vm.handleRecallFavoriteTest}
+        handleRecallFavoriteTests={vm.handleRecallFavoriteTests}
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
         handleLoadMore={vm.handleLoadMore}

@@ -510,18 +510,18 @@ const GlasgowComaScale = ({
             size={24}
             fill="var(--primary-gray)"
             style={{
-              cursor: rowData?.cancelledAt
+              cursor: rowData?.cancelledAt || edit
                 ? 'not-allowed'
                 : 'pointer',
 
-              opacity: rowData?.cancelledAt
+              opacity: rowData?.cancelledAt || edit
                 ? 0.5
                 : 1
             }}
             onClick={e => {
               e.stopPropagation();
 
-              if (rowData?.cancelledAt) return;
+              if (rowData?.cancelledAt || edit) return;
 
               setGcsAssessment({
                 ...rowData
@@ -536,17 +536,17 @@ const GlasgowComaScale = ({
             fill="var(--rs-red-500, #f44336)"
             title="Cancel"
             style={{
-              cursor: rowData?.cancelledAt
+              cursor: rowData?.cancelledAt || edit
                 ? 'not-allowed'
                 : 'pointer',
-              opacity: rowData?.cancelledAt
+              opacity: rowData?.cancelledAt || edit
                 ? 0.5
                 : 1
             }}
             onClick={e => {
               e.stopPropagation();
 
-              if (rowData?.cancelledAt) return;
+              if (rowData?.cancelledAt || edit) return;
 
               setGcsAssessment(rowData);
 
@@ -595,7 +595,6 @@ const GlasgowComaScale = ({
 return (
     <div
       dir={dir}
-      className={edit ? 'disabled-panel' : ''}
     >
       <Panel dir={dir}>
         <div className="gcs-table-header">
@@ -611,7 +610,6 @@ return (
                 timestamp: Date.now()
               }));
             }}
-            disabled={isReadOnly}
           >
             <Translate>Show Cancelled</Translate>
           </Checkbox>
@@ -627,7 +625,7 @@ return (
               setOpenPopup(true);
             }}
             width="109px"
-            disabled={isReadOnly}
+            disabled={isReadOnly || edit}
           >
             Add New
           </MyButton>

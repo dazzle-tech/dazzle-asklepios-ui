@@ -6,14 +6,10 @@ import {
     useGetDiagnosticTestProfilesByIdsMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 import {
-    useGetLovAllValuesQuery,
-    useGetLovsQuery,
     useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import {
-    initialListRequest,
-    initialListRequestAllValues
-} from '@/types/types';
+
+import LovValueCell from '@/components/LovValueCell';
 import { formatDateWithoutSeconds } from '@/utils';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
@@ -147,60 +143,22 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         );
     }, [profilesByIds]);
 
-    const { data: allLovValues } =
-        useGetLovAllValuesQuery({
-            ...initialListRequestAllValues
-        });
 
-    const { data: lovDefinitions } =
-        useGetLovsQuery({
-            ...initialListRequest,
-            pageSize: 1000
-        });
 
     const { data: valueUnitLov } =
         useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-    const resolveLovDisplayValue = (
-        lovId: any,
-        key: any
-    ) => {
-        if (
-            !lovId ||
-            key == null ||
-            !lovDefinitions?.object ||
-            !allLovValues?.object
-        ) {
-            return '-';
-        }
 
-        const lovDef = lovDefinitions.object.find(
-            (d: any) =>
-                String(d.key) === String(lovId)
-        );
 
-        if (!lovDef?.lovCode) {
-            return '-';
-        }
-
-        const found = allLovValues.object.find(
-            (v: any) =>
-                String(v.lovCode) === String(lovDef.lovCode) &&
-                String(v.key) === String(key)
-        );
-
-        return found?.lovDisplayVale || found?.name || '-';
-    };
-
-    const resolveUnitDisplay = (profile: any) => {
+    const resolveUnitDisplay = (profile: any, resultType?: string) => {
         if (!profile) return null;
 
-        const resultType =
-            profile?.resultType?.toUpperCase()?.trim();
+        const resolvedType =
+            (resultType ?? profile?.resultType)?.toUpperCase()?.trim();
 
         if (
-            resultType === 'LOV' ||
-            resultType === 'TEXT'
+            resolvedType === 'LOV' ||
+            resolvedType === 'TEXT'
         ) {
             return null;
         }
@@ -257,7 +215,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         );
     }, [pivotData, record]);
 
-    const renderResultValue = (result: any) => {
+  const renderResultValue = (result: any) => {
     if (!result) return '-';
 
     const profile = profileMap.get(
@@ -265,33 +223,10 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     );
 
     const resultType =
-        profile?.resultType?.toUpperCase()?.trim();
-
-    let displayValue: any = '-';
-
-    if (resultType === 'LOV') {
-
-        displayValue = resolveLovDisplayValue(
-            profile?.listOfValueId,
-            result.resultValueText
-        );
-
-    } else if (resultType === 'TEXT') {
-
-        displayValue =
-            result.resultValueText ?? '-';
-
-    } else if (
-        result.resultValueNumber !== null &&
-        result.resultValueNumber !== undefined
-    ) {
-
-        displayValue =
-            result.resultValueNumber;
-    }
+        (result?.resultTypeAtEntry ?? profile?.resultType)?.toUpperCase()?.trim();
 
     const unit =
-        resolveUnitDisplay(profile);
+        resolveUnitDisplay(profile, resultType);
 
     return (
         <div
@@ -301,20 +236,32 @@ const LaboratoryResultComparison: React.FC<Props> = ({
             }}
         >
             <div>
-                <span>{displayValue}</span>
-
-                {resultType === 'NUMBER' &&
-                    unit && (
-                        <span
-                            style={{
-                                marginLeft: 6,
-                                fontSize: '0.7rem',
-                                color: '#666'
-                            }}
-                        >
-                            {unit}
+                {resultType === 'LOV' ? (
+                    <LovValueCell
+                        valueKey={result.resultValueText}
+                    />
+                ) : (
+                    <>
+                        <span>
+                            {resultType === 'TEXT'
+                                ? result.resultValueText ?? '-'
+                                : result.resultValueNumber ?? '-'}
                         </span>
-                    )}
+
+                        {resultType === 'NUMBER' &&
+                            unit && (
+                                <span
+                                    style={{
+                                        marginLeft: 6,
+                                        fontSize: '0.7rem',
+                                        color: '#666'
+                                    }}
+                                >
+                                    {unit}
+                                </span>
+                            )}
+                    </>
+                )}
             </div>
 
             {resultType !== 'TEXT' &&
@@ -326,12 +273,15 @@ const LaboratoryResultComparison: React.FC<Props> = ({
                             marginTop: 2
                         }}
                     >
-                        {resultType === 'LOV'
-                            ? resolveLovDisplayValue(
-                                  profile?.listOfValueId,
-                                  result.normalRangeValue
-                              )
-                            : result.normalRangeValue}
+                        {resultType === 'LOV' ? (
+                            <LovValueCell
+                                valueKey={
+                                    result.normalRangeValue
+                                }
+                            />
+                        ) : (
+                            result.normalRangeValue
+                        )}
                     </span>
                 )}
         </div>

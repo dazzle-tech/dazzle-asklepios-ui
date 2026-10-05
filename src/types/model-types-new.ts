@@ -128,7 +128,13 @@ export interface Facility {
   defaultLabDepartmentName?: string | null;
   defaultRadDepartmentName?: string | null;
   approvingDiagnosticTestSettlePayment?: boolean;
-  
+  countryId?: number | null;
+  countryName?: string | null;
+  districtId?: number | null;
+  districtName?: string | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
+  facilityAddress?: string | null;
 }
 
 export interface CreateFacility {
@@ -147,6 +153,10 @@ export interface CreateFacility {
   defaultLabDepartmentId?: number | null;
   defaultRadDepartmentId?: number | null;
   approvingDiagnosticTestSettlePayment?: boolean;
+  countryId?: number | null;
+  districtId?: number | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
 }
 
 export interface Role {
@@ -1207,6 +1217,7 @@ export interface DentalAction {
 export interface DiagnosticTestNormalRange {
   id?: number;
   testId: number;
+  isActive?: boolean;
 
   gender?: string;
   ageFrom?: number;
@@ -3903,6 +3914,9 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   undoAcceptBy?: string;
   undoAcceptDate?: string;
   icdDiagnosisId?: number;
+
+  confirmedBy?: string;
+  confirmedAt?: string;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -4684,6 +4698,7 @@ export interface VitalSigns {
   temperature?: number | null;
   oxygenSaturation?: number | null;
   respiratoryRate?: number | null;
+  fastingBloodGlucose?: string | null;
 
   isTriage?: boolean | null;
   isActive: boolean;
@@ -4692,9 +4707,7 @@ export interface VitalSigns {
 
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
-
 }
-
 export interface BodyMeasurements {
   id?: number;
 
@@ -7410,6 +7423,7 @@ export interface PendingClaimInvoiceResponse {
   claimSubType?: string | null;
   matchingItemCount?: number | null;
   matchingNetAmount?: number | null;
+  selectable?: boolean | null;
 }
 
 export interface ClaimBatchSubmitResponse {

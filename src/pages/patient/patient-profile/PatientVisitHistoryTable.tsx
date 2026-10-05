@@ -27,7 +27,6 @@ import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import {
   useGetPractitionersBulkMutation,
   useGetPractitionersBySpecialityAndDepartmentQuery,
@@ -63,6 +62,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelForm, setCancelForm] = useState<{ cancellationReason?: string }>({
+    cancellationReason: ''
+  });
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [openReassignModal, setOpenReassignModal] = useState(false);
   const [actionsMenuKey, setActionsMenuKey] = useState(0);
@@ -117,7 +119,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const encounters = data?.data ?? EMPTY_ENCOUNTERS;
 
-  const [cancelEncounter] = useCancelEncounterMutation();
+  const [cancelEncounter, { isLoading: isCancelling }] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
   const [reassignPractitioner, { isLoading: isReassigning }] = useReassignPractitionerMutation();
 
@@ -164,13 +166,24 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     }
   }, [encounterRefetchTrigger, refetch]);
 
+  const handleCloseCancel = useCallback((open: boolean) => {
+    setOpenCancelModal(open);
+    if (!open) setCancelForm({ cancellationReason: '' });
+  }, []);
+
   const handleCancel = async () => {
     if (!selectedVisit) return;
 
+    const cancellationReason = String(cancelForm.cancellationReason ?? '').trim();
+    if (!cancellationReason) {
+      dispatch(notify({ msg: 'Please enter the cancellation reason', sev: 'warning' }));
+      return;
+    }
+
     try {
-      await cancelEncounter({ id: selectedVisit.id }).unwrap();
+      await cancelEncounter({ id: selectedVisit.id, cancellationReason }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-      setOpenCancelModal(false);
+      handleCloseCancel(false);
       refetch();
     } catch (err: any) {
       const errorMap: Record<string, string> = {
@@ -553,6 +566,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               onClick={() => {
                 closeActionsMenu();
                 setSelectedVisit(row);
+                setCancelForm({ cancellationReason: '' });
                 setOpenCancelModal(true);
               }}
             >
@@ -680,13 +694,34 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           height={580}
         />
 
-        <DeletionConfirmationModal
+        <MyModal
           open={openCancelModal}
-          setOpen={setOpenCancelModal}
-          actionButtonFunction={handleCancel}
-          confirmationQuestion="Cancel this encounter?"
-          actionButtonLabel="Cancel"
+          setOpen={handleCloseCancel}
+          title="Cancel Encounter"
+          size="sm"
+          actionButtonLabel="Cancel Encounter"
           cancelButtonLabel="Close"
+          actionButtonFunction={handleCancel}
+          actionButtonLoading={isCancelling}
+          isDisabledActionBtn={isCancelling || !cancelForm.cancellationReason?.trim()}
+          content={
+            <Form fluid>
+              <p style={{ marginBottom: 12 }}>
+                <Translate>Cancel this encounter?</Translate>
+              </p>
+              <MyInput
+                required
+                column
+                width="100%"
+                fieldType="textarea"
+                fieldLabel="Cancellation Reason / Notes"
+                fieldName="cancellationReason"
+                record={cancelForm}
+                setRecord={setCancelForm}
+                placeholder="Enter the reason for cancellation and any relevant information"
+              />
+            </Form>
+          }
         />
 
         <EncounterDischarge

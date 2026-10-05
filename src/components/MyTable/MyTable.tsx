@@ -329,7 +329,7 @@ const MyTable: React.FC<MyTableProps> = ({
             onPageChange={onPageChange!}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={onRowsPerPageChange!}
-            rowsPerPageOptions={[5, 10, 15, 20, 30]}
+            rowsPerPageOptions={[5, 10, 15, 20, 30 ,60 ,100]}
           />
         )}
       </Box>

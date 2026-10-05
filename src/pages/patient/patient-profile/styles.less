@@ -57,13 +57,17 @@
 }
 
 .profile-sidebar-container {
-  width: 56px;
+    width: 56px;
   height: 91vh;
+  flex-shrink: 0;
+
+  transition: width 0.10s ease-in-out;
 
   &.expanded {
     width: 300px;
   }
-    .sidebar-panel {
+  .sidebar-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -76,8 +80,10 @@
       text-align: left;
       width: 100%;
       margin-bottom: 10px;
+      padding-right: 40px;
       font-weight: 600;
     }
+
     .rs-panel-body {
       width: 100%;
       overflow: visible;
@@ -85,30 +91,23 @@
 
     .expand-sidebar {
       position: absolute;
-      top: 15px;
-      right: 15px;
-    }
-  }
+      top: 12px;
+      right: 12px;
+      z-index: 10;
 
-  .patient-list {
-    display: flex;
-    flex-direction: column;
-    margin-top: 20px;
-    gap: 15px;
-    overflow: auto;
-    height: calc(100vh - 250px);
-    padding: 5px;
-    margin-left: -5px;
-    margin-right: -5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-    .actions-button {
-      background: none;
-      svg {
-        color: var(--icon-gray);
-      }
+      width: 30px;
+      height: 30px;
+      padding: 0;
+
+      cursor: pointer;
     }
   }
 }
+
 .profile-sidebar {
   background: #fff !important;
   border: 1px solid var(--rs-border-primary);
