@@ -7,7 +7,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
@@ -137,11 +137,6 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [selectedPatient, setSelectedPatient] =
     useState<any>(null);
 
-  const [orderIdIn, setOrderIdIn] =
-    useState<number[] | null>(null);
-
-  const [fetchOrders] =
-    useLazyFilterDiagnosticOrdersQuery();
   const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -261,9 +256,9 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             }
             : {}),
 
-          ...(orderIdIn?.length
+          ...(selectedPatient?.id
             ? {
-              orderIdIn
+              patientIdIn: [selectedPatient.id]
             }
             : {})
         }
@@ -395,28 +390,6 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
         console.error('❌ Bulk patient error:', err);
       });
   }, [patientIds, getBulkPatientBasicInfo]);
-
-  useEffect(() => {
-    if (!selectedPatient?.id) {
-      setOrderIdIn(null);
-      return;
-    }
-
-    fetchOrders({
-      patientIdIn: [selectedPatient.id],
-      page: 0,
-      size: 10000
-    })
-      .unwrap()
-      .then(res => {
-        const ids = (res?.data ?? [])
-          .map((order: any) => Number(order.id))
-          .filter((id: number) => Number.isFinite(id));
-
-        setOrderIdIn(ids);
-      })
-      .catch(() => setOrderIdIn([]));
-  }, [selectedPatient?.id]);
 
   const FilterModel = (
     <Form fluid className="table-header-content">
