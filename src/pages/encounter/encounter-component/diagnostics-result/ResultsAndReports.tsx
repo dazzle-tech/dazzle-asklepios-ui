@@ -130,19 +130,19 @@ const ResultsAndReports = ({ patient }) => {
     return { fromDate, toDate };
   });
 
-  const { data: ordersResponse, isFetching: isOrdersFetching } = useFilterDiagnosticOrdersQuery(
+  // Orders are only needed to display the order number; results and reports are filtered by patient directly.
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(
     patientId ? ({ patientId, page: 0, size: 1000, sort: 'id,desc' } as any) : skipToken
   );
 
   const orders = ordersResponse?.data ?? [];
-  const orderIds = useMemo(() => orders.map((o: any) => o.id).filter(Boolean), [orders]);
   const orderMap = useMemo(() => new Map(orders.map((o: any) => [String(o.id), o])), [orders]);
 
   const baseParams = useMemo(() => {
-    if (!patientId || isOrdersFetching || !orderIds.length) return null;
+    if (!patientId) return null;
 
     return {
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       processingStatus: 'RESULT_APPROVED',
       reviewed: true,
       ...(dateFilter.fromDate
@@ -150,7 +150,7 @@ const ResultsAndReports = ({ patient }) => {
         : {}),
       ...(dateFilter.toDate ? { approvedDateTo: endOfDay(dateFilter.toDate).toISOString() } : {})
     };
-  }, [patientId, isOrdersFetching, orderIds, dateFilter]);
+  }, [patientId, dateFilter]);
 
   const { data: resultsResponse, isFetching: isResultsFetching } =
     useFilterDiagnosticOrderTestResultsQuery(
@@ -432,7 +432,6 @@ const ResultsAndReports = ({ patient }) => {
         columns={columns}
         data={pagedRows}
         loading={
-          isOrdersFetching ||
           isResultsFetching ||
           isReportsFetching ||
           isOrderTestsFetching ||

@@ -14,7 +14,6 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 
 import {
-  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
@@ -85,17 +84,6 @@ const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
     const [fetchStudyImageLinkByReportId] =
       useLazyGetStudyImageLinkByReportIdQuery();
-   const ordersQueryParams = useMemo(() => {
-      if (!patient?.id) return skipToken;
-  
-      return {
-        patientId: patient.id,
-        page: 0,
-        size: 1000,
-        sort: 'id,desc'
-      };
-    }, [patient?.id]);
-  
     const { data: radCategoriesLovQueryResponse } =
   useGetLovValuesByCodeQuery('RAD_CATEGORIES');
     
@@ -139,18 +127,6 @@ const handleViewImage = async (reportId: number) => {
   }
 };
 
-      const {
-        data: ordersResponse,
-        isFetching: isOrdersFetching
-      } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-    
-      const orders = ordersResponse?.data ?? [];
-    
-      const orderIds = useMemo(
-        () => orders.map((o: any) => o.id).filter(Boolean),
-        [orders]
-      );
-
 
     const { data: allRadiologiesResponse } = useGetAllRadiologiesQuery({
       page: 0,
@@ -167,20 +143,19 @@ const handleViewImage = async (reportId: number) => {
     const queryParams = useMemo(() => {
 
       if (!patient?.id) return skipToken;
-      if (isOrdersFetching) return skipToken;
-      if (!orderIds.length) return skipToken;
 
       return {
         page,
         size: rowsPerPage,
         sort: 'id,desc',
         params: {
-          processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-          orderIdIn: orderIds
+          processingStatusIn: [DiagnosticOrderTestStatus.RESULT_APPROVED],
+          reviewed: true,
+          patientIdIn: [patient.id]
         }
       };
 
-    }, [patient?.id, isOrdersFetching, orderIds, page, rowsPerPage]);
+    }, [patient?.id, page, rowsPerPage]);
 
 
     const {

@@ -34,6 +34,7 @@ type PagedResult<T> = {
 export type DiagnosticOrderTestResultFilterParams = {
   orderIdIn?: number;
   patientIdIn?: number[];
+  reviewed?: boolean;
   orderTestId?: number;
   profileTestId?: number;
 

@@ -109,7 +109,7 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
     if (!patientId) return null;
 
     return {
-      processingStatus: 'RESULT_APPROVED',
+      processingStatusIn: ['RESULT_APPROVED'],
       reviewed: true,
       patientIdIn: [patientId],
       ...(orderDate.fromDate
