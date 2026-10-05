@@ -73,6 +73,7 @@ import 'react-tabs/style/react-tabs.css';
 import { useLazyGetUserByLoginQuery, useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
 import Translate from '@/components/Translate';
+import ApprovedResultsCell from '@/pages/encounter/encounter-list/ApprovedResultsCell';
 
 dayjs.extend(duration);
 
@@ -809,6 +810,33 @@ const UrgentCareList = () => {
     });
   };
 
+  const handleGoToDiagnosticsResults = async (encounterData: any) => {
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    const isClosed = encounterData?.status?.toUpperCase() === 'CLOSED';
+
+    navigate('/encounter/diagnostics-result', {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'Urgent_Care_List',
+        patient: fullPatient,
+        encounter: encounterData,
+        edit: isClosed,
+        ...(isClosed ? { viewMode: 'readOnly' } : {})
+      }
+    });
+  };
+
   const handleGoToNurseStation = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -1084,6 +1112,17 @@ const handleRowsPerPageChange = useCallback(
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
+    },
+    {
+      key: 'approvedResults',
+      title: 'APPROVED RESULTS',
+      render: (row: any) => (
+        <ApprovedResultsCell
+          encounterId={row?.id}
+          patientId={row?.patient?.id}
+          onGoToDiagnosticsResults={() => handleGoToDiagnosticsResults(row)}
+        />
+      )
     },
     {
       key: 'priorityLevel',

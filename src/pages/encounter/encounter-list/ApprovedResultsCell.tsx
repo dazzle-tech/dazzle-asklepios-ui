@@ -32,14 +32,14 @@ interface ApprovedResultsCellProps {
   encounterId?: number;
   patientId?: number;
   onConfirm?: (test: ApprovedTestRow) => void | Promise<void>;
-  onGoToDiagnosticsOrder?: () => void;
+  onGoToDiagnosticsResults?: () => void;
 }
 
 const ApprovedResultsCell: React.FC<ApprovedResultsCellProps> = ({
   encounterId,
   patientId,
   onConfirm,
-  onGoToDiagnosticsOrder
+  onGoToDiagnosticsResults
 }) => {
   const dispatch = useDispatch();
   const [openModal, setOpenModal] = useState(false);
@@ -56,7 +56,8 @@ const ApprovedResultsCell: React.FC<ApprovedResultsCellProps> = ({
       ...(patientId ? { patientIdIn: [patientId] } : {}),
       processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
       // only results that still need confirmation
-      resultConfirmed: false
+      resultConfirmed: false,
+      isReviewed: true
     }),
     [encounterId, patientId]
   );
@@ -263,16 +264,16 @@ const ApprovedResultsCell: React.FC<ApprovedResultsCellProps> = ({
               height={400}
               tableButtons={
                 <div style={{ display: 'flex', gap: 8 }}>
-                {onGoToDiagnosticsOrder && (
+                {onGoToDiagnosticsResults && (
                   <MyButton
                     appearance="ghost"
                     prefixIcon={() => <FontAwesomeIcon icon={faVials} />}
                     onClick={() => {
                       setOpenModal(false);
-                      onGoToDiagnosticsOrder();
+                      onGoToDiagnosticsResults();
                     }}
                   >
-                    Go to Diagnostics Order
+                    Go to Diagnostics Results
                   </MyButton>
                 )}
                 <MyButton

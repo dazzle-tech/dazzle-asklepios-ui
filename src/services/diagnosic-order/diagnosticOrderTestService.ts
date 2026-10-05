@@ -24,6 +24,7 @@ type DiagnosticOrderTestFilterParams = {
   encounterIdIn?: number[];
   patientIdIn?: number[];
   resultConfirmed?: boolean;
+  isReviewed?: boolean;
   [key: string]: any;
 };
 

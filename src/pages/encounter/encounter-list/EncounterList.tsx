@@ -638,7 +638,7 @@ const EncounterList = () => {
       }
     });
   };
-  const handleGoToDiagnosticsOrder = async (encounterData: any) => {
+  const handleGoToDiagnosticsResults = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -653,7 +653,7 @@ const EncounterList = () => {
 
     const isClosed = encounterData?.status?.toUpperCase() === 'CLOSED';
 
-    navigate('/encounter/diagnostics-order', {
+    navigate('/encounter/diagnostics-result', {
       state: {
         info: 'toEncounter',
         fromPage: 'EncounterList',
@@ -942,7 +942,7 @@ const EncounterList = () => {
         <ApprovedResultsCell
           encounterId={row?.id}
           patientId={row?.patient?.id}
-          onGoToDiagnosticsOrder={() => handleGoToDiagnosticsOrder(row)}
+          onGoToDiagnosticsResults={() => handleGoToDiagnosticsResults(row)}
         />
       )
     },
