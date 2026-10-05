@@ -8,7 +8,6 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
@@ -74,7 +73,6 @@ const endOfDay = (d: Date) => {
 
 const Reports = ({ patient }) => {
   const dispatch = useAppDispatch();
-  const today = new Date();
   const patientId = patient?.id;
 
   const [page, setPage] = useState(0);
@@ -91,9 +89,14 @@ const Reports = ({ patient }) => {
 const [openStudiesModal, setOpenStudiesModal] = useState(false);
 
 const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
-  const [orderDate, setOrderDate] = useState({
-    fromDate: today,
-    toDate: today
+  const [orderDate, setOrderDate] = useState(() => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    return {
+      fromDate: weekAgo,
+      toDate: new Date()
+    };
   });
 
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
@@ -102,38 +105,13 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
 
  const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
-  const ordersQueryParams = useMemo(() => {
-    if (!patientId) return skipToken;
-
-    return {
-      patientId,
-      page: 0,
-      size: 1000,
-      sort: 'id,desc'
-    };
-  }, [patientId]);
-
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-
-  const orders = ordersResponse?.data ?? [];
-
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
-
   const queryParams = useMemo(() => {
     if (!patientId) return null;
-    if (isOrdersFetching) return null;
-    if (!orderIds.length) return null;
 
     return {
       processingStatus: 'RESULT_APPROVED',
       reviewed: true,
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       ...(orderDate.fromDate
         ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
         : {}),
@@ -141,7 +119,7 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
         ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
         : {})
     };
-  }, [patientId, isOrdersFetching, orderIds, orderDate]);
+  }, [patientId, orderDate]);
 
   const {
     data,
@@ -505,7 +483,7 @@ const handleViewImage = async (reportId: number) => {
         tableButtons={tableButtons}
         columns={reportColumns}
         data={reports}
-        loading={isOrdersFetching || isFetching || (!!reports.length && !isDataLoaded)}
+        loading={isFetching ||(!!reports.length && !isDataLoaded)}
         page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
