@@ -619,8 +619,23 @@ const applyAuthHeadersToXhr = (xhr: XMLHttpRequest) => {
   });
 };
 
-const stripAuthHeaders = (headers?: { key?: string; value?: string }[]) =>
-  (Array.isArray(headers) ? headers : []).filter(
+const headerItems = (
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+): { key?: string; value?: string }[] => {
+  if (Array.isArray(headers)) return headers;
+  if (Array.isArray((headers as { list?: unknown })?.list)) {
+    return (headers as { list: { key?: string; value?: string }[] }).list;
+  }
+  if (Array.isArray((headers as { items?: unknown })?.items)) {
+    return (headers as { items: { key?: string; value?: string }[] }).items;
+  }
+  return [];
+};
+
+const stripAuthHeaders = (
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+) =>
+  headerItems(headers).filter(
     item => !AUTH_HEADER_NAMES.has(String(item?.key).toLowerCase())
   );
 
@@ -633,9 +648,15 @@ const mergeAuthHeadersList = (
 
 const headersForStimulsoftHttp = (
   url: string,
-  headers?: { key?: string; value?: string }[]
-) =>
-  isSqlAdapterUrl(url) ? stripAuthHeaders(headers) : mergeAuthHeadersList(headers);
+  headers?: { key?: string; value?: string }[] | { list?: unknown; items?: unknown }
+) => {
+  if (!isSqlAdapterUrl(url)) return mergeAuthHeadersList(headerItems(headers));
+  // A HIS JWT on /proxy makes Node answer HTTP 431. Stimulsoft then shows
+  // "Connection error: Connection error" and drops the real status.
+  return stripAuthHeaders(headers).filter(
+    item => String(item?.value ?? '').length < 4000
+  );
+};
 
 const resolveHttpFilePath = (filePath: string) => {
   if (!isHisApiPath(filePath)) return filePath;
@@ -714,6 +735,28 @@ export const patchStimulsoftHttp = (Stimulsoft?: any) => {
         callback?.(emptyHttpBody(binary));
       }
     };
+  }
+
+  if (typeof Http.sendAsync === 'function' && !Http.sendAsync.__stiSqlHeaders) {
+    const originalSendAsync = Http.sendAsync.bind(Http);
+    const sendAsync = function sendAsync(
+      method: string,
+      url: string,
+      body?: string,
+      headers?: { key?: string; value?: string }[],
+      ...rest: unknown[]
+    ) {
+      const resolved = resolveHttpFilePath(url);
+      return originalSendAsync(
+        method,
+        resolved,
+        body,
+        headersForStimulsoftHttp(resolved, headers),
+        ...rest
+      );
+    };
+    (sendAsync as { __stiSqlHeaders?: boolean }).__stiSqlHeaders = true;
+    Http.sendAsync = sendAsync;
   }
 
   if (typeof Http.send === 'function') {
@@ -804,8 +847,34 @@ export const installStimulsoftApiInterceptor = () => {
       const nativeSetHeader = xhr.setRequestHeader.bind(xhr);
       xhr.setRequestHeader = (key: string, value: string) => {
         if (AUTH_HEADER_NAMES.has(String(key).toLowerCase())) return;
+        if (String(value ?? '').length >= 4000) return;
         return nativeSetHeader(key, value);
       };
+      xhr.addEventListener('readystatechange', () => {
+        if (xhr.readyState !== 4 || xhr.status === 200 || xhr.status === 0) return;
+        const notice = `HTTP ${xhr.status} ${String(
+          xhr.responseText || xhr.statusText || ''
+        ).slice(0, 300)}`;
+        const body = JSON.stringify({
+          success: false,
+          notice,
+          checkVersion: false,
+        });
+        try {
+          Object.defineProperty(xhr, 'status', { configurable: true, value: 200 });
+          Object.defineProperty(xhr, 'statusText', {
+            configurable: true,
+            value: 'OK',
+          });
+          Object.defineProperty(xhr, 'responseText', {
+            configurable: true,
+            value: body,
+          });
+          Object.defineProperty(xhr, 'response', { configurable: true, value: body });
+        } catch {
+          // status can stay read-only; the designer then keeps the generic message
+        }
+      });
     } else if (flagged.__stiHisApi) {
       applyAuthHeadersToXhr(xhr);
     }

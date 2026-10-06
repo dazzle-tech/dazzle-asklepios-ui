@@ -87,7 +87,7 @@ type Props = {
   orderTestRefetch: () => any;
   setSelectedRows: (v: number[]) => void;
 
-  handleRecallFavoriteTest: (t: any) => Promise<void> | void;
+  handleRecallFavoriteTests: (tests: any[]) => Promise<void> | void;
 
   handleLoadMore: () => void;
 };
@@ -159,7 +159,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
     orderTestRefetch,
     setSelectedRows,
     handleLoadMore,
-    handleRecallFavoriteTest
+    handleRecallFavoriteTests
   } = props;
 
   // Direction handling for RTL/LTR
@@ -315,7 +315,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         favoriteTests={favoriteTests ?? []}
         loading={loadingFavorites}
         onRecall={tests => {
-          Promise.all(tests.map((t: any) => handleRecallFavoriteTest(t)));
+          handleRecallFavoriteTests(tests);
         }}
       />
     </div>

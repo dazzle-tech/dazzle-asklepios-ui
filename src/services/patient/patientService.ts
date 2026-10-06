@@ -370,6 +370,20 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+    getPatientVaccinationReportPdf: builder.query<
+      Blob,
+      { patientId: number; timezone?: string; lang?: string }
+    >({
+      query: ({ patientId, timezone, lang = 'en' }) => ({
+        url: `/api/analytics/${patientId}/vaccination-report/pdf`,
+        method: 'GET',
+        params: {
+          ...(timezone ? { timezone } : {}),
+          lang
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
     updatePatientConditions: builder.mutation<
   any,
   UpdatePatientConditionsRequest
@@ -426,6 +440,7 @@ export const {
   useGetFacilityPatientsQuery,
   useLazyGetFacilityPatientsQuery,
   useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientVaccinationReportPdfQuery,
   useUpdatePatientConditionsMutation
 
 } = newPatientService;

@@ -1325,11 +1325,15 @@ const Tests = forwardRef<any, Props>(
       e?.data?.message ||
       e?.error ||
       'Cancellation failed';
+    const isWarning =
+      e?.data?.params === 'test_already_started' ||
+      backendMessage.toLowerCase().includes('already started') ||
+      e?.status === 400;
 
     dispatch(
       notify({
         msg: backendMessage,
-        sev: 'error'
+        sev: isWarning ? 'warning' : 'error'
       })
     );
   }

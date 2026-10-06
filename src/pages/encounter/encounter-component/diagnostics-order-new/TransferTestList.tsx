@@ -1,5 +1,6 @@
   import MyButton from '@/components/MyButton/MyButton';
   import MyInput from '@/components/MyInput';
+  import Translate from '@/components/Translate';
   import { useEnumOptions } from '@/services/enumsApi';
   import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
   import {
@@ -75,7 +76,12 @@
         : skipToken
     );
 
-    const catalogTests = catalogTestsResponse?.data?.tests ?? [];
+    const catalogTests = useMemo(() => {
+      const raw = catalogTestsResponse?.data;
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray((raw as any)?.tests)) return (raw as any).tests;
+      return [];
+    }, [catalogTestsResponse]);
 
 
     const leftChecked = intersection(
@@ -107,7 +113,8 @@
         const matchesCatalog =
           !searchType?.catalogId ||
           catalogTests.some(
-            t => String(t.id) === String(testId)
+            (t: any) =>
+              String(t.diagnosticTestId ?? t.testId ?? t.id) === String(testId)
           );
 
         return matchesName && matchesType && matchesCatalog;
@@ -156,7 +163,9 @@
     };
 
       const handleAllRight = () => {
-        setRightItems([...rightItems, ...filteredLeft]);
+        const existingKeys = new Set(rightItems.map(getItemKey));
+        const newItems = filteredLeft.filter(item => !existingKeys.has(getItemKey(item)));
+        setRightItems([...rightItems, ...newItems]);
 
         setLeftItems(
           leftItems.filter(
@@ -187,7 +196,7 @@
 
     /* ================= render ================= */
 
-    const renderList = (items: any[]) => (
+    const renderList = (items: any[], isRight = false) => (
       <Paper sx={{ height: '60vh', overflow: 'auto' }}>
         <List dense>
           {items.map(item => {
@@ -196,6 +205,17 @@
               <ListItemButton
                 key={key}
                 onClick={handleToggle(item)}
+                onDoubleClick={() => {
+                  if (isRight) {
+                    setLeftItems([...leftItems, item]);
+                    setRightItems(rightItems.filter(i => getItemKey(i) !== key));
+                    setChecked(prev => prev.filter(k => k !== key));
+                  } else {
+                    setRightItems([...rightItems, item]);
+                    setLeftItems(leftItems.filter(i => getItemKey(i) !== key));
+                    setChecked(prev => prev.filter(k => k !== key));
+                  }
+                }}
                 disabled={!!isFetching}
               >
                 <ListItemIcon
@@ -292,7 +312,11 @@ return (
             fieldType="text"
             placeholder="Search Test"
             record={{ testName: searchInput }}
-            setRecord={(r: any) => setSearchInput(r.testName)}
+            setRecord={(r: any) => {
+              const val = r?.testName ?? '';
+              setSearchInput(val);
+              setSearchTerm(val);
+            }}
             width="100%"
             disabled={!!isFetching}
             showLabel={false}
@@ -360,12 +384,31 @@ return (
         >
           <div
             style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#475569',
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span><Translate>Available Tests</Translate></span>
+            <span style={{ fontSize: 11, background: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>
+              {filteredLeft.length}
+            </span>
+          </div>
+
+          <div
+            style={{
               flex: 1,
               overflow: 'hidden',
               minHeight: 0
             }}
           >
-            {renderList(filteredLeft)}
+            {renderList(filteredLeft, false)}
           </div>
 
           <div
@@ -438,7 +481,43 @@ return (
           height: '50vh'
         }}
       >
-        {renderList(rightItems)}
+        <Paper
+          sx={{
+            flex: 1,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <div
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#475569',
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span><Translate>Selected Tests</Translate></span>
+            <span style={{ fontSize: 11, background: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>
+              {rightItems.length}
+            </span>
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              overflow: 'hidden',
+              minHeight: 0
+            }}
+          >
+            {renderList(rightItems, true)}
+          </div>
+        </Paper>
       </div>
     </div>
   </div>

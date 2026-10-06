@@ -483,6 +483,12 @@ export const MODULES: Module[] =
       screens: [
 
         {
+          name: "OPD Visit List",
+          code: "OPD_VISIT_LIST",
+          description: "", icon: "FaList",
+          viewOrder: 1, navPath: "opd-visit-list"
+        },
+        {
           name: "Patients Visits List",
           code: "PATIENTS_VISITS_LIST",
           description: "", icon: "FaList",

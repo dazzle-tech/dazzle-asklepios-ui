@@ -3749,6 +3749,9 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   undoAcceptBy?: string;
   undoAcceptDate?: string;
   icdDiagnosisId?: number;
+
+  confirmedBy?: string;
+  confirmedAt?: string;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -7205,6 +7208,7 @@ export interface PendingClaimInvoiceResponse {
   claimSubType?: string | null;
   matchingItemCount?: number | null;
   matchingNetAmount?: number | null;
+  selectable?: boolean | null;
 }
 
 export interface ClaimBatchSubmitResponse {

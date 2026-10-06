@@ -257,54 +257,54 @@ const AddReportModal = ({
         bodyheight="65vh"
         content={
           <div dir={dir}>
-              <Row>
-                <Col md={24}>
-                  <Form fluid>
-                    <MyInput
-                      width="12vw"
-                      disabled={isDisabled}
-                      fieldName="severity"
-                      fieldLabel="Severity"
-                      fieldType="select"
-                      selectData={severityOptions ?? []}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      record={report}
-                      setRecord={setReport}
-                    />
-                  </Form>
-                </Col>
-              </Row>
+            <Row>
+              <Col md={24}>
+                <Form fluid>
+                  <MyInput
+                    width="12vw"
+                    disabled={isDisabled}
+                    fieldName="severity"
+                    fieldLabel="Severity"
+                    fieldType="select"
+                    selectData={severityOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={report}
+                    setRecord={setReport}
+                  />
+                </Form>
+              </Col>
+            </Row>
 
 
-              <Row>
-                <Col md={24}>
-                  <Form fluid>
-                    {!isDisabled && (<MyInput
-                      fieldName="selectReadyTemplate"
-                      fieldLabel="Choose Ready Template"
-                      fieldType="select"
-                      selectData={templateOptions}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      width="12vw"
-                      record={{ selectReadyTemplate: null }}
-                      setRecord={(rec) =>
-                        handleChooseTemplate(rec.selectReadyTemplate)
-                      }
-                    />)}
-                    <MyInput
-                      width="100%"
-                      fieldName="radiologistInformation"
-                      fieldLabel="Radiologist Information"
-                      fieldType="text"
-                      record={report}
-                      setRecord={setReport}
-                      disabled={true}
-                    />
-                  </Form>
-                </Col>
-              </Row>
+            <Row>
+              <Col md={24}>
+                <Form fluid>
+                  {!isDisabled && (<MyInput
+                    fieldName="selectReadyTemplate"
+                    fieldLabel="Choose Ready Template"
+                    fieldType="select"
+                    selectData={templateOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    width="12vw"
+                    record={{ selectReadyTemplate: null }}
+                    setRecord={(rec) =>
+                      handleChooseTemplate(rec.selectReadyTemplate)
+                    }
+                  />)}
+                  <MyInput
+                    width="100%"
+                    fieldName="radiologistInformation"
+                    fieldLabel="Radiologist Information"
+                    fieldType="text"
+                    record={report}
+                    setRecord={setReport}
+                    disabled={true}
+                  />
+                </Form>
+              </Col>
+            </Row>
 
             {/* Editor */}
             <Row>
@@ -334,7 +334,7 @@ const AddReportModal = ({
                     fieldType="textarea"
                     record={report}
                     setRecord={setReport}
-                    disabled={true}
+                    disabled={isDisabled}
                   />
                 </Form>
               </Col>
@@ -349,7 +349,7 @@ const AddReportModal = ({
                     fieldType="textarea"
                     record={report}
                     setRecord={setReport}
-                    disabled={true}
+                    disabled={isDisabled}
                   />
                 </Form>
               </Col>

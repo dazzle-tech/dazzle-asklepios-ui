@@ -37,7 +37,7 @@ import BulkTransferModal from './components/BulkTransferModal';
 import CancelledAppointmentsModal from './components/CancelledAppointmentsModal';
 import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
+import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useCountRequestedAppointmentRequestsQuery, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
 import ScheduleFiltersPanel from './components/ScheduleFiltersPanel';
 import ScheduleSummaryBar from './components/ScheduleSummaryBar';
 import ScheduleContentGrid from './components/ScheduleContentGrid';
@@ -186,6 +186,8 @@ const ScheduleScreen = () => {
 
   const [cancelAppointmentRequest] = useCancelAppointmentRequestMutation();
   const [approveAppointmentRequest] = useApproveAppointmentRequestMutation();
+  const { data: requestedAppointmentRequestCountRaw } = useCountRequestedAppointmentRequestsQuery();
+  const requestedAppointmentRequestCount = Number(requestedAppointmentRequestCountRaw ?? 0);
 
   const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<any>(null);
@@ -1834,6 +1836,8 @@ const ScheduleScreen = () => {
             selectedResources={selectedResources}
             resourceNameById={resourceNameById}
             selectedResourceTypeValue={selectedResourceTypeValue}
+            requestedAppointmentRequestCount={requestedAppointmentRequestCount}
+            onOpenAppointmentRequests={() => setAppRequestModalOpen(true)}
           />
           <ScheduleContentGrid
             dateType={dateType}

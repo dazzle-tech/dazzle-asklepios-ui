@@ -294,6 +294,8 @@ import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 import PatientsLists from './pages/billing-module/patientList/PatientsLists';
+const OpdVisitList= lazy(()=>import ('./pages/encounter/opd-encounter-list/OpdVisitList'));
+
 const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
@@ -807,6 +809,7 @@ const App = () => {
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="waseel-pre-authorization-requests" element={<WaseelPreAuthorizationRequests />} />
               <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="opd-visit-list" element={<OpdVisitList />} />
               <Route path="inpatient-encounters-list" element={<InpatientList />} />
               <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
               <Route path="day-case-list" element={<DayCaseList />} />

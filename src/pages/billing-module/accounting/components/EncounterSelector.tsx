@@ -67,7 +67,7 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
             </Text>
             <div className="billing-accounting__encounter-meta">
               <span>{formatBillingEnum(encounter.encounterType)}</span>
-              <span>{formatBillingTimestamp(encounter.encounterDate?.toString())}</span>
+              <span>{formatBillingTimestamp(encounter.createdDate?.toString())}</span>
               <Tag size="sm">{formatEncounterLifecycleLabel(encounter)}</Tag>
               {shouldShowEncounterTreatmentStatus(encounter) && (
                 <Tag size="sm" color="blue">

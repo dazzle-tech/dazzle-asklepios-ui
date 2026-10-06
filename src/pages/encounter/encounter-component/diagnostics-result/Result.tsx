@@ -108,9 +108,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<any>({
-    fromDate: null,
-    toDate: null
+  const [dateFilter, setDateFilter] = useState<any>(() => {
+    const toDate = new Date();
+    const fromDate = new Date(toDate);
+    fromDate.setDate(fromDate.getDate() - 14);
+
+    return { fromDate, toDate };
   });
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
@@ -127,26 +130,16 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     };
   }, [patientId]);
 
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+  // Orders are only needed to display the order number; results are filtered by patient directly.
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
 
   const orders = ordersResponse?.data ?? [];
 
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
   const queryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
-    if (isOrdersFetching) return skipToken;
-
-    if (!orderIds.length) return skipToken;
-
     const params: any = {
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       page: pageIndex,
       size: rowsPerPage,
       processingStatus: 'RESULT_APPROVED',
@@ -175,12 +168,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     return params;
   }, [
     patientId,
-    orderIds,
     pageIndex,
     rowsPerPage,
     showAbnormal,
-    dateFilter,
-    isOrdersFetching
+    dateFilter
   ]);
 
   const {
@@ -338,11 +329,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       return;
     }
 
-    if (!orderIds.length) return;
+    if (!patientId) return;
 
     try {
       const idsParams: any = {
-        orderIdIn: orderIds,
+        patientIdIn: [patientId],
         processingStatus: 'RESULT_APPROVED',
         reviewed: true
       };
@@ -557,7 +548,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         }}
         rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
-          isOrdersFetching ||
           isResultsFetching ||
           isOrderTestsFetching ||
           isAllTestsFetching

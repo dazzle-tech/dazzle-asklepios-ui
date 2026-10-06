@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 
 type Props = {
@@ -11,6 +11,8 @@ type Props = {
   resourceNameById: Map<string, string>;
   selectedResourceTypeValue: { value: string | null };
   onRescheduleClick?: () => void;
+  requestedAppointmentRequestCount?: number;
+  onOpenAppointmentRequests?: () => void;
 };
 
 const ScheduleSummaryBar = ({
@@ -20,7 +22,9 @@ const ScheduleSummaryBar = ({
   selectedResources,
   resourceNameById,
   selectedResourceTypeValue,
-  onRescheduleClick
+  onRescheduleClick,
+  requestedAppointmentRequestCount = 0,
+  onOpenAppointmentRequests
 }: Props) => {
   const departmentScopeLabel = (() => {
     const ids = selectedDepartmentIds?.departmentIds;
@@ -86,6 +90,25 @@ const ScheduleSummaryBar = ({
             ) : null}
           </div>
         </div>
+        {onOpenAppointmentRequests ? (
+          <div className="appointments-slot-summary-actions">
+            <button
+              type="button"
+              className="appointments-requested-count-link"
+              onClick={onOpenAppointmentRequests}
+            >
+              <FontAwesomeIcon icon={faTriangleExclamation} />
+              <span>
+                <strong>{requestedAppointmentRequestCount}</strong>{' '}
+                <Translate>
+                  {requestedAppointmentRequestCount === 1
+                    ? 'appointment request is requested'
+                    : 'appointment requests are requested'}
+                </Translate>
+              </span>
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
