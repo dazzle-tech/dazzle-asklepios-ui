@@ -191,6 +191,7 @@ export const MODULES: Module[] =
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
         { name: "Organization Holidays", code: "ORGANIZATION_HOLIDAY", description: "", icon: "FaBuilding", viewOrder: 11, navPath: "organization-holidays" },
         { name: "System Configuration", code: "SYSTEM_CONFIGURATION_SETUP", description: "", icon: "FaGear", viewOrder: 12, navPath: "system-configuration" },
+        { name: "Encounter Status Management", code: "ENCOUNTER_STATUS_MANAGEMENT", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "encounter-status-management" },
       ],
     },
 

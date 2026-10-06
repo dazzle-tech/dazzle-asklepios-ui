@@ -17,6 +17,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import Details from './Details';
 import Perform from './Perform';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
@@ -69,7 +70,8 @@ const Referrals = (props: any) => {
   const [showPreview, setShowPreview] = useState(false);
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const edit = Boolean((props.edit ?? location.state?.edit ?? false) || isAmendmentOpen);
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isNurse = jobRole === 'NURSE';
