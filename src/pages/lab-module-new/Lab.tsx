@@ -18,6 +18,7 @@ import {
   faRectangleList,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
@@ -210,6 +211,14 @@ const Lab = () => {
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  const handleClearFilters = () => {
+    const now = new Date();
+    setDateFilter({ fromDate: now, toDate: now });
+    setSelectedPatient(null);
+    setDepartmentFilter({ fromDepartmentIdIn: null });
+    setOrderNumberFilter('');
+  };
+
   const tablefilters = (<>
               <Form fluid className="filter-form-lab-filters">
                 <MyInput
@@ -258,6 +267,11 @@ const Lab = () => {
                   record={{ orderNumber: orderNumberFilter }}
                   setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
                   showLabel={false}
+                />
+                <AdvancedSearchFilters
+                  showAdvancedButton={false}
+                  searchOnClick={refetchAllLabData}
+                  clearOnClick={handleClearFilters}
                 />
 
               </Form>

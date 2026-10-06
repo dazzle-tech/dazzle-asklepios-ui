@@ -360,6 +360,13 @@ const MyInput = ({
     return date.format('DD-MM-YYYY');
   };
 
+  // Keep the typed date text in sync when the record value changes from outside (e.g. clear/reset)
+  const recordDateText = fieldType === 'date' ? formatDateText(record?.[fieldName]) : '';
+  useEffect(() => {
+    if (fieldType !== 'date') return;
+    setDateText(recordDateText);
+  }, [fieldType, recordDateText]);
+
   const getDateFromText = (text: string) => {
     const match = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
