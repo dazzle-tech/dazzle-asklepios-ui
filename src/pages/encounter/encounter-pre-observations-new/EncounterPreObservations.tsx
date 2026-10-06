@@ -58,6 +58,7 @@ useEffect(() => {
   if (!location.pathname.includes('/nurse-station')) return;
 
   const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+  const fromOpdVisitList = location.state?.fromPage === 'OpdVisitList';
   const encounterDeptId = propsData?.encounter?.departmentId;
 
   if (
@@ -167,6 +168,11 @@ useEffect(() => {
       return;
     }
 
+    if (pageSource === 'OpdVisitList') {
+      navigate('/opd-visit-list');
+      return;
+    }
+
     if (pageSource === 'Urgent_Care_List') {
       navigate('/urgent-care-department-list', {
         state: {
@@ -191,13 +197,15 @@ useEffect(() => {
               {!inModal && (
                 <BackButton
                   onClick={handleGoBack}
-                 text={
-                  pageSource === 'PatientsLists'
-                    ? 'To Patients list'
-                    : pageSource === 'Urgent_Care_List'
-                      ? 'To Urgent Care list'
-                      : 'To Encounters list'
-                 }
+                  text={
+                    pageSource === 'PatientsLists'
+                      ? 'To Patients list'
+                      : pageSource === 'OpdVisitList'
+                        ? 'To OPD Visit List'
+                        : pageSource === 'Urgent_Care_List'
+                          ? 'To Urgent Care list'
+                          : 'To Encounters list'
+                  }
                 />
               )}
               {!inModal && (
