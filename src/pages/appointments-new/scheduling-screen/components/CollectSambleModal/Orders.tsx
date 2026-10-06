@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
 import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import PrintOrderSampleLabelAction from '@/pages/lab-module-new/PrintOrderSampleLabelAction';
 import './style.less';
 
 type OrdersProps = {
@@ -302,6 +303,16 @@ const totalCount = ordersResponse?.totalCount ?? 0;
               <FontAwesomeIcon icon={faLandMineOn} className="urgent-icon-style" />
             </Whisper>
           ) : null
+      },
+      {
+        key: 'print',
+        title: <Translate>PRINT</Translate>,
+        width: 30,
+        render: (rowData: any) => (
+          <div onClick={e => e.stopPropagation()}>
+            <PrintOrderSampleLabelAction rowData={rowData} />
+          </div>
+        )
       }
     ];
 
