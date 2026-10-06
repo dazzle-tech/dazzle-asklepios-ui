@@ -1348,7 +1348,7 @@ export const buildTimelineEvents = (
       type: 'ENCOUNTER_REGISTERED',
       label: 'Encounter registered',
       timestamp:
-        encounterAny.createdAt ??
+        encounterAny.createdDate ??
         encounter.encounterDate?.toString() ??
         null,
       detail: [

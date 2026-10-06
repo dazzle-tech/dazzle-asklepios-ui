@@ -16,6 +16,65 @@ import {
 
 import type { InvoicePrintChargeContext } from './useInvoicePrintLookups';
 
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+const hasExplicitTimeZone = (value: string) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+
+/**
+ * Invoice timestamps arrive as UTC. A value with no offset is still UTC;
+ * convert it to the browser's local time before printing.
+ */
+const toLocalInvoiceDate = (value?: string | Date | null): Date | null => {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  let raw = String(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  raw = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+
+  const hasTime = /(?:T|\s)\d{2}:\d{2}/.test(raw);
+  if (hasTime && !hasExplicitTimeZone(raw)) {
+    raw = `${raw.includes('T') ? raw : raw.replace(' ', 'T')}Z`;
+  }
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatLocalInvoiceDateTime = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+
+export const formatInvoicePrintDateTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value) ?? new Date();
+  return formatLocalInvoiceDateTime(date);
+};
+
+export const formatInvoicePrintDate = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+export const formatInvoicePrintTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+};
+
 export type InvoicePrintLineItem = {
   serviceCode: string;
   serviceName: string;
@@ -585,9 +644,7 @@ export const buildInvoicePrintDataFromEncounter = ({
               : formatMoneyValue(encounterDetails.billingSummary?.insuranceOutstandingAmount)
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
 
@@ -674,9 +731,7 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
             invoiceType === 'INSURANCE_CLAIM' ? formatMoneyValue(invoice.totalAmount) : 0
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
   const composedPatientName = [patient?.firstName, patient?.lastName]
