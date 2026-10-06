@@ -580,6 +580,7 @@ export const patientEncounterService = createApi({
         }
       }),
 
+      
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientEncounter', id },
         'PatientEncounter'
