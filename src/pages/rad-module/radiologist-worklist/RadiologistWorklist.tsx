@@ -747,11 +747,11 @@ const handleViewImage = async (reportId: number) => {
       },
       {
         key: 'orderByAt',
-        title: 'Order By / At',
+        title: 'Reported By ',
         width: 200,
         render: row => (
           <UserDateCell
-            login={row.createdBy}
+            login={row.radiologistInformation}
             date={row.createdDate}
           />
         )
