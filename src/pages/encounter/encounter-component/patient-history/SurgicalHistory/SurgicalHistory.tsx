@@ -9,7 +9,9 @@ import { notify } from '@/utils/uiReducerActions';
 
 import {
   useCancelSurgicalHistoryMutation,
-  useGetSurgicalHistoryQuery
+  useGetSurgicalHistoryQuery,
+  useAddSurgicalHistoryMutation,
+  useUpdateSurgicalHistoryMutation
 } from '@/services/patients/surgicalHistoryService';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
@@ -25,12 +27,18 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
-const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
+import { Form, Tooltip, Whisper } from 'rsuite';
+
+const SurgicalHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
   const { data: adverseLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] = useState<number | null>(null);
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
@@ -51,7 +59,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
 
 
 
-  const { data, isFetching } = useGetSurgicalHistoryQuery(
+  const { data, isFetching, refetch } = useGetSurgicalHistoryQuery(
     {
       patientId,
       page,
@@ -69,7 +77,75 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const filteredData = data?.data ?? [];
 
 
+  const [addSurgicalHistory, { isLoading: isSavingFreeText }] =
+    useAddSurgicalHistoryMutation();
+  const [updateSurgicalHistory, { isLoading: isUpdatingFreeText }] =
+    useUpdateSurgicalHistoryMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    if (!isValidPatientId) {
+      dispatch(notify({ msg: 'Invalid patient.', sev: 'error' }));
+      return;
+    }
+
+    const payload = {
+      patientId,
+      surgery: null,
+      facility: null,
+      anesthesiaType: null,
+      dateOfSurgery: null,
+      complications: null,
+      adverseReactionsToAnesthesia: null,
+      hasImplantsOrDevices: null,
+      implantsOrDevicesDescription: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateSurgicalHistory({
+          ...payload,
+          id: editingFreeTextId
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await addSurgicalHistory(payload).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
   const handleEdit = (row: any) => {
+    if (row?.patientIsFree === true) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({
+        freeText: row.freeText || ''
+      });
+      return;
+    }
+
     setSelectedRow(row);
     setOpen(true);
   };
@@ -123,6 +199,54 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
 
 
   const columns = [
+    {
+      key: 'freeText',
+      title: (
+        <div style={{ minWidth: 350, width: '100%' }}>
+          <Translate>FREE TEXT</Translate>
+        </div>
+      ),
+      minWidth: 350,
+      flexGrow: 3,
+      render: (row: any) => {
+        if (row?.patientIsFree !== true) {
+          return '-';
+        }
+
+        const text = row?.freeText?.trim() || '-';
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 500,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {text}
+              </Tooltip>
+            }
+          >
+            <div
+              style={{
+                display: 'block',
+                width: '100%',
+                minWidth: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {text}
+            </div>
+          </Whisper>
+        );
+      }
+    },
     { key: 'surgery', title: 'SURGERY', flexGrow: 3 },
     {
       key: 'dateOfSurgery',
@@ -261,7 +385,10 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
       key: 'hasImplantsOrDevices',
       title: 'IMPLANTS / DEVICES',
       flexGrow: 3,
-      render: row => (row?.hasImplantsOrDevices ? row?.implantsOrDevicesDescription : 'No')
+      render: row =>
+        row?.patientIsFree === true
+          ? '-'
+          : row?.hasImplantsOrDevices ? row?.implantsOrDevicesDescription : 'No'
     },
     ...(!toShowData
       ? [
@@ -324,21 +451,60 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
         <SectionContainer
           title="Surgical History"
           action={
-            !toShowData && (
-              <MyButton
-                disabled={edit}
-                prefixIcon={() => <PlusIcon />}
-                onClick={() => {
-                  setSelectedRow(null);
-                  setOpen(true);
-                }}
-              >
-                Add
-              </MyButton>
-            )
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {!toShowData && (
+                <MyButton
+                  disabled={edit}
+                  prefixIcon={() => <PlusIcon />}
+                  onClick={() => {
+                    setSelectedRow(null);
+                    setOpen(true);
+                  }}
+                >
+                  Add
+                </MyButton>
+              )}
+
+              {showFreeText && (
+                <MyButton
+                  disabled={
+                    edit ||
+                    isSavingFreeText ||
+                    isUpdatingFreeText ||
+                    !freeTextRecord.freeText?.trim()
+                  }
+                  onClick={handleSaveFreeText}
+                >
+                  {isSavingFreeText || isUpdatingFreeText
+                    ? 'Saving...'
+                    : editingFreeTextId !== null
+                      ? 'Update'
+                      : 'Save'}
+                </MyButton>
+              )}
+            </div>
           }
           content={
             <>
+              {showFreeText && (
+                <Form
+                  fluid
+                  formValue={freeTextRecord}
+                  onChange={(value: any) => setFreeTextRecord(value)}
+                >
+                  <div style={{ marginBottom: 20, width: '100%' }}>
+                    <MyInput
+                      fieldType="textarea"
+                      fieldLabel="Free Text"
+                      fieldName="freeText"
+                      record={freeTextRecord}
+                      setRecord={setFreeTextRecord}
+                      disabled={edit || isSavingFreeText || isUpdatingFreeText}
+                      width="100%"
+                    />
+                  </div>
+                </Form>
+              )}
 
               
                 <div className="margin-bottom-10 show-cancelled">

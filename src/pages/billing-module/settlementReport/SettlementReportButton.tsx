@@ -10,7 +10,8 @@ import Translate from '@/components/Translate';
 
 import {
   useLazyGetClaimSettlementsQuery,
-  useGenerateSettlementPdfMutation
+  useGenerateSettlementPdfMutation,
+  useGenerateSettlementPdfWithoutPatientAndClaimMutation
 } from '@/services/billing/claimSettlementService';
 
 import { notify } from '@/utils/uiReducerActions';
@@ -21,16 +22,21 @@ type AppliedFilters = {
   encounterType: string | null;
   fromDate: string;
   toDate: string;
+  settlementNo: string | null;
 };
 
 type Props = {
   appliedFilters: AppliedFilters | null;
   insuranceCompanyName: string;
+  groupBySettlement?: boolean;
+  buttonLabel?: string;
 };
 
 const SettlementReportButton = ({
   appliedFilters,
-  insuranceCompanyName
+  insuranceCompanyName,
+  groupBySettlement = false,
+  buttonLabel = 'Print Report'
 }: Props) => {
 
   const dispatch = useDispatch();
@@ -46,6 +52,8 @@ const SettlementReportButton = ({
 
   const [generateSettlementPdf] =
     useGenerateSettlementPdfMutation();
+  const [generateSettlementPdfWithoutPatientAndClaim] =
+    useGenerateSettlementPdfWithoutPatientAndClaimMutation();
 
   const [loading, setLoading] =
     useState(false);
@@ -90,6 +98,9 @@ const SettlementReportButton = ({
           toDate:
             appliedFilters.toDate,
 
+          settlementNo:
+            appliedFilters.settlementNo,
+
           page: 0,
 
           size: 100000,
@@ -97,14 +108,10 @@ const SettlementReportButton = ({
           sort: 'id,desc'
         }).unwrap();
 
-      const pdfBlob =
-        await generateSettlementPdf({
-
-          timezone,
-
-          lang: selectedLang.lang,
-
-          body: {
+      const reportRequest = {
+        timezone,
+        lang: selectedLang.lang,
+        body: {
 
             criteria: {
 
@@ -128,9 +135,10 @@ const SettlementReportButton = ({
                 appliedFilters.encounterType
             },
 
-            rows:
-              allRowsResponse.content.map(
-                row => ({
+            rows: groupBySettlement
+              ? groupRowsBySettlement(allRowsResponse.content)
+              : allRowsResponse.content.map(
+                  row => ({
 
                   patientName:
                     row.patientName || '',
@@ -193,10 +201,15 @@ const SettlementReportButton = ({
                   settlementStatus:
                     row.settlementStatus
 
-                })
-              )
-          }
-        }).unwrap();
+                  })
+                )
+        }
+      };
+
+      const pdfBlob = await (groupBySettlement
+        ? generateSettlementPdfWithoutPatientAndClaim(reportRequest)
+        : generateSettlementPdf(reportRequest)
+      ).unwrap();
 
       const fileURL =
         window.URL.createObjectURL(pdfBlob);
@@ -245,13 +258,10 @@ const SettlementReportButton = ({
         disabled={!appliedFilters}
         onClick={() => setOpenLangModal(true)}
         prefixIcon={() => (
-          <FontAwesomeIcon
-            icon={faPrint}
-            style={{ marginRight: 8 }}
-          />
+          <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
         )}
       >
-        <Translate>Print Report</Translate>
+        <Translate>{buttonLabel}</Translate>
       </MyButton>
 
       <MyModal
@@ -260,12 +270,9 @@ const SettlementReportButton = ({
         title="Select Language"
         size="xs"
         bodyheight="25vh"
-        actionButtonFunction={
-          handleGenerateReport
-        }
+        actionButtonFunction={handleGenerateReport}
         content={
           <Form>
-
             <MyInput
               fieldType="select"
               fieldLabel="Language"
@@ -275,12 +282,73 @@ const SettlementReportButton = ({
               setRecord={setSelectedLang}
               width="100%"
             />
-
           </Form>
         }
       />
     </>
   );
+};
+
+const groupRowsBySettlement = (rows: any[]) => {
+  const groups = new Map<
+    string,
+    { row: Record<string, any>; statuses: Set<string> }
+  >();
+
+  rows.forEach((sourceRow, index) => {
+    const settlementNumber = sourceRow.settlementNo || '';
+    const groupKey = settlementNumber || `unassigned-${index}`;
+    let group = groups.get(groupKey);
+
+    if (!group) {
+      group = {
+        row: {
+          patientName: '',
+          patientId: '',
+          invoiceNumber: '',
+          settlementNumber,
+          settlementDate: sourceRow.settlementDate
+            ? sourceRow.settlementDate.substring(0, 10)
+            : null,
+          insuranceCompany: sourceRow.insuranceCompany || '',
+          claimNumber: '',
+          claimDate: null,
+          billedAmount: 0,
+          approvedAmount: 0,
+          rejectedAmount: 0,
+          patientShare: 0,
+          insuranceAmount: 0,
+          paidAmount: 0,
+          outstandingAmount: 0,
+          settlementStatus: ''
+        },
+        statuses: new Set<string>()
+      };
+      groups.set(groupKey, group);
+    }
+
+    [
+      'billedAmount',
+      'approvedAmount',
+      'rejectedAmount',
+      'patientShare',
+      'insuranceAmount',
+      'paidAmount',
+      'outstandingAmount'
+    ].forEach(field => {
+      group!.row[field] += Number(sourceRow[field]) || 0;
+    });
+
+    if (sourceRow.settlementStatus) {
+      group.statuses.add(sourceRow.settlementStatus);
+    }
+  });
+
+  return Array.from(groups.values(), ({ row, statuses }) => ({
+    ...row,
+    settlementStatus:
+      statuses.size === 1 ? Array.from(statuses)[0] : statuses.size ? 'MIXED' : ''
+  }));
 };
 
 export default SettlementReportButton;

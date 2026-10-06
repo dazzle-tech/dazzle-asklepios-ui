@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -7,7 +8,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
@@ -137,11 +138,6 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [selectedPatient, setSelectedPatient] =
     useState<any>(null);
 
-  const [orderIdIn, setOrderIdIn] =
-    useState<number[] | null>(null);
-
-  const [fetchOrders] =
-    useLazyFilterDiagnosticOrdersQuery();
   const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -261,9 +257,9 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             }
             : {}),
 
-          ...(orderIdIn?.length
+          ...(selectedPatient?.id
             ? {
-              orderIdIn
+              patientIdIn: [selectedPatient.id]
             }
             : {})
         }
@@ -396,27 +392,18 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
       });
   }, [patientIds, getBulkPatientBasicInfo]);
 
-  useEffect(() => {
-    if (!selectedPatient?.id) {
-      setOrderIdIn(null);
-      return;
-    }
+  const handleSearch = () => {
+    if (attachmentsLocked) return;
+    refetch();
+  };
 
-    fetchOrders({
-      patientIdIn: [selectedPatient.id],
-      page: 0,
-      size: 10000
-    })
-      .unwrap()
-      .then(res => {
-        const ids = (res?.data ?? [])
-          .map((order: any) => Number(order.id))
-          .filter((id: number) => Number.isFinite(id));
-
-        setOrderIdIn(ids);
-      })
-      .catch(() => setOrderIdIn([]));
-  }, [selectedPatient?.id]);
+  const handleClearFilters = () => {
+    const now = new Date();
+    setPage(0);
+    setSelectedPatient(null);
+    setDateFilter({ fromDate: now, toDate: now });
+    setDepartmentFilter({ departmentIds: [] });
+  };
 
   const FilterModel = (
     <Form fluid className="table-header-content">
@@ -475,6 +462,11 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
           }}
         />
       </div>
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={handleSearch}
+        clearOnClick={handleClearFilters}
+      />
     </Form>
   );
 
@@ -774,11 +766,11 @@ const handleViewImage = async (reportId: number) => {
       },
       {
         key: 'orderByAt',
-        title: 'Order By / At',
+        title: 'Reported By ',
         width: 200,
         render: row => (
           <UserDateCell
-            login={row.createdBy}
+            login={row.radiologistInformation}
             date={row.createdDate}
           />
         )

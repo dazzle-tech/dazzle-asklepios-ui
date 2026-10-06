@@ -4,11 +4,11 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import {
-  useFilterDiagnosticOrderTestResultsQuery
+  useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
-  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
@@ -40,8 +40,12 @@ interface Props {
   patient: any;
 }
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) => {
+  const resultTypeAtEntry = row?.resultTypeAtEntry?.trim();
+  return (resultTypeAtEntry || row?._profile?.resultType)?.toUpperCase()?.trim();
+};
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 
 
@@ -107,7 +111,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   const resolveUnitDisplay = (row: any) => {
     const profile = row._profile;
-    if (!profile || isLovProfile(profile)) return null;
+    if (!profile || isLovProfile(row)) return null;
 
     const unit = valueUnitLov?.object?.find(
       (u: any) => String(u.key) === String(profile.resultUnit)
@@ -116,42 +120,22 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     return unit || null;
   };
 
-  const ordersQueryParams = useMemo(() => {
-    if (!patient?.id) return skipToken;
-
-    return {
-      patientId: patient.id,
-      page: 0,
-      size: 1000,
-      sort: 'id,desc'
-    };
-  }, [patient?.id]);
-
-  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(
-    ordersQueryParams
-  );
-
-  const orders = ordersResponse?.data ?? [];
-
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
-
   const queryParams = useMemo(() => {
-    if (!orderIds.length) return skipToken;
+    if (!patient?.id) return skipToken;
 
     return {
       page,
       size,
       sort: 'id,desc',
       processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-      orderIdIn: orderIds
+      reviewed: true,
+      patientIdIn: [patient.id]
     };
-  }, [orderIds, page, size]);
+  }, [patient?.id, page, size]);
 
   const { data: resultsResponse, isFetching } =
     useFilterDiagnosticOrderTestResultsQuery(queryParams);
+  const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
   const results = resultsResponse?.data ?? [];
   const totalCount = resultsResponse?.totalCount ?? 0;
@@ -283,16 +267,28 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     normalizedResults.length > 0 &&
     normalizedResults.every((row: any) => selectedResultIds.includes(row.id));
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedResultIds((previous) =>
-        Array.from(new Set([...previous, ...normalizedResults.map((row: any) => row.id)]))
-      );
-    } else {
-      const currentPageIds = normalizedResults.map((row: any) => row.id);
+  const handleSelectAll = async (checked: boolean) => {
+    const currentPageIds = normalizedResults.map((row: any) => row.id);
+
+    if (!checked) {
       setSelectedResultIds((previous) =>
         previous.filter((id) => !currentPageIds.includes(id))
       );
+      return;
+    }
+
+    if (!patient?.id) return;
+
+    try {
+      const ids = await getAllResultIds({
+        patientIdIn: [patient.id],
+        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+        reviewed: true
+      }).unwrap();
+
+      setSelectedResultIds(ids);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -377,7 +373,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
           row.resultValueText ??
           '';
 
-        if (isLovProfile(profile)) {
+        if (isLovProfile(row)) {
           return (
             <LovValueCell
               valueKey={String(value)}
@@ -407,7 +403,7 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
           row.maxValue !== undefined;
 
         if (hasViewRange) {
-          if (isLovProfile(profile)) {
+          if (isLovProfile(row)) {
             return (
               <LovValueCell
                 valueKey={String(row.normalRangeValue)}

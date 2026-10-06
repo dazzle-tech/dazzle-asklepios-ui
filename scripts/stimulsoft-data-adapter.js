@@ -27,9 +27,22 @@ const candidates = [
   ),
 ];
 
-const adapterDir = candidates.find(dir =>
-  fs.existsSync(path.join(dir, 'index.js'))
-);
+const readVersion = dir => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+      .version;
+  } catch {
+    return '0';
+  }
+};
+
+// The designer engine follows stimulsoft-dashboards-js. Prefer that adapter
+// build (2026.3.4) over the older top-level package (2026.3.2).
+const adapterDir = candidates
+  .filter(dir => fs.existsSync(path.join(dir, 'index.js')))
+  .sort((a, b) =>
+    readVersion(b).localeCompare(readVersion(a), undefined, { numeric: true })
+  )[0];
 if (!adapterDir) {
   console.error('stimulsoft-data-adapter not found. Run npm install.');
   process.exit(1);
@@ -38,7 +51,23 @@ if (!adapterDir) {
 const adapter = require(adapterDir);
 const port = Number(process.env.STIMULSOFT_SQL_ADAPTER_PORT || 9615);
 
-const server = http.createServer((request, response) => {
+const normalizeConnectionString = value =>
+  String(value || '')
+    .replace(/[\r\n\t]+/g, '')
+    .replace(/user\s*id\s*=/gi, 'User Id=');
+
+const fail = (response, notice) => {
+  response.statusCode = 200;
+  response.end(
+    JSON.stringify({
+      success: false,
+      notice,
+      checkVersion: false,
+    })
+  );
+};
+
+const server = http.createServer({ maxHeaderSize: 1024 * 1024 }, (request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader(
     'Access-Control-Allow-Headers',
@@ -72,17 +101,23 @@ const server = http.createServer((request, response) => {
     }
     try {
       const command = adapter.getCommand(data);
+      if (command && typeof command.connectionString === 'string') {
+        command.connectionString = normalizeConnectionString(
+          command.connectionString
+        );
+      }
       adapter.process(command, result => {
+        const notice = result && result.notice ? String(result.notice) : '';
+        console.log(
+          `[sql-adapter] ${command.command || ''} ${command.database || ''} success=${Boolean(result && result.success)}${notice ? ` notice=${notice}` : ''}`
+        );
+        response.statusCode = 200;
         response.end(adapter.getResponse(result));
       });
     } catch (error) {
-      response.statusCode = 400;
-      response.end(
-        JSON.stringify({
-          success: false,
-          notice: error instanceof Error ? error.message : String(error),
-        })
-      );
+      const notice = error instanceof Error ? error.message : String(error);
+      console.log(`[sql-adapter] failed ${notice}`);
+      fail(response, notice);
     }
   });
 });

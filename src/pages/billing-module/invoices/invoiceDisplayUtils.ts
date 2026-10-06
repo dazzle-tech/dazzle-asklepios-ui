@@ -51,26 +51,42 @@ export const resolveInvoiceDisplayNumber = (
 
 export const resolveInvoiceVisitNumber = (
   invoice?: { encounterId?: number | null; encounterNumber?: string | null } | null,
-  encounterDetails?: { encounterNumber?: string | null } | null,
+  encounterDetails?: { encounterId?: number | null; encounterNumber?: string | null } | null,
   billableVisits?: Array<{ encounterId?: number; encounterNumber?: string }>
 ): string => {
-  if (encounterDetails?.encounterNumber?.trim()) {
-    return encounterDetails.encounterNumber.trim();
-  }
+  const invoiceEncounterId =
+    invoice?.encounterId != null ? Number(invoice.encounterId) : null;
 
-  if (invoice?.encounterNumber?.trim()) {
-    return invoice.encounterNumber.trim();
+  const fromInvoice = invoice?.encounterNumber?.trim();
+  if (fromInvoice && !/^#?\d+$/.test(fromInvoice)) {
+    return fromInvoice;
   }
 
   const visit = billableVisits?.find(
-    candidate => candidate.encounterId === invoice?.encounterId
+    candidate =>
+      invoiceEncounterId != null && Number(candidate.encounterId) === invoiceEncounterId
   );
-  if (visit?.encounterNumber?.trim()) {
-    return visit.encounterNumber.trim();
+  const fromVisit = visit?.encounterNumber?.trim();
+  if (fromVisit) {
+    return fromVisit;
   }
 
-  if (invoice?.encounterId != null) {
-    return `#${invoice.encounterId}`;
+  // Only reuse loaded encounter details when they belong to THIS invoice's visit.
+  const detailsMatch =
+    encounterDetails?.encounterNumber?.trim() &&
+    (invoiceEncounterId == null ||
+      encounterDetails.encounterId == null ||
+      Number(encounterDetails.encounterId) === invoiceEncounterId);
+  if (detailsMatch) {
+    return encounterDetails!.encounterNumber!.trim();
+  }
+
+  if (fromInvoice) {
+    return fromInvoice;
+  }
+
+  if (invoiceEncounterId != null) {
+    return `#${invoiceEncounterId}`;
   }
 
   return '-';

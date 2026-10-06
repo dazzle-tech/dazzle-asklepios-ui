@@ -63,17 +63,11 @@ const AdjustmentDocument: React.FC<AdjustmentDocumentProps> = ({
           <div className="invoice-print__subtitle">
             {adjustmentTypeLabel(adjustment.documentType, adjustment.invoiceType)}
           </div>
-          {(adjustment.facilityAddress || adjustment.vatRegistrationNumber) && (
+          {adjustment.facilityAddress ? (
             <div className="invoice-print__facility-meta">
-              {adjustment.facilityAddress ? <span>{adjustment.facilityAddress}</span> : null}
-              {adjustment.facilityAddress && adjustment.vatRegistrationNumber ? (
-                <span className="invoice-print__facility-meta-sep"> · </span>
-              ) : null}
-              {adjustment.vatRegistrationNumber ? (
-                <span>VAT: {adjustment.vatRegistrationNumber}</span>
-              ) : null}
+              <span>{adjustment.facilityAddress}</span>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="invoice-print__meta">

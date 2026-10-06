@@ -16,6 +16,65 @@ import {
 
 import type { InvoicePrintChargeContext } from './useInvoicePrintLookups';
 
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+const hasExplicitTimeZone = (value: string) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+
+/**
+ * Invoice timestamps arrive as UTC. A value with no offset is still UTC;
+ * convert it to the browser's local time before printing.
+ */
+const toLocalInvoiceDate = (value?: string | Date | null): Date | null => {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  let raw = String(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  raw = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+
+  const hasTime = /(?:T|\s)\d{2}:\d{2}/.test(raw);
+  if (hasTime && !hasExplicitTimeZone(raw)) {
+    raw = `${raw.includes('T') ? raw : raw.replace(' ', 'T')}Z`;
+  }
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatLocalInvoiceDateTime = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+
+export const formatInvoicePrintDateTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value) ?? new Date();
+  return formatLocalInvoiceDateTime(date);
+};
+
+export const formatInvoicePrintDate = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+export const formatInvoicePrintTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+};
+
 export type InvoicePrintLineItem = {
   serviceCode: string;
   serviceName: string;
@@ -42,7 +101,6 @@ export type InvoicePrintData = {
   visitDate?: string;
   facilityName: string;
   facilityAddress?: string;
-  vatRegistrationNumber?: string;
   qrCodePayload: string;
   patientName: string;
   patientMrn: string;
@@ -75,9 +133,87 @@ export type InvoicePrintData = {
 
 export type FacilityPrintInfo = {
   name: string;
+  nameAr?: string;
   address?: string;
-  vatRegistrationNumber?: string;
+  addressEn?: string;
+  addressParts?: FacilityAddressParts;
   providerId?: string;
+  logoUrl?: string;
+  logoUrls?: string[];
+};
+
+export type FacilityAddressParts = {
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
+const readAddressPart = (value: unknown) => {
+  const text = String(value ?? '').trim();
+  if (!text || text === '-' || text === 'null') return '';
+  return text;
+};
+
+const englishCountryLabel = (countryName?: string | null) => {
+  const raw = readAddressPart(countryName);
+  if (!raw) return '';
+  if (/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/.test(raw)) {
+    return raw
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return raw;
+};
+
+export const buildFacilityAddressParts = (facility?: {
+  countryName?: string | null;
+  districtName?: string | null;
+  streetAddress?: string | null;
+  postalCode?: string | null;
+} | null): FacilityAddressParts => ({
+  street: readAddressPart(facility?.streetAddress),
+  city: readAddressPart(facility?.districtName),
+  postalCode: readAddressPart(facility?.postalCode),
+  country: readAddressPart(facility?.countryName)
+});
+
+export const buildFacilityAddress = (parts: FacilityAddressParts) =>
+  [
+    parts.street,
+    [parts.city, parts.postalCode].filter(Boolean).join(' '),
+    englishCountryLabel(parts.country)
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+const toTranslationKey = (value: string) =>
+  value.normalize('NFD').replace(/\s+/g, '_').toUpperCase();
+
+/** Arabic address from the system translation dictionary; untranslated parts are left out. */
+export const buildFacilityAddressAr = (
+  parts: FacilityAddressParts | undefined,
+  arabic: Record<string, string> | undefined
+) => {
+  if (!parts || !arabic) return '';
+
+  const translate = (value: string) => {
+    if (!value) return '';
+    return (
+      arabic[value]?.trim() ||
+      arabic[toTranslationKey(value)]?.trim() ||
+      arabic[toTranslationKey(englishCountryLabel(value))]?.trim() ||
+      ''
+    );
+  };
+
+  const street = translate(parts.street);
+  const city = translate(parts.city);
+  const country = translate(parts.country);
+  const cityLine = [city, city ? parts.postalCode : ''].filter(Boolean).join(' ');
+
+  return [street, cityLine, country].filter(Boolean).join('\n');
 };
 
 const formatMoneyValue = (value?: number) => Number(value ?? 0);
@@ -153,14 +289,12 @@ const buildQrCodePayload = ({
   invoiceNumber,
   invoiceDate,
   facilityName,
-  vatRegistrationNumber,
   netAmount,
   taxAmount
 }: {
   invoiceNumber: string;
   invoiceDate: string;
   facilityName: string;
-  vatRegistrationNumber?: string;
   netAmount: number;
   taxAmount: number;
 }) =>
@@ -168,7 +302,6 @@ const buildQrCodePayload = ({
     `Invoice: ${invoiceNumber}`,
     `Date: ${invoiceDate}`,
     `Facility: ${facilityName}`,
-    vatRegistrationNumber ? `VAT: ${vatRegistrationNumber}` : null,
     `Net: ${netAmount.toFixed(2)}`,
     `Tax: ${taxAmount.toFixed(2)}`
   ]
@@ -511,9 +644,7 @@ export const buildInvoicePrintDataFromEncounter = ({
               : formatMoneyValue(encounterDetails.billingSummary?.insuranceOutstandingAmount)
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
 
@@ -532,12 +663,10 @@ export const buildInvoicePrintDataFromEncounter = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
@@ -602,9 +731,7 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
             invoiceType === 'INSURANCE_CLAIM' ? formatMoneyValue(invoice.totalAmount) : 0
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
   const composedPatientName = [patient?.firstName, patient?.lastName]
@@ -630,12 +757,10 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
       : undefined,
     facilityName: facility.name,
     facilityAddress: facility.address,
-    vatRegistrationNumber: facility.vatRegistrationNumber,
     qrCodePayload: buildQrCodePayload({
       invoiceNumber: invoice.documentNumber,
       invoiceDate,
       facilityName: facility.name,
-      vatRegistrationNumber: facility.vatRegistrationNumber,
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),

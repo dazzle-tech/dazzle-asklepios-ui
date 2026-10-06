@@ -18,7 +18,8 @@ import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, HStack, Message, Panel, Tooltip, useToaster, Whisper } from 'rsuite';
 
 import {
-  useFilterDiagnosticOrderTestResultsQuery
+  useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
@@ -43,8 +44,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 type Props = {
   patient: any;
 };
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 const startOfDay = (date: Date) => {
   const d = new Date(date);
@@ -105,9 +108,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<any>({
-    fromDate: null,
-    toDate: null
+  const [dateFilter, setDateFilter] = useState<any>(() => {
+    const toDate = new Date();
+    const fromDate = new Date(toDate);
+    fromDate.setDate(fromDate.getDate() - 14);
+
+    return { fromDate, toDate };
   });
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
@@ -124,26 +130,16 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     };
   }, [patientId]);
 
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+  // Orders are only needed to display the order number; results are filtered by patient directly.
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
 
   const orders = ordersResponse?.data ?? [];
 
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
   const queryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
-    if (isOrdersFetching) return skipToken;
-
-    if (!orderIds.length) return skipToken;
-
     const params: any = {
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       page: pageIndex,
       size: rowsPerPage,
       processingStatus: 'RESULT_APPROVED',
@@ -172,18 +168,17 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     return params;
   }, [
     patientId,
-    orderIds,
     pageIndex,
     rowsPerPage,
     showAbnormal,
-    dateFilter,
-    isOrdersFetching
+    dateFilter
   ]);
 
   const {
     data: response,
     isFetching: isResultsFetching
   } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
+  const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: notesResponse } = useGetNotesByResultIdQuery(
@@ -222,7 +217,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
+      if (!profile || isLovProfile(row)) return null;
 
       if (!profile.resultUnit) return null;
 
@@ -326,11 +321,45 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     normalizedResults.length > 0 &&
     normalizedResults.every(row => selectedRows.includes(row.id));
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(normalizedResults.map(row => row.id));
-    } else {
-      setSelectedRows([]);
+  const handleSelectAll = async (checked: boolean) => {
+    const currentPageIds = normalizedResults.map(row => row.id);
+
+    if (!checked) {
+      setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
+      return;
+    }
+
+    if (!patientId) return;
+
+    try {
+      const idsParams: any = {
+        patientIdIn: [patientId],
+        processingStatus: 'RESULT_APPROVED',
+        reviewed: true
+      };
+
+      if (showAbnormal) {
+        idsParams.markerIn = [
+          'UPPER_LIMIT',
+          'LOWER_LIMIT',
+          'ABNORMAL_MARKER',
+          'CRITICAL_UPPER',
+          'CRITICAL_LOWER'
+        ];
+      }
+
+      if (dateFilter.fromDate) {
+        idsParams.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
+      }
+
+      if (dateFilter.toDate) {
+        idsParams.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
+      }
+
+      const ids = await getAllResultIds(idsParams).unwrap();
+      setSelectedRows(ids);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -386,7 +415,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     
                 const value = row.resultValueNumber ?? row.resultValueText ?? '';
     
-                if (isLovProfile(profile)) {
+                if (isLovProfile(row)) {
                   return (
                     <LovValueCell
                       valueKey={value}
@@ -415,7 +444,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
                   row.maxValue !== undefined;
     
                 if (hasViewRange) {
-                  if (isLovProfile(profile)) {
+                  if (isLovProfile(row)) {
                     return (
                       <LovValueCell
                         valueKey={String(row.normalRangeValue)}
@@ -519,7 +548,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         }}
         rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
-          isOrdersFetching ||
           isResultsFetching ||
           isOrderTestsFetching ||
           isAllTestsFetching

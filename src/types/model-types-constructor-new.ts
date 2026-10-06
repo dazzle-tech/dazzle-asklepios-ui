@@ -89,6 +89,10 @@ export const newFacility: modelTypes.Facility = {
   timeZone: '',
   defaultLabDepartmentId: null,
   defaultRadDepartmentId: null,
+  countryId: null,
+  districtId: null,
+  streetAddress: null,
+  postalCode: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -107,6 +111,10 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   timeZone: '',
   defaultLabDepartmentId: null,
   defaultRadDepartmentId: null,
+  countryId: null,
+  districtId: null,
+  streetAddress: null,
+  postalCode: null,
 };
 
 // ------------------- Role -------------------
@@ -2869,6 +2877,7 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
+  fastingBloodGlucose: null,
 
   isTriage: false,
   isActive: true,
@@ -3375,6 +3384,8 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   dateOfResolution: null,
   byPatient: true,
   sourceOfInformation: null,
+  patientIsFree: false,
+  freeText: null,
   status: 'ACTIVE',
   cancelledBy: null,
   cancelledDate: null,

@@ -17,6 +17,7 @@ import {
   useBulkApproveDiagnosticOrderTestResultMutation,
   useBulkRejectDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
@@ -49,6 +50,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState
 } from 'react';
 import { FaChartLine } from 'react-icons/fa';
@@ -79,8 +81,10 @@ type PaginationParams = {
   sort: string;
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 
 const Result = forwardRef<any, Props>(
@@ -134,6 +138,7 @@ const Result = forwardRef<any, Props>(
     const [bulkApproveResults] = useBulkApproveDiagnosticOrderTestResultMutation();
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
+    const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
    
 
@@ -297,11 +302,8 @@ const Result = forwardRef<any, Props>(
       }
     };
 const resolveResultDisplay = (row: any) => {
-  const profile = row.profile;
-  if (!profile) return ' ';
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return ' ';
 
   if (resultType === 'LOV') {
     return (
@@ -320,7 +322,7 @@ const resolveResultDisplay = (row: any) => {
 
    const resolveUnitDisplay = (row: any) => {
   const profile = row.profile;
-  if (!profile || isLovProfile(profile)) return null;
+    if (!profile || isLovProfile(row)) return null;
 
   if (!profile.resultUnit) return null;
 
@@ -394,12 +396,8 @@ const resolveResultDisplay = (row: any) => {
     // ─────────────────────────────────────────────────────────────────────────
 
   const isResultEmpty = (row: any) => {
-  const profile = row.profile;
-
-  if (!profile) return true;
-
-  const resultType =
-    profile?.resultType?.toUpperCase()?.trim();
+  const resultType = getResultType(row);
+  if (!resultType) return true;
 
   if (resultType === 'LOV' || resultType === 'TEXT') {
     return (
@@ -562,13 +560,25 @@ const resolveResultDisplay = (row: any) => {
     };
 
 
-    const handleToggleSelectAll = (checked: boolean) => {
-      const allRowIds = normalizedResults.map(row => row.id);
+    const handleToggleSelectAll = async (checked: boolean) => {
+      const currentPageIds = normalizedResults.map(row => row.id);
 
-      if (checked) {
-        setSelectedResultIds(prev => Array.from(new Set([...prev, ...allRowIds])));
-      } else {
-        setSelectedResultIds(prev => prev.filter(id => !allRowIds.includes(id)));
+      if (!checked) {
+        setSelectedResultIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+        return;
+      }
+
+      if (!order?.id) return;
+
+      try {
+        const ids = await getAllResultIds({
+          orderIdIn: order.id,
+          ...(categoryFilter.value ? { category: categoryFilter.value } : {})
+        }).unwrap();
+
+        setSelectedResultIds(ids);
+      } catch (e) {
+        console.error(e);
       }
     };
     const columns: ColumnConfig[] = [
@@ -633,9 +643,7 @@ const resolveResultDisplay = (row: any) => {
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
         render: (row: any) => {
-
-          const isText =
-            row?.profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
@@ -667,9 +675,7 @@ const resolveResultDisplay = (row: any) => {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
-          const profile = row.profile;
-          const isText =
-            profile?.resultType?.toUpperCase() === 'TEXT';
+          const isText = getResultType(row) === 'TEXT';
 
           if (isText) {
             return '-';
@@ -682,10 +688,8 @@ const resolveResultDisplay = (row: any) => {
             row.minValue !== undefined &&
             row.maxValue !== null &&
             row.maxValue !== undefined;
-            console.log('hasViewRange', hasViewRange);
-            console.log("isLovProfile", isLovProfile(profile));
           if (hasViewRange) {
-            if (isLovProfile(profile)) {
+            if (isLovProfile(row)) {
               return (
                 <LovValueCell
                   valueKey={row.viewNormalRange}
@@ -988,10 +992,14 @@ const resolveResultDisplay = (row: any) => {
       });
     }, [fetchNormalRangesByProfileTestId, normalRangesMap, profileTestIds]);
 
+    const previousOrderId = useRef(order?.id);
+
     useEffect(() => {
-      const currentIds = normalizedResults.map(r => r.id);
-      setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
-    }, [normalizedResults]);
+      if (previousOrderId.current !== order?.id) {
+        setSelectedResultIds([]);
+        previousOrderId.current = order?.id;
+      }
+    }, [order?.id]);
 
 
 
@@ -1119,10 +1127,13 @@ const resolveResultDisplay = (row: any) => {
             setOpen={setOpenNormalRangeModal}
             ranges={
               selectedResult
-                ? normalRangesMap[selectedResult.profileTestId] ?? []
+                ? (normalRangesMap[selectedResult.profileTestId] ?? []).filter(
+                    (range: any) => range.isActive === true
+                  )
                 : []
             }
             profileTestId={selectedResult?.profileTestId ?? null}
+            resultTypeAtEntry={selectedResult?.resultTypeAtEntry}
           />
 
           <MyModal

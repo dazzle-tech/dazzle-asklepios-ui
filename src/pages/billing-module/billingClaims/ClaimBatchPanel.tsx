@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Checkbox, DateRangePicker, Form, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, DateRangePicker, Form, Tag, Tooltip, Whisper } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -31,31 +31,57 @@ type ClaimBatchPanelProps = {
   onSubmitted?: () => void;
 };
 
+const UNAPPROVED_RESULT_LABEL = 'Result not approved';
+const UNAPPROVED_RESULT_MESSAGE =
+  'Select is locked because a test result on this invoice is not Result Approved.';
+
+const isSelectableInvoice = (row: PendingClaimInvoiceResponse) => row.selectable !== false;
+
+const toIsoDateString = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const dispatch = useAppDispatch();
   const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
   const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
   const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
   const [dateRange, setDateRange] = useState<[Date, Date] | null>(currentMonthToTodayRange);
+  const [encounterDateRange, setEncounterDateRange] = useState<[Date, Date] | null>(null);
   const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
   const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
   const [appliedClaimType, setAppliedClaimType] = useState<string | null>(null);
   const [appliedClaimSubType, setAppliedClaimSubType] = useState<string | null>(null);
   const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
+  const [appliedEncounterDateFrom, setAppliedEncounterDateFrom] = useState<string | null>(null);
+  const [appliedEncounterDateTo, setAppliedEncounterDateTo] = useState<string | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
   const [openEMRModal, setOpenEMRModal] = useState(false);
 
-  const { data: pendingInvoices = [], isFetching, refetch } = useGetPendingClaimInvoicesQuery(
+  const { data: pendingInvoicesPage, isFetching, refetch } = useGetPendingClaimInvoicesQuery(
     {
       payorId: appliedPayorId,
       payerNphiesId: appliedPayerNphiesId,
       fromDate: appliedFromDate,
       toDate: appliedToDate,
       claimType: appliedClaimType,
-      claimSubType: appliedClaimSubType
+      claimSubType: appliedClaimSubType,
+      encounterDateFrom: appliedEncounterDateFrom,
+      encounterDateTo: appliedEncounterDateTo,
+      page,
+      size: rowsPerPage
     },
     {
       skip:
@@ -99,7 +125,19 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     }
   };
 
-  const rows = useMemo(() => pendingInvoices ?? [], [pendingInvoices]);
+  const rows = pendingInvoicesPage?.data ?? [];
+  const totalCount = pendingInvoicesPage?.totalCount ?? 0;
+  const selectableInvoiceIds = useMemo(
+    () =>
+      rows
+        .filter(isSelectableInvoice)
+        .map(row => row.financialDocumentId)
+        .filter((id): id is number => id != null),
+    [rows]
+  );
+  const selectedOnPageCount = selectableInvoiceIds.filter(id =>
+    selectedInvoiceIds.includes(id)
+  ).length;
 
   const toggleRow = (invoiceId: number) => {
     setSelectedInvoiceIds(current =>
@@ -110,16 +148,16 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   };
 
   const toggleAll = () => {
-    const ids = rows
-      .map(row => row.financialDocumentId)
-      .filter((id): id is number => id != null);
+    const pageIds = new Set(selectableInvoiceIds);
+    const allPageSelected =
+      selectableInvoiceIds.length > 0 && selectedOnPageCount === selectableInvoiceIds.length;
 
-    if (selectedInvoiceIds.length === ids.length) {
-      setSelectedInvoiceIds([]);
+    if (allPageSelected) {
+      setSelectedInvoiceIds(current => current.filter(id => !pageIds.has(id)));
       return;
     }
 
-    setSelectedInvoiceIds(ids);
+    setSelectedInvoiceIds(current => [...new Set([...current, ...selectableInvoiceIds])]);
   };
 
   const handleSearch = () => {
@@ -146,7 +184,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     setAppliedClaimSubType(claimSubType);
     setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
     setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
+    setAppliedEncounterDateFrom(toIsoDateString(encounterDateRange?.[0]));
+    setAppliedEncounterDateTo(toIsoDateString(encounterDateRange?.[1]));
     setSelectedInvoiceIds([]);
+    setPage(0);
   };
 
   const handleSubmitBatch = async () => {
@@ -195,11 +236,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       key: 'select',
       title: (
         <Checkbox
-          checked={rows.length > 0 && selectedInvoiceIds.length === rows.length}
-          indeterminate={
-            selectedInvoiceIds.length > 0 && selectedInvoiceIds.length < rows.length
+          checked={
+            selectableInvoiceIds.length > 0 &&
+            selectedOnPageCount === selectableInvoiceIds.length
           }
-          disabled={!rows.length}
+          indeterminate={
+            selectedOnPageCount > 0 && selectedOnPageCount < selectableInvoiceIds.length
+          }
+          disabled={!selectableInvoiceIds.length}
           onChange={toggleAll}
         />
       ),
@@ -210,11 +254,50 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           return null;
         }
 
-        return (
+        const checkbox = (
           <Checkbox
             checked={selectedInvoiceIds.includes(invoiceId)}
+            disabled={!isSelectableInvoice(row)}
             onChange={() => toggleRow(invoiceId)}
           />
+        );
+
+        if (isSelectableInvoice(row)) {
+          return checkbox;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
+          >
+            <span>{checkbox}</span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'selectionReason',
+      title: 'Selection',
+      width: 170,
+      render: (row: PendingClaimInvoiceResponse) => {
+        if (isSelectableInvoice(row)) {
+          return '-';
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
+          >
+            <span>
+              <Tag color="red" size="sm">
+                {UNAPPROVED_RESULT_LABEL}
+              </Tag>
+            </span>
+          </Whisper>
         );
       }
     },
@@ -230,6 +313,14 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       width: 100,
       render: (row: PendingClaimInvoiceResponse) => row?.encounter?.encounterNumber ?? '-'
     },
+    {
+      key: 'encounterDate',
+      title: 'Encounter Date',
+      width: 150,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.encounter?.createdDate ? formatDateWithoutSeconds(String(row.encounter.createdDate)) : '-'
+    },
+
     {
       key: 'encounterType',
       title: 'Visit type',
@@ -289,7 +380,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       render: (row: PendingClaimInvoiceResponse) =>
         row.createdDate ? formatDateWithoutSeconds(String(row.createdDate)) : '-'
     },
-     {
+
+    {
       key: 'actions',
       title: ' ',
       render: (row: PendingClaimInvoiceResponse) => {
@@ -310,11 +402,11 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
                 <MyButton
                   size="small"
                   backgroundColor="violet"
-                  onClick={ () => {
-                      setEmrEncounter(row?.encounter);
-                      setEmrPatient(row?.patient);
-                      setOpenEMRModal(true);
-                   
+                  onClick={() => {
+                    setEmrEncounter(row?.encounter);
+                    setEmrPatient(row?.patient);
+                    setOpenEMRModal(true);
+
                   }}
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
@@ -340,79 +432,114 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       </div>
 
       <Form fluid className="claims-batch-filters-form">
-        <div className="claims-batch-filters">
-          <MyInput
-            fieldLabel="Payor"
-            fieldName="payerNphiesId"
-            fieldType="select"
-            selectData={payorOptions}
-            selectDataLabel="label"
-            selectDataValue="nphiesId"
-            record={{ payerNphiesId }}
-            setRecord={(value: { payerNphiesId: number | string | null }) =>
-              setPayerNphiesId(
-                value.payerNphiesId == null || value.payerNphiesId === ''
-                  ? null
-                  : String(value.payerNphiesId).trim()
-              )
-            }
-            cleanable
-            loading={isNphiesPayersLoading}
-            placeholder={
-              isNphiesPayersLoading
-                ? 'Loading payors...'
-                : payorOptions.length === 0
-                  ? 'No payors found'
-                  : 'Select payor'
-            }
-            width="280px"
-          />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: '12px',
+            flexWrap: 'wrap',
+            marginBottom: '12px'
+          }}
+        >
+          <div style={{ width: '260px' }}>
+            <MyInput
+              fieldLabel="Payor"
+              width="100%"
+              fieldName="payerNphiesId"
+              fieldType="select"
+              selectData={payorOptions}
+              selectDataLabel="label"
+              selectDataValue="nphiesId"
+              record={{ payerNphiesId }}
+              setRecord={(value: { payerNphiesId: number | string | null }) =>
+                setPayerNphiesId(
+                  value.payerNphiesId == null || value.payerNphiesId === ''
+                    ? null
+                    : String(value.payerNphiesId).trim()
+                )
+              }
+              cleanable
+              loading={isNphiesPayersLoading}
+            />
+          </div>
 
-          <MyInput
-            fieldLabel="Type"
-            fieldName="claimType"
-            fieldType="select"
-            selectData={WASEEL_CLAIM_TYPE_OPTIONS}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={{ claimType }}
-            setRecord={handleClaimTypeChange}
-            searchable={false}
-            cleanable={false}
-            placeholder="Select type"
-            width="180px"
-          />
+          <div style={{ minWidth: '140px' }}>
+            <MyInput
+              fieldLabel="Type"
+              fieldName="claimType"
+              fieldType="select"
+              selectData={WASEEL_CLAIM_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimType }}
+              setRecord={handleClaimTypeChange}
+              searchable={false}
+              cleanable={false}
+            />
+          </div>
 
-          <MyInput
-            fieldLabel="Sub Type"
-            fieldName="claimSubType"
-            fieldType="select"
-            selectData={subTypeOptions}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={{ claimSubType }}
-            setRecord={(value: { claimSubType: string | null }) =>
-              setClaimSubType(value.claimSubType)
-            }
-            searchable={false}
-            cleanable={false}
-            disabled={!isProfessionalClaimType(claimType)}
-            placeholder="Select sub type"
-            width="180px"
-          />
+          <div style={{ minWidth: '180px' }}>
+            <MyInput
+              fieldLabel="Sub Type"
+              fieldName="claimSubType"
+              fieldType="select"
+              selectData={subTypeOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimSubType }}
+              setRecord={(value: { claimSubType: string | null }) =>
+                setClaimSubType(value.claimSubType)
+              }
+              searchable={false}
+              cleanable={false}
+              disabled={!isProfessionalClaimType(claimType)}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Period
+            </label>
 
-          <div className="claims-batch-filters__dates">
-            <span className="claims-batch-filters__label">Period</span>
             <DateRangePicker
               value={dateRange}
               onChange={value => setDateRange(value)}
               placement="bottomStart"
-              placeholder="Select period"
+              size="sm"
+              style={{ width: '220px' }}
             />
           </div>
 
-          <MyButton appearance="primary" onClick={handleSearch}>
-            Search invoices
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Encounter Period
+            </label>
+
+            <DateRangePicker
+              value={encounterDateRange}
+              onChange={value => setEncounterDateRange(value)}
+              placement="bottomStart"
+              cleanable
+              size="sm"
+              style={{ width: '220px' }}
+              container={() => document.body}
+            />
+          </div>
+
+          <MyButton
+            appearance="primary"
+            onClick={handleSearch}
+          >
+            Search
           </MyButton>
 
           <MyButton
@@ -421,7 +548,7 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
             disabled={!selectedInvoiceIds.length || submitting}
             onClick={handleSubmitBatch}
           >
-            Submit selected ({selectedInvoiceIds.length})
+            Submit ({selectedInvoiceIds.length})
           </MyButton>
         </div>
       </Form>
@@ -431,10 +558,17 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
           columns={columns}
           data={rows}
           loading={isFetching}
-          height={280}
-          totalCount={rows.length}
+          height={320}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
         />
-         <MyModal
+        <MyModal
           open={openEMRModal}
           setOpen={setOpenEMRModal}
           title="Electronic Medical Record"
@@ -506,7 +640,6 @@ const toExclusiveEndIso = (date?: Date | null) => {
   end.setHours(0, 0, 0, 0);
   end.setDate(end.getDate() + 1);
   return end.toISOString();
-
 };
 
 const calculateAge = (dateOfBirth?: string | Date | null) => {

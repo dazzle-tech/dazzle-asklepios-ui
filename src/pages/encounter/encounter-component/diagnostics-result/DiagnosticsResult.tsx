@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Result from './Result';
 import Reports from './Reports';
+import ResultsAndReports from './ResultsAndReports';
 import LaboratoryResultComparison from './LaboratoryResultComparison';
 import { useAppSelector } from '@/hooks';
 import MyTab from '@/components/MyTab';
@@ -15,6 +16,12 @@ const DiagnosticsResult = props => {
   const edit = viewMode === 'readOnly';
     
 const tabData = [
+  {
+    title: 'Results & Reports',
+    content: (
+      <ResultsAndReports patient={patient} />
+    )
+  },
   {
     title: 'Results',
     content: (

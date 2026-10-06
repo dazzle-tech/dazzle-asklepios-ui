@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Panel, Tag, Text } from 'rsuite';
 
@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
 
   faFileInvoice,
+
+  faFileInvoiceDollar,
 
   faLock,
 
@@ -80,6 +82,7 @@ import InvoiceAdjustmentModal from './invoices/InvoiceAdjustmentModal';
 import DiscountCreditNoteModal from './invoices/DiscountCreditNoteModal';
 
 import InvoicePrintModal from './invoices/InvoicePrintModal';
+import InsuranceCreditPrintModal from './invoices/InsuranceCreditPrintModal';
 import AdjustmentPrintModal from './invoices/AdjustmentPrintModal';
 
 import {
@@ -96,6 +99,8 @@ import { useFinancialDocumentTypes } from './invoices/useFinancialDocumentTypes'
 
 import {
 
+  buildFacilityAddress,
+  buildFacilityAddressParts,
   buildInvoicePrintDataFromIssuedInvoice,
 
   type InvoicePrintData
@@ -105,24 +110,37 @@ import {
 import { useInvoicePrintLookups } from './invoices/useInvoicePrintLookups';
 import {
   computeEncounterRemainingToPay,
-  formatBillingCoverageType
+  formatBillingCoverageType,
+  mergeBillingChargeRows
 } from './accounting/utils/billingAccountingUtils';
 import {
+  isInsuranceClaimInvoice,
   resolveInvoiceDisplayNumber,
   resolveInvoiceVisitNumber
 } from './invoices/invoiceDisplayUtils';
+import {
+  buildInsuranceCreditPrintData,
+  type InsuranceCreditPrintData
+} from './invoices/insuranceCreditPrintUtils';
 import {
   buildAdjustmentPrintData,
   type AdjustmentPrintData
 } from './invoices/adjustmentPrintUtils';
 
 import { useGetFinancialDocumentNumberingByFacilityQuery } from '@/services/billing/financialDocumentNumberingService';
+import { useLazyGetEncounterBillingSummaryQuery } from '@/services/billing/billingTransactionService';
+import { useLazyGetPatientServicesAndProductsByEncounterQuery } from '@/services/encounters/patientServicesAndProductsService';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useLazyGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
+import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 
 import { FINANCIAL_DOCUMENT_NUMBERING_ERROR_MAP } from '@/pages/setup/financial-document-numbering/financialDocumentNumberingErrorHandler';
 
 import { notify } from '@/utils/uiReducerActions';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useBranding } from '@/hooks/useBranding';
 
 import {
 
@@ -141,6 +159,8 @@ import {
   extractAdjustmentErrorMessage
 
 } from './invoices/adjustmentErrorMessage';
+
+import { formatEnumString } from '@/utils';
 
 
 
@@ -324,26 +344,79 @@ const Invoices: React.FC<InvoicesProps> = ({
     useAppSelector(state => state.auth?.selectedDepartment?.facilityId) ??
     selectedFacility?.id ??
     null;
-  const facilityPrintInfo = useMemo(
-    () => ({
+  const { data: facilityDetails } = useGetFacilityByIdQuery(facilityId as number | string, {
+    skip: facilityId == null
+  });
+  const { logo: systemLogo, sidebarLogo } = useBranding();
+  const facilityPrintInfo = useMemo(() => {
+    const facilityRecord = facilityDetails ?? selectedFacility;
+    const facilityExtras = facilityRecord as Record<string, unknown> | null | undefined;
+    const readText = (value: unknown) => {
+      const text = String(value ?? '').trim();
+      return text && text !== '-' && text !== 'null' ? text : '';
+    };
+    const countryLabel = facilityRecord?.countryName
+      ? formatEnumString(String(facilityRecord.countryName))
+      : '';
+    const composedAddress = [
+      facilityRecord?.districtName,
+      countryLabel,
+      facilityRecord?.streetAddress,
+      facilityRecord?.postalCode
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    const rawAddress =
+      facilityRecord?.facilityAddress ||
+      composedAddress ||
+      facilityRecord?.address ||
+      undefined;
+    const address = rawAddress
+      ? String(rawAddress)
+          .split(',')
+          .map(part => {
+            const trimmed = part.trim();
+            if (!trimmed) return '';
+            if (/^[A-Z0-9]+(?:_[A-Z0-9]+)+$/.test(trimmed)) {
+              return formatEnumString(trimmed);
+            }
+            return trimmed;
+          })
+          .filter(Boolean)
+          .join(', ')
+      : undefined;
+
+    const logoUrls = [systemLogo, sidebarLogo]
+      .map(readText)
+      .filter((url, index, list) => Boolean(url) && list.indexOf(url) === index);
+    const addressParts = buildFacilityAddressParts(facilityRecord);
+
+    return {
       name:
-        selectedFacility?.name ??
-        selectedFacility?.facilityName ??
+        facilityRecord?.name ??
+        facilityRecord?.facilityName ??
         'Healthcare Facility',
-      address:
-        selectedFacility?.facilityAddress ??
-        selectedFacility?.address ??
-        undefined,
-      vatRegistrationNumber:
-        selectedFacility?.vatRegistrationNumber ??
-        selectedFacility?.vatNumber ??
-        undefined,
+      addressEn: buildFacilityAddress(addressParts),
+      addressParts,
+      nameAr: readText(
+        facilityExtras?.arabicName ??
+          facilityExtras?.nameAr ??
+          facilityExtras?.nameSecondary ??
+          facilityExtras?.secondaryName
+      ),
+      logoUrls,
+      logoUrl: logoUrls[0] ?? '',
+      address,
       providerId:
-        selectedFacility?.providerId ??
-        (selectedFacility?.id != null ? String(selectedFacility.id) : undefined)
-    }),
-    [selectedFacility]
-  );
+        facilityRecord?.providerId != null &&
+        String(facilityRecord.providerId).trim() !== ''
+          ? String(facilityRecord.providerId).trim()
+          : facilityRecord?.code != null && String(facilityRecord.code).trim() !== ''
+            ? String(facilityRecord.code).trim()
+            : undefined
+    };
+  }, [facilityDetails, selectedFacility, sidebarLogo, systemLogo]);
 
   const patientId = resolvePatientId(patient);
 
@@ -372,6 +445,12 @@ const Invoices: React.FC<InvoicesProps> = ({
     autoPrint: boolean;
 
   }>({ open: false, invoices: [], autoPrint: false });
+
+  const [creditPrintModal, setCreditPrintModal] = useState<{
+    open: boolean;
+    data: InsuranceCreditPrintData | null;
+  }>({ open: false, data: null });
+  const creditPrintRequestRef = useRef(0);
 
   const [pendingInvoicePrint, setPendingInvoicePrint] = useState<{
 
@@ -489,6 +568,11 @@ const Invoices: React.FC<InvoicesProps> = ({
   const [fetchInvoiceLineItemsForPrint] = useLazyGetInvoiceLineItemsQuery();
   const [fetchInvoicePricingSummaryForPrint] = useLazyGetInvoicePricingSummaryQuery();
   const [fetchEncounterDetailsForPrint] = useLazyGetEncounterInvoiceDetailsQuery();
+  const [fetchBillingSummaryForPrint] = useLazyGetEncounterBillingSummaryQuery();
+  const [fetchServicesForPrint] = useLazyGetPatientServicesAndProductsByEncounterQuery();
+  const [fetchEncounterForPrint] = useLazyGetEncounterByIdQuery();
+  const [fetchPractitionerForPrint] = useLazyGetPractitionerByIdQuery();
+  const [fetchInsurancesForPrint] = useLazyGetInsurancesByPatientQuery();
 
 
 
@@ -1352,6 +1436,229 @@ const Invoices: React.FC<InvoicesProps> = ({
     }
   };
 
+  const closeCreditPrintModal = () => {
+    creditPrintRequestRef.current += 1;
+    setCreditPrintModal({ open: false, data: null });
+  };
+
+  const handlePrintDetailedInvoice = async (invoice: PatientFinancialInvoice) => {
+    const requestId = creditPrintRequestRef.current + 1;
+    creditPrintRequestRef.current = requestId;
+    setCreditPrintModal({ open: true, data: null });
+
+    try {
+      const [lineItemsResult, encounterDetailsResult] = await Promise.allSettled([
+        selectedInvoice?.id === invoice.id && invoiceLineItems.length > 0
+          ? Promise.resolve(invoiceLineItems)
+          : fetchInvoiceLineItemsForPrint(invoice.id).unwrap(),
+        encounterDetails?.encounterId === invoice.encounterId
+          ? Promise.resolve(encounterDetails)
+          : fetchEncounterDetailsForPrint(invoice.encounterId).unwrap()
+      ]);
+
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
+      if (lineItemsResult.status === 'rejected') {
+        throw lineItemsResult.reason;
+      }
+
+      const lineItems = Array.isArray(lineItemsResult.value) ? lineItemsResult.value : [];
+      const matchingEncounterDetails =
+        encounterDetailsResult.status === 'fulfilled' ? encounterDetailsResult.value : null;
+
+      const eligibility =
+        matchingEncounterDetails?.encounterId === selectedEncounterId
+          ? eligibilitySnapshot ?? encounterDetails?.eligibilitySnapshot ?? null
+          : matchingEncounterDetails?.eligibilitySnapshot ?? null;
+
+      const cachedChargeContext = resolveChargeContextForInvoice(invoice);
+      const cachedBillingItems =
+        invoice.encounterId === printEncounterId
+          ? (billingSummary?.items ?? [])
+          : [];
+
+      setCreditPrintModal({
+        open: true,
+        data: buildInsuranceCreditPrintData({
+          invoice: {
+            ...invoice,
+            documentNumber: resolveInvoiceDisplayNumber(invoice)
+          },
+          lineItems,
+          encounterDetails: matchingEncounterDetails,
+          eligibilitySnapshot: eligibility,
+          patient,
+          facility: facilityPrintInfo,
+          billingItems: cachedBillingItems,
+          pspRows: [],
+          doctorName: '',
+          insurance: null,
+          episodeNo: resolveInvoiceVisitNumber(
+            invoice,
+            matchingEncounterDetails,
+            billableVisits
+          ),
+          chargeContext: cachedChargeContext,
+          printData: buildInvoicePrintDataFromIssuedInvoice({
+            invoice: {
+              ...invoice,
+              documentNumber: resolveInvoiceDisplayNumber(invoice)
+            },
+            lineItems,
+            encounterDetails: matchingEncounterDetails,
+            eligibilitySnapshot: eligibility,
+            patient,
+            facility: facilityPrintInfo,
+            chargeContext: cachedChargeContext
+          })
+        })
+      });
+
+      try {
+      const [billingResult, servicesResult, encounterResult, insuranceResult] =
+        await Promise.allSettled([
+          // Always refresh billing summary so patient/sponsor shares are complete.
+          fetchBillingSummaryForPrint({ encounterId: invoice.encounterId }).unwrap(),
+          fetchServicesForPrint({
+            encounterId: invoice.encounterId,
+            page: 0,
+            size: 500,
+            sort: 'id,asc'
+          }).unwrap(),
+          fetchEncounterForPrint({ id: invoice.encounterId }).unwrap(),
+          fetchInsurancesForPrint({
+            patientId: invoice.patientId,
+            page: 0,
+            size: 100,
+            sort: 'id,asc'
+          }).unwrap()
+        ]);
+
+      const billingItems =
+        billingResult.status === 'fulfilled'
+          ? billingResult.value?.items ??
+            (Array.isArray(billingResult.value) ? billingResult.value : [])
+          : [];
+      const pspRows =
+        servicesResult.status === 'fulfilled'
+          ? servicesResult.value?.data ??
+            (Array.isArray(servicesResult.value) ? servicesResult.value : [])
+          : [];
+      const freshBillingSummary =
+        billingResult.status === 'fulfilled'
+          ? Array.isArray(billingResult.value)
+            ? { items: billingResult.value }
+            : billingResult.value
+          : null;
+      const rebuiltChargeRows = mergeBillingChargeRows(
+        freshBillingSummary as any,
+        pspRows
+      );
+      const resolvedChargeContext = {
+        billingSummary:
+          freshBillingSummary ??
+          (invoice.encounterId === printEncounterId ? billingSummary : null),
+        chargeRows:
+          rebuiltChargeRows.length > 0
+            ? rebuiltChargeRows
+            : invoice.encounterId === printEncounterId
+              ? chargeContext.chargeRows
+              : []
+      };
+
+      let doctorName = '';
+      if (encounterResult.status === 'fulfilled' && encounterResult.value?.practitionerId != null) {
+        try {
+          const practitioner = await fetchPractitionerForPrint(
+            encounterResult.value.practitionerId
+          ).unwrap();
+          doctorName =
+            [practitioner?.firstName, practitioner?.secondName, practitioner?.lastName]
+              .filter(Boolean)
+              .join(' ')
+              .trim() || String(practitioner?.fullName ?? '').trim();
+        } catch {
+          doctorName = '';
+        }
+      }
+
+      const insuranceRows =
+        insuranceResult.status === 'fulfilled'
+          ? insuranceResult.value?.data ?? insuranceResult.value ?? []
+          : [];
+      const insuranceId =
+        matchingEncounterDetails?.patientInsuranceId ??
+        eligibility?.patientInsuranceId ??
+        null;
+      const insuranceRecord = Array.isArray(insuranceRows)
+        ? insuranceRows.find((row: { id?: number }) => Number(row?.id) === Number(insuranceId)) ??
+          insuranceRows.find((row: { isPrimary?: boolean }) => row?.isPrimary) ??
+          insuranceRows[0] ??
+          null
+        : null;
+
+      const printData = buildInvoicePrintDataFromIssuedInvoice({
+        invoice: {
+          ...invoice,
+          documentNumber: resolveInvoiceDisplayNumber(invoice)
+        },
+        lineItems: Array.isArray(lineItems) ? lineItems : [],
+        encounterDetails: matchingEncounterDetails,
+        eligibilitySnapshot: eligibility,
+        patient,
+        facility: facilityPrintInfo,
+        chargeContext: resolvedChargeContext
+      });
+
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
+      setCreditPrintModal({
+        open: true,
+        data: buildInsuranceCreditPrintData({
+          invoice: {
+            ...invoice,
+            documentNumber: resolveInvoiceDisplayNumber(invoice)
+          },
+          lineItems,
+          encounterDetails: matchingEncounterDetails,
+          eligibilitySnapshot: eligibility,
+          patient,
+          facility: facilityPrintInfo,
+          billingItems,
+          pspRows,
+          doctorName,
+          insurance: insuranceRecord,
+          episodeNo: resolveInvoiceVisitNumber(
+            invoice,
+            matchingEncounterDetails,
+            billableVisits
+          ),
+          chargeContext: resolvedChargeContext,
+          printData
+        })
+      });
+      } catch {
+        // The invoice is already open. A later lookup failure should not close it.
+      }
+    } catch (error: any) {
+      if (creditPrintRequestRef.current !== requestId) {
+        return;
+      }
+
+      setCreditPrintModal({ open: false, data: null });
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error, INVOICE_GENERATION_ERROR_MAP),
+          sev: 'error'
+        })
+      );
+    }
+  };
+
 
 
   const handleFreezeEligibility = async () => {
@@ -1878,27 +2185,31 @@ const Invoices: React.FC<InvoicesProps> = ({
 
       render: (row: PatientFinancialInvoice) => (
 
-        <MyButton
-
-          appearance="ghost"
-
-          size="sm"
-
-          disabled={!printLookupsReady}
-
-          onClick={event => {
-
-            event.stopPropagation();
-
-            void handlePrintInvoiceRow(row);
-
-          }}
-
-        >
-
-          <FontAwesomeIcon icon={faPrint} /> Print
-
-        </MyButton>
+        <div className="billing-invoices__report-actions">
+          <MyButton
+            appearance="ghost"
+            size="sm"
+            disabled={!printLookupsReady}
+            title="Print invoice"
+            onClick={event => {
+              event.stopPropagation();
+              void handlePrintInvoiceRow(row);
+            }}
+          >
+            <FontAwesomeIcon icon={faPrint} /> Print
+          </MyButton>
+          <MyButton
+            appearance="ghost"
+            size="sm"
+            title="Out-patient credit invoice"
+            onClick={event => {
+              event.stopPropagation();
+              void handlePrintDetailedInvoice(row);
+            }}
+          >
+            <FontAwesomeIcon icon={faFileInvoiceDollar} /> Credit
+          </MyButton>
+        </div>
 
       )
 
@@ -2241,6 +2552,14 @@ const Invoices: React.FC<InvoicesProps> = ({
 
               onPrintInvoice={handlePreviewSelectedInvoice}
 
+              onPrintDetailedInvoice={
+                selectedInvoice
+                  ? () => {
+                      void handlePrintDetailedInvoice(selectedInvoice);
+                    }
+                  : undefined
+              }
+
               onPrintAdjustment={handlePreviewAdjustment}
 
               onCreateCreditNote={async () => {
@@ -2360,6 +2679,12 @@ const Invoices: React.FC<InvoicesProps> = ({
       />
 
 
+
+      <InsuranceCreditPrintModal
+        open={creditPrintModal.open}
+        data={creditPrintModal.data}
+        onClose={closeCreditPrintModal}
+      />
 
       <InvoicePrintModal
 

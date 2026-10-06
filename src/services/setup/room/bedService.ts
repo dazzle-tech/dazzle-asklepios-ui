@@ -15,6 +15,21 @@ type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
 type BedStatus = 'READY' | 'OCCUPIED' | 'IN_CLEANING' | 'OUT_OF_SERVICE';
 
+type EncounterAssignToBed = {
+  id: number;
+  bedId: number;
+  roomId: number;
+  departmentId: number;
+  isActive: boolean;
+  patient?: {
+    id: number;
+    firstName?: string;
+    secondName?: string;
+    thirdName?: string;
+    lastName?: string;
+  };
+};
+
 const mapPaged = (response: Bed[], meta: any): PagedResult<Bed> => {
   const headers = meta?.response?.headers;
   return {
@@ -123,6 +138,18 @@ export const bedService = createApi({
       providesTags: ['Bed']
     }),
 
+    getActiveAssignmentsByBedIds: builder.query<
+      EncounterAssignToBed[],
+      { bedIds: Id[] }
+    >({
+      query: ({ bedIds }) => ({
+        url: '/api/patient/encounter-assign-to-bed/active-list/by-beds',
+        params: {
+          bedIds: bedIds.join(',')
+        }
+      })
+    }),
+
     markBedAsOutOfService: builder.mutation<Bed, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/bed/${id}/mark-out-of-service`,
@@ -183,6 +210,7 @@ export const {
   useMarkBedAsOutOfServiceMutation,
   useMarkBedAsReadyMutation,
   useGetBedsByIdsMutation,
+  useGetActiveAssignmentsByBedIdsQuery,
   useGetBedsByDepartmentIdQuery,
   useCountActiveBedsQuery,
   useLazyCountActiveBedsQuery,
