@@ -575,7 +575,7 @@ export const patientEncounterService = createApi({
       query: ({ id, cancellationReason }) => ({
         url: `/api/patient/encounter/${id}/cancel`,
         method: 'POST',
-        ...(cancellationReason ? { body: { cancellationReason } } : {})
+        body: { cancellationReason: cancellationReason?.trim() ?? '' }
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),

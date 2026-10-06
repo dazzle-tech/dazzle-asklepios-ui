@@ -44,7 +44,7 @@ import {
   newPatientInsurance,
   newPatientPayments
 } from '@/types/model-types-constructor-new';
-import { formatEnumString } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   getEncounterLifecycleStatus,
   getEncounterTreatmentStatus
@@ -664,6 +664,30 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
             {renderVisitActionsMenu(row)}
           </div>
         )
+      },
+      {
+        key: 'cancellationReason',
+        title: <Translate>Cancellation Reason</Translate>,
+        expandable: true,
+        render: (row: any) => row?.cancellationReason || row?.cancelReason || '-'
+      },
+      {
+        key: 'cancelledByAt',
+        title: <Translate>Cancelled By\At</Translate>,
+        expandable: true,
+        render: (row: any) => {
+          const cancelledAt = row?.cancelledAt ?? row?.cancelledDate;
+          if (!row?.cancelledBy && !cancelledAt) return '-';
+          return (
+            <>
+              <span>{row?.cancelledBy || '-'}</span>
+              <br />
+              <span className="date-table-style">
+                {cancelledAt ? formatDateWithoutSeconds(cancelledAt) : ''}
+              </span>
+            </>
+          );
+        }
       }
     ],
     [
