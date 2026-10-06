@@ -792,8 +792,8 @@ const ReviewResults = forwardRef<any, any>(
         </div>
 
         <AdvancedSearchFilters
-          searchFilter={false}
           showAdvancedButton={false}
+          searchOnClick={() => refetch()}
           clearOnClick={resetFilters}
         />
         <div className="test-table-buttons-main-container">{tablebuttons}</div>

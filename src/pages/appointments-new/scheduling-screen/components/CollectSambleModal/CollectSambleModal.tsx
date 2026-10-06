@@ -20,7 +20,8 @@ import {
     faRectangleList,
     faTriangleExclamation,
     faVialCircleCheck,
-    faPrint
+    faPrint,
+    faMagnifyingGlass
 } from '@fortawesome/free-solid-svg-icons';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -413,6 +414,18 @@ const CollectSambleModal = ({
 
     const totalCount = orderTests.length;
 
+    const handleSearch = async () => {
+        try {
+            await OrdersRef.current?.refetchOrders?.();
+
+            if (order?.id && selectedDepartmentId && fromDepartmentId) {
+                await refetchTests();
+            }
+        } catch (error) {
+            console.error('Failed to refresh collect sample data:', error);
+        }
+    };
+
     const tablefilters = (
         <>
             <Form fluid className="filter-form-lab-filters">
@@ -489,6 +502,13 @@ const CollectSambleModal = ({
                     }
                     showLabel={false}
                 />
+
+                <MyButton
+                    prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
+                    onClick={handleSearch}
+                >
+                    <Translate>Search</Translate>
+                </MyButton>
 
             </Form>
         </>
