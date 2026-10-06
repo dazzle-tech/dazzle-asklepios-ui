@@ -5072,13 +5072,109 @@ export interface PatientEncounterDischarge {
   dischargeType: string | null;
   dischargeAt: Date | string | null;
 }
-export interface CurrentMedication {
+export interface SurgicalHistory {
+  id?: number;
   patientId: number;
-  activeIngredientId: number;
+  surgery: string | null;
+  facility: string | null;
+  anesthesiaType: string | null;
+  dateOfSurgery: string | Date | number | null;
+  complications: string | null;
+  adverseReactionsToAnesthesia: string | null;
+  hasImplantsOrDevices: boolean | null;
+  implantsOrDevicesDescription: string | null;
+  patientIsFree: boolean;
+  freeText: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface SocialHistory {
+  id?: number | null;
+  patientId: number;
+  isCurrentSmoker: boolean | null;
+  smokeStartDate: string | Date | number | null;
+  cigaretteAmount: number | null;
+  cigaretteType: string | null;
+  isPreviousSmoker: boolean | null;
+  smokeQuitDate: string | Date | number | null;
+  exposureToSecondHandSmoke: boolean | null;
+  alcoholConsumption: boolean | null;
+  typeOfAlcohol: string | null;
+  alcoholSinceWhen: string | Date | number | null;
+  substanceUse: boolean | null;
+  route: string | null;
+  frequency: string | null;
+  physicalLimitation: string | null;
+  diagnosedEatingDisorders: string | null;
+  patientIsFree: boolean;
+  freeText: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface FamilyHistory {
+  id?: number;
+  patientId: number;
+  condition: string | null;
+  relation: string | null;
+  inheritedDiseases: boolean | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface Hospitalization {
+  id?: number;
+  patientId: number;
+  facility: string | null;
+  reason: string | null;
+  admissionType: string | null;
+  dateOfAdmission: string | Date | null;
+  lengthOfStayDays?: number | null;
+  outcomes?: string | null;
+  medicalInterventionsPerformed?: string | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface CurrentMedication {
+  id?: number;
+  patientId: number;
+  activeIngredientId: number | null;
   dosage?: number | null;
   unit?: string | null;
   frequency?: string | null;
   startDate: string | Date | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
 }
 
 export type CurrentMedicationCreate = CurrentMedication;
@@ -5472,28 +5568,30 @@ export type PreAuthorizationCancelRequest = {
   cancelReason?: CancelReason;
 };
 
-export interface PatientProblem {
-  id?: number;
-  patient?: any | null;
+  export interface PatientProblem {
+    id?: number;
+    patient?: any | null;
 
-  condition: string | null;
-  dateOfDiagnosis?: string | Date | null;
-  conditionStatus: string | null;
-  type: string | null;
-  dateOfResolution?: string | Date | null;
-  byPatient: boolean | null;
-  sourceOfInformation?: string | null;
-  status?: string | null;
-  cancelledBy?: string | null;
-  cancelledDate?: string | Date | null;
-  cancellationReason?: string | null;
-  createdBy?: string | null;
-  createdDate?: string | Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: string | Date | null;
+    condition: string | null;
+    dateOfDiagnosis?: string | Date | null;
+    conditionStatus: string | null;
+    type: string | null;
+    dateOfResolution?: string | Date | null;
+    byPatient: boolean | null;
+    sourceOfInformation?: string | null;
 
+    patientIsFree: boolean;
+    freeText?: string | null;
 
-}
+    status?: string | null;
+    cancelledBy?: string | null;
+    cancelledDate?: string | Date | null;
+    cancellationReason?: string | null;
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
 
 export interface OCRParsingResponseDTO {
    type: string | null;

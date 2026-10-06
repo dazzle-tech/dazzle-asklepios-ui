@@ -2058,8 +2058,8 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   setLocalSearch('');
                 }
               }}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
               container={resolveContainer()}
               menuMaxHeight={getDynamicMenuMaxHeight(pickerData)}
               menuStyle={{
@@ -2136,6 +2136,8 @@ virtualized={shouldVirtualizePicker(dataList.length)}
             }
           />
         );
+      
+      
       case 'checkPicker': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
 
@@ -2146,6 +2148,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
         const primaryLabelKey = labelKeys[0] ?? 'label';
         const valueKey = props?.selectDataValue ?? 'value';
         const dataList = props?.selectData ?? [];
+
         const pickerSearchBy = resolvePickerSearchBy(
           labelKeys,
           isArrayLabel,
@@ -2159,32 +2162,34 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
-                }`}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
               searchable={isPickerSearchable}
               searchBy={pickerSearchBy}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
               name={fieldName}
               data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              menuClassName={clsx(
-                'my-input-picker-popup',
-                props?.menuClassName
-              )}
-              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
+              value={
+                Array.isArray(record?.[fieldName])
+                  ? record[fieldName]
+                  : []
+              }
               renderMenuItem={
                 props.renderMenuItem ??
                 ((label: any, item: any) => {
                   if (isArrayLabel) {
                     return (
                       <Translate>
-                        {buildCombinedLabel(item, labelKeys, label)}
+                        {buildCombinedLabel(
+                          item,
+                          labelKeys,
+                          label
+                        )}
                       </Translate>
                     );
                   }
@@ -2192,21 +2197,29 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   if (props.isEnum) {
                     return (
                       <Translate>
-                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
+                        {formatEnumString(
+                          String(item?.[primaryLabelKey] ?? '')
+                        )}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
+                  return (
+                    <Translate>
+                      {String(item?.[primaryLabelKey] ?? '')}
+                    </Translate>
+                  );
                 })
               }
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
-                  const selectedItems = (props?.selectData ?? []).filter(item =>
+                  const selectedItems = dataList.filter(item =>
                     (value ?? []).some(
-                      v => String(v) === String(item?.[valueKey])
+                      v =>
+                        String(v) ===
+                        String(item?.[valueKey])
                     )
                   );
 
@@ -2218,6 +2231,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               open={isCheckPickerOpen}
               onOpen={() => {
+                selectOpenGuardRef.current = Date.now();
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
                 focusPickerSearch();
@@ -2226,12 +2240,22 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                 setIsCheckPickerOpen(false);
                 setLocalSearch('');
               }}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
+              container={resolveContainer()}
               menuStyle={{
                 minWidth: props?.width ?? '12vw',
                 width: 'auto'
               }}
+              menuClassName={clsx(
+                'my-input-picker-popup',
+                props?.menuClassName
+              )}
               virtualized={shouldVirtualizePicker(dataList.length)}
-              disabledItemValues={getDisabledValues(dataList, valueKey)}
+              disabledItemValues={getDisabledValues(
+                dataList,
+                valueKey
+              )}
             />
           </div>
         );

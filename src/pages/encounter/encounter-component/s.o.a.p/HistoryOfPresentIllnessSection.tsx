@@ -90,6 +90,7 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   return (
     <SectionContainer
       title={title}
+      collapsible
       content={
         <div style={width ? { width } : {}}>
           <Form fluid>

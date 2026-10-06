@@ -192,6 +192,11 @@ const DetailsModal = ({
     ? patientAllergiesUpdateDTO?.allergenType === 'OTHER'
     : patientAllergiesCreateDTO?.allergenType === 'OTHER';
 
+
+const isUnknownType = allerges?.id
+  ? patientAllergiesUpdateDTO?.allergenType === 'UNKNOWN'
+  : patientAllergiesCreateDTO?.allergenType === 'UNKNOWN';
+
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -258,7 +263,7 @@ const DetailsModal = ({
                     setRecord={
                       !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                     }
-                    required
+                      required={!isUnknownType}
                   />
                 ) : (
                   <MyInput
@@ -285,7 +290,8 @@ const DetailsModal = ({
                         }));
                       }
                     }}
-                    required
+                      required={!isUnknownType}
+
                   />
                 )}
                 <MyInput
@@ -300,7 +306,8 @@ const DetailsModal = ({
                     !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                   }
                   searchable={false}
-                  required
+                    required={!isUnknownType}
+
                 />
               </Form>
               <br />
@@ -583,8 +590,10 @@ const DetailsModal = ({
           errorMsg += 'Allergen Type Can`t be empty';
         }
 
-        if (!patientAllergiesCreateDTO.severity) {
-          errorMsg += errorMsg ? ', Severity Can`t be empty' : 'Severity Can`t be empty';
+        if (!isUnknownType && !patientAllergiesCreateDTO.severity) {
+          errorMsg += errorMsg
+            ? ', Severity Can`t be empty'
+            : 'Severity Can`t be empty';
         }
 
         // 🔥 NEW VALIDATION (OTHER)
@@ -613,14 +622,21 @@ const DetailsModal = ({
             patientId: patient?.id,
             encounterId: encounter?.id,
             onsetDate: patientAllergiesCreateDTO?.onsetDate
-              ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString()
-              : '',
+              ? new Date(patientAllergiesCreateDTO.onsetDate).toISOString()
+              : null,
 
-            // 🔥 أهم سطر
-            allergenId: isOtherType ? null : patientAllergiesCreateDTO.allergenId,
+            allergenId:
+              isOtherType || isUnknownType
+                ? null
+                : patientAllergiesCreateDTO.allergenId,
+
             allergenName: isOtherType
               ? patientAllergiesCreateDTO.allergenName
-              : undefined
+              : undefined,
+
+            severity: isUnknownType
+              ? null
+              : patientAllergiesCreateDTO.severity || null
           };
 
           await addPatientAllergy(payload).unwrap();
@@ -646,8 +662,10 @@ const DetailsModal = ({
           errorMsg += 'Allergen Type Can`t be empty';
         }
 
-        if (!patientAllergiesUpdateDTO.severity) {
-          errorMsg += errorMsg ? ', Severity Can`t be empty' : 'Severity Can`t be empty';
+        if (!isUnknownType && !patientAllergiesUpdateDTO.severity) {
+          errorMsg += errorMsg
+            ? ', Severity Can`t be empty'
+            : 'Severity Can`t be empty';
         }
 
         if (isOtherType) {
@@ -672,14 +690,23 @@ const DetailsModal = ({
           const objToAdd = {
             ...patientAllergiesUpdateDTO,
             allergicReactions: reactions.reactions.join(', '),
-            onsetDate: patientAllergiesUpdateDTO?.onsetDate
-              ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString()
-              : '',
 
-            allergenId: isOtherType ? null : patientAllergiesUpdateDTO.allergenId,
+            onsetDate: patientAllergiesUpdateDTO?.onsetDate
+              ? new Date(patientAllergiesUpdateDTO.onsetDate).toISOString()
+              : null,
+
+            allergenId:
+              isOtherType || isUnknownType
+                ? null
+                : patientAllergiesUpdateDTO.allergenId,
+
             allergenName: isOtherType
               ? patientAllergiesUpdateDTO.allergenName
-              : undefined
+              : undefined,
+
+            severity: isUnknownType
+              ? null
+              : patientAllergiesUpdateDTO.severity || null
           };
 
           const updatedAllergy = await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
