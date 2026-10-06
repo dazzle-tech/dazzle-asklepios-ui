@@ -12,6 +12,7 @@ import {
 import { useLazyGetVaccineBrandsByIdsQuery } from '@/services/vaccine/vaccineBrandsService';
 import { useLazyGetVaccineDosesByIdsQuery } from '@/services/vaccine/vaccineDosesService';
 import { useGetVaccinesByIdsQuery } from '@/services/vaccine/vaccineService';
+import VaccinationReportButton from './VaccinationReportButton';
 
 const normalizeArray = (res: any): any[] => {
   if (Array.isArray(res)) return res;
@@ -597,6 +598,11 @@ const VaccineReccord: React.FC<Props> = ({ patient }) => {
         }
         onRowsPerPageChange={
           handleRowsPerPageChange
+        }
+        tableButtons={
+          <VaccinationReportButton
+            patientId={patientId || undefined}
+          />
         }
       />
     </>
