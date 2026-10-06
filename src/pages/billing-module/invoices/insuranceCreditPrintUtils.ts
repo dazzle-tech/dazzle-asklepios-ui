@@ -18,7 +18,11 @@ import type {
   InvoicePrintLineItem
 } from './invoicePrintUtils';
 import type { InvoicePrintChargeContext } from './useInvoicePrintLookups';
-import { buildInvoicePrintDataFromIssuedInvoice } from './invoicePrintUtils';
+import {
+  buildInvoicePrintDataFromIssuedInvoice,
+  formatInvoicePrintDate,
+  formatInvoicePrintTime
+} from './invoicePrintUtils';
 import {
   CREDIT_INVOICE_GROUP_ORDER,
   classifyCreditInvoiceGroup,
@@ -220,29 +224,6 @@ const formatServiceDate = (value?: string | Date | null) => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = String(date.getFullYear()).slice(-2);
   return `${day}-${month}-${year}`;
-};
-
-const formatIssueDate = (value?: string | Date | null) => {
-  const date = parseDate(value);
-  if (!date) {
-    return '';
-  }
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-};
-
-const formatIssueTime = (value?: string | Date | null) => {
-  const date = parseDate(value);
-  if (!date) {
-    return '';
-  }
-
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
 };
 
 const formatExpiryDate = (value?: string | Date | null) => {
@@ -1083,8 +1064,12 @@ export const buildInsuranceCreditPrintData = ({
     companyVatNo: '',
     companyAddress: '',
     invoiceNo: invoice.documentNumber || resolvedPrintData?.invoiceNumber || '',
-    invoiceIssueDate: formatIssueDate(invoice.createdDate || resolvedPrintData?.invoiceDate),
-    invoiceIssueTime: formatIssueTime(invoice.createdDate || resolvedPrintData?.invoiceDate),
+    invoiceIssueDate: invoice.createdDate
+      ? formatInvoicePrintDate(invoice.createdDate)
+      : String(resolvedPrintData?.invoiceDate ?? '').substring(0, 10),
+    invoiceIssueTime: invoice.createdDate
+      ? formatInvoicePrintTime(invoice.createdDate)
+      : String(resolvedPrintData?.invoiceDate ?? '').substring(11, 19),
     tpa: displayText((insurance as { tpaName?: string | null } | null | undefined)?.tpaName),
     insuranceCorp: insuranceCompanyLabel(
       insurance,
