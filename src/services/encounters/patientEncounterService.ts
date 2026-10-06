@@ -672,6 +672,7 @@ export const patientEncounterService = createApi({
         body: { cancellationReason: cancellationReason?.trim() ?? '' }
       }),
 
+      
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientEncounter', id },
         'PatientEncounter'
