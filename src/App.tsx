@@ -220,6 +220,7 @@ const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/Wareh
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
 const UsersNew = lazy (() => import ( './pages/system-configurations/users-setup-new'));
 const FacilityPatients = lazy (() => import ( './pages/patient/facility-patients/FacilityPatients'));
+const EncounterStatusManagement = lazy(() => import('./pages/patient/encounter-status-management'));
 const PatientsEncounters = lazy (() => import ( './pages/patient/PatientsEncounters/PatientsEncounters'));
 import 'survey-core/survey-core.min.css';
 import 'survey-creator-core/survey-creator-core.min.css';
@@ -801,6 +802,7 @@ const App = () => {
               </Route>
 
               <Route path="facility-patients" element={<FacilityPatients />} />
+              <Route path="encounter-status-management" element={<EncounterStatusManagement />} />
               <Route path="patients-encounters-list" element={<PatientsEncounters />} />
               <Route path="price-list" element={<PriceLists />} />
               <Route path="patients-list" element={<PatientsLists />} />

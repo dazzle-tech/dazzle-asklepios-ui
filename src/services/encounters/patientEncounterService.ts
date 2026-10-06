@@ -29,6 +29,58 @@ type PatientEncounterCompletionValidation = {
   missing: string[];
 };
 
+export type EncounterAmendment = {
+  id: number;
+  encounterId: number;
+  sessionNumber: number;
+  typeOfReopen?: string | null;
+  status: string;
+  reason?: string;
+  reopenedBy?: string;
+  reopenedAt?: string;
+};
+
+export type EncounterAmendmentSummary = {
+  encounterId: number;
+  amendmentCount: number;
+  amendmentOpen: boolean;
+  latestSessionNumber?: number | null;
+  latestTypeOfReopen?: string | null;
+  latestReason?: string | null;
+  amendedBy?: string | null;
+  amendedAt?: string | null;
+  openSessionId?: number | null;
+};
+
+export type AmendmentHistoryFieldChange = {
+  field: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+};
+
+export type AmendmentHistoryChange = {
+  module: string;
+  medicalSheet?: string | null;
+  action: 'ADDED' | 'CHANGED' | 'REMOVED' | 'CANCELLED' | string;
+  recordId?: number | null;
+  changedBy?: string | null;
+  changedAt?: string | null;
+  changes: AmendmentHistoryFieldChange[];
+};
+
+export type AmendmentHistorySession = {
+  sessionId: number;
+  sessionNumber: number;
+  typeOfReopen?: string | null;
+  reason?: string | null;
+  status: string;
+  amendedBy?: string | null;
+  amendedAt?: string | null;
+  closedBy?: string | null;
+  closedAt?: string | null;
+  changes: AmendmentHistoryChange[];
+};
+
 type PagedParams = {
   page: number;
   size: number;
@@ -714,6 +766,52 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
+    startAmendment: builder.mutation<
+      EncounterAmendment,
+      { encounterId: Id; typeOfReopen: string; reason: string }
+    >({
+      query: ({ encounterId, typeOfReopen, reason }) => ({
+        url: `/api/patient/encounter/${encounterId}/amendments`,
+        method: 'POST',
+        body: { typeOfReopen, reason }
+      }),
+      invalidatesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId },
+        'PatientEncounter'
+      ]
+    }),
+    finishAmendment: builder.mutation<
+      EncounterAmendment,
+      { encounterId: Id; sessionId: Id }
+    >({
+      query: ({ encounterId, sessionId }) => ({
+        url: `/api/patient/encounter/${encounterId}/amendments/${sessionId}/finish`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId },
+        'PatientEncounter'
+      ]
+    }),
+    getAmendments: builder.query<EncounterAmendment[], Id>({
+      query: id => ({
+        url: `/api/patient/encounter/${id}/amendments`
+      }),
+      providesTags: (_res, _err, id) => [{ type: 'PatientEncounter', id }]
+    }),
+    getAmendmentSummaries: builder.query<EncounterAmendmentSummary[], number[]>({
+      query: encounterIds => ({
+        url: '/api/patient/encounter/amendment-summaries',
+        params: { encounterIds }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+    getAmendmentHistory: builder.query<AmendmentHistorySession[], Id>({
+      query: encounterId => ({
+        url: `/api/patient/encounter/${encounterId}/amendment-history`
+      }),
+      providesTags: (_res, _err, encounterId) => [{ type: 'PatientEncounter', id: encounterId }]
+    }),
 
     closeEncounterForBilling: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
@@ -959,6 +1057,12 @@ export const {
   useGetEncounterListQuery,
   useLazyGetEncounterListQuery,
   useReopenEncounterMutation,
-  useGetEncounterAuditQuery,
+  useStartAmendmentMutation,
+  useFinishAmendmentMutation,
+  useGetAmendmentsQuery,
+  useLazyGetAmendmentsQuery,
+  useGetAmendmentSummariesQuery,
+  useGetAmendmentHistoryQuery,
+    useGetEncounterAuditQuery,
   useLazyGetEncounterAuditQuery
 } = patientEncounterService;
