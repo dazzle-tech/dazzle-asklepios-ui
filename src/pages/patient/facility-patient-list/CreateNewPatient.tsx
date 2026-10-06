@@ -486,7 +486,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
   const patientDocumentEnum = useEnumOptions('DocumentType', {
-    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+    exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE',  'SOCIAL_CARD']
   });
 
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');

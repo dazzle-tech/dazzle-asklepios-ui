@@ -99,7 +99,7 @@ const AddExtraDetails = ({
   const [addNoDocument] = useAddNoDocumentMutation();
 
   const patientDocumentEnum = useEnumOptions('DocumentType', {
-    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+    exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE', 'SOCIAL_CARD']
   });
 
   const enumLabels = useEnumOptions('CountryName');
@@ -130,6 +130,8 @@ const AddExtraDetails = ({
     const { type, number, countryId } = secondaryDocument;
     const numberStr = String(number ?? '').trim();
 
+    if (type === 'PASSPORT' || type === 'BORDER_NUMBER') return true;
+
     if (countryId !== saudiCountryId) return true;
 
     if (type === 'NATIONAL_ID') {
@@ -143,9 +145,9 @@ const AddExtraDetails = ({
       }
     }
 
-    if (type === 'IQAMA' || type === 'BORDER_NUMBER') {
+    if (type === 'IQAMA') {
       if (!numberStr.startsWith('2')) {
-        dispatch(notify({ msg: `Saudi ${type} number must start with 2.`, sev: 'warning' }));
+        dispatch(notify({ msg: 'Saudi IQAMA number must start with 2.', sev: 'warning' }));
         return false;
       }
       if (numberStr.length < 10) {
@@ -205,7 +207,11 @@ const AddExtraDetails = ({
           required
           column
           width={300}
-          fieldType="number"
+          fieldType={
+            secondaryDocument.type === 'PASSPORT' || secondaryDocument.type === 'BORDER_NUMBER'
+              ? 'text'
+              : 'number'
+          }
           fieldLabel="Document Number"
           fieldName="number"
           record={secondaryDocument}
@@ -215,7 +221,9 @@ const AddExtraDetails = ({
               number:
                 prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT'
                   ? 'NO_DOCUMENT'
-                  : String(r.number ?? '')
+                  : prev.type === 'PASSPORT' || prev.type === 'BORDER_NUMBER'
+                    ? String(r.number ?? '').replace(/[^a-zA-Z0-9]/g, '')
+                    : String(r.number ?? '')
             }))
           }
         />
