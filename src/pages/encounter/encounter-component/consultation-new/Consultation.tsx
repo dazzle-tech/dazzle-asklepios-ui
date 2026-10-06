@@ -4,6 +4,7 @@ import NormalConsultation from './NormalConsultation';
 import TelephonicConsultation from './TelephonicConsultation';
 import './styles.less';
 import MyTab from '@/components/MyTab';
+import ReferralRequest from '../add-referral-request';
 
 const Consultation = () => {
   const { patient, encounter, edit } = useOutletContext<any>();
@@ -16,6 +17,10 @@ const Consultation = () => {
     {
       title: 'Telephonic Consultation',
       content: <TelephonicConsultation patient={patient} encounter={encounter} edit={edit} />
+    },
+    {
+      title: 'Referral Request',
+      content: <ReferralRequest />
     }
   ];
 

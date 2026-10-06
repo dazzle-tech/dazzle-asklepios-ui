@@ -26,17 +26,18 @@ const UccMedicationOrderAddModal = ({
   const dispatch = useAppDispatch();
 
   // ================= state =================
-  const emptyRecord = {
-    ...newPatientUccMedicationOrder,
-    instructionText: '',
-    dose: '',
-    unit: null,
-    frequencyNumber: '',
-    frequencyUnit: null,
-    duration: '',
-    startTime: new Date().toTimeString().slice(0, 5),
-    roa: null
-  };
+const emptyRecord = {
+  ...newPatientUccMedicationOrder,
+  instructionText: '',
+  isStat: false,
+  dose: '',
+  unit: null,
+  frequencyNumber: '',
+  frequencyUnit: null,
+  duration: '',
+  startTime: new Date().toTimeString().slice(0, 5),
+  roa: null
+};
 
   const [record, setRecord] = useState<any>({ ...emptyRecord });
 
@@ -133,9 +134,9 @@ console.log('unitLov', unitLov);
       return;
     }
 
-    let finalInstruction = record.instructionText;
+    let finalInstruction = record.isStat ? 'STAT' : record.instructionText;
 
-    if (selectedOption === 'MANUAL_INSTRUCTIONS') {
+    if (!record.isStat && selectedOption === 'MANUAL_INSTRUCTIONS') {
       if (!record.instructionText?.trim()) {
         dispatch(
           notify({
@@ -147,7 +148,7 @@ console.log('unitLov', unitLov);
       }
     }
 
-    if (selectedOption === 'CUSTOM_INSTRUCTIONS') {
+    if (!record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS') {
       const missing: string[] = [];
 
       if (!record?.dose) missing.push('Dose');
@@ -213,28 +214,43 @@ console.log('unitLov', unitLov);
       encounterId: encounter.id,
       activeIngredientId: record.activeIngredientId,
       instructionType: selectedOption,
-      instructionText: finalInstruction,
-      dose: record?.dose ? Number(record.dose) : null,
-      doseUnit: record?.unit || null,
-      route: record?.roa || null,
+      instructionText: record.isStat ? 'STAT' : finalInstruction,
+      isStat: !!record.isStat,
+
+      dose:
+        record.isStat
+          ? null
+          : record?.dose
+            ? Number(record.dose)
+            : null,
+
+      doseUnit:
+        record.isStat
+          ? null
+          : record?.unit || null,
+
+      route:
+        record.isStat
+          ? null
+          : record?.roa || null,
 
       frequencyNumber:
-        selectedOption === 'CUSTOM_INSTRUCTIONS'
+        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
           ? Number(record.frequencyNumber)
           : null,
 
       frequencyUnit:
-        selectedOption === 'CUSTOM_INSTRUCTIONS'
+        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
           ? record.frequencyUnit
           : null,
 
       duration:
-        selectedOption === 'CUSTOM_INSTRUCTIONS'
+        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
           ? Number(record.duration)
           : null,
 
       startTime:
-        selectedOption === 'CUSTOM_INSTRUCTIONS'
+        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
           ? record.startTime
           : null
     };
@@ -273,7 +289,8 @@ console.log('unitLov', unitLov);
     setRecord({
       ...emptyRecord,
       activeIngredientId: editRow.activeIngredientId ?? null,
-      instructionText: editRow.instructionText ?? '',
+      instructionText: editRow.isStat ? 'STAT' : editRow.instructionText ?? '',
+      isStat: !!editRow.isStat,
       dose: editRow.dose ?? '',
       unit: editRow.doseUnit ?? null,
       frequencyNumber: editRow.frequencyNumber ?? '',
@@ -355,20 +372,47 @@ console.log('unitLov', unitLov);
                 setRecord={setSelectedActiveIngredient}
                 disabled
               />
+
+              <MyInput
+                width="100%"
+                fieldType="checkbox"
+                fieldLabel="STAT"
+                fieldName="isStat"
+                record={record}
+                setRecord={setRecord}
+              />
             </div>
 
             {/* Instruction Type */}
             <RadioGroup
               value={selectedOption}
               inline
+              disabled={record.isStat}
               onChange={value => setSelectedOption(value)}
             >
               <Radio value="MANUAL_INSTRUCTIONS">Manual</Radio>
               <Radio value="CUSTOM_INSTRUCTIONS">Custom</Radio>
             </RadioGroup>
+            {record.isStat && (
+              <div
+                style={{
+                  width: '100%',
+                  minHeight: 80,
+                  padding: '10px 12px',
+                  marginTop: 10,
+                  border: '1px solid #e5e5ea',
+                  borderRadius: 6,
+                  background: '#f7f7fa',
+                  color: 'red',
+                  fontWeight: 500
+                }}
+              >
+                STAT
+              </div>
+            )}
 
             {/* Manual */}
-            {selectedOption === 'MANUAL_INSTRUCTIONS' && (
+            {!record.isStat && selectedOption === 'MANUAL_INSTRUCTIONS' && (
               <MyInput
                 fieldName="instructionText"
                 fieldType="textarea"
@@ -382,7 +426,7 @@ console.log('unitLov', unitLov);
             )}
 
             {/* Custom */}
-            {selectedOption === 'CUSTOM_INSTRUCTIONS' && (
+            {!record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS' && (
               <div className="custom-instruction-container">
 
                 <MyInput

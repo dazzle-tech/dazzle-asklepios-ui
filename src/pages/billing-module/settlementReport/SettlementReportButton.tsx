@@ -10,7 +10,8 @@ import Translate from '@/components/Translate';
 
 import {
   useLazyGetClaimSettlementsQuery,
-  useGenerateSettlementPdfMutation
+  useGenerateSettlementPdfMutation,
+  useGenerateSettlementPdfWithoutPatientAndClaimMutation
 } from '@/services/billing/claimSettlementService';
 
 import { notify } from '@/utils/uiReducerActions';
@@ -51,6 +52,8 @@ const SettlementReportButton = ({
 
   const [generateSettlementPdf] =
     useGenerateSettlementPdfMutation();
+  const [generateSettlementPdfWithoutPatientAndClaim] =
+    useGenerateSettlementPdfWithoutPatientAndClaimMutation();
 
   const [loading, setLoading] =
     useState(false);
@@ -105,14 +108,10 @@ const SettlementReportButton = ({
           sort: 'id,desc'
         }).unwrap();
 
-      const pdfBlob =
-        await generateSettlementPdf({
-
-          timezone,
-
-          lang: selectedLang.lang,
-
-          body: {
+      const reportRequest = {
+        timezone,
+        lang: selectedLang.lang,
+        body: {
 
             criteria: {
 
@@ -204,8 +203,13 @@ const SettlementReportButton = ({
 
                   })
                 )
-          }
-        }).unwrap();
+        }
+      };
+
+      const pdfBlob = await (groupBySettlement
+        ? generateSettlementPdfWithoutPatientAndClaim(reportRequest)
+        : generateSettlementPdf(reportRequest)
+      ).unwrap();
 
       const fileURL =
         window.URL.createObjectURL(pdfBlob);
@@ -254,10 +258,7 @@ const SettlementReportButton = ({
         disabled={!appliedFilters}
         onClick={() => setOpenLangModal(true)}
         prefixIcon={() => (
-          <FontAwesomeIcon
-            icon={faPrint}
-            style={{ marginRight: 8 }}
-          />
+          <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
         )}
       >
         <Translate>{buttonLabel}</Translate>
@@ -269,12 +270,9 @@ const SettlementReportButton = ({
         title="Select Language"
         size="xs"
         bodyheight="25vh"
-        actionButtonFunction={
-          handleGenerateReport
-        }
+        actionButtonFunction={handleGenerateReport}
         content={
           <Form>
-
             <MyInput
               fieldType="select"
               fieldLabel="Language"
@@ -284,7 +282,6 @@ const SettlementReportButton = ({
               setRecord={setSelectedLang}
               width="100%"
             />
-
           </Form>
         }
       />

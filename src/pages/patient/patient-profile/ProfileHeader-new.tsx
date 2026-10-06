@@ -85,6 +85,7 @@ import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 interface ProfileHeaderProps {
   localPatient: Patient;
   handleSave: () => void;
+  isSaving?: boolean;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
   validationResult: any;
@@ -104,6 +105,7 @@ interface ProfileHeaderProps {
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
   handleSave,
+  isSaving = false,
   handleClear,
   setVisitHistoryModel,
   setQuickAppointmentModel,
@@ -1016,7 +1018,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
-                disabled={!!localPatient?.id && localPatient?.patientStatus === 'MERGED'}
+                loading={isSaving}
+                disabled={isSaving || (!!localPatient?.id && localPatient?.patientStatus === 'MERGED')}
               >
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>

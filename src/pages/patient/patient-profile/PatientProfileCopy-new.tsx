@@ -266,6 +266,7 @@ const PatientProfile = () => {
 
   const [addPatient, addResult] = useAddPatientMutation();
   const [updatePatient, updateResult] = useUpdatePatientMutation();
+  const isSaving = addResult.isLoading || updateResult.isLoading;
 
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
@@ -528,6 +529,7 @@ const PatientProfile = () => {
             setCchiDocument={setCchiDocument}
             setCchiInsurance={setCchiInsurance}
             handleSave={handleSave}
+            isSaving={isSaving}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}

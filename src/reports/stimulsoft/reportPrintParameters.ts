@@ -42,8 +42,11 @@ const DATE_PARAM_NAMES = new Set([
 
 const PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 const QUERY_PARAM_RE = /[?&]([A-Za-z_][A-Za-z0-9_]*)=/g;
-const DATE_TOKEN_RE =
-  /(?:[?&]|\{|%7B|"Name"\s*:\s*")(date|startDate|endDate|fromDate|toDate)(?:[=\}%]|")/gi;
+const DATE_QUERY_TOKEN_RE =
+  /(?:[?&]|\{|%7B)(date|startDate|endDate|fromDate|toDate)(?:[=\}%]|")/gi;
+const DATE_VARIABLE_NAME_RE =
+  /"Name"\s*:\s*"(startDate|endDate|fromDate|toDate)"/gi;
+const DATE_RANGE_NAME_RE = /^(startDate|endDate|fromDate|toDate)$/i;
 
 const toLabel = (name: string) =>
   name
@@ -296,7 +299,28 @@ const toParameters = (
       enumName: enumHint?.enumName,
     });
   });
-  return Array.from(byName.values());
+  return withoutRedundantDateParameter(Array.from(byName.values()));
+};
+
+const collectDateTokens = (text: string, names: string[]) => {
+  resetGlobalRegex(DATE_QUERY_TOKEN_RE);
+  text.replace(DATE_QUERY_TOKEN_RE, (_match, name: string) => {
+    addName(names, name);
+    return _match;
+  });
+  resetGlobalRegex(DATE_VARIABLE_NAME_RE);
+  text.replace(DATE_VARIABLE_NAME_RE, (_match, name: string) => {
+    addName(names, name);
+    return _match;
+  });
+};
+
+const withoutRedundantDateParameter = (
+  parameters: ReportPrintParameter[]
+): ReportPrintParameter[] => {
+  const hasRange = parameters.some(param => DATE_RANGE_NAME_RE.test(param.name));
+  if (!hasRange) return parameters;
+  return parameters.filter(param => !/^date$/i.test(param.name));
 };
 
 export const extractReportPrintParameters = (
@@ -307,11 +331,7 @@ export const extractReportPrintParameters = (
 
   const names: string[] = [];
   const enumHints: Record<string, ParamHint> = {};
-  resetGlobalRegex(DATE_TOKEN_RE);
-  text.replace(DATE_TOKEN_RE, (_match, name: string) => {
-    addName(names, name);
-    return _match;
-  });
+  collectDateTokens(text, names);
   if (/daily-visits/i.test(text)) addName(names, 'date');
   applyPathParamHints(text, names, enumHints);
 

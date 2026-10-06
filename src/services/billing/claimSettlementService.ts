@@ -160,6 +160,26 @@ export const claimSettlementApi = createApi({
         body,
         responseHandler: response => response.blob()
       })
+    }),
+
+    generateSettlementPdfWithoutPatientAndClaim: builder.mutation<
+      Blob,
+      {
+        timezone: string;
+        lang: string;
+        body: SettlementReportRequestDTO;
+      }
+    >({
+      query: ({ timezone, lang, body }) => ({
+        url: '/api/analytics/settlement/pdf/without-patient-and-claim',
+        method: 'POST',
+        params: {
+          timezone,
+          lang
+        },
+        body,
+        responseHandler: response => response.blob()
+      })
     })
   })
 });
@@ -167,6 +187,7 @@ export const {
   useGetClaimSettlementsQuery,
   useLazyGetClaimSettlementsQuery,
   useGetSettlementNumbersQuery,
-  useGenerateSettlementPdfMutation
+  useGenerateSettlementPdfMutation,
+  useGenerateSettlementPdfWithoutPatientAndClaimMutation
 } = claimSettlementApi;
   

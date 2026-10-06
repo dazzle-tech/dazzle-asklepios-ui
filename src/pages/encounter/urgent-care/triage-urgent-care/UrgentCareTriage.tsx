@@ -551,7 +551,8 @@ const UrgentCareTriage = () => {
       page,
       size: pageSize,
       sort: DEFAULT_SORT,
-      timestamp: searchTick
+      timestamp: searchTick,
+      sortByPriority: true
     };
   }, [departmentId, page, pageSize, searchTick]);
 
@@ -716,27 +717,6 @@ const UrgentCareTriage = () => {
     return m;
   }, [emergencyLevelEnumOptions]);
 
-  const priorityOrderMap = useMemo(() => {
-    const rank = (value: string) => {
-      const v = String(value ?? '').toUpperCase();
-      if (
-        v.includes('URGENT') ||
-        v.includes('CRITICAL') ||
-        v.includes('STAT') ||
-        v.includes('EMERG')
-      ) {
-        return 0;
-      }
-      return null;
-    };
-    const m = new Map<string, number>();
-    encounterPriorityEnumOptions.forEach((opt, idx) => {
-      if (opt?.value == null) return;
-      const forced = rank(String(opt.value));
-      m.set(String(opt.value), forced ?? idx + 10);
-    });
-    return m;
-  }, [encounterPriorityEnumOptions]);
 
   const priorityLabelMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -755,22 +735,8 @@ const UrgentCareTriage = () => {
     return m;
   }, [encounterPriorityEnumOptions]);
 
-  const sortedTableData = useMemo(() => {
-    const copied = [...(normalizedRows ?? [])];
-    copied.sort((a, b) => {
-      const aKey = a?.priorityLevel ? String(a.priorityLevel) : '';
-      const bKey = b?.priorityLevel ? String(b.priorityLevel) : '';
-      const aOrder = aKey ? priorityOrderMap.get(aKey) ?? 999999 : 999999;
-      const bOrder = bKey ? priorityOrderMap.get(bKey) ?? 999999 : 999999;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      const aDate = a?.encounterDate ? new Date(a.encounterDate).getTime() : 0;
-      const bDate = b?.encounterDate ? new Date(b.encounterDate).getTime() : 0;
-      return aDate - bDate;
-    });
-    return copied;
-  }, [normalizedRows, priorityOrderMap]);
 
-  const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
+  const tableData = useMemo(() => normalizedRows ?? [], [normalizedRows]);
 
   const isSelected = (rowData: any) => {
     if (

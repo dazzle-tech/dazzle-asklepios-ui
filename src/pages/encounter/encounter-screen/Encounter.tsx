@@ -347,6 +347,8 @@ const handleGoBack = () => {
     navigate('/ER-department');
   } else if (currentFromPage === 'Urgent_Care_List') {
     navigate('/urgent-care-department-list');
+  } else if (currentFromPage === 'OpdVisitList') {
+    navigate('/opd-visit-list');
   } else if (currentFromPage === 'PatientsLists') {
     navigate('/patients-list');
   } else {
@@ -892,9 +894,10 @@ const handleGoBack = () => {
   );
 
   const visibleSheets = React.useMemo(() => {
-    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code)).filter(ms =>
-      ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
-    );
+    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code))
+      // Referral Request is shown as a tab inside Consultation
+      .filter(ms => !(ms.code === 'REFERRAL_REQUEST' && allowedSheetCodes.has('CONSULTATION')))
+      .filter(ms => ms.name.toLowerCase().includes(searchTerm.term.toLowerCase()));
   }, [allowedSheetCodes, searchTerm.term]);
 
   const headersMap = React.useMemo(() => {

@@ -85,6 +85,214 @@
   padding: 5px;
 }
 
+.header-top-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+.orders-mini-table-container {
+  flex: 0 0 320px;
+  max-width: 380px;
+  background: #ffffff;
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .orders-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #f0f0f4;
+
+    .orders-list-header-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary-gray, #64748b);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .orders-list-count-badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+  }
+
+  .orders-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 125px;
+    overflow-y: auto;
+    padding-right: 2px;
+
+    /* subtle scrollbar */
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  }
+
+  .orders-empty-state {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  .order-compact-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    &.active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 1px #3b82f6;
+
+      .order-compact-icon {
+        background: #3b82f6;
+        color: #ffffff;
+      }
+
+      .order-compact-number {
+        color: #1d4ed8;
+        font-weight: 700;
+      }
+    }
+
+    .order-compact-card-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .order-compact-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      background: #e2e8f0;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .order-compact-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .order-compact-number {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .order-compact-date {
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      line-height: 1;
+    }
+
+    .order-compact-card-right {
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+
+    .order-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      line-height: 12px;
+
+      &.draft {
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #ffedd5;
+      }
+
+      &.submitted {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #d1fae5;
+      }
+    }
+  }
+}
+
+.order-actions-section {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+}
+
+.order-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filters-left-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .header-first-row {
   display: flex;
   align-items: center;
