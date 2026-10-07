@@ -29,7 +29,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 import { Form, Tooltip, Whisper } from 'rsuite';
 
-const SurgicalHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
+const SurgicalHistory = ({ patient, edit, toShowData = false, showFreeText = false,  collapsible = false, defaultCollapsed = false }) => {
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
   const { data: adverseLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
@@ -449,6 +449,8 @@ const SurgicalHistory = ({ patient, edit, toShowData = false, showFreeText = fal
     <div className="medical-main-container" dir={dir}>
       <div className="medical-container-div" dir={dir}>
         <SectionContainer
+          collapsible={collapsible}
+          defaultCollapsed={defaultCollapsed}
           title="Surgical History"
           action={
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

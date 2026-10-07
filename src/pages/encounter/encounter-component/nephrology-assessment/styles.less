@@ -1,0 +1,854 @@
+.nephrology-patient-assessment {
+  width: 100%;
+}
+.nephrology-assessment-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 16px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-assessment-card--full {
+  flex: 1 1 100%;
+
+  width: 100%;
+  min-width: 0;
+
+  >* {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pd-root {
+    width: 100% !important;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .nephrology-assessment-row {
+    flex-direction: column;
+  }
+
+  .nephrology-assessment-card--full {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+}
+
+.nephrology-assessment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+
+  width: 100%;
+  padding: 4px 0 8px;
+
+  .rs-form {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.nephrology-assessment-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-assessment-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.nephrology-assessment-group-title {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.nephrology-assessment-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.nephrology-assessment-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 16px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-assessment-grid+.nephrology-assessment-grid {
+  margin-top: 16px;
+}
+
+.nephrology-assessment-card {
+  flex: 1 1 0;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 0;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  >* {
+    width: 100%;
+    min-width: 0;
+
+    margin: 0;
+  }
+
+  >.medical-main-container {
+    width: 100% !important;
+    min-width: 0;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    >.medical-container-div {
+      width: 100% !important;
+      min-width: 0;
+
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+
+  .container-form-section {
+    width: 100%;
+    min-width: 0;
+
+    margin: 0 !important;
+  }
+}
+
+.nephrology-assessment-grid--clinical {
+  align-items: flex-start;
+
+  textarea {
+    min-height: 86px;
+  }
+}
+
+.nephrology-assessment-grid--measurements {
+  align-items: flex-start;
+}
+
+.nephrology-assessment[dir='rtl'] {
+  .nephrology-assessment-group-header {
+    text-align: right;
+  }
+}
+
+
+@media (max-width: 1180px) {
+  .nephrology-assessment-grid {
+    flex-direction: column;
+  }
+
+  .nephrology-assessment-card {
+    flex: 0 0 auto;
+
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .nephrology-assessment-content {
+    gap: 22px;
+  }
+
+  .nephrology-assessment-grid {
+    gap: 12px;
+  }
+
+  .nephrology-assessment-grid+.nephrology-assessment-grid {
+    margin-top: 12px;
+  }
+
+  .nephrology-assessment-group-header {
+    margin-bottom: 12px;
+  }
+}
+
+.nephrology-kidney-assessment {
+  width: 100%;
+}
+
+.nephrology-kidney-content {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0 8px;
+
+  .rs-form {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.nephrology-kidney-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-kidney-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.nephrology-kidney-group-title {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.nephrology-kidney-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.nephrology-kidney-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 20px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-kidney-field {
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  .rs-form-group {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+.nephrology-assessment[dir='rtl'] {
+  .nephrology-kidney-group-header {
+    text-align: right;
+  }
+}
+
+@media (max-width: 1100px) {
+  .nephrology-kidney-row {
+    flex-wrap: wrap;
+  }
+
+  .nephrology-kidney-field {
+    flex: 1 1 calc(50% - 10px);
+    width: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .nephrology-kidney-content {
+    gap: 22px;
+  }
+
+  .nephrology-kidney-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .nephrology-kidney-field {
+    flex: 0 0 auto;
+
+    width: 100%;
+  }
+
+  .nephrology-kidney-group-header {
+    margin-bottom: 12px;
+  }
+}
+
+
+
+.nephrology-renal-function {
+  width: 100%;
+}
+
+.nephrology-renal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0 8px;
+
+  .rs-form {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.nephrology-renal-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-renal-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.nephrology-renal-group-heading {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nephrology-renal-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.nephrology-renal-group-description {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  opacity: 0.55;
+}
+
+.nephrology-renal-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.nephrology-renal-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 18px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-renal-field {
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  .rs-form-group {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+.nephrology-assessment[dir='rtl'] {
+  .nephrology-renal-group-header {
+    text-align: right;
+  }
+}
+
+
+@media (max-width: 1200px) {
+  .nephrology-renal-row {
+    flex-wrap: wrap;
+  }
+
+  .nephrology-renal-field {
+    flex: 1 1 calc(50% - 9px);
+    width: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .nephrology-renal-content {
+    gap: 22px;
+  }
+
+  .nephrology-renal-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 14px;
+  }
+
+  .nephrology-renal-field {
+    flex: 0 0 auto;
+
+    width: 100%;
+  }
+
+  .nephrology-renal-group-header {
+    margin-bottom: 12px;
+  }
+}
+
+.nephrology-treatment-plan {
+  width: 100%;
+}
+
+.nephrology-treatment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0 8px;
+}
+
+.nephrology-treatment-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-treatment-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.nephrology-treatment-group-title {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.nephrology-treatment-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.nephrology-treatment-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 18px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-treatment-row--single {
+  max-width: 420px;
+}
+
+.nephrology-treatment-field {
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  .rs-form-group {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+.nephrology-dialysis-registration {
+  width: 100%;
+  min-width: 0;
+
+  padding: 20px 22px 22px;
+
+  border: 1px solid rgba(33, 150, 243, 0.16);
+  border-radius: 8px;
+
+  background: rgba(33, 150, 243, 0.025);
+}
+
+.nephrology-dialysis-registration-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  width: 100%;
+  margin-bottom: 24px;
+  padding-bottom: 15px;
+
+  border-bottom: 1px solid rgba(128, 128, 128, 0.16);
+}
+
+.nephrology-dialysis-registration-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.nephrology-dialysis-registration-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.nephrology-dialysis-registration-description {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  opacity: 0.58;
+}
+
+.nephrology-dialysis-registration-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  min-height: 26px;
+  padding: 5px 11px;
+
+  border: 1px solid rgba(33, 150, 243, 0.18);
+  border-radius: 14px;
+
+  background: rgba(33, 150, 243, 0.08);
+
+  color: #1687d9;
+
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.nephrology-dialysis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-dialysis-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-dialysis-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.nephrology-dialysis-group-title {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.nephrology-dialysis-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.nephrology-dialysis-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 18px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-dialysis-field {
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  .rs-form-group {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+.nephrology-dialysis-field--wide {
+  flex-grow: 1.5;
+}
+
+.nephrology-dialysis-field--doctor {
+  flex-grow: 1.4;
+}
+
+.nephrology-assessment[dir='rtl'] {
+
+  .nephrology-treatment-group-header,
+  .nephrology-dialysis-group-header,
+  .nephrology-dialysis-registration-header {
+    text-align: right;
+  }
+}
+
+@media (max-width: 1200px) {
+  .nephrology-dialysis-row {
+    flex-wrap: wrap;
+  }
+
+  .nephrology-dialysis-field,
+  .nephrology-dialysis-field--wide,
+  .nephrology-dialysis-field--doctor {
+    flex: 1 1 calc(50% - 9px);
+    width: auto;
+  }
+}
+
+@media (max-width: 700px) {
+
+  .nephrology-treatment-content,
+  .nephrology-dialysis-content {
+    gap: 22px;
+  }
+
+  .nephrology-treatment-row,
+  .nephrology-dialysis-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    gap: 14px;
+  }
+
+  .nephrology-treatment-row--single {
+    max-width: none;
+  }
+
+  .nephrology-treatment-field,
+  .nephrology-dialysis-field,
+  .nephrology-dialysis-field--wide,
+  .nephrology-dialysis-field--doctor {
+    flex: 0 0 auto;
+
+    width: 100%;
+  }
+
+  .nephrology-dialysis-registration {
+    padding: 16px;
+  }
+
+  .nephrology-dialysis-registration-header {
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .nephrology-treatment-group-header,
+  .nephrology-dialysis-group-header {
+    margin-bottom: 12px;
+  }
+}
+
+
+.nephrology-main-section {
+  width: 100%;
+
+  >.container-form-section {
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+.nephrology-section-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.nephrology-section-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 42px;
+
+  width: 42px;
+  height: 42px;
+
+  border: 1px solid rgba(33, 150, 243, 0.22);
+  border-radius: 9px;
+
+  background: rgba(33, 150, 243, 0.08);
+
+  color: #1687d9;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nephrology-section-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 3px;
+
+  min-width: 0;
+
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.nephrology-section-description {
+  display: block;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+
+  color: var(--primary-gray);
+  opacity: 0.72;
+}
+
+.nephrology-main-section+.nephrology-main-section {
+  margin-top: 14px;
+}
+
+.nephrology-assessment[dir='rtl'] {
+  .nephrology-section-title {
+    flex-direction: row;
+    text-align: right;
+  }
+
+  .nephrology-section-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .nephrology-section-title {
+    gap: 10px;
+  }
+
+  .nephrology-section-index {
+    flex-basis: 36px;
+
+    width: 36px;
+    height: 36px;
+  }
+
+  .nephrology-section-heading {
+    font-size: 14px;
+  }
+
+  .nephrology-section-description {
+    font-size: 11px;
+  }
+
+  .nephrology-main-section+.nephrology-main-section {
+    margin-top: 10px;
+  }
+}

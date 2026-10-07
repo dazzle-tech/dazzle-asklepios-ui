@@ -31,7 +31,9 @@ const PatientProblems = ({
   patient,
   edit,
   toShowData = false,
-  showFreeText = false
+  showFreeText = false,
+  collapsible = false,
+  defaultCollapsed = false
 }) => {
   const dispatch = useAppDispatch();
 
@@ -524,6 +526,8 @@ const totalCount = pageData?.totalCount ?? 0;
   return (
     <div className="medical-container-div">
       <SectionContainer
+        collapsible={collapsible}
+        defaultCollapsed={defaultCollapsed}
         title={<>Patient&apos;s Problems</>}
         action={
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

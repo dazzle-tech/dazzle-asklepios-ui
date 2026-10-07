@@ -15,6 +15,8 @@ type HistoryOfPresentIllnessSectionProps = {
   title?: React.ReactNode;
   width?: string;
   onShowHistory?: () => void;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 };
 
 const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionProps> = ({
@@ -23,7 +25,9 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   disabled = false,
   title = <Translate>History Of Present Illness</Translate>,
   width = '100%',
-  onShowHistory
+  onShowHistory,
+  collapsible = true,
+  defaultCollapsed = false
 }) => {
   const dispatch = useAppDispatch();
 
@@ -90,7 +94,8 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   return (
     <SectionContainer
       title={title}
-      collapsible
+      collapsible={collapsible}
+      defaultCollapsed={defaultCollapsed}
       content={
         <div style={width ? { width } : {}}>
           <Form fluid>

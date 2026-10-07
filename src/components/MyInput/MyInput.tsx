@@ -148,6 +148,7 @@ type MyInputProps = {
   min?: number;
   step?: number;
   allowDecimal?: boolean;
+  allowNegative?: boolean;
   disabledItemValues?: boolean;
   disableByField?: string;
   disableByFieldValue?: any;
@@ -2876,70 +2877,193 @@ onBlur={() => {
               ? String(record[fieldName])
               : '';
 
-        const inputControl = props.allowDecimal ? (
-          <Form.Control
-            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
+const inputControl = props.allowDecimal ? (
+  <div
+    style={{
+      position: 'relative',
+      width: numInputWidth,
+      minWidth: numInputWidth,
+      maxWidth: numInputWidth,
+      flexShrink: 0
+    }}
+  >
+    <Form.Control
+      className={`arrow-number-style ${
+        inputColor ? `input-${inputColor}` : ''
+      }`}
+      style={{
+        width: numInputWidth,
+        height: props?.height ?? 30,
+        minWidth: numInputWidth,
+        maxWidth: numInputWidth,
+        flexShrink: 0,
+        paddingRight: rightAddon ? '2px' : '28px'
+      }}
+      disabled={props.disabled}
+      name={fieldName}
+      accepter={Input}
+      type="text"
+      inputMode="decimal"
+      value={value}
+      placeholder={props.placeholder}
+      onChange={(value: string) => {
+        if (
+          value === '' ||
+          value === null ||
+          value === undefined
+        ) {
+          setRecord?.({
+            ...record,
+            [fieldName]: ''
+          });
+          return;
+        }
+
+        let normalized = value.replace(',', '.');
+
+        const negative = Boolean(
+          props.allowNegative &&
+          normalized.trim().startsWith('-')
+        );
+
+        normalized = normalized.replace(
+          props.allowNegative
+            ? /[^0-9.-]/g
+            : /[^0-9.]/g,
+          ''
+        );
+
+        if (props.allowNegative) {
+          normalized = normalized.replace(/-/g, '');
+
+          if (negative) {
+            normalized = `-${normalized}`;
+          }
+        }
+
+        const digitsOnly = normalized.replace(/[-.]/g, '');
+
+        if (digitsOnly.length > 10) {
+          const trimmed = digitsOnly.slice(0, 10);
+
+          normalized = normalized.includes('.')
+            ? trimmed.slice(0, normalized.indexOf('.')) +
+              '.' +
+              trimmed.slice(normalized.indexOf('.'))
+            : trimmed;
+
+          dispatch(
+            notify({
+              msg: 'Maximum allowed is 10 digits',
+              sev: 'warning'
+            })
+          );
+        }
+
+        const firstDotIndex = normalized.indexOf('.');
+
+        if (firstDotIndex !== -1) {
+          normalized =
+            normalized.slice(0, firstDotIndex + 1) +
+            normalized
+              .slice(firstDotIndex + 1)
+              .replace(/\./g, '');
+        }
+
+        setRecord?.({
+          ...record,
+          [fieldName]: normalized
+        });
+      }}
+      onBlur={() => {
+        const currentValue = record?.[fieldName];
+
+        if (
+          currentValue === '' ||
+          currentValue === null ||
+          currentValue === undefined
+        ) {
+          setRecord?.({
+            ...record,
+            [fieldName]: null
+          });
+          return;
+        }
+
+        const normalized = String(currentValue)
+          .replace(',', '.')
+          .trim();
+
+        const numericValue = Number(normalized);
+
+        setRecord?.({
+          ...record,
+          [fieldName]: Number.isNaN(numericValue)
+            ? null
+            : numericValue
+        });
+      }}
+      onKeyDown={focusNextField}
+    />
+
+    {!rightAddon && (
+      <div
+        style={{
+          position: 'absolute',
+          top: 1,
+          right: 1,
+          bottom: 1,
+          width: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          borderLeft: '1px solid #e5e5ea',
+          borderRadius: '0 5px 5px 0',
+          overflow: 'hidden',
+          pointerEvents: 'none'
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderBottom: '1px solid #e5e5ea'
+          }}
+        >
+          <span
             style={{
-              width: numInputWidth,
-              height: props?.height ?? 30,
-              minWidth: numInputWidth,
-              maxWidth: numInputWidth,
-              flexShrink: 0,
-              paddingRight: rightAddon ? '2px' : undefined
+              fontSize: '7px',
+              lineHeight: 1,
+              opacity: 0.65
             }}
-            disabled={props.disabled}
-            name={fieldName}
-            accepter={Input}
-            type="text"
-            inputMode="decimal"
-            value={value}
-            placeholder={props.placeholder}
-            onChange={(value: string) => {
-              if (value === '' || value === null || value === undefined) {
-                setRecord?.({ ...record, [fieldName]: '' });
-                return;
-              }
+          >
+            ▲
+          </span>
+        </div>
 
-              let normalized = value.replace(',', '.');
-              normalized = normalized.replace(/[^0-9.]/g, '');
-
-              const digitsOnly = normalized.replace('.', '');
-              if (digitsOnly.length > 10) {
-                const trimmed = digitsOnly.slice(0, 10);
-                normalized = normalized.includes('.')
-                  ? trimmed.slice(0, normalized.indexOf('.')) +
-                  '.' +
-                  trimmed.slice(normalized.indexOf('.'))
-                  : trimmed;
-
-                dispatch(notify({ msg: 'Maximum allowed is 10 digits', sev: 'warning' }));
-              }
-
-              const firstDotIndex = normalized.indexOf('.');
-              if (firstDotIndex !== -1) {
-                normalized =
-                  normalized.slice(0, firstDotIndex + 1) +
-                  normalized.slice(firstDotIndex + 1).replace(/\./g, '');
-              }
-
-              setRecord?.({ ...record, [fieldName]: normalized });
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <span
+            style={{
+              fontSize: '7px',
+              lineHeight: 1,
+              opacity: 0.65
             }}
-            onBlur={() => {
-              const currentValue = record?.[fieldName];
-              if (currentValue === '' || currentValue === null || currentValue === undefined) {
-                setRecord?.({ ...record, [fieldName]: null });
-                return;
-              }
-              const normalized = String(currentValue).replace(',', '.').trim();
-              const numericValue = Number(normalized);
-              setRecord?.({
-                ...record,
-                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
-              });
-            }}
-            onKeyDown={focusNextField}
-          />
-        ) : (
+          >
+            ▼
+          </span>
+        </div>
+      </div>
+    )}
+  </div>
+) : (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{

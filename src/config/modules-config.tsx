@@ -26,6 +26,7 @@ import {
 } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
+import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
   name: string;
   code: string;
@@ -82,6 +83,8 @@ export interface MedicalSheet {
 }
 export const MedicalSheets: MedicalSheet[] = [
 
+
+  
   // { name: 'ICU', code: 'ICU', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/icu' },
   // { name: 'Pregnancy Follow-up', code: 'PREGNANCY_FOLLOW_UP', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pregnancy-follow-up', type: "Specialty" },
   // { name: 'VTE Risk Assessment', code: 'VTE_RISK_ASSESSMENT', icon: <FontAwesomeIcon icon={faBraille} className="icon" />, path: '/vte-risk-assessment' },
@@ -171,7 +174,20 @@ export const MedicalSheets: MedicalSheet[] = [
   },
 
   { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' },
-
+  {
+    name: 'Nephrology Assessment',
+    code: 'NEPHROLOGY_ASSESSMENT',
+    icon: <GiKidneys className="icon" />,
+    path: '/nephrology-assessment',
+    type: 'Specialty'
+  },
+  {
+    name: 'Dialysis Session',
+    code: 'DIALYSIS_SESSION',
+    icon: <GiKidneys className="icon" />,
+    path: '/dialysis-session',
+    type: 'Specialty'
+  },
 ];
 
 

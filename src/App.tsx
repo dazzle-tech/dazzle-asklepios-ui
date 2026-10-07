@@ -299,6 +299,10 @@ const OpdVisitList= lazy(()=>import ('./pages/encounter/opd-encounter-list/OpdVi
 const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
 const TestsResults = lazy (() => import ( './pages/tests-results/TestsResults'));
 
+const NephrologyAssessment = lazy(() => import('./pages/encounter/encounter-component/nephrology-assessment'));
+
+const DialysisSession = lazy(() => import('./pages/encounter/encounter-component/dialysis-session'));
+
 
 const PUBLIC_PATHS = PUBLIC_PERMISSION_BYPASS_PATHS;
 
@@ -727,7 +731,9 @@ const App = () => {
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route path="nephrology-assessment" element={<NephrologyAssessment />}/>
 
+                <Route path="dialysis-session" element={<DialysisSession />}/>
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}

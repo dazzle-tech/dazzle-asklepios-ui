@@ -1,0 +1,320 @@
+.dialysis-session {
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-session-sections {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-session-section {
+  width: 100%;
+
+  > .container-form-section {
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+.dialysis-session-section + .dialysis-session-section {
+  margin-top: 14px;
+}
+
+.dialysis-session-section-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-session-section-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 42px;
+
+  width: 42px;
+  height: 42px;
+
+  border: 1px solid rgba(33, 150, 243, 0.22);
+  border-radius: 9px;
+
+  background: rgba(33, 150, 243, 0.08);
+  color: #1687d9;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dialysis-session-section-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 3px;
+
+  min-width: 0;
+
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dialysis-session-section-description {
+  display: block;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+
+  color: var(--primary-gray);
+  opacity: 0.72;
+}
+
+.dialysis-session-content,
+.dialysis-session-information {
+  display: flex;
+  flex-direction: column;
+
+  gap: 26px;
+
+  width: 100%;
+  min-width: 0;
+
+  padding: 4px 0 8px;
+
+  .rs-form {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.dialysis-session-group {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-session-group-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.dialysis-session-group-title {
+  flex: 0 0 auto;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  color: var(--primary-gray);
+}
+
+.dialysis-session-group-line {
+  flex: 1 1 auto;
+
+  height: 1px;
+
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.dialysis-session-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  gap: 18px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-session-row--spaced {
+  margin-top: 18px;
+}
+
+.dialysis-session-field {
+  flex: 1 1 0;
+
+  width: 0;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  .rs-form-group {
+    width: 100%;
+    margin-bottom: 0;
+  }
+}
+
+.dialysis-session-field--full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.dialysis-session-field--empty {
+  visibility: hidden;
+}
+
+.dialysis-session-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+
+  width: 100%;
+}
+
+.dialysis-session-table {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+
+.dialysis-complications {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+
+  gap: 12px 20px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.dialysis-complication-item {
+  flex: 1 1 calc(25% - 20px);
+
+  min-width: 210px;
+
+  .rs-form-group {
+    margin-bottom: 0;
+  }
+}
+
+.dialysis-session[dir='rtl'] {
+  .dialysis-session-section-title,
+  .dialysis-session-group-header {
+    text-align: right;
+  }
+
+  .dialysis-session-section-heading {
+    align-items: flex-start;
+  }
+}
+
+// =========================================================
+// RESPONSIVE
+// =========================================================
+
+@media (max-width: 1200px) {
+  .dialysis-session-row {
+    flex-wrap: wrap;
+  }
+
+  .dialysis-session-field {
+    flex: 1 1 calc(50% - 9px);
+    width: auto;
+  }
+
+  .dialysis-session-field--empty {
+    display: none;
+  }
+
+  .dialysis-complication-item {
+    flex: 1 1 calc(33.333% - 20px);
+  }
+}
+
+@media (max-width: 900px) {
+  .dialysis-complication-item {
+    flex: 1 1 calc(50% - 20px);
+  }
+}
+
+@media (max-width: 700px) {
+  .dialysis-session-section + .dialysis-session-section {
+    margin-top: 10px;
+  }
+
+  .dialysis-session-section-title {
+    gap: 10px;
+  }
+
+  .dialysis-session-section-index {
+    flex-basis: 36px;
+
+    width: 36px;
+    height: 36px;
+  }
+
+  .dialysis-session-section-heading {
+    font-size: 14px;
+  }
+
+  .dialysis-session-section-description {
+    font-size: 11px;
+  }
+
+  .dialysis-session-content,
+  .dialysis-session-information {
+    gap: 22px;
+  }
+
+  .dialysis-session-group-header {
+    margin-bottom: 12px;
+  }
+
+  .dialysis-session-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    gap: 14px;
+  }
+
+  .dialysis-session-row--spaced {
+    margin-top: 14px;
+  }
+
+  .dialysis-session-field,
+  .dialysis-session-field--full {
+    flex: 0 0 auto;
+
+    width: 100%;
+  }
+
+  .dialysis-complications {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .dialysis-complication-item {
+    flex: 0 0 auto;
+
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dialysis-session-actions {
+    justify-content: flex-start;
+  }
+}
