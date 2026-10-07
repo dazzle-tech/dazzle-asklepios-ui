@@ -27,7 +27,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
-const SocialHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
+const SocialHistory = ({ patient, edit, toShowData = false, showFreeText = false, collapsible = false, defaultCollapsed = false }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
@@ -474,6 +474,8 @@ const SocialHistory = ({ patient, edit, toShowData = false, showFreeText = false
     <div className="medical-main-container" dir={dir}>
       <div className="medical-container-div" dir={dir}>
         <SectionContainer
+          collapsible={collapsible}
+          defaultCollapsed={defaultCollapsed}
           title="Social History"
           action={
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

@@ -80,7 +80,10 @@ export const vitalSignsService = createApi({
       query: ({ id, ...body }) => ({
         url: `/api/patient/vital-signs/${id}`,
         method: 'PUT',
-        body
+        body: {
+          ...body,
+          id
+        }
       }),
       invalidatesTags: ['VitalSigns']
     }),

@@ -30,7 +30,7 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 import { Form, Tooltip, Whisper } from 'rsuite';
 
-const FamilyHistory = ({ patient, edit, toShowData = false, showFreeText = false }) => {
+const FamilyHistory = ({ patient, edit, toShowData = false, showFreeText = false, collapsible = false, defaultCollapsed = false }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
@@ -399,6 +399,8 @@ const FamilyHistory = ({ patient, edit, toShowData = false, showFreeText = false
   return (
     <div className="medical-container-div">
       <SectionContainer
+        collapsible={collapsible}
+        defaultCollapsed={defaultCollapsed}
         action={
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {!toShowData && (

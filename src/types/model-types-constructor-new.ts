@@ -2879,6 +2879,10 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   respiratoryRate: null,
   fastingBloodGlucose: null,
 
+  fluidStatus: null,
+  edema: null,
+  urineOutput: null,
+
   isTriage: false,
   isActive: true,
 
