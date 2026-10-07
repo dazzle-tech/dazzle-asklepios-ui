@@ -6,7 +6,10 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
-import { useCreateAppointmentRequestMutation } from '@/services/appointment/appointmentRequestService';
+import {
+  useCreateAppointmentRequestMutation,
+  useCreateRecurringAppointmentRequestsMutation
+} from '@/services/appointment/appointmentRequestService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -39,6 +42,10 @@ import '../styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientSearchBar from '../PatientSearchBar';
+import RecurringFollowUpSection, {
+  RecurringFollowUpConfig,
+  RecurringMappingRow
+} from './RecurringFollowUpSection';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
 const normalizeResourceTypeKey = (value: any) => String(value ?? '').trim().toUpperCase();
@@ -534,6 +541,7 @@ const FollowupAppointmentModal = ({
   }, [appointment]);
 
   const [createAppointmentRequest] = useCreateAppointmentRequestMutation();
+  const [createRecurringAppointmentRequests] = useCreateRecurringAppointmentRequestsMutation();
 
   useEffect(() => {
     // When editing/viewing an existing appointment, localPatient should come from `appointmentData`.
@@ -842,7 +850,20 @@ const FollowupAppointmentModal = ({
     setInstructionsKey(null);
     setInstructionsValue(null);
     setSelectedCriterion(null);
+    setRecurringEnabled(false);
+    setRecurringRows([]);
+    setRecurringConfig(null);
   };
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      setRecurringEnabled(false);
+      setRecurringRows([]);
+      setRecurringConfig(null);
+      setRecurringResetKey(current => current + 1);
+    }
+    wasOpenRef.current = Boolean(isOpen);
+  }, [isOpen]);
 
   useEffect(() => {
     calculateAge(localPatient?.dob);
@@ -1135,6 +1156,73 @@ const FollowupAppointmentModal = ({
           ? appointmentStart.toISOString().slice(0, 10)
           : null;
 
+    const describeSaveError = (e: any) => {
+      if (e?.status === 405) {
+        return 'Appointment request create API is not enabled on backend (POST /api/patient/appointment-requests).';
+      }
+      return (
+        (e?.data && (e.data.msg || e.data.message)) ||
+        (typeof e?.data === 'string' ? e.data : null) ||
+        (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
+        `Failed to save appointment request${e?.status ? ` (status ${e.status})` : ''}`
+      );
+    };
+
+    if (recurringEnabled) {
+      const rowsWithSlots = recurringRows.filter(row => row.slot);
+      if (!recurringConfig?.startDate || recurringConfig.daysOfWeek.length === 0 || rowsWithSlots.length === 0) {
+        dispatch(
+          notify({
+            msg: 'Generate the recurring appointments, then keep the days that have an available slot.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const rawPriority = String(apptAny?.priority ?? apptAny?.priorityLkey ?? 'NORMAL').toUpperCase();
+      setIsSavingRequests(true);
+      createRecurringAppointmentRequests({
+        patientId,
+        facilityId,
+        departmentId,
+        sourceEncounterId,
+        requestedResourceType: String(appointment?.resourceTypeLkey ?? ''),
+        requestedResourceId: Number(finalResourceKey),
+        priority: rawPriority === 'URGENT' ? 'URGENT' : 'NORMAL',
+        reason: apptAny?.reason ?? null,
+        note: instructions || appointment?.notes || null,
+        daysOfWeek: recurringConfig.daysOfWeek,
+        startDate: recurringConfig.startDate,
+        period: recurringConfig.period,
+        periodUnit: recurringConfig.periodUnit,
+        selectedAppointmentIds: rowsWithSlots.map(row => Number(row.slot!.id))
+      })
+        .unwrap()
+        .then(result => {
+          const saved = result?.created?.length ?? 0;
+          const skippedWithoutSlot = result?.daysWithoutSlot ?? 0;
+          const skippedText =
+            skippedWithoutSlot > 0 ? ` ${skippedWithoutSlot} day(s) had no available slot and were skipped.` : '';
+          dispatch(
+            notify({
+              msg:
+                saved === 1
+                  ? `Appointment request saved successfully.${skippedText}`
+                  : `${saved} appointment requests saved successfully.${skippedText}`,
+              sev: 'success'
+            })
+          );
+          closeModal();
+          onSave();
+        })
+        .catch(error => {
+          dispatch(notify({ msg: describeSaveError(error), sev: 'warn' }));
+        })
+        .finally(() => setIsSavingRequests(false));
+      return;
+    }
+
     const requestPayload = {
       patientId,
       facilityId,
@@ -1157,6 +1245,7 @@ const FollowupAppointmentModal = ({
       requestedBy: loggedInUsername || String(authSlice?.user?.username ?? '')
     };
 
+    setIsSavingRequests(true);
     createAppointmentRequest(requestPayload as any)
       .unwrap()
       .then(() => {
@@ -1164,23 +1253,10 @@ const FollowupAppointmentModal = ({
         closeModal();
         onSave();
       })
-      .catch(e => {
-        if (e?.status === 405) {
-          dispatch(
-            notify({
-              msg: 'Appointment request create API is not enabled on backend (POST /api/patient/appointment-requests).',
-              sev: 'warn'
-            })
-          );
-          return;
-        }
-        const msg =
-          (e?.data && (e.data.msg || e.data.message)) ||
-          (typeof e?.data === 'string' ? e.data : null) ||
-          (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
-          `Failed to save appointment request${e?.status ? ` (status ${e.status})` : ''}`;
-        dispatch(notify({ msg, sev: 'warn' }));
-      });
+      .catch(error => {
+        dispatch(notify({ msg: describeSaveError(error), sev: 'warn' }));
+      })
+      .finally(() => setIsSavingRequests(false));
   };
 
   const getAvailableDatesInMonth = (dayOfWeek, year, month) => {
@@ -1293,6 +1369,12 @@ const FollowupAppointmentModal = ({
   }, [availableDatesInMonth]);
 
   const [modalKey, setModalKey] = useState(0);
+  const [recurringEnabled, setRecurringEnabled] = useState(false);
+  const [recurringRows, setRecurringRows] = useState<RecurringMappingRow[]>([]);
+  const [recurringConfig, setRecurringConfig] = useState<RecurringFollowUpConfig | null>(null);
+  const [isSavingRequests, setIsSavingRequests] = useState(false);
+  const [recurringResetKey, setRecurringResetKey] = useState(0);
+  const wasOpenRef = useRef(false);
 
   const handleDayClick = day => {
     const isDeselecting = openDay === day;
@@ -1317,6 +1399,7 @@ const FollowupAppointmentModal = ({
         setOpen={() => {
           onClose(), handleClear();
         }}
+        isDisabledActionBtn={isSavingRequests}
         actionButtonFunction={handleSaveAppointment}
         rightTitle="Create Follow-up"
         rightBodyNoScroll={false}
@@ -1557,33 +1640,59 @@ const FollowupAppointmentModal = ({
                                 required
                               />
                             </div>
-                            <div className="input-wrapper" style={{ flex: 3 }}>
-                              <MyInput
-                                width={'15vw'}
-                                column
-                                fieldLabel="Preferred date"
-                                fieldType="date"
-                                fieldName="preferredDate"
-                                record={{ preferredDate: selectedDate ? selectedDate.toISOString().slice(0, 10) : null }}
-                                setRecord={(newRecord: any) => {
-                                  const dateValue = newRecord?.preferredDate;
-                                  if (!dateValue) {
-                                    setSelectedDate(null);
-                                    return;
-                                  }
-                                  const parsed = new Date(dateValue);
-                                  setSelectedDate(Number.isFinite(parsed.getTime()) ? parsed : null);
-                                }}
-                                disabled={showOnly}
-                                placeholder="Select preferred date"
-                                cleanable={false}
-                                disablePastDates
-                              />
-                            </div>
+                            {!recurringEnabled && (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  column
+                                  fieldLabel="Preferred date"
+                                  fieldType="date"
+                                  fieldName="preferredDate"
+                                  record={{ preferredDate: selectedDate ? selectedDate.toISOString().slice(0, 10) : null }}
+                                  setRecord={(newRecord: any) => {
+                                    const dateValue = newRecord?.preferredDate;
+                                    if (!dateValue) {
+                                      setSelectedDate(null);
+                                      return;
+                                    }
+                                    const parsed = new Date(dateValue);
+                                    setSelectedDate(Number.isFinite(parsed.getTime()) ? parsed : null);
+                                  }}
+                                  disabled={showOnly}
+                                  placeholder="Select preferred date"
+                                  cleanable={false}
+                                  disablePastDates
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </Form>
                     }
+                  />
+
+                  <RecurringFollowUpSection
+                    disabled={Boolean(showOnly) || isSavingRequests}
+                    facilityId={
+                      Number.isFinite(Number(appointment?.facilityKey)) ? Number(appointment?.facilityKey) : null
+                    }
+                    departmentId={
+                      Number.isFinite(Number(appointment?.departmentId ?? appointment?.departmentKey))
+                        ? Number(appointment?.departmentId ?? appointment?.departmentKey)
+                        : null
+                    }
+                    resourceType={appointment?.resourceTypeLkey ? String(appointment.resourceTypeLkey) : null}
+                    resourceId={
+                      Number.isFinite(Number(appointment?.resourceKey)) ? Number(appointment?.resourceKey) : null
+                    }
+                    patientId={Number.isFinite(Number(localPatient?.key)) ? Number(localPatient?.key) : null}
+                    sourceEncounterId={sourceEncounterId}
+                    enabled={recurringEnabled}
+                    onEnabledChange={setRecurringEnabled}
+                    rows={recurringRows}
+                    onRowsChange={setRecurringRows}
+                    onConfigChange={setRecurringConfig}
+                    resetKey={recurringResetKey}
                   />
                 </div>
               </div>

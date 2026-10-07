@@ -146,24 +146,6 @@ useImperativeHandle(ref, () => ({
 
 const allOrdersList = ordersResponse?.data ?? [];
 
-
-console.log('ORDERS RESPONSE:', ordersResponse);
-
-console.log('ORDERS TOTAL COUNT:', ordersResponse?.totalCount);
-
-console.log(
-  'ORDERS:',
-  allOrdersList.map((o: any) => ({
-    id: o.id,
-    orderNumber: o.orderNumber,
-    status: o.status,
-    labStatus: o.labStatus,
-    departmentId: o.departmentId,
-    fromDepartmentId: o.fromDepartmentId,
-    patientId: o.patientId
-  }))
-);
-
 const ordersList = allOrdersList;
 const totalCount = ordersResponse?.totalCount ?? 0;
 
