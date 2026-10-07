@@ -315,6 +315,24 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
             }
         },
         {
+            key: 'recurrence',
+            title: 'Recurrence',
+            render: (row: Row) => {
+                const raw = row?._raw ?? {};
+                const recurring = raw.recurring === true;
+                if (!recurring) return '-';
+                const days = String(raw.recurrenceDays ?? raw.recurrence_days ?? '')
+                    .split(',')
+                    .filter(Boolean)
+                    .map((day: string) => day.charAt(0) + day.slice(1).toLowerCase().slice(0, 2))
+                    .join(', ');
+                const period = raw.recurrencePeriod ?? raw.recurrence_period;
+                const unit = String(raw.recurrenceUnit ?? raw.recurrence_unit ?? '').toLowerCase();
+                const repeat = period && unit ? `${period} ${unit}${Number(period) === 1 ? '' : 's'}` : '';
+                return <span>{[days, repeat].filter(Boolean).join(' · ') || 'Recurring'}</span>;
+            }
+        },
+        {
             key: 'preferredDate',
             title: 'Preferred Date',
             render: (row: Row) => {
@@ -329,6 +347,21 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
                 // Accept dates in ISO or YYYY-MM-DD format
                 const d = dayjs(String(pd));
                 return d.isValid() ? d.format('DD-MM-YYYY') : String(pd);
+            }
+        },
+        {
+            key: 'preferredTime',
+            title: 'Preferred Time',
+            render: (row: Row) => {
+                const raw = row?._raw ?? {};
+                const startRaw = raw.preferredStartTime ?? raw.preferred_start_time ?? null;
+                const endRaw = raw.preferredEndTime ?? raw.preferred_end_time ?? null;
+                const start = startRaw ? dayjs(String(startRaw)) : null;
+                const end = endRaw ? dayjs(String(endRaw)) : null;
+                if (!start?.isValid()) return '-';
+                const startText = start.format('HH:mm');
+                if (!end?.isValid()) return startText;
+                return `${startText} - ${end.format('HH:mm')}`;
             }
         },
         {

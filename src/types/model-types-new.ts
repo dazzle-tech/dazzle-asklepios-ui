@@ -706,6 +706,13 @@ export interface AppointmentRequestResponseVM {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
   preferredDate?: string | null;
+  preferredStartTime?: string | null;
+  preferredEndTime?: string | null;
+  recurring?: boolean | null;
+  recurrenceDays?: string | null;
+  recurrenceStartDate?: string | null;
+  recurrencePeriod?: number | null;
+  recurrenceUnit?: string | null;
 }
 
 export interface AppointmentRequestCreateDTO {

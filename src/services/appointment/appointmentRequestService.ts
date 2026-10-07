@@ -4,6 +4,55 @@ import * as modelTypes from '@/types/model-types-new';
 
 type Id = number | string;
 
+export type RecurringAppointmentRequestBody = {
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+  sourceEncounterId: number;
+  requestedResourceType: string;
+  requestedResourceId: number;
+  priority?: string | null;
+  reason?: string | null;
+  note?: string | null;
+  daysOfWeek: string[];
+  startDate: string;
+  period: number;
+  periodUnit: 'WEEK' | 'MONTH';
+  selectedAppointmentIds?: number[];
+};
+
+export type RecurringSkippedDay = {
+  date: string;
+  dayOfWeek?: string | null;
+  reason?: string | null;
+};
+
+export type RecurringAvailableSlot = {
+  appointmentId: number;
+  date: string;
+  startDatetime?: string | null;
+  endDatetime?: string | null;
+};
+
+export type RecurringAppointmentPreview = {
+  days: Array<{
+    date: string;
+    dayOfWeek?: string | null;
+    appointmentId?: number | null;
+    startDatetime?: string | null;
+    endDatetime?: string | null;
+    hasAvailableSlot?: boolean | null;
+  }>;
+  skippedDays: RecurringSkippedDay[];
+  availableSlots: RecurringAvailableSlot[];
+};
+
+export type RecurringAppointmentCreateResult = {
+  created: modelTypes.AppointmentRequestResponseVM[];
+  skippedDays: RecurringSkippedDay[];
+  daysWithoutSlot: number;
+};
+
 export type AppointmentRequestListParams = {
   patientId?: number;
   facilityId?: number;
@@ -22,6 +71,29 @@ export const appointmentRequestService = createApi({
     >({
       query: body => ({
         url: '/api/patient/appointment-requests',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['AppointmentRequest']
+    }),
+
+    previewRecurringAppointmentRequests: builder.mutation<
+      RecurringAppointmentPreview,
+      RecurringAppointmentRequestBody
+    >({
+      query: body => ({
+        url: '/api/patient/appointment-requests/recurring/preview',
+        method: 'POST',
+        body
+      })
+    }),
+
+    createRecurringAppointmentRequests: builder.mutation<
+      RecurringAppointmentCreateResult,
+      RecurringAppointmentRequestBody
+    >({
+      query: body => ({
+        url: '/api/patient/appointment-requests/recurring',
         method: 'POST',
         body
       }),
@@ -104,6 +176,8 @@ export const appointmentRequestService = createApi({
 
 export const {
   useCreateAppointmentRequestMutation,
+  usePreviewRecurringAppointmentRequestsMutation,
+  useCreateRecurringAppointmentRequestsMutation,
   useGetAppointmentRequestByIdQuery,
   useApproveAppointmentRequestMutation,
   useLazyGetAppointmentRequestByIdQuery,
