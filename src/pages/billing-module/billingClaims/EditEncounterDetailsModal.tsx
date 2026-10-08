@@ -288,6 +288,7 @@ const EditEncounterDetailsModal = ({
                         content: (
                             <PatientHistory
                                 claimEncounterCopyId={encounterCopy?.id}
+                                encounterId={encounter?.id}
                             />
                         )
                     }

@@ -8247,3 +8247,82 @@ export interface ClaimEncounterCopyCurrentMedicationUpdateDTO {
   patientIsFree: boolean;
   freeText?: string;
 }
+
+export interface ClaimEncounterCopyDiagnosticOrderTestResult {
+  id: number;
+  claimEncounterCopyId: number;
+  diagnosticOrderTestResultId?: number | null;
+  orderTestId: number;
+  profileTestId?: number | null;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  normalRangeValue?: string | null;
+  resultTypeAtEntry?: string | null;
+
+  status: string;
+
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
+  orderTestId: number;
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+  resultTypeAtEntry?: string | null;
+}
+
+export interface ClaimEncounterCopyDiagnosticOrderTestResultUpdateDTO {
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+}
+
+export interface ClaimEncounterCopyDiagnosticOrderTestReport {
+  id: number;
+  claimEncounterCopyId: number;
+  diagnosticOrderTestReportId?: number | null;
+  orderTestId: number;
+
+  report?: string | null;
+  radiologistInformation?: string | null;
+  criticalFindings?: string | null;
+  radiologistComments?: string | null;
+  severity?: string | null;
+
+  status: string;
+
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO {
+  orderTestId: number;
+  report?: string | null;
+  radiologistInformation?: string | null;
+  criticalFindings?: string | null;
+  radiologistComments?: string | null;
+  severity?: string | null;
+}
+
+export interface ClaimEncounterCopyDiagnosticOrderTestReportUpdateDTO {
+  report?: string | null;
+  radiologistInformation?: string | null;
+  criticalFindings?: string | null;
+  radiologistComments?: string | null;
+  severity?: string | null;
+}

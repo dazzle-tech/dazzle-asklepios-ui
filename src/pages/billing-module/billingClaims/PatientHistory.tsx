@@ -8,8 +8,9 @@ import ClaimEncounterCopyPatientProblemsTable from './ClaimEncounterCopyPatientP
 import ClaimEncounterCopyFamilyHistoryTable from './ClaimEncounterCopyFamilyHistoryTable';
 import ClaimEncounterCopyHospitalizations from './ClaimEncounterCopyHospitalizations';
 import ClaimEncounterCopyCurrentMedicationTable from './ClaimEncounterCopyCurrentMedicationTable';
+import ClaimEncounterCopyDiagnosticOrders from './ClaimEncounterCopyDiagnosticOrders';
 
-const PatientHistory = ({ claimEncounterCopyId }) => {
+const PatientHistory = ({ claimEncounterCopyId, encounterId }) => {
     if (!claimEncounterCopyId) {
         return null;
     }
@@ -65,7 +66,16 @@ const PatientHistory = ({ claimEncounterCopyId }) => {
                     />
                 }
             />
-            
+            <SectionContainer
+                title="Diagnostic Orders"
+                content={
+                    <ClaimEncounterCopyDiagnosticOrders
+                        claimEncounterCopyId={claimEncounterCopyId}
+                        encounterId={encounterId}
+                    />
+                }
+            />
+
         </div>
     );
 };

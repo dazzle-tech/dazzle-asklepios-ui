@@ -280,6 +280,8 @@ import { claimEncounterCopyPatientProblemService } from './services/billing/clai
 import { claimEncounterCopyFamilyHistoryService } from './services/billing/claimEncounterCopyFamilyHistoryService';
 import { claimEncounterCopyHospitalizationService } from './services/billing/claimEncounterCopyHospitalizationService';
 import { claimEncounterCopyCurrentMedicationService } from './services/billing/claimEncounterCopyCurrentMedicationService';
+import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
+import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -483,7 +485,9 @@ export const store = configureStore({
     [claimEncounterCopyFamilyHistoryService.reducerPath]: claimEncounterCopyFamilyHistoryService.reducer,
     [claimEncounterCopyHospitalizationService.reducerPath]: claimEncounterCopyHospitalizationService.reducer,
     [claimEncounterCopyCurrentMedicationService.reducerPath]: claimEncounterCopyCurrentMedicationService.reducer,
-    
+    [claimEncounterCopyDiagnosticOrderTestResultService.reducerPath]: claimEncounterCopyDiagnosticOrderTestResultService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestReportService.reducerPath]: claimEncounterCopyDiagnosticOrderTestReportService.reducer,
+
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
@@ -926,7 +930,7 @@ export const store = configureStore({
         nephrologyTreatmentPlanService.middleware,
         dialysisSessionService.middleware,
         dialysisFlowReadingService.middleware,
-        dialysisMedicationService.middleware
+        dialysisMedicationService.middleware,
         claimEncounterCopyService.middleware,
         claimEncounterDiagnosisService.middleware,
         claimEncounterProgressNoteService.middleware,
@@ -935,7 +939,9 @@ export const store = configureStore({
         claimEncounterCopyPatientProblemService.middleware,
         claimEncounterCopyFamilyHistoryService.middleware,
         claimEncounterCopyHospitalizationService.middleware,
-        claimEncounterCopyCurrentMedicationService.middleware
+        claimEncounterCopyCurrentMedicationService.middleware,
+        claimEncounterCopyDiagnosticOrderTestResultService.middleware,
+        claimEncounterCopyDiagnosticOrderTestReportService.middleware
       ) as any
 });
 
