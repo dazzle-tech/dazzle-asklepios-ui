@@ -3,7 +3,9 @@ import { BaseQuery, onQueryStarted } from '../../../newApi';
 import type {
   ApplyAvailabilityTemplateResponseVM,
   AvailabilityGenerationBatch,
-  AvailabilityGenerationBatchApplyDTO
+  AvailabilityGenerationBatchApplyDTO,
+  CancelUpcomingAvailableSlotsDTO,
+  CancelUpcomingAvailableSlotsResponseVM
 } from '@/types/model-types-new';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
@@ -99,6 +101,25 @@ export const availabilityGenerationBatchService = createApi({
         await onQueryStarted(arg, api);
       },
       providesTags: ['AvailabilityGenerationBatch']
+    }),
+
+    /**
+     * Cancel upcoming free slots for one applied template batch.
+     * Today's appointments stay available.
+     */
+    cancelUpcomingAvailableSlots: builder.mutation<
+      CancelUpcomingAvailableSlotsResponseVM,
+      { batchId: Id } & CancelUpcomingAvailableSlotsDTO
+    >({
+      query: ({ batchId, cancelReason }) => ({
+        url: `/api/patient/availability-generation-batches/${batchId}/cancel-upcoming-available-slots`,
+        method: 'PUT',
+        body: { cancelReason }
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ['AvailabilityGenerationBatch']
     })
   })
 });
@@ -110,5 +131,6 @@ export const {
   useGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
   useLazyGetAvailabilityGenerationBatchesByTemplateExcludingBatchQuery,
   useGetAvailabilityGenerationBatchByIdQuery,
-  useLazyGetAvailabilityGenerationBatchByIdQuery
+  useLazyGetAvailabilityGenerationBatchByIdQuery,
+  useCancelUpcomingAvailableSlotsMutation
 } = availabilityGenerationBatchService;

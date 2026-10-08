@@ -131,21 +131,25 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
 
   const handleApplyTemplate = React.useCallback(async () => {
     const payload = buildApplyAvailabilityPayload(formState);
-    await applyAvailabilityTemplate(payload).unwrap()
-      .then(() => {
-        dispatch(
-          notify({
-            msg: 'Applied Successfully',
-            sev: 'success'
-          })
-        );
-      })
-      .catch((e) => {
-        const errorMsg = extractErrorMessage(e) || 'Save Failed';
-        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
-      });
-    handleClose();
-  }, [applyAvailabilityTemplate, formState, handleClose]);
+    try {
+      await applyAvailabilityTemplate(payload).unwrap();
+      dispatch(
+        notify({
+          msg: 'Applied Successfully',
+          sev: 'success'
+        })
+      );
+      setFormState(prev => ({
+        ...prev,
+        startDate: null as any,
+        endDate: null as any,
+      }));
+    } catch (e) {
+      const errorMsg = extractErrorMessage(e) || 'Save Failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+      throw e;
+    }
+  }, [applyAvailabilityTemplate, dispatch, formState]);
 
   React.useEffect(() => {
     setFormState(prev => ({

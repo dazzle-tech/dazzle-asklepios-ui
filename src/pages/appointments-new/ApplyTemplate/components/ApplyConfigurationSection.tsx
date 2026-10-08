@@ -382,8 +382,14 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
 
   const [isPolicyPickerOpen, setIsPolicyPickerOpen] = React.useState(false);
   const [policyPickerSelectionIds, setPolicyPickerSelectionIds] = React.useState<number[]>([]);
+  const skipInitialPolicyResetRef = React.useRef(true);
 
   React.useEffect(() => {
+    if (skipInitialPolicyResetRef.current) {
+      skipInitialPolicyResetRef.current = false;
+      return;
+    }
+
     setDto(
       (prev) =>
       ({
@@ -426,6 +432,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
       return;
     }
 
+    if (isLoadingPolicyAssignments && (activePolicyAssignments as PolicyAssignment[]).length === 0) {
+      return;
+    }
+
     const availableIds = new Set(
       (activePolicyAssignments as PolicyAssignment[])
         .map((policyAssignment) => Number(policyAssignment.id))
@@ -447,7 +457,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
         policyAssignmentIds: nextIds,
       } as any;
     });
-  }, [activePolicyAssignments, shouldFetchPolicyAssignments, setDto]);
+  }, [activePolicyAssignments, isLoadingPolicyAssignments, shouldFetchPolicyAssignments, setDto]);
 
   const selectedPolicyAssignments = React.useMemo(() => {
     return (activePolicyAssignments as PolicyAssignment[]).filter(

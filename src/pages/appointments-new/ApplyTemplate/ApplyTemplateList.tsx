@@ -1,11 +1,15 @@
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { Box } from '@mui/material';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useGetAvailabilityGenerationBatchesByTemplateQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import {
+  useCancelUpcomingAvailableSlotsMutation,
+  useGetAvailabilityGenerationBatchesByTemplateQuery
+} from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { useGetAppointmentsByBatchIdQuery } from '@/services/appointment/appointmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
@@ -18,10 +22,11 @@ import type {
   AvailabilityGenerationBatch,
   AvailabilityTemplateResponseVM
 } from '@/types/model-types-new';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import type { LinkMap } from '@/utils/paginationHelper';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
-import { CalendarDays } from 'lucide-react';
+import { notify } from '@/utils/uiReducerActions';
+import { CalendarDays, CalendarX } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import ApplyTemplate from './ApplyTemplate';
@@ -56,6 +61,8 @@ const ApplyTemplateList = () => {
   const [appointmentSortColumn, setAppointmentSortColumn] = useState('id');
   const [appointmentSortType, setAppointmentSortType] = useState<'asc' | 'desc'>('asc');
   const [appointmentLinks, setAppointmentLinks] = useState<LinkMap>({});
+  const [cancelBatch, setCancelBatch] = useState<AvailabilityGenerationBatch | null>(null);
+  const [cancelReasonRecord, setCancelReasonRecordState] = useState({ cancelReason: '' });
 
   const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesActiveByStatusQuery({
     status: 'PUBLISHED'
@@ -72,6 +79,8 @@ const ApplyTemplateList = () => {
       },
       { skip: !selectedTemplate?.id }
     );
+  const [cancelUpcomingAvailableSlots, { isLoading: isCancellingUpcoming }] =
+    useCancelUpcomingAvailableSlotsMutation();
   const { data: appointmentsByBatchResponse, isFetching: isFetchingAppointmentsByBatch } =
     useGetAppointmentsByBatchIdQuery(
       {
@@ -299,6 +308,57 @@ const ApplyTemplateList = () => {
     []
   );
 
+  const setCancelReasonRecord = (next: { cancelReason?: string }) => {
+    setCancelReasonRecordState({
+      cancelReason: String(next?.cancelReason ?? '').slice(0, 255)
+    });
+  };
+
+  const closeCancelUpcomingModal = () => {
+    setCancelBatch(null);
+    setCancelReasonRecord({ cancelReason: '' });
+  };
+
+  const handleCancelUpcomingAvailableSlots = async () => {
+    const batchId = Number(cancelBatch?.id ?? 0);
+    const cancelReason = String(cancelReasonRecord.cancelReason ?? '').trim();
+    if (!batchId) return;
+    if (!cancelReason) {
+      dispatch(notify({ msg: 'Please enter a cancel reason', sev: 'warning' }));
+      return;
+    }
+    if (cancelReason.length > 255) {
+      dispatch(notify({ msg: 'Cancel reason must be 255 characters or fewer', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      const response = await cancelUpcomingAvailableSlots({ batchId, cancelReason }).unwrap();
+      dispatch(
+        notify({
+          msg:
+            response?.message ||
+            "Upcoming available slots were cancelled. Today's appointments stay available.",
+          sev: 'success'
+        })
+      );
+      closeCancelUpcomingModal();
+      if (selectedBatchId === batchId) {
+        setAppointmentPaginationParams(prev => ({
+          ...prev,
+          timestamp: Date.now()
+        }));
+      }
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to cancel upcoming available slots',
+          sev: 'warning'
+        })
+      );
+    }
+  };
+
   const generateAction = (rowData: AvailabilityTemplateResponseVM) => (
     <div className="container-of-icons">
       <button
@@ -438,6 +498,29 @@ const ApplyTemplateList = () => {
         ) : (
           <p>-</p>
         )
+      )
+    },
+    {
+      key: 'actions',
+      title: <Translate></Translate>,
+      flexGrow: 1,
+      render: (rowData: AvailabilityGenerationBatch) => (
+        <div className="container-of-icons">
+          <button
+            type="button"
+            title="Cancel upcoming new appointments"
+            onClick={e => {
+              e.stopPropagation();
+              setCancelReasonRecord({ cancelReason: '' });
+              setCancelBatch(rowData);
+            }}
+            className="icons-style"
+            style={{ background: 'transparent', border: 'none', padding: 0, display: 'inline-flex' }}
+            aria-label="Cancel upcoming new appointments"
+          >
+            <CalendarX size={22} color="#DC2626" />
+          </button>
+        </div>
       )
     }
   ];
@@ -607,6 +690,43 @@ const ApplyTemplateList = () => {
           </Panel>
         </Box>
       )}
+
+      <MyModal
+        open={Boolean(cancelBatch)}
+        setOpen={nextOpen => {
+          if (!nextOpen) closeCancelUpcomingModal();
+        }}
+        title="Cancel upcoming new appointments"
+        size="38vw"
+        bodyheight="32vh"
+        position="center"
+        hideBack
+        actionButtonLabel="Cancel upcoming slots"
+        actionButtonLoading={isCancellingUpcoming}
+        isDisabledActionBtn={isCancellingUpcoming || !String(cancelReasonRecord.cancelReason ?? '').trim()}
+        actionButtonFunction={handleCancelUpcomingAvailableSlots}
+        content={
+          <Form fluid layout="vertical">
+            <p style={{ margin: '0 0 12px', lineHeight: 1.5 }}>
+              Upcoming free slots for batch #{cancelBatch?.id} will be cancelled. Today&apos;s appointments stay
+              available.
+            </p>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Cancel Reason"
+              fieldName="cancelReason"
+              fieldType="textarea"
+              rows={3}
+              record={cancelReasonRecord}
+              setRecord={setCancelReasonRecord}
+            />
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: '#667085' }}>
+              {String(cancelReasonRecord.cancelReason ?? '').length}/255
+            </p>
+          </Form>
+        }
+      />
 
       {selectedTemplate?.id && selectedBatchId && (
         <Box mt={3}>

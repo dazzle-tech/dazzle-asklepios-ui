@@ -516,6 +516,17 @@ export interface AvailabilityGenerationBatch {
   lastModifiedDate?: string | null;
 }
 
+/** PUT `/availability-generation-batches/{batchId}/cancel-upcoming-available-slots` */
+export interface CancelUpcomingAvailableSlotsDTO {
+  cancelReason: string;
+}
+
+export interface CancelUpcomingAvailableSlotsResponseVM {
+  batchId?: number | null;
+  cancelledCount?: number | null;
+  message?: string | null;
+}
+
 /* =========================
  *  Appointments From Template
  * ========================= */
