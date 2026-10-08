@@ -138,6 +138,11 @@ const ClaimEncounterCopySocialHistory = ({
     }
   };
 
+  const handleAdd = () => {
+    setEditData(null);
+    setOpenEditModal(true);
+  };
+
   const handleEdit = (row: any) => {
     if (row?.patientIsFree === true) {
       setEditingFreeTextId(row.id);
