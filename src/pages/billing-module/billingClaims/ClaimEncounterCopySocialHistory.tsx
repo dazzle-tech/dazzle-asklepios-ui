@@ -1,5 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
+import { Form } from 'rsuite';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdModeEdit } from 'react-icons/md';
 
@@ -12,9 +13,14 @@ import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import Translate from '@/components/Translate';
 
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
 import {
   useCancelClaimEncounterCopySocialHistoryMutation,
-  useGetClaimEncounterCopySocialHistoriesQuery
+  useCreateClaimEncounterCopySocialHistoryMutation,
+  useGetClaimEncounterCopySocialHistoriesQuery,
+  useUpdateClaimEncounterCopySocialHistoryMutation
 } from '@/services/billing/claimEncounterCopySocialHistoryService';
 
 import EditClaimEncounterCopySocialHistoryModal from './EditClaimEncounterCopySocialHistoryModal';
@@ -22,6 +28,8 @@ import EditClaimEncounterCopySocialHistoryModal from './EditClaimEncounterCopySo
 const ClaimEncounterCopySocialHistory = ({
   claimEncounterCopyId
 }) => {
+  const dispatch = useAppDispatch();
+
   const [showCancelled, setShowCancelled] = useState(false);
 
   const [selectedHistory, setSelectedHistory] =
@@ -29,6 +37,12 @@ const ClaimEncounterCopySocialHistory = ({
 
   const [editData, setEditData] = useState<any>(null);
   const [openEditModal, setOpenEditModal] = useState(false);
+
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] =
+    useState<number | null>(null);
 
   const [openCancelModal, setOpenCancelModal] =
     useState(false);
@@ -55,12 +69,82 @@ const ClaimEncounterCopySocialHistory = ({
     { isLoading: isCancelling }
   ] = useCancelClaimEncounterCopySocialHistoryMutation();
 
-  const handleAdd = () => {
-    setEditData(null);
-    setOpenEditModal(true);
+  const [
+    createSocialHistory,
+    { isLoading: isSavingFreeText }
+  ] = useCreateClaimEncounterCopySocialHistoryMutation();
+
+  const [
+    updateSocialHistory,
+    { isLoading: isUpdatingFreeText }
+  ] = useUpdateClaimEncounterCopySocialHistoryMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    const payload = {
+      isCurrentSmoker: false,
+      smokeStartDate: null,
+      cigaretteAmount: null,
+      cigaretteType: null,
+      isPreviousSmoker: false,
+      smokeQuitDate: null,
+      exposureToSecondHandSmoke: false,
+      alcoholConsumption: false,
+      typeOfAlcohol: null,
+      alcoholSinceWhen: null,
+      substanceUse: false,
+      route: null,
+      frequency: null,
+      physicalLimitation: null,
+      diagnosedEatingDisorders: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateSocialHistory({
+          id: editingFreeTextId,
+          ...payload
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await createSocialHistory({
+          claimEncounterCopyId,
+          ...payload
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
   };
 
   const handleEdit = (row: any) => {
+    if (row?.patientIsFree === true) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({ freeText: row.freeText || '' });
+      return;
+    }
+
     setEditData(row);
     setOpenEditModal(true);
   };
@@ -342,6 +426,21 @@ const ClaimEncounterCopySocialHistory = ({
           >
             <Translate>Cancel</Translate>
           </MyButton>
+
+          <MyButton
+            disabled={
+              isSavingFreeText ||
+              isUpdatingFreeText ||
+              !freeTextRecord.freeText?.trim()
+            }
+            onClick={handleSaveFreeText}
+          >
+            {isSavingFreeText || isUpdatingFreeText
+              ? 'Saving...'
+              : editingFreeTextId !== null
+                ? 'Update'
+                : 'Save'}
+          </MyButton>
         </div>
 
         <div className="bt-right-3">
@@ -359,6 +458,24 @@ const ClaimEncounterCopySocialHistory = ({
           />
         </div>
       </div>
+
+      <Form
+        fluid
+        formValue={freeTextRecord}
+        onChange={(value: any) => setFreeTextRecord(value)}
+      >
+        <div style={{ marginBottom: 20, width: '100%' }}>
+          <MyInput
+            fieldType="textarea"
+            fieldLabel="Free Text"
+            fieldName="freeText"
+            record={freeTextRecord}
+            setRecord={setFreeTextRecord}
+            disabled={isSavingFreeText || isUpdatingFreeText}
+            width="100%"
+          />
+        </div>
+      </Form>
 
       <MyTable
         height={450}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Form } from 'rsuite';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdModeEdit } from 'react-icons/md';
 
@@ -10,12 +11,18 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import UserDateCell from '@/components/UserDateCell';
 import Translate from '@/components/Translate';
 
-
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 import { ClaimEncounterCopyFamilyHistory } from '@/types/model-types-new';
 
 import AddClaimEncounterCopyFamilyHistory from './AddClaimEncounterCopyFamilyHistory';
-import { useCancelClaimEncounterCopyFamilyHistoryMutation, useGetClaimEncounterCopyFamilyHistoriesQuery } from '@/services/billing/claimEncounterCopyFamilyHistoryService';
+import {
+  useCancelClaimEncounterCopyFamilyHistoryMutation,
+  useCreateClaimEncounterCopyFamilyHistoryMutation,
+  useGetClaimEncounterCopyFamilyHistoriesQuery,
+  useUpdateClaimEncounterCopyFamilyHistoryMutation
+} from '@/services/billing/claimEncounterCopyFamilyHistoryService';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import { formatEnumString } from '@/utils';
 
@@ -29,6 +36,8 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
     const direction = localStorage.getItem('direction') || 'LTR';
     const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
+    const dispatch = useAppDispatch();
+
     const [showCancelled, setShowCancelled] = useState(false);
     const [selectedHistory, setSelectedHistory] =
         useState<ClaimEncounterCopyFamilyHistory | null>(null);
@@ -36,6 +45,12 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
     const [openModal, setOpenModal] = useState(false);
     const [openCancelModal, setOpenCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
+
+    const [freeTextRecord, setFreeTextRecord] = useState({
+        freeText: ''
+    });
+    const [editingFreeTextId, setEditingFreeTextId] =
+        useState<number | null>(null);
 
     const {
         data: familyHistories = [],
@@ -49,6 +64,62 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
         cancelClaimEncounterCopyFamilyHistory,
         { isLoading: isCancelling }
     ] = useCancelClaimEncounterCopyFamilyHistoryMutation();
+
+    const [
+        createFamilyHistory,
+        { isLoading: isSavingFreeText }
+    ] = useCreateClaimEncounterCopyFamilyHistoryMutation();
+
+    const [
+        updateFamilyHistory,
+        { isLoading: isUpdatingFreeText }
+    ] = useUpdateClaimEncounterCopyFamilyHistoryMutation();
+
+    const handleSaveFreeText = async () => {
+        const freeText = freeTextRecord.freeText?.trim();
+
+        if (!freeText) {
+            dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+            return;
+        }
+
+        const payload = {
+            condition: null,
+            relation: null,
+            inheritedDiseases: null,
+            patientIsFree: true,
+            freeText
+        };
+
+        try {
+            if (editingFreeTextId !== null) {
+                await updateFamilyHistory({
+                    id: editingFreeTextId,
+                    ...payload
+                }).unwrap();
+
+                dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+            } else {
+                await createFamilyHistory({
+                    claimEncounterCopyId,
+                    ...payload
+                }).unwrap();
+
+                dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+            }
+
+            setFreeTextRecord({ freeText: '' });
+            setEditingFreeTextId(null);
+        } catch (error: any) {
+            const errorMessage =
+                error?.data?.message ||
+                error?.data?.detail ||
+                error?.error ||
+                `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+            dispatch(notify({ msg: errorMessage, sev: 'error' }));
+        }
+    };
 
     const relations = useMemo(
         () => [
@@ -70,6 +141,12 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
     };
 
     const handleEdit = (row: ClaimEncounterCopyFamilyHistory) => {
+        if (row?.patientIsFree === true) {
+            setEditingFreeTextId(row.id);
+            setFreeTextRecord({ freeText: row.freeText || '' });
+            return;
+        }
+
         setSelectedHistory(row);
         setOpenModal(true);
     };
@@ -250,6 +327,21 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
                     >
                         <Translate>Cancel</Translate>
                     </MyButton>
+
+                    <MyButton
+                        disabled={
+                            isSavingFreeText ||
+                            isUpdatingFreeText ||
+                            !freeTextRecord.freeText?.trim()
+                        }
+                        onClick={handleSaveFreeText}
+                    >
+                        {isSavingFreeText || isUpdatingFreeText
+                            ? 'Saving...'
+                            : editingFreeTextId !== null
+                                ? 'Update'
+                                : 'Save'}
+                    </MyButton>
                 </div>
 
                 <div className="bt-right-3">
@@ -265,6 +357,24 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
                     />
                 </div>
             </div>
+
+            <Form
+                fluid
+                formValue={freeTextRecord}
+                onChange={(value: any) => setFreeTextRecord(value)}
+            >
+                <div style={{ marginBottom: 20, width: '100%' }}>
+                    <MyInput
+                        fieldType="textarea"
+                        fieldLabel="Free Text"
+                        fieldName="freeText"
+                        record={freeTextRecord}
+                        setRecord={setFreeTextRecord}
+                        disabled={isSavingFreeText || isUpdatingFreeText}
+                        width="100%"
+                    />
+                </div>
+            </Form>
 
             <MyTable
                 height={450}

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Form } from 'rsuite';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdModeEdit } from 'react-icons/md';
 
@@ -14,9 +15,14 @@ import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
 import { formatEnumString } from '@/utils';
 
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
 import {
   useCancelClaimEncounterCopyHospitalizationMutation,
-  useGetClaimEncounterCopyHospitalizationsQuery
+  useCreateClaimEncounterCopyHospitalizationMutation,
+  useGetClaimEncounterCopyHospitalizationsQuery,
+  useUpdateClaimEncounterCopyHospitalizationMutation
 } from '@/services/billing/claimEncounterCopyHospitalizationService';
 
 import AddClaimEncounterCopyHospitalization from './AddClaimEncounterCopyHospitalization';
@@ -37,6 +43,8 @@ const ClaimEncounterCopyHospitalizations = ({
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
+  const dispatch = useAppDispatch();
+
   const [showCancelled, setShowCancelled] = useState(false);
 
   const [selectedHospitalization, setSelectedHospitalization] =
@@ -45,6 +53,12 @@ const ClaimEncounterCopyHospitalizations = ({
   const [openModal, setOpenModal] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] =
+    useState<number | null>(null);
 
   const {
     data: hospitalizations = [],
@@ -64,6 +78,66 @@ const ClaimEncounterCopyHospitalizations = ({
     { isLoading: isCancelling }
   ] = useCancelClaimEncounterCopyHospitalizationMutation();
 
+  const [
+    createClaimEncounterCopyHospitalization,
+    { isLoading: isSavingFreeText }
+  ] = useCreateClaimEncounterCopyHospitalizationMutation();
+
+  const [
+    updateClaimEncounterCopyHospitalization,
+    { isLoading: isUpdatingFreeText }
+  ] = useUpdateClaimEncounterCopyHospitalizationMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    const payload = {
+      facility: null,
+      reason: null,
+      admissionType: null,
+      dateOfAdmission: null,
+      lengthOfStayDays: null,
+      outcomes: null,
+      medicalInterventionsPerformed: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateClaimEncounterCopyHospitalization({
+          id: editingFreeTextId,
+          data: payload
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await createClaimEncounterCopyHospitalization({
+          claimEncounterCopyId,
+          data: payload
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
   const handleAdd = () => {
     setSelectedHospitalization(null);
     setOpenModal(true);
@@ -73,6 +147,12 @@ const ClaimEncounterCopyHospitalizations = ({
     row: ClaimEncounterCopyHospitalization
   ) => {
     if (row.status === 'CANCELLED') {
+      return;
+    }
+
+    if (row?.patientIsFree === true) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({ freeText: row.freeText || '' });
       return;
     }
 
@@ -379,6 +459,22 @@ const ClaimEncounterCopyHospitalizations = ({
             >
               <Translate>Cancel</Translate>
             </MyButton>
+
+            <MyButton
+              disabled={
+                edit ||
+                isSavingFreeText ||
+                isUpdatingFreeText ||
+                !freeTextRecord.freeText?.trim()
+              }
+              onClick={handleSaveFreeText}
+            >
+              {isSavingFreeText || isUpdatingFreeText
+                ? 'Saving...'
+                : editingFreeTextId !== null
+                  ? 'Update'
+                  : 'Save'}
+            </MyButton>
           </div>
 
           <div className="bt-right-3">
@@ -396,6 +492,26 @@ const ClaimEncounterCopyHospitalizations = ({
             />
           </div>
         </div>
+      )}
+
+      {!toShowData && (
+        <Form
+          fluid
+          formValue={freeTextRecord}
+          onChange={(value: any) => setFreeTextRecord(value)}
+        >
+          <div style={{ marginBottom: 20, width: '100%' }}>
+            <MyInput
+              fieldType="textarea"
+              fieldLabel="Free Text"
+              fieldName="freeText"
+              record={freeTextRecord}
+              setRecord={setFreeTextRecord}
+              disabled={edit || isSavingFreeText || isUpdatingFreeText}
+              width="100%"
+            />
+          </div>
+        </Form>
       )}
 
       <MyTable
