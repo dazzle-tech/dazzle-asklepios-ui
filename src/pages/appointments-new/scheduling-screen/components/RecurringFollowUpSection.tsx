@@ -66,6 +66,16 @@ type Props = {
 
 type SkippedDay = { dateKey: string; dateLabel: string };
 
+type UnavailableSlot = {
+  id: string;
+  rowId: string;
+  dateKey: string;
+  dateLabel: string;
+  dayLabel: string;
+  timeLabel: string | null;
+  reason: string;
+};
+
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const toDateKey = (date: Date) => {
@@ -143,8 +153,13 @@ const RecurringFollowUpSection = ({
     unit: 'week'
   });
   const [skipped, setSkipped] = useState<SkippedDay[]>([]);
+  const [unavailable, setUnavailable] = useState<UnavailableSlot[]>([]);
   const [slotPool, setSlotPool] = useState<RecurringSlotChoice[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [unavailableOpen, setUnavailableOpen] = useState(false);
+  const [alertItemId, setAlertItemId] = useState<string | null>(null);
+  const [upcomingDateKey, setUpcomingDateKey] = useState<string | null>(null);
   const [changeRowId, setChangeRowId] = useState<string | null>(null);
   const [pickerDateKey, setPickerDateKey] = useState<string | null>(null);
 
@@ -152,7 +167,12 @@ const RecurringFollowUpSection = ({
     setSelectedDays([]);
     setForm({ startDate: null, period: 1, unit: 'week' });
     setSkipped([]);
+    setUnavailable([]);
     setSlotPool([]);
+    setHasGenerated(false);
+    setUnavailableOpen(false);
+    setAlertItemId(null);
+    setUpcomingDateKey(null);
     setChangeRowId(null);
   }, [resetKey]);
 
@@ -171,13 +191,84 @@ const RecurringFollowUpSection = ({
   const clearMapping = () => {
     onRowsChange([]);
     setSkipped([]);
+    setUnavailable([]);
     setSlotPool([]);
+    setHasGenerated(false);
+    setUnavailableOpen(false);
+    setAlertItemId(null);
+    setUpcomingDateKey(null);
     setChangeRowId(null);
   };
 
   const selectedDayLabels = DAYS.filter(day => selectedDays.includes(day.value)).map(day => day.label);
 
   const readyCount = rows.filter(row => row.slot).length;
+
+  const unresolvedCount = useMemo(() => {
+    const unresolved = unavailable.filter(item => !rows.some(row => row.id === item.rowId && row.slot));
+    return new Set(unresolved.map(item => item.rowId)).size;
+  }, [unavailable, rows]);
+
+  const selectedUnavailable = unavailable.find(item => item.id === alertItemId) ?? null;
+
+  const upcomingSlots = useMemo(() => {
+    if (!selectedUnavailable) return [];
+    const todayKey = toDateKey(startOfDay(new Date()));
+    const usedIds = new Set(
+      rows.filter(row => row.id !== selectedUnavailable.rowId && row.slot).map(row => row.slot!.id)
+    );
+    const usedDates = new Set(
+      rows.filter(row => row.id !== selectedUnavailable.rowId && row.slot).map(row => row.dateKey)
+    );
+    return slotPool.filter(
+      slot => slot.dateKey >= todayKey && !usedIds.has(slot.id) && !usedDates.has(slot.dateKey)
+    );
+  }, [rows, selectedUnavailable, slotPool]);
+
+  const upcomingDates = useMemo(() => {
+    const seen = new Set<string>();
+    return upcomingSlots.filter(slot => {
+      if (seen.has(slot.dateKey)) return false;
+      seen.add(slot.dateKey);
+      return true;
+    });
+  }, [upcomingSlots]);
+
+  const activeUpcomingDateKey =
+    upcomingDateKey && upcomingDates.some(slot => slot.dateKey === upcomingDateKey)
+      ? upcomingDateKey
+      : upcomingDates[0]?.dateKey ?? null;
+
+  const upcomingTimes = upcomingSlots.filter(slot => slot.dateKey === activeUpcomingDateKey);
+
+  const selectUnavailable = (item: UnavailableSlot) => {
+    setAlertItemId(item.id);
+    const replacement = rows.find(row => row.id === item.rowId && row.slot);
+    const todayKey = toDateKey(startOfDay(new Date()));
+    const usedIds = new Set(rows.filter(row => row.id !== item.rowId && row.slot).map(row => row.slot!.id));
+    const usedDates = new Set(rows.filter(row => row.id !== item.rowId && row.slot).map(row => row.dateKey));
+    const pool = slotPool.filter(
+      slot => slot.dateKey >= todayKey && !usedIds.has(slot.id) && !usedDates.has(slot.dateKey)
+    );
+    const preferred =
+      replacement?.dateKey && pool.some(slot => slot.dateKey === replacement.dateKey)
+        ? replacement.dateKey
+        : pool[0]?.dateKey ?? null;
+    setUpcomingDateKey(preferred);
+  };
+
+  const assignUpcomingSlot = (item: UnavailableSlot, slot: RecurringSlotChoice) => {
+    const date = parseDateOnly(slot.dateKey);
+    const nextRow: RecurringMappingRow = {
+      id: item.rowId,
+      dateKey: slot.dateKey,
+      dateLabel: slot.dateLabel,
+      dayLabel: date ? formatDayLabel(date) : item.dayLabel,
+      slot
+    };
+    const exists = rows.some(row => row.id === item.rowId);
+    onRowsChange(exists ? rows.map(row => (row.id === item.rowId ? nextRow : row)) : [...rows, nextRow]);
+  };
 
   const changeRow = rows.find(row => row.id === changeRowId) ?? null;
 
@@ -320,7 +411,62 @@ const RecurringFollowUpSection = ({
         };
       });
 
+      const timeLabelFrom = (startIso?: string | null, endIso?: string | null) => {
+        if (!startIso) return null;
+        const start = new Date(startIso);
+        if (Number.isNaN(start.getTime())) return null;
+        const end = endIso ? new Date(endIso) : null;
+        return formatTimeLabel(start, end && !Number.isNaN(end.getTime()) ? end : null);
+      };
+
+      const nextUnavailable: UnavailableSlot[] = [];
+      const coveredDates = new Set<string>();
+      (preview?.unavailableSlots ?? []).forEach((slot, index) => {
+        const date = parseDateOnly(slot.date);
+        const dateKey = date ? toDateKey(date) : String(slot.date);
+        coveredDates.add(dateKey);
+        nextUnavailable.push({
+          id: `${dateKey}-${index}`,
+          rowId: `replacement-${dateKey}`,
+          dateKey,
+          dateLabel: date ? formatDateLabel(date) : String(slot.date),
+          dayLabel: date ? formatDayLabel(date) : String(slot.dayOfWeek ?? ''),
+          timeLabel: timeLabelFrom(slot.startDatetime, slot.endDatetime),
+          reason: slot.reason || 'Appointment already exists on this day'
+        });
+      });
+      (preview?.skippedDays ?? []).forEach(day => {
+        const date = parseDateOnly(day.date);
+        const dateKey = date ? toDateKey(date) : String(day.date);
+        if (coveredDates.has(dateKey)) return;
+        coveredDates.add(dateKey);
+        nextUnavailable.push({
+          id: dateKey,
+          rowId: `replacement-${dateKey}`,
+          dateKey,
+          dateLabel: date ? formatDateLabel(date) : String(day.date),
+          dayLabel: date ? formatDayLabel(date) : String(day.dayOfWeek ?? ''),
+          timeLabel: null,
+          reason: day.reason || 'Appointment already exists on this day'
+        });
+      });
+      nextRows.forEach(row => {
+        if (row.slot) return;
+        nextUnavailable.push({
+          id: `empty-${row.id}`,
+          rowId: row.id,
+          dateKey: row.dateKey,
+          dateLabel: row.dateLabel,
+          dayLabel: row.dayLabel,
+          timeLabel: null,
+          reason: 'No open slot on this day'
+        });
+      });
+
       setSkipped(nextSkipped);
+      setUnavailable(nextUnavailable);
+      setAlertItemId(nextUnavailable[0]?.id ?? null);
+      setHasGenerated(true);
       setSlotPool(slots);
       onRowsChange(nextRows);
 
@@ -457,6 +603,27 @@ const RecurringFollowUpSection = ({
                     <MyButton appearance="ghost" loading={isGenerating} disabled={disabled} onClick={() => void handleGenerate()}>
                       Generate
                     </MyButton>
+                    <div className="recurring-followup-alert">
+                      <MyButton
+                        appearance="ghost"
+                        color="#c2410c"
+                        disabled={disabled}
+                        onClick={() => {
+                          if (!hasGenerated) {
+                            dispatch(notify({ msg: 'Generate the series first to see unavailable slots.', sev: 'warning' }));
+                            return;
+                          }
+                          const first = unavailable.find(item => item.id === alertItemId) ?? unavailable[0];
+                          if (first) selectUnavailable(first);
+                          setUnavailableOpen(true);
+                        }}
+                      >
+                        Unavailable
+                      </MyButton>
+                      {hasGenerated && unresolvedCount > 0 && (
+                        <span className="recurring-followup-alert-count">{unresolvedCount}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Form>
@@ -507,6 +674,112 @@ const RecurringFollowUpSection = ({
               )}
             </>
           )}
+
+          <Modal open={unavailableOpen} onClose={() => setUnavailableOpen(false)} size="md">
+            <Modal.Header>
+              <Modal.Title>Unavailable slots</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p className="recurring-followup-hint">
+                These days cannot use their original slot. Select one, choose a day that has an available slot, then pick a time.
+              </p>
+              {unavailable.length === 0 ? (
+                <p className="recurring-followup-row-empty">Every generated day has an available slot.</p>
+              ) : (
+                <div className="recurring-followup-unavailable">
+                  <div className="recurring-followup-slot-list">
+                    {unavailable.map(item => {
+                      const replacement = rows.find(row => row.id === item.rowId && row.slot);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={
+                            item.id === alertItemId
+                              ? 'recurring-followup-slot-option selected'
+                              : 'recurring-followup-slot-option'
+                          }
+                          onClick={() => selectUnavailable(item)}
+                        >
+                          <div className="recurring-followup-row-date">
+                            {item.dayLabel}, {item.dateLabel}
+                            {item.timeLabel ? ` · ${item.timeLabel}` : ''}
+                          </div>
+                          <div className="recurring-followup-row-empty">{item.reason}</div>
+                          {replacement?.slot && (
+                            <div className="recurring-followup-row-slot">
+                              Upcoming slot: {replacement.dayLabel}, {replacement.dateLabel} · {replacement.slot.timeLabel}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div>
+                    <p className="recurring-followup-summary-title">Upcoming available slots</p>
+                    {upcomingDates.length === 0 ? (
+                      <p className="recurring-followup-row-empty">No upcoming open slot for this configuration.</p>
+                    ) : (
+                      <>
+                        <Form fluid>
+                          <MyInput
+                            column
+                            width="100%"
+                            fieldLabel="Date"
+                            fieldType="select"
+                            fieldName="dateKey"
+                            selectData={upcomingDates.map(slot => {
+                              const date = parseDateOnly(slot.dateKey);
+                              return {
+                                label: date ? `${formatDayLabel(date)}, ${slot.dateLabel}` : slot.dateLabel,
+                                value: slot.dateKey
+                              };
+                            })}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            record={{ dateKey: activeUpcomingDateKey }}
+                            setRecord={(next: any) => setUpcomingDateKey(next?.dateKey ?? null)}
+                            searchable
+                          />
+                        </Form>
+                        <div className="recurring-followup-slot-list">
+                          {upcomingTimes.length === 0 ? (
+                            <p className="recurring-followup-row-empty">No open slot on this date.</p>
+                          ) : (
+                            upcomingTimes.map(slot => {
+                              const assigned =
+                                selectedUnavailable != null &&
+                                rows.some(row => row.id === selectedUnavailable.rowId && row.slot?.id === slot.id);
+                              return (
+                                <button
+                                  key={slot.id}
+                                  type="button"
+                                  className={
+                                    assigned
+                                      ? 'recurring-followup-slot-option selected'
+                                      : 'recurring-followup-slot-option'
+                                  }
+                                  disabled={!selectedUnavailable}
+                                  onClick={() => selectedUnavailable && assignUpcomingSlot(selectedUnavailable, slot)}
+                                >
+                                  {slot.timeLabel}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <MyButton appearance="ghost" onClick={() => setUnavailableOpen(false)}>
+                Close
+              </MyButton>
+            </Modal.Footer>
+          </Modal>
 
           <Modal open={Boolean(changeRow)} onClose={() => setChangeRowId(null)} size="sm">
             <Modal.Header>

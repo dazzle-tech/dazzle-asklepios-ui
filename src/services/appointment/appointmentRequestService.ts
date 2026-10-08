@@ -34,6 +34,14 @@ export type RecurringAvailableSlot = {
   endDatetime?: string | null;
 };
 
+export type RecurringUnavailableSlot = {
+  date: string;
+  dayOfWeek?: string | null;
+  startDatetime?: string | null;
+  endDatetime?: string | null;
+  reason?: string | null;
+};
+
 export type RecurringAppointmentPreview = {
   days: Array<{
     date: string;
@@ -45,6 +53,7 @@ export type RecurringAppointmentPreview = {
   }>;
   skippedDays: RecurringSkippedDay[];
   availableSlots: RecurringAvailableSlot[];
+  unavailableSlots?: RecurringUnavailableSlot[];
 };
 
 export type RecurringAppointmentCreateResult = {
