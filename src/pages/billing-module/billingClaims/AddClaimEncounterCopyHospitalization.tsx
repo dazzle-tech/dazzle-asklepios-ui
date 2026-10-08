@@ -174,98 +174,102 @@ const AddClaimEncounterCopyHospitalization = ({
       <MyInput
         width="100%"
         column
-        fieldType="check"
+        fieldType="checkbox"
         fieldLabel="Patient is Free"
         fieldName="patientIsFree"
         record={formData}
         setRecord={setFormData}
       />
 
-      {formData.patientIsFree ? (
-        <MyInput
-          width="100%"
-          column
-          fieldType="textarea"
-          fieldLabel="Free Text"
-          fieldName="freeText"
-          record={formData}
-          setRecord={setFormData}
-          required
-        />
-      ) : (
-        <>
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Facility"
-            fieldName="facility"
-            record={formData}
-            setRecord={setFormData}
-            required
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldType="textarea"
+        fieldLabel="Free Text"
+        fieldName="freeText"
+        record={formData}
+        setRecord={setFormData}
+        required={formData.patientIsFree}
+        disabled={!formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Reason"
-            fieldName="reason"
-            record={formData}
-            setRecord={setFormData}
-            required
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Facility"
+        fieldName="facility"
+        record={formData}
+        setRecord={setFormData}
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Admission Type"
-            fieldName="admissionType"
-            record={formData}
-            setRecord={setFormData}
-            required
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Reason"
+        fieldName="reason"
+        record={formData}
+        setRecord={setFormData}
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Date of admission"
-            fieldType="date"
-            fieldName="dateOfAdmission"
-            record={formData}
-            setRecord={setFormData}
-            disableFutureDates
-            required
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Admission Type"
+        fieldName="admissionType"
+        record={formData}
+        setRecord={setFormData}
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Length of stay (Days)"
-            fieldType="number"
-            fieldName="lengthOfStayDays"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Date of admission"
+        fieldType="date"
+        fieldName="dateOfAdmission"
+        record={formData}
+        setRecord={setFormData}
+        disableFutureDates
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Outcomes"
-            fieldName="outcomes"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Length of stay (Days)"
+        fieldType="number"
+        fieldName="lengthOfStayDays"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="100%"
-            column
-            fieldLabel="Medical Interventions Performed"
-            fieldType="textarea"
-            fieldName="medicalInterventionsPerformed"
-            record={formData}
-            setRecord={setFormData}
-          />
-        </>
-      )}
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Outcomes"
+        fieldName="outcomes"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
+
+      <MyInput
+        width="100%"
+        column
+        fieldLabel="Medical Interventions Performed"
+        fieldType="textarea"
+        fieldName="medicalInterventionsPerformed"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
     </Form>
   );
 

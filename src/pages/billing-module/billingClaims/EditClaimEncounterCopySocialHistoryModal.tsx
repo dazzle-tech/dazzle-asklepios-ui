@@ -778,6 +778,14 @@ const EditClaimEncounterCopySocialHistoryModal = ({
   const validateBeforeSave = () => {
     const errors: string[] = [];
 
+    if (record.patientIsFree) {
+      if (!record.freeText?.trim()) {
+        errors.push('Free Text is required.');
+      }
+
+      return errors;
+    }
+
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
@@ -869,11 +877,14 @@ const EditClaimEncounterCopySocialHistoryModal = ({
       return;
     }
 
+    const isFree = record.patientIsFree === true;
+
     const payload = {
       isCurrentSmoker:
-        record.isCurrentSmoker ?? false,
+        isFree ? false : record.isCurrentSmoker ?? false,
 
       smokeStartDate:
+        !isFree &&
         record.isCurrentSmoker &&
         record.smokeStartDate
           ? new Date(
@@ -882,19 +893,20 @@ const EditClaimEncounterCopySocialHistoryModal = ({
           : null,
 
       cigaretteAmount:
-        record.isCurrentSmoker
+        !isFree && record.isCurrentSmoker
           ? record.cigaretteAmount ?? null
           : null,
 
       cigaretteType:
-        record.isCurrentSmoker
+        !isFree && record.isCurrentSmoker
           ? record.cigaretteType?.trim() || null
           : null,
 
       isPreviousSmoker:
-        record.isPreviousSmoker ?? false,
+        isFree ? false : record.isPreviousSmoker ?? false,
 
       smokeQuitDate:
+        !isFree &&
         record.isPreviousSmoker &&
         record.smokeQuitDate
           ? new Date(
@@ -903,17 +915,18 @@ const EditClaimEncounterCopySocialHistoryModal = ({
           : null,
 
       exposureToSecondHandSmoke:
-        record.exposureToSecondHandSmoke ?? false,
+        isFree ? false : record.exposureToSecondHandSmoke ?? false,
 
       alcoholConsumption:
-        record.alcoholConsumption ?? false,
+        isFree ? false : record.alcoholConsumption ?? false,
 
       typeOfAlcohol:
-        record.alcoholConsumption
+        !isFree && record.alcoholConsumption
           ? record.typeOfAlcohol?.trim() || null
           : null,
 
       alcoholSinceWhen:
+        !isFree &&
         record.alcoholConsumption &&
         record.alcoholSinceWhen
           ? new Date(
@@ -924,29 +937,28 @@ const EditClaimEncounterCopySocialHistoryModal = ({
           : null,
 
       substanceUse:
-        record.substanceUse ?? false,
+        isFree ? false : record.substanceUse ?? false,
 
       route:
-        record.substanceUse
+        !isFree && record.substanceUse
           ? record.route || null
           : null,
 
       frequency:
-        record.substanceUse
+        !isFree && record.substanceUse
           ? record.frequency || null
           : null,
 
       physicalLimitation:
-        record.physicalLimitation || null,
+        isFree ? null : record.physicalLimitation || null,
 
       diagnosedEatingDisorders:
-        record.diagnosedEatingDisorders || null,
+        isFree ? null : record.diagnosedEatingDisorders || null,
 
-      patientIsFree:
-        record.patientIsFree ?? false,
+      patientIsFree: isFree,
 
       freeText:
-        record.patientIsFree
+        isFree
           ? record.freeText?.trim() || null
           : null
     };
@@ -1028,7 +1040,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               fieldName="isCurrentSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record?.isPreviousSmoker}
+              disabled={record?.patientIsFree || record?.isPreviousSmoker}
             />
           </div>
 
@@ -1037,19 +1049,20 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               <MyInput
                 width="100%"
                 column
-                required
+                required={!record?.patientIsFree}
                 fieldType="date"
                 fieldLabel="Start date"
                 fieldName="smokeStartDate"
                 disableFutureDates
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
 
               <MyInput
                 width="100%"
                 column
-                required
+                required={!record?.patientIsFree}
                 fieldType="number"
                 fieldLabel="Amount"
                 fieldName="cigaretteAmount"
@@ -1057,6 +1070,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
                 setRecord={setRecord}
                 rightAddon="pack/day"
                 rightAddonwidth={80}
+                disabled={record?.patientIsFree}
               />
 
               <MyInput
@@ -1066,6 +1080,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
                 fieldName="cigaretteType"
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
             </>
           )}
@@ -1079,7 +1094,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               fieldName="isPreviousSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record?.isCurrentSmoker}
+              disabled={record?.patientIsFree || record?.isCurrentSmoker}
             />
           </div>
 
@@ -1088,13 +1103,14 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               <MyInput
                 width="100%"
                 column
-                required
+                required={!record?.patientIsFree}
                 fieldType="date"
                 fieldLabel="Quit date"
                 fieldName="smokeQuitDate"
                 disableFutureDates
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
             </div>
           )}
@@ -1107,6 +1123,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
             fieldName="exposureToSecondHandSmoke"
             record={record}
             setRecord={setRecord}
+            disabled={record?.patientIsFree}
           />
         </Form>
       </CollapsibleSection>
@@ -1135,6 +1152,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               fieldName="alcoholConsumption"
               record={record}
               setRecord={setRecord}
+              disabled={record?.patientIsFree}
             />
           </div>
 
@@ -1143,13 +1161,14 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               <MyInput
                 width="100%"
                 column
-                required
+                required={!record?.patientIsFree}
                 fieldType="date"
                 fieldLabel="Since when"
                 fieldName="alcoholSinceWhen"
                 disableFutureDates
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
 
               <MyInput
@@ -1159,6 +1178,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
                 fieldName="typeOfAlcohol"
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
             </>
           )}
@@ -1189,6 +1209,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
               fieldName="substanceUse"
               record={record}
               setRecord={setRecord}
+              disabled={record?.patientIsFree}
             />
           </div>
 
@@ -1206,6 +1227,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
+                disabled={record?.patientIsFree}
               />
 
               <MyInput
@@ -1221,6 +1243,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
                 record={record}
                 setRecord={setRecord}
                 searchable={false}
+                disabled={record?.patientIsFree}
               />
             </>
           )}
@@ -1254,6 +1277,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
             record={record}
             setRecord={setRecord}
             searchable={false}
+            disabled={record?.patientIsFree}
           />
 
           <MyInput
@@ -1269,6 +1293,7 @@ const EditClaimEncounterCopySocialHistoryModal = ({
             record={record}
             setRecord={setRecord}
             searchable={false}
+            disabled={record?.patientIsFree}
           />
         </Form>
       </CollapsibleSection>
@@ -1297,17 +1322,17 @@ const EditClaimEncounterCopySocialHistoryModal = ({
             />
           </div>
 
-          {record?.patientIsFree && (
-            <MyInput
-              width="100%"
-              column
-              fieldType="textarea"
-              fieldLabel="Free Text"
-              fieldName="freeText"
-              record={record}
-              setRecord={setRecord}
-            />
-          )}
+          <MyInput
+            width="100%"
+            column
+            fieldType="textarea"
+            fieldLabel="Free Text"
+            fieldName="freeText"
+            record={record}
+            setRecord={setRecord}
+            required={record?.patientIsFree}
+            disabled={!record?.patientIsFree}
+          />
         </Form>
       </CollapsibleSection>
     </div>

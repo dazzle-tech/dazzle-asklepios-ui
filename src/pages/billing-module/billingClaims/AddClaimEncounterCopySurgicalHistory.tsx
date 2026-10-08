@@ -361,181 +361,185 @@ const AddClaimEncounterCopySurgicalHistory = ({
         setRecord={setFormData}
       />
 
-      {formData.patientIsFree ? (
-        <MyInput
-          width="28vw"
-          column
-          required
-          fieldLabel="Free Text"
-          fieldType="textarea"
-          fieldName="freeText"
-          record={formData}
-          setRecord={setFormData}
-        />
-      ) : (
-        <>
-          <MyInput
-            width="14vw"
-            column
-            required
-            fieldLabel="Surgery"
-            fieldName="surgery"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="28vw"
+        column
+        required={formData.patientIsFree}
+        fieldLabel="Free Text"
+        fieldType="textarea"
+        fieldName="freeText"
+        record={formData}
+        setRecord={setFormData}
+        disabled={!formData.patientIsFree}
+      />
 
-          <MyInput
-            width="14vw"
-            column
-            required
-            fieldLabel="Date of surgery"
-            fieldType="date"
-            fieldName="dateOfSurgery"
-            disableFutureDates
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="14vw"
+        column
+        required={!formData.patientIsFree}
+        fieldLabel="Surgery"
+        fieldName="surgery"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="14vw"
-            column
-            required
-            fieldLabel="Facility"
-            fieldName="facility"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="14vw"
+        column
+        required={!formData.patientIsFree}
+        fieldLabel="Date of surgery"
+        fieldType="date"
+        fieldName="dateOfSurgery"
+        disableFutureDates
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="14vw"
-            column
-            required
-            fieldLabel="Anesthesia Type"
-            fieldType="select"
-            fieldName="anesthesiaType"
-            selectData={anesthesiaLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            disableByField="isValid"
-            selectDataValue="key"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="14vw"
+        column
+        required={!formData.patientIsFree}
+        fieldLabel="Facility"
+        fieldName="facility"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="28vw"
-            column
-            fieldLabel="Complications"
-            fieldType="checkPicker"
-            fieldName="complications"
-            selectData={complicationsLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            disableByField="isValid"
-            selectDataValue="key"
-            record={formData}
-            setRecord={setFormData}
-          />
+      <MyInput
+        width="14vw"
+        column
+        required={!formData.patientIsFree}
+        fieldLabel="Anesthesia Type"
+        fieldType="select"
+        fieldName="anesthesiaType"
+        selectData={anesthesiaLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-          <MyInput
-            width="28vw"
-            column
-            fieldLabel="Complications Details"
-            fieldType="textarea"
-            fieldName="complicationsDetails"
-            record={{
-              ...formData,
-              complicationsDetails: (
-                formData.complications || []
-              )
-                .map(selectedKey => {
-                  const item =
-                    (
-                      complicationsLov?.object ?? []
-                    ).find(
-                      lov =>
-                        lov.key === selectedKey
-                    );
+      <MyInput
+        width="28vw"
+        column
+        fieldLabel="Complications"
+        fieldType="checkPicker"
+        fieldName="complications"
+        selectData={complicationsLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-                  return (
-                    item?.lovDisplayVale ||
-                    selectedKey
-                  );
-                })
-                .filter(Boolean)
-                .join(', ')
-            }}
-            setRecord={() => {}}
-            disabled
-          />
+      <MyInput
+        width="28vw"
+        column
+        fieldLabel="Complications Details"
+        fieldType="textarea"
+        fieldName="complicationsDetails"
+        record={{
+          ...formData,
+          complicationsDetails: (
+            formData.complications || []
+          )
+            .map(selectedKey => {
+              const item =
+                (
+                  complicationsLov?.object ?? []
+                ).find(
+                  lov =>
+                    lov.key === selectedKey
+                );
 
-          <MyInput
-            width="28vw"
-            column
-            fieldLabel="Adverse Reactions"
-            fieldType="checkPicker"
-            fieldName="adverseReactionsToAnesthesia"
-            selectData={adverseLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            disableByField="isValid"
-            selectDataValue="key"
-            record={formData}
-            setRecord={setFormData}
-          />
+              return (
+                item?.lovDisplayVale ||
+                selectedKey
+              );
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => {}}
+        disabled
+      />
 
-          <MyInput
-            width="28vw"
-            column
-            fieldLabel="Adverse Reactions Details"
-            fieldType="textarea"
-            fieldName="adverseReactionsDetails"
-            record={{
-              ...formData,
-              adverseReactionsDetails: (
-                formData.adverseReactionsToAnesthesia ||
-                []
-              )
-                .map(selectedKey => {
-                  const item =
-                    (
-                      adverseLov?.object ?? []
-                    ).find(
-                      lov =>
-                        lov.key === selectedKey
-                    );
+      <MyInput
+        width="28vw"
+        column
+        fieldLabel="Adverse Reactions"
+        fieldType="checkPicker"
+        fieldName="adverseReactionsToAnesthesia"
+        selectData={adverseLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree}
+      />
 
-                  return (
-                    item?.lovDisplayVale ||
-                    selectedKey
-                  );
-                })
-                .filter(Boolean)
-                .join(', ')
-            }}
-            setRecord={() => {}}
-            disabled
-          />
+      <MyInput
+        width="28vw"
+        column
+        fieldLabel="Adverse Reactions Details"
+        fieldType="textarea"
+        fieldName="adverseReactionsDetails"
+        record={{
+          ...formData,
+          adverseReactionsDetails: (
+            formData.adverseReactionsToAnesthesia ||
+            []
+          )
+            .map(selectedKey => {
+              const item =
+                (
+                  adverseLov?.object ?? []
+                ).find(
+                  lov =>
+                    lov.key === selectedKey
+                );
 
-          <MyInput
-            width="14vw"
-            column
-            fieldLabel="Implants or Devices"
-            fieldType="checkbox"
-            fieldName="open"
-            record={openImplants}
-            setRecord={setOpenImplants}
-          />
+              return (
+                item?.lovDisplayVale ||
+                selectedKey
+              );
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => {}}
+        disabled
+      />
 
-          <MyInput
-            width="14vw"
-            column
-            fieldLabel="Implants/Devices Description"
-            fieldName="implantsOrDevicesDescription"
-            record={formData}
-            setRecord={setFormData}
-            disabled={!openImplants.open}
-            required={openImplants.open}
-          />
-        </>
-      )}
+      <MyInput
+        width="14vw"
+        column
+        fieldLabel="Implants or Devices"
+        fieldType="checkbox"
+        fieldName="open"
+        record={openImplants}
+        setRecord={setOpenImplants}
+        disabled={formData.patientIsFree}
+      />
+
+      <MyInput
+        width="14vw"
+        column
+        fieldLabel="Implants/Devices Description"
+        fieldName="implantsOrDevicesDescription"
+        record={formData}
+        setRecord={setFormData}
+        disabled={formData.patientIsFree || !openImplants.open}
+        required={!formData.patientIsFree && openImplants.open}
+      />
     </Form>
   );
 

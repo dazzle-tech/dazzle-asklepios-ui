@@ -399,20 +399,19 @@ const AddClaimEncounterCopyPatientProblem = ({
           </Col>
         </Row>
 
-        {formData.patientIsFree && (
-          <Row>
-            <MyInput
-              width="100%"
-              column
-              fieldLabel="Free Text"
-              fieldType="textarea"
-              fieldName="freeText"
-              record={formData}
-              setRecord={setFormData}
-              required
-            />
-          </Row>
-        )}
+        <Row>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Free Text"
+            fieldType="textarea"
+            fieldName="freeText"
+            record={formData}
+            setRecord={setFormData}
+            required={formData.patientIsFree}
+            disabled={!formData.patientIsFree}
+          />
+        </Row>
       </Row>
     </Form>
   );

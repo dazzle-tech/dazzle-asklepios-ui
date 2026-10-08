@@ -305,7 +305,7 @@ const AddClaimEncounterCopyCurrentMedication = ({
           <MyInput
             width="100%"
             column
-            fieldType="check"
+            fieldType="checkbox"
             fieldLabel="Patient Is Free"
             fieldName="patientIsFree"
             record={formData}
@@ -314,22 +314,21 @@ const AddClaimEncounterCopyCurrentMedication = ({
         </Col>
       </Row>
 
-      {formData.patientIsFree && (
-        <Row gutter={16} style={{ marginTop: 10 }}>
-          <Col md={24}>
-            <MyInput
-              width="100%"
-              column
-              fieldType="textarea"
-              fieldLabel="Free Text"
-              fieldName="freeText"
-              record={formData}
-              setRecord={setFormData}
-              required
-            />
-          </Col>
-        </Row>
-      )}
+      <Row gutter={16} style={{ marginTop: 10 }}>
+        <Col md={24}>
+          <MyInput
+            width="100%"
+            column
+            fieldType="textarea"
+            fieldLabel="Free Text"
+            fieldName="freeText"
+            record={formData}
+            setRecord={setFormData}
+            required={formData.patientIsFree}
+            disabled={!formData.patientIsFree}
+          />
+        </Col>
+      </Row>
     </Form>
   );
 
