@@ -48,6 +48,7 @@ import RecurringFollowUpSection, {
 } from './RecurringFollowUpSection';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
+const ENABLE_RECURRING_FOLLOW_UP = true;
 const normalizeResourceTypeKey = (value: any) => String(value ?? '').trim().toUpperCase();
 const isPractitionerResourceType = (value: any) =>
   normalizeResourceTypeKey(value) === 'PRACTITIONER' || normalizeResourceTypeKey(value) === '2039534205961578';
@@ -1168,7 +1169,7 @@ const FollowupAppointmentModal = ({
       );
     };
 
-    if (recurringEnabled) {
+    if (ENABLE_RECURRING_FOLLOW_UP && recurringEnabled) {
       const rowsWithSlots = recurringRows.filter(row => row.slot);
       if (!recurringConfig?.startDate || recurringConfig.daysOfWeek.length === 0 || rowsWithSlots.length === 0) {
         dispatch(
@@ -1640,7 +1641,7 @@ const FollowupAppointmentModal = ({
                                 required
                               />
                             </div>
-                            {!recurringEnabled && (
+                            {(!ENABLE_RECURRING_FOLLOW_UP || !recurringEnabled) && (
                               <div className="input-wrapper" style={{ flex: 3 }}>
                                 <MyInput
                                   width={'15vw'}
@@ -1671,6 +1672,7 @@ const FollowupAppointmentModal = ({
                     }
                   />
 
+                  {ENABLE_RECURRING_FOLLOW_UP && (
                   <RecurringFollowUpSection
                     disabled={Boolean(showOnly) || isSavingRequests}
                     facilityId={
@@ -1694,6 +1696,7 @@ const FollowupAppointmentModal = ({
                     onConfigChange={setRecurringConfig}
                     resetKey={recurringResetKey}
                   />
+                  )}
                 </div>
               </div>
             </div>
