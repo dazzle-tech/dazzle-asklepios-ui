@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
@@ -86,6 +87,13 @@ const renderMarker = (marker?: string) => {
   }
 };
 
+const getDefaultDateFilter = () => {
+  const toDate = new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setDate(fromDate.getDate() - 3);
+  return { fromDate, toDate };
+};
+
 const ResultsAndReports = ({ patient }) => {
   const patientId = patient?.id;
 
@@ -123,12 +131,8 @@ const ResultsAndReports = ({ patient }) => {
       );
     }
   };
-  const [dateFilter, setDateFilter] = useState<any>(() => {
-    const toDate = new Date();
-    const fromDate = new Date(toDate);
-    fromDate.setDate(fromDate.getDate() - 14);
-    return { fromDate, toDate };
-  });
+  const [dateFilter, setDateFilter] = useState<any>(getDefaultDateFilter);
+  const [appliedDateFilter, setAppliedDateFilter] = useState<any>(dateFilter);
 
   // Orders are only needed to display the order number; results and reports are filtered by patient directly.
   const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(
@@ -145,21 +149,31 @@ const ResultsAndReports = ({ patient }) => {
       patientIdIn: [patientId],
       processingStatus: 'RESULT_APPROVED',
       reviewed: true,
-      ...(dateFilter.fromDate
-        ? { approvedDateFrom: startOfDay(dateFilter.fromDate).toISOString() }
+      ...(appliedDateFilter.fromDate
+        ? { approvedDateFrom: startOfDay(appliedDateFilter.fromDate).toISOString() }
         : {}),
-      ...(dateFilter.toDate ? { approvedDateTo: endOfDay(dateFilter.toDate).toISOString() } : {})
+      ...(appliedDateFilter.toDate
+        ? { approvedDateTo: endOfDay(appliedDateFilter.toDate).toISOString() }
+        : {})
     };
-  }, [patientId, dateFilter]);
+  }, [patientId, appliedDateFilter]);
 
-  const { data: resultsResponse, isFetching: isResultsFetching } =
+  const {
+    data: resultsResponse,
+    isFetching: isResultsFetching,
+    refetch: refetchResults
+  } =
     useFilterDiagnosticOrderTestResultsQuery(
       baseParams
         ? ({ ...baseParams, page: 0, size: FETCH_SIZE, sort: 'reviewDate,desc' } as any)
         : skipToken
     );
 
-  const { data: reportsResponse, isFetching: isReportsFetching } = useFilterRadiologyReportsQuery(
+  const {
+    data: reportsResponse,
+    isFetching: isReportsFetching,
+    refetch: refetchReports
+  } = useFilterRadiologyReportsQuery(
     baseParams ? { page: 0, size: FETCH_SIZE, sort: 'id,desc', params: baseParams } : skipToken
   );
 
@@ -396,6 +410,26 @@ const ResultsAndReports = ({ patient }) => {
     }
   ];
 
+  const handleSearch = () => {
+    setPage(0);
+    if (
+      dateFilter.fromDate?.valueOf() === appliedDateFilter.fromDate?.valueOf() &&
+      dateFilter.toDate?.valueOf() === appliedDateFilter.toDate?.valueOf()
+    ) {
+      refetchResults();
+      refetchReports();
+      return;
+    }
+    setAppliedDateFilter({ ...dateFilter });
+  };
+
+  const handleClearFilters = () => {
+    const defaults = getDefaultDateFilter();
+    setDateFilter(defaults);
+    setAppliedDateFilter(defaults);
+    setPage(0);
+  };
+
   const filters = (
     <Form fluid className="filter-form-disable-fix">
       <div className="diagnostics-result-filters-main-container">
@@ -415,13 +449,18 @@ const ResultsAndReports = ({ patient }) => {
           record={dateFilter}
           setRecord={setDateFilter}
         />
+        <AdvancedSearchFilters
+          showAdvancedButton={false}
+          searchOnClick={handleSearch}
+          clearOnClick={handleClearFilters}
+        />
       </div>
     </Form>
   );
 
   useEffect(() => {
     setPage(0);
-  }, [patientId, dateFilter]);
+  }, [patientId, appliedDateFilter]);
 
   if (!patientId) return null;
 
