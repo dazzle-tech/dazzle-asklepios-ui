@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -6,16 +7,26 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import SettlementReportPanel from '@/pages/billing-module/settlementReport/SettlementReport';
 
 import ClaimsWorkspace from './ClaimsWorkspace';
+import BillersWorkspace from './BillersWorkspace';
 import './styles.less';
 
-type ClaimsTab = 'claims' | 'settlement';
+type ClaimsTab = 'claims' | 'settlement' | 'billers';
 
 const ClaimsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<ClaimsTab>(
-    searchParams.get('tab') === 'settlement' ? 'settlement' : 'claims'
-  );
+
+  const getInitialTab = (): ClaimsTab => {
+    const tab = searchParams.get('tab');
+
+    if (tab === 'settlement' || tab === 'billers') {
+      return tab;
+    }
+
+    return 'claims';
+  };
+
+  const [activeTab, setActiveTab] = useState<ClaimsTab>(getInitialTab);
 
   useEffect(() => {
     dispatch(setPageCode('Claims'));
@@ -24,11 +35,13 @@ const ClaimsScreen: React.FC = () => {
 
   const handleTabChange = (tab: ClaimsTab) => {
     setActiveTab(tab);
-    if (tab === 'settlement') {
-      setSearchParams({ tab: 'settlement' }, { replace: true });
+
+    if (tab === 'claims') {
+      setSearchParams({}, { replace: true });
       return;
     }
-    setSearchParams({}, { replace: true });
+
+    setSearchParams({ tab }, { replace: true });
   };
 
   return (
@@ -56,10 +69,21 @@ const ClaimsScreen: React.FC = () => {
           >
             Settlement Report
           </button>
+           <button
+            type="button"
+            className={`bc-tab${activeTab === 'billers' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('billers')}
+          >
+            Pre-Claim Clinical & Coding Review
+          </button>
         </nav>
       </header>
 
-      {activeTab === 'claims' ? <ClaimsWorkspace /> : <SettlementReportPanel />}
+      {activeTab === 'claims' && <ClaimsWorkspace />}
+
+      {activeTab === 'billers' && <BillersWorkspace />}
+
+      {activeTab === 'settlement' && <SettlementReportPanel />}
     </div>
   );
 };

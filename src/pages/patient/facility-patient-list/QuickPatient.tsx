@@ -197,7 +197,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   const genderEnum = useEnumOptions('Gender');
   const EncounterTypeEnum = useEnumOptions('EncounterType');
 
-  const [isUnknown, setIsUnknown] = useState(false);
+  const [isUnknown, setIsUnknown] = useState({isUnknown: false});
   const [validationResult, setValidationResult] = useState<any>({});
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
@@ -247,7 +247,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   };
 
   const handleClearModal = () => {
-    setIsUnknown(false);
+    setIsUnknown({isUnknown: false});
     setValidationResult({});
     setLocalPatient({ ...newPatient });
     setEncounterType('EMERGENCY');
@@ -440,7 +440,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   };
 
   const validateMandatoryFields = () => {
-    if (isUnknown) return true;
+    if (isUnknown.isUnknown) return true;
 
     const missingFields = QUICK_PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
       const value = (localPatient as any)?.[key];
@@ -498,7 +498,7 @@ const handleSave = async () => {
   try {
     let savedPatient: Patient;
 
-    if (isUnknown) {
+    if (isUnknown.isUnknown) {
       const payload: Patient = {
         ...localPatient,
         isUnknown: true,
@@ -644,7 +644,7 @@ const handleSave = async () => {
           fieldName="firstName"
           record={localPatient}
           setRecord={setLocalPatient}
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           width="100%"
         />
 
@@ -655,7 +655,7 @@ const handleSave = async () => {
           fieldName="secondName"
           record={localPatient}
           setRecord={setLocalPatient}
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           width="100%"
         />
 
@@ -666,7 +666,7 @@ const handleSave = async () => {
           fieldName="lastName"
           record={localPatient}
           setRecord={setLocalPatient}
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           width="100%"
         />
 
@@ -682,7 +682,7 @@ const handleSave = async () => {
           selectDataValue="value"
           record={localPatient}
           setRecord={setLocalPatient}
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           searchable={false}
           width="100%"
         />
@@ -694,7 +694,7 @@ const handleSave = async () => {
           record={localPatient}
           setRecord={setLocalPatient}
           fieldLabel="Primary Mobile Number" 
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           width="100%"
         />
 
@@ -718,17 +718,17 @@ const handleSave = async () => {
           setRecord={setLocalPatient}
           disableFutureDates
           showWarningIfBeforeYear1900
-          disabled={isUnknown}
+          disabled={isUnknown.isUnknown}
           width="100%"
         />
 
-        <Form.Group className="my-input-container">
-          <Form.ControlLabel>
-            <MyLabel label="Unknown Patient" />
-          </Form.ControlLabel>
-          <div style={{ marginBottom: 5 }} />
-          <Toggle onChange={setIsUnknown} checked={isUnknown} />
-        </Form.Group>
+        <MyInput 
+         fieldType='checkbox'
+         fieldName='isUnknown'
+         record={isUnknown}
+         setRecord={setIsUnknown}
+         fieldLabel='Unknown Patient'
+        />
 
         {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
           <>

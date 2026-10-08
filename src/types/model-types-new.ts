@@ -7941,6 +7941,118 @@ export interface DialysisFlowReading {
   arterialPressure?: number | null;
   venousPressure?: number | null;
   transmembranePressure?: number | null;
+}
+
+export interface ClaimEncounterCopyResponse {
+  id: number;
+  encounterId: number;
+  chiefComplaint: string | null;
+  historyOfPresentIllness: string | null;
+  physicalExamination: string | null;
+  assessment: string | null;
+  treatmentPlan: string | null;
+  pulse: number | null;
+  temperature: number | null;
+  respiratoryRate: number | null;
+  oxygenSaturation: number | null;
+  bloodPressureSystolic: number | null;
+  bloodPressureDiastolic: number | null;
+  height: number | null;
+  weight: number | null;
+}
+
+export interface ClaimEncounterDiagnosis {
+  id: number;
+  claimEncounterCopyId: number;
+  encounterId: number;
+  diagnosisId: number | null;
+  type: string | null;
+  suspected: boolean;
+  major: boolean;
+}
+
+export interface UpdateClaimEncounterDiagnosesRequest {
+  encounterId: number;
+  diagnoses: Array<{
+    id?: number;
+    diagnosisId: number;
+    type: string;
+    suspected: boolean;
+    major: boolean;
+  }>;
+}
+
+export interface ClaimEncounterProgressNote {
+  id: number;
+  claimEncounterCopyId: number;
+  encounterId: number;
+  progressNoteId: number;
+  noteText: string;
+  cancelledBy: string | null;
+  cancelledDate: string | null;
+  cancellationReason: string | null;
+  createdBy: string | null;
+  createdDate: string | null;
+  lastModifiedBy: string | null;
+  lastModifiedDate: string | null;
+}
+
+export interface ClaimEncounterCopySocialHistory {
+  id: number;
+  claimEncounterCopyId: number;
+  socialHistoryId: number;
+
+  isCurrentSmoker?: boolean | null;
+  smokeStartDate?: string | null;
+  cigaretteAmount?: number | null;
+  cigaretteType?: string | null;
+
+  isPreviousSmoker?: boolean | null;
+  smokeQuitDate?: string | null;
+
+  exposureToSecondHandSmoke?: boolean | null;
+
+  alcoholConsumption?: boolean | null;
+  typeOfAlcohol?: string | null;
+  alcoholSinceWhen?: string | null;
+
+  substanceUse?: boolean | null;
+  route?: string | null;
+  frequency?: string | null;
+
+  physicalLimitation?: string | null;
+  diagnosedEatingDisorders?: string | null;
+
+  patientIsFree: boolean;
+  freeText?: string | null;
+
+  status: string;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface ClaimEncounterCopySurgicalHistory {
+  id?: number;
+  claimEncounterCopyId: number;
+  surgicalHistoryId?: number | null;
+
+  surgery?: string | null;
+  dateOfSurgery?: string | null;
+  facility?: string | null;
+  anesthesiaType?: string | null;
+  complications?: string | null;
+  adverseReactionsToAnesthesia?: string | null;
+  hasImplantsOrDevices?: boolean | null;
+  implantsOrDevicesDescription?: string | null;
+
+  patientIsFree: boolean;
+  freeText?: string | null;
+
+  status: string;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
 
   createdBy?: string | null;
   createdDate?: string | null;
@@ -7976,6 +8088,30 @@ export interface DialysisMedication {
   dose?: number | null;
 
   doseUnit?: string | null;
+}
+
+export interface ClaimEncounterCopyPatientProblem {
+  id?: number;
+  claimEncounterCopyId: number;
+  patientProblemId?: number | null;
+
+  condition?: string | null;
+  dateOfDiagnosis?: string | null;
+  conditionStatus?: string | null;
+  type?: string | null;
+  dateOfResolution?: string | null;
+
+  byPatient?: boolean | null;
+  sourceOfInformation?: string | null;
+
+  patientIsFree: boolean;
+  freeText?: string | null;
+
+  status: string;
+
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
 
   createdBy?: string | null;
   createdDate?: string | null;
@@ -8003,4 +8139,111 @@ export interface DialysisMedicationUpdateDTO {
   dose?: number | null;
 
   doseUnit?: string | null;
+}
+export interface ClaimEncounterCopyFamilyHistory {
+  id: number;
+  claimEncounterCopyId: number;
+  familyHistoryId?: number | null;
+
+  condition?: string | null;
+  relation?: string | null;
+  inheritedDiseases?: boolean | null;
+
+  patientIsFree: boolean;
+  freeText?: string | null;
+
+  status: string;
+
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface ClaimEncounterCopyHospitalization {
+  id: number;
+  claimEncounterCopyId: number;
+  hospitalizationId?: number | null;
+  facility?: string | null;
+  reason?: string | null;
+  admissionType?: string | null;
+  dateOfAdmission?: string | null;
+  lengthOfStayDays?: number | null;
+  outcomes?: string | null;
+  medicalInterventionsPerformed?: string | null;
+  patientIsFree: boolean;
+  freeText?: string | null;
+  status: string;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface ClaimEncounterCopyHospitalizationCreateDTO {
+  facility?: string | null;
+  reason?: string | null;
+  admissionType?: string | null;
+  dateOfAdmission?: string | null;
+  lengthOfStayDays?: number | null;
+  outcomes?: string | null;
+  medicalInterventionsPerformed?: string | null;
+  patientIsFree: boolean;
+  freeText?: string | null;
+}
+
+export interface ClaimEncounterCopyHospitalizationUpdateDTO {
+  facility?: string | null;
+  reason?: string | null;
+  admissionType?: string | null;
+  dateOfAdmission?: string | null;
+  lengthOfStayDays?: number | null;
+  outcomes?: string | null;
+  medicalInterventionsPerformed?: string | null;
+  patientIsFree: boolean;
+  freeText?: string | null;
+}
+
+export interface ClaimEncounterCopyCurrentMedication {
+  id: number;
+  claimEncounterCopyId: number;
+  currentMedicationId?: number;
+  activeIngredientId?: number;
+  dosage?: number;
+  unit?: string;
+  frequency?: string;
+  startDate?: string;
+  patientIsFree: boolean;
+  freeText?: string;
+  status: string;
+  cancelledBy?: string;
+  cancelledDate?: string;
+  cancellationReason?: string;
+}
+
+export interface ClaimEncounterCopyCurrentMedicationCreateDTO {
+  activeIngredientId?: number;
+  dosage?: number;
+  unit?: string;
+  frequency?: string;
+  startDate?: string;
+  patientIsFree: boolean;
+  freeText?: string;
+}
+
+export interface ClaimEncounterCopyCurrentMedicationUpdateDTO {
+  activeIngredientId?: number;
+  dosage?: number;
+  unit?: string;
+  frequency?: string;
+  startDate?: string;
+  patientIsFree: boolean;
+  freeText?: string;
 }

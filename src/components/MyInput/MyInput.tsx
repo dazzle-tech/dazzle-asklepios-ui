@@ -737,6 +737,7 @@ return (keyword: string, label: any, item: any) => {
       case 'checkbox':
         return (
           <Toggle
+            data-testid={props.dataTestId}
             name={fieldName}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             checkedChildren={<Translate>{props.checkedLabel || 'Yes'}</Translate>}
