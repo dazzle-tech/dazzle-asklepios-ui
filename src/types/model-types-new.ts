@@ -8276,6 +8276,7 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
 
 export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
   orderTestId: number;
+  profileTestId?: number | null;
   resultValueNumber?: number | null;
   resultValueText?: string | null;
   resultTypeAtEntry?: string | null;

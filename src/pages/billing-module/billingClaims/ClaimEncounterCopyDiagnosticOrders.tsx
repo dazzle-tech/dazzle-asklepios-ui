@@ -7,22 +7,18 @@ import MyTable from '@/components/MyTable';
 import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
-import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
 import { useGetOrdersByEncounterQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetTestsByOrderIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetAllActiveDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import {
-  useCancelClaimEncounterCopyDiagnosticOrderTestResultMutation,
-  useGetClaimEncounterCopyDiagnosticOrderTestResultsQuery
-} from '@/services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
-import {
   useCancelClaimEncounterCopyDiagnosticOrderTestReportMutation,
   useGetClaimEncounterCopyDiagnosticOrderTestReportsQuery
 } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
+import { useGetClaimEncounterCopyDiagnosticOrderTestResultsQuery } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
 
-import AddClaimEncounterCopyDiagnosticOrderTestResult from './AddClaimEncounterCopyDiagnosticOrderTestResult';
+import ClaimEncounterCopyDiagnosticOrderLabResultModal from './ClaimEncounterCopyDiagnosticOrderLabResultModal';
 import AddClaimEncounterCopyDiagnosticOrderTestReport from './AddClaimEncounterCopyDiagnosticOrderTestReport';
 
 interface ClaimEncounterCopyDiagnosticOrdersProps {
@@ -73,9 +69,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
   const { data: diagnosticTestsResponse } =
     useGetAllActiveDiagnosticTestsQuery({ page: 0, size: 1000 });
 
-  const [cancelResult] =
-    useCancelClaimEncounterCopyDiagnosticOrderTestResultMutation();
-
   const [cancelReport] =
     useCancelClaimEncounterCopyDiagnosticOrderTestReportMutation();
 
@@ -93,18 +86,24 @@ const ClaimEncounterCopyDiagnosticOrders = ({
     return (testsResponse?.data ?? []).map((test: any) => {
       const isLab = test.orderType === 'LABORATORY';
 
-      const copy = isLab
-        ? resultCopies.find(
+      const copies = isLab
+        ? resultCopies.filter(
             (r: any) => String(r.orderTestId) === String(test.id)
           )
-        : reportCopies.find(
+        : reportCopies.filter(
             (r: any) => String(r.orderTestId) === String(test.id)
           );
+
+      const hasActive = copies.some((c: any) => c.status === 'ACTIVE');
+      const hasAny = copies.length > 0;
 
       return {
         ...test,
         isLab,
-        copy,
+        copies,
+        copy: copies[0] ?? null,
+        hasActive,
+        hasAny,
         testName: testNameMap.get(test.testId) || `Test #${test.testId}`
       };
     });
@@ -121,17 +120,10 @@ const ClaimEncounterCopyDiagnosticOrders = ({
     }
 
     try {
-      if (selectedTestRow.isLab) {
-        await cancelResult({
-          id: selectedTestRow.copy.id,
-          data: { cancellationReason: cancelReason.trim() }
-        }).unwrap();
-      } else {
-        await cancelReport({
-          id: selectedTestRow.copy.id,
-          data: { cancellationReason: cancelReason.trim() }
-        }).unwrap();
-      }
+      await cancelReport({
+        id: selectedTestRow.copy.id,
+        data: { cancellationReason: cancelReason.trim() }
+      }).unwrap();
 
       setOpenCancelModal(false);
       setCancelReason('');
@@ -203,25 +195,14 @@ const ClaimEncounterCopyDiagnosticOrders = ({
     },
     {
       key: 'value',
-      title: <Translate>Value</Translate>,
-      flexGrow: 2,
-      render: (row: any) => {
-        if (!row.copy) {
-          return '-';
-        }
-
-        if (row.isLab) {
-          return row.copy.resultValueNumber != null
-            ? String(row.copy.resultValueNumber)
-            : row.copy.resultValueText || '-';
-        }
-
-        return row.copy.report ? (
-          <ExpandableText text={row.copy.report} />
-        ) : (
-          '-'
-        );
-      }
+      title: <Translate>Results Filled</Translate>,
+      flexGrow: 1,
+      render: (row: any) =>
+        row.isLab
+          ? `${row.copies.filter((c: any) => c.status === 'ACTIVE').length} filled`
+          : row.copy
+            ? '1 filled'
+            : '-'
     },
     {
       key: 'copyStatus',
@@ -229,13 +210,15 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       flexGrow: 1.5,
       render: (row: any) => (
         <MyBadgeStatus
-          contant={row.copy ? row.copy.status : 'NOT COPIED'}
+          contant={
+            !row.hasAny ? 'NOT COPIED' : row.hasActive ? 'ACTIVE' : 'CANCELLED'
+          }
           color={
-            !row.copy
+            !row.hasAny
               ? '#6c757d'
-              : row.copy.status === 'CANCELLED'
-                ? '#dc3545'
-                : '#28a745'
+              : row.hasActive
+                ? '#28a745'
+                : '#dc3545'
           }
         />
       )
@@ -245,28 +228,26 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       title: 'Actions',
       render: (row: any) => (
         <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
-          {(!row.copy || row.copy.status !== 'CANCELLED') && (
-            row.copy ? (
-              <MdModeEdit
-                size={22}
-                fill="var(--primary-gray)"
-                className="pointer"
-                onClick={event => {
-                  event.stopPropagation();
-                  handleEdit(row);
-                }}
-              />
-            ) : (
-              <MdAddCircleOutline
-                size={22}
-                fill="var(--primary-gray)"
-                className="pointer"
-                onClick={event => {
-                  event.stopPropagation();
-                  handleEdit(row);
-                }}
-              />
-            )
+          {row.hasAny ? (
+            <MdModeEdit
+              size={22}
+              fill="var(--primary-gray)"
+              className="pointer"
+              onClick={event => {
+                event.stopPropagation();
+                handleEdit(row);
+              }}
+            />
+          ) : (
+            <MdAddCircleOutline
+              size={22}
+              fill="var(--primary-gray)"
+              className="pointer"
+              onClick={event => {
+                event.stopPropagation();
+                handleEdit(row);
+              }}
+            />
           )}
         </div>
       )
@@ -295,8 +276,9 @@ const ClaimEncounterCopyDiagnosticOrders = ({
               <MyButton
                 onClick={() => setOpenCancelModal(true)}
                 disabled={
-                  !selectedTestRow?.copy ||
-                  selectedTestRow.copy.status === 'CANCELLED'
+                  !selectedTestRow ||
+                  selectedTestRow.isLab ||
+                  !selectedTestRow.hasActive
                 }
               >
                 <Translate>Cancel</Translate>
@@ -330,13 +312,13 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       )}
 
       {selectedTestRow && selectedTestRow.isLab && (
-        <AddClaimEncounterCopyDiagnosticOrderTestResult
+        <ClaimEncounterCopyDiagnosticOrderLabResultModal
           open={openModal}
           setOpen={setOpenModal}
           claimEncounterCopyId={claimEncounterCopyId}
-          orderTestId={selectedTestRow.id}
+          orderTest={selectedTestRow}
           testName={selectedTestRow.testName}
-          initialData={selectedTestRow.copy ?? null}
+          existingCopies={selectedTestRow.copies}
         />
       )}
 
@@ -346,13 +328,14 @@ const ClaimEncounterCopyDiagnosticOrders = ({
           setOpen={setOpenModal}
           claimEncounterCopyId={claimEncounterCopyId}
           orderTestId={selectedTestRow.id}
+          testId={selectedTestRow.testId}
           testName={selectedTestRow.testName}
           initialData={selectedTestRow.copy ?? null}
         />
       )}
 
       <CancellationModal
-        title="Cancel Diagnostic Result"
+        title="Cancel Radiology Report"
         fieldLabel="Cancellation Reason"
         open={openCancelModal}
         setOpen={value => {
