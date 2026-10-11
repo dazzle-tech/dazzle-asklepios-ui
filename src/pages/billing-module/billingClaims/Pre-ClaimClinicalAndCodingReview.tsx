@@ -32,7 +32,7 @@ import {
 } from './types';
 import EditEncounterDetailsModal from './EditEncounterDetailsModal';
 
-const BillersWorkspace: React.FC = () => {
+const PreClaimClinicalAndCodingReview: React.FC = () => {
   const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
   const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
   const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
@@ -608,4 +608,4 @@ const calculateAge = (dateOfBirth?: string | Date | null) => {
   return `${years}y ${months}m ${days}d`;
 };
 
-export default BillersWorkspace;
+export default PreClaimClinicalAndCodingReview;

@@ -1,10 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { MdModeEdit, MdAddCircleOutline } from 'react-icons/md';
-
-import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 
@@ -13,7 +10,6 @@ import { useGetTestsByOrderIdQuery } from '@/services/diagnosic-order/diagnostic
 import { useGetAllActiveDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import {
-  useCancelClaimEncounterCopyDiagnosticOrderTestReportMutation,
   useGetClaimEncounterCopyDiagnosticOrderTestReportsQuery
 } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
 import { useGetClaimEncounterCopyDiagnosticOrderTestResultsQuery } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
@@ -35,12 +31,7 @@ const ClaimEncounterCopyDiagnosticOrders = ({
 
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [selectedTestRow, setSelectedTestRow] = useState<any | null>(null);
-
-  const [showCancelled, setShowCancelled] = useState(false);
-
   const [openModal, setOpenModal] = useState(false);
-  const [openCancelModal, setOpenCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
 
   const { data: ordersResponse, isFetching: isFetchingOrders } =
     useGetOrdersByEncounterQuery(
@@ -56,21 +47,17 @@ const ClaimEncounterCopyDiagnosticOrders = ({
 
   const { data: resultCopies = [] } =
     useGetClaimEncounterCopyDiagnosticOrderTestResultsQuery({
-      claimEncounterCopyId,
-      showCancelled
+      claimEncounterCopyId
     });
 
   const { data: reportCopies = [] } =
     useGetClaimEncounterCopyDiagnosticOrderTestReportsQuery({
-      claimEncounterCopyId,
-      showCancelled
+      claimEncounterCopyId
     });
 
   const { data: diagnosticTestsResponse } =
     useGetAllActiveDiagnosticTestsQuery({ page: 0, size: 1000 });
 
-  const [cancelReport] =
-    useCancelClaimEncounterCopyDiagnosticOrderTestReportMutation();
 
   const testNameMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -94,16 +81,14 @@ const ClaimEncounterCopyDiagnosticOrders = ({
             (r: any) => String(r.orderTestId) === String(test.id)
           );
 
-      const hasActive = copies.some((c: any) => c.status === 'ACTIVE');
-      const hasAny = copies.length > 0;
+      const isCopied = copies.length > 0;
 
       return {
         ...test,
         isLab,
         copies,
         copy: copies[0] ?? null,
-        hasActive,
-        hasAny,
+        isCopied,
         testName: testNameMap.get(test.testId) || `Test #${test.testId}`
       };
     });
@@ -112,25 +97,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
   const handleEdit = (row: any) => {
     setSelectedTestRow(row);
     setOpenModal(true);
-  };
-
-  const handleCancel = async () => {
-    if (!selectedTestRow?.copy || !cancelReason.trim()) {
-      return;
-    }
-
-    try {
-      await cancelReport({
-        id: selectedTestRow.copy.id,
-        data: { cancellationReason: cancelReason.trim() }
-      }).unwrap();
-
-      setOpenCancelModal(false);
-      setCancelReason('');
-      setSelectedTestRow(null);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const isOrderSelected = (row: any) =>
@@ -199,8 +165,8 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       flexGrow: 1,
       render: (row: any) =>
         row.isLab
-          ? `${row.copies.filter((c: any) => c.status === 'ACTIVE').length} filled`
-          : row.copy
+          ? `${row.copies.length} filled`
+          : row.isCopied
             ? '1 filled'
             : '-'
     },
@@ -210,16 +176,8 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       flexGrow: 1.5,
       render: (row: any) => (
         <MyBadgeStatus
-          contant={
-            !row.hasAny ? 'NOT COPIED' : row.hasActive ? 'ACTIVE' : 'CANCELLED'
-          }
-          color={
-            !row.hasAny
-              ? '#6c757d'
-              : row.hasActive
-                ? '#28a745'
-                : '#dc3545'
-          }
+          contant={row.isCopied ? 'COPIED' : 'NOT COPIED'}
+          color={row.isCopied ? '#28a745' : '#6c757d'}
         />
       )
     },
@@ -228,7 +186,7 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       title: 'Actions',
       render: (row: any) => (
         <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
-          {row.hasAny ? (
+          {row.isCopied ? (
             <MdModeEdit
               size={22}
               fill="var(--primary-gray)"
@@ -270,35 +228,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       />
 
       {selectedOrder && (
-        <>
-          <div className="bt-div-3" style={{ marginTop: 16 }}>
-            <div className="flex-gap-12">
-              <MyButton
-                onClick={() => setOpenCancelModal(true)}
-                disabled={
-                  !selectedTestRow ||
-                  selectedTestRow.isLab ||
-                  !selectedTestRow.hasActive
-                }
-              >
-                <Translate>Cancel</Translate>
-              </MyButton>
-            </div>
-
-            <div className="bt-right-3">
-              <MyInput
-                fieldLabel="Show Cancelled"
-                fieldType="check"
-                fieldName="showCancelled"
-                record={{ showCancelled }}
-                setRecord={(record: any) =>
-                  setShowCancelled(!!record.showCancelled)
-                }
-                showLabel={false}
-              />
-            </div>
-          </div>
-
           <MyTable
             height={350}
             data={testRows}
@@ -308,7 +237,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
             onRowClick={row => setSelectedTestRow(row)}
             rowClassName={isTestSelected}
           />
-        </>
       )}
 
       {selectedTestRow && selectedTestRow.isLab && (
@@ -334,25 +262,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
         />
       )}
 
-      <CancellationModal
-        title="Cancel Radiology Report"
-        fieldLabel="Cancellation Reason"
-        open={openCancelModal}
-        setOpen={value => {
-          setOpenCancelModal(value);
-
-          if (!value) {
-            setCancelReason('');
-          }
-        }}
-        object={{ cancellationReason: cancelReason }}
-        setObject={(object: any) =>
-          setCancelReason(object.cancellationReason || '')
-        }
-        handleCancle={handleCancel}
-        fieldName="cancellationReason"
-        required
-      />
     </div>
   );
 };

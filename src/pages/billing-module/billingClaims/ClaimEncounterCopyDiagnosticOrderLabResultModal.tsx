@@ -2,12 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlask } from '@fortawesome/free-solid-svg-icons';
-import { MdCancel } from 'react-icons/md';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
-import CancellationModal from '@/components/CancellationModal';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -22,8 +20,7 @@ import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 
 import {
   useCreateClaimEncounterCopyDiagnosticOrderTestResultMutation,
-  useUpdateClaimEncounterCopyDiagnosticOrderTestResultMutation,
-  useCancelClaimEncounterCopyDiagnosticOrderTestResultMutation
+  useUpdateClaimEncounterCopyDiagnosticOrderTestResultMutation
 } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
 
 interface ClaimEncounterCopyDiagnosticOrderLabResultModalProps {
@@ -56,9 +53,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
 
   const [form, setForm] = useState<Record<number, any>>({});
 
-  const [openCancelModal, setOpenCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
 
   const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
@@ -77,8 +71,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
   const [updateResult, { isLoading: isUpdating }] =
     useUpdateClaimEncounterCopyDiagnosticOrderTestResultMutation();
 
-  const [cancelResult] =
-    useCancelClaimEncounterCopyDiagnosticOrderTestResultMutation();
 
   useEffect(() => {
     if (!open || !orderTest?.testId) {
@@ -98,9 +90,7 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
   const copyByProfileId = useMemo(() => {
     const map = new Map<number, any>();
 
-    existingCopies
-      .filter(c => c.status !== 'CANCELLED')
-      .forEach(c => {
+    existingCopies.forEach(c => {
         if (c.profileTestId != null) {
           map.set(c.profileTestId, c);
         }
@@ -216,26 +206,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
       );
     }
   };
-
-  const handleCancel = async () => {
-    if (!cancelTargetId || !cancelReason.trim()) {
-      return;
-    }
-
-    try {
-      await cancelResult({
-        id: cancelTargetId,
-        data: { cancellationReason: cancelReason.trim() }
-      }).unwrap();
-
-      setOpenCancelModal(false);
-      setCancelReason('');
-      setCancelTargetId(null);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
@@ -314,24 +284,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                       >
                         Save
                       </MyButton>
-
-                      {existing && existing.status !== 'CANCELLED' && (
-                        <MdCancel
-                          size={20}
-                          className="pointer"
-                          color="#dc3545"
-                          onClick={() => {
-                            setCancelTargetId(existing.id);
-                            setOpenCancelModal(true);
-                          }}
-                        />
-                      )}
-
-                      {existing?.status === 'CANCELLED' && (
-                        <span style={{ color: '#dc3545', fontSize: 12 }}>
-                          Cancelled
-                        </span>
-                      )}
                     </div>
                   );
                 })}
@@ -345,26 +297,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
             </Panel>
           </div>
         }
-      />
-
-      <CancellationModal
-        title="Cancel Laboratory Result"
-        fieldLabel="Cancellation Reason"
-        open={openCancelModal}
-        setOpen={value => {
-          setOpenCancelModal(value);
-
-          if (!value) {
-            setCancelReason('');
-          }
-        }}
-        object={{ cancellationReason: cancelReason }}
-        setObject={(object: any) =>
-          setCancelReason(object.cancellationReason || '')
-        }
-        handleCancle={handleCancel}
-        fieldName="cancellationReason"
-        required
       />
     </div>
   );

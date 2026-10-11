@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import { Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 
@@ -351,27 +351,6 @@ const AddClaimEncounterCopySurgicalHistory = ({
       layout="inline"
       className="fields-container"
     >
-      <MyInput
-        width="14vw"
-        column
-        fieldLabel="Patient Is Free"
-        fieldType="checkbox"
-        fieldName="patientIsFree"
-        record={formData}
-        setRecord={setFormData}
-      />
-
-      <MyInput
-        width="28vw"
-        column
-        required={formData.patientIsFree}
-        fieldLabel="Free Text"
-        fieldType="textarea"
-        fieldName="freeText"
-        record={formData}
-        setRecord={setFormData}
-        disabled={!formData.patientIsFree}
-      />
 
       <MyInput
         width="14vw"
@@ -540,6 +519,30 @@ const AddClaimEncounterCopySurgicalHistory = ({
         disabled={formData.patientIsFree || !openImplants.open}
         required={!formData.patientIsFree && openImplants.open}
       />
+      {/* <Row> */}
+      <MyInput
+        width="28vw"
+        column
+        fieldLabel="Patient Is Free"
+        fieldType="checkbox"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
+      {/* </Row>
+        <Row > */}
+      <MyInput
+        width="28vw"
+        column
+        required={formData.patientIsFree}
+        fieldLabel="Free Text"
+        fieldType="textarea"
+        fieldName="freeText"
+        record={formData}
+        setRecord={setFormData}
+        disabled={!formData.patientIsFree}
+      />
+      {/* </Row> */}
     </Form>
   );
 

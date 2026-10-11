@@ -263,15 +263,7 @@ const AddClaimEncounterCopyPatientProblem = ({
   const content = (
     <Form fluid className="fields-container">
       <Row>
-        <MyInput
-          width="14vw"
-          column
-          fieldLabel="Patient Is Free"
-          fieldType="checkbox"
-          fieldName="patientIsFree"
-          record={formData}
-          setRecord={setFormData}
-        />
+    
 
         <Row>
           <Col md={12}>
@@ -398,8 +390,16 @@ const AddClaimEncounterCopyPatientProblem = ({
             />
           </Col>
         </Row>
-
-        <Row>
+         <MyInput
+          width="100%"
+          column
+          fieldLabel="Patient Is Free"
+          fieldType="checkbox"
+          fieldName="patientIsFree"
+          record={formData}
+          setRecord={setFormData}
+        />
+         <Row>
           <MyInput
             width="100%"
             column

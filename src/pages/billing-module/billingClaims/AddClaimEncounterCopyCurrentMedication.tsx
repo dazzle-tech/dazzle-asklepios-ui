@@ -216,8 +216,8 @@ const AddClaimEncounterCopyCurrentMedication = ({
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   const content = (
-    <Form fluid className="fields-container">
-      <Row gutter={16}>
+    <Form fluid >
+      <Row >
         <Col md={12}>
           <MyInput
             width="100%"
@@ -253,7 +253,7 @@ const AddClaimEncounterCopyCurrentMedication = ({
         </Col>
       </Row>
 
-      <Row gutter={16} style={{ marginTop: 10 }}>
+      <Row >
         <Col md={8}>
           <MyInput
             width="100%"
@@ -299,9 +299,7 @@ const AddClaimEncounterCopyCurrentMedication = ({
           />
         </Col>
       </Row>
-
-      <Row gutter={16} style={{ marginTop: 10 }}>
-        <Col md={24}>
+       
           <MyInput
             width="100%"
             column
@@ -311,11 +309,8 @@ const AddClaimEncounterCopyCurrentMedication = ({
             record={formData}
             setRecord={setFormData}
           />
-        </Col>
-      </Row>
 
-      <Row gutter={16} style={{ marginTop: 10 }}>
-        <Col md={24}>
+     
           <MyInput
             width="100%"
             column
@@ -327,8 +322,7 @@ const AddClaimEncounterCopyCurrentMedication = ({
             required={formData.patientIsFree}
             disabled={!formData.patientIsFree}
           />
-        </Col>
-      </Row>
+    
     </Form>
   );
 

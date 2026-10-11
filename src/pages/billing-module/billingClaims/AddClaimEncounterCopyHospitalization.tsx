@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -170,29 +170,10 @@ const AddClaimEncounterCopyHospitalization = ({
   };
 
   const content = (
-    <Form fluid layout="inline" className="fields-container">
-      <MyInput
-        width="100%"
-        column
-        fieldType="checkbox"
-        fieldLabel="Patient is Free"
-        fieldName="patientIsFree"
-        record={formData}
-        setRecord={setFormData}
-      />
-
-      <MyInput
-        width="100%"
-        column
-        fieldType="textarea"
-        fieldLabel="Free Text"
-        fieldName="freeText"
-        record={formData}
-        setRecord={setFormData}
-        required={formData.patientIsFree}
-        disabled={!formData.patientIsFree}
-      />
-
+    <Form fluid >
+     
+     <Row>
+        <Col md={12}>
       <MyInput
         width="100%"
         column
@@ -203,7 +184,8 @@ const AddClaimEncounterCopyHospitalization = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
-
+        </Col>
+      <Col md={12}>
       <MyInput
         width="100%"
         column
@@ -214,7 +196,10 @@ const AddClaimEncounterCopyHospitalization = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
-
+      </Col>
+     </Row>
+     <Row>
+      <Col md={12}>  
       <MyInput
         width="100%"
         column
@@ -225,7 +210,8 @@ const AddClaimEncounterCopyHospitalization = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
-
+      </Col>
+        <Col md={12}>
       <MyInput
         width="100%"
         column
@@ -238,7 +224,10 @@ const AddClaimEncounterCopyHospitalization = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
-
+        </Col>
+      </Row>
+      <Row>
+      <Col md={12}>
       <MyInput
         width="100%"
         column
@@ -249,7 +238,8 @@ const AddClaimEncounterCopyHospitalization = ({
         setRecord={setFormData}
         disabled={formData.patientIsFree}
       />
-
+      </Col>
+        <Col md={12}>
       <MyInput
         width="100%"
         column
@@ -259,6 +249,8 @@ const AddClaimEncounterCopyHospitalization = ({
         setRecord={setFormData}
         disabled={formData.patientIsFree}
       />
+        </Col>
+      </Row>
 
       <MyInput
         width="100%"
@@ -270,6 +262,29 @@ const AddClaimEncounterCopyHospitalization = ({
         setRecord={setFormData}
         disabled={formData.patientIsFree}
       />
+      
+       <MyInput
+        width="100%"
+        column
+        fieldType="checkbox"
+        fieldLabel="Patient is Free"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
+     <Row>
+      <MyInput
+        width="100%"
+        column
+        fieldType="textarea"
+        fieldLabel="Free Text"
+        fieldName="freeText"
+        record={formData}
+        setRecord={setFormData}
+        required={formData.patientIsFree}
+        disabled={!formData.patientIsFree}
+      />
+      </Row>
     </Form>
   );
 

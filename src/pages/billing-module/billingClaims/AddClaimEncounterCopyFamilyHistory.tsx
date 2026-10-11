@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 
@@ -185,9 +185,11 @@ const AddClaimEncounterCopyFamilyHistory = ({
   };
 
   const content = (
-    <Form fluid layout="inline" className="fields-container">
+    <Form fluid>
+    <Row>
+        <Col md={12}>
       <MyInput
-        width="14vw"
+        width="100%"
         column
         fieldLabel="Condition"
         fieldName="condition"
@@ -196,9 +198,10 @@ const AddClaimEncounterCopyFamilyHistory = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
-
+      </Col>
+      <Col md={12}>
       <MyInput
-        width="14vw"
+        width="100%"
         column
         fieldLabel="Relation"
         fieldType="select"
@@ -212,9 +215,11 @@ const AddClaimEncounterCopyFamilyHistory = ({
         required={!formData.patientIsFree}
         disabled={formData.patientIsFree}
       />
+      </Col>
+      </Row>
 
       <MyInput
-        width="14vw"
+       width="100%"
         column
         fieldLabel="Inherited Diseases"
         fieldType="checkbox"
@@ -223,7 +228,15 @@ const AddClaimEncounterCopyFamilyHistory = ({
         setRecord={setFormData}
         disabled={formData.patientIsFree}
       />
-
+      <MyInput
+       width="100%"
+        column
+        fieldLabel="Patient Is Free"
+        fieldType="checkbox"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
       <MyInput
         width="100%"
         column
@@ -235,16 +248,8 @@ const AddClaimEncounterCopyFamilyHistory = ({
         disabled={!formData.patientIsFree}
         required={formData.patientIsFree}
       />
+    
 
-      <MyInput
-        width="14vw"
-        column
-        fieldLabel="Patient Is Free"
-        fieldType="checkbox"
-        fieldName="patientIsFree"
-        record={formData}
-        setRecord={setFormData}
-      />
     </Form>
   );
 

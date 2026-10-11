@@ -7,10 +7,10 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import SettlementReportPanel from '@/pages/billing-module/settlementReport/SettlementReport';
 
 import ClaimsWorkspace from './ClaimsWorkspace';
-import BillersWorkspace from './BillersWorkspace';
 import './styles.less';
+import PreClaimClinicalAndCodingReview from './Pre-ClaimClinicalAndCodingReview';
 
-type ClaimsTab = 'claims' | 'settlement' | 'billers';
+type ClaimsTab = 'claims' | 'settlement' | 'preClaimClinicalAndCodingReview';
 
 const ClaimsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -19,7 +19,7 @@ const ClaimsScreen: React.FC = () => {
   const getInitialTab = (): ClaimsTab => {
     const tab = searchParams.get('tab');
 
-    if (tab === 'settlement' || tab === 'billers') {
+    if (tab === 'settlement' || tab === 'preClaimClinicalAndCodingReview') {
       return tab;
     }
 
@@ -71,8 +71,8 @@ const ClaimsScreen: React.FC = () => {
           </button>
            <button
             type="button"
-            className={`bc-tab${activeTab === 'billers' ? ' bc-tab--active' : ''}`}
-            onClick={() => handleTabChange('billers')}
+            className={`bc-tab${activeTab === 'preClaimClinicalAndCodingReview' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('preClaimClinicalAndCodingReview')}
           >
             Pre-Claim Clinical & Coding Review
           </button>
@@ -81,7 +81,7 @@ const ClaimsScreen: React.FC = () => {
 
       {activeTab === 'claims' && <ClaimsWorkspace />}
 
-      {activeTab === 'billers' && <BillersWorkspace />}
+      {activeTab === 'preClaimClinicalAndCodingReview' && <PreClaimClinicalAndCodingReview />}
 
       {activeTab === 'settlement' && <SettlementReportPanel />}
     </div>

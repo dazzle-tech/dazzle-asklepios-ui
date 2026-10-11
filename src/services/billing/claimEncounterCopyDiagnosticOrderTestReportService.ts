@@ -8,9 +8,6 @@ import {
   ClaimEncounterCopyDiagnosticOrderTestReportUpdateDTO
 } from '@/types/model-types-new';
 
-export interface ClaimEncounterCopyDiagnosticOrderTestReportCancelDTO {
-  cancellationReason: string;
-}
 
 export const claimEncounterCopyDiagnosticOrderTestReportService = createApi({
   reducerPath: 'claimEncounterCopyDiagnosticOrderTestReportApi',
@@ -20,17 +17,12 @@ export const claimEncounterCopyDiagnosticOrderTestReportService = createApi({
     getClaimEncounterCopyDiagnosticOrderTestReports: builder.query<
       ClaimEncounterCopyDiagnosticOrderTestReport[],
       {
-        claimEncounterCopyId: number;
-        showCancelled?: boolean;
-      }
+        claimEncounterCopyId: number;      }
     >({
       query: ({
-        claimEncounterCopyId,
-        showCancelled = false
+        claimEncounterCopyId
       }) => ({
-        url: showCancelled
-          ? `/api/patient/billing/claim-encounter-copy-diagnostic-order-test-reports/by-copy/${claimEncounterCopyId}/all`
-          : `/api/patient/billing/claim-encounter-copy-diagnostic-order-test-reports/by-copy/${claimEncounterCopyId}/not-cancelled`,
+        url: `/api/patient/billing/claim-encounter-copy-diagnostic-order-test-reports/by-copy/${claimEncounterCopyId}/all`,
         method: 'GET'
       }),
       providesTags: ['ClaimEncounterCopyDiagnosticOrderTestReport']
@@ -66,26 +58,11 @@ export const claimEncounterCopyDiagnosticOrderTestReportService = createApi({
       invalidatesTags: ['ClaimEncounterCopyDiagnosticOrderTestReport']
     }),
 
-    cancelClaimEncounterCopyDiagnosticOrderTestReport: builder.mutation<
-      ClaimEncounterCopyDiagnosticOrderTestReport,
-      {
-        id: number;
-        data: ClaimEncounterCopyDiagnosticOrderTestReportCancelDTO;
-      }
-    >({
-      query: ({ id, data }) => ({
-        url: `/api/patient/billing/claim-encounter-copy-diagnostic-order-test-reports/${id}/cancel`,
-        method: 'PUT',
-        body: data
-      }),
-      invalidatesTags: ['ClaimEncounterCopyDiagnosticOrderTestReport']
-    })
   })
 });
 
 export const {
   useGetClaimEncounterCopyDiagnosticOrderTestReportsQuery,
   useCreateClaimEncounterCopyDiagnosticOrderTestReportMutation,
-  useUpdateClaimEncounterCopyDiagnosticOrderTestReportMutation,
-  useCancelClaimEncounterCopyDiagnosticOrderTestReportMutation
+  useUpdateClaimEncounterCopyDiagnosticOrderTestReportMutation
 } = claimEncounterCopyDiagnosticOrderTestReportService;
