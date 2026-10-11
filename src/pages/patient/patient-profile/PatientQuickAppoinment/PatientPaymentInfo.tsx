@@ -315,9 +315,10 @@ const resolvePaymentCategory =
       paymentMethodCode
     ) {
       case 'CASH':
+        return 'CASH';
       case 'CREDIT_CARD':
       case 'CREDIT_DEBIT_CARD':
-        return 'CASH';
+        return 'CARD';
       case 'CHEQUE':
         return 'CHEQUE';
       case 'BANK_TRANSFER':
