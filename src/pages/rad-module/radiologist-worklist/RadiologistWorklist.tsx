@@ -10,6 +10,7 @@ import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
   useLazyGetRadiologyReportPdfQuery
@@ -127,9 +128,12 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+  const [encountersMap, setEncountersMap] = useState<Record<string, any>>({});
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+  const [fetchEncountersByIds] = useLazyGetEncountersByIdsQuery();
+  const [encounterNumberFilter, setEncounterNumberFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState('id');
@@ -261,6 +265,12 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             ? {
               patientIdIn: [selectedPatient.id]
             }
+            : {}),
+
+          ...(encounterNumberFilter.trim()
+            ? {
+              encounterNumber: encounterNumberFilter.trim()
+            }
             : {})
         }
       }
@@ -327,6 +337,30 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const patientIds = useMemo<number[]>(() => {
     return uniqueNumbers(Object.values(ordersMap ?? {}).map((o: any) => o?.patientId));
   }, [ordersMap]);
+
+  const encounterIds = useMemo<number[]>(() => {
+    return uniqueNumbers(Object.values(ordersMap ?? {}).map((o: any) => o?.encounterId));
+  }, [ordersMap]);
+
+  useEffect(() => {
+    const missingIds = encounterIds.filter(id => !encountersMap[id]);
+    if (!missingIds.length) return;
+
+    fetchEncountersByIds({ ids: missingIds })
+      .unwrap()
+      .then((res: any[]) => {
+        setEncountersMap(prev => {
+          const next = { ...prev };
+          (res ?? []).forEach((encounter: any) => {
+            if (encounter?.id != null) {
+              next[encounter.id] = encounter;
+            }
+          });
+          return next;
+        });
+      })
+      .catch(() => { });
+  }, [encounterIds, fetchEncountersByIds, encountersMap]);
 
   useEffect(() => {
     if (!orderTestIds.length) return;
@@ -403,7 +437,12 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
     setSelectedPatient(null);
     setDateFilter({ fromDate: now, toDate: now });
     setDepartmentFilter({ departmentIds: [] });
+    setEncounterNumberFilter('');
   };
+
+  useEffect(() => {
+    setPage(0);
+  }, [encounterNumberFilter]);
 
   const FilterModel = (
     <Form fluid className="table-header-content">
@@ -459,6 +498,19 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
           setRecord={rec => {
             setPage(0);
             setDepartmentFilter(rec);
+          }}
+        />
+
+        <MyInput
+          width={160}
+          fieldType="text"
+          fieldLabel="Encounter Number"
+          fieldName="encounterNumber"
+          placeholder="Encounter Number"
+          record={{ encounterNumber: encounterNumberFilter }}
+          setRecord={(rec: any) => {
+            setPage(0);
+            setEncounterNumberFilter(rec.encounterNumber ?? '');
           }}
         />
       </div>
@@ -584,6 +636,31 @@ const handleViewImage = async (reportId: number) => {
           return patient
             ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
             : ' ';
+        }
+      },
+      {
+        key: 'orderNumber',
+        title: 'Order Number',
+        width: 140,
+        render: row => {
+          const orderTestId = Number(row?.orderTestId);
+          const ot = orderTestsMap?.[orderTestId];
+          const order = ordersMap?.[ot?.orderId];
+
+          return order?.orderNumber ?? ' ';
+        }
+      },
+      {
+        key: 'encounterNumber',
+        title: 'Encounter Number',
+        width: 140,
+        render: row => {
+          const orderTestId = Number(row?.orderTestId);
+          const ot = orderTestsMap?.[orderTestId];
+          const order = ordersMap?.[ot?.orderId];
+          const encounter = encountersMap?.[order?.encounterId];
+
+          return encounter?.encounterNumber ?? ' ';
         }
       },
       {
@@ -877,6 +954,7 @@ const handleViewImage = async (reportId: number) => {
       orderTestsMap,
       ordersMap,
       patientsMap,
+      encountersMap,
       departmentsMap,
       testsMap,
       localHasCommentIds,
