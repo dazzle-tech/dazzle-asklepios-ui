@@ -18,7 +18,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -148,6 +148,7 @@ type MyInputProps = {
   min?: number;
   step?: number;
   allowDecimal?: boolean;
+  allowNegative?: boolean;
   disabledItemValues?: boolean;
   disableByField?: string;
   disableByFieldValue?: any;
@@ -360,6 +361,13 @@ const MyInput = ({
     return date.format('DD-MM-YYYY');
   };
 
+  // Keep the typed date text in sync when the record value changes from outside (e.g. clear/reset)
+  const recordDateText = fieldType === 'date' ? formatDateText(record?.[fieldName]) : '';
+  useEffect(() => {
+    if (fieldType !== 'date') return;
+    setDateText(recordDateText);
+  }, [fieldType, recordDateText]);
+
   const getDateFromText = (text: string) => {
     const match = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
 
@@ -536,18 +544,52 @@ const MyInput = ({
     };
   }, [portaledSelectOpen]);
 
-  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
+  const [placement, setPlacement] = useState<'topStart' | 'bottomStart' | 'topEnd' | 'bottomEnd'>('bottomStart');
   const pickerRef = useRef<any>(null);
 
-  const calculatePlacement = (popupHeight = 250) => {
+  const calculatePlacement = (popupHeight = 250, popupWidth = 420) => {
     if (!pickerRef.current) return 'bottomStart';
     const rect = pickerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
-    if (spaceBelow >= popupHeight) return 'bottomStart';
-    if (spaceAbove >= popupHeight) return 'topStart';
-    return spaceAbove > spaceBelow ? 'topStart' : 'bottomStart';
+
+    // Horizontal: the menu grows to the right from the field's left edge (Start).
+    // If there is no room on the right but there is more room on the left, align
+    // the menu with the field's right edge instead (End) so it opens to the left.
+    const neededWidth = Math.min(popupWidth, window.innerWidth - 32);
+    const spaceRight = window.innerWidth - rect.left - 8;
+    const spaceLeft = rect.right - 8;
+    const horizontal =
+      spaceRight >= neededWidth || spaceRight >= spaceLeft ? 'Start' : 'End';
+
+    if (spaceBelow >= popupHeight) return `bottom${horizontal}` as const;
+    if (spaceAbove >= popupHeight) return `top${horizontal}` as const;
+    return (spaceAbove > spaceBelow ? `top${horizontal}` : `bottom${horizontal}`) as
+      | 'topStart'
+      | 'bottomStart'
+      | 'topEnd'
+      | 'bottomEnd';
   };
+
+  // Keeps long option labels from stretching the dropdown past the screen edge.
+  const getPickerMenuStyle = (): React.CSSProperties => ({
+    minWidth: props?.width ?? '12vw',
+    width: 'auto',
+    maxWidth: 'min(420px, calc(100vw - 32px))'
+  });
+
+  // Lets long option labels wrap inside the (now capped) menu instead of being cut off.
+  // Skipped for virtualized lists because their rows have a fixed height.
+  const wrapMenuItem =
+    (render: (label: any, item: any) => React.ReactNode, virtualized = false) =>
+    (label: any, item: any) => {
+      if (virtualized) return render(label, item);
+      return (
+        <span style={{ display: 'block', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+          {render(label, item)}
+        </span>
+      );
+    };
 
   const openCalendar = (kind: 'date' | 'datetime') => {
     if (props.disabled) return;
@@ -1684,7 +1726,7 @@ return (keyword: string, label: any, item: any) => {
               }}
               renderMenuItem={
                 props.renderMenuItem ??
-                (isArrayLabel
+                wrapMenuItem(isArrayLabel
                   ? (
                     label: any,
                     item: any
@@ -1711,7 +1753,7 @@ return (keyword: string, label: any, item: any) => {
                       <Translate>
                         {String(item?.[primaryLabelKey] ?? '')}
                       </Translate>
-                    ))
+                    ), shouldVirtualizePicker(dataList.length))
               }
               renderValue={
                 isArrayLabel
@@ -1789,20 +1831,20 @@ return (keyword: string, label: any, item: any) => {
               loading={props?.loading ?? false}
               onOpen={() => {
                 selectOpenGuardRef.current = Date.now();
+                setPlacement(calculatePlacement());
                 focusPickerSearch();
               }}
               onClose={() => {
                 setLocalSearch('');
               }}
-              placement={props.placement ?? 'bottomStart'}
+              placement={props.placement ?? placement}
               preventOverflow={false}
               container={() => document.body}
               menuMaxHeight={getDynamicMenuMaxHeight(
                 dataList
               )}
               menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto',
+                ...getPickerMenuStyle(),
                 zIndex: 100050
               }}
               menuClassName={clsx(
@@ -1965,7 +2007,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               }
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => {
+                wrapMenuItem((label: any, item: any) => {
                   if (item?.isLoadMore) {
                     return <span style={{ fontWeight: 600 }}>Load more...</span>;
                   }
@@ -1991,7 +2033,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   }
 
                   return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
-                })
+                }, shouldVirtualizePicker(pickerData.length))
               }
               renderValue={
                 isArrayLabel
@@ -2058,14 +2100,11 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   setLocalSearch('');
                 }
               }}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
               container={resolveContainer()}
               menuMaxHeight={getDynamicMenuMaxHeight(pickerData)}
-              menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto'
-              }}
+              menuStyle={getPickerMenuStyle()}
               virtualized={shouldVirtualizePicker(pickerData.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
@@ -2136,6 +2175,8 @@ virtualized={shouldVirtualizePicker(dataList.length)}
             }
           />
         );
+      
+      
       case 'checkPicker': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
 
@@ -2146,6 +2187,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
         const primaryLabelKey = labelKeys[0] ?? 'label';
         const valueKey = props?.selectDataValue ?? 'value';
         const dataList = props?.selectData ?? [];
+
         const pickerSearchBy = resolvePickerSearchBy(
           labelKeys,
           isArrayLabel,
@@ -2159,32 +2201,34 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                 width: props?.width ?? 145,
                 height: props?.height ?? 30
               }}
-              className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''
-                }`}
+              className={`arrow-number-style my-input ${
+                inputColor ? `input-${inputColor}` : ''
+              }`}
               block={props?.width === '100%'}
               disabled={props.disabled}
               accepter={CheckPicker}
               searchable={isPickerSearchable}
               searchBy={pickerSearchBy}
-              container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
               name={fieldName}
               data={dataList}
               labelKey={primaryLabelKey}
               valueKey={valueKey}
-              menuClassName={clsx(
-                'my-input-picker-popup',
-                props?.menuClassName
-              )}
-              value={Array.isArray(record?.[fieldName]) ? record[fieldName] : []}
+              value={
+                Array.isArray(record?.[fieldName])
+                  ? record[fieldName]
+                  : []
+              }
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => {
+                wrapMenuItem((label: any, item: any) => {
                   if (isArrayLabel) {
                     return (
                       <Translate>
-                        {buildCombinedLabel(item, labelKeys, label)}
+                        {buildCombinedLabel(
+                          item,
+                          labelKeys,
+                          label
+                        )}
                       </Translate>
                     );
                   }
@@ -2192,21 +2236,29 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   if (props.isEnum) {
                     return (
                       <Translate>
-                        {formatEnumString(String(item?.[primaryLabelKey] ?? ''))}
+                        {formatEnumString(
+                          String(item?.[primaryLabelKey] ?? '')
+                        )}
                       </Translate>
                     );
                   }
 
-                  return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
-                })
+                  return (
+                    <Translate>
+                      {String(item?.[primaryLabelKey] ?? '')}
+                    </Translate>
+                  );
+                }, shouldVirtualizePicker(dataList.length))
               }
               onChange={value => {
                 handleValueChange(value);
 
                 if (props.onSelectItem) {
-                  const selectedItems = (props?.selectData ?? []).filter(item =>
+                  const selectedItems = dataList.filter(item =>
                     (value ?? []).some(
-                      v => String(v) === String(item?.[valueKey])
+                      v =>
+                        String(v) ===
+                        String(item?.[valueKey])
                     )
                   );
 
@@ -2218,6 +2270,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               open={isCheckPickerOpen}
               onOpen={() => {
+                selectOpenGuardRef.current = Date.now();
                 setPlacement(calculatePlacement());
                 setIsCheckPickerOpen(true);
                 focusPickerSearch();
@@ -2226,12 +2279,19 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                 setIsCheckPickerOpen(false);
                 setLocalSearch('');
               }}
-              menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto'
-              }}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
+              container={resolveContainer()}
+              menuStyle={getPickerMenuStyle()}
+              menuClassName={clsx(
+                'my-input-picker-popup',
+                props?.menuClassName
+              )}
               virtualized={shouldVirtualizePicker(dataList.length)}
-              disabledItemValues={getDisabledValues(dataList, valueKey)}
+              disabledItemValues={getDisabledValues(
+                dataList,
+                valueKey
+              )}
             />
           </div>
         );
@@ -2845,70 +2905,145 @@ onBlur={() => {
               ? String(record[fieldName])
               : '';
 
-        const inputControl = props.allowDecimal ? (
-          <Form.Control
-            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
-            style={{
-              width: numInputWidth,
-              height: props?.height ?? 30,
-              minWidth: numInputWidth,
-              maxWidth: numInputWidth,
-              flexShrink: 0,
-              paddingRight: rightAddon ? '2px' : undefined
-            }}
-            disabled={props.disabled}
-            name={fieldName}
-            accepter={Input}
-            type="text"
-            inputMode="decimal"
-            value={value}
-            placeholder={props.placeholder}
-            onChange={(value: string) => {
-              if (value === '' || value === null || value === undefined) {
-                setRecord?.({ ...record, [fieldName]: '' });
-                return;
-              }
+const inputControl = props.allowDecimal ? (
+  <div
+    style={{
+      position: 'relative',
+      width: numInputWidth,
+      minWidth: numInputWidth,
+      maxWidth: numInputWidth,
+      flexShrink: 0
+    }}
+  >
+    <Form.Control
+      className={`arrow-number-style ${
+        inputColor ? `input-${inputColor}` : ''
+      }`}
+      style={{
+        width: numInputWidth,
+        height: props?.height ?? 30,
+        minWidth: numInputWidth,
+        maxWidth: numInputWidth,
+        flexShrink: 0,
+        paddingInlineEnd: rightAddon ? '2px' : '28px'
+      }}
+      disabled={props.disabled}
+      name={fieldName}
+      accepter={Input}
+      type="text"
+      inputMode="decimal"
+      value={value}
+      placeholder={props.placeholder}
+      onChange={(value: string) => {
+        if (
+          value === '' ||
+          value === null ||
+          value === undefined
+        ) {
+          setRecord?.({
+            ...record,
+            [fieldName]: ''
+          });
+          return;
+        }
 
-              let normalized = value.replace(',', '.');
-              normalized = normalized.replace(/[^0-9.]/g, '');
+        let normalized = value.replace(',', '.');
 
-              const digitsOnly = normalized.replace('.', '');
-              if (digitsOnly.length > 10) {
-                const trimmed = digitsOnly.slice(0, 10);
-                normalized = normalized.includes('.')
-                  ? trimmed.slice(0, normalized.indexOf('.')) +
-                  '.' +
-                  trimmed.slice(normalized.indexOf('.'))
-                  : trimmed;
+        const negative = Boolean(
+          props.allowNegative &&
+          normalized.trim().startsWith('-')
+        );
 
-                dispatch(notify({ msg: 'Maximum allowed is 10 digits', sev: 'warning' }));
-              }
+        normalized = normalized.replace(
+          props.allowNegative
+            ? /[^0-9.-]/g
+            : /[^0-9.]/g,
+          ''
+        );
 
-              const firstDotIndex = normalized.indexOf('.');
-              if (firstDotIndex !== -1) {
-                normalized =
-                  normalized.slice(0, firstDotIndex + 1) +
-                  normalized.slice(firstDotIndex + 1).replace(/\./g, '');
-              }
+        if (props.allowNegative) {
+          normalized = normalized.replace(/-/g, '');
 
-              setRecord?.({ ...record, [fieldName]: normalized });
-            }}
-            onBlur={() => {
-              const currentValue = record?.[fieldName];
-              if (currentValue === '' || currentValue === null || currentValue === undefined) {
-                setRecord?.({ ...record, [fieldName]: null });
-                return;
-              }
-              const normalized = String(currentValue).replace(',', '.').trim();
-              const numericValue = Number(normalized);
-              setRecord?.({
-                ...record,
-                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
-              });
-            }}
-            onKeyDown={focusNextField}
-          />
-        ) : (
+          if (negative) {
+            normalized = `-${normalized}`;
+          }
+        }
+
+        const digitsOnly = normalized.replace(/[-.]/g, '');
+
+        if (digitsOnly.length > 10) {
+          const trimmed = digitsOnly.slice(0, 10);
+
+          normalized = normalized.includes('.')
+            ? trimmed.slice(0, normalized.indexOf('.')) +
+              '.' +
+              trimmed.slice(normalized.indexOf('.'))
+            : trimmed;
+
+          dispatch(
+            notify({
+              msg: 'Maximum allowed is 10 digits',
+              sev: 'warning'
+            })
+          );
+        }
+
+        const firstDotIndex = normalized.indexOf('.');
+
+        if (firstDotIndex !== -1) {
+          normalized =
+            normalized.slice(0, firstDotIndex + 1) +
+            normalized
+              .slice(firstDotIndex + 1)
+              .replace(/\./g, '');
+        }
+
+        setRecord?.({
+          ...record,
+          [fieldName]: normalized
+        });
+      }}
+      onBlur={() => {
+        const currentValue = record?.[fieldName];
+
+        if (
+          currentValue === '' ||
+          currentValue === null ||
+          currentValue === undefined
+        ) {
+          setRecord?.({
+            ...record,
+            [fieldName]: null
+          });
+          return;
+        }
+
+        const normalized = String(currentValue)
+          .replace(',', '.')
+          .trim();
+
+        const numericValue = Number(normalized);
+
+        setRecord?.({
+          ...record,
+          [fieldName]: Number.isNaN(numericValue)
+            ? null
+            : numericValue
+        });
+      }}
+      onKeyDown={focusNextField}
+    />
+
+    {!rightAddon && (
+      <span
+        className="my-input-decimal-calculator-icon"
+        aria-hidden="true"
+      >
+        <FontAwesomeIcon icon={faCalculator} />
+      </span>
+    )}
+  </div>
+) : (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{

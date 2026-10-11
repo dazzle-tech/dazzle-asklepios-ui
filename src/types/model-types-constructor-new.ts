@@ -2879,6 +2879,10 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   respiratoryRate: null,
   fastingBloodGlucose: null,
 
+  fluidStatus: null,
+  edema: null,
+  urineOutput: null,
+
   isTriage: false,
   isActive: true,
 
@@ -3384,6 +3388,8 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   dateOfResolution: null,
   byPatient: true,
   sourceOfInformation: null,
+  patientIsFree: false,
+  freeText: null,
   status: 'ACTIVE',
   cancelledBy: null,
   cancelledDate: null,

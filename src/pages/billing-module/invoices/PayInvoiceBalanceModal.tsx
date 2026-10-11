@@ -239,7 +239,7 @@ console.log("Resolved Patient ID:", resolvedPatientId);
     }
     const chargeCreditCardIfNeeded = async () => {
       if (resolvedPatientId == null || resolvedEncounterId == null) {
-        return true;
+        return { proceed: true, cardResult: null };
       }
 
       const creditCardCollect = await collectCreditCardAmountOrSkip(
@@ -260,15 +260,24 @@ console.log("Resolved Patient ID:", resolvedPatientId);
             sev: 'warning'
           })
         );
-        return false;
+        return { proceed: false };
       }
 
-      return true;
+      return {
+        proceed: true,
+        cardResult: creditCardCollect.skipped
+          ? null
+          : {
+              authorizationCode: creditCardCollect.result?.authorizationCode ?? null,
+              processorReference: creditCardCollect.result?.processorReference ?? null,
+              cardLastFour: creditCardCollect.result?.cardLastFour ?? null
+            }
+      };
     };
 
-    const creditCardCharged = await chargeCreditCardIfNeeded();
+    const creditCardCharge = await chargeCreditCardIfNeeded();
 
-    if (!creditCardCharged) {
+    if (!creditCardCharge.proceed) {
       return;
     }
 
@@ -282,7 +291,10 @@ console.log("Resolved Patient ID:", resolvedPatientId);
             selectedMethod?.id ?? selectedMethod?.key ?? selectedMethod?.valueId ?? 0
           ),
           requestId: makeRequestId('INVOICE-PAY'),
-          notes: form.notes.trim() || `Invoice balance payment ${resolvedDocumentNumber}`
+          notes: form.notes.trim() || `Invoice balance payment ${resolvedDocumentNumber}`,
+          authorizationCode: creditCardCharge.cardResult?.authorizationCode ?? null,
+          processorReference: creditCardCharge.cardResult?.processorReference ?? null,
+          cardLastFour: creditCardCharge.cardResult?.cardLastFour ?? null
         }
       }).unwrap();
 

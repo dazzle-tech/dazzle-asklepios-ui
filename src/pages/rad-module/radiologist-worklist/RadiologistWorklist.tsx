@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -391,6 +392,19 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
       });
   }, [patientIds, getBulkPatientBasicInfo]);
 
+  const handleSearch = () => {
+    if (attachmentsLocked) return;
+    refetch();
+  };
+
+  const handleClearFilters = () => {
+    const now = new Date();
+    setPage(0);
+    setSelectedPatient(null);
+    setDateFilter({ fromDate: now, toDate: now });
+    setDepartmentFilter({ departmentIds: [] });
+  };
+
   const FilterModel = (
     <Form fluid className="table-header-content">
       <div className="filter-radiologist-worklist-main-container">
@@ -448,6 +462,11 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
           }}
         />
       </div>
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={handleSearch}
+        clearOnClick={handleClearFilters}
+      />
     </Form>
   );
 

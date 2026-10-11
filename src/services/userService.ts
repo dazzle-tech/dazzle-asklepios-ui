@@ -255,7 +255,16 @@ export const userService = createApi({
         method: 'POST',
       }),
     }),
+    getUsersByIds: builder.query<any[], number[]>({
+      query: ids => ({
+        url: '/api/admin/users-by-ids',
+        params: {
+        ids: ids.join(',')
+        }
+  })
+}),
   }),
+  
 
 });
 
@@ -290,4 +299,5 @@ export const {
   useUpdateUserEncountersAccessMutation,
   useGetUserByLoginQuery,
   useLazyGetUserByLoginQuery,
+  useGetUsersByIdsQuery
 } = userService;

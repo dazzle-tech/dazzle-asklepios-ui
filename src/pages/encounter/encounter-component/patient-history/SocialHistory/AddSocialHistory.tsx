@@ -16,36 +16,13 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import './style.less';
 import Translate from '@/components/Translate';
-
-type SocialHistory = {
-  id?: number | null;
-  patientId?: number | null;
-
-  isCurrentSmoker?: boolean;
-  smokeStartDate?: any;
-  cigaretteAmount?: number | null;
-  cigaretteType?: string;
-
-  isPreviousSmoker?: boolean;
-  smokeQuitDate?: any;
-
-  exposureToSecondHandSmoke?: boolean;
-
-  alcoholConsumption?: boolean;
-  typeOfAlcohol?: string;
-  alcoholSinceWhen?: any;
-
-  substanceUse?: boolean;
-  route?: any;
-  frequency?: any;
-
-  physicalLimitation?: any;
-  diagnosedEatingDisorders?: any;
-};
+import { SocialHistory } from '@/types/model-types-new';
 
 const newSocialHistory: SocialHistory = {
   id: null,
   patientId: null,
+  patientIsFree: false,
+  freeText: null,
 
   isCurrentSmoker: false,
   smokeStartDate: null,
@@ -169,6 +146,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       setRecord({
         id: initialData.id,
         patientId: patient?.id,
+        patientIsFree: false,
+        freeText: null,
 
         isCurrentSmoker: initialData.isCurrentSmoker || false,
         smokeStartDate: initialData.smokeStartDate || null,
@@ -242,8 +221,10 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       return;
     }
 
-    const payload: any = {
+    const payload: SocialHistory = {
       patientId: Number(patient?.id),
+      patientIsFree: false,
+      freeText: null,
 
       isCurrentSmoker: record.isCurrentSmoker ?? false,
       smokeStartDate:

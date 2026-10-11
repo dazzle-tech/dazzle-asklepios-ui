@@ -66,6 +66,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [cancelForm, setCancelForm] = useState<{ cancellationReason?: string }>({
     cancellationReason: ''
   });
+
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [openReassignModal, setOpenReassignModal] = useState(false);
   const [actionsMenuKey, setActionsMenuKey] = useState(0);
@@ -81,26 +82,34 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<PaymentReceiptData | null>(null);
+
   const [paymentDraft, setPaymentDraft] = useState<any>({
     ...newPatientPayments,
     patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
     useBalanceToSettleDebts: false,
     dept: 0
   });
+
   const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>({
     ...newPatientInsurance,
     payorName: '',
     planName: ''
   });
+
   const paymentInfoRef = useRef<PatientPaymentInfoHandle | null>(null);
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
-    {}
-  );
-  const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+
+  const [practitionersMap, setPractitionersMap] = useState<
+    Record<number | string, Practitioner>
+  >({});
+
+  const [departmentsMap, setDepartmentsMap] = useState<
+    Record<number | string, Department>
+  >({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getPractitionerById] = useLazyGetPractitionerByIdQuery();
   const [getDepartmentById] = useLazyGetDepartmentByIdQuery();
+
   const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
     useLazyGetDiagnosisFlagsByEncounterIdsQuery();
 
@@ -122,36 +131,42 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
-  const [reassignPractitioner, { isLoading: isReassigning }] = useReassignPractitionerMutation();
+  const [reassignPractitioner, { isLoading: isReassigning }] =
+    useReassignPractitionerMutation();
 
   const reassignDepartmentId = selectedVisit?.departmentId
     ? Number(selectedVisit.departmentId)
     : null;
+
   const mappedCurrentPractitioner =
     selectedVisit?.practitionerId != null
       ? practitionersMap[String(selectedVisit.practitionerId)] ??
         practitionersMap[selectedVisit.practitionerId]
       : null;
+
   const reassignSpecialty = String(
     reassignSpecialtyOverride ||
       selectedVisit?.specialty ||
       mappedCurrentPractitioner?.specialty ||
       ''
   ).trim();
+
   const canLoadReassignPractitioners =
     openReassignModal && reassignDepartmentId != null && !!reassignSpecialty;
 
-  const { data: practitionersBySpecialty, isFetching: isLoadingReassignPractitioners } =
-    useGetPractitionersBySpecialityAndDepartmentQuery(
-      {
-        departmentId: reassignDepartmentId ?? 0,
-        specialty: reassignSpecialty,
-        page: 0,
-        size: 200,
-        sort: 'firstName,asc'
-      },
-      { skip: !canLoadReassignPractitioners }
-    );
+  const {
+    data: practitionersBySpecialty,
+    isFetching: isLoadingReassignPractitioners
+  } = useGetPractitionersBySpecialityAndDepartmentQuery(
+    {
+      departmentId: reassignDepartmentId ?? 0,
+      specialty: reassignSpecialty,
+      page: 0,
+      size: 200,
+      sort: 'firstName,asc'
+    },
+    { skip: !canLoadReassignPractitioners }
+  );
 
   const reassignPractitionerOptions = useMemo(() => {
     return (practitionersBySpecialty?.data ?? []).filter(
@@ -169,31 +184,57 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const handleCloseCancel = useCallback((open: boolean) => {
     setOpenCancelModal(open);
-    if (!open) setCancelForm({ cancellationReason: '' });
+
+    if (!open) {
+      setCancelForm({ cancellationReason: '' });
+    }
   }, []);
 
   const handleCancel = async () => {
     if (!selectedVisit) return;
 
-    const cancellationReason = String(cancelForm.cancellationReason ?? '').trim();
+    const cancellationReason = String(
+      cancelForm.cancellationReason ?? ''
+    ).trim();
+
     if (!cancellationReason) {
-      dispatch(notify({ msg: 'Please enter the cancellation reason', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Please enter the cancellation reason',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
     try {
-      await cancelEncounter({ id: selectedVisit.id, cancellationReason }).unwrap();
-      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      await cancelEncounter({
+        id: selectedVisit.id,
+        cancellationReason
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Cancelled Successfully',
+          sev: 'success'
+        })
+      );
+
       handleCloseCancel(false);
       refetch();
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
-        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation':
+          'Cannot cancel encounter with observations'
       };
 
       const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      const msg =
+        errorMap[backendMessage] ||
+        'Error cancelling encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
     }
@@ -202,16 +243,26 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const handleComplete = async (row: any) => {
     try {
       await completeEncounter({ id: row.id }).unwrap();
-      dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Completed Successfully',
+          sev: 'success'
+        })
+      );
+
       refetch();
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.complete.notAllowed':
+          'Cannot complete unless status is ONGOING or TRIAGE STARTED',
         'error.id.notfound': 'Encounter not found'
       };
 
       const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error completing encounter';
+      const msg =
+        errorMap[backendMessage] ||
+        'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
     }
@@ -237,21 +288,35 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       ).trim();
 
       if (existingSpecialty || !row?.practitionerId) {
-        if (existingSpecialty) setReassignSpecialtyOverride(existingSpecialty);
+        if (existingSpecialty) {
+          setReassignSpecialtyOverride(existingSpecialty);
+        }
         return;
       }
 
       try {
-        const practitioner = await getPractitionerById(row.practitionerId).unwrap();
-        const specialty = String(practitioner?.specialty ?? '').trim();
+        const practitioner = await getPractitionerById(
+          row.practitionerId
+        ).unwrap();
+
+        const specialty = String(
+          practitioner?.specialty ?? ''
+        ).trim();
+
         if (specialty) {
           setReassignSpecialtyOverride(specialty);
+
           setSelectedVisit((prev: any) =>
-            prev?.id === row.id ? { ...prev, specialty } : prev
+            prev?.id === row.id
+              ? { ...prev, specialty }
+              : prev
           );
         }
       } catch (err) {
-        console.error('Failed to load practitioner specialty:', err);
+        console.error(
+          'Failed to load practitioner specialty:',
+          err
+        );
       }
     },
     [closeActionsMenu, getPractitionerById, practitionersMap]
@@ -259,6 +324,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const handleCloseReassign = useCallback((open: boolean) => {
     setOpenReassignModal(open);
+
     if (!open) {
       setReassignForm({ practitionerId: null });
       setReassignSpecialtyOverride('');
@@ -268,14 +334,29 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const handleReassignPractitioner = async () => {
     if (!selectedVisit?.id) return;
 
-    const practitionerId = Number(reassignForm.practitionerId);
+    const practitionerId = Number(
+      reassignForm.practitionerId
+    );
+
     if (!practitionerId) {
-      dispatch(notify({ msg: 'Please select a practitioner', sev: 'warning' }));
+      dispatch(
+        notify({
+          msg: 'Please select a practitioner',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
-    if (Number(selectedVisit.practitionerId) === practitionerId) {
-      dispatch(notify({ msg: 'Please select a different practitioner', sev: 'warning' }));
+    if (
+      Number(selectedVisit.practitionerId) === practitionerId
+    ) {
+      dispatch(
+        notify({
+          msg: 'Please select a different practitioner',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
@@ -284,14 +365,23 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         encounterId: selectedVisit.id,
         practitionerId
       }).unwrap();
-      dispatch(notify({ msg: 'Practitioner reassigned successfully', sev: 'success' }));
+
+      dispatch(
+        notify({
+          msg: 'Practitioner reassigned successfully',
+          sev: 'success'
+        })
+      );
+
       setOpenReassignModal(false);
       setReassignForm({ practitionerId: null });
       refetch();
     } catch (error) {
       dispatch(
         notify({
-          msg: extractApiErrorMessage(error) || 'Failed to reassign practitioner',
+          msg:
+            extractApiErrorMessage(error) ||
+            'Failed to reassign practitioner',
           sev: 'error'
         })
       );
@@ -305,7 +395,11 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const practitionerIds = useMemo(
     () =>
       Array.from(
-        new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
+        new Set(
+          encounters
+            .map((e: any) => e.practitionerId)
+            .filter((id: any) => id != null)
+        )
       ),
     [encounters]
   );
@@ -324,7 +418,10 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   );
 
   const encounterIds = useMemo(
-    () => encounters.map((e: any) => e.id).filter((id: any) => id != null),
+    () =>
+      encounters
+        .map((e: any) => e.id)
+        .filter((id: any) => id != null),
     [encounters]
   );
 
@@ -339,7 +436,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     const load = async () => {
       try {
         const practitioners =
-          await getPractitionersBulk(practitionerIds).unwrap();
+          await getPractitionersBulk(
+            practitionerIds
+          ).unwrap();
 
         const nextMap = Object.fromEntries(
           practitioners.map((p: Practitioner) => [
@@ -354,7 +453,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
           if (
             prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
+            prevKeys.every(
+              key => prev[key] === nextMap[key]
+            )
           ) {
             return prev;
           }
@@ -362,7 +463,10 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           return nextMap;
         });
       } catch (err) {
-        console.error('getPractitionersBulk error:', err);
+        console.error(
+          'getPractitionersBulk error:',
+          err
+        );
       }
     };
 
@@ -392,7 +496,10 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
         setDepartmentsMap(nextMap);
       } catch (err) {
-        console.error('getDepartmentById error:', err);
+        console.error(
+          'getDepartmentById error:',
+          err
+        );
       }
     };
 
@@ -401,19 +508,28 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   useEffect(() => {
     if (!encounterIds.length) return;
-    fetchDiagnosisFlags({ encounterIds });
+
+    fetchDiagnosisFlags({
+      encounterIds
+    });
   }, [encounterIds, fetchDiagnosisFlags]);
 
   const diagnosisMap = useMemo(() => {
     return Object.fromEntries(
-      diagnosisFlags?.map((item: any) => [item.encounterId, item.hasPrimaryDiagnoses]) || []
+      diagnosisFlags?.map((item: any) => [
+        item.encounterId,
+        item.hasPrimaryDiagnoses
+      ]) || []
     );
   }, [diagnosisFlags]);
 
   const handleCloseQuickAppointment = useCallback(
     (val: boolean) => {
       setQuickAppointmentModel(val);
-      if (!val) refetch();
+
+      if (!val) {
+        refetch();
+      }
     },
     [refetch]
   );
@@ -422,21 +538,30 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     (row: any) => {
       setSelectedVisit(row);
       setPaymentViewOnly(false);
+
       setPaymentDraft((previous: any) => ({
         ...previous,
-        patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
+        patientId: Number(
+          localPatient?.id ??
+            localPatient?.key ??
+            0
+        ),
         encounterId: row?.id ?? 0
       }));
+
       setPaymentModalOpen(true);
     },
     [localPatient?.id, localPatient?.key]
   );
 
   const handlePaymentConfirm = async () => {
-    const ok = await paymentInfoRef.current?.confirm?.();
+    const ok =
+      await paymentInfoRef.current?.confirm?.();
+
     if (!ok) return;
 
     await refetch();
+
     dispatch(
       notify({
         msg: 'Payment confirmed successfully',
@@ -448,6 +573,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const handlePaymentModalSetOpen = useCallback(
     (open: boolean) => {
       setPaymentModalOpen(open);
+
       if (!open) {
         setPaymentViewOnly(false);
         setPaymentConfirmLoading(false);
@@ -475,33 +601,65 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   }, [handlePaymentModalSetOpen]);
 
   const renderVisitActionsMenu = (row: any) => {
-    const treatmentStatus = getEncounterTreatmentStatus(row);
-    const lifecycleStatus = getEncounterLifecycleStatus(row);
+    const treatmentStatus =
+      getEncounterTreatmentStatus(row);
+
+    const lifecycleStatus =
+      getEncounterLifecycleStatus(row);
+
     const isNew = treatmentStatus === 'NEW';
-    const isPendingPayment = treatmentStatus === 'PENDING_PAYMENT';
-    const isWaitingTriage = treatmentStatus === 'WAITING_TRIAGE';
-    const isCancelled = lifecycleStatus === 'CANCELLED';
-    const isClosed = lifecycleStatus === 'CLOSED';
+    const isPendingPayment =
+      treatmentStatus === 'PENDING_PAYMENT';
+    const isWaitingTriage =
+      treatmentStatus === 'WAITING_TRIAGE';
 
-    const departmentType = departmentsMap[row.departmentId]?.type;
+    const isCancelled =
+      lifecycleStatus === 'CANCELLED';
 
-    const Radiology = departmentType === 'RADIOLOGY';
-    const Laboratory = departmentType === 'LABORATORY';
+    const isClosed =
+      lifecycleStatus === 'CLOSED';
+
+    const departmentType =
+      departmentsMap[row.departmentId]?.type;
+
+    const Radiology =
+      departmentType === 'RADIOLOGY';
+
+    const Laboratory =
+      departmentType === 'LABORATORY';
 
     const canPay =
       !isCancelled &&
       !isClosed &&
       !isNew &&
-      (isPendingPayment || (lifecycleStatus === 'OPEN' && treatmentStatus !== 'WAITING_TRIAGE'));
+      (isPendingPayment ||
+        (lifecycleStatus === 'OPEN' &&
+          treatmentStatus !== 'WAITING_TRIAGE'));
 
-    const canCancel = (isNew || isPendingPayment || isWaitingTriage) && !row?.isObserved;
-    const canComplete = Radiology || Laboratory;
+    const canCancel =
+      (isNew ||
+        isPendingPayment ||
+        isWaitingTriage) &&
+      !row?.isObserved;
+
+    const canComplete =
+      Radiology || Laboratory;
+
     const canDischarge = false;
-    const canReassignPractitioner = isNew || isPendingPayment;
-    const hasVisibleActions =
-      canPay || canComplete || canDischarge || canCancel || canReassignPractitioner;
 
-    if (!hasVisibleActions) return null;
+    const canReassignPractitioner =
+      isNew || isPendingPayment;
+
+    const hasVisibleActions =
+      canPay ||
+      canComplete ||
+      canDischarge ||
+      canCancel ||
+      canReassignPractitioner;
+
+    if (!hasVisibleActions) {
+      return null;
+    }
 
     const menu = (
       <Popover className="visit-history__actions-popover">
@@ -514,7 +672,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               }}
             >
               <div className="visit-history__dropdown-item">
-                <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                <FontAwesomeIcon
+                  icon={faFileInvoiceDollar}
+                />
                 <Translate>Payment</Translate>
               </div>
             </Dropdown.Item>
@@ -527,8 +687,12 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               }}
             >
               <div className="visit-history__dropdown-item">
-                <FontAwesomeIcon icon={faUserDoctor} />
-                <Translate>Re-assign Practitioner</Translate>
+                <FontAwesomeIcon
+                  icon={faUserDoctor}
+                />
+                <Translate>
+                  Re-assign Practitioner
+                </Translate>
               </div>
             </Dropdown.Item>
           ) : null}
@@ -541,7 +705,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               }}
             >
               <div className="visit-history__dropdown-item">
-                <FontAwesomeIcon icon={faCheckDouble} />
+                <FontAwesomeIcon
+                  icon={faCheckDouble}
+                />
                 <Translate>Complete</Translate>
               </div>
             </Dropdown.Item>
@@ -556,7 +722,9 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               }}
             >
               <div className="visit-history__dropdown-item">
-                <FontAwesomeIcon icon={faPowerOff} />
+                <FontAwesomeIcon
+                  icon={faPowerOff}
+                />
                 <Translate>Discharge</Translate>
               </div>
             </Dropdown.Item>
@@ -567,13 +735,19 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               onClick={() => {
                 closeActionsMenu();
                 setSelectedVisit(row);
-                setCancelForm({ cancellationReason: '' });
+                setCancelForm({
+                  cancellationReason: ''
+                });
                 setOpenCancelModal(true);
               }}
             >
               <div className="visit-history__dropdown-item visit-history__dropdown-item--danger">
-                <FontAwesomeIcon icon={faRectangleXmark} />
-                <Translate>Cancel Encounter</Translate>
+                <FontAwesomeIcon
+                  icon={faRectangleXmark}
+                />
+                <Translate>
+                  Cancel Encounter
+                </Translate>
               </div>
             </Dropdown.Item>
           ) : null}
@@ -590,8 +764,13 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         container={getTooltipContainer}
       >
         <span className="visit-history__tooltip-trigger">
-          <MyButton appearance="subtle" size="small">
-            <FontAwesomeIcon icon={faEllipsisVertical} />
+          <MyButton
+            appearance="subtle"
+            size="small"
+          >
+            <FontAwesomeIcon
+              icon={faEllipsisVertical}
+            />
           </MyButton>
         </span>
       </Whisper>
@@ -616,44 +795,86 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           </a>
         )
       },
-      { key: 'encounterDate', title: <Translate>Date</Translate>, dataKey: 'encounterDate' },
+      {
+        key: 'encounterDate',
+        title: <Translate>Date</Translate>,
+        dataKey: 'encounterDate'
+      },
       {
         key: 'department',
         title: <Translate>Department</Translate>,
         render: (row: any) => {
-          const department = departmentsMap[String(row.departmentId)];
+          const department =
+            departmentsMap[
+              String(row.departmentId)
+            ];
 
-          return department?.name || row?.department?.name || '-';
+          return (
+            department?.name ||
+            row?.department?.name ||
+            '-'
+          );
         }
       },
       {
         key: 'practitioner',
         title: <Translate>Practitioner</Translate>,
         render: (row: any) => {
-          const p = practitionersMap[row.practitionerId];
+          const p =
+            practitionersMap[
+              row.practitionerId
+            ];
+
           if (!p) return '';
-          return `${p.firstName} ${p.lastName ?? ''}`.trim();
+
+          return `${p.firstName} ${
+            p.lastName ?? ''
+          }`.trim();
         }
       },
       {
         key: 'reason',
         title: <Translate>Reason</Translate>,
-        render: (row: any) => formatEnumString(row.encounterReason)
+        render: (row: any) =>
+          formatEnumString(
+            row.encounterReason
+          )
       },
       {
         key: 'priority',
         title: <Translate>Priority</Translate>,
-        render: (row: any) => formatEnumString(row.priorityLevel)
+        render: (row: any) =>
+          formatEnumString(
+            row.priorityLevel
+          )
       },
       {
         key: 'encounterStatus',
-        title: <Translate>Encounter Status</Translate>,
-        render: (row: any) => formatEnumString(getEncounterLifecycleStatus(row) || '-')
+        title: (
+          <Translate>
+            Encounter Status
+          </Translate>
+        ),
+        render: (row: any) =>
+          formatEnumString(
+            getEncounterLifecycleStatus(
+              row
+            ) || '-'
+          )
       },
       {
         key: 'treatmentStatus',
-        title: <Translate>Treatment Status</Translate>,
-        render: (row: any) => formatEnumString(getEncounterTreatmentStatus(row))
+        title: (
+          <Translate>
+            Treatment Status
+          </Translate>
+        ),
+        render: (row: any) =>
+          formatEnumString(
+            getEncounterTreatmentStatus(
+              row
+            )
+          )
       },
       {
         key: 'actions',
@@ -667,23 +888,51 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       },
       {
         key: 'cancellationReason',
-        title: <Translate>Cancellation Reason</Translate>,
+        title: (
+          <Translate>
+            Cancellation Reason
+          </Translate>
+        ),
         expandable: true,
-        render: (row: any) => row?.cancellationReason || row?.cancelReason || '-'
+        render: (row: any) =>
+          row?.cancellationReason ||
+          row?.cancelReason ||
+          '-'
       },
       {
         key: 'cancelledByAt',
-        title: <Translate>Cancelled By\At</Translate>,
+        title: (
+          <Translate>
+            Cancelled By\At
+          </Translate>
+        ),
         expandable: true,
         render: (row: any) => {
-          const cancelledAt = row?.cancelledAt ?? row?.cancelledDate;
-          if (!row?.cancelledBy && !cancelledAt) return '-';
+          const cancelledAt =
+            row?.cancelledAt ??
+            row?.cancelledDate;
+
+          if (
+            !row?.cancelledBy &&
+            !cancelledAt
+          ) {
+            return '-';
+          }
+
           return (
             <>
-              <span>{row?.cancelledBy || '-'}</span>
+              <span>
+                {row?.cancelledBy || '-'}
+              </span>
+
               <br />
+
               <span className="date-table-style">
-                {cancelledAt ? formatDateWithoutSeconds(cancelledAt) : ''}
+                {cancelledAt
+                  ? formatDateWithoutSeconds(
+                      cancelledAt
+                    )
+                  : ''}
               </span>
             </>
           );
@@ -702,20 +951,37 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     ]
   );
 
-  const direction = localStorage.getItem('direction') || 'LTR';
-  const isRTL = direction === 'RTL';
-  const dir = isRTL ? 'rtl' : 'ltr';
-  const currentPractitionerName = mappedCurrentPractitioner
-    ? `${mappedCurrentPractitioner.firstName} ${mappedCurrentPractitioner.lastName ?? ''}`.trim()
-    : '-';
+  const direction =
+    localStorage.getItem('direction') ||
+    'LTR';
+
+  const isRTL =
+    direction === 'RTL';
+
+  const dir =
+    isRTL ? 'rtl' : 'ltr';
+
+  const currentPractitionerName =
+    mappedCurrentPractitioner
+      ? `${mappedCurrentPractitioner.firstName} ${
+          mappedCurrentPractitioner.lastName ??
+          ''
+        }`.trim()
+      : '-';
 
   return (
     <div dir={dir}>
-      <div ref={tooltipContainerRef} className="visit-history__wrapper">
+      <div
+        ref={tooltipContainerRef}
+        className="visit-history__wrapper"
+      >
         <MyTable
           data={encounters}
           columns={columns}
-          loading={isFetching && encounters.length === 0}
+          loading={
+            isFetching &&
+            encounters.length === 0
+          }
           height={580}
         />
 
@@ -743,30 +1009,54 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           title="Re-assign Practitioner"
           size="sm"
           actionButtonLabel="Re-assign"
-          actionButtonFunction={handleReassignPractitioner}
-          actionButtonLoading={isReassigning}
+          actionButtonFunction={
+            handleReassignPractitioner
+          }
+          actionButtonLoading={
+            isReassigning
+          }
           isDisabledActionBtn={
-            isReassigning || !reassignForm.practitionerId || isLoadingReassignPractitioners
+            isReassigning ||
+            !reassignForm.practitionerId ||
+            isLoadingReassignPractitioners
           }
           content={
             <Form fluid>
-              <p style={{ marginBottom: 12 }}>
-                <Translate>Current Practitioner</Translate>: {currentPractitionerName}
+              <p
+                style={{
+                  marginBottom: 12
+                }}
+              >
+                <Translate>
+                  Current Practitioner
+                </Translate>
+                : {currentPractitionerName}
               </p>
+
               <MyInput
                 required
                 column
                 fieldType="select"
                 fieldLabel="New Practitioner"
                 fieldName="practitionerId"
-                selectData={reassignPractitionerOptions}
-                selectDataLabel={['firstName', 'lastName']}
+                selectData={
+                  reassignPractitionerOptions
+                }
+                selectDataLabel={[
+                  'firstName',
+                  'lastName'
+                ]}
                 selectDataValue="id"
                 record={reassignForm}
                 setRecord={setReassignForm}
                 searchable
-                loading={isLoadingReassignPractitioners}
-                disabled={!canLoadReassignPractitioners || isLoadingReassignPractitioners}
+                loading={
+                  isLoadingReassignPractitioners
+                }
+                disabled={
+                  !canLoadReassignPractitioners ||
+                  isLoadingReassignPractitioners
+                }
                 placeholder={
                   !reassignDepartmentId
                     ? 'Encounter department is missing'
@@ -785,19 +1075,29 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
         {quickAppointmentModel && (
           <PatientQuickAppointment
-            quickAppointmentModel={quickAppointmentModel}
-            setQuickAppointmentModel={handleCloseQuickAppointment}
+            quickAppointmentModel={
+              quickAppointmentModel
+            }
+            setQuickAppointmentModel={
+              handleCloseQuickAppointment
+            }
             localPatient={localPatient}
             localVisit={selectedVisit}
-            isDisabeld={quickInitialStep === 0}
+            isDisabeld={
+              quickInitialStep === 0
+            }
             initialStep={quickInitialStep}
-            onEncounterSaved={handleEncounterSaved}
+            onEncounterSaved={
+              handleEncounterSaved
+            }
           />
         )}
 
         <MyModal
           open={paymentModalOpen}
-          setOpen={handlePaymentModalSetOpen}
+          setOpen={
+            handlePaymentModalSetOpen
+          }
           title={
             paymentViewOnly
               ? 'Payment Details'
@@ -809,27 +1109,62 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           enforceFocus={false}
           cancelButtonLabel="Close"
           actionButtonLabel="Confirm"
-          actionButtonFunction={handlePaymentConfirm}
-          actionButtonLoading={paymentConfirmLoading}
-          isDisabledActionBtn={paymentConfirmLoading}
-          handleCancelFunction={() => paymentInfoRef.current?.clear?.()}
+          actionButtonFunction={
+            handlePaymentConfirm
+          }
+          actionButtonLoading={
+            paymentConfirmLoading
+          }
+          isDisabledActionBtn={
+            paymentConfirmLoading
+          }
+          handleCancelFunction={() =>
+            paymentInfoRef.current?.clear?.()
+          }
           content={
-            paymentModalOpen && selectedVisit ? (
+            paymentModalOpen &&
+            selectedVisit ? (
               <PatientPaymentInfo
                 ref={paymentInfoRef}
-                localPatient={localPatient}
-                localEncounter={selectedVisit}
-                isReadOnly={paymentViewOnly}
-                showInternalButtons={false}
-                payment={paymentDraft}
-                setPayment={setPaymentDraft}
-                patientInsurance={patientInsuranceDraft}
-                setPatientInsurance={setPatientInsuranceDraft}
-                onPaymentSaved={handleEncounterSaved}
-                onReceiptReady={handleReceiptReady}
-                onReceiptClosed={handleReceiptClose}
-                onViewOnlyChange={setPaymentViewOnly}
-                onConfirmingChange={setPaymentConfirmLoading}
+                localPatient={
+                  localPatient
+                }
+                localEncounter={
+                  selectedVisit
+                }
+                isReadOnly={
+                  paymentViewOnly
+                }
+                showInternalButtons={
+                  false
+                }
+                payment={
+                  paymentDraft
+                }
+                setPayment={
+                  setPaymentDraft
+                }
+                patientInsurance={
+                  patientInsuranceDraft
+                }
+                setPatientInsurance={
+                  setPatientInsuranceDraft
+                }
+                onPaymentSaved={
+                  handleEncounterSaved
+                }
+                onReceiptReady={
+                  handleReceiptReady
+                }
+                onReceiptClosed={
+                  handleReceiptClose
+                }
+                onViewOnlyChange={
+                  setPaymentViewOnly
+                }
+                onConfirmingChange={
+                  setPaymentConfirmLoading
+                }
               />
             ) : null
           }

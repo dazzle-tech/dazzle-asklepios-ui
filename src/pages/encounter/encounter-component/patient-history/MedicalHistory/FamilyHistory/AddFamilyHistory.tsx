@@ -185,11 +185,13 @@ const relations = useEnumOptions('Relations', {
     }
 
     const payload = {
-      id: formData.id,
-      patientId: Number(patient.id),
+      ...(formData.id ? { id: formData.id } : {}),
+      patientId: Number(patient?.id),
       condition: formData.condition,
       relation: formData.relation,
-      inheritedDiseases: Boolean(formData.inheritedDiseases)
+      inheritedDiseases: formData.inheritedDiseases,
+      patientIsFree: false,
+      freeText: null
     };
 
     try {

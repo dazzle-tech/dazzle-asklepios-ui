@@ -35,6 +35,7 @@ const PatientHistorySummary: React.FC<Props> = ({
   return (
     <div className="medical-container-div">
       <SectionContainer
+        collapsible
         title={
           <div
             className="patient-history-title"

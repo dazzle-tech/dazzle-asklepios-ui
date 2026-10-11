@@ -707,13 +707,21 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    cancelEncounter: builder.mutation<PatientEncounter, { id: Id; cancellationReason?: string }>({
+    cancelEncounter: builder.mutation<
+      PatientEncounter,
+      { id: Id; cancellationReason?: string }
+    >({
       query: ({ id, cancellationReason }) => ({
         url: `/api/patient/encounter/${id}/cancel`,
         method: 'POST',
-        body: { cancellationReason: cancellationReason?.trim() ?? '' }
+        body: {
+          cancellationReason: cancellationReason?.trim() ?? ''
+        }
       }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
     }),
 
     dischargeEncounter: builder.mutation<
@@ -994,6 +1002,16 @@ export const patientEncounterService = createApi({
           ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
+    assignNurse: builder.mutation<void, { encounterId: Id; nurseId: Id }>({
+  query: ({ encounterId, nurseId }) => ({
+    url: `/api/patient/encounter/${encounterId}/assigned-nurse/${nurseId}`,
+    method: 'PUT',
+  }),
+  invalidatesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientEncounter', id: encounterId },
+    'PatientEncounter',
+  ],
+}),
   }),
 
 });
@@ -1055,6 +1073,8 @@ export const {
   useLazyGetAmendmentsQuery,
   useGetAmendmentSummariesQuery,
   useGetAmendmentHistoryQuery,
-    useGetEncounterAuditQuery,
-  useLazyGetEncounterAuditQuery
+  useLazyGetEncounterAuditQuery,
+  useGetEncounterAuditQuery,
+  useLazyGetEncounterAuditQuery,
+  useAssignNurseMutation
 } = patientEncounterService;

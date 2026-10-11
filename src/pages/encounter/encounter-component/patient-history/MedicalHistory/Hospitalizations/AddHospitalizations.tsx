@@ -114,7 +114,9 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     lengthOfStayDays: null,
     outcomes: '',
     medicalInterventionsPerformed: '',
-    patientId: null
+    patientId: null,
+    patientIsFree: false,
+    freeText: null
   });
 
   /*  LOAD  */
@@ -123,7 +125,9 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: false,
+        freeText: null
       });
     } else {
       setFormData({
@@ -134,7 +138,9 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         lengthOfStayDays: null,
         outcomes: '',
         medicalInterventionsPerformed: '',
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: false,
+        freeText: null
       });
     }
   }, [initialData, open, patient?.id]);
@@ -167,15 +173,17 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     }
 
     const payload = {
-      id: formData.id,
-      patientId: Number(patient.id),
+      ...(formData.id ? { id: formData.id } : {}),
+      patientId: Number(patient?.id),
       facility: formData.facility,
       reason: formData.reason,
       admissionType: formData.admissionType,
       dateOfAdmission: formData.dateOfAdmission,
       lengthOfStayDays: formData.lengthOfStayDays,
       outcomes: formData.outcomes,
-      medicalInterventionsPerformed: formData.medicalInterventionsPerformed
+      medicalInterventionsPerformed: formData.medicalInterventionsPerformed,
+      patientIsFree: false,
+      freeText: null
     };
 
     try {
@@ -194,7 +202,9 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
           lengthOfStayDays: null,
           outcomes: '',
           medicalInterventionsPerformed: '',
-          patientId: Number(patient?.id)
+          patientId: Number(patient?.id),
+          patientIsFree: false,
+          freeText: null
         });
       }
     } catch (err: any) {

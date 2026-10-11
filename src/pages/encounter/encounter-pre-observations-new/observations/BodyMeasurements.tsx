@@ -24,6 +24,10 @@ type BodyMeasurementsProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  /** Keep specialty sheets limited to weight, height and BMI. */
+  showExtendedMeasurements?: boolean;
 };
 
 const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
@@ -33,7 +37,10 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Body Measurements'
+  title = 'Body Measurements',
+  showExtendedMeasurements = true,
+  collapsible = false,
+  defaultCollapsed = false
 }) => {
   const dispatch = useAppDispatch();
 
@@ -246,6 +253,8 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
   return (
     <SectionContainer
+      collapsible={collapsible}
+      defaultCollapsed={defaultCollapsed}
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
@@ -297,18 +306,20 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                 required
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <div className="container-Column">
-                <MyLabel label="Body Surface Area" />
-                <div>
-                  <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
-                  <span>{bodySurfaceArea}</span>
+            {showExtendedMeasurements && (
+              <div style={{ flex: 1 }}>
+                <div className="container-Column">
+                  <MyLabel label="Body Surface Area" />
+                  <div>
+                    <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
+                    <span>{bodySurfaceArea}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
-            {showHeadCircumference && (
+            {showExtendedMeasurements && showHeadCircumference && (
               <div
                 className="rows-gap"
                 style={{ display: 'flex', gap: 12, marginTop: 10 }}

@@ -516,6 +516,17 @@ export interface AvailabilityGenerationBatch {
   lastModifiedDate?: string | null;
 }
 
+/** PUT `/availability-generation-batches/{batchId}/cancel-upcoming-available-slots` */
+export interface CancelUpcomingAvailableSlotsDTO {
+  cancelReason: string;
+}
+
+export interface CancelUpcomingAvailableSlotsResponseVM {
+  batchId?: number | null;
+  cancelledCount?: number | null;
+  message?: string | null;
+}
+
 /* =========================
  *  Appointments From Template
  * ========================= */
@@ -706,6 +717,13 @@ export interface AppointmentRequestResponseVM {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
   preferredDate?: string | null;
+  preferredStartTime?: string | null;
+  preferredEndTime?: string | null;
+  recurring?: boolean | null;
+  recurrenceDays?: string | null;
+  recurrenceStartDate?: string | null;
+  recurrencePeriod?: number | null;
+  recurrenceUnit?: string | null;
 }
 
 export interface AppointmentRequestCreateDTO {
@@ -4518,30 +4536,36 @@ export interface PatientDiagnosis {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
 export interface VitalSigns {
-  id?: number;
+    id?: number;
 
-  patientId: number;
-  encounterId: number;
+    patientId: number;
+    encounterId: number;
 
-  bloodPressureSystolic?: number | null;
-  bloodPressureDiastolic?: number | null;
-  measurementSite?: string | null;
+    bloodPressureSystolic?: number | null;
+    bloodPressureDiastolic?: number | null;
+    measurementSite?: string | null;
 
-  heartRate?: number | null;
-  temperature?: number | null;
-  oxygenSaturation?: number | null;
-  respiratoryRate?: number | null;
-  fastingBloodGlucose?: string | null;
+    heartRate?: number | null;
+    temperature?: number | null;
+    oxygenSaturation?: number | null;
+    respiratoryRate?: number | null;
+    fastingBloodGlucose?: string | null;
 
-  isTriage?: boolean | null;
-  isActive: boolean;
+    fluidStatus?: string | null;
+    edema?: string | null;
+    urineOutput?: string | null;
 
-  notes?: string | null;
+    isTriage?: boolean | null;
+    isActive: boolean;
 
-  createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null;
+    notes?: string | null;
+
+    createdDate?: Date | string | null;
+    lastModifiedDate?: Date | string | null;
 }
+
 export interface BodyMeasurements {
   id?: number;
 
@@ -5072,13 +5096,109 @@ export interface PatientEncounterDischarge {
   dischargeType: string | null;
   dischargeAt: Date | string | null;
 }
-export interface CurrentMedication {
+export interface SurgicalHistory {
+  id?: number;
   patientId: number;
-  activeIngredientId: number;
+  surgery: string | null;
+  facility: string | null;
+  anesthesiaType: string | null;
+  dateOfSurgery: string | Date | number | null;
+  complications: string | null;
+  adverseReactionsToAnesthesia: string | null;
+  hasImplantsOrDevices: boolean | null;
+  implantsOrDevicesDescription: string | null;
+  patientIsFree: boolean;
+  freeText: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface SocialHistory {
+  id?: number | null;
+  patientId: number;
+  isCurrentSmoker: boolean | null;
+  smokeStartDate: string | Date | number | null;
+  cigaretteAmount: number | null;
+  cigaretteType: string | null;
+  isPreviousSmoker: boolean | null;
+  smokeQuitDate: string | Date | number | null;
+  exposureToSecondHandSmoke: boolean | null;
+  alcoholConsumption: boolean | null;
+  typeOfAlcohol: string | null;
+  alcoholSinceWhen: string | Date | number | null;
+  substanceUse: boolean | null;
+  route: string | null;
+  frequency: string | null;
+  physicalLimitation: string | null;
+  diagnosedEatingDisorders: string | null;
+  patientIsFree: boolean;
+  freeText: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface FamilyHistory {
+  id?: number;
+  patientId: number;
+  condition: string | null;
+  relation: string | null;
+  inheritedDiseases: boolean | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface Hospitalization {
+  id?: number;
+  patientId: number;
+  facility: string | null;
+  reason: string | null;
+  admissionType: string | null;
+  dateOfAdmission: string | Date | null;
+  lengthOfStayDays?: number | null;
+  outcomes?: string | null;
+  medicalInterventionsPerformed?: string | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
+  status?: string | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | Date | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
+
+export interface CurrentMedication {
+  id?: number;
+  patientId: number;
+  activeIngredientId: number | null;
   dosage?: number | null;
   unit?: string | null;
   frequency?: string | null;
   startDate: string | Date | null;
+  patientIsFree?: boolean;
+  freeText?: string | null;
 }
 
 export type CurrentMedicationCreate = CurrentMedication;
@@ -5472,28 +5592,30 @@ export type PreAuthorizationCancelRequest = {
   cancelReason?: CancelReason;
 };
 
-export interface PatientProblem {
-  id?: number;
-  patient?: any | null;
+  export interface PatientProblem {
+    id?: number;
+    patient?: any | null;
 
-  condition: string | null;
-  dateOfDiagnosis?: string | Date | null;
-  conditionStatus: string | null;
-  type: string | null;
-  dateOfResolution?: string | Date | null;
-  byPatient: boolean | null;
-  sourceOfInformation?: string | null;
-  status?: string | null;
-  cancelledBy?: string | null;
-  cancelledDate?: string | Date | null;
-  cancellationReason?: string | null;
-  createdBy?: string | null;
-  createdDate?: string | Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: string | Date | null;
+    condition: string | null;
+    dateOfDiagnosis?: string | Date | null;
+    conditionStatus: string | null;
+    type: string | null;
+    dateOfResolution?: string | Date | null;
+    byPatient: boolean | null;
+    sourceOfInformation?: string | null;
 
+    patientIsFree: boolean;
+    freeText?: string | null;
 
-}
+    status?: string | null;
+    cancelledBy?: string | null;
+    cancelledDate?: string | Date | null;
+    cancellationReason?: string | null;
+    createdBy?: string | null;
+    createdDate?: string | Date | null;
+    lastModifiedBy?: string | null;
+    lastModifiedDate?: string | Date | null;
+  }
 
 export interface OCRParsingResponseDTO {
    type: string | null;
@@ -7358,4 +7480,547 @@ export interface DischargeReportResponse {
   confidence_score?: number;
   disclaimer?: string;
   requires_physician_review?: boolean;
+}
+
+export interface NephrologyKidneyAssessment {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  ckdStage?: string | null;
+  kidneyCondition?: string | null;
+  causeOfKidneyDisease?: string | null;
+  otherCauseOfKidneyDisease?: string | null;
+
+  diabetes?: boolean | null;
+  hypertension?: boolean | null;
+  proteinuria?: boolean | null;
+  hematuria?: boolean | null;
+
+  isActive: boolean;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface NephrologyKidneyAssessmentCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  ckdStage?: string | null;
+  kidneyCondition?: string | null;
+  causeOfKidneyDisease?: string | null;
+  otherCauseOfKidneyDisease?: string | null;
+
+  diabetes?: boolean | null;
+  hypertension?: boolean | null;
+  proteinuria?: boolean | null;
+  hematuria?: boolean | null;
+}
+
+export interface NephrologyKidneyAssessmentUpdateDTO {
+  id: number;
+
+  ckdStage?: string | null;
+  kidneyCondition?: string | null;
+  causeOfKidneyDisease?: string | null;
+  otherCauseOfKidneyDisease?: string | null;
+
+  diabetes?: boolean | null;
+  hypertension?: boolean | null;
+  proteinuria?: boolean | null;
+  hematuria?: boolean | null;
+}
+
+export interface NephrologyRenalFunction {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  egfr?: number | null;
+  creatinine?: number | null;
+  bun?: number | null;
+  hemoglobin?: number | null;
+
+  potassium?: number | null;
+  sodium?: number | null;
+  calcium?: number | null;
+  phosphorus?: number | null;
+
+  isActive: boolean;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface NephrologyRenalFunctionCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  egfr?: number | null;
+  creatinine?: number | null;
+  bun?: number | null;
+  hemoglobin?: number | null;
+
+  potassium?: number | null;
+  sodium?: number | null;
+  calcium?: number | null;
+  phosphorus?: number | null;
+}
+
+export interface NephrologyRenalFunctionUpdateDTO {
+  id: number;
+
+  egfr?: number | null;
+  creatinine?: number | null;
+  bun?: number | null;
+  hemoglobin?: number | null;
+
+  potassium?: number | null;
+  sodium?: number | null;
+  calcium?: number | null;
+  phosphorus?: number | null;
+}
+
+export interface NephrologyTreatmentPlan {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  treatmentType?: string | null;
+
+  frequency?: number | null;
+  schedule?: string[] | null;
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+
+  dryWeight?: number | null;
+  targetWeight?: number | null;
+  dialysisAccess?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  bloodFlowRate?: number | null;
+  dialysateFlow?: number | null;
+  dialysate?: string | null;
+
+  nephrologistId?: number | null;
+  startDate?: string | null;
+  status?: string | null;
+
+  isActive: boolean;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface NephrologyTreatmentPlanCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  treatmentType?: string | null;
+
+  frequency?: number | null;
+  schedule?: string[] | null;
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+
+  dryWeight?: number | null;
+  targetWeight?: number | null;
+  dialysisAccess?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  bloodFlowRate?: number | null;
+  dialysateFlow?: number | null;
+  dialysate?: string | null;
+
+  nephrologistId?: number | null;
+  startDate?: string | null;
+  status?: string | null;
+}
+
+export interface NephrologyTreatmentPlanUpdateDTO {
+  id: number;
+
+  treatmentType?: string | null;
+
+  frequency?: number | null;
+  schedule?: string[] | null;
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+
+  dryWeight?: number | null;
+  targetWeight?: number | null;
+  dialysisAccess?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  bloodFlowRate?: number | null;
+  dialysateFlow?: number | null;
+  dialysate?: string | null;
+
+  nephrologistId?: number | null;
+  startDate?: string | null;
+  status?: string | null;
+}
+
+export interface DialysisSession {
+  id: number;
+
+  patientId: number;
+  encounterId: number;
+
+  chairStation?: string | null;
+  machine?: string | null;
+  date?: string | null;
+
+  startTime?: string | null;
+  endTime?: string | null;
+  shift?: string | null;
+
+  assignedNurseId?: number | null;
+  nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
+
+  preWeight?: number | null;
+  dryWeight?: number | null;
+  weightGain?: number | null;
+  interdialyticWeightGain?: number | null;
+
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+  heartRate?: number | null;
+  temperature?: number | null;
+  respiratoryRate?: number | null;
+  oxygenSaturation?: number | null;
+
+  symptoms?: string | null;
+  edema?: string | null;
+  preAccessCondition?: string | null;
+  generalCondition?: string | null;
+
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+  bloodFlowRate?: number | null;
+  dialysateFlowRate?: number | null;
+  ultrafiltrationGoal?: number | null;
+
+  dialysateComposition?: string | null;
+
+  sodium?: number | null;
+  potassium?: number | null;
+  calcium?: number | null;
+  dialysisTemperature?: number | null;
+
+  heparinDose?: number | null;
+
+  anticoagulation?: string | null;
+  otherAnticoagulation?: string | null;
+
+  targetDryWeight?: number | null;
+
+  accessType?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  infection?: boolean | null;
+  bleeding?: boolean | null;
+
+  thrill?: string | null;
+  bruit?: string | null;
+  dressing?: string | null;
+  catheterCondition?: string | null;
+
+  postWeight?: number | null;
+  postBloodPressureSystolic?: number | null;
+  postBloodPressureDiastolic?: number | null;
+  postPulse?: number | null;
+  postTemperature?: number | null;
+
+  totalUfRemoved?: number | null;
+  actualTreatmentDuration?: number | null;
+
+  postAccessCondition?: string | null;
+  disposition?: string | null;
+  postComplications?: string | null;
+  patientCondition?: string | null;
+
+  targetUf?: number | null;
+  actualUf?: number | null;
+  ufDifference?: number | null;
+
+  complications?: string[] | null;
+  complicationNotes?: string | null;
+
+  isActive: boolean;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface DialysisSessionCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  chairStation?: string | null;
+  machine?: string | null;
+  date?: string | null;
+
+  startTime?: string | null;
+  endTime?: string | null;
+  shift?: string | null;
+
+  assignedNurseId?: number | null;
+  nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
+
+  preWeight?: number | null;
+  dryWeight?: number | null;
+  weightGain?: number | null;
+  interdialyticWeightGain?: number | null;
+
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+  heartRate?: number | null;
+  temperature?: number | null;
+  respiratoryRate?: number | null;
+  oxygenSaturation?: number | null;
+
+  symptoms?: string | null;
+  edema?: string | null;
+  preAccessCondition?: string | null;
+  generalCondition?: string | null;
+
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+  bloodFlowRate?: number | null;
+  dialysateFlowRate?: number | null;
+  ultrafiltrationGoal?: number | null;
+
+  dialysateComposition?: string | null;
+
+  sodium?: number | null;
+  potassium?: number | null;
+  calcium?: number | null;
+  dialysisTemperature?: number | null;
+
+  heparinDose?: number | null;
+
+  anticoagulation?: string | null;
+  otherAnticoagulation?: string | null;
+
+  targetDryWeight?: number | null;
+
+  accessType?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  infection?: boolean | null;
+  bleeding?: boolean | null;
+
+  thrill?: string | null;
+  bruit?: string | null;
+  dressing?: string | null;
+  catheterCondition?: string | null;
+
+  postWeight?: number | null;
+  postBloodPressureSystolic?: number | null;
+  postBloodPressureDiastolic?: number | null;
+  postPulse?: number | null;
+  postTemperature?: number | null;
+
+  totalUfRemoved?: number | null;
+  actualTreatmentDuration?: number | null;
+
+  postAccessCondition?: string | null;
+  disposition?: string | null;
+  postComplications?: string | null;
+  patientCondition?: string | null;
+
+  targetUf?: number | null;
+  actualUf?: number | null;
+  ufDifference?: number | null;
+
+  complications?: string[] | null;
+  complicationNotes?: string | null;
+}
+
+export interface DialysisSessionUpdateDTO {
+  id: number;
+
+  chairStation?: string | null;
+  machine?: string | null;
+  date?: string | null;
+
+  startTime?: string | null;
+  endTime?: string | null;
+  shift?: string | null;
+
+  assignedNurseId?: number | null;
+  nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
+
+  preWeight?: number | null;
+  dryWeight?: number | null;
+  weightGain?: number | null;
+  interdialyticWeightGain?: number | null;
+
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+  heartRate?: number | null;
+  temperature?: number | null;
+  respiratoryRate?: number | null;
+  oxygenSaturation?: number | null;
+
+  symptoms?: string | null;
+  edema?: string | null;
+  preAccessCondition?: string | null;
+  generalCondition?: string | null;
+
+  dialysisDuration?: number | null;
+  durationType?: string | null;
+  bloodFlowRate?: number | null;
+  dialysateFlowRate?: number | null;
+  ultrafiltrationGoal?: number | null;
+
+  dialysateComposition?: string | null;
+
+  sodium?: number | null;
+  potassium?: number | null;
+  calcium?: number | null;
+  dialysisTemperature?: number | null;
+
+  heparinDose?: number | null;
+
+  anticoagulation?: string | null;
+  otherAnticoagulation?: string | null;
+
+  targetDryWeight?: number | null;
+
+  accessType?: string | null;
+  accessSite?: string | null;
+  otherAccessSite?: string | null;
+
+  infection?: boolean | null;
+  bleeding?: boolean | null;
+
+  thrill?: string | null;
+  bruit?: string | null;
+  dressing?: string | null;
+  catheterCondition?: string | null;
+
+  postWeight?: number | null;
+  postBloodPressureSystolic?: number | null;
+  postBloodPressureDiastolic?: number | null;
+  postPulse?: number | null;
+  postTemperature?: number | null;
+
+  totalUfRemoved?: number | null;
+  actualTreatmentDuration?: number | null;
+
+  postAccessCondition?: string | null;
+  disposition?: string | null;
+  postComplications?: string | null;
+  patientCondition?: string | null;
+
+  targetUf?: number | null;
+  actualUf?: number | null;
+  ufDifference?: number | null;
+
+  complications?: string[] | null;
+  complicationNotes?: string | null;
+}
+
+export interface DialysisFlowReading {
+  id?: number;
+
+  dialysisSessionId: number;
+
+  time?: string | null;
+
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+
+  pulse?: number | null;
+
+  ufRate?: number | null;
+  ufRemoved?: number | null;
+
+  arterialPressure?: number | null;
+  venousPressure?: number | null;
+  transmembranePressure?: number | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface DialysisFlowReadingCreateDTO {
+  dialysisSessionId: number;
+
+  time?: string | null;
+
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+
+  pulse?: number | null;
+
+  ufRate?: number | null;
+  ufRemoved?: number | null;
+
+  arterialPressure?: number | null;
+  venousPressure?: number | null;
+  transmembranePressure?: number | null;
+}
+
+export interface DialysisMedication {
+  id?: number;
+
+  dialysisSessionId: number;
+
+  activeIngredientId: number;
+
+  dose?: number | null;
+
+  doseUnit?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface DialysisMedicationCreateDTO {
+  dialysisSessionId: number;
+
+  activeIngredientId: number;
+
+  dose?: number | null;
+
+  doseUnit?: string | null;
+}
+
+export interface DialysisMedicationUpdateDTO {
+  id: number;
+
+  dialysisSessionId: number;
+
+  activeIngredientId: number;
+
+  dose?: number | null;
+
+  doseUnit?: string | null;
 }

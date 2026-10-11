@@ -1,7 +1,9 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
+import MyButton from '@/components/MyButton/MyButton';
 
 type Props = {
   slotSummaryBarStats: any;
@@ -26,6 +28,8 @@ const ScheduleSummaryBar = ({
   requestedAppointmentRequestCount = 0,
   onOpenAppointmentRequests
 }: Props) => {
+  const mode = useSelector((state: any) => state.ui.mode);
+  const requestAlertColor = mode === 'dark' ? '#fbbf24' : '#b45309';
   const departmentScopeLabel = (() => {
     const ids = selectedDepartmentIds?.departmentIds;
     if (!Array.isArray(ids) || ids.length === 0) return 'All bookable departments';
@@ -92,21 +96,18 @@ const ScheduleSummaryBar = ({
         </div>
         {onOpenAppointmentRequests ? (
           <div className="appointments-slot-summary-actions">
-            <button
-              type="button"
-              className="appointments-requested-count-link"
+            <MyButton
+              appearance="ghost"
+              color={requestAlertColor}
+              prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
               onClick={onOpenAppointmentRequests}
             >
-              <FontAwesomeIcon icon={faTriangleExclamation} />
-              <span>
-                <strong>{requestedAppointmentRequestCount}</strong>{' '}
-                <Translate>
-                  {requestedAppointmentRequestCount === 1
-                    ? 'appointment request is requested'
-                    : 'appointment requests are requested'}
-                </Translate>
-              </span>
-            </button>
+              {`${requestedAppointmentRequestCount} ${
+                requestedAppointmentRequestCount === 1
+                  ? 'Appointment Request'
+                  : 'Appointment Requests'
+              }`}
+            </MyButton>
           </div>
         ) : null}
       </div>

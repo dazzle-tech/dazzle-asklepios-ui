@@ -27,6 +27,7 @@ import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import PatientSearch from '@/components/PatientSearch';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import './styles.less';
 const safeRefetch = async (fn?: () => any) => {
@@ -278,6 +279,14 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
   }, [order?.patientId]);
 
+const handleClearFilters = () => {
+  const now = new Date();
+  setDateFilter({ fromDate: now, toDate: now });
+  setSelectedPatient(null);
+  setDepartmentFilter({ fromDepartmentIdIn: null });
+  setOrderNumberFilter('');
+};
+
 const filters = (
               <>
                 <Form fluid className="filter-form-radiology-filters">
@@ -332,6 +341,11 @@ const filters = (
                       setOrderNumberFilter(val.orderNumber ?? '')
                     }
                     showLabel={false}
+                  />
+                  <AdvancedSearchFilters
+                    showAdvancedButton={false}
+                    searchOnClick={refetchAllRadData}
+                    clearOnClick={handleClearFilters}
                   />
                 </Form>
 

@@ -265,6 +265,12 @@ import { dischargeReportService } from './services/ai-services/dischargeReportSe
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { refreshHl7EventsService } from './services/refreshHl7EventsService';
+import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
+import { nephrologyRenalFunctionService } from './services/dialysis/nephrologyRenalFunctionService';
+import { nephrologyTreatmentPlanService } from './services/dialysis/nephrologyTreatmentPlanService';
+import { dialysisSessionService } from './services/dialysis/dialysisSessionService';
+import { dialysisFlowReadingService } from './services/dialysis/dialysisFlowReadingService';
+import { dialysisMedicationService } from './services/dialysis/dialysisMedicationService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -651,7 +657,14 @@ export const store = configureStore({
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
     [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
-    [labInterpretationService.reducerPath]: labInterpretationService.reducer
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer,
+    [nephrologyKidneyAssessmentService.reducerPath]: nephrologyKidneyAssessmentService.reducer,
+    [nephrologyRenalFunctionService.reducerPath]: nephrologyRenalFunctionService.reducer,
+    [nephrologyTreatmentPlanService.reducerPath]: nephrologyTreatmentPlanService.reducer,
+    [dialysisSessionService.reducerPath]: dialysisSessionService.reducer,
+    [dialysisFlowReadingService.reducerPath]: dialysisFlowReadingService.reducer,
+    [dialysisMedicationService.reducerPath]: dialysisMedicationService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -889,7 +902,13 @@ export const store = configureStore({
         autoPopulationService.middleware,
         dischargeReportService.middleware,
          ocrParsingService.middleware,
-        labInterpretationService.middleware
+        labInterpretationService.middleware,
+        nephrologyKidneyAssessmentService.middleware,
+        nephrologyRenalFunctionService.middleware,
+        nephrologyTreatmentPlanService.middleware,
+        dialysisSessionService.middleware,
+        dialysisFlowReadingService.middleware,
+        dialysisMedicationService.middleware
       ) as any
 });
 

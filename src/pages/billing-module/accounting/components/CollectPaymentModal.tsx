@@ -260,16 +260,25 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
             })
           );
 
-          return false;
+          return { proceed: false as const };
         }
 
-        return true;
+        return {
+          proceed: true as const,
+          cardResult: creditCardCollect.skipped
+            ? null
+            : {
+                authorizationCode: creditCardCollect.result?.authorizationCode ?? null,
+                processorReference: creditCardCollect.result?.processorReference ?? null,
+                cardLastFour: creditCardCollect.result?.cardLastFour ?? null
+              }
+        };
       };
 
-    const creditCardCharged =
+    const creditCardCharge =
       await chargeCreditCardIfNeeded();
 
-    if (!creditCardCharged) {
+    if (!creditCardCharge.proceed) {
       return;
     }
     const request: CreateAdvancePaymentRequest = {
@@ -292,6 +301,9 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       ),
       paymentMethodCode: form.paymentMethodCode,
       transactionStatus: 'SUCCESS',
+      authorizationCode: creditCardCharge.cardResult?.authorizationCode ?? null,
+      processorReference: creditCardCharge.cardResult?.processorReference ?? null,
+      cardLastFour: creditCardCharge.cardResult?.cardLastFour ?? null,
       notes: form.notes.trim() || 'Encounter payment collection',
       patientServiceProductIds: pspIds,
       requestId: makeRequestId('COLLECT-PAYMENT')

@@ -3,3 +3,38 @@
   flex-direction: row;
   gap: 8px;
 }
+
+.emr-dialysis-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.emr-dialysis-toolbar {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 16px;
+}
+
+.emr-dialysis-toolbar--split {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-width: none;
+
+  > * {
+    flex: 1 1 280px;
+    max-width: 420px;
+    min-width: 0;
+  }
+}
+
+.emr-dialysis-message {
+  margin-bottom: 12px;
+}
+
+[dir='rtl'] {
+  .emr-dialysis-toolbar--split {
+    flex-direction: row-reverse;
+  }
+}

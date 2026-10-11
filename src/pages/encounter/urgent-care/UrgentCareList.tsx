@@ -13,7 +13,8 @@ import {
   faUserNurse,
   faEye,
   faVialCircleCheck,
-  faRotateLeft
+  faRotateLeft,
+  faShareFromSquare
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -73,6 +74,8 @@ import 'react-tabs/style/react-tabs.css';
 import { useLazyGetUserByLoginQuery, useLazyGetUserFullNameByLoginQuery } from '@/services/userService';
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
 import Translate from '@/components/Translate';
+import AllNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
+import AssignNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import ApprovedResultsCell from '@/pages/encounter/encounter-list/ApprovedResultsCell';
 
 dayjs.extend(duration);
@@ -236,6 +239,7 @@ const UrgentCareList = () => {
     ...newPatientEncounter,
     discharge: false
   });
+  const [openAllNursesModal, setOpenAllNursesModal] = useState<boolean>(false);
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
@@ -351,6 +355,7 @@ const UrgentCareList = () => {
   } = useFilterEncountersQuery(appliedFilters, {
     skip: !appliedFilters
   });
+  console.log("encountersPaged: ", encountersPaged)
 
   useEffect(() => {
     if (!isFetching && isSearchTriggered) {
@@ -1165,6 +1170,11 @@ const handleRowsPerPageChange = useCallback(
       }
     },
     {
+      key: 'assignedNurseName',
+      title: 'Assigned Nurse',
+      expandable: true,
+    },
+    {
       key: 'doorToPhysician',
       title: 'DOOR TO PHYSICIAN',
       expandable: true,
@@ -1206,6 +1216,7 @@ const handleRowsPerPageChange = useCallback(
         const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
+         const tooltipAssignedNurse = <Tooltip>Assign Nurse</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
@@ -1304,6 +1315,24 @@ const handleRowsPerPageChange = useCallback(
                       }}
                     >
                       <FontAwesomeIcon icon={faBed} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
+
+               {(statusUpper === 'ONGOING' ||
+              statusUpper === 'ASSIGNED_TO_BED') && (
+                <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="gray"
+                      onClick={() => {
+                       setLocalEncounter(row);
+                       setOpenAllNursesModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faShareFromSquare} />
                     </MyButton>
                   </div>
                 </Whisper>
@@ -1730,6 +1759,11 @@ const handleRowsPerPageChange = useCallback(
         setOpen={setOpenCollectSampleModal}
         facilityId={selectedDepartment?.facilityId}
         fromDepartmentId={departmentId}
+      />
+      <AssignNurseModal
+       open={openAllNursesModal}
+       setOpen={setOpenAllNursesModal}
+       encounterId={encounter?.id}
       />
     </Panel>
   );

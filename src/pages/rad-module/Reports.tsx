@@ -655,8 +655,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             <div className="test-table-buttons-main-container">{tablebuttons}</div>
 
             <AdvancedSearchFilters
-                searchFilter={false}
                 showAdvancedButton={false}
+                searchOnClick={() => refetch()}
                 clearOnClick={resetFilters}
             />
         </Form>

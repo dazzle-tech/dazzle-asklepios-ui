@@ -157,6 +157,15 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
       ),
       paymentMethodCode: form.paymentMethodCode,
       transactionStatus: 'SUCCESS',
+      authorizationCode: creditCardCollect.skipped
+        ? null
+        : creditCardCollect.result?.authorizationCode ?? null,
+      processorReference: creditCardCollect.skipped
+        ? null
+        : creditCardCollect.result?.processorReference ?? null,
+      cardLastFour: creditCardCollect.skipped
+        ? null
+        : creditCardCollect.result?.cardLastFour ?? null,
       notes: form.notes.trim() || 'Patient wallet deposit',
       patientServiceProductIds: [],
       requestId: makeRequestId('WALLET-DEPOSIT')

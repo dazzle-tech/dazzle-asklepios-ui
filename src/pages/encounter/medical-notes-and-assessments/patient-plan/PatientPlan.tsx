@@ -52,7 +52,6 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       { id: latestPlan?.id },
       { skip: !latestPlan?.id }
     );
-    console.log("planAudit: ", planAudit)
 
   const [createEncounterPlan, { isLoading: isSavingCreate }] = useCreateEncounterPlanMutation();
   const [updateEncounterPlan, { isLoading: isSavingUpdate }] = useUpdateEncounterPlanMutation();
@@ -191,6 +190,7 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   return (
     <>
     <SectionContainer
+      collapsible
       title={title}
       action={
         <>
