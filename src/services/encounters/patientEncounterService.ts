@@ -806,11 +806,24 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-    getAmendmentHistory: builder.query<AmendmentHistorySession[], Id>({
-      query: encounterId => ({
-        url: `/api/patient/encounter/${encounterId}/amendment-history`
+    getAmendmentHistory: builder.query<
+      { data: AmendmentHistorySession[]; totalCount: number },
+      { encounterId: Id; page?: number; size?: number }
+    >({
+      query: ({ encounterId, page = 0, size = 10 }) => ({
+        url: `/api/patient/encounter/${encounterId}/amendment-history`,
+        params: { page, size }
       }),
-      providesTags: (_res, _err, encounterId) => [{ type: 'PatientEncounter', id: encounterId }]
+      transformResponse: (
+        response: AmendmentHistorySession[],
+        meta
+      ): { data: AmendmentHistorySession[]; totalCount: number } => ({
+        data: response ?? [],
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0)
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientEncounter', id: encounterId }
+      ]
     }),
 
     closeEncounterForBilling: builder.mutation<PatientEncounter, { id: Id }>({

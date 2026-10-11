@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
+import { TablePagination } from '@mui/material';
 import { Message } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -47,15 +48,24 @@ const AmendmentHistoryModal = ({
   onClose: () => void;
 }) => {
   const dir = localStorage.getItem('direction') || 'ltr';
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
+  useEffect(() => {
+    if (open) {
+      setPage(0);
+    }
+  }, [open, encounterId]);
 
   const { currentData, isFetching, isError } =
     useGetAmendmentHistoryQuery(
       open && encounterId != null
-        ? encounterId
+        ? { encounterId, page, size }
         : skipToken
     );
 
-  const sessions = currentData ?? [];
+  const sessions = currentData?.data ?? [];
+  const totalCount = currentData?.totalCount ?? 0;
 
   return (
     <MyModal
@@ -362,15 +372,16 @@ const AmendmentHistoryModal = ({
                                     </div>
 
                                     <div className="amendment-change-module">
-                                      <Translate>
-                                        {change.module}
-                                      </Translate>
+                                      {formatEnumString(
+                                        change.medicalSheet ||
+                                          change.module
+                                      )}
                                     </div>
 
                                     <MyBadgeStatus
-                                      contant={
+                                      contant={formatEnumString(
                                         change.action
-                                      }
+                                      )}
                                       color={
                                         ACTION_COLOR[
                                         change.action
@@ -489,6 +500,24 @@ const AmendmentHistoryModal = ({
                 </div>
               );
             })}
+
+          {!isFetching &&
+            !isError &&
+            totalCount > 0 && (
+              <TablePagination
+                component="div"
+                className="amendment-history-pagination"
+                count={totalCount}
+                page={page}
+                rowsPerPage={size}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={event => {
+                  setSize(Number(event.target.value));
+                  setPage(0);
+                }}
+                rowsPerPageOptions={[5, 10, 20]}
+              />
+            )}
         </div>
       }
     />
