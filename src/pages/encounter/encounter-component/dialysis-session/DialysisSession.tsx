@@ -3162,36 +3162,36 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
         },
         {
             key: 'ufRate',
-            title: <Translate>UF Rate (mL/h)</Translate>,
-            minWidth: 120,
+            title: <Translate>UF Rate</Translate>,
+            minWidth: 110,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.ufRate)
         },
         {
             key: 'ufRemoved',
-            title: <Translate>UF Removed (mL)</Translate>,
-            minWidth: 130,
+            title: <Translate>UF Removed</Translate>,
+            minWidth: 120,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.ufRemoved)
         },
         {
             key: 'arterialPressure',
-            title: <Translate>AP (mmHg)</Translate>,
-            minWidth: 100,
+            title: <Translate>AP</Translate>,
+            minWidth: 90,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.arterialPressure)
         },
         {
             key: 'venousPressure',
-            title: <Translate>VP (mmHg)</Translate>,
-            minWidth: 100,
+            title: <Translate>VP</Translate>,
+            minWidth: 90,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.venousPressure)
         },
         {
             key: 'transmembranePressure',
-            title: <Translate>TMP (mmHg)</Translate>,
-            minWidth: 110,
+            title: <Translate>TMP</Translate>,
+            minWidth: 90,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.transmembranePressure)
         },
@@ -3593,14 +3593,6 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
                                                         setRecord={setForm}
                                                         disabled={sessionFieldsDisabled}
                                                     />
-
-                                                    {nurseError && (
-                                                        <Message type="error">
-                                                            <Translate>
-                                                                Unable to load nurses.
-                                                            </Translate>
-                                                        </Message>
-                                                    )}
                                                 </div>
 
                                                 <div className="dialysis-session-field">
@@ -3618,14 +3610,6 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
                                                         setRecord={setForm}
                                                         disabled={sessionFieldsDisabled}
                                                     />
-
-                                                    {practitionerError && (
-                                                        <Message type="error">
-                                                            <Translate>
-                                                                Unable to load doctors.
-                                                            </Translate>
-                                                        </Message>
-                                                    )}
                                                 </div>
 
                                                 <div className="dialysis-session-field dialysis-session-field--empty" />
@@ -4081,19 +4065,6 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
                                             <div className="dialysis-session-group-line" />
                                         </div>
 
-                                        <Message
-                                            type="info"
-                                            showIcon
-                                            className="dialysis-session-serum-dialysate-note"
-                                        >
-                                            <Translate>
-                                                Enter dialysate bath values only.
-                                                Blood lab results below each field
-                                                are serum reference and must not be
-                                                copied into the prescription.
-                                            </Translate>
-                                        </Message>
-
                                         <div className="dialysis-session-row">
                                             <div className="dialysis-session-field">
                                                 <MyInput
@@ -4282,36 +4253,6 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
                         }
                         content={
                             <div className="dialysis-session-content">
-                                <Message
-                                    type="info"
-                                    showIcon
-                                    className="dialysis-session-flow-note"
-                                >
-                                    <Translate>
-                                        For intradialytic events (e.g. hypotension),
-                                        add a timed reading here and record the
-                                        intervention in Complications notes
-                                        (Section 08) without waiting until post.
-                                    </Translate>
-                                </Message>
-
-                                <div className="dialysis-session-pressure-legend">
-                                    <span>
-                                        <Translate>AP</Translate>
-                                        {' = '}
-                                        <Translate>Arterial Pressure</Translate>
-                                    </span>
-                                    <span>
-                                        <Translate>VP</Translate>
-                                        {' = '}
-                                        <Translate>Venous Pressure</Translate>
-                                    </span>
-                                    <span>
-                                        <Translate>TMP</Translate>
-                                        {' = '}
-                                        <Translate>Transmembrane Pressure</Translate>
-                                    </span>
-                                </div>
 
                                 <Form fluid>
                                     <div className="dialysis-session-row">
@@ -5091,31 +5032,6 @@ const DialysisSession = (props: DialysisSessionProps = {}) => {
                                                 />
                                             </div>
                                         </div>
-
-                                        {ufWeightLossMismatch ? (
-                                            <Message
-                                                type="warning"
-                                                showIcon
-                                                className="dialysis-session-uf-warning"
-                                            >
-                                                <Translate>
-                                                    UF vs weight-loss check:
-                                                </Translate>{' '}
-                                                <Translate>
-                                                    Pre−Post weight loss
-                                                </Translate>
-                                                {` (${ufWeightLossMismatch.weightLossKg} kg) `}
-                                                <Translate>
-                                                    differs from Actual UF
-                                                </Translate>
-                                                {` (${ufWeightLossMismatch.actualUf} L) `}
-                                                <Translate>
-                                                    by more than 0.5 L/kg. Verify
-                                                    scales, priming, and UF meter
-                                                    before signing off.
-                                                </Translate>
-                                            </Message>
-                                        ) : null}
                                     </div>
 
                                 </div>
