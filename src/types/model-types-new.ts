@@ -5724,7 +5724,11 @@ export enum BillingTrigger {
   SERVICE_COMPLETED = 'SERVICE_COMPLETED',
   CHECKOUT = 'CHECKOUT',
   MANUAL = 'MANUAL',
-  DEBIT_NOTE = 'DEBIT_NOTE'
+  DEBIT_NOTE = 'DEBIT_NOTE',
+  SUBMIT_ORDER = 'SUBMIT_ORDER',
+  COLLECT_SAMPLE = 'COLLECT_SAMPLE',
+  ACCEPT_ORDER = 'ACCEPT_ORDER',
+  APPROVED = 'APPROVED'
 }
 
 export enum BillingEventType {
@@ -5738,7 +5742,11 @@ export enum BillingEventType {
   ENCOUNTER_CANCELLED = 'ENCOUNTER_CANCELLED',
   CHECKOUT = 'CHECKOUT',
   MANUAL = 'MANUAL',
-  DEBIT_NOTE = 'DEBIT_NOTE'
+  DEBIT_NOTE = 'DEBIT_NOTE',
+  SUBMIT_ORDER = 'SUBMIT_ORDER',
+  COLLECT_SAMPLE = 'COLLECT_SAMPLE',
+  ACCEPT_ORDER = 'ACCEPT_ORDER',
+  APPROVED = 'APPROVED'
 }
 
 export enum BillingSettlementPath {
@@ -5769,11 +5777,14 @@ export type BillingRuleEvaluationResponse = {
   message?: string | null;
 };
 
+export type BillingRulePaymentType = 'SELF_PAY' | 'INSURANCE' | 'BOTH';
+
 export type BillingRule = {
   id?: number;
   name?: string;
   billingItemType?: BillingItemType;
   billingTrigger?: BillingTrigger;
+  paymentType?: BillingRulePaymentType;
   isDefault?: boolean;
   createdBy?: string;
   createdDate?: string;
@@ -5786,6 +5797,7 @@ export type SaveBillingRuleRequest = {
   name: string;
   billingItemType: BillingItemType;
   billingTrigger: BillingTrigger;
+  paymentType: BillingRulePaymentType;
   isDefault: boolean;
 };
 

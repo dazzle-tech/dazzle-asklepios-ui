@@ -501,6 +501,9 @@ const SKIPPED_BILLING_STATUSES = new Set([
   'DELETED'
 ]);
 
+const isSkippedBillingStatus = (status?: string | null) =>
+  SKIPPED_BILLING_STATUSES.has(String(status ?? '').trim().toUpperCase());
+
 const creditLinesFromBillingItems = (
   items: EncounterBillingItemSummary[],
   pspRows: PatientServiceAndProduct[],
@@ -517,7 +520,7 @@ const creditLinesFromBillingItems = (
   const chargeIndex = buildChargeTypeIndex(chargeRows);
 
   return items
-    .filter(item => !SKIPPED_BILLING_STATUSES.has(String(item.status ?? '').toUpperCase()))
+    .filter(item => !isSkippedBillingStatus(item.status))
     .map(item => {
       const psp =
         item.patientServiceProductId != null
@@ -718,12 +721,16 @@ const creditLinesFromInvoiceItems = (
   const pspById = new Map(pspRows.map(row => [Number(row.id), row]));
   const chargeIndex = buildChargeTypeIndex(chargeRows);
 
-  return items.map(item => {
+  return items.flatMap(item => {
     const billingItem =
       (item.chargeLineId != null ? billingByChargeLine.get(Number(item.chargeLineId)) : undefined) ??
       (item.patientServiceProductId != null
         ? billingByPsp.get(Number(item.patientServiceProductId))
         : undefined);
+
+    if (isSkippedBillingStatus(item.status) || isSkippedBillingStatus(billingItem?.status)) {
+      return [];
+    }
     const psp =
       item.patientServiceProductId != null
         ? pspById.get(Number(item.patientServiceProductId))
@@ -822,11 +829,12 @@ const creditLinesFromChargeRows = (
     patientAmount?: number | null;
     insuranceAmount?: number | null;
     chargedAt?: string | null;
+    status?: string | null;
   }>,
   fallbackDate?: string | null
 ) =>
   (chargeRows ?? [])
-    .filter(Boolean)
+    .filter(row => row && !isSkippedBillingStatus(row.status))
     .map(row => {
       const description = displayText(row.itemName) || '-';
       const quantity = money(row.quantity) > 0 ? money(row.quantity) : 1;

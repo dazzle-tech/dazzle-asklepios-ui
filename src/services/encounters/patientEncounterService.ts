@@ -5,7 +5,31 @@ import { PatientEncounter, PatientEncounterDischarge, PatientEncounterFieldAudit
 
 type Id = number | string;
 
-type PatientEncounterCompletionValidation = {
+export type DiagnosticCheckoutResultLine = {
+  name?: string | null;
+  value?: string | null;
+  unit?: string | null;
+  status?: string | null;
+};
+
+export type DiagnosticCheckoutApproval = {
+  orderTestId: number;
+  testId?: number | null;
+  testName?: string | null;
+  orderType: 'LABORATORY' | 'RADIOLOGY' | string;
+  orderNumber?: string | null;
+  urgent?: boolean | null;
+  testStatus?: string | null;
+  processingStatus?: string | null;
+  approvalStatus?: string | null;
+  imageStatus?: string | null;
+  accessionNumber?: string | null;
+  status?: string | null;
+  message?: string | null;
+  results?: DiagnosticCheckoutResultLine[] | null;
+};
+
+export type PatientEncounterCompletionValidation = {
   encounterId: number;
   coverageType: 'SELF_PAY' | 'INSURANCE' | null;
   patientInsuranceId: number | null;
@@ -27,6 +51,7 @@ type PatientEncounterCompletionValidation = {
   bodyMeasurements: boolean;
   canComplete: boolean;
   missing: string[];
+  diagnosticApprovals?: DiagnosticCheckoutApproval[];
 };
 
 type PagedParams = {
@@ -680,11 +705,12 @@ export const patientEncounterService = createApi({
 
     getEncounterCompletionValidation: builder.query<
       PatientEncounterCompletionValidation,
-      { encounterId: Id }
+      { encounterId: Id; includeDiagnostics?: boolean }
     >({
-      query: ({ encounterId }) => ({
+      query: ({ encounterId, includeDiagnostics }) => ({
         url: `/api/patient/encounter/${encounterId}/completion-validation`,
         method: 'GET',
+        params: includeDiagnostics ? { includeDiagnostics: true } : undefined
       }),
       providesTags: (_res, _err, { encounterId }) => [
         { type: 'PatientEncounter', id: encounterId },

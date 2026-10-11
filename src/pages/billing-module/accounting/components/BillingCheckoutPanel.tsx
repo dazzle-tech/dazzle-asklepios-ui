@@ -12,9 +12,15 @@ import type { InvoiceAdjustmentSummary } from '@/services/billing/financialDocum
 
 import PayInvoiceBalanceModal from '@/pages/billing-module/invoices/PayInvoiceBalanceModal';
 
+import InsuranceCheckoutValidationModal from './InsuranceCheckoutValidationModal';
+
 import { useCheckoutBillingChargeMutation } from '@/services/billing/billingTransactionService';
 
-import { useCloseEncounterForBillingMutation } from '@/services/encounters/patientEncounterService';
+import {
+  useCloseEncounterForBillingMutation,
+  useLazyGetEncounterCompletionValidationQuery,
+  type PatientEncounterCompletionValidation
+} from '@/services/encounters/patientEncounterService';
 
 import { newBillingCheckoutRequest } from '@/types/model-types-constructor-new';
 
@@ -135,6 +141,11 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   const [payModalOpen, setPayModalOpen] = useState(false);
 
+  const [validationOpen, setValidationOpen] = useState(false);
+
+  const [checkoutValidation, setCheckoutValidation] =
+    useState<PatientEncounterCompletionValidation | null>(null);
+
 
 
   const [checkoutBillingCharge, checkoutMutation] =
@@ -144,6 +155,8 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
   const [closeEncounterForBilling, { isLoading: closingEncounter }] =
 
     useCloseEncounterForBillingMutation();
+
+  const [validateEncounterCompletion] = useLazyGetEncounterCompletionValidationQuery();
 
 
 
@@ -232,6 +245,32 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
 
     try {
+
+      if (coverageType === 'INSURANCE' && encounterId != null) {
+
+        const validation = await validateEncounterCompletion({
+
+          encounterId,
+
+          includeDiagnostics: true
+
+        }).unwrap();
+
+        const diagnosticApprovals = validation.diagnosticApprovals ?? [];
+
+        if (!validation.canComplete || diagnosticApprovals.length > 0) {
+
+          setCheckoutValidation(validation);
+
+          setValidationOpen(true);
+
+          setCheckoutStatus(null);
+
+          return;
+
+        }
+
+      }
 
       const result = await checkoutBillingCharge({
 
@@ -675,6 +714,14 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
         </div>
 
       )}
+
+      <InsuranceCheckoutValidationModal
+        open={validationOpen}
+        onClose={() => setValidationOpen(false)}
+        missing={checkoutValidation?.missing ?? []}
+        diagnostics={checkoutValidation?.diagnosticApprovals ?? []}
+        billingItems={summary.items}
+      />
 
       {invoiceId != null && (
         <PayInvoiceBalanceModal

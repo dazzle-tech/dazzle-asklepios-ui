@@ -8,7 +8,10 @@ import type {
   PatientFinancialInvoice
 } from '@/services/billing/invoiceGenerationService';
 import type { EncounterBillingItemSummary } from '@/types/model-types-new';
-import type { UnifiedBillingChargeRow } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import {
+  isCancelledBillingLineStatus,
+  type UnifiedBillingChargeRow
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import {
   formatBillingItemType,
   isTechnicalBillingLabel
@@ -457,19 +460,48 @@ const mapIssuedLineToPrintItem = (
   };
 };
 
+const isCancelledPrintLine = (
+  chargeContext: InvoicePrintChargeContext,
+  lineItem: Pick<InvoiceLineItem, 'chargeLineId' | 'patientServiceProductId' | 'status'>
+): boolean => {
+  if (isCancelledBillingLineStatus(lineItem.status)) {
+    return true;
+  }
+
+  const billingItem = findBillingItem(
+    chargeContext,
+    lineItem.chargeLineId,
+    lineItem.patientServiceProductId
+  );
+  if (isCancelledBillingLineStatus(billingItem?.status)) {
+    return true;
+  }
+
+  const chargeRow = chargeContext.chargeRows.find(
+    row =>
+      (lineItem.chargeLineId != null &&
+        Number(row.chargeLineId) === Number(lineItem.chargeLineId)) ||
+      (lineItem.patientServiceProductId != null &&
+        Number(row.patientServiceProductId) === Number(lineItem.patientServiceProductId))
+  );
+
+  return isCancelledBillingLineStatus(chargeRow?.status);
+};
+
 const buildItemsFromChargeRows = (
   chargeContext: InvoicePrintChargeContext,
   invoiceType: InvoicePrintData['invoiceType'],
   lineItemFilter?: InvoiceLineItem[]
 ): InvoicePrintLineItem[] => {
-  if (lineItemFilter?.length) {
+  if (lineItemFilter) {
     return lineItemFilter
+      .filter(item => !isCancelledPrintLine(chargeContext, item))
       .map(item => mapIssuedLineToPrintItem(item, chargeContext, invoiceType))
       .filter((item): item is InvoicePrintLineItem => item != null);
   }
 
   return chargeContext.chargeRows
-    .filter(row => row.isBilled)
+    .filter(row => row.isBilled && !isCancelledBillingLineStatus(row.status))
     .map(row =>
       mapChargeRowToPrintItem(
         row,
@@ -650,21 +682,29 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
       ? 'INSURANCE_CLAIM'
       : 'PATIENT';
 
-  const items = buildItemsFromChargeRows(chargeContext, invoiceType, lineItems);
+  const printableLineItems = lineItems.filter(
+    item => !isCancelledPrintLine(chargeContext, item)
+  );
+
+  const items = buildItemsFromChargeRows(
+    chargeContext,
+    invoiceType,
+    lineItems.length > 0 ? printableLineItems : undefined
+  );
 
   const totals =
     items.length > 0
       ? buildTotals(items, {
           invoiceTotalAmount: invoice.totalAmount,
-          lineItems
+          lineItems: printableLineItems
         })
       : {
           grossAmount: formatMoneyValue(invoice.totalAmount),
-          discountAmount: lineItems.reduce(
+          discountAmount: printableLineItems.reduce(
             (sum, item) => sum + formatMoneyValue(item.discountAmount),
             0
           ),
-          taxAmount: lineItems.reduce(
+          taxAmount: printableLineItems.reduce(
             (sum, item) => sum + formatMoneyValue(item.taxAmount),
             0
           ),

@@ -420,6 +420,16 @@ const BillingRuleSetup: React.FC = () => {
     },
 
     {
+      key: 'paymentType',
+      title: <Translate>Payment Type</Translate>,
+      flexGrow: 2,
+      render: (row: BillingRuleModel) =>
+        row.paymentType
+          ? formatEnumString(row.paymentType)
+          : 'Both'
+    },
+
+    {
       key: 'billingTrigger',
       title:
         <Translate>
