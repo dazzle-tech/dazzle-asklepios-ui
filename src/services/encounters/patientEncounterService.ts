@@ -1075,6 +1075,5 @@ export const {
   useGetAmendmentHistoryQuery,
   useLazyGetEncounterAuditQuery,
   useGetEncounterAuditQuery,
-  useLazyGetEncounterAuditQuery,
   useAssignNurseMutation
 } = patientEncounterService;
