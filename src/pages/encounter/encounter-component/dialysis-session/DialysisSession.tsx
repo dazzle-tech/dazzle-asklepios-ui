@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { Form, Message } from 'rsuite';
+import { Form, Message, Modal } from 'rsuite';
+import { skipToken } from '@reduxjs/toolkit/query';
 
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
@@ -15,11 +16,16 @@ import { useGetUsersBasicQuery } from '@/services/userService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
     useCreateDialysisSessionMutation,
+    useGetDialysisSessionByIdQuery,
     useGetDialysisSessionQuery,
+    useLazyGetDialysisSessionsByTreatmentPlanQuery,
     useUpdateDialysisSessionMutation
 } from '@/services/dialysis/dialysisSessionService';
+import DialysisPatientRegistration from './DialysisPatientRegistration';
+import { mapTreatmentPlanToSessionFields } from './treatmentPlanSessionMapping';
 import {
     useCreateDialysisFlowReadingMutation,
     useDeleteDialysisFlowReadingMutation,
@@ -30,15 +36,181 @@ import {
     useDeleteDialysisMedicationMutation,
     useGetDialysisMedicationsByDialysisSessionIdQuery
 } from '@/services/dialysis/dialysisMedicationService';
+import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import {
+    useFilterDiagnosticOrderTestResultsQuery,
+    useLazyFilterDiagnosticOrderTestResultsQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import {
+    useGetActiveLabProfilesByTestIdsMutation,
+    useGetDiagnosticTestProfilesByIdsMutation
+} from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
-import type {
-    DialysisFlowReading,
-    DialysisMedication,
-    Patient,
-    PatientEncounter
+import {
+    DiagnosticOrderTestStatus,
+    type DiagnosticOrderTestResultResponseVM,
+    type DialysisFlowReading,
+    type DialysisMedication,
+    type DialysisSession as DialysisSessionModel,
+    type NephrologyTreatmentPlan,
+    type Patient,
+    type PatientEncounter
 } from '@/types/model-types-new';
 
 import './styles.less';
+
+/** Diagnostic Test IDs (not result IDs / order-test IDs). */
+const ELECTROLYTE_DIAGNOSTIC_TEST_IDS = {
+    sodium: 161,
+    potassium: 162,
+    calcium: 1
+} as const;
+
+type ElectrolyteField = keyof typeof ELECTROLYTE_DIAGNOSTIC_TEST_IDS;
+
+type BloodElectrolyteLabRef = {
+    resultId: number;
+    value: number;
+    marker: string | null;
+    isCritical: boolean;
+    unitDisplay: string;
+    approvedDate: string | null;
+    reviewDate: string | null;
+    createdDate: string | null;
+};
+
+const ELECTROLYTE_FIELDS = Object.keys(
+    ELECTROLYTE_DIAGNOSTIC_TEST_IDS
+) as ElectrolyteField[];
+
+const LAB_RESULTS_PAGE_SIZE = 200;
+
+const isCriticalMarker = (marker?: string | null) =>
+    marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+
+const normalizeUnitToken = (unit: string) =>
+    unit.toLowerCase().replace(/\s+/g, '');
+
+const resolveElectrolyteUnitDisplay = (
+    profile: { resultUnit?: string | number | null } | null | undefined,
+    valueUnitLov:
+        | { object?: Array<{ key?: string | number; lovDisplayVale?: string }> }
+        | undefined
+): string | null => {
+    if (profile?.resultUnit == null || profile.resultUnit === '') {
+        return null;
+    }
+
+    const fromLov = valueUnitLov?.object?.find(
+        unit => String(unit.key) === String(profile.resultUnit)
+    )?.lovDisplayVale;
+
+    const display = String(fromLov || profile.resultUnit || '').trim();
+
+    if (!display) {
+        return null;
+    }
+
+    // Unresolved LOV keys are numeric/opaque and must not pass unit validation.
+    if (/^\d+$/.test(display)) {
+        return null;
+    }
+
+    return display;
+};
+
+const isCompatibleElectrolyteUnit = (
+    unitDisplay: string | null | undefined,
+    field: ElectrolyteField
+) => {
+    if (!unitDisplay?.trim()) {
+        return false;
+    }
+
+    const token = normalizeUnitToken(unitDisplay).replace(/\./g, '');
+
+    if (
+        token === 'mmol/l' ||
+        token === 'mmol' ||
+        (token.includes('mmol') && token.includes('l'))
+    ) {
+        return true;
+    }
+
+    // Monovalent electrolytes: mEq/L is clinically equivalent to mmol/L.
+    if (
+        (field === 'sodium' || field === 'potassium') &&
+        (token === 'meq/l' ||
+            token === 'meq' ||
+            (token.includes('meq') && token.includes('l')))
+    ) {
+        return true;
+    }
+
+    return false;
+};
+
+const toTimestampMs = (value?: string | Date | null) => {
+    if (value == null || value === '') {
+        return null;
+    }
+
+    const ms = new Date(value).getTime();
+
+    return Number.isFinite(ms) ? ms : null;
+};
+
+/**
+ * Latest-approved ordering:
+ * 1) approvedDate (primary)
+ * 2) reviewDate
+ * 3) createdDate
+ * 4) result id (deterministic tie-breaker)
+ * Never rely on API array order.
+ */
+const compareApprovedLabResultsNewestFirst = (
+    a: Pick<
+        DiagnosticOrderTestResultResponseVM,
+        'id' | 'approvedDate' | 'reviewDate' | 'createdDate'
+    >,
+    b: Pick<
+        DiagnosticOrderTestResultResponseVM,
+        'id' | 'approvedDate' | 'reviewDate' | 'createdDate'
+    >
+) => {
+    const aApproved = toTimestampMs(a.approvedDate);
+    const bApproved = toTimestampMs(b.approvedDate);
+
+    if (aApproved != null || bApproved != null) {
+        if (aApproved == null) return 1;
+        if (bApproved == null) return -1;
+        if (aApproved !== bApproved) return bApproved - aApproved;
+    }
+
+    const aReview = toTimestampMs(a.reviewDate);
+    const bReview = toTimestampMs(b.reviewDate);
+
+    if (aReview != null || bReview != null) {
+        if (aReview == null) return 1;
+        if (bReview == null) return -1;
+        if (aReview !== bReview) return bReview - aReview;
+    }
+
+    const aCreated = toTimestampMs(a.createdDate);
+    const bCreated = toTimestampMs(b.createdDate);
+
+    if (aCreated != null || bCreated != null) {
+        if (aCreated == null) return 1;
+        if (bCreated == null) return -1;
+        if (aCreated !== bCreated) return bCreated - aCreated;
+    }
+
+    return Number(b.id) - Number(a.id);
+};
+
+const getResultEligibilityTimestamp = (
+    result: DiagnosticOrderTestResultResponseVM
+) => result.approvedDate ?? result.reviewDate ?? result.createdDate ?? null;
 
 type EncounterContext = {
     patient?: Patient;
@@ -46,6 +218,13 @@ type EncounterContext = {
     edit?: boolean;
     readOnly?: boolean;
     viewMode?: string;
+};
+
+type DialysisSessionProps = EncounterContext & {
+    /** When set (e.g. Patient EMR), load this saved session instead of encounter latest. */
+    preferredSessionId?: number | null;
+    /** When set (e.g. Patient EMR), keep the session bound to this Treatment Plan. */
+    preferredTreatmentPlanId?: number | null;
 };
 
 const booleanYesNoOptions = [
@@ -87,6 +266,7 @@ const initialSessionForm = {
     interdialyticWeightGain: null as number | null,
 
     dialysisDuration: null as number | null,
+    durationType: '' as string,
     bloodFlowRate: null as number | null,
     dialysateFlowRate: null as number | null,
     dialysateComposition: null as string | null,
@@ -145,22 +325,35 @@ const initialFlowEntry = {
     transmembranePressure: null as number | string | null
 };
 
-const DialysisSession = () => {
+const DialysisSession = (props: DialysisSessionProps = {}) => {
     const location = useLocation();
     const outletContext = useOutletContext<EncounterContext>();
 
     const state = (location.state ?? {}) as EncounterContext;
 
-    const patient = state.patient ?? outletContext?.patient;
+    const patient =
+        props.patient ?? state.patient ?? outletContext?.patient;
 
-    const encounter = state.encounter ?? outletContext?.encounter;
+    const encounter =
+        props.encounter ?? state.encounter ?? outletContext?.encounter;
 
-    const viewMode = state.viewMode ?? outletContext?.viewMode;
+    const viewMode =
+        props.viewMode ?? state.viewMode ?? outletContext?.viewMode;
+
+    const preferredSessionId =
+        props.preferredSessionId != null
+            ? Number(props.preferredSessionId)
+            : null;
+
+    const preferredTreatmentPlanId =
+        props.preferredTreatmentPlanId != null
+            ? Number(props.preferredTreatmentPlanId)
+            : null;
 
     const disabled = Boolean(
         viewMode === 'readOnly' ||
-        (state.readOnly ?? outletContext?.readOnly) ||
-        (state.edit ?? outletContext?.edit) ||
+        (props.readOnly ?? state.readOnly ?? outletContext?.readOnly) ||
+        (props.edit ?? state.edit ?? outletContext?.edit) ||
         patient?.patientStatus === 'MERGED' ||
         encounter?.status === 'COMPLETED' ||
         encounter?.status === 'CANCELLED'
@@ -178,6 +371,7 @@ const DialysisSession = () => {
     const dialysisAccessTypeOptions = useEnumOptions('DialysisAccessType');
     const dialysisAccessSiteOptions = useEnumOptions('DialysisAccessSite');
     const dialysisDispositionOptions = useEnumOptions('DialysisDisposition');
+    const durationTypeOptions = useEnumOptions('Unit');
     const complicationOptions = useEnumOptions('DialysisComplication', {
         labelOverrides: dialysisComplicationLabelOverrides
     });
@@ -187,20 +381,100 @@ const DialysisSession = () => {
     const [flowEntry, setFlowEntry] = useState(initialFlowEntry);
 
     const [knownSessionId, setKnownSessionId] = useState<number | null>(null);
+    const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+    const [selectedTreatmentPlanId, setSelectedTreatmentPlanId] = useState<
+        number | null
+    >(null);
+    const [pendingTreatmentPlan, setPendingTreatmentPlan] =
+        useState<NephrologyTreatmentPlan | null>(null);
+    const [ambiguousSessions, setAmbiguousSessions] = useState<
+        DialysisSessionModel[]
+    >([]);
+    const [pendingAmbiguousPlan, setPendingAmbiguousPlan] =
+        useState<NephrologyTreatmentPlan | null>(null);
+    const [sessionHydration, setSessionHydration] = useState<{
+        patientId: string | number;
+        encounterId: string | number;
+        sessionId: number | null;
+        treatmentPlanId: number | null;
+    } | null>(null);
+    const [bootstrapComplete, setBootstrapComplete] = useState(false);
+    const [planSwitchLoading, setPlanSwitchLoading] = useState(false);
+
+    const planRequired = selectedTreatmentPlanId == null;
+    const sessionFieldsDisabled = disabled || planRequired;
+
+    const selectedTreatmentPlanIdRef = useRef<number | null>(null);
+    selectedTreatmentPlanIdRef.current = selectedTreatmentPlanId;
+    const activeSessionIdRef = useRef<number | null>(null);
+    activeSessionIdRef.current = activeSessionId;
+    const formBaselineRef = useRef<string>('');
+    const bootstrapAppliedKey = useRef<string | null>(null);
+    const draftHydrationPlanIdRef = useRef<number | null>(null);
 
     const {
-        data: dialysisSession,
-        isFetching: loadingDialysisSession,
-        isSuccess: dialysisSessionLoaded,
-        isError: dialysisSessionFailed
+        currentData: latestSessionResponse,
+        isFetching: loadingLatestSession,
+        isSuccess: latestSessionLoaded,
+        isError: latestSessionFailed
     } = useGetDialysisSessionQuery(
         {
             patientId,
             encounterId
         },
         {
-            skip: !patient?.id || !encounter?.id
+            skip:
+                !patient?.id ||
+                !encounter?.id ||
+                (preferredSessionId != null && preferredSessionId > 0)
         }
+    );
+
+    const {
+        currentData: activeSessionResponse,
+        isFetching: loadingActiveSession,
+        isSuccess: activeSessionLoaded,
+        isError: activeSessionFailed
+    } = useGetDialysisSessionByIdQuery(activeSessionId ?? 0, {
+        skip: activeSessionId == null || activeSessionId <= 0
+    });
+
+    const [fetchSessionsByPlan] =
+        useLazyGetDialysisSessionsByTreatmentPlanQuery();
+
+    const dialysisSession =
+        activeSessionId != null &&
+            activeSessionResponse &&
+            activeSessionResponse.id != null &&
+            Number(activeSessionResponse.id) === Number(activeSessionId) &&
+            String(activeSessionResponse.patientId) === String(patient?.id) &&
+            String(activeSessionResponse.encounterId) === String(encounter?.id)
+            ? activeSessionResponse
+            : undefined;
+
+    const loadingDialysisSession =
+        activeSessionId != null
+            ? loadingActiveSession
+            : !bootstrapComplete && loadingLatestSession;
+
+    const dialysisSessionLoaded =
+        activeSessionId != null
+            ? activeSessionLoaded
+            : bootstrapComplete || latestSessionLoaded || latestSessionFailed;
+
+    const dialysisSessionFailed =
+        activeSessionId != null ? activeSessionFailed : latestSessionFailed;
+
+    const sessionHydrationReady = Boolean(
+        bootstrapComplete &&
+        sessionHydration &&
+        String(sessionHydration.patientId) === String(patient?.id) &&
+        String(sessionHydration.encounterId) === String(encounter?.id) &&
+        (activeSessionId != null
+            ? sessionHydration.sessionId === Number(activeSessionId) &&
+            dialysisSession != null &&
+            !loadingActiveSession
+            : sessionHydration.sessionId == null)
     );
 
     const [createDialysisSession, { isLoading: creatingDialysisSession }] =
@@ -212,21 +486,33 @@ const DialysisSession = () => {
     const savingDialysisSession =
         creatingDialysisSession || updatingDialysisSession;
 
-    const activeSessionId = dialysisSession?.id
-        ? Number(dialysisSession.id)
-        : knownSessionId;
+    const resolvedActiveSessionId =
+        activeSessionId != null
+            ? activeSessionId
+            : sessionHydrationReady
+                ? knownSessionId
+                : null;
 
     const {
-        data: flowReadings = [],
+        currentData: flowReadingsResponse,
         isFetching: loadingFlowReadings
     } = useGetDialysisFlowReadingsByDialysisSessionIdQuery(
         {
-            dialysisSessionId: activeSessionId ?? 0
+            dialysisSessionId: resolvedActiveSessionId ?? 0
         },
         {
-            skip: !activeSessionId
+            skip: !resolvedActiveSessionId
         }
     );
+
+    const flowReadings = Array.isArray(flowReadingsResponse)
+        ? flowReadingsResponse.filter(
+            reading =>
+                resolvedActiveSessionId != null &&
+                Number(reading.dialysisSessionId) ===
+                Number(resolvedActiveSessionId)
+        )
+        : [];
 
     const [createDialysisFlowReading, { isLoading: creatingFlowReading }] =
         useCreateDialysisFlowReadingMutation();
@@ -235,16 +521,25 @@ const DialysisSession = () => {
         useDeleteDialysisFlowReadingMutation();
 
     const {
-        data: dialysisMedications = [],
+        currentData: dialysisMedicationsResponse,
         isFetching: loadingDialysisMedications
     } = useGetDialysisMedicationsByDialysisSessionIdQuery(
         {
-            dialysisSessionId: activeSessionId ?? 0
+            dialysisSessionId: resolvedActiveSessionId ?? 0
         },
         {
-            skip: !activeSessionId
+            skip: !resolvedActiveSessionId
         }
     );
+
+    const dialysisMedications = Array.isArray(dialysisMedicationsResponse)
+        ? dialysisMedicationsResponse.filter(
+            medication =>
+                resolvedActiveSessionId != null &&
+                Number(medication.dialysisSessionId) ===
+                Number(resolvedActiveSessionId)
+        )
+        : [];
 
     const [createDialysisMedication, { isLoading: creatingDialysisMedication }] =
         useCreateDialysisMedicationMutation();
@@ -270,6 +565,7 @@ const DialysisSession = () => {
     const activeIngredients = activeIngredientsRes?.data ?? [];
 
     const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
+    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
     const unitMap = useMemo(() => {
         const map: Record<string, string> = {};
@@ -280,6 +576,711 @@ const DialysisSession = () => {
 
         return map;
     }, [unitLov]);
+
+    const sessionLabCutoffMs = useMemo(() => {
+        const sessionDate = form.date ?? dialysisSession?.date ?? null;
+        const sessionStart =
+            form.startTime ?? dialysisSession?.startTime ?? null;
+
+        if (sessionDate && sessionStart) {
+            const datePart = String(sessionDate).slice(0, 10);
+            const timePart = String(sessionStart).includes('T')
+                ? String(sessionStart)
+                : `${datePart}T${String(sessionStart)}`;
+            const combinedMs =
+                toTimestampMs(timePart) ??
+                toTimestampMs(`${datePart}T${String(sessionStart)}`);
+
+            if (combinedMs != null) {
+                return combinedMs;
+            }
+        }
+
+        const sessionDateMs = toTimestampMs(sessionDate);
+
+        if (sessionDateMs != null) {
+            return sessionDateMs;
+        }
+
+        const encounterCutoff = toTimestampMs(
+            encounter?.startedDate ??
+                encounter?.encounterDate ??
+                encounter?.createdDate ??
+                (encounter as { createdAt?: string | Date | null } | undefined)
+                    ?.createdAt ??
+                null
+        );
+
+        return encounterCutoff ?? Date.now();
+    }, [
+        form.date,
+        form.startTime,
+        dialysisSession?.date,
+        dialysisSession?.startTime,
+        encounter
+    ]);
+
+    const labResultsQueryArgs = useMemo(() => {
+        if (!patientId) {
+            return skipToken;
+        }
+
+        return {
+            page: 0,
+            size: LAB_RESULTS_PAGE_SIZE,
+            // Sort is not used for selection; latest is chosen client-side.
+            sort: 'id,desc',
+            patientIdIn: [patientId],
+            processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
+        };
+    }, [patientId]);
+
+    const {
+        data: labResultsPage,
+        isFetching: loadingLabResults,
+        isSuccess: labResultsSuccess,
+        isError: labResultsError
+    } = useFilterDiagnosticOrderTestResultsQuery(labResultsQueryArgs);
+
+    const [fetchLabResultsPage] =
+        useLazyFilterDiagnosticOrderTestResultsQuery();
+    const [allApprovedLabResults, setAllApprovedLabResults] = useState<
+        DiagnosticOrderTestResultResponseVM[]
+    >([]);
+    const [labResultsFullyLoaded, setLabResultsFullyLoaded] = useState(false);
+
+    useEffect(() => {
+        if (labResultsQueryArgs === skipToken) {
+            setAllApprovedLabResults([]);
+            setLabResultsFullyLoaded(true);
+            return;
+        }
+
+        if (loadingLabResults && !labResultsSuccess && !labResultsError) {
+            setLabResultsFullyLoaded(false);
+            return;
+        }
+
+        if (labResultsError) {
+            setAllApprovedLabResults([]);
+            setLabResultsFullyLoaded(true);
+            return;
+        }
+
+        if (!labResultsSuccess || !labResultsPage) {
+            setLabResultsFullyLoaded(false);
+            return;
+        }
+
+        let cancelled = false;
+
+        const loadAllPages = async () => {
+            setLabResultsFullyLoaded(false);
+
+            const totalCount = Number(labResultsPage.totalCount ?? 0);
+            const merged = [...(labResultsPage.data ?? [])];
+            const totalPages = Math.max(
+                1,
+                Math.ceil(totalCount / LAB_RESULTS_PAGE_SIZE)
+            );
+
+            for (let page = 1; page < totalPages; page += 1) {
+                const nextPage = await fetchLabResultsPage({
+                    ...labResultsQueryArgs,
+                    page,
+                    size: LAB_RESULTS_PAGE_SIZE
+                }).unwrap();
+
+                if (cancelled) {
+                    return;
+                }
+
+                merged.push(...(nextPage.data ?? []));
+            }
+
+            if (cancelled) {
+                return;
+            }
+
+            const approvedOnly = merged.filter(
+                result =>
+                    result.processingStatus ===
+                        DiagnosticOrderTestStatus.RESULT_APPROVED &&
+                    result.resultValueNumber != null &&
+                    Number.isFinite(Number(result.resultValueNumber))
+            );
+
+            setAllApprovedLabResults(approvedOnly);
+            setLabResultsFullyLoaded(true);
+        };
+
+        loadAllPages().catch(() => {
+            if (!cancelled) {
+                setAllApprovedLabResults([]);
+                setLabResultsFullyLoaded(true);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        labResultsQueryArgs,
+        loadingLabResults,
+        labResultsSuccess,
+        labResultsError,
+        labResultsPage,
+        fetchLabResultsPage
+    ]);
+
+    const approvedLabResults = allApprovedLabResults;
+
+    const electrolyteOrderTestIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    approvedLabResults
+                        .map(result => Number(result.orderTestId))
+                        .filter(id => Number.isFinite(id) && id > 0)
+                )
+            ),
+        [approvedLabResults]
+    );
+
+    const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+    const [orderTestsMap, setOrderTestsMap] = useState<
+        Record<
+            string,
+            { id?: number; testId?: number; diagnosticTestId?: number }
+        >
+    >({});
+
+    useEffect(() => {
+        electrolyteOrderTestIds.forEach(orderTestId => {
+            const key = String(orderTestId);
+
+            if (orderTestsMap[key]) {
+                return;
+            }
+
+            fetchOrderTestById(orderTestId)
+                .unwrap()
+                .then(orderTest => {
+                    if (orderTest?.id == null) {
+                        return;
+                    }
+
+                    setOrderTestsMap(previous => ({
+                        ...previous,
+                        [String(orderTest.id)]: orderTest
+                    }));
+                })
+                .catch(() => {
+                    // Leave unresolved; selection skips missing joins.
+                });
+        });
+    }, [electrolyteOrderTestIds, orderTestsMap, fetchOrderTestById]);
+
+    const electrolyteOrderTestById = useMemo(() => {
+        const map = new Map<
+            number,
+            { id?: number; testId?: number; diagnosticTestId?: number }
+        >();
+
+        Object.values(orderTestsMap).forEach(orderTest => {
+            if (orderTest?.id != null) {
+                map.set(Number(orderTest.id), orderTest);
+            }
+        });
+
+        return map;
+    }, [orderTestsMap]);
+
+    const orderTestsResolved =
+        electrolyteOrderTestIds.length === 0 ||
+        electrolyteOrderTestIds.every(id => electrolyteOrderTestById.has(id));
+
+    const electrolyteProfileIds = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    approvedLabResults
+                        .map(result =>
+                            result.profileTestId != null
+                                ? Number(result.profileTestId)
+                                : null
+                        )
+                        .filter(
+                            (id): id is number =>
+                                id != null && Number.isFinite(id) && id > 0
+                        )
+                )
+            ),
+        [approvedLabResults]
+    );
+
+    const [fetchElectrolyteProfilesByIds, { data: electrolyteProfilesResponse }] =
+        useGetDiagnosticTestProfilesByIdsMutation();
+    const [fetchActiveProfilesByTestIds] =
+        useGetActiveLabProfilesByTestIdsMutation();
+    const [activeProfilesByTestId, setActiveProfilesByTestId] = useState<
+        Record<number, any[]>
+    >({});
+    const [activeProfilesLoaded, setActiveProfilesLoaded] = useState(false);
+
+    useEffect(() => {
+        if (electrolyteProfileIds.length > 0) {
+            fetchElectrolyteProfilesByIds(electrolyteProfileIds);
+        }
+    }, [electrolyteProfileIds, fetchElectrolyteProfilesByIds]);
+
+    useEffect(() => {
+        if (labResultsQueryArgs === skipToken) {
+            setActiveProfilesLoaded(true);
+            setActiveProfilesByTestId({});
+            return;
+        }
+
+        setActiveProfilesLoaded(false);
+
+        const testIds = ELECTROLYTE_FIELDS.map(
+            field => ELECTROLYTE_DIAGNOSTIC_TEST_IDS[field]
+        );
+
+        fetchActiveProfilesByTestIds(testIds)
+            .unwrap()
+            .then(response => {
+                setActiveProfilesByTestId(response ?? {});
+                setActiveProfilesLoaded(true);
+            })
+            .catch(() => {
+                setActiveProfilesByTestId({});
+                setActiveProfilesLoaded(true);
+            });
+    }, [labResultsQueryArgs, fetchActiveProfilesByTestIds]);
+
+    const electrolyteProfilesById = useMemo(() => {
+        const map = new Map<number, any>();
+
+        (electrolyteProfilesResponse ?? []).forEach((profile: any) => {
+            if (profile?.id != null) {
+                map.set(Number(profile.id), profile);
+            }
+        });
+
+        return map;
+    }, [electrolyteProfilesResponse]);
+
+    const bloodLabRefsReady = useMemo(() => {
+        if (labResultsQueryArgs === skipToken) {
+            return true;
+        }
+
+        if (!labResultsFullyLoaded || !orderTestsResolved) {
+            return false;
+        }
+
+        if (
+            electrolyteProfileIds.length > 0 &&
+            electrolyteProfilesResponse == null
+        ) {
+            return false;
+        }
+
+        if (!activeProfilesLoaded || valueUnitLov == null) {
+            return false;
+        }
+
+        return true;
+    }, [
+        labResultsQueryArgs,
+        labResultsFullyLoaded,
+        orderTestsResolved,
+        electrolyteProfileIds.length,
+        electrolyteProfilesResponse,
+        activeProfilesLoaded,
+        valueUnitLov
+    ]);
+
+    /**
+     * Approved blood electrolyte labs for reference only.
+     * Never copied into dialysate prescription form fields.
+     */
+    const bloodElectrolyteLabRefs = useMemo(() => {
+        const empty: Record<ElectrolyteField, BloodElectrolyteLabRef | null> = {
+            sodium: null,
+            potassium: null,
+            calcium: null
+        };
+
+        if (labResultsQueryArgs === skipToken || !bloodLabRefsReady) {
+            return empty;
+        }
+
+        const testIdToField = new Map<number, ElectrolyteField>(
+            ELECTROLYTE_FIELDS.map(field => [
+                ELECTROLYTE_DIAGNOSTIC_TEST_IDS[field],
+                field
+            ])
+        );
+
+        const pickProfile = (
+            result: DiagnosticOrderTestResultResponseVM,
+            diagnosticTestId: number
+        ) => {
+            const linked =
+                result.profileTestId != null
+                    ? electrolyteProfilesById.get(Number(result.profileTestId))
+                    : null;
+
+            if (linked) {
+                return linked;
+            }
+
+            const byTest = activeProfilesByTestId[diagnosticTestId] ?? [];
+
+            return (
+                byTest.find((profile: any) => profile?.isDefault) ??
+                byTest[0] ??
+                null
+            );
+        };
+
+        const eligibleByField: Record<
+            ElectrolyteField,
+            Array<{
+                result: DiagnosticOrderTestResultResponseVM;
+                suggestion: BloodElectrolyteLabRef;
+            }>
+        > = {
+            sodium: [],
+            potassium: [],
+            calcium: []
+        };
+
+        approvedLabResults.forEach(result => {
+            if (
+                result.processingStatus !==
+                DiagnosticOrderTestStatus.RESULT_APPROVED
+            ) {
+                return;
+            }
+
+            const orderTest = electrolyteOrderTestById.get(
+                Number(result.orderTestId)
+            );
+            const diagnosticTestId = Number(
+                orderTest?.testId ?? orderTest?.diagnosticTestId
+            );
+
+            if (!Number.isFinite(diagnosticTestId)) {
+                return;
+            }
+
+            const field = testIdToField.get(diagnosticTestId);
+
+            if (!field) {
+                return;
+            }
+
+            const profile = pickProfile(result, diagnosticTestId);
+
+            if (
+                profile?.testId != null &&
+                Number(profile.testId) !== diagnosticTestId
+            ) {
+                return;
+            }
+
+            const resultType = String(profile?.resultType ?? '')
+                .toUpperCase()
+                .trim();
+
+            if (resultType && resultType !== 'NUMBER') {
+                return;
+            }
+
+            const unitDisplay = resolveElectrolyteUnitDisplay(
+                profile,
+                valueUnitLov
+            );
+
+            if (!isCompatibleElectrolyteUnit(unitDisplay, field)) {
+                return;
+            }
+
+            const value = Number(result.resultValueNumber);
+
+            if (!Number.isFinite(value)) {
+                return;
+            }
+
+            const eligibilityAt = getResultEligibilityTimestamp(result);
+            const eligibilityMs = toTimestampMs(eligibilityAt);
+
+            if (eligibilityMs != null && eligibilityMs > sessionLabCutoffMs) {
+                return;
+            }
+
+            const marker = result.viewMarker ?? result.marker ?? null;
+
+            eligibleByField[field].push({
+                result,
+                suggestion: {
+                    resultId: Number(result.id),
+                    value,
+                    marker,
+                    isCritical: isCriticalMarker(marker),
+                    unitDisplay: unitDisplay as string,
+                    approvedDate: result.approvedDate ?? null,
+                    reviewDate: result.reviewDate ?? null,
+                    createdDate: result.createdDate ?? null
+                }
+            });
+        });
+
+        const latestByField: Record<
+            ElectrolyteField,
+            BloodElectrolyteLabRef | null
+        > = { ...empty };
+
+        ELECTROLYTE_FIELDS.forEach(field => {
+            const group = eligibleByField[field];
+
+            if (!group.length) {
+                latestByField[field] = null;
+                return;
+            }
+
+            group.sort((left, right) =>
+                compareApprovedLabResultsNewestFirst(left.result, right.result)
+            );
+
+            latestByField[field] = group[0].suggestion;
+        });
+
+        return latestByField;
+    }, [
+        labResultsQueryArgs,
+        bloodLabRefsReady,
+        approvedLabResults,
+        electrolyteOrderTestById,
+        electrolyteProfilesById,
+        activeProfilesByTestId,
+        valueUnitLov,
+        sessionLabCutoffMs
+    ]);
+
+    /**
+     * Diagnostic trace for Calcium result 1504 / orderTest 1539 / profile 87.
+     * Used only to report the exact rejection gate (not shown in UI).
+     */
+    const calciumLabBlocker = useMemo(() => {
+        if (!bloodLabRefsReady) {
+            return 'Calcium reference waiting for results/joins/units to finish loading.';
+        }
+
+        if (bloodElectrolyteLabRefs.calcium) {
+            return null;
+        }
+
+        const calciumResult = approvedLabResults.find(
+            result => Number(result.id) === 1504
+        );
+
+        if (!calciumResult) {
+            return 'Result 1504 not present in loaded RESULT_APPROVED pages for this patient.';
+        }
+
+        if (
+            calciumResult.processingStatus !==
+            DiagnosticOrderTestStatus.RESULT_APPROVED
+        ) {
+            return `Result 1504 status is ${String(calciumResult.processingStatus)}, not RESULT_APPROVED.`;
+        }
+
+        const orderTest = electrolyteOrderTestById.get(
+            Number(calciumResult.orderTestId)
+        );
+
+        if (!orderTest) {
+            return `Order test ${calciumResult.orderTestId} (expected 1539) did not resolve.`;
+        }
+
+        const diagnosticTestId = Number(
+            orderTest.testId ?? orderTest.diagnosticTestId
+        );
+
+        if (diagnosticTestId !== ELECTROLYTE_DIAGNOSTIC_TEST_IDS.calcium) {
+            return `Order test ${orderTest.id} resolved to testId ${diagnosticTestId}, expected Calcium test ID 1.`;
+        }
+
+        const linkedProfile =
+            calciumResult.profileTestId != null
+                ? electrolyteProfilesById.get(
+                      Number(calciumResult.profileTestId)
+                  )
+                : null;
+        const fallbackProfiles =
+            activeProfilesByTestId[ELECTROLYTE_DIAGNOSTIC_TEST_IDS.calcium] ??
+            [];
+        const profile =
+            linkedProfile ??
+            fallbackProfiles.find((item: any) => item?.isDefault) ??
+            fallbackProfiles[0] ??
+            null;
+
+        if (!profile) {
+            return `Profile ${calciumResult.profileTestId ?? 87} (and active Calcium profiles) could not be loaded for unit resolution.`;
+        }
+
+        if (
+            profile.testId != null &&
+            Number(profile.testId) !== ELECTROLYTE_DIAGNOSTIC_TEST_IDS.calcium
+        ) {
+            return `Profile ${profile.id} testId is ${profile.testId}, expected Calcium test ID 1.`;
+        }
+
+        const resultType = String(profile.resultType ?? '')
+            .toUpperCase()
+            .trim();
+
+        if (resultType && resultType !== 'NUMBER') {
+            return `Profile ${profile.id} resultType is ${resultType}, not NUMBER.`;
+        }
+
+        const unitDisplay = resolveElectrolyteUnitDisplay(profile, valueUnitLov);
+
+        if (!unitDisplay) {
+            return `Profile ${profile.id} resultUnit '${String(profile.resultUnit ?? '')}' could not be resolved via VALUE_UNIT (missing/ambiguous unit).`;
+        }
+
+        if (!isCompatibleElectrolyteUnit(unitDisplay, 'calcium')) {
+            return `Profile ${profile.id} unit '${unitDisplay}' is incompatible for Calcium (accepted: mmol/L family only; mg/dL is not accepted).`;
+        }
+
+        const eligibilityAt = getResultEligibilityTimestamp(calciumResult);
+        const eligibilityMs = toTimestampMs(eligibilityAt);
+
+        if (eligibilityMs != null && eligibilityMs > sessionLabCutoffMs) {
+            return `Result 1504 timestamp ${String(eligibilityAt)} is after the dialysis session cutoff.`;
+        }
+
+        return 'Result 1504 passed gates but was not selected (unexpected).';
+    }, [
+        bloodLabRefsReady,
+        bloodElectrolyteLabRefs.calcium,
+        approvedLabResults,
+        electrolyteOrderTestById,
+        electrolyteProfilesById,
+        activeProfilesByTestId,
+        valueUnitLov,
+        sessionLabCutoffMs
+    ]);
+
+    useEffect(() => {
+        if (process.env.NODE_ENV === 'development' && calciumLabBlocker) {
+            // eslint-disable-next-line no-console
+            console.debug(
+                '[DialysisSession] Calcium blood-lab reference blocked:',
+                calciumLabBlocker
+            );
+        }
+    }, [calciumLabBlocker]);
+
+    const renderBloodLabReference = (field: ElectrolyteField) => {
+        const labRef = bloodElectrolyteLabRefs[field];
+
+        if (!labRef) {
+            if (field === 'calcium' && bloodLabRefsReady && !sessionFieldsDisabled) {
+                return (
+                    <div
+                        className="dialysis-session-lab-ref dialysis-session-lab-ref--unavailable"
+                        role="note"
+                    >
+                        <span className="dialysis-session-lab-ref-label">
+                            <Translate>Blood lab unavailable</Translate>
+                        </span>
+                        <span className="dialysis-session-lab-ref-value">
+                            <Translate>
+                                No eligible approved Calcium blood result for
+                                this patient (check test mapping or unit). Do
+                                not invent a dialysate value from missing labs.
+                            </Translate>
+                        </span>
+                    </div>
+                );
+            }
+
+            return null;
+        }
+
+        const sourceTime = labRef.approvedDate
+            ? formatDateWithoutSeconds(labRef.approvedDate)
+            : labRef.reviewDate
+              ? formatDateWithoutSeconds(labRef.reviewDate)
+              : labRef.createdDate
+                ? formatDateWithoutSeconds(labRef.createdDate)
+                : '';
+
+        return (
+            <div className="dialysis-session-lab-ref" role="note">
+                <span className="dialysis-session-lab-ref-label">
+                    <Translate>Blood result (not dialysate)</Translate>
+                    {labRef.isCritical ? (
+                        <span className="dialysis-session-lab-ref-critical">
+                            {' '}
+                            · <Translate>Critical</Translate>
+                        </span>
+                    ) : null}
+                </span>
+                <span className="dialysis-session-lab-ref-value">
+                    {labRef.value} {labRef.unitDisplay}
+                    {sourceTime ? ` · ${sourceTime}` : ''}
+                    {labRef.marker
+                        ? ` · ${formatEnumString(String(labRef.marker))}`
+                        : ''}
+                </span>
+                <span className="dialysis-session-lab-ref-hint">
+                    <Translate>
+                        Do not copy into dialysate prescription fields.
+                    </Translate>
+                </span>
+            </div>
+        );
+    };
+
+    const ufWeightLossMismatch = useMemo(() => {
+        if (
+            form.preWeight == null ||
+            form.postWeight == null ||
+            form.actualUf == null
+        ) {
+            return null;
+        }
+
+        const pre = Number(form.preWeight);
+        const post = Number(form.postWeight);
+        const actualUf = Number(form.actualUf);
+
+        if (Number.isNaN(pre) || Number.isNaN(post) || Number.isNaN(actualUf)) {
+            return null;
+        }
+
+        const weightLossKg = Math.round((pre - post) * 100) / 100;
+        // Actual UF is entered in L; 1 L ≈ 1 kg fluid.
+        const delta = Math.abs(weightLossKg - actualUf);
+
+        if (delta <= 0.5) {
+            return null;
+        }
+
+        return {
+            weightLossKg,
+            actualUf,
+            delta
+        };
+    }, [form.preWeight, form.postWeight, form.actualUf]);
 
     const {
         data: practitioners,
@@ -309,7 +1310,7 @@ const DialysisSession = () => {
 
     const nurses = nurseListResponse?.data ?? [];
 
-    const section02Initialized = useRef(false);
+    const appliedHydrationKey = useRef<string | null>(null);
     const section02Touched = useRef<Record<string, true>>({});
     const section03Touched = useRef<Record<string, true>>({});
     const section05Touched = useRef<Record<string, true>>({});
@@ -326,11 +1327,51 @@ const DialysisSession = () => {
         encounterId: encounter?.id
     };
 
+    const contextIdentity = `${patient?.id ?? ''}|${encounter?.id ?? ''}`;
+    const [renderedContext, setRenderedContext] = useState(contextIdentity);
+
+    if (renderedContext !== contextIdentity) {
+        setRenderedContext(contextIdentity);
+        loadedSessionId.current = null;
+        appliedHydrationKey.current = null;
+        bootstrapAppliedKey.current = null;
+        draftHydrationPlanIdRef.current = null;
+        creatingSessionRef.current = null;
+        formBaselineRef.current = '';
+        section02Touched.current = {};
+        section03Touched.current = {};
+        section05Touched.current = {};
+        section07Touched.current = {};
+        section08Touched.current = {};
+        setKnownSessionId(null);
+        setActiveSessionId(null);
+        setSelectedTreatmentPlanId(null);
+        setPendingTreatmentPlan(null);
+        setAmbiguousSessions([]);
+        setPendingAmbiguousPlan(null);
+        setSessionHydration(null);
+        setBootstrapComplete(false);
+        setPlanSwitchLoading(false);
+        setForm(initialSessionForm);
+        setFlowEntry(initialFlowEntry);
+    }
+
     useEffect(() => {
         loadedSessionId.current = null;
         setKnownSessionId(null);
+        setActiveSessionId(null);
+        setSelectedTreatmentPlanId(null);
+        setPendingTreatmentPlan(null);
+        setAmbiguousSessions([]);
+        setPendingAmbiguousPlan(null);
+        setSessionHydration(null);
+        setBootstrapComplete(false);
+        setPlanSwitchLoading(false);
         creatingSessionRef.current = null;
-        section02Initialized.current = false;
+        appliedHydrationKey.current = null;
+        bootstrapAppliedKey.current = null;
+        draftHydrationPlanIdRef.current = null;
+        formBaselineRef.current = '';
         section02Touched.current = {};
         section03Touched.current = {};
         section05Touched.current = {};
@@ -348,14 +1389,76 @@ const DialysisSession = () => {
         }
     }, [dialysisSession?.id]);
 
+    /** Clinical IDWG = Pre Weight − Dry Weight (kg). */
+    const computeInterdialyticWeightGain = (
+        preWeight: number | string | null | undefined,
+        dryWeight: number | string | null | undefined
+    ) => {
+        if (
+            preWeight === '' ||
+            preWeight === null ||
+            preWeight === undefined ||
+            dryWeight === '' ||
+            dryWeight === null ||
+            dryWeight === undefined
+        ) {
+            return null;
+        }
+
+        const pre = Number(preWeight);
+        const dry = Number(dryWeight);
+
+        if (Number.isNaN(pre) || Number.isNaN(dry)) {
+            return null;
+        }
+
+        return Math.round((pre - dry) * 100) / 100;
+    };
+
+    const computeUfDifference = (
+        targetUf: number | string | null | undefined,
+        actualUf: number | string | null | undefined
+    ) => {
+        if (
+            targetUf === '' ||
+            targetUf === null ||
+            targetUf === undefined ||
+            actualUf === '' ||
+            actualUf === null ||
+            actualUf === undefined
+        ) {
+            return null;
+        }
+
+        const target = Number(targetUf);
+        const actual = Number(actualUf);
+
+        if (Number.isNaN(target) || Number.isNaN(actual)) {
+            return null;
+        }
+
+        return Math.round((actual - target) * 100) / 100;
+    };
+
     const setSection02Form = (
         next:
             | typeof initialSessionForm
             | ((previous: typeof initialSessionForm) => typeof initialSessionForm)
     ) => {
         setForm(previous => {
-            const record =
+            const incoming =
                 typeof next === 'function' ? next(previous) : next;
+            const record = { ...incoming };
+
+            const preWeightChanged = record.preWeight !== previous.preWeight;
+            const dryWeightChanged = record.dryWeight !== previous.dryWeight;
+
+            if (preWeightChanged || dryWeightChanged) {
+                record.interdialyticWeightGain = computeInterdialyticWeightGain(
+                    record.preWeight,
+                    record.dryWeight
+                );
+            }
 
             (
                 [
@@ -401,6 +1504,7 @@ const DialysisSession = () => {
             (
                 [
                     'dialysisDuration',
+                    'durationType',
                     'bloodFlowRate',
                     'dialysateFlowRate',
                     'ultrafiltrationGoal',
@@ -466,8 +1570,20 @@ const DialysisSession = () => {
             | ((previous: typeof initialSessionForm) => typeof initialSessionForm)
     ) => {
         setForm(previous => {
-            const record =
+            const incoming =
                 typeof next === 'function' ? next(previous) : next;
+            const record = { ...incoming };
+
+            const targetUfChanged = record.targetUf !== previous.targetUf;
+            const actualUfChanged = record.actualUf !== previous.actualUf;
+
+            if (targetUfChanged || actualUfChanged) {
+                // Difference is derived (Actual − Target); not manually edited.
+                record.ufDifference = computeUfDifference(
+                    record.targetUf,
+                    record.actualUf
+                );
+            }
 
             (
                 [
@@ -487,6 +1603,13 @@ const DialysisSession = () => {
                     'ufDifference'
                 ] as const
             ).forEach(field => {
+                if (
+                    field === 'ufDifference' &&
+                    (targetUfChanged || actualUfChanged)
+                ) {
+                    return;
+                }
+
                 if (record[field] !== previous[field]) {
                     section07Touched.current[field] = true;
                 }
@@ -536,15 +1659,298 @@ const DialysisSession = () => {
         return numericValue === null ? null : Math.trunc(numericValue);
     };
 
-    const persistDialysisSession = async (): Promise<number | null> => {
-        if (!patient?.id || !encounter?.id) {
-            return null;
+    const captureFormBaseline = (nextForm: typeof initialSessionForm) => {
+        formBaselineRef.current = JSON.stringify(nextForm);
+    };
+
+    const hasUnsavedSessionChanges = () => {
+        if (!formBaselineRef.current) {
+            return false;
+        }
+
+        return JSON.stringify(form) !== formBaselineRef.current;
+    };
+
+    const resetTouchedSections = () => {
+        section02Touched.current = {};
+        section03Touched.current = {};
+        section05Touched.current = {};
+        section07Touched.current = {};
+        section08Touched.current = {};
+    };
+
+    const beginDraftForPlan = (plan: NephrologyTreatmentPlan) => {
+        // Never create draft/session state from read-only EMR or locked encounters.
+        if (
+            disabled ||
+            !patient?.id ||
+            !encounter?.id ||
+            String(plan.patientId) !== String(patient.id)
+        ) {
+            return;
+        }
+
+        const planId = Number(plan.id);
+        const mapped = mapTreatmentPlanToSessionFields(plan);
+        const nextForm = {
+            ...initialSessionForm,
+            ...mapped
+        };
+
+        creatingSessionRef.current = null;
+        loadedSessionId.current = null;
+        draftHydrationPlanIdRef.current = planId;
+        appliedHydrationKey.current = `draft:plan:${planId}`;
+        resetTouchedSections();
+
+        setActiveSessionId(null);
+        activeSessionIdRef.current = null;
+        setKnownSessionId(null);
+        setSelectedTreatmentPlanId(planId);
+        selectedTreatmentPlanIdRef.current = planId;
+        setForm(nextForm);
+        setFlowEntry(initialFlowEntry);
+        captureFormBaseline(nextForm);
+        setSessionHydration({
+            patientId: patient.id,
+            encounterId: encounter.id,
+            sessionId: null,
+            treatmentPlanId: planId
+        });
+        setBootstrapComplete(true);
+    };
+
+    const loadSavedSessionForPlan = (
+        session: DialysisSessionModel,
+        plan: NephrologyTreatmentPlan
+    ) => {
+        if (
+            !patient?.id ||
+            !encounter?.id ||
+            String(session.patientId) !== String(patient.id) ||
+            String(session.encounterId) !== String(encounter.id) ||
+            String(plan.patientId) !== String(patient.id)
+        ) {
+            return;
+        }
+
+        const sessionId = Number(session.id);
+        const planId = Number(plan.id);
+
+        creatingSessionRef.current = null;
+        loadedSessionId.current = sessionId;
+        draftHydrationPlanIdRef.current = null;
+        appliedHydrationKey.current = null;
+        resetTouchedSections();
+
+        setSelectedTreatmentPlanId(planId);
+        selectedTreatmentPlanIdRef.current = planId;
+        setKnownSessionId(sessionId);
+        setActiveSessionId(sessionId);
+        activeSessionIdRef.current = sessionId;
+        setBootstrapComplete(true);
+        // Form hydration is applied from the by-id query response.
+    };
+
+    const selectTreatmentPlan = async (plan: NephrologyTreatmentPlan) => {
+        // Allow plan switching while read-only so EMR can browse saved sessions.
+        // Drafts / creates remain blocked via beginDraftForPlan + save guards.
+        // When EMR locks a preferred plan, do not switch away from it.
+        if (
+            savingDialysisSession ||
+            planSwitchLoading ||
+            !patient?.id ||
+            !encounter?.id ||
+            String(plan.patientId) !== String(patient.id)
+        ) {
+            return;
         }
 
         if (
-            loadingDialysisSession &&
-            loadedSessionId.current == null &&
-            !dialysisSession?.id
+            preferredTreatmentPlanId != null &&
+            preferredTreatmentPlanId > 0 &&
+            Number(plan.id) !== preferredTreatmentPlanId
+        ) {
+            return;
+        }
+
+        const requestPatientId = patient.id;
+        const requestEncounterId = encounter.id;
+        const planId = Number(plan.id);
+
+        setPlanSwitchLoading(true);
+
+        try {
+            const sessions = await fetchSessionsByPlan({
+                patientId: Number(requestPatientId),
+                encounterId: Number(requestEncounterId),
+                treatmentPlanId: planId
+            }).unwrap();
+
+            if (
+                String(sessionContextRef.current.patientId) !==
+                String(requestPatientId) ||
+                String(sessionContextRef.current.encounterId) !==
+                String(requestEncounterId)
+            ) {
+                return;
+            }
+
+            const matchingSessions = (sessions ?? []).filter(
+                session =>
+                    String(session.patientId) === String(requestPatientId) &&
+                    String(session.encounterId) ===
+                    String(requestEncounterId) &&
+                    Number(session.treatmentPlanId) === planId
+            );
+
+            if (matchingSessions.length > 1) {
+                setPendingAmbiguousPlan(plan);
+                setAmbiguousSessions(matchingSessions);
+                return;
+            }
+
+            if (matchingSessions.length === 1) {
+                loadSavedSessionForPlan(matchingSessions[0], plan);
+                return;
+            }
+
+            if (disabled) {
+                creatingSessionRef.current = null;
+                loadedSessionId.current = null;
+                draftHydrationPlanIdRef.current = null;
+                appliedHydrationKey.current = `empty:plan:${planId}`;
+                resetTouchedSections();
+                setActiveSessionId(null);
+                activeSessionIdRef.current = null;
+                setKnownSessionId(null);
+                setSelectedTreatmentPlanId(planId);
+                selectedTreatmentPlanIdRef.current = planId;
+                setForm(initialSessionForm);
+                setFlowEntry(initialFlowEntry);
+                captureFormBaseline(initialSessionForm);
+                setSessionHydration({
+                    patientId: requestPatientId,
+                    encounterId: requestEncounterId,
+                    sessionId: null,
+                    treatmentPlanId: planId
+                });
+                setBootstrapComplete(true);
+                return;
+            }
+
+            beginDraftForPlan(plan);
+        } catch (e: any) {
+            dispatch(
+                notify({
+                    msg:
+                        e?.data?.detail ||
+                        e?.data?.message ||
+                        'Failed to load sessions for the selected Treatment Plan',
+                    sev: 'error'
+                })
+            );
+        } finally {
+            setPlanSwitchLoading(false);
+        }
+    };
+
+    const handleSelectTreatmentPlan = (plan: NephrologyTreatmentPlan) => {
+        if (
+            savingDialysisSession ||
+            planSwitchLoading ||
+            String(plan.patientId) !== String(patient?.id)
+        ) {
+            return;
+        }
+
+        if (
+            Number(plan.id) === Number(selectedTreatmentPlanId) &&
+            (activeSessionId != null ||
+                sessionHydration?.treatmentPlanId === Number(plan.id))
+        ) {
+            return;
+        }
+
+        if (
+            (selectedTreatmentPlanId != null || activeSessionId != null) &&
+            hasUnsavedSessionChanges()
+        ) {
+            setPendingTreatmentPlan(plan);
+            return;
+        }
+
+        void selectTreatmentPlan(plan);
+    };
+
+    const confirmPendingTreatmentPlan = () => {
+        if (!pendingTreatmentPlan) {
+            return;
+        }
+
+        const plan = pendingTreatmentPlan;
+        setPendingTreatmentPlan(null);
+        void selectTreatmentPlan(plan);
+    };
+
+    const selectAmbiguousSession = (session: DialysisSessionModel) => {
+        if (!pendingAmbiguousPlan) {
+            return;
+        }
+
+        const plan = pendingAmbiguousPlan;
+        setPendingAmbiguousPlan(null);
+        setAmbiguousSessions([]);
+        loadSavedSessionForPlan(session, plan);
+    };
+
+    const persistDialysisSession = async (): Promise<number | null> => {
+        if (disabled || !patient?.id || !encounter?.id) {
+            return null;
+        }
+
+        if (selectedTreatmentPlanIdRef.current == null) {
+            return null;
+        }
+
+        const requestPatientId = patient.id;
+        const requestEncounterId = encounter.id;
+
+        if (
+            String(sessionContextRef.current.patientId) !== String(requestPatientId) ||
+            String(sessionContextRef.current.encounterId) !== String(requestEncounterId)
+        ) {
+            return null;
+        }
+
+        const hydrationMatchesContext =
+            sessionHydration != null &&
+            String(sessionHydration.patientId) === String(requestPatientId) &&
+            String(sessionHydration.encounterId) === String(requestEncounterId);
+
+        const serverSessionId =
+            activeSessionId != null &&
+                hydrationMatchesContext &&
+                sessionHydration?.sessionId === Number(activeSessionId)
+                ? Number(activeSessionId)
+                : null;
+
+        if (serverSessionId) {
+            if (
+                loadingActiveSession ||
+                (dialysisSession != null &&
+                    Number(dialysisSession.id) !== serverSessionId)
+            ) {
+                return null;
+            }
+        } else if (!bootstrapComplete || !hydrationMatchesContext) {
+            return null;
+        } else if (sessionHydration?.sessionId != null) {
+            return null;
+        } else if (
+            selectedTreatmentPlanIdRef.current != null &&
+            sessionHydration?.treatmentPlanId !==
+            Number(selectedTreatmentPlanIdRef.current)
         ) {
             return null;
         }
@@ -562,6 +1968,7 @@ const DialysisSession = () => {
             nephrologistId: form.nephrologistId
                 ? Number(form.nephrologistId)
                 : null,
+            treatmentPlanId: Number(selectedTreatmentPlanIdRef.current),
             preWeight: toMeasurement(form.preWeight),
             dryWeight: toMeasurement(form.dryWeight),
             weightGain: toMeasurement(form.weightGain),
@@ -579,6 +1986,7 @@ const DialysisSession = () => {
             preAccessCondition: form.preAccessCondition?.trim() || null,
             generalCondition: form.generalCondition?.trim() || null,
             dialysisDuration: toMeasurement(form.dialysisDuration),
+            durationType: form.durationType || null,
             bloodFlowRate: toMeasurement(form.bloodFlowRate),
             dialysateFlowRate: toMeasurement(form.dialysateFlowRate),
             ultrafiltrationGoal: toMeasurement(form.ultrafiltrationGoal),
@@ -637,15 +2045,41 @@ const DialysisSession = () => {
             complicationNotes: form.complicationNotes?.trim() || null
         };
 
-        const existingSessionId = dialysisSession?.id
-            ? Number(dialysisSession.id)
-            : loadedSessionId.current;
+        const hydratedSessionId =
+            hydrationMatchesContext && sessionHydration?.sessionId != null
+                ? Number(sessionHydration.sessionId)
+                : null;
+        const rememberedSessionId =
+            loadedSessionId.current != null &&
+                Number(loadedSessionId.current) === hydratedSessionId
+                ? Number(loadedSessionId.current)
+                : null;
+        const existingSessionId = serverSessionId ?? rememberedSessionId;
 
         if (existingSessionId) {
             await updateDialysisSession({
                 id: existingSessionId,
                 ...body
             }).unwrap();
+
+            if (
+                String(sessionContextRef.current.patientId) ===
+                String(requestPatientId) &&
+                String(sessionContextRef.current.encounterId) ===
+                String(requestEncounterId)
+            ) {
+                appliedHydrationKey.current = `id:${existingSessionId}`;
+                captureFormBaseline(form);
+                setActiveSessionId(existingSessionId);
+                activeSessionIdRef.current = existingSessionId;
+                setKnownSessionId(existingSessionId);
+                setSessionHydration({
+                    patientId: requestPatientId,
+                    encounterId: requestEncounterId,
+                    sessionId: existingSessionId,
+                    treatmentPlanId: selectedTreatmentPlanIdRef.current
+                });
+            }
 
             return existingSessionId;
         }
@@ -654,10 +2088,8 @@ const DialysisSession = () => {
             return creatingSessionRef.current;
         }
 
-        const requestPatientId = patient.id;
-        const requestEncounterId = encounter.id;
-
-        const createPromise = (async (): Promise<number | null> => {
+        let createPromise: Promise<number | null>;
+        createPromise = (async (): Promise<number | null> => {
             try {
                 const created = await createDialysisSession({
                     patientId,
@@ -676,7 +2108,18 @@ const DialysisSession = () => {
 
                 if (stillSameEncounter) {
                     loadedSessionId.current = createdId;
+                    draftHydrationPlanIdRef.current = null;
+                    appliedHydrationKey.current = `id:${createdId}`;
+                    captureFormBaseline(form);
                     setKnownSessionId(createdId);
+                    setActiveSessionId(createdId);
+                    activeSessionIdRef.current = createdId;
+                    setSessionHydration({
+                        patientId: requestPatientId,
+                        encounterId: requestEncounterId,
+                        sessionId: createdId,
+                        treatmentPlanId: selectedTreatmentPlanIdRef.current
+                    });
                 }
 
                 return createdId;
@@ -692,7 +2135,7 @@ const DialysisSession = () => {
     };
 
     const saveDialysisSession = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -701,7 +2144,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -723,7 +2170,7 @@ const DialysisSession = () => {
     };
 
     const savePreDialysisAssessment = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -732,7 +2179,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -754,7 +2205,7 @@ const DialysisSession = () => {
     };
 
     const saveDialysisPrescription = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -763,7 +2214,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -785,7 +2240,7 @@ const DialysisSession = () => {
     };
 
     const saveDialysisAccess = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -794,7 +2249,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -816,7 +2275,7 @@ const DialysisSession = () => {
     };
 
     const savePostDialysisAssessment = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -825,7 +2284,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -847,7 +2310,7 @@ const DialysisSession = () => {
     };
 
     const saveDialysisComplications = async () => {
-        if (disabled || savingDialysisSession) {
+        if (sessionFieldsDisabled || savingDialysisSession) {
             return;
         }
 
@@ -856,7 +2319,11 @@ const DialysisSession = () => {
         }
 
         try {
-            await persistDialysisSession();
+            const savedSessionId = await persistDialysisSession();
+
+            if (!savedSessionId) {
+                return;
+            }
 
             dispatch(
                 notify({
@@ -878,35 +2345,166 @@ const DialysisSession = () => {
     };
 
     useEffect(() => {
-        if (!dialysisSession) {
+        if (!patient?.id || !encounter?.id) {
             return;
         }
 
-        setForm(prev => ({
-            ...prev,
-            chairStation: dialysisSession.chairStation ?? '',
-            machine: dialysisSession.machine ?? '',
-            date: dialysisSession.date ?? null,
-            startTime: dialysisSession.startTime ?? null,
-            endTime: dialysisSession.endTime ?? null,
-            shift: dialysisSession.shift ?? '',
-            assignedNurseId: dialysisSession.assignedNurseId ?? null,
-            nephrologistId: dialysisSession.nephrologistId ?? null
-        }));
-    }, [dialysisSession]);
+        const preferredKey =
+            preferredSessionId != null && preferredSessionId > 0
+                ? `|session:${preferredSessionId}`
+                : '';
+        const bootstrapKey = `${patient.id}|${encounter.id}${preferredKey}`;
+
+        if (bootstrapAppliedKey.current === bootstrapKey) {
+            return;
+        }
+
+        // EMR / explicit session selection: load by id, never create.
+        if (preferredSessionId != null && preferredSessionId > 0) {
+            bootstrapAppliedKey.current = bootstrapKey;
+            loadedSessionId.current = preferredSessionId;
+            draftHydrationPlanIdRef.current = null;
+            appliedHydrationKey.current = null;
+            resetTouchedSections();
+            setActiveSessionId(preferredSessionId);
+            activeSessionIdRef.current = preferredSessionId;
+            setKnownSessionId(preferredSessionId);
+            if (
+                preferredTreatmentPlanId != null &&
+                preferredTreatmentPlanId > 0
+            ) {
+                setSelectedTreatmentPlanId(preferredTreatmentPlanId);
+                selectedTreatmentPlanIdRef.current = preferredTreatmentPlanId;
+            }
+            setBootstrapComplete(true);
+            return;
+        }
+
+        if (loadingLatestSession) {
+            return;
+        }
+
+        if (!latestSessionLoaded && !latestSessionFailed) {
+            return;
+        }
+
+        bootstrapAppliedKey.current = bootstrapKey;
+
+        const latest =
+            latestSessionResponse &&
+                latestSessionResponse.id != null &&
+                String(latestSessionResponse.patientId) === String(patient.id) &&
+                String(latestSessionResponse.encounterId) === String(encounter.id)
+                ? latestSessionResponse
+                : undefined;
+
+        if (latest?.id != null) {
+            const sessionId = Number(latest.id);
+            const planId =
+                latest.treatmentPlanId != null
+                    ? Number(latest.treatmentPlanId)
+                    : null;
+
+            loadedSessionId.current = sessionId;
+            draftHydrationPlanIdRef.current = null;
+            appliedHydrationKey.current = null;
+            resetTouchedSections();
+            setActiveSessionId(sessionId);
+            activeSessionIdRef.current = sessionId;
+            setKnownSessionId(sessionId);
+            setSelectedTreatmentPlanId(planId);
+            selectedTreatmentPlanIdRef.current = planId;
+            setBootstrapComplete(true);
+            return;
+        }
+
+        // No saved session for this encounter yet.
+        if (selectedTreatmentPlanIdRef.current != null) {
+            setBootstrapComplete(true);
+            return;
+        }
+
+        appliedHydrationKey.current = 'empty';
+        setActiveSessionId(null);
+        setKnownSessionId(null);
+        setSelectedTreatmentPlanId(null);
+        setForm(initialSessionForm);
+        captureFormBaseline(initialSessionForm);
+        setSessionHydration({
+            patientId: patient.id,
+            encounterId: encounter.id,
+            sessionId: null,
+            treatmentPlanId: null
+        });
+        setBootstrapComplete(true);
+    }, [
+        patient?.id,
+        encounter?.id,
+        preferredSessionId,
+        preferredTreatmentPlanId,
+        latestSessionResponse,
+        loadingLatestSession,
+        latestSessionLoaded,
+        latestSessionFailed
+    ]);
 
     const sessionSkipped = !patient?.id || !encounter?.id;
     const section02SourcesReady =
-        sessionSkipped || dialysisSessionLoaded || dialysisSessionFailed;
+        sessionSkipped ||
+        (activeSessionId != null
+            ? activeSessionLoaded || activeSessionFailed
+            : bootstrapComplete);
 
     useEffect(() => {
+        if (!patient?.id || !encounter?.id || !section02SourcesReady) {
+            return;
+        }
+
+        // Draft for a selected plan is initialized explicitly; do not wipe it.
         if (
-            section02Initialized.current ||
-            !patient?.id ||
-            !encounter?.id ||
-            !section02SourcesReady
+            activeSessionId == null &&
+            draftHydrationPlanIdRef.current != null
         ) {
             return;
+        }
+
+        if (activeSessionId != null) {
+            if (loadingActiveSession) {
+                return;
+            }
+
+            if (!dialysisSession && !activeSessionFailed) {
+                return;
+            }
+
+            if (
+                dialysisSession &&
+                Number(dialysisSession.id) !== Number(activeSessionId)
+            ) {
+                return;
+            }
+        } else if (!bootstrapComplete) {
+            return;
+        }
+
+        const hydrationKey =
+            dialysisSession?.id != null
+                ? `id:${Number(dialysisSession.id)}`
+                : activeSessionId == null
+                    ? 'empty'
+                    : `pending:${activeSessionId}`;
+
+        if (appliedHydrationKey.current === hydrationKey) {
+            return;
+        }
+
+        if (hydrationKey.startsWith('pending:')) {
+            return;
+        }
+
+        if (hydrationKey === 'empty') {
+            loadedSessionId.current = null;
+            setKnownSessionId(null);
         }
 
         setForm(previous => {
@@ -925,6 +2523,7 @@ const DialysisSession = () => {
             const initialSection03 = (
                 field:
                     | 'dialysisDuration'
+                    | 'durationType'
                     | 'bloodFlowRate'
                     | 'dialysateFlowRate'
                     | 'ultrafiltrationGoal'
@@ -1006,8 +2605,16 @@ const DialysisSession = () => {
                 return persisted ?? fallback;
             };
 
-            return {
+            const nextForm = {
                 ...previous,
+                chairStation: dialysisSession?.chairStation ?? '',
+                machine: dialysisSession?.machine ?? '',
+                date: dialysisSession?.date ?? null,
+                startTime: dialysisSession?.startTime ?? null,
+                endTime: dialysisSession?.endTime ?? null,
+                shift: dialysisSession?.shift ?? '',
+                assignedNurseId: dialysisSession?.assignedNurseId ?? null,
+                nephrologistId: dialysisSession?.nephrologistId ?? null,
                 preWeight: initialValue(
                     'preWeight',
                     dialysisSession?.preWeight,
@@ -1023,11 +2630,19 @@ const DialysisSession = () => {
                     dialysisSession?.weightGain,
                     null
                 ) as number | null,
-                interdialyticWeightGain: initialValue(
-                    'interdialyticWeightGain',
-                    dialysisSession?.interdialyticWeightGain,
-                    null
-                ) as number | null,
+                interdialyticWeightGain: (() => {
+                    const preWeight = initialValue(
+                        'preWeight',
+                        dialysisSession?.preWeight,
+                        null
+                    ) as number | null;
+                    const dryWeight = initialValue(
+                        'dryWeight',
+                        dialysisSession?.dryWeight,
+                        null
+                    ) as number | null;
+                    return computeInterdialyticWeightGain(preWeight, dryWeight);
+                })(),
                 bloodPressureSystolic: initialValue(
                     'bloodPressureSystolic',
                     dialysisSession?.bloodPressureSystolic,
@@ -1083,6 +2698,11 @@ const DialysisSession = () => {
                     dialysisSession?.dialysisDuration,
                     null
                 ) as number | null,
+                durationType: initialSection03(
+                    'durationType',
+                    dialysisSession?.durationType,
+                    ''
+                ) as string,
                 bloodFlowRate: initialSection03(
                     'bloodFlowRate',
                     dialysisSession?.bloodFlowRate,
@@ -1257,11 +2877,19 @@ const DialysisSession = () => {
                     dialysisSession?.actualUf,
                     null
                 ) as number | null,
-                ufDifference: initialSection07(
-                    'ufDifference',
-                    dialysisSession?.ufDifference,
-                    null
-                ) as number | null,
+                ufDifference: (() => {
+                    const targetUf = initialSection07(
+                        'targetUf',
+                        dialysisSession?.targetUf,
+                        null
+                    ) as number | null;
+                    const actualUf = initialSection07(
+                        'actualUf',
+                        dialysisSession?.actualUf,
+                        null
+                    ) as number | null;
+                    return computeUfDifference(targetUf, actualUf);
+                })(),
                 complications: initialSection08(
                     'complications',
                     dialysisSession?.complications,
@@ -1273,14 +2901,46 @@ const DialysisSession = () => {
                     null
                 ) as string | null
             };
+
+            captureFormBaseline(nextForm);
+            return nextForm;
         });
 
-        section02Initialized.current = true;
+        appliedHydrationKey.current = hydrationKey;
+
+        const restoredPlanId =
+            preferredTreatmentPlanId != null && preferredTreatmentPlanId > 0
+                ? preferredTreatmentPlanId
+                : dialysisSession?.treatmentPlanId != null
+                  ? Number(dialysisSession.treatmentPlanId)
+                  : selectedTreatmentPlanIdRef.current;
+
+        if (dialysisSession?.id != null) {
+            setSelectedTreatmentPlanId(restoredPlanId);
+            selectedTreatmentPlanIdRef.current = restoredPlanId;
+            setKnownSessionId(Number(dialysisSession.id));
+            loadedSessionId.current = Number(dialysisSession.id);
+        }
+
+        setSessionHydration({
+            patientId: patient.id,
+            encounterId: encounter.id,
+            sessionId:
+                dialysisSession?.id != null
+                    ? Number(dialysisSession.id)
+                    : null,
+            treatmentPlanId: restoredPlanId
+        });
     }, [
         section02SourcesReady,
         patient?.id,
         encounter?.id,
-        dialysisSession
+        dialysisSession,
+        activeSessionId,
+        loadingActiveSession,
+        activeSessionFailed,
+        bootstrapComplete,
+        preferredTreatmentPlanId
     ]);
 
     const handleComplicationChange = (
@@ -1334,7 +2994,7 @@ const DialysisSession = () => {
 
     const handleAddFlowEntry = async () => {
         if (
-            disabled ||
+            sessionFieldsDisabled ||
             creatingFlowReading ||
             deletingFlowReading ||
             savingDialysisSession
@@ -1343,6 +3003,16 @@ const DialysisSession = () => {
         }
 
         if (!patient?.id || !encounter?.id) {
+            return;
+        }
+
+        if (!sessionHydrationReady) {
+            dispatch(
+                notify({
+                    msg: 'The dialysis session is still loading.',
+                    sev: 'warning'
+                })
+            );
             return;
         }
 
@@ -1357,24 +3027,32 @@ const DialysisSession = () => {
             return;
         }
 
-        if (
-            loadingDialysisSession &&
-            !dialysisSession?.id &&
-            knownSessionId == null
-        ) {
-            return;
-        }
-
         try {
-            const currentSessionId = dialysisSession?.id
-                ? Number(dialysisSession.id)
-                : knownSessionId ?? loadedSessionId.current;
+            const hydratedSessionId =
+                sessionHydration?.sessionId != null
+                    ? Number(sessionHydration.sessionId)
+                    : null;
+            const currentSessionId =
+                dialysisSession?.id != null &&
+                    hydratedSessionId === Number(dialysisSession.id)
+                    ? Number(dialysisSession.id)
+                    : hydratedSessionId != null &&
+                        loadedSessionId.current != null &&
+                        Number(loadedSessionId.current) === hydratedSessionId
+                        ? hydratedSessionId
+                        : null;
 
             const sessionId = currentSessionId
                 ? currentSessionId
                 : await persistDialysisSession();
 
             if (!sessionId) {
+                dispatch(
+                    notify({
+                        msg: 'Unable to add a flow reading until the dialysis session is saved.',
+                        sev: 'error'
+                    })
+                );
                 return;
             }
 
@@ -1419,20 +3097,27 @@ const DialysisSession = () => {
     };
 
     const handleDeleteFlowEntry = async (row: DialysisFlowReading) => {
-        if (disabled || deletingFlowReading || !row.id) {
+        if (sessionFieldsDisabled || deletingFlowReading || !row.id) {
             return;
         }
 
-        const sessionId = row.dialysisSessionId || activeSessionId;
-
-        if (!sessionId) {
+        if (
+            resolvedActiveSessionId == null ||
+            Number(row.dialysisSessionId) !== Number(resolvedActiveSessionId)
+        ) {
+            dispatch(
+                notify({
+                    msg: 'This flow reading does not belong to the current dialysis session.',
+                    sev: 'error'
+                })
+            );
             return;
         }
 
         try {
             await deleteDialysisFlowReading({
                 id: row.id,
-                dialysisSessionId: sessionId
+                dialysisSessionId: resolvedActiveSessionId
             }).unwrap();
 
             dispatch(
@@ -1477,36 +3162,36 @@ const DialysisSession = () => {
         },
         {
             key: 'ufRate',
-            title: <Translate>UF Rate</Translate>,
-            minWidth: 110,
+            title: <Translate>UF Rate (mL/h)</Translate>,
+            minWidth: 120,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.ufRate)
         },
         {
             key: 'ufRemoved',
-            title: <Translate>UF Removed</Translate>,
-            minWidth: 120,
+            title: <Translate>UF Removed (mL)</Translate>,
+            minWidth: 130,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.ufRemoved)
         },
         {
             key: 'arterialPressure',
-            title: <Translate>AP</Translate>,
-            minWidth: 90,
+            title: <Translate>AP (mmHg)</Translate>,
+            minWidth: 100,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.arterialPressure)
         },
         {
             key: 'venousPressure',
-            title: <Translate>VP</Translate>,
-            minWidth: 90,
+            title: <Translate>VP (mmHg)</Translate>,
+            minWidth: 100,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.venousPressure)
         },
         {
             key: 'transmembranePressure',
-            title: <Translate>TMP</Translate>,
-            minWidth: 90,
+            title: <Translate>TMP (mmHg)</Translate>,
+            minWidth: 110,
             render: (row: DialysisFlowReading) =>
                 displayReadingValue(row.transmembranePressure)
         },
@@ -1515,7 +3200,7 @@ const DialysisSession = () => {
             title: <Translate>Actions</Translate>,
             minWidth: 100,
             render: (row: DialysisFlowReading) =>
-                disabled ? null : (
+                sessionFieldsDisabled ? null : (
                     <MyButton
                         onClick={() => handleDeleteFlowEntry(row)}
                     >
@@ -1527,7 +3212,7 @@ const DialysisSession = () => {
 
     const handleAddMedication = async () => {
         if (
-            disabled ||
+            sessionFieldsDisabled ||
             creatingDialysisMedication ||
             deletingDialysisMedication ||
             savingDialysisSession
@@ -1539,6 +3224,16 @@ const DialysisSession = () => {
             return;
         }
 
+        if (!sessionHydrationReady) {
+            dispatch(
+                notify({
+                    msg: 'The dialysis session is still loading.',
+                    sev: 'warning'
+                })
+            );
+            return;
+        }
+
         if (
             form.activeIngredientId === null ||
             form.activeIngredientId === undefined
@@ -1546,24 +3241,32 @@ const DialysisSession = () => {
             return;
         }
 
-        if (
-            loadingDialysisSession &&
-            !dialysisSession?.id &&
-            knownSessionId == null
-        ) {
-            return;
-        }
-
         try {
-            const currentSessionId = dialysisSession?.id
-                ? Number(dialysisSession.id)
-                : knownSessionId ?? loadedSessionId.current;
+            const hydratedSessionId =
+                sessionHydration?.sessionId != null
+                    ? Number(sessionHydration.sessionId)
+                    : null;
+            const currentSessionId =
+                dialysisSession?.id != null &&
+                    hydratedSessionId === Number(dialysisSession.id)
+                    ? Number(dialysisSession.id)
+                    : hydratedSessionId != null &&
+                        loadedSessionId.current != null &&
+                        Number(loadedSessionId.current) === hydratedSessionId
+                        ? hydratedSessionId
+                        : null;
 
             const sessionId = currentSessionId
                 ? currentSessionId
                 : await persistDialysisSession();
 
             if (!sessionId) {
+                dispatch(
+                    notify({
+                        msg: 'Unable to add a medication until the dialysis session is saved.',
+                        sev: 'error'
+                    })
+                );
                 return;
             }
 
@@ -1601,20 +3304,27 @@ const DialysisSession = () => {
     };
 
     const handleDeleteMedication = async (row: DialysisMedication) => {
-        if (disabled || deletingDialysisMedication || !row.id) {
+        if (sessionFieldsDisabled || deletingDialysisMedication || !row.id) {
             return;
         }
 
-        const sessionId = row.dialysisSessionId || activeSessionId;
-
-        if (!sessionId) {
+        if (
+            resolvedActiveSessionId == null ||
+            Number(row.dialysisSessionId) !== Number(resolvedActiveSessionId)
+        ) {
+            dispatch(
+                notify({
+                    msg: 'This medication does not belong to the current dialysis session.',
+                    sev: 'error'
+                })
+            );
             return;
         }
 
         try {
             await deleteDialysisMedication({
                 id: row.id,
-                dialysisSessionId: sessionId
+                dialysisSessionId: resolvedActiveSessionId
             }).unwrap();
 
             dispatch(
@@ -1670,7 +3380,7 @@ const DialysisSession = () => {
             title: <Translate>Actions</Translate>,
             minWidth: 100,
             render: (row: DialysisMedication) =>
-                disabled ? null : (
+                sessionFieldsDisabled ? null : (
                     <MyButton
                         onClick={() => handleDeleteMedication(row)}
                     >
@@ -1680,9 +3390,43 @@ const DialysisSession = () => {
         }
     ];
 
+    const direction =
+        localStorage.getItem('direction')?.toLowerCase() === 'rtl'
+            ? 'rtl'
+            : 'ltr';
+
     return (
-        <div className="dialysis-session">
+        <div className="dialysis-session" dir={direction}>
             <div className="dialysis-session-sections">
+                <div className="dialysis-session-section">
+                            {planRequired && (
+                                <Message
+                                    type="warning"
+                                    className="dialysis-session-plan-required"
+                                >
+                                    <Translate>
+                                        Please select a Treatment Plan to
+                                        continue.
+                                    </Translate>
+                                </Message>
+                            )}
+
+                            <DialysisPatientRegistration
+                                patientId={patient?.id}
+                                selectedTreatmentPlanId={
+                                    selectedTreatmentPlanId
+                                }
+                                onSelectTreatmentPlan={
+                                    handleSelectTreatmentPlan
+                                }
+                                selectionDisabled={
+                                    disabled ||
+                                    savingDialysisSession ||
+                                    planSwitchLoading
+                                }
+                            />
+                        </div>
+
                 <div className="dialysis-session-section">
                     <SectionContainer
                         collapsible={true}
@@ -1709,9 +3453,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={saveDialysisSession}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -1722,173 +3466,175 @@ const DialysisSession = () => {
                             </MyButton>
                         }
                         content={
-                            <Form fluid>
-                                <div className="dialysis-session-content">
+                            <>
+                                <Form fluid>
+                                    <div className="dialysis-session-content">
 
-                                    <div className="dialysis-session-group">
-                                        <div className="dialysis-session-group-header">
-                                            <span className="dialysis-session-group-title">
-                                                <Translate>Session Details</Translate>
-                                            </span>
+                                        <div className="dialysis-session-group">
+                                            <div className="dialysis-session-group-header">
+                                                <span className="dialysis-session-group-title">
+                                                    <Translate>Session Details</Translate>
+                                                </span>
 
-                                            <div className="dialysis-session-group-line" />
+                                                <div className="dialysis-session-group-line" />
+                                            </div>
+
+                                            <div className="dialysis-session-row">
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="chairStation"
+                                                        fieldLabel="Chair / Station"
+                                                        fieldType="text"
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
+
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="machine"
+                                                        fieldLabel="Machine"
+                                                        fieldType="text"
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
+
+                                                <div className="dialysis-session-field">
+                                                    <MyDateHijriInput
+                                                        fieldName="date"
+                                                        fieldLabel="Date"
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="chairStation"
-                                                    fieldLabel="Chair / Station"
-                                                    fieldType="text"
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
+                                        <div className="dialysis-session-group">
+                                            <div className="dialysis-session-group-header">
+                                                <span className="dialysis-session-group-title">
+                                                    <Translate>Session Time</Translate>
+                                                </span>
+
+                                                <div className="dialysis-session-group-line" />
                                             </div>
 
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="machine"
-                                                    fieldLabel="Machine"
-                                                    fieldType="text"
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-                                            </div>
+                                            <div className="dialysis-session-row">
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="startTime"
+                                                        fieldLabel="Start Time"
+                                                        fieldType="time"
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
 
-                                            <div className="dialysis-session-field">
-                                                <MyDateHijriInput
-                                                    fieldName="date"
-                                                    fieldLabel="Date"
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="endTime"
+                                                        fieldLabel="End Time"
+                                                        fieldType="time"
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
+
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="shift"
+                                                        fieldLabel="Shift"
+                                                        fieldType="select"
+                                                        selectData={shiftOptions}
+                                                        selectDataLabel="label"
+                                                        selectDataValue="value"
+                                                        searchable={false}
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
+
+                                        <div className="dialysis-session-group">
+                                            <div className="dialysis-session-group-header">
+                                                <span className="dialysis-session-group-title">
+                                                    <Translate>Clinical Assignment</Translate>
+                                                </span>
+
+                                                <div className="dialysis-session-group-line" />
+                                            </div>
+
+                                            <div className="dialysis-session-row">
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="assignedNurseId"
+                                                        fieldLabel="Assigned Nurse"
+                                                        fieldType="select"
+                                                        selectData={nurses}
+                                                        selectDataLabel={['firstName', 'lastName']}
+                                                        selectDataValue="id"
+                                                        searchable
+                                                        loading={loadingNurses}
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+
+                                                    {nurseError && (
+                                                        <Message type="error">
+                                                            <Translate>
+                                                                Unable to load nurses.
+                                                            </Translate>
+                                                        </Message>
+                                                    )}
+                                                </div>
+
+                                                <div className="dialysis-session-field">
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldName="nephrologistId"
+                                                        fieldLabel="Nephrologist"
+                                                        fieldType="select"
+                                                        selectData={physicians}
+                                                        selectDataLabel={['firstName', 'lastName']}
+                                                        selectDataValue="id"
+                                                        searchable
+                                                        loading={loadingPractitioners}
+                                                        record={form}
+                                                        setRecord={setForm}
+                                                        disabled={sessionFieldsDisabled}
+                                                    />
+
+                                                    {practitionerError && (
+                                                        <Message type="error">
+                                                            <Translate>
+                                                                Unable to load doctors.
+                                                            </Translate>
+                                                        </Message>
+                                                    )}
+                                                </div>
+
+                                                <div className="dialysis-session-field dialysis-session-field--empty" />
+                                            </div>
+                                        </div>
+
                                     </div>
-
-                                    <div className="dialysis-session-group">
-                                        <div className="dialysis-session-group-header">
-                                            <span className="dialysis-session-group-title">
-                                                <Translate>Session Time</Translate>
-                                            </span>
-
-                                            <div className="dialysis-session-group-line" />
-                                        </div>
-
-                                        <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="startTime"
-                                                    fieldLabel="Start Time"
-                                                    fieldType="time"
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-                                            </div>
-
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="endTime"
-                                                    fieldLabel="End Time"
-                                                    fieldType="time"
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-                                            </div>
-
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="shift"
-                                                    fieldLabel="Shift"
-                                                    fieldType="select"
-                                                    selectData={shiftOptions}
-                                                    selectDataLabel="label"
-                                                    selectDataValue="value"
-                                                    searchable={false}
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="dialysis-session-group">
-                                        <div className="dialysis-session-group-header">
-                                            <span className="dialysis-session-group-title">
-                                                <Translate>Clinical Assignment</Translate>
-                                            </span>
-
-                                            <div className="dialysis-session-group-line" />
-                                        </div>
-
-                                        <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="assignedNurseId"
-                                                    fieldLabel="Assigned Nurse"
-                                                    fieldType="select"
-                                                    selectData={nurses}
-                                                    selectDataLabel={['firstName', 'lastName']}
-                                                    selectDataValue="id"
-                                                    searchable
-                                                    loading={loadingNurses}
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-
-                                                {nurseError && (
-                                                    <Message type="error">
-                                                        <Translate>
-                                                            Unable to load nurses.
-                                                        </Translate>
-                                                    </Message>
-                                                )}
-                                            </div>
-
-                                            <div className="dialysis-session-field">
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldName="nephrologistId"
-                                                    fieldLabel="Nephrologist"
-                                                    fieldType="select"
-                                                    selectData={physicians}
-                                                    selectDataLabel={['firstName', 'lastName']}
-                                                    selectDataValue="id"
-                                                    searchable
-                                                    loading={loadingPractitioners}
-                                                    record={form}
-                                                    setRecord={setForm}
-                                                    disabled={disabled}
-                                                />
-
-                                                {practitionerError && (
-                                                    <Message type="error">
-                                                        <Translate>
-                                                            Unable to load doctors.
-                                                        </Translate>
-                                                    </Message>
-                                                )}
-                                            </div>
-
-                                            <div className="dialysis-session-field dialysis-session-field--empty" />
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </Form>
+                                </Form>
+                            </>
                         }
                     />
                 </div>
@@ -1919,9 +3665,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={savePreDialysisAssessment}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -1947,7 +3693,7 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="preWeight"
@@ -1955,13 +3701,17 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
+                                        </div>
 
-                                            <div className="dialysis-session-field">
+                                        <div className="dialysis-session-row dialysis-session-row--spaced">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="dryWeight"
@@ -1969,37 +3719,43 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="weightGain"
-                                                    fieldLabel="Weight Gain"
+                                                    fieldLabel="Reported Weight Gain"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="interdialyticWeightGain"
-                                                    fieldLabel="Interdialytic Weight Gain Kg"
+                                                    fieldLabel="Interdialytic Weight Gain (Pre − Dry)"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
-                                                    setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    setRecord={() => undefined}
+                                                    disabled
                                                 />
                                             </div>
                                         </div>
@@ -2015,78 +3771,95 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="bloodPressureSystolic"
+                                                    fieldLabel="Pre BP Systolic"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="mmHg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="bloodPressureDiastolic"
+                                                    fieldLabel="Pre BP Diastolic"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="mmHg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="heartRate"
+                                                    fieldLabel="Heart Rate"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="bpm"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="temperature"
+                                                    fieldLabel="Temperature"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="°C"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="respiratoryRate"
-                                                    fieldLabel="R.R"
+                                                    fieldLabel="Respiratory Rate"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="breaths/min"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="oxygenSaturation"
+                                                    fieldLabel="Oxygen Saturation"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="%"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2113,7 +3886,7 @@ const DialysisSession = () => {
                                                     rows={3}
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2125,7 +3898,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2138,7 +3911,7 @@ const DialysisSession = () => {
                                                     rows={3}
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2151,7 +3924,7 @@ const DialysisSession = () => {
                                                     rows={3}
                                                     record={form}
                                                     setRecord={setSection02Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2189,9 +3962,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={saveDialysisPrescription}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -2227,11 +4000,27 @@ const DialysisSession = () => {
                                                     showZero
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
                                             <div className="dialysis-session-field">
+                                                <MyInput
+                                                    width="100%"
+                                                    fieldName="durationType"
+                                                    fieldLabel="Duration Type"
+                                                    fieldType="select"
+                                                    selectData={durationTypeOptions}
+                                                    selectDataLabel="label"
+                                                    selectDataValue="value"
+                                                    searchable={false}
+                                                    record={form}
+                                                    setRecord={setSection03Form}
+                                                    disabled={sessionFieldsDisabled}
+                                                />
+                                            </div>
+
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="bloodFlowRate"
@@ -2239,13 +4028,15 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="mL/min"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="dialysateFlowRate"
@@ -2253,13 +4044,15 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="mL/min"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="ultrafiltrationGoal"
@@ -2267,9 +4060,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2286,62 +4081,84 @@ const DialysisSession = () => {
                                             <div className="dialysis-session-group-line" />
                                         </div>
 
+                                        <Message
+                                            type="info"
+                                            showIcon
+                                            className="dialysis-session-serum-dialysate-note"
+                                        >
+                                            <Translate>
+                                                Enter dialysate bath values only.
+                                                Blood lab results below each field
+                                                are serum reference and must not be
+                                                copied into the prescription.
+                                            </Translate>
+                                        </Message>
+
                                         <div className="dialysis-session-row">
                                             <div className="dialysis-session-field">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="dialysateComposition"
-                                                    fieldLabel="Dialysate Composition"
+                                                    fieldLabel="Dialysate Composition (free text)"
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="sodium"
-                                                    fieldLabel="Sodium"
+                                                    fieldLabel="Dialysate Sodium"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="mmol/L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
+                                                {renderBloodLabReference('sodium')}
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="potassium"
-                                                    fieldLabel="Potassium"
+                                                    fieldLabel="Dialysate Potassium"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="mmol/L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
+                                                {renderBloodLabReference('potassium')}
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="calcium"
-                                                    fieldLabel="Calcium"
+                                                    fieldLabel="Dialysate Calcium"
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="mmol/L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
+                                                {renderBloodLabReference('calcium')}
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="dialysisTemperature"
@@ -2349,9 +4166,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="°C"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2369,7 +4188,7 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="heparinDose"
@@ -2377,9 +4196,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="IU"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2387,7 +4208,7 @@ const DialysisSession = () => {
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="anticoagulation"
-                                                    fieldLabel="Anticoagulation"
+                                                    fieldLabel="Anticoagulation Type"
                                                     fieldType="select"
                                                     selectData={dialysisAnticoagulationOptions}
                                                     selectDataLabel="label"
@@ -2395,7 +4216,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2408,12 +4229,12 @@ const DialysisSession = () => {
                                                         fieldType="text"
                                                         record={form}
                                                         setRecord={setSection03Form}
-                                                        disabled={disabled}
+                                                        disabled={sessionFieldsDisabled}
                                                     />
                                                 </div>
                                             )}
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="targetDryWeight"
@@ -2421,9 +4242,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection03Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2451,13 +4274,45 @@ const DialysisSession = () => {
                                     </Translate>
 
                                     <span className="dialysis-session-section-description">
-                                        Intra-dialysis monitoring and treatment measurements
+                                        Intra-dialysis monitoring — chart BP drops
+                                        and interventions as they occur
                                     </span>
                                 </div>
                             </div>
                         }
                         content={
                             <div className="dialysis-session-content">
+                                <Message
+                                    type="info"
+                                    showIcon
+                                    className="dialysis-session-flow-note"
+                                >
+                                    <Translate>
+                                        For intradialytic events (e.g. hypotension),
+                                        add a timed reading here and record the
+                                        intervention in Complications notes
+                                        (Section 08) without waiting until post.
+                                    </Translate>
+                                </Message>
+
+                                <div className="dialysis-session-pressure-legend">
+                                    <span>
+                                        <Translate>AP</Translate>
+                                        {' = '}
+                                        <Translate>Arterial Pressure</Translate>
+                                    </span>
+                                    <span>
+                                        <Translate>VP</Translate>
+                                        {' = '}
+                                        <Translate>Venous Pressure</Translate>
+                                    </span>
+                                    <span>
+                                        <Translate>TMP</Translate>
+                                        {' = '}
+                                        <Translate>Transmembrane Pressure</Translate>
+                                    </span>
+                                </div>
+
                                 <Form fluid>
                                     <div className="dialysis-session-row">
                                         <div className="dialysis-session-field">
@@ -2468,52 +4323,58 @@ const DialysisSession = () => {
                                                 fieldType="time"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="bloodPressureSystolic"
-                                                fieldLabel="Blood Pressure Systolic"
+                                                fieldLabel="Intradialytic BP Systolic"
                                                 fieldType="number"
                                                 showZero
+                                                rightAddon="mmHg"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="bloodPressureDiastolic"
-                                                fieldLabel="Blood Pressure Diastolic"
+                                                fieldLabel="Intradialytic BP Diastolic"
                                                 fieldType="number"
                                                 showZero
+                                                rightAddon="mmHg"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="pulse"
                                                 fieldLabel="Pulse"
                                                 fieldType="number"
                                                 showZero
+                                                rightAddon="bpm"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="dialysis-session-row dialysis-session-row--spaced">
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="ufRate"
@@ -2521,13 +4382,15 @@ const DialysisSession = () => {
                                                 fieldType="number"
                                                 allowDecimal
                                                 showZero
+                                                rightAddon="mL/h"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="ufRemoved"
@@ -2535,56 +4398,64 @@ const DialysisSession = () => {
                                                 fieldType="number"
                                                 allowDecimal
                                                 showZero
+                                                rightAddon="mL"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="arterialPressure"
-                                                fieldLabel="AP"
+                                                fieldLabel="AP (Arterial)"
                                                 fieldType="number"
                                                 allowDecimal
                                                 allowNegative
                                                 showZero
+                                                rightAddon="mmHg"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="venousPressure"
-                                                fieldLabel="VP"
+                                                fieldLabel="VP (Venous)"
                                                 fieldType="number"
                                                 allowDecimal
                                                 allowNegative
                                                 showZero
+                                                rightAddon="mmHg"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="dialysis-session-row dialysis-session-row--spaced">
-                                        <div className="dialysis-session-field">
+                                        <div className="dialysis-session-field dialysis-session-field--addon">
                                             <MyInput
                                                 width="100%"
                                                 fieldName="transmembranePressure"
-                                                fieldLabel="TMP"
+                                                fieldLabel="TMP (Transmembrane)"
                                                 fieldType="number"
                                                 allowDecimal
                                                 allowNegative
                                                 showZero
+                                                rightAddon="mmHg"
+                                                rightAddonwidth="auto"
                                                 record={flowEntry}
                                                 setRecord={setFlowEntry}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
                                     </div>
@@ -2592,7 +4463,16 @@ const DialysisSession = () => {
 
                                 {!disabled && (
                                     <div className="dialysis-session-actions">
-                                        <MyButton onClick={handleAddFlowEntry}>
+                                        <MyButton
+                                            onClick={handleAddFlowEntry}
+                                            disabled={
+                                                sessionFieldsDisabled ||
+                                                !sessionHydrationReady ||
+                                                savingDialysisSession ||
+                                                creatingFlowReading ||
+                                                deletingFlowReading
+                                            }
+                                        >
                                             <Translate>Add Reading</Translate>
                                         </MyButton>
                                     </div>
@@ -2626,7 +4506,8 @@ const DialysisSession = () => {
                                     </Translate>
 
                                     <span className="dialysis-session-section-description">
-                                        Vascular access type and condition assessment
+                                        Complete at pre-connect / cannulation — before
+                                        starting the flow sheet
                                     </span>
                                 </div>
                             </div>
@@ -2636,9 +4517,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={saveDialysisAccess}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -2674,7 +4555,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2690,7 +4571,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2703,7 +4584,7 @@ const DialysisSession = () => {
                                                         fieldType="text"
                                                         record={form}
                                                         setRecord={setSection05Form}
-                                                        disabled={disabled}
+                                                        disabled={sessionFieldsDisabled}
                                                     />
                                                 </div>
                                             )}
@@ -2734,7 +4615,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2750,7 +4631,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2762,7 +4643,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2774,7 +4655,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2788,7 +4669,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -2800,7 +4681,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection05Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -2849,7 +4730,7 @@ const DialysisSession = () => {
                                                 searchable={true}
                                                 record={form}
                                                 setRecord={setForm}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
@@ -2862,7 +4743,7 @@ const DialysisSession = () => {
                                                 showZero
                                                 record={form}
                                                 setRecord={setForm}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
 
@@ -2879,7 +4760,7 @@ const DialysisSession = () => {
                                                 searchable={true}
                                                 record={form}
                                                 setRecord={setForm}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
                                     </div>
@@ -2887,7 +4768,16 @@ const DialysisSession = () => {
 
                                 {!disabled && (
                                     <div className="dialysis-session-actions">
-                                        <MyButton onClick={handleAddMedication}>
+                                        <MyButton
+                                            onClick={handleAddMedication}
+                                            disabled={
+                                                sessionFieldsDisabled ||
+                                                !sessionHydrationReady ||
+                                                savingDialysisSession ||
+                                                creatingDialysisMedication ||
+                                                deletingDialysisMedication
+                                            }
+                                        >
                                             <Translate>Add Medication</Translate>
                                         </MyButton>
                                     </div>
@@ -2931,9 +4821,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={savePostDialysisAssessment}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -2959,7 +4849,7 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postWeight"
@@ -2967,52 +4857,60 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="kg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postBloodPressureSystolic"
                                                     fieldLabel="Post BP Systolic"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="mmHg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postBloodPressureDiastolic"
                                                     fieldLabel="Post BP Diastolic"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="mmHg"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postPulse"
                                                     fieldLabel="Pulse"
                                                     fieldType="number"
                                                     showZero
+                                                    rightAddon="bpm"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postTemperature"
@@ -3020,9 +4918,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="°C"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -3040,7 +4940,7 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="totalUfRemoved"
@@ -3048,13 +4948,15 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="actualTreatmentDuration"
@@ -3062,9 +4964,11 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="h"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -3076,7 +4980,7 @@ const DialysisSession = () => {
                                                     fieldType="text"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -3092,7 +4996,7 @@ const DialysisSession = () => {
                                                     searchable={false}
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -3102,12 +5006,12 @@ const DialysisSession = () => {
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="postComplications"
-                                                    fieldLabel="Complications"
+                                                    fieldLabel="Post Complications Summary"
                                                     fieldType="textarea"
                                                     rows={3}
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
@@ -3120,7 +5024,7 @@ const DialysisSession = () => {
                                                     rows={3}
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         </div>
@@ -3138,7 +5042,7 @@ const DialysisSession = () => {
                                         </div>
 
                                         <div className="dialysis-session-row">
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="targetUf"
@@ -3146,13 +5050,15 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="actualUf"
@@ -3160,27 +5066,56 @@ const DialysisSession = () => {
                                                     fieldType="number"
                                                     allowDecimal
                                                     showZero
+                                                    rightAddon="L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
                                                     setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
 
-                                            <div className="dialysis-session-field">
+                                            <div className="dialysis-session-field dialysis-session-field--addon">
                                                 <MyInput
                                                     width="100%"
                                                     fieldName="ufDifference"
-                                                    fieldLabel="Difference"
+                                                    fieldLabel="Difference (Actual − Target)"
                                                     fieldType="number"
                                                     allowDecimal
                                                     allowNegative
                                                     showZero
+                                                    rightAddon="L"
+                                                    rightAddonwidth="auto"
                                                     record={form}
-                                                    setRecord={setSection07Form}
-                                                    disabled={disabled}
+                                                    setRecord={() => undefined}
+                                                    disabled
                                                 />
                                             </div>
                                         </div>
+
+                                        {ufWeightLossMismatch ? (
+                                            <Message
+                                                type="warning"
+                                                showIcon
+                                                className="dialysis-session-uf-warning"
+                                            >
+                                                <Translate>
+                                                    UF vs weight-loss check:
+                                                </Translate>{' '}
+                                                <Translate>
+                                                    Pre−Post weight loss
+                                                </Translate>
+                                                {` (${ufWeightLossMismatch.weightLossKg} kg) `}
+                                                <Translate>
+                                                    differs from Actual UF
+                                                </Translate>
+                                                {` (${ufWeightLossMismatch.actualUf} L) `}
+                                                <Translate>
+                                                    by more than 0.5 L/kg. Verify
+                                                    scales, priming, and UF meter
+                                                    before signing off.
+                                                </Translate>
+                                            </Message>
+                                        ) : null}
                                     </div>
 
                                 </div>
@@ -3205,7 +5140,8 @@ const DialysisSession = () => {
                                     </Translate>
 
                                     <span className="dialysis-session-section-description">
-                                        Complications and events recorded during treatment
+                                        Document intradialytic events and interventions
+                                        in real time — do not wait until post
                                     </span>
                                 </div>
                             </div>
@@ -3215,9 +5151,9 @@ const DialysisSession = () => {
                                 size="small"
                                 onClick={saveDialysisComplications}
                                 disabled={
-                                    disabled ||
+                                    sessionFieldsDisabled ||
                                     savingDialysisSession ||
-                                    loadingDialysisSession
+                                    !sessionHydrationReady
                                 }
                             >
                                 {savingDialysisSession ? (
@@ -3253,7 +5189,7 @@ const DialysisSession = () => {
                                                             Boolean(record?.[option.value])
                                                         )
                                                     }
-                                                    disabled={disabled}
+                                                    disabled={sessionFieldsDisabled}
                                                 />
                                             </div>
                                         ))}
@@ -3269,7 +5205,7 @@ const DialysisSession = () => {
                                                 rows={3}
                                                 record={form}
                                                 setRecord={setSection08Form}
-                                                disabled={disabled}
+                                                disabled={sessionFieldsDisabled}
                                             />
                                         </div>
                                     </div>
@@ -3280,6 +5216,92 @@ const DialysisSession = () => {
                 </div>
 
             </div>
+
+            <Modal
+                open={pendingTreatmentPlan != null}
+                onClose={() => setPendingTreatmentPlan(null)}
+            >
+                <Modal.Header>
+                    <Modal.Title>
+                        <Translate>Change Treatment Plan</Translate>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Translate>
+                        You have unsaved Dialysis Session changes. Switching
+                        Treatment Plans will discard these unsaved changes and
+                        load the saved session for the selected plan (or start a
+                        new draft if none exists). Continue?
+                    </Translate>
+                </Modal.Body>
+                <Modal.Footer>
+                    <MyButton onClick={() => setPendingTreatmentPlan(null)}>
+                        <Translate>Cancel</Translate>
+                    </MyButton>
+                    <MyButton onClick={confirmPendingTreatmentPlan}>
+                        <Translate>Discard and Switch</Translate>
+                    </MyButton>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal
+                open={ambiguousSessions.length > 0}
+                onClose={() => {
+                    setAmbiguousSessions([]);
+                    setPendingAmbiguousPlan(null);
+                }}
+            >
+                <Modal.Header>
+                    <Modal.Title>
+                        <Translate>Select Dialysis Session</Translate>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Translate>
+                        Multiple saved Dialysis Sessions are associated with this
+                        Treatment Plan. Select the session to open.
+                    </Translate>
+                    <div className="dialysis-session-ambiguous-list">
+                        {ambiguousSessions.map(session => (
+                            <div
+                                key={session.id}
+                                className="dialysis-session-ambiguous-item"
+                            >
+                                <span>
+                                    <Translate>Session</Translate>
+                                    {` #${session.id}`}
+                                    {session.date
+                                        ? ` — ${String(session.date).slice(0, 10)}`
+                                        : ''}
+                                    {session.lastModifiedDate
+                                        ? ` (${String(
+                                            session.lastModifiedDate
+                                        ).slice(0, 16)})`
+                                        : ''}
+                                </span>
+                                <MyButton
+                                    size="small"
+                                    onClick={() =>
+                                        selectAmbiguousSession(session)
+                                    }
+                                >
+                                    <Translate>Open</Translate>
+                                </MyButton>
+                            </div>
+                        ))}
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <MyButton
+                        onClick={() => {
+                            setAmbiguousSessions([]);
+                            setPendingAmbiguousPlan(null);
+                        }}
+                    >
+                        <Translate>Cancel</Translate>
+                    </MyButton>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };

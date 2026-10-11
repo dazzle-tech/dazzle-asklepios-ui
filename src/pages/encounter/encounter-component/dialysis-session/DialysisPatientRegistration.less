@@ -1,0 +1,198 @@
+
+/* Dialysis Patient Registration — scoped styles */
+
+.dialysis-registration-block {
+  width: 100%;
+  min-width: 0;
+
+  &__body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  &__body[hidden] {
+    display: none !important;
+  }
+}
+
+.dialysis-registration-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--rs-border-primary, #dce3ec);
+  border-radius: 12px;
+  background: var(--rs-bg-card, #fff);
+
+  &__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 160px;
+
+    strong {
+      font-size: 20px;
+      line-height: 1.25;
+    }
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    flex: 1;
+    gap: 12px;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-inline-start: 15px;
+      border-inline-start: 1px solid var(--rs-border-primary, #dce3ec);
+      min-width: 0;
+
+      span {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      strong {
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+    }
+  }
+}
+
+.dialysis-registration-eyebrow {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.dialysis-registration-details,
+.dialysis-registration-panel {
+  border: 1px solid var(--rs-border-primary, #dce3ec);
+  border-radius: 12px;
+  background: var(--rs-bg-card, #fff);
+  min-width: 0;
+  padding: 18px;
+}
+
+.dialysis-registration-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    font-size: 15px;
+  }
+
+  small {
+    opacity: 0.7;
+    font-size: 12px;
+  }
+}
+
+.dialysis-registration-readonly {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--rs-bg-well, #f1f4f8);
+  white-space: nowrap;
+}
+
+.dialysis-registration-details {
+  .dialysis-session-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .dialysis-session-group {
+    min-width: 0;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--rs-border-primary, #e4e9ef);
+    background: var(--rs-bg-well, #f8fafc);
+  }
+
+  .dialysis-session-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .dialysis-session-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dialysis-session-group-header {
+    margin-bottom: 14px;
+  }
+
+  .rs-form {
+    width: 100%;
+  }
+}
+
+.dialysis-registration-plans {
+  .dialysis-registration-table {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .dialysis-session-group-header {
+    margin-bottom: 14px;
+  }
+}
+
+.dialysis-registration-row--selected {
+  background: var(--rs-state-hover-bg, rgba(52, 129, 255, 0.08));
+}
+
+@media (max-width: 1100px) {
+  .dialysis-registration-details {
+    .dialysis-session-content {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .dialysis-registration-block__body {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .dialysis-registration-overview {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dialysis-registration-overview__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .dialysis-registration-details,
+  .dialysis-registration-panel {
+    padding: 12px;
+  }
+
+  .dialysis-registration-details {
+    .dialysis-session-row {
+      grid-template-columns: 1fr;
+    }
+  }
+}

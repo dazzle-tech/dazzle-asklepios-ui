@@ -220,6 +220,11 @@
   .dialysis-session-section-heading {
     align-items: flex-start;
   }
+
+  .dialysis-registration-block.is-collapsed
+    .dialysis-registration-block__chevron {
+    transform: rotate(135deg);
+  }
 }
 
 // =========================================================
@@ -316,5 +321,213 @@
 
   .dialysis-session-actions {
     justify-content: flex-start;
+  }
+}
+
+.dialysis-registration-block {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 18px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 12px;
+
+    border: 1px solid rgba(33, 150, 243, 0.22);
+    border-radius: 8px;
+    background: rgba(33, 150, 243, 0.08);
+    color: inherit;
+
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  &__chevron {
+    flex: 0 0 auto;
+
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+
+  &.is-collapsed &__chevron {
+    margin-top: 0;
+    transform: rotate(-45deg);
+  }
+
+  &__body {
+    width: 100%;
+    min-width: 0;
+    padding-top: 14px;
+  }
+
+  &.is-collapsed &__body,
+  &__body[hidden] {
+    display: none !important;
+  }
+}
+
+.dialysis-registration-state {
+  margin: 4px 0 8px;
+}
+
+.dialysis-session-plan-required {
+  margin: 0 0 12px;
+}
+
+.dialysis-registration-plans {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.dialysis-registration-table {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 12px;
+}
+
+.dialysis-registration-row--selected {
+  background: rgba(33, 150, 243, 0.08) !important;
+}
+
+.dialysis-session-ambiguous-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dialysis-session-ambiguous-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(33, 150, 243, 0.2);
+  border-radius: 8px;
+}
+
+.dialysis-session-lab-ref {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-left: 3px solid #2563eb;
+  background: rgba(37, 99, 235, 0.06);
+  font-size: 11px;
+  line-height: 1.35;
+  color: rgba(55, 65, 81, 0.9);
+}
+
+.dialysis-session-lab-ref--unavailable {
+  border-left-color: #d97706;
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.dialysis-session-lab-ref-label {
+  font-weight: 600;
+}
+
+.dialysis-session-lab-ref-critical {
+  color: #b91c1c;
+}
+
+.dialysis-session-lab-ref-value {
+  word-break: break-word;
+}
+
+.dialysis-session-lab-ref-hint {
+  color: rgba(55, 65, 81, 0.75);
+  font-style: italic;
+}
+
+.dialysis-session-serum-dialysate-note,
+.dialysis-session-flow-note,
+.dialysis-session-uf-warning {
+  margin-bottom: 12px;
+}
+
+.dialysis-session-pressure-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: rgba(55, 65, 81, 0.85);
+}
+
+.dialysis-session-field--addon {
+  > .rs-form-group > .rs-input-group {
+    width: 100% !important;
+    max-width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  > .rs-form-group > .rs-input-group > .rs-form-control-wrapper,
+  > .rs-form-group > .rs-input-group > div {
+    display: flex;
+    flex: 1 1 auto !important;
+    flex-wrap: wrap;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  > .rs-form-group > .rs-input-group > div > .rs-form-control-wrapper {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  > .rs-form-group > .rs-input-group .rs-form-control-wrapper > .rs-input-number {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  > .rs-form-group > .rs-input-group .rs-form-control-wrapper > .rs-input-number > .rs-input {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  > .rs-form-group > .rs-input-group .rs-form-control-wrapper > .rs-input-number > .rs-input-number-btn-group-vertical {
+    flex: 0 0 auto;
+  }
+
+  > .rs-form-group > .rs-input-group .rs-form-control-wrapper > .rs-input,
+  > .rs-form-group > .rs-input-group .rs-form-control-wrapper > input.rs-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  > .rs-form-group > .rs-input-group .rs-form-control-message-wrapper {
+    flex: 1 0 100%;
+  }
+
+  > .rs-form-group > .rs-input-group > .rs-input-group-addon {
+    flex: 0 0 auto;
   }
 }

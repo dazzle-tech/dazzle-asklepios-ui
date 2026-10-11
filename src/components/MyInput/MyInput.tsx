@@ -18,7 +18,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -2925,7 +2925,7 @@ const inputControl = props.allowDecimal ? (
         minWidth: numInputWidth,
         maxWidth: numInputWidth,
         flexShrink: 0,
-        paddingRight: rightAddon ? '2px' : '28px'
+        paddingInlineEnd: rightAddon ? '2px' : '28px'
       }}
       disabled={props.disabled}
       name={fieldName}
@@ -3035,60 +3035,12 @@ const inputControl = props.allowDecimal ? (
     />
 
     {!rightAddon && (
-      <div
-        style={{
-          position: 'absolute',
-          top: 1,
-          right: 1,
-          bottom: 1,
-          width: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          borderLeft: '1px solid #e5e5ea',
-          borderRadius: '0 5px 5px 0',
-          overflow: 'hidden',
-          pointerEvents: 'none'
-        }}
+      <span
+        className="my-input-decimal-calculator-icon"
+        aria-hidden="true"
       >
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderBottom: '1px solid #e5e5ea'
-          }}
-        >
-          <span
-            style={{
-              fontSize: '7px',
-              lineHeight: 1,
-              opacity: 0.65
-            }}
-          >
-            ▲
-          </span>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <span
-            style={{
-              fontSize: '7px',
-              lineHeight: 1,
-              opacity: 0.65
-            }}
-          >
-            ▼
-          </span>
-        </div>
-      </div>
+        <FontAwesomeIcon icon={faCalculator} />
+      </span>
     )}
   </div>
 ) : (
