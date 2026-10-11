@@ -3269,7 +3269,12 @@ const PatientPaymentInfo =
       const receivePayment =
         async (
           pspIds: number[],
-          billingSummary: EncounterBillingSummary = summary
+          billingSummary: EncounterBillingSummary = summary,
+          cardPaymentResult?: {
+            authorizationCode?: string | null;
+            processorReference?: string | null;
+            cardLastFour?: string | null;
+          } | null
         ) => {
           if (
             formState.payZeroNow ||
@@ -3377,19 +3382,22 @@ const PatientPaymentInfo =
               null,
 
             authorizationCode:
-              formState.authorizationCode
+              cardPaymentResult?.authorizationCode ??
+              (formState.authorizationCode
                 .trim() ||
-              null,
+              null),
 
             processorReference:
-              formState.processorReference
+              cardPaymentResult?.processorReference ??
+              (formState.processorReference
                 .trim() ||
-              null,
+              null),
 
             cardLastFour:
-              formState.cardLastFour
+              cardPaymentResult?.cardLastFour ??
+              (formState.cardLastFour
                 .trim() ||
-              null,
+              null),
 
             bankReference:
               formState.bankReference
@@ -3460,10 +3468,31 @@ const PatientPaymentInfo =
               })
             );
 
-            return false;
+            return {
+              proceed: false as const
+            };
           }
 
-          return true;
+          return {
+            proceed: true as const,
+            cardResult:
+              creditCardCollect.skipped
+                ? null
+                : {
+                  authorizationCode:
+                    creditCardCollect.result
+                      ?.authorizationCode ??
+                    null,
+                  processorReference:
+                    creditCardCollect.result
+                      ?.processorReference ??
+                    null,
+                  cardLastFour:
+                    creditCardCollect.result
+                      ?.cardLastFour ??
+                    null
+                }
+          };
         };
 
       const handleConfirm =
@@ -3706,11 +3735,11 @@ const PatientPaymentInfo =
               return true;
             }
 
-            const creditCardCharged =
+            const creditCardCharge =
               await chargeCreditCardIfNeeded();
 
             if (
-              !creditCardCharged
+              !creditCardCharge.proceed
             ) {
               return false;
             }
@@ -3718,7 +3747,8 @@ const PatientPaymentInfo =
             const paymentResult =
               await receivePayment(
                 paymentTargetIds,
-                billingSummary
+                billingSummary,
+                creditCardCharge.cardResult
               );
 
             setSummaryRefreshKey(
@@ -5040,18 +5070,20 @@ const PatientPaymentInfo =
                         }
                       : await prepareServices();
 
-                  const creditCardCharged =
+                  const creditCardCharge =
                     await chargeCreditCardIfNeeded();
 
                   if (
-                    !creditCardCharged
+                    !creditCardCharge.proceed
                   ) {
                     return;
                   }
 
                   const result =
                     await receivePayment(
-                      prepared.ids
+                      prepared.ids,
+                      summary,
+                      creditCardCharge.cardResult
                     );
 
                   const refreshed =

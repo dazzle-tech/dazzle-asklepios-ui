@@ -57,6 +57,19 @@ const normalizePosStatus = (
 ): string =>
   String(status ?? '').trim().toUpperCase();
 
+const extractCardLastFour = (
+  panNumber?: string | null
+): string | null => {
+
+  const digits =
+    String(panNumber ?? '')
+      .replace(/\D/g, '');
+
+  return digits.length >= 4
+    ? digits.slice(-4)
+    : null;
+};
+
 export const useCreditCardMachinePayment = () => {
  const [isProcessingCard, setIsProcessingCard] =useState(false);
   const [purchase] =
@@ -265,6 +278,10 @@ export const useCreditCardMachinePayment = () => {
             finalTransaction.authCode,
           processorReference:
             finalTransaction.externalTransactionId,
+          cardLastFour:
+            extractCardLastFour(
+              finalTransaction.panNumber
+            ),
           message:
             'POS payment approved.'
         };

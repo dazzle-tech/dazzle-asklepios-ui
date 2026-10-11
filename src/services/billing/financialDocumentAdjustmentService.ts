@@ -126,6 +126,9 @@ export type CollectInvoiceBalanceRequest = {
   paymentMethodId: number;
   requestId: string;
   notes?: string | null;
+  authorizationCode?: string | null;
+  processorReference?: string | null;
+  cardLastFour?: string | null;
 };
 
 export type CollectInvoiceBalanceResult = {
