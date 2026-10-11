@@ -7581,6 +7581,7 @@ export interface NephrologyTreatmentPlan {
   frequency?: number | null;
   schedule?: string[] | null;
   dialysisDuration?: number | null;
+  durationType?: string | null;
 
   dryWeight?: number | null;
   targetWeight?: number | null;
@@ -7613,6 +7614,7 @@ export interface NephrologyTreatmentPlanCreateDTO {
   frequency?: number | null;
   schedule?: string[] | null;
   dialysisDuration?: number | null;
+  durationType?: string | null;
 
   dryWeight?: number | null;
   targetWeight?: number | null;
@@ -7637,6 +7639,7 @@ export interface NephrologyTreatmentPlanUpdateDTO {
   frequency?: number | null;
   schedule?: string[] | null;
   dialysisDuration?: number | null;
+  durationType?: string | null;
 
   dryWeight?: number | null;
   targetWeight?: number | null;
@@ -7669,6 +7672,7 @@ export interface DialysisSession {
 
   assignedNurseId?: number | null;
   nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
 
   preWeight?: number | null;
   dryWeight?: number | null;
@@ -7688,6 +7692,7 @@ export interface DialysisSession {
   generalCondition?: string | null;
 
   dialysisDuration?: number | null;
+  durationType?: string | null;
   bloodFlowRate?: number | null;
   dialysateFlowRate?: number | null;
   ultrafiltrationGoal?: number | null;
@@ -7761,6 +7766,7 @@ export interface DialysisSessionCreateDTO {
 
   assignedNurseId?: number | null;
   nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
 
   preWeight?: number | null;
   dryWeight?: number | null;
@@ -7780,6 +7786,7 @@ export interface DialysisSessionCreateDTO {
   generalCondition?: string | null;
 
   dialysisDuration?: number | null;
+  durationType?: string | null;
   bloodFlowRate?: number | null;
   dialysateFlowRate?: number | null;
   ultrafiltrationGoal?: number | null;
@@ -7845,6 +7852,7 @@ export interface DialysisSessionUpdateDTO {
 
   assignedNurseId?: number | null;
   nephrologistId?: number | null;
+  treatmentPlanId?: number | null;
 
   preWeight?: number | null;
   dryWeight?: number | null;
@@ -7864,6 +7872,7 @@ export interface DialysisSessionUpdateDTO {
   generalCondition?: string | null;
 
   dialysisDuration?: number | null;
+  durationType?: string | null;
   bloodFlowRate?: number | null;
   dialysateFlowRate?: number | null;
   ultrafiltrationGoal?: number | null;

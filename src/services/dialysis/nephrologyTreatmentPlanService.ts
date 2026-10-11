@@ -6,6 +6,19 @@ import {
   NephrologyTreatmentPlanUpdateDTO,
 } from '@/types/model-types-new';
 
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+};
+
+type FindTreatmentPlansParams = {
+  patientId: number;
+  encounterId?: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
 /* ===================== SERVICE ===================== */
 
 export const nephrologyTreatmentPlanService = createApi({
@@ -51,11 +64,86 @@ export const nephrologyTreatmentPlanService = createApi({
           type: 'NephrologyTreatmentPlan',
           id: body.id,
         },
+        'NephrologyTreatmentPlan',
       ],
     }),
 
     /* -------------------------------------------------
-     * GET BY PATIENT + ENCOUNTER
+     * LIST BY PATIENT
+     * ------------------------------------------------- */
+
+    getNephrologyTreatmentPlansByPatient: builder.query<
+      PagedResult<NephrologyTreatmentPlan>,
+      FindTreatmentPlansParams
+    >({
+      query: ({
+        patientId,
+        encounterId,
+        page = 0,
+        size = 20,
+        sort = 'createdDate,desc',
+      }) => ({
+        url: '/api/patient/nephrology-treatment-plans',
+        method: 'GET',
+        params: {
+          patientId,
+          ...(encounterId != null ? { encounterId } : {}),
+          page,
+          size,
+          sort,
+        },
+      }),
+
+      transformResponse: (
+        response: NephrologyTreatmentPlan[],
+        meta
+      ): PagedResult<NephrologyTreatmentPlan> => {
+        const totalCount =
+          Number(meta?.response?.headers.get('X-Total-Count')) ||
+          response?.length ||
+          0;
+
+        return {
+          data: response ?? [],
+          totalCount,
+        };
+      },
+
+      providesTags: (result, _error, { patientId }) => [
+        {
+          type: 'NephrologyTreatmentPlan',
+          id: `patient-${patientId}`,
+        },
+        ...(result?.data ?? []).map(plan => ({
+          type: 'NephrologyTreatmentPlan' as const,
+          id: plan.id,
+        })),
+      ],
+    }),
+
+    /* -------------------------------------------------
+     * GET BY ID
+     * ------------------------------------------------- */
+
+    getNephrologyTreatmentPlanById: builder.query<
+      NephrologyTreatmentPlan,
+      number
+    >({
+      query: id => ({
+        url: `/api/patient/nephrology-treatment-plans/${id}`,
+        method: 'GET',
+      }),
+
+      providesTags: (_result, _error, id) => [
+        {
+          type: 'NephrologyTreatmentPlan',
+          id,
+        },
+      ],
+    }),
+
+    /* -------------------------------------------------
+     * GET BY PATIENT + ENCOUNTER (legacy single record)
      * ------------------------------------------------- */
 
     getNephrologyTreatmentPlan: builder.query<
@@ -91,6 +179,9 @@ export const nephrologyTreatmentPlanService = createApi({
 export const {
   useCreateNephrologyTreatmentPlanMutation,
   useUpdateNephrologyTreatmentPlanMutation,
+  useGetNephrologyTreatmentPlansByPatientQuery,
+  useGetNephrologyTreatmentPlanByIdQuery,
+  useLazyGetNephrologyTreatmentPlanByIdQuery,
   useGetNephrologyTreatmentPlanQuery,
   useLazyGetNephrologyTreatmentPlanQuery,
 } = nephrologyTreatmentPlanService;
