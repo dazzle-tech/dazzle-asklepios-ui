@@ -15,7 +15,10 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetNotesByResultIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import {
+  useLazyGetEncounterByIdQuery,
+  useLazyGetEncountersByIdsQuery
+} from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
@@ -137,6 +140,9 @@ const ReviewResults = forwardRef<any, any>(
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
+    const [fetchEncountersByIds] = useLazyGetEncountersByIdsQuery();
+    const [encounterNumberFilter, setEncounterNumberFilter] = useState('');
+    const [encountersMap, setEncountersMap] = useState<Record<string, any>>({});
 
     const [toggleReviewDiagnosticOrderTestResult] =
       useToggleReviewDiagnosticOrderTestResultMutation();
@@ -211,6 +217,10 @@ const ReviewResults = forwardRef<any, any>(
         params.orderNumber = orderIdNumber;
       }
 
+      if (encounterNumberFilter.trim()) {
+        params.encounterNumber = encounterNumberFilter.trim();
+      }
+
       if (
         selectedPatient?.id ||
         departmentFilter?.fromDepartmentIdIn ||
@@ -235,7 +245,8 @@ const ReviewResults = forwardRef<any, any>(
       orderDate,
       orderIdFilter,
       selectedPatient?.id,
-      departmentFilter?.fromDepartmentIdIn
+      departmentFilter?.fromDepartmentIdIn,
+      encounterNumberFilter
     ]);
     const {
       data: resultsResponse,
@@ -265,6 +276,34 @@ const ReviewResults = forwardRef<any, any>(
         .map(String)
         .filter((id, i, arr) => arr.indexOf(id) === i);
     }, [ordersMap]);
+
+    const encounterIds = useMemo(() => {
+      return Object.values(ordersMap)
+        .map((o: any) => o?.encounterId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i);
+    }, [ordersMap]);
+
+    useEffect(() => {
+      const missingIds = encounterIds.filter(id => !encountersMap[id]);
+      if (!missingIds.length) return;
+
+      fetchEncountersByIds({ ids: missingIds.map(Number) })
+        .unwrap()
+        .then((res) => {
+          setEncountersMap((prev) => {
+            const next = { ...prev };
+            (res ?? []).forEach((encounter: any) => {
+              if (encounter?.id != null) {
+                next[String(encounter.id)] = encounter;
+              }
+            });
+            return next;
+          });
+        })
+        .catch(() => { });
+    }, [encounterIds]);
 
     useImperativeHandle(ref, () => ({ refetch }));
 
@@ -384,6 +423,8 @@ const ReviewResults = forwardRef<any, any>(
         const patient = patientsMap[String(order?.patientId)];
         const profile = profilesMap.get(r.profileTestId);
 
+        const encounter = encountersMap[String(order?.encounterId)];
+
         return {
           ...r,
           _patientName: patient
@@ -392,10 +433,12 @@ const ReviewResults = forwardRef<any, any>(
           _profile: profile,
           _testName: profile?.name ?? '-',
           _approvedDate: r.approvedDate,
+          _orderNumber: order?.orderNumber ?? null,
+          _encounterNumber: encounter?.encounterNumber ?? null,
           encounterId: order?.encounterId
         };
       });
-    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
+    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap, encountersMap]);
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row.profile;
@@ -466,6 +509,7 @@ const ReviewResults = forwardRef<any, any>(
         fromDepartmentIdIn: null
       });
       setOrderIdFilter('');
+      setEncounterNumberFilter('');
       setPage(0);
 
       setFiltersKey(prev => prev + 1);
@@ -532,6 +576,16 @@ const ReviewResults = forwardRef<any, any>(
           key: 'patient',
           title: <Translate>PATIENT NAME</Translate>,
           render: (r: any) => r._patientName
+        },
+        {
+          key: 'orderNumber',
+          title: <Translate>ORDER NUMBER</Translate>,
+          render: (row: any) => row._orderNumber ?? '-'
+        },
+        {
+          key: 'encounterNumber',
+          title: <Translate>ENCOUNTER NUMBER</Translate>,
+          render: (row: any) => row._encounterNumber ?? '-'
         },
         {
           key: 'approvedAt',
@@ -776,6 +830,19 @@ const ReviewResults = forwardRef<any, any>(
                 setPage(0);
               }}
             />
+
+            <MyInput
+              fieldType="text"
+              fieldLabel="Encounter Number"
+              fieldName="encounterNumber"
+              showLabel={false}
+              placeholder="Encounter Number"
+              record={{ encounterNumber: encounterNumberFilter }}
+              setRecord={(record: any) => {
+                setEncounterNumberFilter(record.encounterNumber ?? '');
+                setPage(0);
+              }}
+            />
           </div>
           <div className='check-box-review-results-handle'>
             <MyInput
@@ -814,7 +881,7 @@ const ReviewResults = forwardRef<any, any>(
     useEffect(() => {
       const { fromDate, toDate } = orderDate;
 
-      fetchOrders({
+      const baseOrderParams: any = {
         submittedDateFrom: fromDate
           ? startOfDay(fromDate).toISOString()
           : undefined,
@@ -839,7 +906,9 @@ const ReviewResults = forwardRef<any, any>(
 
         page: 0,
         size: 10000
-      })
+      };
+
+      fetchOrders(baseOrderParams)
         .unwrap()
         .then((res) => {
           const ids = (res?.data ?? []).map((o: any) => o.id);
@@ -858,7 +927,8 @@ const ReviewResults = forwardRef<any, any>(
     }, [
       orderDate,
       selectedPatient?.id,
-      departmentFilter?.fromDepartmentIdIn
+      departmentFilter?.fromDepartmentIdIn,
+      encounterNumberFilter
     ]);
 
     // Direction handling for RTL/LTR

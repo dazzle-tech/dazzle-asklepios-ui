@@ -54,6 +54,9 @@ export type DiagnosticOrderTestResultFilterParams = {
   reviewDateTo?: string;
 
   resultType?: "NUMBER" | "TEXT";
+
+  orderNumber?: string;
+  encounterNumber?: string;
 } & PagedParams;
 
 export type AllDiagnosticOrderTestResultsParams = {

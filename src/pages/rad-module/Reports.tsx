@@ -12,7 +12,10 @@ import {
 import {
     useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import {
+    useLazyGetEncounterByIdQuery,
+    useLazyGetEncountersByIdsQuery
+} from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
     useCreateReportCommentMutation,
@@ -109,12 +112,14 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
     const [testsMap, setTestsMap] = useState<Record<string, any>>({});
+    const [encountersMap, setEncountersMap] = useState<Record<string, any>>({});
     const [showReviewed, setShowReviewed] = useState(false);
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
+    const [fetchEncountersByIds] = useLazyGetEncountersByIdsQuery();
     const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
     const [filtersKey, setFiltersKey] = useState(0);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
@@ -126,6 +131,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     });
 
     const [orderIdFilter, setOrderIdFilter] = useState('');
+    const [encounterNumberFilter, setEncounterNumberFilter] = useState('');
     const [getReportIds] =
         useLazyGetDiagnosticOrderTestReportsIdsQuery();
     const [
@@ -164,6 +170,10 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         queryParams.orderNumber = orderIdNumber;
     }
 
+    if (encounterNumberFilter.trim()) {
+        queryParams.encounterNumber = encounterNumberFilter.trim();
+    }
+
     const { data, isFetching, refetch } =
         useFilterRadiologyReportsQuery({
             page,
@@ -194,6 +204,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 patientName: patient?.fullName
             });
 
+            const encounter = encountersMap[String(order?.encounterId)];
+
             return {
                 ...report,
                 _patientName: patient
@@ -206,14 +218,17 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                         .join(' ')
                     : '—',
                 _order: order,
-                _orderTest: orderTest
+                _orderTest: orderTest,
+                _orderNumber: order?.orderNumber ?? null,
+                _encounterNumber: encounter?.encounterNumber ?? null
             };
         });
     }, [
         reports,
         orderTestsMap,
         ordersMap,
-        patientsMap
+        patientsMap,
+        encountersMap
     ]);
 
 
@@ -263,6 +278,36 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 .filter((id, i, arr) => arr.indexOf(id) === i),
         [ordersMap]
     );
+
+    const encounterIds = useMemo(
+        () =>
+            Object.values(ordersMap)
+                .map((o: any) => o?.encounterId)
+                .filter(Boolean)
+                .map(String)
+                .filter((id, i, arr) => arr.indexOf(id) === i),
+        [ordersMap]
+    );
+
+    useEffect(() => {
+        const missingIds = encounterIds.filter(id => !encountersMap[id]);
+        if (!missingIds.length) return;
+
+        fetchEncountersByIds({ ids: missingIds.map(Number) })
+            .unwrap()
+            .then((res) => {
+                setEncountersMap((prev) => {
+                    const next = { ...prev };
+                    (res ?? []).forEach((encounter: any) => {
+                        if (encounter?.id != null) {
+                            next[String(encounter.id)] = encounter;
+                        }
+                    });
+                    return next;
+                });
+            })
+            .catch(() => { });
+    }, [encounterIds]);
 
     const { data: departmentsList = [] } =
         useGetAllDepartmentsWithoutPaginationQuery();
@@ -429,6 +474,16 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 render: (row: any) => row._patientName
             },
             {
+                key: 'orderNumber',
+                title: <Translate>ORDER NUMBER</Translate>,
+                render: (row: any) => row._orderNumber ?? '-'
+            },
+            {
+                key: 'encounterNumber',
+                title: <Translate>ENCOUNTER NUMBER</Translate>,
+                render: (row: any) => row._encounterNumber ?? '-'
+            },
+            {
                 key: 'test',
                 title: <Translate>Test</Translate>,
                 render: row => {
@@ -551,6 +606,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         });
 
         setOrderIdFilter('');
+        setEncounterNumberFilter('');
         setFiltersKey(prev => prev + 1);
     };
     const tablebuttons = (
@@ -641,6 +697,18 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                             setPage(0);
                         }}
                     />
+
+                    <MyInput
+                        fieldType="text"
+                        fieldName="encounterNumber"
+                        placeholder="Encounter Number"
+                        showLabel={false}
+                        record={{ encounterNumber: encounterNumberFilter }}
+                        setRecord={(record: any) => {
+                            setEncounterNumberFilter(record.encounterNumber ?? '');
+                            setPage(0);
+                        }}
+                    />
                 </div>
 
                 <div style={{ marginTop: '1.4vw' }}>
@@ -715,6 +783,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
 
     useEffect(() => {
         const { fromDate, toDate } = orderDate;
+
         if (
             !fromDate &&
             !toDate &&
@@ -772,7 +841,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         showReviewed,
         selectedPatient?.id,
         departmentFilter?.fromDepartmentIdIn,
-        orderIdFilter
+        orderIdFilter,
+        encounterNumberFilter
     ]);
 
 
