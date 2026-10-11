@@ -544,18 +544,52 @@ const MyInput = ({
     };
   }, [portaledSelectOpen]);
 
-  const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
+  const [placement, setPlacement] = useState<'topStart' | 'bottomStart' | 'topEnd' | 'bottomEnd'>('bottomStart');
   const pickerRef = useRef<any>(null);
 
-  const calculatePlacement = (popupHeight = 250) => {
+  const calculatePlacement = (popupHeight = 250, popupWidth = 420) => {
     if (!pickerRef.current) return 'bottomStart';
     const rect = pickerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
-    if (spaceBelow >= popupHeight) return 'bottomStart';
-    if (spaceAbove >= popupHeight) return 'topStart';
-    return spaceAbove > spaceBelow ? 'topStart' : 'bottomStart';
+
+    // Horizontal: the menu grows to the right from the field's left edge (Start).
+    // If there is no room on the right but there is more room on the left, align
+    // the menu with the field's right edge instead (End) so it opens to the left.
+    const neededWidth = Math.min(popupWidth, window.innerWidth - 32);
+    const spaceRight = window.innerWidth - rect.left - 8;
+    const spaceLeft = rect.right - 8;
+    const horizontal =
+      spaceRight >= neededWidth || spaceRight >= spaceLeft ? 'Start' : 'End';
+
+    if (spaceBelow >= popupHeight) return `bottom${horizontal}` as const;
+    if (spaceAbove >= popupHeight) return `top${horizontal}` as const;
+    return (spaceAbove > spaceBelow ? `top${horizontal}` : `bottom${horizontal}`) as
+      | 'topStart'
+      | 'bottomStart'
+      | 'topEnd'
+      | 'bottomEnd';
   };
+
+  // Keeps long option labels from stretching the dropdown past the screen edge.
+  const getPickerMenuStyle = (): React.CSSProperties => ({
+    minWidth: props?.width ?? '12vw',
+    width: 'auto',
+    maxWidth: 'min(420px, calc(100vw - 32px))'
+  });
+
+  // Lets long option labels wrap inside the (now capped) menu instead of being cut off.
+  // Skipped for virtualized lists because their rows have a fixed height.
+  const wrapMenuItem =
+    (render: (label: any, item: any) => React.ReactNode, virtualized = false) =>
+    (label: any, item: any) => {
+      if (virtualized) return render(label, item);
+      return (
+        <span style={{ display: 'block', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+          {render(label, item)}
+        </span>
+      );
+    };
 
   const openCalendar = (kind: 'date' | 'datetime') => {
     if (props.disabled) return;
@@ -1692,7 +1726,7 @@ return (keyword: string, label: any, item: any) => {
               }}
               renderMenuItem={
                 props.renderMenuItem ??
-                (isArrayLabel
+                wrapMenuItem(isArrayLabel
                   ? (
                     label: any,
                     item: any
@@ -1719,7 +1753,7 @@ return (keyword: string, label: any, item: any) => {
                       <Translate>
                         {String(item?.[primaryLabelKey] ?? '')}
                       </Translate>
-                    ))
+                    ), shouldVirtualizePicker(dataList.length))
               }
               renderValue={
                 isArrayLabel
@@ -1797,20 +1831,20 @@ return (keyword: string, label: any, item: any) => {
               loading={props?.loading ?? false}
               onOpen={() => {
                 selectOpenGuardRef.current = Date.now();
+                setPlacement(calculatePlacement());
                 focusPickerSearch();
               }}
               onClose={() => {
                 setLocalSearch('');
               }}
-              placement={props.placement ?? 'bottomStart'}
+              placement={props.placement ?? placement}
               preventOverflow={false}
               container={() => document.body}
               menuMaxHeight={getDynamicMenuMaxHeight(
                 dataList
               )}
               menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto',
+                ...getPickerMenuStyle(),
                 zIndex: 100050
               }}
               menuClassName={clsx(
@@ -1973,7 +2007,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               }
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => {
+                wrapMenuItem((label: any, item: any) => {
                   if (item?.isLoadMore) {
                     return <span style={{ fontWeight: 600 }}>Load more...</span>;
                   }
@@ -1999,7 +2033,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                   }
 
                   return <Translate>{String(item?.[primaryLabelKey] ?? '')}</Translate>;
-                })
+                }, shouldVirtualizePicker(pickerData.length))
               }
               renderValue={
                 isArrayLabel
@@ -2070,10 +2104,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               preventOverflow={false}
               container={resolveContainer()}
               menuMaxHeight={getDynamicMenuMaxHeight(pickerData)}
-              menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto'
-              }}
+              menuStyle={getPickerMenuStyle()}
               virtualized={shouldVirtualizePicker(pickerData.length)}
               disabledItemValues={getDisabledValues(dataList, valueKey)}
             />
@@ -2189,7 +2220,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               }
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => {
+                wrapMenuItem((label: any, item: any) => {
                   if (isArrayLabel) {
                     return (
                       <Translate>
@@ -2217,7 +2248,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
                       {String(item?.[primaryLabelKey] ?? '')}
                     </Translate>
                   );
-                })
+                }, shouldVirtualizePicker(dataList.length))
               }
               onChange={value => {
                 handleValueChange(value);
@@ -2251,10 +2282,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               placement={props.placement ?? placement}
               preventOverflow={false}
               container={resolveContainer()}
-              menuStyle={{
-                minWidth: props?.width ?? '12vw',
-                width: 'auto'
-              }}
+              menuStyle={getPickerMenuStyle()}
               menuClassName={clsx(
                 'my-input-picker-popup',
                 props?.menuClassName
