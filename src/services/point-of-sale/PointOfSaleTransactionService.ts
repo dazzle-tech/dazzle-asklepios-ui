@@ -71,6 +71,8 @@ export interface PointOfSaleTransactionDTO {
 
   schemeLabel?: string;
 
+  panNumber?: string;
+
   transactionDate?: string;
 
   webhookReceived?: boolean;
