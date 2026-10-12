@@ -487,8 +487,10 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 <MyInput
                   width="100%"
                   fieldType="text"
-                  fieldLabel="Fasting Blood Glucose"
+                  fieldLabel="Random Blood Glucose"
+                  rightAddon="mg/dL"
                   fieldName="fastingBloodGlucose"
+                  rightAddonwidth={60}
                   record={vitalSigns}
                   setRecord={setVitalSigns}
                   disabled={disabled}

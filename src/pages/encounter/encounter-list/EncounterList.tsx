@@ -1264,7 +1264,7 @@ const EncounterList = () => {
             column
             width={260}
             fieldType="check"
-            fieldLabel="Show Only My Paients"
+            fieldLabel="Show Only My Patients"
             fieldName="showOnlyMyPatients"
             record={showOnlyMyPatients}
             setRecord={setShowOnlyMyPatients}
