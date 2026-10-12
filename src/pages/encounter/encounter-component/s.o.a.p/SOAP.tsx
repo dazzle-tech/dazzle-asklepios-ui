@@ -38,8 +38,8 @@ import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
 import FieldAuditHistoryModal from './FieldAuditHistory';
 import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
-import AutoPopulationResults from './AutoPopulationResults';
 import Allergies from '../../encounter-pre-observations-new/AllergiesNurse';
+import AutoPopulationSection from './AutoPopulationSection';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -63,24 +63,6 @@ const SOAP = props => {
     props.viewMode ??
     location.state?.viewMode ??
     outletContext?.viewMode;
-
-  const [caseSummary, setCaseSummary] = useState({
-    caseSummary: null
-  });
-
-  const [
-    showAutoPopulationResults,
-    setShowAutoPopulationResults
-  ] = useState(false);
-
-  const [
-    autoPopulate,
-    {
-      data: autoPopulationResult,
-      isLoading: isAutoPopulating,
-      isError: isAutoPopulationError
-    }
-  ] = useAutoPopulateMutation();
 
   const edit =
     viewMode === 'readOnly' ||
@@ -374,56 +356,6 @@ const SOAP = props => {
       }
     };
 
-  const handleCaseSummary = async () => {
-    try {
-      if (!caseSummary.caseSummary?.trim()) {
-        dispatch(
-          notify({
-            msg: 'Please enter case summary text',
-            sev: 'warning'
-          })
-        );
-
-        return;
-      }
-
-      if (!patient?.id) {
-        dispatch(
-          notify({
-            msg: 'Patient id is missing',
-            sev: 'error'
-          })
-        );
-
-        return;
-      }
-
-      setShowAutoPopulationResults(true);
-
-      await autoPopulate({
-        userText: caseSummary.caseSummary,
-        patientId: patient.id
-      }).unwrap();
-
-      dispatch(
-        notify({
-          msg:
-            'Auto population completed successfully',
-          sev: 'success'
-        })
-      );
-    } catch (error) {
-      console.log('error: ', error);
-
-      dispatch(
-        notify({
-          msg: 'Auto population failed',
-          sev: 'error'
-        })
-      );
-    }
-  };
-
   useEffect(() => {
     if (isLoading || isFetching) {
       dispatch(showSystemLoader());
@@ -452,31 +384,38 @@ const SOAP = props => {
         // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
           <div className="top-section">
-            <div style={{ marginBottom: '16px' }}>
-              <SectionContainer
-                collapsible
-                title={<Translate>Case Summary</Translate>}
-                content={
-                  <Form fluid>
-                    <MyInput
-                      width="100%"
-                      height="95px"
-                      showLabel={false}
-                      fieldType="textarea"
-                      fieldName="caseSummary"
-                      record={caseSummary}
-                      setRecord={setCaseSummary}
-                      disabled={edit}
-                    />
-                  </Form>
-                }
-                action={
-                  <MyButton size="small" onClick={handleCaseSummary} loading={isAutoPopulating} disabled={edit}>
-                    Auto Populate
-                  </MyButton>
-                }
-              />
-            </div>
+             <AutoPopulationSection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              patient={patient}
+              edit={edit}
+             />
             <div style={{ marginBottom: '16px' }}>
               <SectionContainer
                 collapsible
@@ -740,14 +679,7 @@ const SOAP = props => {
           }
         />
       </div>
-      <AutoPopulationResults
-        open={showAutoPopulationResults}
-        setOpen={setShowAutoPopulationResults}
-        result={autoPopulationResult}
-        isLoading={isAutoPopulating}
-        isError={isAutoPopulationError}
-      />
-
+      
       <FieldAuditHistoryModal
         open={auditModalOpen}
         setOpen={setAuditModalOpen}

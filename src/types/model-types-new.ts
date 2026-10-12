@@ -8359,3 +8359,8 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReportUpdateDTO {
   radiologistComments?: string | null;
   severity?: string | null;
 }
+
+export interface ClinicalSummaryVoiceResponse {
+  summary: string;
+  transcript: string;
+}
