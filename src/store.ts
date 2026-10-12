@@ -271,6 +271,17 @@ import { nephrologyTreatmentPlanService } from './services/dialysis/nephrologyTr
 import { dialysisSessionService } from './services/dialysis/dialysisSessionService';
 import { dialysisFlowReadingService } from './services/dialysis/dialysisFlowReadingService';
 import { dialysisMedicationService } from './services/dialysis/dialysisMedicationService';
+import { claimEncounterCopyService } from './services/billing/claimEncounterCopyService';
+import { claimEncounterDiagnosisService } from './services/billing/claimEncounterDiagnosisService';
+import { claimEncounterProgressNoteService } from './services/billing/claimEncounterProgressNoteService';
+import { claimEncounterCopySocialHistoryService } from './services/billing/claimEncounterCopySocialHistoryService';
+import { claimEncounterCopySurgicalHistoryService } from './services/billing/claimEncounterCopySurgicalHistoryService';
+import { claimEncounterCopyPatientProblemService } from './services/billing/claimEncounterCopyPatientProblemService';
+import { claimEncounterCopyFamilyHistoryService } from './services/billing/claimEncounterCopyFamilyHistoryService';
+import { claimEncounterCopyHospitalizationService } from './services/billing/claimEncounterCopyHospitalizationService';
+import { claimEncounterCopyCurrentMedicationService } from './services/billing/claimEncounterCopyCurrentMedicationService';
+import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
+import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -465,6 +476,17 @@ export const store = configureStore({
 
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
+    [claimEncounterCopyService.reducerPath]: claimEncounterCopyService.reducer,
+    [claimEncounterDiagnosisService.reducerPath]: claimEncounterDiagnosisService.reducer,
+    [claimEncounterProgressNoteService.reducerPath]: claimEncounterProgressNoteService.reducer,
+    [claimEncounterCopySocialHistoryService.reducerPath]: claimEncounterCopySocialHistoryService.reducer,
+    [claimEncounterCopySurgicalHistoryService.reducerPath]: claimEncounterCopySurgicalHistoryService.reducer,
+    [claimEncounterCopyPatientProblemService.reducerPath]: claimEncounterCopyPatientProblemService.reducer,
+    [claimEncounterCopyFamilyHistoryService.reducerPath]: claimEncounterCopyFamilyHistoryService.reducer,
+    [claimEncounterCopyHospitalizationService.reducerPath]: claimEncounterCopyHospitalizationService.reducer,
+    [claimEncounterCopyCurrentMedicationService.reducerPath]: claimEncounterCopyCurrentMedicationService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestResultService.reducerPath]: claimEncounterCopyDiagnosticOrderTestResultService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestReportService.reducerPath]: claimEncounterCopyDiagnosticOrderTestReportService.reducer,
 
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -908,7 +930,18 @@ export const store = configureStore({
         nephrologyTreatmentPlanService.middleware,
         dialysisSessionService.middleware,
         dialysisFlowReadingService.middleware,
-        dialysisMedicationService.middleware
+        dialysisMedicationService.middleware,
+        claimEncounterCopyService.middleware,
+        claimEncounterDiagnosisService.middleware,
+        claimEncounterProgressNoteService.middleware,
+        claimEncounterCopySocialHistoryService.middleware,
+        claimEncounterCopySurgicalHistoryService.middleware,
+        claimEncounterCopyPatientProblemService.middleware,
+        claimEncounterCopyFamilyHistoryService.middleware,
+        claimEncounterCopyHospitalizationService.middleware,
+        claimEncounterCopyCurrentMedicationService.middleware,
+        claimEncounterCopyDiagnosticOrderTestResultService.middleware,
+        claimEncounterCopyDiagnosticOrderTestReportService.middleware
       ) as any
 });
 
