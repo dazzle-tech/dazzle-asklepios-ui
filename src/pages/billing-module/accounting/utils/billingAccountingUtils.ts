@@ -1562,6 +1562,17 @@ export const formatEncounterTreatmentLabel = (
   encounter: PatientEncounter | null | undefined
 ): string => formatBillingEnum(getEncounterTreatmentStatus(encounter));
 
+const CANCELLED_BILLING_LINE_STATUSES = new Set([
+  'CANCELLED',
+  'CANCELED',
+  'REVERSED'
+]);
+
+export const isCancelledBillingLineStatus = (
+  status: string | null | undefined
+): boolean =>
+  CANCELLED_BILLING_LINE_STATUSES.has(String(status ?? '').trim().toUpperCase());
+
 export const formatBillingChargeStatus = (
   status: string | null | undefined
 ): string => formatBillingEnum(status);

@@ -3546,6 +3546,7 @@ export const newBillingRule: modelTypes.BillingRule = {
   name: undefined,
   billingItemType: 'SERVICE',
   billingTrigger: modelTypes.BillingTrigger.ENCOUNTER_CREATED,
+  paymentType: 'BOTH',
   isDefault: false
 };
 
