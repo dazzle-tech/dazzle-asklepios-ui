@@ -257,6 +257,7 @@ import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfS
 import { billingTransactionService } from './services/billing/billingTransactionService';
 import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -674,6 +675,7 @@ export const store = configureStore({
       serializableCheck: false
     })
       .prepend(rtkDispatchLoopGuard)
+      .prepend(patientBillingSidebarRefreshMiddleware.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
