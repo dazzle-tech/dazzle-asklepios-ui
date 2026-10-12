@@ -1,5 +1,6 @@
 import { BaseQuery } from "@/newApi";
 import { createApi } from "@reduxjs/toolkit/query/react";
+import type { BillingPaymentResult } from "@/types/model-types-new";
 
 export interface CreatePointOfSaleTransactionDTO {
   patientId: number;
@@ -130,6 +131,21 @@ export const PointOfSaleTransactionService = createApi({
       ],
     }),
 
+    completePayment: builder.mutation<
+      BillingPaymentResult,
+      number
+    >({
+      query: id => ({
+        url:
+          `/api/patient/point-of-sale-transactions/transactions/${id}/complete-payment`,
+        method: "POST",
+      }),
+
+      invalidatesTags: [
+        "PointOfSaleTransaction",
+      ],
+    }),
+
   }),
 });
 
@@ -138,5 +154,7 @@ export const {
   usePurchaseMutation,
 
   useRefreshTransactionStatusMutation,
+
+  useCompletePaymentMutation,
 
 } = PointOfSaleTransactionService;

@@ -40,6 +40,21 @@ export type InsurancePriceListCoverageCheckRequest = {
   currency?: string | null;
 };
 
+export type BillingPaymentSummaryDTO = {
+  paymentId: number;
+  paymentNumber: string;
+  encounterId?: number | null;
+  paymentCategory?: string | null;
+  payerType?: string | null;
+  amount: number;
+  currency?: string | null;
+  status?: string | null;
+  paymentDate?: string | null;
+  receiptNumber?: string | null;
+  externalReference?: string | null;
+  notes?: string | null;
+};
+
 export type InsurancePriceListCoverageCheckResult = {
   insuranceVisit: boolean;
   coveredByInsurance: boolean;
@@ -225,6 +240,38 @@ export const billingTransactionService =
 
               body
             })
+          }),
+
+        getPaymentsByEncounter:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              encounterId => ({
+                url:
+                  `/api/patient/billing/payments/by-encounter/${encounterId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        getPaymentsByPatient:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              patientId => ({
+                url:
+                  `/api/patient/billing/payments/by-patient/${patientId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
           }),
 
         createAdvancePayment:
@@ -472,6 +519,12 @@ export const {
   usePreviewDefaultServicesPricingMutation,
 
   useCreateAdvancePaymentMutation,
+
+  useGetPaymentsByEncounterQuery,
+  useLazyGetPaymentsByEncounterQuery,
+
+  useGetPaymentsByPatientQuery,
+  useLazyGetPaymentsByPatientQuery,
 
   useGetBillingPaymentByIdQuery,
   useLazyGetBillingPaymentByIdQuery,
