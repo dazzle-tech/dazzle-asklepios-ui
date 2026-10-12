@@ -158,6 +158,10 @@ const ClaimEncounterCopyDiagnosticOrders = ({
             ? '1 filled'
             : '-'
     },
+     {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+    },
     {
       key: 'copyStatus',
       title: <Translate>Copy Status</Translate>,

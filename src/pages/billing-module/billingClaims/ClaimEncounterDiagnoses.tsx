@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,11 +18,13 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import {
     useGetClaimEncounterDiagnosesQuery,
-    useUpdateClaimEncounterDiagnosesMutation,
-    type ClaimEncounterDiagnosis
+    useCreateClaimEncounterDiagnosisMutation,
+    useUpdateClaimEncounterDiagnosisMutation,
+    useDeleteClaimEncounterDiagnosisMutation,
 } from '@/services/billing/claimEncounterDiagnosisService';
 
 import { formatEnumString } from '@/utils';
+import { ClaimEncounterDiagnosis } from '@/types/model-types-new';
 
 type ClaimEncounterDiagnosesProps = {
     encounter: any;
@@ -30,7 +33,6 @@ type ClaimEncounterDiagnosesProps = {
 };
 
 type DiagnosisForm = {
-    id?: number;
     diagnosisId: number | null;
     type: string | null;
     suspected: boolean;
@@ -61,9 +63,21 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
     );
 
     const [
-        updateClaimEncounterDiagnoses,
-        { isLoading: isSaving }
-    ] = useUpdateClaimEncounterDiagnosesMutation();
+        createClaimEncounterDiagnosis,
+        { isLoading: isCreating }
+    ] = useCreateClaimEncounterDiagnosisMutation();
+
+    const [
+        updateClaimEncounterDiagnosis,
+        { isLoading: isUpdating }
+    ] = useUpdateClaimEncounterDiagnosisMutation();
+
+    const [
+        deleteClaimEncounterDiagnosis,
+        { isLoading: isDeleting }
+    ] = useDeleteClaimEncounterDiagnosisMutation();
+
+    const isSaving = isCreating || isUpdating || isDeleting;
 
     const [diagnoses, setDiagnoses] = useState<ClaimEncounterDiagnosis[]>([]);
 
@@ -131,7 +145,7 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
                     return next;
                 });
             } catch {
-                //
+                // Ignore ICD lookup errors.
             }
         };
 
@@ -153,7 +167,24 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
         setEditingDiagnosisId(null);
     };
 
-    const handleAddOrUpdate = () => {
+    const showError = (error: any, defaultMessage: string) => {
+        const data = error?.data ?? {};
+
+        dispatch(
+            notify({
+                msg:
+                    data?.detail ||
+                    data?.message ||
+                    data?.title ||
+                    defaultMessage,
+                sev: 'error'
+            })
+        );
+    };
+
+    const handleAddOrUpdate = async () => {
+        if (!encounterId) return;
+
         if (!diagnosis.diagnosisId) {
             dispatch(
                 notify({
@@ -174,43 +205,52 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
             return;
         }
 
-        if (editingDiagnosisId) {
-            setDiagnoses(previous =>
-                previous.map(item =>
-                    item.id === editingDiagnosisId
-                        ? {
-                            ...item,
-                            diagnosisId: diagnosis.diagnosisId,
-                            type: diagnosis.type,
-                            suspected: diagnosis.suspected,
-                            major: diagnosis.major
-                        }
-                        : item
-                )
-            );
-        } else {
-            setDiagnoses(previous => [
-                ...previous,
-                {
-                    id: undefined as any,
-                    claimEncounterCopyId: 0,
-                    encounterId: encounterId as number,
-                    diagnosisId: diagnosis.diagnosisId,
-                    type: diagnosis.type,
-                    suspected: diagnosis.suspected,
-                    major: diagnosis.major
-                }
-            ]);
-        }
+        const payload = {
+            diagnosisId: diagnosis.diagnosisId,
+            type: diagnosis.type,
+            suspected: diagnosis.suspected,
+            major: diagnosis.major
+        };
 
-        clearForm();
+        try {
+            if (editingDiagnosisId !== null) {
+                await updateClaimEncounterDiagnosis({
+                    id: editingDiagnosisId,
+                    ...payload
+                }).unwrap();
+
+                dispatch(
+                    notify({
+                        msg: 'Diagnosis updated successfully',
+                        sev: 'success'
+                    })
+                );
+            } else {
+                await createClaimEncounterDiagnosis({
+                    encounterId,
+                    ...payload
+                }).unwrap();
+
+                dispatch(
+                    notify({
+                        msg: 'Diagnosis added successfully',
+                        sev: 'success'
+                    })
+                );
+            }
+
+            clearForm();
+            await refetch();
+            onDiagnosisSaved?.();
+        } catch (error: any) {
+            showError(error, 'Failed to save diagnosis');
+        }
     };
 
     const handleEdit = (row: ClaimEncounterDiagnosis) => {
         setEditingDiagnosisId(row.id);
 
         setDiagnosis({
-            id: row.id,
             diagnosisId: row.diagnosisId,
             type: row.type,
             suspected: row.suspected,
@@ -223,61 +263,32 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
         setDeleteModalOpen(true);
     };
 
-    const handleConfirmDelete = () => {
-        if (!selectedDiagnosisToDelete) return;
-
-        setDiagnoses(previous =>
-            previous.filter(item => item.id !== selectedDiagnosisToDelete.id)
-        );
-
-        if (editingDiagnosisId === selectedDiagnosisToDelete.id) {
-            clearForm();
-        }
-
-        setSelectedDiagnosisToDelete(null);
-        setDeleteModalOpen(false);
-    };
-
-    const handleSave = async () => {
-        if (!encounterId) return;
+    const handleConfirmDelete = async () => {
+        if (selectedDiagnosisToDelete?.id == null) return;
 
         try {
-            await updateClaimEncounterDiagnoses({
-                encounterId,
-                diagnoses: diagnoses.map(item => ({
-                    ...(item.id ? { id: item.id } : {}),
-                    diagnosisId: item.diagnosisId as number,
-                    type: item.type as string,
-                    suspected: item.suspected,
-                    major: item.major
-                }))
-            }).unwrap();
+            await deleteClaimEncounterDiagnosis(
+                selectedDiagnosisToDelete.id
+            ).unwrap();
+
+            if (editingDiagnosisId === selectedDiagnosisToDelete.id) {
+                clearForm();
+            }
+
+            setDeleteModalOpen(false);
+            setSelectedDiagnosisToDelete(null);
 
             dispatch(
                 notify({
-                    msg: 'Diagnoses saved successfully',
+                    msg: 'Diagnosis deleted successfully',
                     sev: 'success'
                 })
             );
 
-            clearForm();
-
             await refetch();
-
             onDiagnosisSaved?.();
         } catch (error: any) {
-            const data = error?.data ?? {};
-
-            dispatch(
-                notify({
-                    msg:
-                        data?.detail ||
-                        data?.message ||
-                        data?.title ||
-                        'Failed to save diagnoses',
-                    sev: 'error'
-                })
-            );
+            showError(error, 'Failed to delete diagnosis');
         }
     };
 
@@ -363,7 +374,7 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
                 )
             }
         ],
-        [icdMap, disabled, isSaving, editingDiagnosisId]
+        [icdMap, disabled, isSaving]
     );
 
     return (
@@ -443,9 +454,13 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
                         >
                             <MyButton
                                 onClick={handleAddOrUpdate}
-                                disabled={disabled || isSaving}
+                                disabled={disabled || isSaving || isFetching}
                             >
-                                {editingDiagnosisId ? 'Update' : 'Add'}
+                                {isSaving
+                                    ? 'Saving...'
+                                    : editingDiagnosisId !== null
+                                      ? 'Update'
+                                      : 'Add'}
                             </MyButton>
 
                             <MyButton
@@ -462,25 +477,10 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
                     <MyTable
                         data={diagnoses}
                         totalCount={diagnoses.length}
-                        loading={isFetching}
+                        loading={isFetching || isSaving}
                         columns={tableColumns}
                     />
                 </div>
-            </div>
-
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    marginTop: '16px'
-                }}
-            >
-                <MyButton
-                    onClick={handleSave}
-                    disabled={disabled || isSaving || isFetching}
-                >
-                    {isSaving ? 'Saving...' : 'Save Diagnoses'}
-                </MyButton>
             </div>
 
             <DeletionConfirmationModal

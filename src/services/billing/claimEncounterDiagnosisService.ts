@@ -1,7 +1,14 @@
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
-import { ClaimEncounterDiagnosis, UpdateClaimEncounterDiagnosesRequest } from '@/types/model-types-new';
+import { ClaimEncounterDiagnosis } from '@/types/model-types-new';
 
+type ClaimEncounterDiagnosisPayload = {
+  diagnosisId: number;
+  type: string;
+  suspected: boolean;
+  major: boolean;
+};
 
 export const claimEncounterDiagnosisService = createApi({
   reducerPath: 'claimEncounterDiagnosisApi',
@@ -19,14 +26,34 @@ export const claimEncounterDiagnosisService = createApi({
       providesTags: ['ClaimEncounterDiagnosis']
     }),
 
-    updateClaimEncounterDiagnoses: builder.mutation<
-      ClaimEncounterDiagnosis[],
-      UpdateClaimEncounterDiagnosesRequest
+    createClaimEncounterDiagnosis: builder.mutation<
+      ClaimEncounterDiagnosis,
+      ClaimEncounterDiagnosisPayload & { encounterId: number }
     >({
-      query: ({ encounterId, diagnoses }) => ({
+      query: ({ encounterId, ...body }) => ({
         url: `/api/patient/billing/claim-encounter-diagnoses/encounters/${encounterId}`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['ClaimEncounterDiagnosis']
+    }),
+
+    updateClaimEncounterDiagnosis: builder.mutation<
+      ClaimEncounterDiagnosis,
+      ClaimEncounterDiagnosisPayload & { id: number }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/api/patient/billing/claim-encounter-diagnoses/${id}`,
         method: 'PUT',
-        body: diagnoses
+        body
+      }),
+      invalidatesTags: ['ClaimEncounterDiagnosis']
+    }),
+
+    deleteClaimEncounterDiagnosis: builder.mutation<void, number>({
+      query: id => ({
+        url: `/api/patient/billing/claim-encounter-diagnoses/${id}`,
+        method: 'DELETE'
       }),
       invalidatesTags: ['ClaimEncounterDiagnosis']
     })
@@ -35,5 +62,7 @@ export const claimEncounterDiagnosisService = createApi({
 
 export const {
   useGetClaimEncounterDiagnosesQuery,
-  useUpdateClaimEncounterDiagnosesMutation
+  useCreateClaimEncounterDiagnosisMutation,
+  useUpdateClaimEncounterDiagnosisMutation,
+  useDeleteClaimEncounterDiagnosisMutation
 } = claimEncounterDiagnosisService;
