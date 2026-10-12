@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Checkbox, Loader, Tag } from 'rsuite';
 
@@ -16,6 +16,8 @@ import {
   computeRowRemainingAmount,
 
   formatBillingChargeStatus,
+
+  isCancelledBillingLineStatus,
 
   formatBillingPriceSource,
 
@@ -100,6 +102,16 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 }) => {
 
   const selectable = Boolean(onSelectionChange);
+
+  const [showCancelled, setShowCancelled] = useState(false);
+
+  const visibleRows = useMemo(
+    () =>
+      showCancelled
+        ? rows
+        : rows.filter(row => !isCancelledBillingLineStatus(row.status)),
+    [rows, showCancelled]
+  );
 
 
 
@@ -680,30 +692,32 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
         height={360}
 
-        data={rows}
+        data={visibleRows}
 
         columns={columns}
 
         tableButtons={
 
-          onCollectPayment ? (
-
-            <MyButton
-
-              disabled={
-                disabled ||
-                selectedRowIds.length === 0
-              }
-
-              onClick={onCollectPayment}
-
+          <div className="billing-accounting__table-toolbar">
+            <Checkbox
+              className={`billing-accounting__show-cancelled${
+                showCancelled ? ' billing-accounting__show-cancelled--on' : ''
+              }`}
+              checked={showCancelled}
+              onChange={(_, checked) => setShowCancelled(checked)}
             >
+              Show cancelled
+            </Checkbox>
 
-              Collect payment ({selectedRowIds.length})
-
-            </MyButton>
-
-          ) : undefined
+            {onCollectPayment ? (
+              <MyButton
+                disabled={disabled || selectedRowIds.length === 0}
+                onClick={onCollectPayment}
+              >
+                Collect payment ({selectedRowIds.length})
+              </MyButton>
+            ) : null}
+          </div>
 
         }
 
