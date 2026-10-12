@@ -48,7 +48,7 @@ import RecurringFollowUpSection, {
 } from './RecurringFollowUpSection';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
-const ENABLE_RECURRING_FOLLOW_UP = false;
+const ENABLE_RECURRING_FOLLOW_UP = true;
 const normalizeResourceTypeKey = (value: any) => String(value ?? '').trim().toUpperCase();
 const isPractitionerResourceType = (value: any) =>
   normalizeResourceTypeKey(value) === 'PRACTITIONER' || normalizeResourceTypeKey(value) === '2039534205961578';
