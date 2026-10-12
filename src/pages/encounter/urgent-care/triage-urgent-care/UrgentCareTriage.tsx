@@ -511,7 +511,7 @@ const UrgentCareTriage = () => {
   const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(5);
   const DEFAULT_SORT = 'id,desc';
   const [searchTick, setSearchTick] = useState(1);
   const [hasSearched, setHasSearched] = useState(true);
@@ -1629,6 +1629,7 @@ const handleCancelEncounter = async () => {
           data={tableData}
           columns={tableColumns}
           rowClassName={isSelected}
+          rowTestId={row => `encounter-row-${row.id}`}
           loading={isLoading || (manualSearchTriggered && isFetching)}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
