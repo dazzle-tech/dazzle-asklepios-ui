@@ -119,18 +119,6 @@ const ClaimEncounterCopyDiagnosticOrders = ({
       render: (row: any) => row.status || '-'
     },
     {
-      key: 'labStatus',
-      title: <Translate>Lab Status</Translate>,
-      flexGrow: 1,
-      render: (row: any) => row.labStatus || '-'
-    },
-    {
-      key: 'radStatus',
-      title: <Translate>Rad Status</Translate>,
-      flexGrow: 1,
-      render: (row: any) => row.radStatus || '-'
-    },
-    {
       key: 'submittedDate',
       title: <Translate>Submitted Date</Translate>,
       flexGrow: 1.5,

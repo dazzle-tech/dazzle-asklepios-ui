@@ -31,6 +31,7 @@ import {
   subTypeOptionsForClaimType
 } from './types';
 import EditEncounterDetailsModal from './EditEncounterDetailsModal';
+import { TbCopy } from "react-icons/tb";
 
 const PreClaimClinicalAndCodingReview: React.FC = () => {
   const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
@@ -301,21 +302,19 @@ const PreClaimClinicalAndCodingReview: React.FC = () => {
           placement="top"
           speaker={
             <Tooltip>
-              <Translate>Edit Encounter Details</Translate>
+              <Translate>Edit Encounter Copy Details</Translate>
             </Tooltip>
           }
         >
           <div>
-            <MyButton
-              size="small"
-              backgroundColor="violet"
+            <TbCopy
+              className="icons-style"
+              size={22}
+              color="var(--primary-gray)"
               onClick={() => {
                 setEmrEncounter(row?.encounter);
                 setOpenEditEncounterDetailsModal(true);
-              }}
-            >
-              <FontAwesomeIcon icon={faFileWaveform} />
-            </MyButton>
+              }} />
           </div>
         </Whisper>
       )
