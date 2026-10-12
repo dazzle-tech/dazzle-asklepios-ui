@@ -13,6 +13,7 @@ import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useLocation } from 'react-router-dom';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
@@ -33,7 +34,8 @@ const UccMedicationOrder = (props: any) => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const viewMode = location.state?.viewMode;
-  const edit = viewMode === 'readOnly';
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const edit = viewMode === 'readOnly' || isAmendmentOpen;
   const dispatch = useAppDispatch();
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);

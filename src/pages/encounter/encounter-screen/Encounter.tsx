@@ -14,6 +14,7 @@ import {
 } from '@/services/encounters/patientEncounterService';
 
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import {
@@ -117,6 +118,7 @@ const Encounter = ({
   const [fetchDiagnosticOrderTests] =
     useLazyGetTestsByOrderIdQuery();
   const encounterId = propsData?.encounter?.id;
+  const isAmendmentOpen = useOpenAmendmentSession(encounterId);
 
 
   const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
@@ -325,10 +327,11 @@ const Encounter = ({
       patient: propsData?.patient,
       encounter: propsData?.encounter,
       edit,
+      isAmendmentOpen,
       fromPage: currentFromPage,
       viewMode: propsData?.viewMode
     }),
-    [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
+    [propsData?.patient, propsData?.encounter, edit, isAmendmentOpen, currentFromPage, propsData?.viewMode]
   );
 
 const handleGoBack = () => {
@@ -351,6 +354,8 @@ const handleGoBack = () => {
     navigate('/opd-visit-list');
   } else if (currentFromPage === 'PatientsLists') {
     navigate('/patients-list');
+  } else if (currentFromPage === 'Encounter_Status_Management') {
+    navigate('/encounter-status-management');
   } else {
     navigate('/encounter-list');
   }
@@ -368,11 +373,16 @@ const handleGoBack = () => {
     try {
       if (propsData?.encounter) {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
-        dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+        dispatch(notify({
+          msg: isAmendmentOpen ? 'Visit amendment finished' : 'Completed Successfully',
+          sev: 'success'
+        }));
       }
     } catch (err: any) {
       const errorMap: Record<string, string> = {
         'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.amendment.completeNotAllowed':
+          'This encounter has an open amendment. Finish the amendment before completing the encounter.',
         'error.id.notfound': 'Encounter not found'
       };
 
@@ -1123,6 +1133,11 @@ const handleGoBack = () => {
                         return;
                       }
 
+                      if (isAmendmentOpen) {
+                        await completeEncounterNow();
+                        return;
+                      }
+
                       const exists = await checkDiagnosisExists({
                         encounterId
                       }).unwrap();
@@ -1159,7 +1174,7 @@ const handleGoBack = () => {
                   appearance="ghost"
                 >
                   <Translate>
-                    {localEncounter?.encounterType === 'EMERGENCY'
+                    {!isAmendmentOpen && localEncounter?.encounterType === 'EMERGENCY'
                       ? 'Disposition'
                       : 'Complete Visit'}
                   </Translate>
@@ -1246,6 +1261,7 @@ const handleGoBack = () => {
                       patient: propsData?.patient,
                       encounter: propsData?.encounter,
                       edit,
+                      isAmendmentOpen,
                       setLocalEncounter,
                       onDiagnosisSaved: handlePatientDiagnosisSaved
                     }}

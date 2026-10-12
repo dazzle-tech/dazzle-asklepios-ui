@@ -4,6 +4,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -146,7 +147,8 @@ const formatDate = (date: any) => {
 const UCCMedications = ({ patient, ...props }: Props) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const edit = isAmendmentOpen || (props.edit ?? location.state?.edit ?? false);
   const [administrationModalOpen, setAdministrationModalOpen] =
     useState(false);
 
@@ -281,7 +283,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
 
 
   const handleDiscard = async () => {
-    if (!selectedRow) return;
+    if (isAmendmentOpen || !selectedRow) return;
 
     try {
       await discardOrder({
@@ -316,6 +318,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
   const handleDoubleCheck = async (
     row: MedicationOrderRow
   ) => {
+    if (isAmendmentOpen) return;
     try {
       await doubleCheckOrder(row.id).unwrap();
 

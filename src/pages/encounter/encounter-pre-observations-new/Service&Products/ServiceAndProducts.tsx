@@ -3,6 +3,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import { useLocation } from 'react-router-dom';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
@@ -64,7 +65,8 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
 
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
-  const isReadOnly = Boolean(edit || billingFinalized);
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const isReadOnly = Boolean(edit || billingFinalized || isAmendmentOpen);
 
   const [openModal, setOpenModal] = useState(false);
   const [popupOpen, setPopupOpen] = useState<boolean>(false);

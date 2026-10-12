@@ -1,5 +1,6 @@
 import React, { useEffect, useRef,useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 
 import './styles.less';
 
@@ -22,9 +23,11 @@ const DiagnosticsOrder = (props: any) => {
   const encounter = location.state?.encounter;
 
   const viewMode = location.state?.viewMode;
+  const isAmendmentOpen = useIsAmendmentOpen();
   const edit =
     viewMode === 'readOnly' ||
-    (props.edit ?? location.state?.edit ?? false);
+    (props.edit ?? location.state?.edit ?? false) ||
+    isAmendmentOpen;
 
   const [openValidationSummaryModal, setOpenValidationSummaryModal] = useState(false);
     const vm = useDiagnosticsOrder({

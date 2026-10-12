@@ -4,6 +4,7 @@ import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { useAdministerUccMedicationOrderMutation } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 
 type MedicationAdministrationModalProps = {
   orderId: number | null;
@@ -21,6 +22,7 @@ const MedicationAdministrationModal: React.FC<
   onSuccess
 }) => {
   const dispatch = useAppDispatch();
+  const isAmendmentOpen = useIsAmendmentOpen();
 
   const [administerOrder, { isLoading }] =
     useAdministerUccMedicationOrderMutation();
@@ -38,7 +40,7 @@ const MedicationAdministrationModal: React.FC<
   }, [open]);
 
   const handleConfirm = async () => {
-    if (!orderId) {
+    if (isAmendmentOpen || !orderId) {
       return;
     }
 
@@ -76,6 +78,7 @@ const MedicationAdministrationModal: React.FC<
       open={open}
       setOpen={setOpen}
       actionButtonFunction={handleConfirm}
+      isDisabledActionBtn={isAmendmentOpen}
       size="sm"
       bodyheight="30vh"
       content={
