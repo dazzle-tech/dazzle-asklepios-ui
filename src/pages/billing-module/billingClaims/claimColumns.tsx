@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Whisper } from 'rsuite';
+import { Checkbox, Tooltip, Whisper } from 'rsuite';
 
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -8,20 +8,81 @@ import type { ClaimTrackingResponse } from '@/types/model-types-new';
 import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 import ClaimRowActions from './ClaimRowActions';
-import { formatMoney, getClaimItems, getStatusColor } from './utils';
+import { canReturnClaimForResubmit, formatMoney, getClaimItems, getStatusColor } from './utils';
 import type { ClaimRowHandlers } from './types';
 
 type GetClaimColumnsParams = {
   handlers: ClaimRowHandlers;
   encounterMap: Map<number, any>;
   patientMap: Map<string, any>;
+  canSelect?: boolean;
+  selectedIds?: number[];
+  pageReturnableIds?: number[];
+  onToggleRow?: (id: number) => void;
+  onTogglePage?: () => void;
 };
+
+const RETURN_LOCKED_MESSAGE =
+  'Only submitting, submitted, or accepted claims can be returned to the batch.';
 
 export const getClaimColumns = ({
   handlers,
   encounterMap,
-  patientMap
+  patientMap,
+  canSelect = false,
+  selectedIds = [],
+  pageReturnableIds = [],
+  onToggleRow,
+  onTogglePage
 }: GetClaimColumnsParams): ColumnConfig[] => [
+  ...(canSelect
+    ? [
+        {
+          key: 'select',
+          title: (
+            <div className="bc-select-cell" onClick={event => event.stopPropagation()}>
+              <Checkbox
+                checked={
+                  pageReturnableIds.length > 0 &&
+                  pageReturnableIds.every(id => selectedIds.includes(id))
+                }
+                indeterminate={
+                  pageReturnableIds.some(id => selectedIds.includes(id)) &&
+                  !pageReturnableIds.every(id => selectedIds.includes(id))
+                }
+                disabled={pageReturnableIds.length === 0}
+                onChange={() => onTogglePage?.()}
+              />
+            </div>
+          ),
+          width: 52,
+          render: (row: ClaimTrackingResponse) => {
+            const claimId = row.id;
+            if (claimId == null) {
+              return null;
+            }
+            const returnable = canReturnClaimForResubmit(row);
+            const checkbox = (
+              <div className="bc-select-cell" onClick={event => event.stopPropagation()}>
+                <Checkbox
+                  checked={selectedIds.includes(claimId)}
+                  disabled={!returnable}
+                  onChange={() => returnable && onToggleRow?.(claimId)}
+                />
+              </div>
+            );
+            if (returnable) {
+              return checkbox;
+            }
+            return (
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>{RETURN_LOCKED_MESSAGE}</Tooltip>}>
+                <span>{checkbox}</span>
+              </Whisper>
+            );
+          }
+        } as ColumnConfig
+      ]
+    : []),
   {
     key: 'claimReference',
     title: <Translate>Claim Reference</Translate>,
@@ -143,7 +204,7 @@ export const getClaimColumns = ({
   {
     key: 'actions',
     title: <Translate>Actions</Translate>,
-    width: 130,
+    width: 96,
     render: (row: ClaimTrackingResponse) => (
       <ClaimRowActions row={row} {...handlers} />
     )

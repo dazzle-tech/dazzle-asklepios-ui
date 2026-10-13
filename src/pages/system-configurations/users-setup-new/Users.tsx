@@ -47,11 +47,16 @@ const Users = () => {
   const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    name: string;
+    email: string;
+    login: string;
+    jobRole: string | null;
+  }>({
     name: '',
     email: '',
     login: '',
-    jobRole: '',
+    jobRole: null,
   });
 
 
@@ -68,6 +73,7 @@ const Users = () => {
   const {
     data: usersResponse,
     isLoading,
+    isError,
     refetch,
   } = useGetUsersBasicQuery({
     page: pageIndex,
@@ -525,6 +531,11 @@ const Users = () => {
   return (
     <div dir={dir}>
       <Panel>
+        {isError && (
+          <div style={{ padding: '8px 4px 12px', color: '#b45309' }}>
+            Users could not be loaded. Log out and log in again, then reopen this page.
+          </div>
+        )}
         <MyTable
           data={users}
           columns={tableColumns}

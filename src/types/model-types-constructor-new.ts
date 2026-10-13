@@ -29,6 +29,7 @@ export const newApUser: modelTypes.ApUser = {
   allowOngoingVisit: false,
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
+  canReturnClaimForResubmit: false,
 };
 
 // ------------------- Candidate -------------------
