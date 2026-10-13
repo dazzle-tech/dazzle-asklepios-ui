@@ -1,11 +1,13 @@
 import React from "react";
 import { useAppDispatch } from '@/hooks';
 import {
-  useModifyToothActionMutation,
-  useModifyToothServiceMutation
-} from '@/services/dentalService';
-import type { ApDentalChartTooth } from '@/types/model-types';
+  useSaveToothActionMutation,
+  useCancelToothActionMutation,
+  useSaveToothServiceMutation,
+  useCancelToothServiceMutation
+} from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
+import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix } from '@/utils/toothNumber';
 import { useEffect, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { Button } from 'rsuite';
@@ -15,10 +17,26 @@ import clsx from 'clsx';
 import './styles.less';
 import MyModal from '../MyModal/MyModal';
 import Tooth from './Tooth/Tooth';
+import OcclusalBadge from './Tooth/OcclusalBadge';
+import { getToothShapeType } from './Tooth/toothShape';
 import ToothStateTab from './tabs/ToothStateTab';
 import ToothHistoryTab from './tabs/ToothHistoryTab';
 import ToothServicesTab from './tabs/ToothServicesTab';
 import ToothCdtTab from './tabs/ToothCdtTab';
+
+// One entry per surface that has an active (non-cancelled) action on the
+// tooth; condition takes priority over treatment if both exist on the same
+// surface, matching the main tooth icon's own condition-over-treatment rule.
+const getSurfaceStates = (tooth: any, dentalActionsMap: any): Record<string, 'condition' | 'treatment'> => {
+  const states: Record<string, 'condition' | 'treatment'> = {};
+  (tooth?.actions ?? []).forEach((action: any) => {
+    const actionType = dentalActionsMap?.[action.dentalActionId]?.type;
+    if (actionType !== 'CONDITION' && actionType !== 'TREATMENT') return;
+    if (states[action.surface] === 'condition') return;
+    states[action.surface] = actionType === 'CONDITION' ? 'condition' : 'treatment';
+  });
+  return states;
+};
 
 const DentalChart = ({
   chartObject,
@@ -41,31 +59,34 @@ const DentalChart = ({
   const [lowerTeeth, setLowerTeeth] = useState([]);
 
   const [currentToothAction, setCurrentToothAction] = useState({
-    key: null,
-    actionKey: '',
-    surfaceKey: '',
+    id: null,
+    dentalActionId: null,
+    surface: null,
     note: '',
     existing: false
   });
 
   const [currentToothService, setCurrentToothService] = useState({
-    key: null,
-    serviceKey: ''
+    id: null,
+    serviceId: null
   });
 
   const [selectedCdt, setSelectedCdt] = useState('');
 
-  const [addToothAction, addToothActionMutation] = useModifyToothActionMutation();
-  const [addToothService, addToothServiceMutation] = useModifyToothServiceMutation();
-  const [removeToothAction, removeToothActionMutation] = useModifyToothActionMutation();
+  const [addToothAction, addToothActionMutation] = useSaveToothActionMutation();
+  const [addToothService, addToothServiceMutation] = useSaveToothServiceMutation();
+  const [removeToothAction, removeToothActionMutation] = useCancelToothActionMutation();
 
   useEffect(() => {
-    if (chartObject?.chartTeeth) {
+    if (chartObject?.teeth) {
       const upper = [];
       const lower = [];
+      // Half-based split (16/32 permanent, 10/20 primary) instead of a
+      // hardcoded "< 17" so this works for both tooth sets automatically.
+      const upperCutoff = chartObject.teeth.length / 2;
 
-      chartObject.chartTeeth.map((tooth: any) => {
-        if (tooth.toothNumberNumeric < 17) {
+      chartObject.teeth.map((tooth: any) => {
+        if (toothIndexFromEnum(tooth.toothNumber) <= upperCutoff) {
           upper.push(tooth);
         } else {
           lower.unshift(tooth);
@@ -79,32 +100,31 @@ const DentalChart = ({
 
   const addAction = () => {
     addToothAction({
-      key: currentToothAction.key,
-      toothKey: selectedTooth.key,
-      actionKey: currentToothAction.actionKey,
-      surface: currentToothAction.surfaceKey,
+      id: currentToothAction.id,
+      toothId: selectedTooth.id,
+      dentalActionId: currentToothAction.dentalActionId,
+      surface: currentToothAction.surface,
       note: currentToothAction.note,
       existing: currentToothAction.existing,
-      cdtKey: selectedCdt,
-      operation: 'SAVE'
+      cdtCodeId: selectedCdt
     }).unwrap();
   };
 
   useEffect(() => {
     if (addToothActionMutation.status === 'fulfilled') {
       setCurrentToothAction({
-        key: null,
-        actionKey: '',
-        surfaceKey: '',
+        id: null,
+        dentalActionId: null,
+        surface: null,
         note: '',
         existing: false
       });
       setSelectedCdt('');
 
       setChartObject(addToothActionMutation.data);
-      for (const toothKey in addToothActionMutation.data.chartTeeth) {
-        const tooth = addToothActionMutation.data.chartTeeth[toothKey];
-        if (tooth.key === selectedTooth.key) {
+      for (const toothKey in addToothActionMutation.data.teeth) {
+        const tooth = addToothActionMutation.data.teeth[toothKey];
+        if (tooth.id === selectedTooth.id) {
           setSelectedTooth(tooth);
           break;
         }
@@ -121,24 +141,22 @@ const DentalChart = ({
 
   const addService = () => {
     addToothService({
-      key: currentToothService.key,
-      toothKey: selectedTooth.key,
-      serviceKey: currentToothService.serviceKey,
-      operation: 'SAVE'
+      toothId: selectedTooth.id,
+      serviceId: currentToothService.serviceId
     }).unwrap();
   };
 
   useEffect(() => {
     if (addToothServiceMutation.status === 'fulfilled') {
       setCurrentToothService({
-        key: null,
-        serviceKey: ''
+        id: null,
+        serviceId: null
       });
 
       setChartObject(addToothServiceMutation.data);
-      for (const toothKey in addToothServiceMutation.data.chartTeeth) {
-        const tooth = addToothServiceMutation.data.chartTeeth[toothKey];
-        if (tooth.key === selectedTooth.key) {
+      for (const toothKey in addToothServiceMutation.data.teeth) {
+        const tooth = addToothServiceMutation.data.teeth[toothKey];
+        if (tooth.id === selectedTooth.id) {
           setSelectedTooth(tooth);
           break;
         }
@@ -155,18 +173,18 @@ const DentalChart = ({
   useEffect(() => {
     if (removeToothActionMutation.status === 'fulfilled') {
       setCurrentToothAction({
-        key: null,
-        actionKey: '',
-        surfaceKey: '',
+        id: null,
+        dentalActionId: null,
+        surface: null,
         note: '',
         existing: false
       });
       setSelectedCdt('');
 
       setChartObject(removeToothActionMutation.data);
-      for (const toothKey in removeToothActionMutation.data.chartTeeth) {
-        const tooth = removeToothActionMutation.data.chartTeeth[toothKey];
-        if (tooth.key === selectedTooth.key) {
+      for (const toothKey in removeToothActionMutation.data.teeth) {
+        const tooth = removeToothActionMutation.data.teeth[toothKey];
+        if (tooth.id === selectedTooth.id) {
           setSelectedTooth(tooth);
           break;
         }
@@ -183,9 +201,9 @@ const DentalChart = ({
 
   const clearCurrentAction = () => {
     setCurrentToothAction({
-      key: null,
-      actionKey: '',
-      surfaceKey: '',
+      id: null,
+      dentalActionId: null,
+      surface: null,
       note: '',
       existing: false
     });
@@ -194,8 +212,8 @@ const DentalChart = ({
 
   const clearCurrentService = () => {
     setCurrentToothService({
-      key: null,
-      serviceKey: ''
+      id: null,
+      serviceId: null
     });
   };
 
@@ -203,22 +221,22 @@ const DentalChart = ({
     <>
       <Box className="dental-chart-container">
         <Box className="tooth-arc upper">
-          {upperTeeth.map((_tooth: ApDentalChartTooth, idx: number) => {
+          {upperTeeth.map((_tooth: any, idx: number) => {
             const total = upperTeeth.length;
             const angle = (Math.PI * idx) / (total - 1);
             const x = 50 + 50 * Math.cos(angle - Math.PI);
             const y = 50 + 60 * Math.sin(angle - Math.PI);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
-            const hasCondition = (_tooth as any).toothActions?.some(
-              action => dentalActionsMap?.[action.actionKey]?.type === 'condition'
+            const hasCondition = (_tooth as any).actions?.some(
+              action => dentalActionsMap?.[action.dentalActionId]?.type === 'CONDITION'
             );
-            const hasTreatment = (_tooth as any).toothActions?.some(
-              action => dentalActionsMap?.[action.actionKey]?.type === 'treatment'
+            const hasTreatment = (_tooth as any).actions?.some(
+              action => dentalActionsMap?.[action.dentalActionId]?.type === 'TREATMENT'
             );
             return (
               <div
-                key={_tooth.key}
+                key={_tooth.id}
                 className={clsx(`tooth-slot`, {
                   selected: selected
                 })}
@@ -228,7 +246,7 @@ const DentalChart = ({
                   transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`
                 }}
               >
-                <div className="tooth-number">{_tooth.toothNumber}</div>
+                <div className="tooth-number">{toothDisplayLabel(_tooth.toothNumber)}</div>
                 <Button
                   disabled={props.disabled}
                   onClick={() => setSelectedTooth(_tooth)}
@@ -236,40 +254,46 @@ const DentalChart = ({
                   appearance={
                     _tooth.toothNumber === selectedTooth.toothNumber ? 'primary' : 'default'
                   }
-                  className={clsx(`tooth-btn tooth_${_tooth.toothNumber}`)}
+                  className={clsx(`tooth-btn tooth_${toothCssClassSuffix(_tooth.toothNumber)}`)}
                 >
                   <div>
                     <Tooth
                       chartTooth={_tooth}
                       selected={selected}
-                      type={dentalActionsMap?.[(_tooth as any)?.toothActions[0]?.actionKey]?.type}
+                      type={dentalActionsMap?.[(_tooth as any)?.actions[0]?.dentalActionId]?.type}
                       hasCondition={hasCondition}
                       hasTreatment={hasTreatment}
                     />
                   </div>
                 </Button>
+                <div className="tooth-occlusal-badge">
+                  <OcclusalBadge
+                    shapeType={getToothShapeType(_tooth.toothNumber)}
+                    surfaceStates={getSurfaceStates(_tooth, dentalActionsMap)}
+                  />
+                </div>
               </div>
             );
           })}
         </Box>
 
         <Box className="tooth-arc lower">
-          {lowerTeeth.map((_tooth: ApDentalChartTooth, idx: number) => {
+          {lowerTeeth.map((_tooth: any, idx: number) => {
             const total = lowerTeeth.length;
             const angle = (Math.PI * idx) / (total - 1);
             const x = 50 + 50 * Math.cos(angle);
             const y = 50 + 65 * Math.sin(angle);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
-            const hasCondition = (_tooth as any).toothActions?.some(
-              action => dentalActionsMap?.[action.actionKey]?.type === 'condition'
+            const hasCondition = (_tooth as any).actions?.some(
+              action => dentalActionsMap?.[action.dentalActionId]?.type === 'CONDITION'
             );
-            const hasTreatment = (_tooth as any).toothActions?.some(
-              action => dentalActionsMap?.[action.actionKey]?.type === 'treatment'
+            const hasTreatment = (_tooth as any).actions?.some(
+              action => dentalActionsMap?.[action.dentalActionId]?.type === 'TREATMENT'
             );
             return (
               <div
-                key={_tooth.key}
+                key={_tooth.id}
                 className={clsx(`tooth-slot`, {
                   selected: selected
                 })}
@@ -286,19 +310,25 @@ const DentalChart = ({
                   appearance={
                     _tooth.toothNumber === selectedTooth.toothNumber ? 'primary' : 'default'
                   }
-                  className={clsx(`tooth-btn tooth_${_tooth.toothNumber}`)}
+                  className={clsx(`tooth-btn tooth_${toothCssClassSuffix(_tooth.toothNumber)}`)}
                 >
                   <div>
                     <Tooth
                       chartTooth={_tooth}
                       selected={selected}
-                      type={dentalActionsMap?.[(_tooth as any)?.toothActions[0]?.actionKey]?.type}
+                      type={dentalActionsMap?.[(_tooth as any)?.actions[0]?.dentalActionId]?.type}
                       hasCondition={hasCondition}
                       hasTreatment={hasTreatment}
                     />
                   </div>
                 </Button>
-                <div className="tooth-number">{_tooth.toothNumber}</div>
+                <div className="tooth-occlusal-badge">
+                  <OcclusalBadge
+                    shapeType={getToothShapeType(_tooth.toothNumber)}
+                    surfaceStates={getSurfaceStates(_tooth, dentalActionsMap)}
+                  />
+                </div>
+                <div className="tooth-number">{toothDisplayLabel(_tooth.toothNumber)}</div>
               </div>
             );
           })}

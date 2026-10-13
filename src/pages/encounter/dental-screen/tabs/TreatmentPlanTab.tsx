@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, IconButton, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -6,16 +6,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Translate from '@/components/Translate';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal/DeletionConfirmationModal';
+import CancellationModal from '@/components/CancellationModal/CancellationModal';
 import { ItemDataType } from 'rsuite/esm/@types/common';
 import {
-  useSavePlannedTreatmentMutation,
-  useDeletePlannedTreatmentMutation,
-  useFetchTreatmentPlanQuery
-} from '@/services/dentalService';
-import { useGetCdtsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
+  useGetTreatmentPlanByEncounterQuery,
+  useCreatePlannedTreatmentMutation,
+  useUpdatePlannedTreatmentMutation,
+  useCancelPlannedTreatmentMutation
+} from '@/services/dental/dentalTreatmentPlanService';
+import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';
 import { newApDentalPlannedTreatment } from '@/types/model-types-constructor';
+import { toothDisplayLabel } from '@/utils/toothNumber';
 import MyModal from '@/components/MyModal/MyModal';
 import { Form, Panel, Tabs } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
@@ -30,83 +31,134 @@ const TreatmentPlanTab = ({
   originalChart,
   dispatch
 }) => {
-  const [treatmentPlan, setTreatmentPlan] = useState({ draft: [], current: [] });
   const [draftPlannedTreatment, setDraftPlannedTreatment] = useState({
     ...newApDentalPlannedTreatment
   });
   const [activePlannedTreatment, setActivePlannedTreatment] = useState({
     ...newApDentalPlannedTreatment
   });
-  const [cdtMap, setCdtMap] = useState({});
-  const [billingMap, setBillingMap] = useState({});
   const [draftModalOpen, setDraftModalOpen] = useState(false);
   const [activeModalOpen, setActiveModalOpen] = useState(false);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
 
-  const cdtListResponse = useGetCdtsQuery({
-    ...initialListRequest,
-    filters: [{ fieldName: 'type_lkey', operator: 'match', value: '277273303968200' }],
-    pageSize: 1000
+  const cdtListResponse = useGetAllCdtQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
+  const treatmentPlanDataResponse = useGetTreatmentPlanByEncounterQuery(encounter?.id, {
+    skip: !encounter?.id
   });
 
-  const { data: billingTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BILLING_TYPE');
+  // Tooth-action saves (in the chart tab) can create/alter planned treatments server-side
+  // (source = DENTAL_CHART_CDT_TREATMENT) without the treatment-plan API's own tag
+  // invalidation being aware of it, since it lives in a separate RTK Query API slice.
+  // Re-fetch explicitly whenever that cross-slice trigger flips.
+  useEffect(() => {
+    if (encounter?.id) {
+      treatmentPlanDataResponse.refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treatmentPlanTrigger]);
 
-  const treatmentPlanDataResponse = useFetchTreatmentPlanQuery(
-    { encounterKey: originalChart.encounterKey, trigger: treatmentPlanTrigger },
-    { skip: !originalChart.key }
+  const [createPlannedTreatment, createPlannedTreatmentMutation] =
+    useCreatePlannedTreatmentMutation();
+  const [updatePlannedTreatment, updatePlannedTreatmentMutation] =
+    useUpdatePlannedTreatmentMutation();
+  const [cancelPlannedTreatment, cancelPlannedTreatmentMutation] =
+    useCancelPlannedTreatmentMutation();
+
+  const cdtMap = useMemo(() => {
+    const cache: Record<number, any> = {};
+    (cdtListResponse?.data?.data ?? []).forEach((cdt: any) => {
+      cache[cdt.id] = cdt;
+    });
+    return cache;
+  }, [cdtListResponse.data]);
+
+  const treatmentPlan = useMemo(
+    () => ({
+      draft: treatmentPlanDataResponse?.data?.draftTreatments ?? [],
+      current: treatmentPlanDataResponse?.data?.currentTreatments ?? []
+    }),
+    [treatmentPlanDataResponse.data]
   );
 
-  const [savePlannedTreatment, savePlannedTreatmentMutation] = useSavePlannedTreatmentMutation();
-  const [deletePlannedTreatment, deletePlannedTreatmentMutation] =
-    useDeletePlannedTreatmentMutation();
-
   useEffect(() => {
-    if (cdtListResponse.status === 'fulfilled') {
-      const cache = {};
-      cdtListResponse.data.object.forEach(cdt => {
-        cache[cdt.key] = cdt;
-      });
-      setCdtMap(cache);
-    }
-  }, [cdtListResponse]);
-
-  useEffect(() => {
-    if (billingTypeLovQueryResponse) {
-      const billingMap = {};
-      billingTypeLovQueryResponse.object.forEach(item => {
-        billingMap[item.key] = item.lovDisplayVale;
-      });
-      setBillingMap(billingMap);
-    }
-  }, [billingTypeLovQueryResponse]);
-
-  useEffect(() => {
-    if (treatmentPlanDataResponse?.isSuccess && treatmentPlanDataResponse.data.object) {
-      setTreatmentPlan({
-        draft: treatmentPlanDataResponse.data.object?.draftTreatments ?? [],
-        current: treatmentPlanDataResponse.data.object?.currentTreatments ?? []
-      });
-    }
-  }, [treatmentPlanDataResponse]);
-
-  useEffect(() => {
-    if (savePlannedTreatmentMutation.status === 'fulfilled') {
+    if (createPlannedTreatmentMutation.status === 'fulfilled') {
       setTreatmentPlanTrigger(prev => prev * -1);
       setDraftModalOpen(false);
       setActiveModalOpen(false);
-    } else if (savePlannedTreatmentMutation.status === 'rejected') {
+    } else if (createPlannedTreatmentMutation.status === 'rejected') {
       dispatch({ type: 'NOTIFY', payload: { msg: 'Save Failed', sev: 'error' } });
     }
-  }, [savePlannedTreatmentMutation.status]);
+  }, [createPlannedTreatmentMutation.status]);
 
   useEffect(() => {
-    if (deletePlannedTreatmentMutation.status === 'fulfilled') {
+    if (updatePlannedTreatmentMutation.status === 'fulfilled') {
+      setTreatmentPlanTrigger(prev => prev * -1);
+      setDraftModalOpen(false);
+      setActiveModalOpen(false);
+    } else if (updatePlannedTreatmentMutation.status === 'rejected') {
+      dispatch({ type: 'NOTIFY', payload: { msg: 'Save Failed', sev: 'error' } });
+    }
+  }, [updatePlannedTreatmentMutation.status]);
+
+  useEffect(() => {
+    if (cancelPlannedTreatmentMutation.status === 'fulfilled') {
       setTreatmentPlanTrigger(prev => prev * -1);
       setDraftPlannedTreatment({ ...newApDentalPlannedTreatment });
-    } else if (deletePlannedTreatmentMutation.status === 'rejected') {
-      dispatch({ type: 'NOTIFY', payload: { msg: 'Delete Failed', sev: 'error' } });
+    } else if (cancelPlannedTreatmentMutation.status === 'rejected') {
+      dispatch({ type: 'NOTIFY', payload: { msg: 'Cancel Failed', sev: 'error' } });
     }
-  }, [deletePlannedTreatmentMutation.status]);
+  }, [cancelPlannedTreatmentMutation.status]);
+
+  const buildSavePayload = (treatment: any, type: 'DRAFT' | 'CURRENT') => ({
+    patientId: patient?.id,
+    encounterId: encounter?.id,
+    type,
+    visitNumber: treatment.visitNumber ?? null,
+    cdtCodeId: treatment.cdtCodeId ?? null,
+    toothId: treatment.toothId ?? null,
+    note: treatment.note ?? null,
+    surface: treatment.surface ?? null,
+    fees: Math.min(99, Math.max(-99, Math.round(Number(treatment.fees) || 0))),
+    insurance: treatment.insurance ?? 0,
+    discount: Math.min(99, Math.max(-99, Math.round(Number(treatment.discount) || 0)))
+  });
+
+  const saveDraftTreatment = () => {
+    const body = buildSavePayload(draftPlannedTreatment, 'DRAFT');
+    if (draftPlannedTreatment.id) {
+      updatePlannedTreatment({ id: draftPlannedTreatment.id, body }).unwrap();
+    } else {
+      createPlannedTreatment(body).unwrap();
+    }
+  };
+
+  const saveActiveTreatment = () => {
+    const body = buildSavePayload(activePlannedTreatment, 'CURRENT');
+    if (activePlannedTreatment.id) {
+      updatePlannedTreatment({ id: activePlannedTreatment.id, body }).unwrap();
+    } else {
+      createPlannedTreatment(body).unwrap();
+    }
+  };
+
+  const handleCancelDraft = async () => {
+    if (!draftPlannedTreatment.id) {
+      setConfirmCancelOpen(false);
+      return;
+    }
+    try {
+      await cancelPlannedTreatment({
+        id: draftPlannedTreatment.id,
+        body: { cancellationReason: cancelForm.cancellationReason || '' }
+      }).unwrap();
+      setConfirmCancelOpen(false);
+      setCancelForm({ cancellationReason: '' });
+    } catch (error) {
+      setConfirmCancelOpen(false);
+    }
+  };
 
   const draftColumns = [
     {
@@ -117,12 +169,12 @@ const TreatmentPlanTab = ({
     {
       key: 'cdtCode',
       title: <Translate>CDT</Translate>,
-      render: row => cdtMap[row.cdtKey]?.cdtCode || row.cdtKey
+      render: row => cdtMap[row.cdtCodeId]?.code || row.cdtCodeId
     },
     {
       key: 'procedure',
       title: <Translate>Procedure</Translate>,
-      render: row => cdtMap[row.cdtKey]?.description || row.cdtKey
+      render: row => cdtMap[row.cdtCodeId]?.description || row.cdtCodeId
     },
     {
       key: 'note',
@@ -147,9 +199,11 @@ const TreatmentPlanTab = ({
           <IconButton
             color="error"
             size="small"
+            disabled={row.cancelled}
             onClick={() => {
               setDraftPlannedTreatment(row);
-              setConfirmDeleteOpen(true);
+              setCancelForm({ cancellationReason: '' });
+              setConfirmCancelOpen(true);
             }}
             className="delete-icon"
           >
@@ -164,27 +218,23 @@ const TreatmentPlanTab = ({
     {
       key: 'cdtCode',
       title: <Translate>CDT</Translate>,
-      render: row => cdtMap[row.cdtKey]?.cdtCode || row.cdtKey
+      render: row => cdtMap[row.cdtCodeId]?.code || row.cdtCodeId
     },
     {
       key: 'procedure',
       title: <Translate>Procedure</Translate>,
-      render: row => cdtMap[row.cdtKey]?.description || row.cdtKey
+      render: row => cdtMap[row.cdtCodeId]?.description || row.cdtCodeId
     },
     {
       key: 'tooth',
       title: <Translate>Tooth</Translate>,
-      render: row => row.toothObject?.toothNumber || row.toothKey
+      render: row =>
+        row.tooth?.toothNumber ? toothDisplayLabel(row.tooth.toothNumber) : row.toothId
     },
     {
       key: 'surface',
       title: <Translate>Surface</Translate>,
-      render: row => row.surfaceLvalue?.lovDisplayVale || row.surfaceLkey
-    },
-    {
-      key: 'billing',
-      title: <Translate>Billing Type</Translate>,
-      render: row => billingMap[row.billingTypeLkey] || row.billingTypeLkey
+      render: row => row.surface
     },
     {
       key: 'fees',
@@ -252,19 +302,19 @@ const TreatmentPlanTab = ({
             />
             <MyInput
               width={400}
-              fieldName="cdtKey"
+              fieldName="cdtCodeId"
               fieldLabel="CDT"
               fieldType="select"
-              selectData={cdtListResponse?.data?.object ?? []}
+              selectData={cdtListResponse?.data?.data ?? []}
               selectDataLabel="description"
-              selectDataValue="key"
+              selectDataValue="id"
               renderMenuItem={(label, item) => (
                 <span>
-                  {item.cdtCode} / {item.description}
+                  {item.code} / {item.description}
                 </span>
               )}
               searchBy={(keyword, _, item: ItemDataType) =>
-                item.cdtCode.toLowerCase().includes(keyword.toLowerCase()) ||
+                item.code.toLowerCase().includes(keyword.toLowerCase()) ||
                 item.description.toLowerCase().includes(keyword.toLowerCase())
               }
               record={draftPlannedTreatment}
@@ -279,19 +329,7 @@ const TreatmentPlanTab = ({
             />
           </Form>
         )}
-        actionButtonFunction={() =>
-          savePlannedTreatment({
-            ...draftPlannedTreatment,
-            type: 'DRAFT',
-            encounterKey: encounter?.id,
-            patientKey: patient?.id,
-            fees: Math.min(99, Math.max(-99, Math.round(Number(activePlannedTreatment.fees) || 0))),
-            discount: Math.min(
-              99,
-              Math.max(-99, Math.round(Number(activePlannedTreatment.discount) || 0))
-            )
-          }).unwrap()
-        }
+        actionButtonFunction={saveDraftTreatment}
       />
 
       <MyModal
@@ -305,37 +343,24 @@ const TreatmentPlanTab = ({
           <Form>
             <MyInput
               width={400}
-              disabled={!!activePlannedTreatment.key}
-              fieldName="cdtKey"
+              disabled={!!activePlannedTreatment.id}
+              fieldName="cdtCodeId"
               fieldLabel="CDT"
               fieldType="select"
-              selectData={cdtListResponse?.data?.object ?? []}
+              selectData={cdtListResponse?.data?.data ?? []}
               selectDataLabel="description"
-              selectDataValue="key"
+              selectDataValue="id"
               renderMenuItem={(label, item) => (
                 <span>
-                  {item.cdtCode} / {item.description}
+                  {item.code} / {item.description}
                 </span>
               )}
               searchBy={(keyword, _, item: ItemDataType) =>
-                item.cdtCode.toLowerCase().includes(keyword.toLowerCase()) ||
+                item.code.toLowerCase().includes(keyword.toLowerCase()) ||
                 item.description.toLowerCase().includes(keyword.toLowerCase())
               }
               record={activePlannedTreatment}
               setRecord={setActivePlannedTreatment}
-            />
-            <MyInput
-              width={400}
-              fieldName="billingTypeLkey"
-              fieldType="select"
-              fieldLabel="Billing Type"
-              selectData={billingTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={activePlannedTreatment}
-              setRecord={setActivePlannedTreatment}
-                      disableByField='isValid'
-
             />
             <MyInput
               width={400}
@@ -360,30 +385,19 @@ const TreatmentPlanTab = ({
             />
           </Form>
         )}
-        actionButtonFunction={() =>
-          savePlannedTreatment({
-            ...activePlannedTreatment,
-            type: 'CURRENT',
-            encounterKey: encounter?.id,
-            patientKey: patient?.id,
-            fees: Math.min(99, Math.max(-99, Math.round(Number(activePlannedTreatment.fees) || 0))),
-            discount: Math.min(
-              99,
-              Math.max(-99, Math.round(Number(activePlannedTreatment.discount) || 0))
-            )
-          }).unwrap()
-        }
+        actionButtonFunction={saveActiveTreatment}
       />
 
-      <DeletionConfirmationModal
-        open={confirmDeleteOpen}
-        setOpen={setConfirmDeleteOpen}
-        itemToDelete="draft treatment"
-        actionButtonFunction={() => {
-          deletePlannedTreatment(draftPlannedTreatment).unwrap();
-          setConfirmDeleteOpen(false);
-        }}
-        actionType="delete"
+      <CancellationModal
+        title="Cancel Draft Treatment"
+        fieldLabel="Cancellation Reason"
+        open={confirmCancelOpen}
+        setOpen={setConfirmCancelOpen}
+        object={cancelForm}
+        setObject={setCancelForm}
+        handleCancle={handleCancelDraft}
+        fieldName="cancellationReason"
+        required={true}
       />
 
       <Box className="tab-content">
