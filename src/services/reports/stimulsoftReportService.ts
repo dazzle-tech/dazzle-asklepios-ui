@@ -546,28 +546,6 @@ export const stimulsoftReportService = createApi({
         };
       },
       invalidatesTags: ['StimulsoftReportTemplate'],
-      async onQueryStarted({ templateId }, { dispatch, getState, queryFulfilled }) {
-        const patches = stimulsoftReportService.util
-          .selectCachedArgsForQuery(getState(), 'getViewableStimulsoftDashboards')
-          .map(args =>
-            dispatch(
-              stimulsoftReportService.util.updateQueryData(
-                'getViewableStimulsoftDashboards',
-                args,
-                draft => {
-                  draft.forEach(item => {
-                    item.isUserDefault = item.id === templateId;
-                  });
-                }
-              )
-            )
-          );
-        try {
-          await queryFulfilled;
-        } catch {
-          patches.forEach(patch => patch.undo());
-        }
-      },
     }),
   }),
 });
