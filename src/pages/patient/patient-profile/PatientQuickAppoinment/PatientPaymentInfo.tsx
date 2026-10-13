@@ -68,6 +68,7 @@ import { extractPatientInsurancesList,
   resolveDisplayedEligibilityStatus,
   shouldShowCheckEligibilityAction
 } from '../cchiMappers';
+import { patientInsuranceRecordId, pickDefaultPatientInsurance } from '../insuranceDisplayUtils';
 
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 
@@ -761,6 +762,9 @@ const PatientPaymentInfo =
           null
         );
 
+      const userTouchedCoverageRef =
+        useRef(false);
+
       const [
         defaultServiceRows,
         setDefaultServiceRows
@@ -992,15 +996,30 @@ const PatientPaymentInfo =
           return;
         }
 
-        const storedCoverageType =
+        if (
+          encounterCoverage != null &&
+          Number(
+            encounterCoverage.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        if (
+          billingSummary != null &&
+          Number(
+            billingSummary.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        const savedCoverage =
           toBillingCoverageType(
-            encounterCoverage?.coverageType
+            localEncounter?.coverageType
           ) ??
           toBillingCoverageType(
             billingSummary?.coverageType
-          ) ??
-          toBillingCoverageType(
-            localEncounter?.coverageType
           );
 
         const storedInsuranceId =
@@ -1014,22 +1033,52 @@ const PatientPaymentInfo =
             localEncounter?.patientInsuranceId
           );
 
-        const nextCoverageType =
-          storedCoverageType ===
+        const apiCoverage =
+          toBillingCoverageType(
+            encounterCoverage?.coverageType
+          );
+
+        const paymentTypes = (
+          encounterCoverage as {
+            paymentTypes?: string | null;
+          } | null
+        )?.paymentTypes;
+
+        const savedChoice =
+          savedCoverage ===
+            'INSURANCE' ||
+          apiCoverage ===
             'INSURANCE' ||
           storedInsuranceId != null
             ? 'INSURANCE'
-            : storedCoverageType;
+            : savedCoverage ===
+                'SELF_PAY' ||
+              (paymentTypes !=
+                null &&
+                String(
+                  paymentTypes
+                ).trim() !==
+                  '')
+              ? 'SELF_PAY'
+              : null;
 
         if (
-          nextCoverageType !==
-            'INSURANCE' &&
-          storedInsuranceId == null
+          savedChoice !==
+          'INSURANCE'
         ) {
-          coverageHydratedEncounterIdRef.current =
-            encounterId;
+          if (
+            savedChoice ===
+            'SELF_PAY'
+          ) {
+            coverageHydratedEncounterIdRef.current =
+              encounterId;
+          }
+
           return;
         }
+
+        const nextCoverageType =
+          'INSURANCE';
 
         coverageHydratedEncounterIdRef.current =
           encounterId;
@@ -1453,6 +1502,169 @@ const PatientPaymentInfo =
             insuranceResponse.data
           ]
         );
+
+      useEffect(() => {
+        if (
+          !encounterId ||
+          userTouchedCoverageRef.current
+        ) {
+          return;
+        }
+
+        if (
+          coverageHydratedEncounterIdRef.current ===
+          encounterId
+        ) {
+          return;
+        }
+
+        if (
+          fetchingEncounterCoverage &&
+          encounterCoverage == null &&
+          billingSummary == null
+        ) {
+          return;
+        }
+
+        if (
+          encounterCoverage != null &&
+          Number(
+            encounterCoverage.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        if (
+          billingSummary != null &&
+          Number(
+            billingSummary.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        const savedCoverage =
+          toBillingCoverageType(
+            localEncounter?.coverageType
+          ) ??
+          toBillingCoverageType(
+            billingSummary?.coverageType
+          );
+
+        const storedInsuranceId =
+          toPositiveId(
+            encounterCoverage?.patientInsuranceId
+          ) ??
+          toPositiveId(
+            billingSummary?.patientInsuranceId
+          ) ??
+          toPositiveId(
+            localEncounter?.patientInsuranceId
+          );
+
+        const apiCoverage =
+          toBillingCoverageType(
+            encounterCoverage?.coverageType
+          );
+
+        if (
+          savedCoverage ===
+            'INSURANCE' ||
+          apiCoverage ===
+            'INSURANCE' ||
+          storedInsuranceId !=
+            null ||
+          savedCoverage ===
+            'SELF_PAY'
+        ) {
+          return;
+        }
+
+        const paymentTypes = (
+          encounterCoverage as {
+            paymentTypes?: string | null;
+          } | null
+        )?.paymentTypes;
+
+        if (
+          paymentTypes != null &&
+          String(paymentTypes).trim() !==
+            ''
+        ) {
+          return;
+        }
+
+        if (servicesArePrepared) {
+          coverageHydratedEncounterIdRef.current =
+            encounterId;
+          return;
+        }
+
+        if (
+          insuranceResponse.isLoading ||
+          insuranceResponse.isUninitialized ||
+          (insuranceResponse.isFetching &&
+            patientInsurances.length ===
+              0)
+        ) {
+          return;
+        }
+
+        const picked =
+          pickDefaultPatientInsurance(
+            patientInsurances
+          );
+
+        coverageHydratedEncounterIdRef.current =
+          encounterId;
+
+        if (!picked) {
+          return;
+        }
+
+        const insuranceId =
+          patientInsuranceRecordId(
+            picked
+          );
+
+        if (insuranceId == null) {
+          return;
+        }
+
+        setFormState(previous => {
+          if (
+            previous.coverageType ===
+              'INSURANCE' &&
+            String(
+              previous.patientInsuranceId ??
+                ''
+            ) === String(insuranceId)
+          ) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            coverageType:
+              'INSURANCE',
+            patientInsuranceId:
+              insuranceId
+          };
+        });
+      }, [
+        encounterId,
+        fetchingEncounterCoverage,
+        encounterCoverage,
+        billingSummary,
+        localEncounter?.coverageType,
+        localEncounter?.patientInsuranceId,
+        insuranceResponse.isLoading,
+        insuranceResponse.isUninitialized,
+        insuranceResponse.isFetching,
+        patientInsurances,
+        servicesArePrepared
+      ]);
 
       const filteredInsurances =
         useMemo(() => {
@@ -2105,6 +2317,13 @@ const PatientPaymentInfo =
       }, [
         encounterId,
         summaryRefreshKey
+      ]);
+
+      useEffect(() => {
+        userTouchedCoverageRef.current =
+          false;
+      }, [
+        encounterId
       ]);
 
       useEffect(() => {
@@ -5304,14 +5523,31 @@ const PatientPaymentInfo =
                 formState
               }
               setRecord={(updatedForm: BillingFormState) => {
+                userTouchedCoverageRef.current =
+                  true;
+                coverageHydratedEncounterIdRef.current =
+                  encounterId;
+
                 const nextCoverage =
                   updatedForm.coverageType;
+
+                const pickedInsuranceId =
+                  nextCoverage ===
+                    'INSURANCE' &&
+                  !updatedForm.patientInsuranceId
+                    ? patientInsuranceRecordId(
+                        pickDefaultPatientInsurance(
+                          patientInsurances
+                        )
+                      )
+                    : null;
 
                 setFormState({
                   ...updatedForm,
                   patientInsuranceId:
                     nextCoverage === 'INSURANCE'
-                      ? updatedForm.patientInsuranceId
+                      ? updatedForm.patientInsuranceId ??
+                        pickedInsuranceId
                       : null
                 });
               }}

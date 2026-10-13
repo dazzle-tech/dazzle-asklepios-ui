@@ -25,6 +25,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useLazyGetPatientFromCchiQuery, useRefreshPatientFromCchiMutation } from '@/services/waseel-integration/cchiService';
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
+import { newPatient } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, extractEligibilityErrorMessage, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -69,7 +70,9 @@ import {
   extractCchiInsurance,
   extractPatientInsurancesList,
   getCchiInsuranceStorageKey,
-  pickPatientFields
+  hasReturnedCchiDocument,
+  pickPatientFields,
+  wasCchiPatientFound
 } from './cchiMappers';
 import type { CchiMappedPatientResponse } from '@/services/waseel-integration/cchiService';
 import {
@@ -137,7 +140,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
   const [openCchiModal, setOpenCchiModal] = useState(false);
+  const [openCchiPatientChoiceModal, setOpenCchiPatientChoiceModal] = useState(false);
   const [cchiDocumentId, setCchiDocumentId] = useState('');
+  const cchiFetchModeRef = useRef<'new' | 'edit'>('edit');
   const [openEligibilityModal, setOpenEligibilityModal] = useState(false);
   const [selectedPatientInsuranceId, setSelectedPatientInsuranceId] = useState<number | null>(
     null
@@ -362,20 +367,37 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
-  const applyCchiMappedResponse = (mappedResponse: CchiMappedPatientResponse) => {
+  const applyCchiMappedResponse = (
+    mappedResponse: CchiMappedPatientResponse,
+    mode: 'new' | 'edit' = 'edit'
+  ) => {
     const rawInsurance = extractCchiInsurance(mappedResponse);
+    const replaceCurrentPatient = mode === 'new';
+    const basePatient = replaceCurrentPatient ? { ...newPatient } : localPatient;
+    const keptPatientId = replaceCurrentPatient
+      ? undefined
+      : localPatient?.id ?? mappedResponse.patient?.id;
+    const mappedDocument = mappedResponse.document;
+    const documentReturned = hasReturnedCchiDocument(mappedDocument);
+
+    if (replaceCurrentPatient) {
+      handleClear();
+    }
 
     setLocalPatient({
-      ...localPatient,
+      ...basePatient,
       ...pickPatientFields(mappedResponse.patient),
-      id: localPatient?.id ?? mappedResponse.patient?.id,
-      isCchiPatient: true
+      id: keptPatientId,
+      isCchiPatient: documentReturned
+        ? true
+        : replaceCurrentPatient
+          ? false
+          : Boolean(basePatient?.isCchiPatient)
     });
 
     setCchiAddress(mappedResponse.address ?? null);
 
-    const mappedDocument = mappedResponse.document;
-    if (mappedDocument) {
+    if (mappedDocument && documentReturned) {
       setCchiDocument?.({
         ...mappedDocument,
         id: null,
@@ -393,13 +415,17 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setCchiInsurance?.({
         ...rawInsurance,
         id: undefined,
-        patientId: localPatient?.id != null ? Number(localPatient.id) : undefined,
+        patientId:
+          !replaceCurrentPatient && localPatient?.id != null
+            ? Number(localPatient.id)
+            : undefined,
         isPrimary: rawInsurance.isPrimary ?? true
       } as PatientInsurance);
 
       const storageKey = getCchiInsuranceStorageKey(
-        localPatient?.id,
-        mappedResponse.patient?.documentId ?? localPatient?.documentId
+        replaceCurrentPatient ? undefined : localPatient?.id,
+        mappedResponse.patient?.documentId ??
+          (replaceCurrentPatient ? undefined : localPatient?.documentId)
       );
       if (storageKey) {
         sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
@@ -407,6 +433,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     } else {
       setCchiInsurance?.(null);
     }
+  };
+
+  const handleOpenFetchFromCchi = () => {
+    if (localPatient?.id) {
+      setOpenCchiPatientChoiceModal(true);
+      return;
+    }
+
+    cchiFetchModeRef.current = 'edit';
+    setOpenCchiModal(true);
+  };
+
+  const handleChooseClearCurrentPatient = () => {
+    cchiFetchModeRef.current = 'new';
+    setOpenCchiPatientChoiceModal(false);
+    setCchiDocumentId('');
+    setOpenCchiModal(true);
+  };
+
+  const handleChooseEditCurrentPatient = () => {
+    cchiFetchModeRef.current = 'edit';
+    setOpenCchiPatientChoiceModal(false);
+    setCchiDocumentId('');
+    setOpenCchiModal(true);
   };
 
   const handleFetchPatientFromCchi = async () => {
@@ -422,8 +472,48 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     try {
       const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
+      const fetchMode = cchiFetchModeRef.current;
+
+      if (
+        !wasCchiPatientFound(mappedResponse.patient, mappedResponse.document) &&
+        !hasReturnedCchiDocument(mappedResponse.document)
+      ) {
+        setOpenCchiModal(false);
+        setCchiDocumentId('');
+        dispatch(
+          notify({
+            msg: 'Patient was not found at Waseel, and no document was returned.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
       if (mappedResponse.alreadyExists && mappedResponse.patient) {
+        const returnedId = mappedResponse.patient.id;
+        const currentId = localPatient?.id;
+        const belongsToAnotherPatient =
+          fetchMode === 'edit' &&
+          currentId != null &&
+          returnedId != null &&
+          String(returnedId) !== String(currentId);
+
+        if (belongsToAnotherPatient) {
+          setOpenCchiModal(false);
+          setCchiDocumentId('');
+          dispatch(
+            notify({
+              msg: 'This document belongs to another patient already in the system. Clear the current patient if you want to load that record.',
+              sev: 'warning'
+            })
+          );
+          return;
+        }
+
+        if (fetchMode === 'new') {
+          handleClear();
+        }
+
         setLocalPatient(mappedResponse.patient);
         dispatch(setPatient(mappedResponse.patient));
         setCchiAddress(null);
@@ -435,26 +525,42 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         dispatch(
           notify({
             msg:
-              mappedResponse.message ||
-              'Patient already exists in the system. Loaded from local records.',
+              fetchMode === 'new'
+                ? `Current patient was cleared. ${
+                    mappedResponse.message ||
+                    'Patient already exists in the system. Loaded from local records.'
+                  }`
+                : mappedResponse.message ||
+                  'Patient already exists in the system. Loaded from local records.',
             sev: 'warning'
           })
         );
         return;
       }
 
-      applyCchiMappedResponse(mappedResponse);
+      applyCchiMappedResponse(mappedResponse, fetchMode);
 
       const rawInsurance = extractCchiInsurance(mappedResponse);
 
       setOpenCchiModal(false);
       setCchiDocumentId('');
 
+      const clearedCurrentPatient = fetchMode === 'new';
+      const editingCurrentPatient = fetchMode === 'edit' && localPatient?.id != null;
+
       dispatch(
         notify({
-          msg: rawInsurance
-            ? 'Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
-            : 'Patient data loaded from CCHI successfully',
+          msg: clearedCurrentPatient
+            ? rawInsurance
+              ? 'Current patient was cleared. Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+              : 'Current patient was cleared. Patient data loaded from CCHI successfully.'
+            : editingCurrentPatient
+              ? rawInsurance
+                ? 'Current patient updated from CCHI, including insurance. Review the data, then click Edit to save.'
+                : 'Current patient updated from CCHI. Review the data, then click Edit to save.'
+              : rawInsurance
+                ? 'Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+                : 'Patient data loaded from CCHI successfully',
           sev: 'success'
         })
       );
@@ -486,11 +592,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       const mappedResponse = await refreshPatientFromCchi(Number(localPatient.id)).unwrap();
       applyCchiMappedResponse(mappedResponse);
 
+      const documentReturned = hasReturnedCchiDocument(mappedResponse.document);
       const refreshedPatient = {
         ...localPatient,
         ...pickPatientFields(mappedResponse.patient),
         id: localPatient.id,
-        isCchiPatient: true
+        isCchiPatient: documentReturned ? true : Boolean(localPatient.isCchiPatient)
       };
 
       setLocalPatient(refreshedPatient);
@@ -987,7 +1094,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <Translate>Eligibility Check</Translate>
               </MyButton>
 
-              <MyButton onClick={() => setOpenCchiModal(true)}>
+              <MyButton onClick={handleOpenFetchFromCchi}>
                 <Translate>Fetch Patient from CCHI</Translate>
               </MyButton>
 
@@ -1246,6 +1353,52 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             ) : null}
           </Form>
+        }
+      />
+
+      <MyModal
+        open={openCchiPatientChoiceModal}
+        setOpen={setOpenCchiPatientChoiceModal}
+        title={<Translate>Patient Already Loaded</Translate>}
+        size="34vw"
+        bodyheight="auto"
+        pagesCount={1}
+        hideBack
+        hideActionBtn
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => setOpenCchiPatientChoiceModal(false)}
+        footerButtons={
+          <>
+            <MyButton
+              appearance="ghost"
+              prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+              onClick={handleChooseClearCurrentPatient}
+            >
+              Clear
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              disabled={localPatient?.patientStatus === 'MERGED'}
+              onClick={handleChooseEditCurrentPatient}
+            >
+              Edit Current Patient
+            </MyButton>
+          </>
+        }
+        content={
+          <Message showIcon type="warning">
+            <Translate>
+              {'A patient is currently loaded. Do you want to clear the current patient and fetch a new one, or edit the current patient?'}
+            </Translate>
+            {(localPatient?.firstName || localPatient?.medicalRecordNumber) && (
+              <div>
+                {[localPatient?.firstName, localPatient?.lastName].filter(Boolean).join(' ')}
+                {localPatient?.medicalRecordNumber
+                  ? ` (${localPatient.medicalRecordNumber})`
+                  : ''}
+              </div>
+            )}
+          </Message>
         }
       />
 
