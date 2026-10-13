@@ -7,7 +7,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { setSelectedDepartment } from '@/reducers/authSlice';
 import {
   useGetAmendmentSummariesQuery,
   useGetEncountersByPatientQuery,
@@ -15,7 +16,8 @@ import {
   useStartAmendmentMutation,
   type EncounterAmendmentSummary
 } from '@/services/encounters/patientEncounterService';
-import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useGetDepartmentByIdQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useLazyGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import type { Patient, PatientEncounter } from '@/types/model-types-new';
@@ -29,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import AmendmentHistoryModal from './AmendmentHistoryModal';
 
 const AMENDABLE_STATUSES = new Set(['COMPLETED', 'DISCHARGED']);
+export const PENDING_ENCOUNTER_OPEN_KEY = 'encounter-status-management.pending-open';
 
 const DepartmentName = ({ id }: { id?: number }) => {
   const { currentData, isFetching, isError } = useGetDepartmentByIdQuery(id ?? skipToken);
@@ -47,6 +50,10 @@ const PractitionerName = ({ id }: { id?: number }) => {
 const PatientVisits = ({ patient }: { patient: Patient }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const selectedDepartment = useAppSelector(state => state.auth.selectedDepartment);
+  const userId = useAppSelector(state => state.auth.user?.id);
+  const [fetchDepartmentById] = useLazyGetDepartmentByIdQuery();
+  const [fetchActiveDepartments] = useLazyGetActiveUserDepartmentsByUserQuery();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [amendTarget, setAmendTarget] = useState<PatientEncounter | null>(null);
@@ -83,20 +90,91 @@ const PatientVisits = ({ patient }: { patient: Patient }) => {
   const [startAmendment, { isLoading: isStartingAmendment }] = useStartAmendmentMutation();
   const [finishAmendment, { isLoading: isFinishingAmendment }] = useFinishAmendmentMutation();
 
-  const openEncounter = (row: PatientEncounter, amendmentOpen: boolean) => {
+  const openEncounter = async (row: PatientEncounter, amendmentOpen: boolean) => {
     const encounter = amendmentOpen
       ? { ...row, status: 'ONGOING', treatmentStatus: 'ONGOING' }
       : row;
-    navigate('/encounter', {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'Encounter_Status_Management',
-        patient,
-        encounter,
-        viewMode: amendmentOpen ? undefined : 'readOnly',
-        isAmendmentOpen: amendmentOpen
-      }
-    });
+    const navigationState = {
+      info: 'toEncounter',
+      fromPage: 'Encounter_Status_Management',
+      patient,
+      encounter,
+      viewMode: amendmentOpen ? undefined : 'readOnly',
+      isAmendmentOpen: amendmentOpen
+    };
+
+    if (row.departmentId == null) {
+      dispatch(notify({ msg: 'This encounter has no department.', sev: 'warning' }));
+      return;
+    }
+
+    let department: { id?: number; name?: string; facilityId?: string | number | null } | undefined;
+    try {
+      department = await fetchDepartmentById(row.departmentId).unwrap();
+    } catch {
+      department = undefined;
+    }
+    if (department?.id == null) {
+      dispatch(notify({ msg: 'The encounter department could not be found.', sev: 'warning' }));
+      return;
+    }
+
+    if (userId == null) {
+      dispatch(notify({ msg: 'You do not have permission to access this department.', sev: 'warning' }));
+      return;
+    }
+
+    let assignments: Array<{
+      departmentId?: string | number | null;
+      facilityId?: string | number | null;
+      departmentName?: string | null;
+      facilityName?: string | null;
+    }> = [];
+    try {
+      assignments = await fetchActiveDepartments({
+        userId,
+        facilityId: department.facilityId ?? selectedDepartment?.facilityId ?? 'no-facility'
+      }).unwrap();
+    } catch {
+      dispatch(notify({ msg: 'You do not have permission to access this department.', sev: 'warning' }));
+      return;
+    }
+
+    const assignment = assignments.find(
+      item => String(item.departmentId ?? '') === String(row.departmentId)
+    );
+    if (!assignment) {
+      dispatch(notify({ msg: 'You do not have permission to access this department.', sev: 'warning' }));
+      return;
+    }
+
+    const nextDepartment = {
+      departmentId: row.departmentId,
+      facilityId: assignment.facilityId ?? department.facilityId ?? null,
+      departmentName: assignment.departmentName ?? department.name ?? null,
+      facilityName: assignment.facilityName ?? null
+    };
+    const alreadySelected =
+      String(selectedDepartment?.departmentId ?? '') === String(nextDepartment.departmentId ?? '') &&
+      String(selectedDepartment?.facilityId ?? '') === String(nextDepartment.facilityId ?? '');
+
+    if (alreadySelected) {
+      navigate('/encounter', { state: navigationState });
+      return;
+    }
+
+    dispatch(setSelectedDepartment(nextDepartment));
+    sessionStorage.setItem(
+      PENDING_ENCOUNTER_OPEN_KEY,
+      JSON.stringify({
+        departmentId: nextDepartment.departmentId,
+        facilityId: nextDepartment.facilityId,
+        state: navigationState
+      })
+    );
+    setTimeout(() => {
+      window.location.reload();
+    }, 50);
   };
 
   const confirmAmendment = async () => {

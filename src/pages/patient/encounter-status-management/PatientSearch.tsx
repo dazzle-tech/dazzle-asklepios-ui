@@ -21,6 +21,7 @@ type SearchRecord = { field: SearchField; keyword: string };
 type Props = {
   selectedPatientId?: number;
   onSelectPatient: (patient: Patient) => void;
+  onClear: () => void;
 };
 
 const searchFields = [
@@ -40,7 +41,7 @@ const DocumentNumber = ({ patientId }: { patientId?: number }) => {
   return <>{currentData?.number || '-'}</>;
 };
 
-const PatientSearch = ({ selectedPatientId, onSelectPatient }: Props) => {
+const PatientSearch = ({ selectedPatientId, onSelectPatient, onClear }: Props) => {
   const [record, setRecord] = useState<SearchRecord>(initialSearch);
   const [search, setSearch] = useState<SearchRecord | null>(null);
   const [page, setPage] = useState(0);
@@ -158,6 +159,7 @@ const PatientSearch = ({ selectedPatientId, onSelectPatient }: Props) => {
                 setRecord(initialSearch);
                 setSearch(null);
                 setPage(0);
+                onClear();
               }}
             >
               Clear
