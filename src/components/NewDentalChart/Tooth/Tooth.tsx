@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
+import { toothImageCodeFromEnum } from '@/utils/toothNumber';
 
 interface ToothProps {
   chartTooth: any;
@@ -19,8 +20,8 @@ const Tooth = ({
   const [overlayImage, setOverlayImage] = useState<string | null>(null);
 
   const hasImplant = useMemo(() => {
-    return chartTooth?.toothActions?.some((action: any) => action.imageName === 'Implant');
-  }, [chartTooth?.toothActions]);
+    return chartTooth?.actions?.some((action: any) => action.imageName === 'Implant');
+  }, [chartTooth?.actions]);
 
   const loadBaseImage = (toothNumber: string): string | undefined => {
     try {
@@ -95,9 +96,9 @@ const Tooth = ({
   };
 
   useEffect(() => {
-    const baseImage = loadBaseImage(chartTooth?.toothNumber);
+    const baseImage = loadBaseImage(chartTooth?.toothNumber ? toothImageCodeFromEnum(chartTooth.toothNumber) : undefined);
     if (!chartTooth?.missing && !hasImplant && baseImage) {
-      if (hasCondition || hasTreatment || selected || chartTooth?.toothActions?.length > 0) {
+      if (hasCondition || hasTreatment || selected || chartTooth?.actions?.length > 0) {
         createColorOverlay(baseImage, hasCondition, hasTreatment, selected);
       } else {
         setOverlayImage(null);
@@ -107,7 +108,7 @@ const Tooth = ({
     }
   }, [chartTooth, hasImplant, hasCondition, hasTreatment, selected]);
 
-  const baseToothImage = loadBaseImage(chartTooth?.toothNumber);
+  const baseToothImage = loadBaseImage(chartTooth?.toothNumber ? toothImageCodeFromEnum(chartTooth.toothNumber) : undefined);
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>

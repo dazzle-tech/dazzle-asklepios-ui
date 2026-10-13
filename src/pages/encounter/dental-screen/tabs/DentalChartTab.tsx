@@ -5,9 +5,9 @@ import Translate from '@/components/Translate';
 import DentalChart from '@/components/NewDentalChart';
 import ToothActionCard from '@/components/NewDentalChart/ToothActionCard/ToothActionCard';
 import { newApDentalChartTooth } from '@/types/model-types-constructor';
-import { useGetActionsQuery, useGetChartDataQuery } from '@/services/dentalService';
-import { useGetCdtsQuery, useGetDentalActionsQuery, useGetServicesQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
+import { useGetChartByIdQuery } from '@/services/dental/dentalChartService';
+import { useGetAllDentalActionsQuery } from '@/services/setup/dental-action/dentalActionService';
+import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';
 import { Box, Typography } from '@mui/material';
 import './styles.less';
 import ToothIcon from '@/images/svgs/ToothIcon';
@@ -20,8 +20,8 @@ const ChartTab = ({
   setCurrentChart,
   originalChart,
   previousCharts,
-  selectedPreviousChartKey,
-  setSelectedPreviousChartKey,
+  selectedPreviousChartId,
+  setSelectedPreviousChartId,
   selectedTooth,
   setSelectedTooth,
   cancelPreviousChartView,
@@ -29,27 +29,24 @@ const ChartTab = ({
   setTreatmentPlanTrigger,
   isLoading
 }) => {
-  const dentalActionsRes = useGetActionsQuery({ ...initialListRequest, pageSize: 1000 });
+  const dentalActionsRes = useGetAllDentalActionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
 
-  const {data:serviceList}=useGetServicesByCategoryQuery({page:0,size:1000,category:'DENTAL'});
-  const dentalServicesRes = useGetServicesQuery({
-    ...initialListRequest,
-    filters: [{ fieldName: 'category_lkey', operator: 'match', value: '6418596687583232' }],
-    pageSize: 1000
+  const { data: serviceList, isLoading: servicesLoading } = useGetServicesByCategoryQuery({
+    page: 0,
+    size: 1000,
+    category: 'DENTAL'
   });
-  const cdtListRes = useGetCdtsQuery({
-    ...initialListRequest,
-    filters: [{ fieldName: 'type_lkey', operator: 'match', value: '277273303968200' }],
-    pageSize: 1000
-  });
-  const prevChartRes = useGetChartDataQuery(selectedPreviousChartKey, {
-    skip: !selectedPreviousChartKey
+
+  const cdtListRes = useGetAllCdtQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
+  const prevChartRes = useGetChartByIdQuery(selectedPreviousChartId, {
+    skip: !selectedPreviousChartId
   });
 
   const dentalActionsMap = useMemo(() => {
     if (dentalActionsRes.isSuccess) {
-      return dentalActionsRes.data.object.reduce((acc, item) => {
-        acc[item.key] = item;
+      return (dentalActionsRes.data?.data ?? []).reduce((acc, item) => {
+        acc[item.id] = item;
         return acc;
       }, {});
     }
@@ -57,19 +54,16 @@ const ChartTab = ({
   }, [dentalActionsRes.data]);
 
   const dentalServicesMap = useMemo(() => {
-    if (dentalServicesRes.isSuccess) {
-      return dentalServicesRes.data.object.reduce((acc, item) => {
-        acc[item.key] = item;
-        return acc;
-      }, {});
-    }
-    return {};
-  }, [dentalServicesRes.data]);
+    return (serviceList?.data ?? []).reduce((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {});
+  }, [serviceList]);
 
   const cdtMap = useMemo(() => {
     if (cdtListRes.isSuccess) {
-      return cdtListRes.data.object.reduce((acc, item) => {
-        acc[item.key] = item;
+      return (cdtListRes.data?.data ?? []).reduce((acc, item) => {
+        acc[item.id] = item;
         return acc;
       }, {});
     }
@@ -77,12 +71,12 @@ const ChartTab = ({
   }, [cdtListRes.data]);
 
   useEffect(() => {
-    if (prevChartRes.isSuccess && prevChartRes.data.object) {
-      setCurrentChart(prevChartRes.data.object);
+    if (prevChartRes.isSuccess && prevChartRes.data) {
+      setCurrentChart(prevChartRes.data);
     }
   }, [prevChartRes]);
 
-  const isPreviewingHistory = currentChart.key !== originalChart.key;
+  const isPreviewingHistory = currentChart?.id !== originalChart?.id;
 
   return (
     <Box className="dental-chart-tab-container">
@@ -106,18 +100,18 @@ const ChartTab = ({
                   placeholder="Previous Charts"
                   data={previousCharts}
                   labelKey="chartDate"
-                  valueKey="key"
-                  value={selectedPreviousChartKey}
+                  valueKey="id"
+                  value={selectedPreviousChartId}
                   style={{ width: 200 }}
                   onChange={val =>
-                    val ? setSelectedPreviousChartKey(val) : cancelPreviousChartView()
+                    val ? setSelectedPreviousChartId(val) : cancelPreviousChartView()
                   }
                   onClean={cancelPreviousChartView}
                 />
               </ButtonToolbar>
             </Stack>
 
-            {selectedTooth?.key && (
+            {selectedTooth?.id && (
               <Box className="selected-tooth-cleaner">
                 <small>
                   (Selected Tooth <strong>#{selectedTooth?.toothNumber}</strong>)
@@ -145,16 +139,16 @@ const ChartTab = ({
             setChartObject={setCurrentChart}
             selectedTooth={selectedTooth}
             setSelectedTooth={setSelectedTooth}
-              dentalActionsList={dentalActionsRes.data?.object ?? []}
+            dentalActionsList={dentalActionsRes.data?.data ?? []}
             dentalActionsMap={dentalActionsMap}
             dentalServicesList={serviceList?.data ?? []}
             dentalServicesMap={dentalServicesMap}
-            cdtList={cdtListRes.data?.object ?? []}
+            cdtList={cdtListRes.data?.data ?? []}
             cdtMap={cdtMap}
             treatmentPlanTrigger={treatmentPlanTrigger}
             setTreatmentPlanTrigger={setTreatmentPlanTrigger}
             cdtLoading={cdtListRes.isLoading}
-            servicesLoading={dentalServicesRes.isLoading}
+            servicesLoading={servicesLoading}
           />
         )}
       </Panel>
@@ -181,14 +175,16 @@ const ChartTab = ({
         ) : currentChart?.chartActions?.length ? (
           currentChart.chartActions.map(tooth => (
             <ToothActionCard
-              key={tooth.key}
-              date={tooth.createdAt}
+              key={tooth.id}
+              date={Date.now()}
               toothNumber={tooth.toothNumber}
-              action={dentalActionsMap[tooth.actionKey]?.description || '-'}
+              action={dentalActionsMap[tooth.dentalActionId]?.description || '-'}
               type={
-                dentalActionsMap[tooth.actionKey]?.type === 'treatment' ? 'Treatment' : 'Condition'
+                dentalActionsMap[tooth.dentalActionId]?.type === 'TREATMENT'
+                  ? 'Treatment'
+                  : 'Condition'
               }
-              surface={tooth.surfaceLvalue?.lovDisplayVale ?? '-'}
+              surface={tooth.surface ?? '-'}
               note={tooth.note}
               existing={tooth.existing}
             />

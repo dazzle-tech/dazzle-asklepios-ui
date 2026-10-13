@@ -1503,10 +1503,25 @@ export interface prescriptionInstructions {
   frequency: string;
 }
 
+// Shape sent when CREATING a CDT<->DentalAction link (plain id).
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
   cdtId: number;
+}
+
+// Shape actually RETURNED by GET endpoints (CdtDentalActionResponseVM) -- the setup-service
+// controller nests the full CdtCode object under `cdtId`, it is not a plain number here.
+export interface CdtDentalActionResponseVM {
+  id: number;
+  dentalActionId: number;
+  cdtId: {
+    id: number;
+    code?: string;
+    description?: string;
+    cdtClass?: string;
+    isActive?: boolean;
+  } | null;
 }
 
 export interface BrandMedicationActiveIngredient {
@@ -8358,4 +8373,207 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReportUpdateDTO {
   criticalFindings?: string | null;
   radiologistComments?: string | null;
   severity?: string | null;
+}
+
+/* =========================
+ *  Dental Chart (Phase C)
+ * ========================= */
+
+export type ToothSurface =
+  | 'MESIAL'
+  | 'DISTAL'
+  | 'BUCCAL'
+  | 'LINGUAL'
+  | 'OCCLUSAL'
+  | 'INCISAL'
+  | 'FACIAL'
+  | 'WHOLE_TOOTH';
+
+export type DentalActionType = 'CONDITION' | 'TREATMENT';
+
+export type DentalChartType = string;
+export type DentalChartStatus = string;
+
+export type PlannedTreatmentType = 'DRAFT' | 'CURRENT';
+
+export type ToothActionOrServiceSource =
+  | 'DENTAL_CHART_CDT_TREATMENT'
+  | 'DENTAL_CHART_MANUAL_SERVICE'
+  | string;
+
+export interface ToothActionDTO {
+  id: number;
+  toothId: number;
+  dentalActionId: number;
+  note?: string | null;
+  surface?: ToothSurface | null;
+  existing?: boolean | null;
+  imageName?: string | null;
+  toothNumber?: ToothNumber | null;
+  cancelled?: boolean | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface ToothActionLogDTO {
+  id: number;
+  toothId: number;
+  dentalActionId: number;
+  logType: string;
+  logTime?: string | null;
+  logOwner?: string | null;
+}
+
+export interface ToothCdtDTO {
+  id: number;
+  toothId: number;
+  cdtCodeId: number;
+  source?: ToothActionOrServiceSource | null;
+  toothActionId?: number | null;
+  surface?: ToothSurface | null;
+  cancelled?: boolean | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface ToothServiceDTO {
+  id: number;
+  toothId: number;
+  serviceId: number;
+  source?: ToothActionOrServiceSource | null;
+  toothActionId?: number | null;
+  price?: number | null;
+  cancelled?: boolean | null;
+  cancelledBy?: string | null;
+  cancelledDate?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface DentalChartToothDTO {
+  id: number;
+  chartId: number;
+  toothNumber: ToothNumber;
+  missing?: boolean | null;
+  actions: ToothActionDTO[];
+  history: ToothActionLogDTO[];
+  services: ToothServiceDTO[];
+  cdts: ToothCdtDTO[];
+}
+
+export interface DentalChartToothSummaryDTO {
+  id: number;
+  chartId: number;
+  toothNumber: ToothNumber;
+  missing?: boolean | null;
+}
+
+export interface DentalChartSummaryDTO {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  chartDate?: string | null;
+  chartType?: DentalChartType | null;
+  status?: DentalChartStatus | null;
+}
+
+export interface DentalChartResponseDTO {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  chartDate?: string | null;
+  chartType?: DentalChartType | null;
+  status?: DentalChartStatus | null;
+  treatmentPlan?: string | null;
+  teeth: DentalChartToothDTO[];
+  chartActions: ToothActionDTO[];
+  historyCharts: DentalChartSummaryDTO[];
+}
+
+export interface ChartUpdateDTO {
+  chartDate?: string | null;
+  chartType?: DentalChartType | null;
+  status?: DentalChartStatus | null;
+  treatmentPlan?: string | null;
+}
+
+export interface ToothActionSaveDTO {
+  id?: number | null;
+  toothId: number;
+  dentalActionId: number;
+  note?: string | null;
+  surface?: ToothSurface | null;
+  cdtCodeId?: number | null;
+  existing?: boolean | null;
+}
+
+export interface ToothActionCancelDTO {
+  cancellationReason: string;
+}
+
+export interface ToothServiceSaveDTO {
+  toothId: number;
+  serviceId: number;
+}
+
+export interface ToothServiceCancelDTO {
+  cancellationReason: string;
+}
+
+export interface ProgressNoteDTO {
+  id: number;
+  chartId: number;
+  note: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+}
+
+export interface ProgressNoteSaveDTO {
+  id?: number | null;
+  note: string;
+}
+
+export interface PlannedTreatmentDTO {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  type: PlannedTreatmentType;
+  visitNumber?: number | null;
+  cdtCodeId?: number | null;
+  toothId?: number | null;
+  note?: string | null;
+  surface?: ToothSurface | null;
+  fees?: number | null;
+  insurance?: number | null;
+  discount?: number | null;
+  source?: ToothActionOrServiceSource | null;
+  toothActionId?: number | null;
+  cancelled?: boolean | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  tooth?: DentalChartToothSummaryDTO | null;
+}
+
+export interface PlannedTreatmentSaveDTO {
+  patientId: number;
+  encounterId: number;
+  type: PlannedTreatmentType;
+  visitNumber?: number | null;
+  cdtCodeId?: number | null;
+  toothId?: number | null;
+  note?: string | null;
+  surface?: ToothSurface | null;
+  fees?: number | null;
+  insurance?: number | null;
+  discount?: number | null;
+}
+
+export interface PlannedTreatmentCancelDTO {
+  cancellationReason: string;
+}
+
+export interface DentalTreatmentPlanResponseDTO {
+  draftTreatments: PlannedTreatmentDTO[];
+  currentTreatments: PlannedTreatmentDTO[];
 }

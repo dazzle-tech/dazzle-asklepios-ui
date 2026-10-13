@@ -17,7 +17,7 @@ const ToothCdtTab: React.FC<ToothCdtTabProps> = ({ selectedTooth, cdtMap }) => {
       title: 'Code',
       align: 'center' as const,
       render: (rowData: any) => (
-        <Translate>{cdtMap[rowData.cdtKey]?.cdtCode ?? rowData.cdtKey}</Translate>
+        <Translate>{cdtMap[rowData.cdtCodeId]?.code ?? rowData.cdtCodeId}</Translate>
       )
     },
     {
@@ -25,15 +25,14 @@ const ToothCdtTab: React.FC<ToothCdtTabProps> = ({ selectedTooth, cdtMap }) => {
       title: 'CDT',
       align: 'center' as const,
       render: (rowData: any) => (
-        <Translate>{cdtMap[rowData.cdtKey]?.description ?? 'Loadingss...'}</Translate>
+        <Translate>{cdtMap[rowData.cdtCodeId]?.description ?? 'Loadingss...'}</Translate>
       )
     },
     {
       key: 'surface',
       title: 'Surface',
       align: 'center' as const,
-      render: (rowData: any) =>
-        rowData.surfaceLvalue ? rowData.surfaceLvalue.lovDisplayVale : rowData.surfaceLkey
+      render: (rowData: any) => rowData.surface
     },
     {
       key: 'source',
@@ -57,7 +56,7 @@ const ToothCdtTab: React.FC<ToothCdtTabProps> = ({ selectedTooth, cdtMap }) => {
     }
   ];
 
-  return <MyTable data={selectedTooth.toothCdts || []} columns={columns} height={400} />;
+  return <MyTable data={selectedTooth.cdts || []} columns={columns} height={400} />;
 };
 
 export default ToothCdtTab;
