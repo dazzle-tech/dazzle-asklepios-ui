@@ -8409,7 +8409,9 @@ export interface ToothActionDTO {
   surface?: ToothSurface | null;
   existing?: boolean | null;
   imageName?: string | null;
-  toothNumber?: ToothNumber | null;
+  // Plain string, not the strict ToothNumber union: holds either a permanent
+  // ("Tooth5") or primary/child ("ToothC") tooth identifier.
+  toothNumber?: string | null;
   cancelled?: boolean | null;
   cancelledBy?: string | null;
   cancelledDate?: string | null;
@@ -8454,7 +8456,8 @@ export interface ToothServiceDTO {
 export interface DentalChartToothDTO {
   id: number;
   chartId: number;
-  toothNumber: ToothNumber;
+  // Plain string: "Tooth5" (permanent) or "ToothC" (primary/child).
+  toothNumber: string;
   missing?: boolean | null;
   actions: ToothActionDTO[];
   history: ToothActionLogDTO[];
@@ -8465,7 +8468,7 @@ export interface DentalChartToothDTO {
 export interface DentalChartToothSummaryDTO {
   id: number;
   chartId: number;
-  toothNumber: ToothNumber;
+  toothNumber: string;
   missing?: boolean | null;
 }
 

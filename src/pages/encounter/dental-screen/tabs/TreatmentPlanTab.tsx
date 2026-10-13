@@ -16,7 +16,7 @@ import {
 } from '@/services/dental/dentalTreatmentPlanService';
 import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';
 import { newApDentalPlannedTreatment } from '@/types/model-types-constructor';
-import { toothIndexFromEnum } from '@/utils/toothNumber';
+import { toothDisplayLabel } from '@/utils/toothNumber';
 import MyModal from '@/components/MyModal/MyModal';
 import { Form, Panel, Tabs } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
@@ -229,7 +229,7 @@ const TreatmentPlanTab = ({
       key: 'tooth',
       title: <Translate>Tooth</Translate>,
       render: row =>
-        row.tooth?.toothNumber ? toothIndexFromEnum(row.tooth.toothNumber) : row.toothId
+        row.tooth?.toothNumber ? toothDisplayLabel(row.tooth.toothNumber) : row.toothId
     },
     {
       key: 'surface',
