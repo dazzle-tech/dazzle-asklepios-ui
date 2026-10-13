@@ -420,6 +420,11 @@
   }
 
   &__encounter-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    text-align: start;
     border: 1px solid var(--rs-border-primary, #e5e5ea);
     border-radius: 8px;
     padding: 10px 12px;
@@ -442,6 +447,23 @@
     gap: 8px;
     margin-top: 6px;
     font-size: 12px;
+    color: var(--rs-text-secondary, #8e8e93);
+  }
+
+  &__encounter-person {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    direction: ltr;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rs-text-primary, #1a1a1a);
+  }
+
+  &__encounter-person-label {
+    font-weight: 500;
     color: var(--rs-text-secondary, #8e8e93);
   }
 

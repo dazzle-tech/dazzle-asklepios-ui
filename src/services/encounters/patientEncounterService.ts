@@ -126,6 +126,26 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+export type EncounterExecutedServiceLine = {
+  id: number;
+  cancelled: boolean;
+  paymentStatus: string | null;
+  chargedAt: string | null;
+  source: string | null;
+  type: string | null;
+  code: string | null;
+  item: string | null;
+  quantity: number | null;
+  priceSource: string | null;
+  unitPrice: number | null;
+  netAmount: number | null;
+  patientShareAmount: number | null;
+  insuranceShareAmount: number | null;
+  currency: string | null;
+  grossAmount: number | null;
+  patientPaidAmount: number | null;
+};
+
 export type EncounterListVM = {
   id: number;
   patientId: number | null;
@@ -146,6 +166,10 @@ export type EncounterListVM = {
   practitionerName: string | null;
   defaultServiceName: string | null;
   amount: number | null;
+  calculatedTotal: number | null;
+  patientTotal: number | null;
+  insuranceTotal: number | null;
+  patientPaidTotal: number | null;
   paymentStatus: string | null;
   coverageType: string | null;
   paymentType: string | null;
@@ -592,6 +616,25 @@ export const patientEncounterService = createApi({
             'PatientEncounter',
           ]
           : ['PatientEncounter'],
+    }),
+
+    getEncounterExecutedServices: builder.query<
+      {
+        encounterId: number;
+        encounterNumber: string | null;
+        patientName: string | null;
+        coverageType: string | null;
+        calculatedTotal: number | null;
+        patientTotal: number | null;
+        insuranceTotal: number | null;
+        lines: EncounterExecutedServiceLine[];
+      },
+      number
+    >({
+      query: encounterId => ({
+        url: `/api/patient/encounter/${encounterId}/executed-services`,
+        method: 'GET',
+      }),
     }),
 
 
@@ -1105,6 +1148,8 @@ export const {
   useLazySearchBillingPendingQueueQuery,
   useGetEncounterListQuery,
   useLazyGetEncounterListQuery,
+  useGetEncounterExecutedServicesQuery,
+  useLazyGetEncounterExecutedServicesQuery,
   useReopenEncounterMutation,
   useStartAmendmentMutation,
   useFinishAmendmentMutation,
