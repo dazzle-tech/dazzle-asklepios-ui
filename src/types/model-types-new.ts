@@ -8412,6 +8412,8 @@ export interface ToothActionDTO {
   // Plain string, not the strict ToothNumber union: holds either a permanent
   // ("Tooth5") or primary/child ("ToothC") tooth identifier.
   toothNumber?: string | null;
+  anesthesiaUsed?: string | null;
+  dose?: string | null;
   cancelled?: boolean | null;
   cancelledBy?: string | null;
   cancelledDate?: string | null;
@@ -8509,6 +8511,8 @@ export interface ToothActionSaveDTO {
   surface?: ToothSurface | null;
   cdtCodeId?: number | null;
   existing?: boolean | null;
+  anesthesiaUsed?: string | null;
+  dose?: string | null;
 }
 
 export interface ToothActionCancelDTO {
@@ -8547,9 +8551,7 @@ export interface PlannedTreatmentDTO {
   toothId?: number | null;
   note?: string | null;
   surface?: ToothSurface | null;
-  fees?: number | null;
   insurance?: number | null;
-  discount?: number | null;
   source?: ToothActionOrServiceSource | null;
   toothActionId?: number | null;
   cancelled?: boolean | null;
@@ -8567,9 +8569,7 @@ export interface PlannedTreatmentSaveDTO {
   toothId?: number | null;
   note?: string | null;
   surface?: ToothSurface | null;
-  fees?: number | null;
   insurance?: number | null;
-  discount?: number | null;
 }
 
 export interface PlannedTreatmentCancelDTO {

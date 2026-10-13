@@ -653,9 +653,7 @@ export const newApDentalPlannedTreatment: Partial<import("./model-types-new").Pl
 	toothId: null,
 	note: '',
 	surface: null,
-	fees: 0,
 	insurance: 0,
-	discount: 0,
 }
 
 export const newApDepartment:modelTypes.ApDepartment = { 
