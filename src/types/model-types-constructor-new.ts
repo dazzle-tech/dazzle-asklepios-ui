@@ -1738,7 +1738,7 @@ export const newPatient: modelTypes.Patient = {
   lastNameSecondaryLang: '',
 
   primaryMobileNumber: '',
-  receiveSms: false,
+  receiveSms: true,
   secondMobileNumber: '',
   homePhone: '',
   workPhone: '',
