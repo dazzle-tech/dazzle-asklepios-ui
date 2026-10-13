@@ -120,12 +120,20 @@ const TreatmentPlanTab = ({
     toothId: treatment.toothId ?? null,
     note: treatment.note ?? null,
     surface: treatment.surface ?? null,
-    fees: Math.min(99, Math.max(-99, Math.round(Number(treatment.fees) || 0))),
-    insurance: treatment.insurance ?? 0,
-    discount: Math.min(99, Math.max(-99, Math.round(Number(treatment.discount) || 0)))
+    insurance: treatment.insurance ?? 0
   });
 
+  const handleErrorMessage = (missingFields: string[]) => {
+    if (missingFields.length === 0) return false;
+    dispatch({
+      type: 'NOTIFY',
+      payload: { msg: `Required: ${missingFields.join(', ')}`, sev: 'error' }
+    });
+    return true;
+  };
+
   const saveDraftTreatment = () => {
+    if (handleErrorMessage(!draftPlannedTreatment.cdtCodeId ? ['CDT'] : [])) return;
     const body = buildSavePayload(draftPlannedTreatment, 'DRAFT');
     if (draftPlannedTreatment.id) {
       updatePlannedTreatment({ id: draftPlannedTreatment.id, body }).unwrap();
@@ -135,6 +143,7 @@ const TreatmentPlanTab = ({
   };
 
   const saveActiveTreatment = () => {
+    if (handleErrorMessage(!activePlannedTreatment.cdtCodeId ? ['CDT'] : [])) return;
     const body = buildSavePayload(activePlannedTreatment, 'CURRENT');
     if (activePlannedTreatment.id) {
       updatePlannedTreatment({ id: activePlannedTreatment.id, body }).unwrap();
@@ -237,16 +246,6 @@ const TreatmentPlanTab = ({
       render: row => row.surface
     },
     {
-      key: 'fees',
-      title: <Translate>Fees</Translate>,
-      render: row => row.fees ?? '-'
-    },
-    {
-      key: 'discount',
-      title: <Translate>Discount</Translate>,
-      render: row => row.discount ?? '-'
-    },
-    {
       key: 'note',
       title: <Translate>Note</Translate>,
       render: row => row.note || '-'
@@ -302,6 +301,7 @@ const TreatmentPlanTab = ({
             />
             <MyInput
               width={400}
+              required
               fieldName="cdtCodeId"
               fieldLabel="CDT"
               fieldType="select"
@@ -343,6 +343,7 @@ const TreatmentPlanTab = ({
           <Form>
             <MyInput
               width={400}
+              required
               disabled={!!activePlannedTreatment.id}
               fieldName="cdtCodeId"
               fieldLabel="CDT"
@@ -359,20 +360,6 @@ const TreatmentPlanTab = ({
                 item.code.toLowerCase().includes(keyword.toLowerCase()) ||
                 item.description.toLowerCase().includes(keyword.toLowerCase())
               }
-              record={activePlannedTreatment}
-              setRecord={setActivePlannedTreatment}
-            />
-            <MyInput
-              width={400}
-              fieldName="fees"
-              fieldType="number"
-              record={activePlannedTreatment}
-              setRecord={setActivePlannedTreatment}
-            />
-            <MyInput
-              width={400}
-              fieldName="discount"
-              fieldType="number"
               record={activePlannedTreatment}
               setRecord={setActivePlannedTreatment}
             />

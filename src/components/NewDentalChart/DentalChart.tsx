@@ -63,7 +63,9 @@ const DentalChart = ({
     dentalActionId: null,
     surface: null,
     note: '',
-    existing: false
+    existing: false,
+    anesthesiaUsed: '',
+    dose: ''
   });
 
   const [currentToothService, setCurrentToothService] = useState({
@@ -98,7 +100,22 @@ const DentalChart = ({
     }
   }, [chartObject]);
 
+  const handleErrorMessage = (missingFields: string[]) => {
+    if (missingFields.length === 0) return false;
+    dispatch(notify({ msg: `Required: ${missingFields.join(', ')}`, sev: 'error' }));
+    return true;
+  };
+
   const addAction = () => {
+    const action = dentalActionsMap?.[currentToothAction.dentalActionId];
+    const missingFields: string[] = [];
+    if (!currentToothAction.dentalActionId) missingFields.push('Dental Action');
+    if (!currentToothAction.surface) missingFields.push('Surface');
+    if (action?.type === 'TREATMENT' && !currentToothAction.existing && !selectedCdt) {
+      missingFields.push('CDT Code');
+    }
+    if (handleErrorMessage(missingFields)) return;
+
     addToothAction({
       id: currentToothAction.id,
       toothId: selectedTooth.id,
@@ -106,7 +123,9 @@ const DentalChart = ({
       surface: currentToothAction.surface,
       note: currentToothAction.note,
       existing: currentToothAction.existing,
-      cdtCodeId: selectedCdt
+      cdtCodeId: selectedCdt,
+      anesthesiaUsed: currentToothAction.anesthesiaUsed,
+      dose: currentToothAction.dose
     }).unwrap();
   };
 
@@ -117,7 +136,9 @@ const DentalChart = ({
         dentalActionId: null,
         surface: null,
         note: '',
-        existing: false
+        existing: false,
+        anesthesiaUsed: '',
+        dose: ''
       });
       setSelectedCdt('');
 
@@ -177,7 +198,9 @@ const DentalChart = ({
         dentalActionId: null,
         surface: null,
         note: '',
-        existing: false
+        existing: false,
+        anesthesiaUsed: '',
+        dose: ''
       });
       setSelectedCdt('');
 
@@ -205,7 +228,9 @@ const DentalChart = ({
       dentalActionId: null,
       surface: null,
       note: '',
-      existing: false
+      existing: false,
+      anesthesiaUsed: '',
+      dose: ''
     });
     setSelectedCdt('');
   };

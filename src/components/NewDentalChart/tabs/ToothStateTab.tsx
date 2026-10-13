@@ -90,6 +90,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
             <MyInput
               fieldName="dentalActionId"
               fieldType="select"
+              required
               record={currentToothAction}
               setRecord={setCurrentToothAction}
               placeholder={<Translate>Select Action From List</Translate>}
@@ -124,6 +125,10 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
             <MyInput
               fieldName="cdtCodeId"
               fieldType="select"
+              required={
+                dentalActionsMap[currentToothAction.dentalActionId]?.type === 'TREATMENT' &&
+                !currentToothAction.existing
+              }
               record={{ cdtCodeId: selectedCdt }}
               setRecord={r => setSelectedCdt(r.cdtCodeId)}
               disabled={
@@ -156,6 +161,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
             <MyInput
               fieldName="surface"
               fieldType="select"
+              required
               record={currentToothAction}
               setRecord={setCurrentToothAction}
               disabled={!!currentToothAction.id}
@@ -166,6 +172,22 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
             />
           </Box>
           <Box className="tooth-status-form-row">
+            <MyInput
+              fieldName="anesthesiaUsed"
+              fieldLabel="Anesthesia"
+              fieldType="text"
+              record={currentToothAction}
+              setRecord={setCurrentToothAction}
+              placeholder="Anesthesia"
+            />
+            <MyInput
+              fieldName="dose"
+              fieldLabel="Dose"
+              fieldType="text"
+              record={currentToothAction}
+              setRecord={setCurrentToothAction}
+              placeholder="Dose"
+            />
             <MyInput
               fieldName="note"
               fieldType="text"
@@ -224,7 +246,9 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                       dentalActionId: action.dentalActionId,
                       surface: action.surface,
                       note: action.note,
-                      existing: action.existing
+                      existing: action.existing,
+                      anesthesiaUsed: action.anesthesiaUsed,
+                      dose: action.dose
                     });
                   }}
                   style={{
