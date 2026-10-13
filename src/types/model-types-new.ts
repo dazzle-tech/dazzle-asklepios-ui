@@ -28,6 +28,7 @@ export interface ApUser {
   allowOngoingVisit: boolean;
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
+  canReturnClaimForResubmit: boolean;
 }
 
 

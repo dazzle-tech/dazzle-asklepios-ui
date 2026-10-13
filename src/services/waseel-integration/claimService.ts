@@ -18,6 +18,18 @@ type PagedParams = {
   timestamp?: number;
 };
 
+export type ClaimTrackingQuery = PagedParams & {
+  status?: string | null;
+  claimType?: string | null;
+  claimSubType?: string | null;
+  claimReference?: string | null;
+  provClaimNo?: string | null;
+  uploadName?: string | null;
+  preAuthRefNo?: string | null;
+  encounterId?: string | null;
+  patientId?: string | null;
+};
+
 type PagedResult<T> = {
   data: T[];
   totalCount: number;
@@ -32,10 +44,15 @@ const mapPaged = <T,>(
 
   const rows: T[] = Array.isArray(response) ? response : response?.content ?? [];
 
-  const totalCount =
-    Number(headers?.get('X-Total-Count')) ||
-    Number(response?.totalElements) ||
-    rows.length;
+  const headerRaw = headers?.get('X-Total-Count');
+  const headerCount =
+    headerRaw == null || headerRaw.trim() === '' ? Number.NaN : Number(headerRaw);
+  const bodyCount = Number(response?.totalElements);
+  const totalCount = Number.isFinite(bodyCount)
+    ? bodyCount
+    : Number.isFinite(headerCount)
+      ? headerCount
+      : rows.length;
 
   return {
     data: rows,
@@ -50,11 +67,18 @@ export const claimApi = createApi({
   tagTypes: ['ClaimTracking'],
 
   endpoints: builder => ({
-    getClaimTracking: builder.query<PagedResult<ClaimTrackingResponse>, PagedParams>({
-      query: ({ page, size, sort = 'id,desc' }) => ({
+    getClaimTracking: builder.query<PagedResult<ClaimTrackingResponse>, ClaimTrackingQuery>({
+      query: ({ page, size, sort = 'id,desc', timestamp: _timestamp, ...filters }) => ({
         url: '/api/patient/internal/waseel/claims/tracking',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          ...Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value != null && String(value).trim() !== '')
+          )
+        }
       }),
       transformResponse: mapPaged<ClaimTrackingResponse>,
       providesTags: ['ClaimTracking']
@@ -205,6 +229,21 @@ export const claimApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    returnClaimsForResubmit: builder.mutation<
+      { returnedCount: number; skippedCount: number },
+      { claimIds: number[] }
+    >({
+      query: body => ({
+        url: '/api/patient/internal/waseel/claims/return-for-resubmit',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['ClaimTracking'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -220,5 +259,6 @@ export const {
   useRefreshClaimUploadSummaryMutation,
   useRefreshClaimStatusMutation,
   useGetPendingClaimInvoicesQuery,
-  useSubmitClaimBatchMutation
+  useSubmitClaimBatchMutation,
+  useReturnClaimsForResubmitMutation
 } = claimApi;
