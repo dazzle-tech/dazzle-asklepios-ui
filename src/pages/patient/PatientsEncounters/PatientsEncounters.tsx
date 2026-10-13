@@ -282,7 +282,7 @@ const PatientsEncounters = () => {
                 key: 'paymentType',
                 title: 'Self Pay / Insurance',
                 render: (row: EncounterListVM) =>
-                    formatEnumString(row.paymentType || row.coverageType || '') || '—',
+                    formatEnumString(row.paymentType || '') || '—',
             },
             {
                 key: 'insuranceName',
