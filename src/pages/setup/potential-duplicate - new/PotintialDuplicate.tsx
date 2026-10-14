@@ -23,7 +23,10 @@ import {
   useReactivateDuplicationCandidateMutation,
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
-  useGetAvailableForRoleQuery
+  useGetAvailableForRoleQuery,
+  useLazyGetDuplicationCandidatesByRuleQuery,
+  useLazyGetDuplicationCandidatesByStatusQuery,
+  useLazyGetDuplicationCandidatesByFieldQuery
 } from '@/services/potintialDuplicateService';
 import { newCandidate } from '@/types/model-types-constructor-new';
 import { Candidate } from '@/types/model-types-new';
@@ -54,9 +57,49 @@ const PotintialDuplicate = () => {
   const [createCandidate] = useCreateDuplicationCandidateMutation();
   const [deactivateCandidate] = useDeactivateDuplicationCandidateMutation();
   const [reactivateCandidate] = useReactivateDuplicationCandidateMutation();
-  const [searchTerm, setSearchTerm] = useState({ search: "" });
+  // Filter state
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredList, setFilteredList] = useState<Candidate[]>([]);
 
-  const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(searchTerm?.search || undefined);
+  const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(undefined);
+  const [getByRule] = useLazyGetDuplicationCandidatesByRuleQuery();
+  const [getByStatus] = useLazyGetDuplicationCandidatesByStatusQuery();
+  const [getByField] = useLazyGetDuplicationCandidatesByFieldQuery();
+
+  // ──────────────────────────── FILTER LOGIC ────────────────────────────
+  const handleFilterChange = async (field: string, value: string) => {
+    try {
+      if (!field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
+
+      let response;
+      if (field === 'rule') {
+        response = await getByRule({ rule: value.trim() }).unwrap();
+      } else if (field === 'status') {
+        response = await getByStatus({ isActive: value }).unwrap();
+      } else {
+        response = await getByField({ field, value }).unwrap();
+      }
+
+      setFilteredList(response ?? []);
+      setIsFiltered(true);
+      setPageIndex(0);
+    } catch (error) {
+      console.error('Error filtering duplication rules:', error);
+      dispatch(notify({ msg: 'Failed to filter rules', sev: 'error' }));
+      setIsFiltered(false);
+    }
+  };
+
+  // Re-run the active filter after add/update/toggle so the filtered list stays in sync
+  const refreshList = () => {
+    refetch();
+    if (isFiltered) handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
+  };
 
   // Header page setUp
   const divContent = (
@@ -161,7 +204,19 @@ useEffect(() => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPageIndex(0);
   };
-  const totalCount = candidateList?.length ?? 0;
+  // Available fields for filtering (one per table column)
+  const filterFields = [
+    { label: 'Rule', value: 'rule' },
+    ...duplicationFields.map(field => ({ label: field.replace(/_/g, ' '), value: field })),
+    { label: 'Status', value: 'status' }
+  ];
+
+  const filteredData = React.useMemo(
+    () => (isFiltered ? filteredList : candidateList ?? []),
+    [isFiltered, filteredList, candidateList]
+  );
+
+  const totalCount = filteredData.length;
 
   // Sorting state
   const [sortBy, setSortBy] = useState<string | null>(null);
@@ -169,10 +224,9 @@ useEffect(() => {
 
   // Sorting logic
   const sortedData = React.useMemo(() => {
-    if (!candidateList) return [];
-    if (!sortBy) return candidateList;
+    if (!sortBy) return filteredData;
 
-    return [...candidateList].sort((a, b) => {
+    return [...filteredData].sort((a, b) => {
       const valA = a[sortBy];
       const valB = b[sortBy];
       if (valA == null) return 1;
@@ -190,7 +244,7 @@ useEffect(() => {
       }
       return 0;
     });
-  }, [candidateList, sortBy, sortType]);
+  }, [filteredData, sortBy, sortType]);
 
   // Pagination on sorted data
   const paginatedData = sortedData.slice(
@@ -211,7 +265,7 @@ useEffect(() => {
       try {
 
         await createCandidate(candidate).unwrap().then(() => {
-          refetch();
+          refreshList();
         });
         dispatch(notify({ msg: 'The Role has been created successfully', sev: 'success' }));
       } catch (error) {
@@ -232,7 +286,7 @@ useEffect(() => {
         }).unwrap()
 
           .then(() => {
-            refetch();
+            refreshList();
           });
         dispatch(notify({ msg: 'The Role has been updated successfully', sev: 'success' }));
       } catch (error) {
@@ -251,7 +305,7 @@ useEffect(() => {
     deactivateCandidate(candidate.id)
       .unwrap()
       .then(() => {
-        refetch();
+        refreshList();
         dispatch(notify({ msg: 'The Role was successfully Deactivated', sev: 'success' }));
       })
       .catch(() => {
@@ -265,7 +319,7 @@ useEffect(() => {
     reactivateCandidate(candidate.id)
       .unwrap()
       .then(() => {
-        refetch();
+        refreshList();
         dispatch(notify({ msg: 'The Role was successfully Reactivated', sev: 'success' }));
       })
       .catch(() => {
@@ -282,23 +336,84 @@ useEffect(() => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   const filters = () => {
+    const selectedFilter = recordOfFilter.filter;
+    let dynamicInput: React.ReactNode;
+
+    if (selectedFilter === 'status') {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: 'true' },
+            { label: 'Inactive', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Status"
+          searchable={false}
+        />
+      );
+    } else if (selectedFilter && selectedFilter !== 'rule') {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'True', value: 'true' },
+            { label: 'False', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Value"
+          searchable={false}
+        />
+      );
+    } else {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder={selectedFilter === 'rule' ? 'Enter Rule' : 'Enter Value'}
+        />
+      );
+    }
+
     return (
-      <>
-        <Form layout="inline" fluid className="date-filter-form">
-          <MyInput
-            column
-            width='10vw'
-            showLabel={false}
-            fieldName="search"
-            record={searchTerm}
-            setRecord={setSearchTerm}
-            placeholder="Search by Role"
-          />
+      <Form fluid className="form-of-filters-set-up">
+        <MyInput
+          fieldName="filter"
+          fieldType="select"
+          selectData={filterFields}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ filter: u.filter, value: '' })}
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width="180px"
+        />
 
-        </Form>
+        {dynamicInput}
 
-
-      </>
+        <MyButton
+          color="var(--deep-blue)"
+          width="80px"
+          onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        >
+          Search
+        </MyButton>
+      </Form>
     );
   };
 
