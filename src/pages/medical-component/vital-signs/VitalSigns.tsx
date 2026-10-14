@@ -486,7 +486,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
               <div className="margin-bot-10">
                 <MyInput
                   width="100%"
-                  fieldType="text"
+                  fieldType="number"
+                  allowDecimal
                   fieldLabel="Random Blood Glucose"
                   rightAddon="mg/dL"
                   fieldName="fastingBloodGlucose"
