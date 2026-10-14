@@ -973,9 +973,22 @@ export const shouldShowInsuranceSummary = (
   coverageType: BillingCoverageType = 'SELF_PAY'
 ): boolean => coverageType === 'INSURANCE' || hasEncounterInsuranceBilling(summary);
 
-export const resolvePatientDisplayName = (patient: any): string => {
-  const composed = [patient?.firstName, patient?.lastName].filter(Boolean).join(' ').trim();
-  return composed || patient?.fullName || patient?.name || '-';
+export const resolvePatientDisplayName = (patient: any, fallback?: string | null): string => {
+  const composed = [patient?.firstName, patient?.secondName, patient?.thirdName, patient?.lastName]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ');
+  const stored = String(patient?.fullName ?? patient?.name ?? '').trim();
+  const header = String(fallback ?? '').trim();
+  const candidates = [composed, stored, header].filter(Boolean);
+
+  if (candidates.length === 0) {
+    return '-';
+  }
+
+  return candidates.reduce((best, current) =>
+    current.split(/\s+/).length > best.split(/\s+/).length ? current : best
+  );
 };
 
 export const resolvePatientMrn = (patient: any): string =>

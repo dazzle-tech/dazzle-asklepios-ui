@@ -90,6 +90,7 @@ import {
 } from '@/utils/followUpReviewDefaultServices';
 
 import {
+  resolvePatientDisplayName,
   resolvePatientWalletAvailable,
   resolvePatientWalletReserved,
   resolvePaymentReceiptNumber
@@ -2921,16 +2922,7 @@ const PatientPaymentInfo =
             facilityResponse?.data?.name ??
             'Healthcare Facility';
 
-          const patientName =
-            [
-              localPatient?.firstName,
-              localPatient?.lastName
-            ]
-              .filter(Boolean)
-              .join(' ') ||
-            localPatient?.fullName ||
-            localPatient?.name ||
-            '-';
+          const patientName = resolvePatientDisplayName(localPatient);
 
           const patientMrn =
             localPatient?.mrn ??

@@ -10,6 +10,7 @@ import type {
   PatientServiceAndProduct
 } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
+import { resolvePatientDisplayName } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import type {
   FacilityAddressParts,
@@ -277,12 +278,8 @@ const formatSex = (patient?: any) => {
 };
 
 const formatPersonName = (patient?: any, fallback?: string | null) => {
-  const composed = [patient?.firstName, patient?.secondName, patient?.thirdName, patient?.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-
-  return composed || patient?.fullName || patient?.name || fallback || '';
+  const name = resolvePatientDisplayName(patient, fallback);
+  return name === '-' ? '' : name;
 };
 
 const formatArabicName = (patient?: any) =>
