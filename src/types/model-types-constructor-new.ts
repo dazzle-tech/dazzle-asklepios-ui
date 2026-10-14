@@ -346,6 +346,19 @@ export const newAllergen: modelTypes.Allergen = {
   lastModifiedDate: null
 };
 
+// ------------------- Analyzer -------------------
+export const newAnalyzer: modelTypes.Analyzer = {
+  id: undefined,
+  code: '',
+  type: '',
+  facilityId: undefined,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
 // ------------------- Diagnostic Test -------------------
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
@@ -445,7 +458,8 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
-  timing: null
+  timing: null,
+  analyzerId: undefined
 };
 
 // default empty object

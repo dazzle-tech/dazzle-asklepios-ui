@@ -183,6 +183,7 @@ const ResetPassword = lazy (() => import ( './pages/reset-password/ResetPassword
 const AccessRoles = lazy (() => import ( './pages/setup/access-roles'));
 const AgeGroupSetup = lazy (() => import ( './pages/setup/age-group'));
 const Allergens = lazy (() => import ( './pages/setup/allergens-setup'));
+const AnalyzerSetup = lazy (() => import ( './pages/setup/analyzer-setup'));
 const Room = lazy (() => import ( './pages/setup/bed-room-setup'));
 const Catalog = lazy (() => import ( './pages/setup/catalog-setup-new'));
 const CDTSetup = lazy (() => import ( './pages/setup/cdt-setup'));
@@ -932,6 +933,7 @@ const App = () => {
               {/* <Route path="skill-definition" element={<SkillDefinitions />} /> */}
 
               <Route path="allergens" element={<Allergens />} />
+              <Route path="analyzer-setup" element={<AnalyzerSetup />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />

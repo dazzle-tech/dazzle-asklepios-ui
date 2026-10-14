@@ -206,6 +206,32 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
     },
   }),
 }),
+
+    /* Grouped print for multiple selected order tests: tests sharing the same
+       (analyzer, tubeColor, tubeType) print on one label instead of one each.
+       Tests missing analyzer/tube definition are skipped and reported back
+       via the X-Missing-Definition-Tests response header. */
+    getGroupedSampleLabelsPdf: builder.query<
+      { blob: Blob | null; missingDefinitionTests: string[] },
+      { orderTestIds: number[]; copies?: number; lang?: string }
+    >({
+      query: ({ orderTestIds, copies = 1, lang = "en" }) => ({
+        url: `/api/analytics/diagnostic-order-tests/grouped-sample-labels/pdf`,
+        method: "GET",
+        params: { orderTestIds: orderTestIds.join(","), copies, lang },
+        responseHandler: async (response) => {
+          const blob = response.status === 204 ? null : await response.blob();
+          const header = response.headers.get("X-Missing-Definition-Tests") ?? "";
+          const missingDefinitionTests = header
+            ? header
+                .split(",")
+                .filter(Boolean)
+                .map((name) => decodeURIComponent(name))
+            : [];
+          return { blob, missingDefinitionTests };
+        },
+      }),
+    }),
   }),
 });
 
@@ -224,5 +250,6 @@ export const {
   useLazyGetSampleLabelsPdfQuery,
   useGetOrderSampleLabelPdfQuery,
   useRejectCollectedSampleMutation,
-  useLazyGetOrderSampleLabelPdfQuery
+  useLazyGetOrderSampleLabelPdfQuery,
+  useLazyGetGroupedSampleLabelsPdfQuery
 } = diagnosticOrderTestCollectedSampleService;

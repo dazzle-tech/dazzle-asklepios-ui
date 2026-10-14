@@ -999,6 +999,22 @@ export interface Allergen {
 }
 
 /* =========================
+ *  Analyzer
+ * ========================= */
+
+export interface Analyzer {
+  id?: number;
+  code: string;
+  type: string;
+  facilityId?: number; // FK
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
  *  Procedures / Diagnostics / Lab / Radiology
  * ========================= */
 
@@ -1115,6 +1131,7 @@ export interface Laboratory {
   category?: string;
   tubeType?: string;
   timing?: string;
+  analyzerId?: number;
 }
 
 export interface DiagnosticTestProfile {
