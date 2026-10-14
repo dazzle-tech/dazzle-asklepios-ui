@@ -10,6 +10,7 @@ import type {
 import type { EncounterBillingItemSummary } from '@/types/model-types-new';
 import {
   isCancelledBillingLineStatus,
+  resolvePatientDisplayName,
   type UnifiedBillingChargeRow
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import {
@@ -702,7 +703,7 @@ export const buildInvoicePrintDataFromEncounter = ({
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
-    patientName: encounterDetails.patient?.fullName ?? '-',
+    patientName: resolvePatientDisplayName(null, encounterDetails.patient?.fullName),
     patientMrn: encounterDetails.patient?.medicalRecordNumber ?? '-',
     nationalId: encounterDetails.patient?.nationalId ?? undefined,
     mobileNumber: encounterDetails.patient?.mobileNumber ?? undefined,
@@ -774,13 +775,7 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
   const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
-  const composedPatientName = [patient?.firstName, patient?.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  const patientName =
-    encounterDetails?.patient?.fullName ??
-    (composedPatientName || patient?.fullName || patient?.name || '-');
+  const patientName = resolvePatientDisplayName(patient, encounterDetails?.patient?.fullName);
 
   return {
     invoiceNumber: invoice.documentNumber,
