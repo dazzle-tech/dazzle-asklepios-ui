@@ -8581,3 +8581,74 @@ export interface DentalTreatmentPlanResponseDTO {
   draftTreatments: PlannedTreatmentDTO[];
   currentTreatments: PlannedTreatmentDTO[];
 }
+
+export interface PatientActivity {
+  id: number;
+  patientId: number;
+  encounterId?: number | null;
+  appointmentId?: number | null;
+  category: string;
+  activityType: string;
+  status: string;
+  source: string;
+  sourceType?: string | null;
+  sourceId?: number | null;
+  priority: string;
+  note: string;
+  dueAt?: string | null;
+  completedAt?: string | null;
+  completedBy?: string | null;
+  outcomeNote?: string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientActivityCreateDTO {
+  patientId: number;
+  encounterId?: number | null;
+  appointmentId?: number | null;
+  category: string;
+  activityType: string;
+  status: string;
+  priority?: string | null;
+  note: string;
+  dueAt?: string | null;
+}
+
+export interface PatientActivityUpdateDTO {
+  encounterId?: number | null;
+  appointmentId?: number | null;
+  category: string;
+  activityType: string;
+  priority?: string | null;
+  note: string;
+  dueAt?: string | null;
+}
+
+export interface PatientActivityCompleteDTO {
+  outcomeNote: string;
+}
+
+export interface PatientActivityCancelDTO {
+  cancellationReason: string;
+}
+
+export interface PatientActivityTypeOption {
+  value: string;
+  category: string;
+  defaultStatus: string;
+  defaultPriority: string;
+}
+
+export interface PatientActivityCatalog {
+  categories: string[];
+  types: PatientActivityTypeOption[];
+  statuses: string[];
+  creatableStatuses: string[];
+  priorities: string[];
+}
