@@ -219,6 +219,7 @@ export const MODULES: Module[] =
       screens: [
 
         { name: "Allergens", code: "ALLERGENS", description: "Allergens setup", icon: "Fa500Px", viewOrder: 10, navPath: "allergens" },
+        { name: "Analyzer", code: "ANALYZER", description: "Analyzer setup", icon: "FaMicroscope", viewOrder: 10, navPath: "analyzer-setup" },
         { name: "Potential Duplicate", code: "POTENTIAL_DUPLICATE", description: "", icon: "FaInstalod", viewOrder: 15, navPath: "potintial-duplicate" },
         { name: "Brand Medications", code: "BRAND_MEDICATIONS", description: "", icon: "FaBottleDroplet", viewOrder: 8, navPath: "brand-medications" },
         { name: "Lists Of Value", code: "LISTS_OF_VALUE", description: "", icon: "FaList", viewOrder: 8, navPath: "lov-setup" },

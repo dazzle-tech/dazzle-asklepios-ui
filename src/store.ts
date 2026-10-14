@@ -87,6 +87,7 @@ import { Icd10Service } from './services/setup/icd10service';
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
+import { analyzerService } from './services/setup/analyzerService';
 
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
@@ -457,6 +458,7 @@ export const store = configureStore({
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
+    [analyzerService.reducerPath]: analyzerService.reducer,
 
     // diagnostic tests
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
@@ -773,6 +775,7 @@ export const store = configureStore({
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,
+        analyzerService.middleware,
         diagnosticTestService.middleware,
         cdtCodeService.middleware,
         loincCodeService.middleware,
