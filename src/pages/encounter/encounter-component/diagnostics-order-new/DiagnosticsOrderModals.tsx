@@ -10,7 +10,7 @@ import DetailsModal from './DetailsModal';
 import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
 import RequestTestModal from './RequestTestModal';
 import TestCardModal from './TestCardModal';
-import TransferList from './TransferTestList';
+import TestTypeSections from './test-type-sections';
 
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
@@ -241,22 +241,14 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenTestsModal}
         title="Select Tests"
         actionButtonFunction={handleSaveTests}
-        size="50vw"
+        size="60vw"
         content={
           <div dir={dir}>
             <UncoveredInsuranceWarning items={uncoveredItems} />
-            <TransferList
+            <TestTypeSections
               open={openTestsModal}
-              leftItems={leftItems}
-              rightItems={rightItems}
-              setLeftItems={setLeftItems}
-              setRightItems={setRightItems}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              searchType={searchType}
-              setSearchType={setSearchType}
-              isFetching={isFetching}
-              onLoadMore={handleLoadMore}
+              selectedTests={rightItems}
+              setSelectedTests={setRightItems}
             />
           </div>
         }
