@@ -51,16 +51,19 @@ const RecallFavoriteDiagnosticOrdersModal = ({
       open={open}
       setOpen={setOpen}
       title="Recall from Favorites"
-      size="60vw"
+      size="96vw"
+      bodyheight="calc(100vh - 230px)"
       actionButtonFunction={handleRecall}
       content={
-        <TestTypeSections
-          open={open}
-          items={favoriteTests}
-          loading={loading}
-          selectedTests={selectedTests}
-          setSelectedTests={setSelectedTests}
-        />
+        <div className="test-type-sections-modal-content">
+          <TestTypeSections
+            open={open}
+            items={favoriteTests}
+            loading={loading}
+            selectedTests={selectedTests}
+            setSelectedTests={setSelectedTests}
+          />
+        </div>
       }
     />
   </div>
