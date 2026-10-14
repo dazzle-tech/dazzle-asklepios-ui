@@ -67,6 +67,15 @@ export const analyzerService = createApi({
       providesTags: ['Analyzer']
     }),
 
+    getAnalyzersByFacility: builder.query<PagedResult<any>, { facilityId: number } & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/analyzer/by-facility/${facilityId}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Analyzer']
+    }),
+
     addAnalyzer: builder.mutation<any, any>({
       query: body => ({
         url: '/api/setup/analyzer',
@@ -118,6 +127,7 @@ export const {
   useLazyGetAnalyzersByTypeQuery,
   useGetAnalyzersByTypeQuery,
   useLazyGetAnalyzersByCodeQuery,
+  useLazyGetAnalyzersByFacilityQuery,
   useAddAnalyzerMutation,
   useUpdateAnalyzerMutation,
   useDeleteAnalyzerMutation,

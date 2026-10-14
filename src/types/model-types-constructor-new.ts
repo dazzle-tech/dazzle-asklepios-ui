@@ -351,6 +351,7 @@ export const newAnalyzer: modelTypes.Analyzer = {
   id: undefined,
   code: '',
   type: '',
+  facilityId: undefined,
   isActive: true,
   createdBy: '',
   createdDate: null,

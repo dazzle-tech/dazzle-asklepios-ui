@@ -38,6 +38,7 @@ import AddResultModal from './AddResultModal';
 import BulkCollectSampleModal from './BulkCollectSampleModal';
 import ExternalLabAction from './ExternalLabAction';
 import PrintSampleLabelAction from './PrintSampleLabelAction';
+import PrintSelectedSampleLabelsAction from './PrintSelectedSampleLabelsAction';
 import SampleModal from './SampleModal';
 import './styles.less';
 
@@ -908,6 +909,12 @@ const Tests = forwardRef<any, Props>(
             >
               Reject Selected
             </MyButton>
+          </span>
+        </Whisper>
+
+        <Whisper placement="top" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
+          <span style={{ display: 'inline-block' }}>
+            <PrintSelectedSampleLabelsAction orderTestIds={selectedRows} />
           </span>
         </Whisper>
       </HStack>
