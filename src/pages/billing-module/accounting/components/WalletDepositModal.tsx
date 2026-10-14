@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Modal, Text } from 'rsuite';
+import { Checkbox, Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -17,6 +17,7 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildWalletDepositReceipt,
+  isCreditCardPaymentMethod,
   makeRequestId,
   mergeBillingPaymentMethodOptions,
   normalizeBillingError,
@@ -81,7 +82,10 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
   const [form, setForm] = useState({
     amount: 0,
     paymentMethodCode: '',
-    notes: ''
+    notes: '',
+    manualCardEntry: false,
+    manualCardPanNumber: '',
+    manualCardTransactionId: ''
   });
 
   const [createAdvancePayment, { isLoading }] = useCreateAdvancePaymentMutation();
@@ -92,7 +96,10 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
     setForm({
       amount: 0,
       paymentMethodCode: '',
-      notes: ''
+      notes: '',
+      manualCardEntry: false,
+      manualCardPanNumber: '',
+      manualCardTransactionId: ''
     });
   }, [open]);
 
@@ -121,7 +128,13 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
         patientId,
         sourceType: 'WALLET_BALANCE',
         sourceReferenceId: patientId,
-        facilityId
+        facilityId,
+        manualEntry: form.manualCardEntry
+          ? {
+              panNumber: form.manualCardPanNumber,
+              transactionId: form.manualCardTransactionId
+            }
+          : null
       }
     );
 
@@ -221,6 +234,40 @@ const WalletDepositModal: React.FC<WalletDepositModalProps> = ({
                 }))
               }
             />
+            {isCreditCardPaymentMethod(form.paymentMethodCode) && (
+              <>
+                <Checkbox
+                  checked={form.manualCardEntry}
+                  onChange={(_, checked) =>
+                    setForm(previous => ({ ...previous, manualCardEntry: checked }))
+                  }
+                >
+                  Charged manually on a separate terminal
+                </Checkbox>
+                {form.manualCardEntry && (
+                  <>
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Card Number"
+                      fieldName="manualCardPanNumber"
+                      record={form}
+                      setRecord={setForm}
+                      width="100%"
+                    />
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Transaction ID"
+                      fieldName="manualCardTransactionId"
+                      record={form}
+                      setRecord={setForm}
+                      width="100%"
+                    />
+                  </>
+                )}
+              </>
+            )}
             <MyInput
               column
               fieldType="number"

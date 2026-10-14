@@ -46,6 +46,8 @@ import {
   getEnteredPaymentAmount,
   useCreditCardMachinePayment
 } from '@/utils/cardMachinePayment';
+import { isCreditCardPaymentMethod }
+  from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
   useGetFacilityByIdQuery
@@ -177,6 +179,10 @@ type BillingFormState = {
   cashRegisterId: number | null;
   notes: string;
   payZeroNow: boolean;
+
+  manualCardEntry: boolean;
+  manualCardPanNumber: string;
+  manualCardTransactionId: string;
 };
 
 export type PatientPaymentInfoHandle = {
@@ -265,7 +271,16 @@ BillingFormState = {
     '',
 
   payZeroNow:
-    false
+    false,
+
+  manualCardEntry:
+    false,
+
+  manualCardPanNumber:
+    '',
+
+  manualCardTransactionId:
+    ''
 };
 
 const toBillingCoverageType = (
@@ -3660,9 +3675,19 @@ const PatientPaymentInfo =
                facilityId,
                 currency:
                   'SAR',
-              
+
                 onAmount:
-                  onCreditCardPaymentAmount
+                  onCreditCardPaymentAmount,
+
+                manualEntry:
+                  formState.manualCardEntry
+                    ? {
+                      panNumber:
+                        formState.manualCardPanNumber,
+                      transactionId:
+                        formState.manualCardTransactionId
+                    }
+                    : null
               }
             );
 
@@ -6212,6 +6237,64 @@ const PatientPaymentInfo =
             <div className="payment-info__field-note">
               Receipt, payment, and transaction numbers are generated automatically by the backend after payment is received.
             </div>
+
+            {isCreditCardPaymentMethod(
+              formState.paymentMethodCode
+            ) ? (
+              <div className="payment-info__field-grid payment-info__field-grid--compact">
+                <Checkbox
+                  checked={
+                    formState.manualCardEntry
+                  }
+                  disabled={
+                    paymentFieldsDisabled
+                  }
+                  onChange={(
+                    _,
+                    checked
+                  ) =>
+                    setFormState({
+                      ...formState,
+                      manualCardEntry: checked
+                    })
+                  }
+                >
+                  Charged manually on a separate terminal
+                </Checkbox>
+
+                {formState.manualCardEntry ? (
+                  <>
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Card Number"
+                      fieldName="manualCardPanNumber"
+                      record={
+                        formState
+                      }
+                      setRecord={setFormState}
+                      disabled={
+                        paymentFieldsDisabled
+                      }
+                    />
+
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Transaction ID"
+                      fieldName="manualCardTransactionId"
+                      record={
+                        formState
+                      }
+                      setRecord={setFormState}
+                      disabled={
+                        paymentFieldsDisabled
+                      }
+                    />
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             {showCardFields || showBankReference ? (
               <div className="payment-info__field-grid payment-info__field-grid--compact">

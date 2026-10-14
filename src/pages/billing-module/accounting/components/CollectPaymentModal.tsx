@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Modal, Text } from 'rsuite';
+import { Checkbox, Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -24,6 +24,7 @@ import {
   computeRowRemainingAmount,
   computeWalletCollectAmounts,
   formatMoney,
+  isCreditCardPaymentMethod,
   isWalletPaymentMethod,
   makeRequestId,
   mergeBillingPaymentMethodOptions,
@@ -128,7 +129,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   const [form, setForm] = useState({
     amount: 0,
     paymentMethodCode: '',
-    notes: ''
+    notes: '',
+    manualCardEntry: false,
+    manualCardPanNumber: '',
+    manualCardTransactionId: ''
   });
 
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -153,7 +157,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     setForm({
       amount: Number(suggestedAmount.toFixed(2)),
       paymentMethodCode: '',
-      notes: ''
+      notes: '',
+      manualCardEntry: false,
+      manualCardPanNumber: '',
+      manualCardTransactionId: ''
     });
   }, [open, suggestedAmount]);
 
@@ -244,7 +251,14 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
               sourceReferenceId: encounterId,
 
-              facilityId
+              facilityId,
+
+              manualEntry: form.manualCardEntry
+                ? {
+                    panNumber: form.manualCardPanNumber,
+                    transactionId: form.manualCardTransactionId
+                  }
+                : null
             }
           );
 
@@ -394,6 +408,40 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
                     {formatMoney(walletCollectPreview.applyAmount, currency)} · Remaining to pay{' '}
                     {formatMoney(walletCollectPreview.remainingAfter, currency)}
                   </Text>
+                </>
+              )}
+              {isCreditCardPaymentMethod(form.paymentMethodCode) && (
+                <>
+                  <Checkbox
+                    checked={form.manualCardEntry}
+                    onChange={(_, checked) =>
+                      setForm(previous => ({ ...previous, manualCardEntry: checked }))
+                    }
+                  >
+                    Charged manually on a separate terminal
+                  </Checkbox>
+                  {form.manualCardEntry && (
+                    <>
+                      <MyInput
+                        column
+                        required
+                        fieldLabel="Card Number"
+                        fieldName="manualCardPanNumber"
+                        record={form}
+                        setRecord={setForm}
+                        width="100%"
+                      />
+                      <MyInput
+                        column
+                        required
+                        fieldLabel="Transaction ID"
+                        fieldName="manualCardTransactionId"
+                        record={form}
+                        setRecord={setForm}
+                        width="100%"
+                      />
+                    </>
+                  )}
                 </>
               )}
               <MyInput

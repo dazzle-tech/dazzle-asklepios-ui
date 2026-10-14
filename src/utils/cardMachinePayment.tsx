@@ -1,12 +1,18 @@
 import {
   PointOfSaleTransactionDTO,
   usePurchaseMutation,
+  useRecordManualEntryMutation,
   useRefreshTransactionStatusMutation,
 } from '@/services/point-of-sale/PointOfSaleTransactionService';
 
 import { isCreditCardPaymentMethod }
   from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { useState } from 'react';
+
+export type ManualCardEntry = {
+  panNumber: string;
+  transactionId: string;
+};
 
 export type CreditCardMachinePaymentRequest = {
   amount: number;
@@ -21,6 +27,8 @@ export type CreditCardMachinePaymentRequest = {
   sourceReferenceId?: number | null;
 
   facilityId?: number | null;
+
+  manualEntry?: ManualCardEntry | null;
 };
 export type CreditCardMachinePaymentResult = {
   ok: boolean;
@@ -77,6 +85,9 @@ export const useCreditCardMachinePayment = () => {
 
   const [refreshTransactionStatus] =
     useRefreshTransactionStatusMutation();
+
+  const [recordManualEntry] =
+    useRecordManualEntryMutation();
   const waitForFinalStatus = async (
     transactionId: number
   ): Promise<Partial<PointOfSaleTransactionDTO>> => {
@@ -176,6 +187,90 @@ export const useCreditCardMachinePayment = () => {
             'Enter a credit card payment amount greater than zero.'
         };
       }
+
+      if (request.manualEntry) {
+
+        const panNumber =
+          request.manualEntry.panNumber?.trim();
+
+        const transactionId =
+          request.manualEntry.transactionId?.trim();
+
+        if (!panNumber || !transactionId) {
+
+          return {
+            ok: false,
+            amount: 0,
+            message:
+              'Enter the card number and transaction id for the manual card entry.'
+          };
+        }
+
+        setIsProcessingCard(true);
+
+        try {
+
+          const manualTransaction =
+            await recordManualEntry({
+
+              patientId: Number(
+                request.patientId
+              ),
+
+              sourceType:
+                request.sourceType,
+
+              sourceReferenceId:
+                request.sourceReferenceId != null
+                  ? Number(
+                    request.sourceReferenceId
+                  )
+                  : 0,
+
+              amount,
+
+              panNumber,
+
+              transactionId
+
+            }).unwrap();
+
+          return {
+            ok: true,
+            amount,
+            authorizationCode: null,
+            processorReference:
+              manualTransaction.rrn,
+            cardLastFour:
+              extractCardLastFour(
+                manualTransaction.panNumber
+              ),
+            message:
+              'Manual card entry recorded.'
+          };
+
+        } catch (error) {
+
+          console.error(
+            'MANUAL POS ENTRY ERROR',
+            error
+          );
+
+          return {
+            ok: false,
+            amount: 0,
+            message:
+              getPosErrorMessage(
+                error?.message
+              )
+          };
+
+        } finally {
+
+          setIsProcessingCard(false);
+        }
+      }
+
   setIsProcessingCard(true);
       try {
         const posResponse =
@@ -388,7 +483,10 @@ export const useCreditCardMachinePayment = () => {
             options?.sourceReferenceId,
 
           facilityId:
-            options?.facilityId
+            options?.facilityId,
+
+          manualEntry:
+            options?.manualEntry
 
         });
 
