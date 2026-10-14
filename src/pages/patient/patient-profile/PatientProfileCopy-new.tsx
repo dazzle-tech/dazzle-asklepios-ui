@@ -598,6 +598,8 @@ const PatientProfile = () => {
           setRefetchData={setRefetchData}
           searchRef={searchRef}
           showButton={true}
+          showPhoneNumberSearch={true}
+          showEncounterNumberSearch={true}
         />
       </div>
 

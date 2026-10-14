@@ -934,6 +934,16 @@ export const patientEncounterService = createApi({
       }),
       providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
     }),
+    getEncounterByNumber: builder.query<PatientEncounter, { encounterNumber: string }>({
+      query: ({ encounterNumber }) => ({
+        url: `/api/patient/encounter/by-number/${encodeURIComponent(encounterNumber)}`,
+        method: 'GET'
+      }),
+      providesTags: result =>
+        result?.id != null
+          ? [{ type: 'PatientEncounter', id: result.id }]
+          : ['PatientEncounter']
+    }),
     getEncounterCoverage: builder.query<
       {
         encounterId: number;
@@ -1127,6 +1137,8 @@ export const {
   useCountTodayDepartmentCancelledQuery,
   useGetEncounterByIdQuery,
   useLazyGetEncounterByIdQuery,
+  useGetEncounterByNumberQuery,
+  useLazyGetEncounterByNumberQuery,
   useGetEncounterCoverageQuery,
   useGetEncounterCompletionValidationQuery,
   useLazyGetEncounterCompletionValidationQuery,

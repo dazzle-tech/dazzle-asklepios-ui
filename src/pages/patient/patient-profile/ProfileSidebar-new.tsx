@@ -9,13 +9,15 @@ import {
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
-  useLazyGetPatientsByPrimaryPhoneQuery
+  useLazyGetPatientsByPrimaryPhoneQuery,
+  useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
+import { useLazyGetEncounterByNumberQuery } from '@/services/encounters/patientEncounterService';
 
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
 import { Button, Form, Input, InputGroup, Panel, Sidebar, Sidenav } from 'rsuite';
@@ -23,6 +25,7 @@ import { Button, Form, Input, InputGroup, Panel, Sidebar, Sidenav } from 'rsuite
 import { Patient } from '@/types/model-types-new';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import './styles.less';
+
 interface ProfileSidebarProps {
   expand: boolean;
   setExpand: (value: boolean) => void;
@@ -34,6 +37,8 @@ interface ProfileSidebarProps {
   direction?: string;
   showButton?: boolean;
   searchRef?: React.MutableRefObject<(() => void) | null>;
+  showPhoneNumberSearch?: boolean;
+  showEncounterNumberSearch?: boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -47,7 +52,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   showButton = true,
   refetchData,
   setRefetchData,
-  searchRef
+  searchRef,
+  showPhoneNumberSearch = false,
+  showEncounterNumberSearch = false
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
@@ -56,6 +63,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [patients, setPatients] = useState<any[]>([]);
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
+  const searchRequestIdRef = useRef(0);
 
   const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
@@ -63,6 +71,40 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
   const [fetchByFullName] = useLazyGetPatientsByFullNameQuery();
   const [fetchByDocumentNo] = useLazyGetPatientsByAnyDocumentNumberQuery();
+  const [fetchEncounterByNumber] = useLazyGetEncounterByNumberQuery();
+  const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+  const selectData = useMemo(() => {
+    const options = [
+      { label: 'Full Name', value: 'fullName' },
+      { label: 'MRN', value: 'patientMrn' },
+      { label: 'Document Number', value: 'documentNo' }
+    ];
+
+    if (showPhoneNumberSearch) {
+      options.push({ label: 'Phone Number', value: 'phoneNumber' });
+    }
+
+    if (showEncounterNumberSearch) {
+      options.push({ label: 'Encounter Number', value: 'encounterNumber' });
+    }
+
+    return options;
+  }, [showPhoneNumberSearch, showEncounterNumberSearch]);
+
+  useEffect(() => {
+    const isPhoneHidden =
+      selectedCriterion === 'phoneNumber' && !showPhoneNumberSearch;
+    const isEncounterHidden =
+      selectedCriterion === 'encounterNumber' && !showEncounterNumberSearch;
+
+    if (isPhoneHidden || isEncounterHidden) {
+      setSelectedCriterion('fullName');
+      setSearchKeyword('');
+      setPatients([]);
+      setLinks({});
+    }
+  }, [showPhoneNumberSearch, showEncounterNumberSearch, selectedCriterion]);
 
   const selectTrigger = () => {
     switch (selectedCriterion) {
@@ -120,9 +162,57 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const search = useCallback(
     async (page = 0) => {
+      if (selectedCriterion === 'encounterNumber') {
+        const encounterNumber = String(searchKeyword ?? '').trim();
+        if (!encounterNumber) return;
+
+        const requestId = ++searchRequestIdRef.current;
+        setIsLoadingPatients(true);
+
+        try {
+          const encounter = await fetchEncounterByNumber({
+            encounterNumber
+          }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
+
+          const patientId =
+            (encounter as any)?.patient?.id ?? (encounter as any)?.patientId;
+
+          if (patientId == null) {
+            setPatients([]);
+            setLinks({});
+            return;
+          }
+
+          const patient = await fetchPatientById({ id: patientId }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
+
+          const visiblePatients =
+            patient?.patientStatus !== 'MERGED' ? [patient] : [];
+
+          setPatients(visiblePatients);
+          setLinks({});
+        } catch (e) {
+          if (requestId !== searchRequestIdRef.current) return;
+          console.error('Search error:', e);
+          setPatients([]);
+          setLinks({});
+        } finally {
+          if (requestId === searchRequestIdRef.current) {
+            setIsLoadingPatients(false);
+          }
+        }
+
+        return;
+      }
+
       if (selectedCriterion !== 'dob' && (!searchKeyword || String(searchKeyword).length < 3))
         return;
       if (selectedCriterion === 'dob' && !searchKeyword) return;
+
+      const requestId = ++searchRequestIdRef.current;
       setIsLoadingPatients(true);
 
       if (selectedCriterion === 'dob' && typeof searchKeyword === 'string') {
@@ -133,6 +223,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             size: PAGE_SIZE,
             sort: 'id,asc'
           }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
 
           const visiblePatients = (resp.data || []).filter(
             (patient: Patient) => patient?.patientStatus !== 'MERGED'
@@ -146,9 +238,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
           setLinks(resp.links || {});
         } catch (e) {
+          if (requestId !== searchRequestIdRef.current) return;
           console.error('Search error:', e);
         } finally {
-          setIsLoadingPatients(false);
+          if (requestId === searchRequestIdRef.current) {
+            setIsLoadingPatients(false);
+          }
         }
 
         return;
@@ -159,6 +254,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
       try {
         const resp = await trigger(params).unwrap();
+
+        if (requestId !== searchRequestIdRef.current) return;
 
         const visiblePatients = (resp.data || []).filter(
           (patient: Patient) => patient?.patientStatus !== 'MERGED'
@@ -172,12 +269,21 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
         setLinks(resp.links || {});
       } catch (e) {
+        if (requestId !== searchRequestIdRef.current) return;
         console.error('Search error:', e);
       } finally {
-        setIsLoadingPatients(false);
+        if (requestId === searchRequestIdRef.current) {
+          setIsLoadingPatients(false);
+        }
       }
     },
-    [searchKeyword, selectedCriterion]
+    [
+      searchKeyword,
+      selectedCriterion,
+      fetchEncounterByNumber,
+      fetchPatientById,
+      fetchByDob
+    ]
   );
 
   const loadMore = async () => {
@@ -189,7 +295,11 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   useEffect(() => {
     if (refetchData) {
-      if (searchKeyword && String(searchKeyword).length >= 3) search(0);
+      if (selectedCriterion === 'encounterNumber') {
+        if (String(searchKeyword ?? '').trim()) search(0);
+      } else if (searchKeyword && String(searchKeyword).length >= 3) {
+        search(0);
+      }
       setRefetchData?.(false);
     }
   }, [refetchData]);
@@ -197,10 +307,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   useEffect(() => {
     if (searchRef) {
       searchRef.current = () => {
+        if (selectedCriterion === 'encounterNumber') {
+          if (String(searchKeyword ?? '').trim()) search(0);
+          return;
+        }
         if (searchKeyword && String(searchKeyword).length >= 3) search(0);
       };
     }
-  }, [search, searchKeyword, searchRef]);
+  }, [search, searchKeyword, searchRef, selectedCriterion]);
 
   return (
     <div
@@ -225,11 +339,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
-                        selectData={[
-                          { label: 'Full Name', value: 'fullName' },
-                          { label: 'MRN', value: 'patientMrn' },
-                          { label: 'Document Number', value: 'documentNo' }
-                        ]}
+                        selectData={selectData}
                         selectDataLabel="label"
                         selectDataValue="value"
                         showLabel={false}
@@ -239,10 +349,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                           if (!newCriterion) return;
                           if (newCriterion === selectedCriterion) return;
 
+                          searchRequestIdRef.current += 1;
                           setSelectedCriterion(newCriterion);
                           setSearchKeyword('');
                           setPatients([]);
                           setLinks({});
+                          setIsLoadingPatients(false);
                         }}
                         width="100%"
                         searchable={false}
