@@ -241,9 +241,10 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenTestsModal}
         title="Select Tests"
         actionButtonFunction={handleSaveTests}
-        size="60vw"
+        size="96vw"
+        bodyheight="calc(100vh - 230px)"
         content={
-          <div dir={dir}>
+          <div dir={dir} className="test-type-sections-modal-content">
             <UncoveredInsuranceWarning items={uncoveredItems} />
             <TestTypeSections
               open={openTestsModal}

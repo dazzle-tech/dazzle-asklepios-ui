@@ -119,8 +119,6 @@ const TestTypeSection: React.FC<SectionProps> = ({
     return catalogId ? catalogTests : tests;
   }, [hasFixedItems, catalogId, fixedItemsOfType, catalogTestIdSet, catalogTests, tests]);
 
-  const totalCount =
-    hasFixedItems || catalogId ? sourceTests.length : testsResponse?.totalCount ?? 0;
   const hasMore = !hasFixedItems && !catalogId && tests.length < (testsResponse?.totalCount ?? 0);
   const isLoading = hasFixedItems
     ? !!loading || (!!catalogId && isFetchingCatalogTests)
@@ -134,9 +132,9 @@ const TestTypeSection: React.FC<SectionProps> = ({
     return sourceTests.filter(t => normalizeSearchText(getItemName(t)).includes(term));
   }, [sourceTests, searchTerm]);
 
-  // "tests" follows the search/catalog; "selected" (selectedCount) never does — it is everything chosen in this section
-  const isSearching = !!normalizeSearchText(searchTerm);
-  const displayedTotal = isSearching ? filteredTests.length : totalCount;
+  // "tests" = what is shown in the list right now (catalog, search and Load More all change it);
+  // "selected" (selectedCount) never follows the list — it is everything chosen in this section
+  const displayedTotal = filteredTests.length;
 
   return (
     <div className="test-type-section">
@@ -154,8 +152,8 @@ const TestTypeSection: React.FC<SectionProps> = ({
         </span>
       </div>
 
-      <Form fluid>
-        <div className="test-type-section-search">
+      <Form fluid className="test-type-section-filters">
+        <div>
           <MyInput
             fieldName="catalogId"
             fieldType="select"
@@ -169,7 +167,7 @@ const TestTypeSection: React.FC<SectionProps> = ({
             setRecord={setCatalogFilter}
           />
         </div>
-        <div className="test-name-field-main-container test-type-section-search">
+        <div className="test-name-field-main-container">
           <MyInput
             fieldName="testName"
             fieldType="text"
