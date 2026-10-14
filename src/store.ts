@@ -285,6 +285,7 @@ import { claimEncounterCopyHospitalizationService } from './services/billing/cla
 import { claimEncounterCopyCurrentMedicationService } from './services/billing/claimEncounterCopyCurrentMedicationService';
 import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
 import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
+import { clinicalSummaryVoiceService } from './services/ai-services/clinicalSummaryVoiceService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -337,6 +338,7 @@ export const store = configureStore({
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
+    [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -949,7 +951,8 @@ export const store = configureStore({
         claimEncounterCopyHospitalizationService.middleware,
         claimEncounterCopyCurrentMedicationService.middleware,
         claimEncounterCopyDiagnosticOrderTestResultService.middleware,
-        claimEncounterCopyDiagnosticOrderTestReportService.middleware
+        claimEncounterCopyDiagnosticOrderTestReportService.middleware,
+        clinicalSummaryVoiceService.middleware
       ) as any
 });
 

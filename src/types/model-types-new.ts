@@ -8376,6 +8376,11 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReportUpdateDTO {
   severity?: string | null;
 }
 
+export interface ClinicalSummaryVoiceResponse {
+  summary: string;
+  transcript: string;
+}
+
 /* =========================
  *  Dental Chart (Phase C)
  * ========================= */
