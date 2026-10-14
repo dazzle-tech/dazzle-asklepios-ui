@@ -10,7 +10,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 
 const AddEditAnalyzer = ({ open, setOpen, width, analyzer, setAnalyzer, handleSave }) => {
   // Fetch Analyzer Type Lov response
-  const { data: AnalyzerTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ANALYZER_TYPE');
+  const { data: AnalyzerTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
 
   const [facilityListRequest] = useState<ListRequest>({
     ...initialListRequest
