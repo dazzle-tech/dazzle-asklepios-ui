@@ -37,6 +37,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import ProcedureAssignedDocumentsModal from './ProcedureAssignedDocumentsModal';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -328,13 +329,19 @@ const Referrals = (props: any) => {
       {
         key: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1,
         render: (rowData: any) => {
           if (!proceduresByIds && procedureIds.length > 0) {
             return <TableLoader />;
           }
+
           const proc = proceduresMap.get(Number(rowData.procedureId));
-          return proc?.name ?? '';
+
+          return (
+          <ExpandableText
+            text={proc?.name}
+            lines={3}
+          />
+          );
         }
       },
       {
