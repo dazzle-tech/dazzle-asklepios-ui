@@ -71,6 +71,5 @@ export const filterOptions: FilterOption[] = [
 
 export type ClaimRowHandlers = {
   onPreview: (row: import('@/types/model-types-new').ClaimTrackingResponse) => void;
-  onResubmit: (row: import('@/types/model-types-new').ClaimTrackingResponse) => void;
   onRefreshUpload: (row: import('@/types/model-types-new').ClaimTrackingResponse) => void;
 };

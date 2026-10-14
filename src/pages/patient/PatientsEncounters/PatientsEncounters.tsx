@@ -3,28 +3,22 @@ import SectionContainer from '@/components/SectionsoContainer';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
-import { Form } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
-    useSearchEncountersQuery,
+    useGetEncounterListQuery,
+    type EncounterListVM,
 } from '@/services/encounters/patientEncounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import './styles.less';
-import MyButton from '@/components/MyButton/MyButton';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
-import UserDateCell from '@/components/UserDateCell';
-import {
-    useLazyGetEncounterBillingSummaryQuery
-} from '@/services/billing/billingTransactionService';
-
-import {
-    useLazyGetInsurancesByPatientQuery
-} from '@/services/patients/patientInsurancesService';
+import { MdOutlineReceiptLong } from 'react-icons/md';
+import EncounterServicesModal from './EncounterServicesModal';
 
 const today = new Date();
 
@@ -54,21 +48,7 @@ const PatientsEncounters = () => {
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(15);
-
-
-    const [getEncounterBillingSummary] =
-        useLazyGetEncounterBillingSummaryQuery();
-
-    const [getInsurancesByPatient] =
-        useLazyGetInsurancesByPatientQuery();
-
-    const [billingData, setBillingData] = useState<
-        Record<number, any>
-    >({});
-
-    const [insuranceData, setInsuranceData] = useState<
-        Record<number, any>
-    >({});
+    const [servicesEncounter, setServicesEncounter] = useState<EncounterListVM | null>(null);
 
     const [appliedFilters, setAppliedFilters] = useState<any>({
         fromDate: todayDate,
@@ -144,16 +124,6 @@ const PatientsEncounters = () => {
 
     const departments = departmentsResponse?.data ?? [];
 
-    const departmentMap = useMemo(() => {
-        return new Map(
-            departments.map((department: any) => [
-                department.id,
-                department.name,
-            ])
-        );
-    }, [departments]);
-
-
     const [dateKey, setDateKey] = useState(0);
     const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
@@ -183,18 +153,6 @@ const PatientsEncounters = () => {
         })
     );
 
-    const practitionerMap = useMemo(() => {
-        return new Map(
-            practitioners.map((practitioner: any) => [
-                practitioner.id,
-                practitioner.fullName,
-            ])
-        );
-    }, [practitioners]);
-
-
-
-
     const handlePatientSearchClick = () => {
         const searchText = String(
             patientSearch?.patientName ?? ''
@@ -217,325 +175,157 @@ const PatientsEncounters = () => {
         data,
         isLoading,
         isFetching,
-    } = useSearchEncountersQuery(appliedFilters);
+    } = useGetEncounterListQuery(
+        {
+            facilityId: appliedFilters.facilityId,
+            fromDate: appliedFilters.fromDate,
+            toDate: appliedFilters.toDate,
+            patientName: appliedFilters.patientName,
+            mrn: appliedFilters.mrn,
+            encounterNumber: appliedFilters.encounterNumber,
+            departmentId: appliedFilters.departmentId,
+            practitionerId: appliedFilters.practitionerId,
+            encounterReasons: appliedFilters.encounterReasons,
+            treatmentStatusIn: appliedFilters.statusIn,
+            encounterStatusIn: appliedFilters.encounterStatuses,
+            page: appliedFilters.page ?? 0,
+            size: appliedFilters.size ?? rowsPerPage,
+            sort: appliedFilters.sort ?? 'id,desc',
+        },
+        { skip: !appliedFilters.facilityId }
+    );
 
-    const tableData = data?.data ?? [];
+    const tableData: EncounterListVM[] = data?.data ?? [];
 
     const totalCount = Number(
         data?.totalCount ?? 0
     );
 
-    const getPatientName = (row: any) => {
-        const patient = row?.patient ?? row?.patientObject;
-
-        if (!patient) {
-            return '-';
+    const formatAmount = (value?: number | null) => {
+        if (value == null || Number.isNaN(Number(value))) {
+            return '—';
         }
 
-        const name = [
-            patient?.firstName,
-            patient?.secondName,
-            patient?.thirdName,
-            patient?.lastName,
-        ]
-            .filter(Boolean)
-            .join(' ')
-            .trim();
-
-        return name || '-';
+        return Number(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     };
-
-    const getMRN = (row: any) => {
-        return (
-            row?.patient?.medicalRecordNumber ??
-            row?.patientObject?.medicalRecordNumber ??
-            '-'
-        );
-    };
-
-    const getDepartmentName = (row: any) => {
-        if (row?.department?.name) {
-            return row.department.name;
-        }
-
-        if (row?.departmentName) {
-            return row.departmentName;
-        }
-
-        if (row?.departmentId) {
-            return departmentMap.get(row.departmentId) ?? '-';
-        }
-
-        return '-';
-    };
-
-    const getPractitionerName = (row: any) => {
-        const practitioner = row?.practitioner;
-
-        if (practitioner) {
-            const name = [
-                practitioner?.firstName,
-                practitioner?.secondName,
-                practitioner?.thirdName,
-                practitioner?.lastName,
-            ]
-                .filter(Boolean)
-                .join(' ')
-                .trim();
-
-            return (
-                name ||
-                practitioner?.fullName ||
-                practitioner?.name ||
-                '-'
-            );
-        }
-
-        if (row?.practitionerName) {
-            return row.practitionerName;
-        }
-
-        if (row?.practitionerId) {
-            return practitionerMap.get(row.practitionerId) ?? '-';
-        }
-
-        return '-';
-    };
-
-    const getBillingSummary = (row: any) => {
-        return billingData?.[row?.id] ?? null;
-    };
-
-    const getAmount = (row: any) => {
-        const billing = getBillingSummary(row);
-
-        return (
-            billing?.netAmount ??
-            billing?.grossAmount ??
-            billing?.items?.reduce(
-                (total: number, item: any) =>
-                    total + Number(item?.netAmount ?? 0),
-                0
-            ) ??
-            '-'
-        );
-    };
-
-    const getPaymentStatus = (row: any) => {
-        const billing = getBillingSummary(row);
-
-        if (!billing) {
-            return '-';
-        }
-
-        if (
-            billing?.items?.every(
-                (item: any) =>
-                    ['CLOSED', 'FULLY_ALLOCATED'].includes(
-                        String(item?.status ?? '').toUpperCase()
-                    )
-            )
-        ) {
-            return 'Paid';
-        }
-
-        if (
-            billing?.items?.some(
-                (item: any) =>
-                    Number(item?.outstandingAmount ?? 0) > 0
-            )
-        ) {
-            return 'Remaining To Pay';
-        }
-
-        return billing?.status
-            ? formatEnumString(billing.status)
-            : '-';
-    };
-
-    const getInsuranceName = (row: any) => {
-        const insurance = getPatientInsurance(row);
-
-        return (
-            insurance?.payerName ??
-            insurance?.insuranceName ??
-            insurance?.payorName ??
-            insurance?.payerNphiesId ??
-            '-'
-        );
-    };
-
-    const getPatientInsurance = (row: any) => {
-        const patientId =
-            row?.patient?.id ??
-            row?.patient?.key ??
-            row?.patientId;
-
-        if (!patientId) {
-            return null;
-        }
-
-        const insurances = insuranceData?.[patientId] ?? [];
-
-        return insurances[0] ?? null;
-    };
-
-    const getCoverageType = (row: any) => {
-        // 1. لو الـEncounter نفسه عنده coverageType استخدمه
-        const encounterCoverageType =
-            row?.coverageType ??
-            row?.coverage?.type;
-
-        if (encounterCoverageType) {
-            return encounterCoverageType;
-        }
-
-        // 2. وإلا نجيبها من Insurance
-        const insurance = getPatientInsurance(row);
-
-        if (insurance?.coverageType) {
-            return insurance.coverageType;
-        }
-
-        // 3. ما في Insurance => Self Pay
-        return 'SELF_PAY';
-    };
-
-    const getPaymentType = (row: any) => {
-        const encounterCoverageType =
-            row?.coverageType ??
-            row?.coverage?.type;
-        if (encounterCoverageType) {
-            return String(encounterCoverageType).toUpperCase() === 'INSURANCE'
-                ? 'Insurance'
-                : 'Self Pay';
-        }
-        const insurance = getPatientInsurance(row);
-
-        return insurance ? 'Insurance' : 'Self Pay';
-    };
-
-    const triageStartedStatuses = new Set([
-        'TRIAGE_STARTED',
-        'ASSIGNED_TO_BED',
-        'ONGOING',
-        'IN_OPERATION',
-        'CONFIRM_RETURN',
-        'TEMP_DC',
-        'COMPLETED',
-        'CLOSED',
-        'DISCHARGED',
-    ]);
 
     const columns = useMemo(
         () => [
             {
                 key: 'encounterId',
                 title: 'Encounter Id',
-                render: (row: any) =>
-                    row?.encounterNumber ?? '-',
+                render: (row: EncounterListVM) => row.encounterNumber || '—',
             },
             {
                 key: 'patientName',
                 title: 'Patient Name',
-                render: (row: any) =>
-                    getPatientName(row),
+                render: (row: EncounterListVM) => row.patientFullName || '—',
             },
             {
                 key: 'mrn',
                 title: 'MRN',
-                render: (row: any) =>
-                    getMRN(row),
+                render: (row: EncounterListVM) => row.mrn || '—',
             },
             {
                 key: 'encounterType',
                 title: 'Encounter Type',
-                render: (row: any) =>
-                    formatEnumString(
-                        row?.encounterType
-                    ) || '-',
+                render: (row: EncounterListVM) =>
+                    formatEnumString(row.encounterType || '') || '—',
             },
             {
                 key: 'department',
                 title: 'Department',
-                render: (row: any) =>
-                    getDepartmentName(row),
+                render: (row: EncounterListVM) => row.departmentName || '—',
             },
             {
                 key: 'practitioner',
                 title: 'Practitioner',
-                render: (row: any) =>
-                    getPractitionerName(row),
+                render: (row: EncounterListVM) => row.practitionerName || '—',
             },
             {
                 key: 'defaultService',
                 title: 'Default Service',
-                render: (row: any) => {
-                    const billing = getBillingSummary(row);
-
-                    return (
-                        billing?.items?.[0]?.serviceName ??
-                        billing?.items?.[0]?.itemName ??
-                        row?.appointment?.defaultServiceName ??
-                        row?.appointment?.defaultServiceId ??
-                        '-'
-                    );
-                },
+                render: (row: EncounterListVM) => row.defaultServiceName || '—',
             },
             {
                 key: 'amount',
-                title: 'Amount',
-                render: (row: any) =>
-                    getAmount(row),
+                title: 'Total Amount',
+                render: (row: EncounterListVM) =>
+                    formatAmount(row.calculatedTotal ?? row.amount),
+            },
+            {
+                key: 'patientTotal',
+                title: 'Co-payment',
+                render: (row: EncounterListVM) => formatAmount(row.patientTotal),
+            },
+            {
+                key: 'patientPaidTotal',
+                title: 'Patient Paid',
+                render: (row: EncounterListVM) => formatAmount(row.patientPaidTotal),
             },
             {
                 key: 'paymentStatus',
                 title: 'Payment Status',
-                render: (row: any) =>
-                    getPaymentStatus(row),
+                render: (row: EncounterListVM) =>
+                    formatEnumString(row.paymentStatus || '') || '—',
             },
             {
                 key: 'coverageType',
                 title: 'Coverage Type',
-                render: (row: any) =>
-                    formatEnumString(getCoverageType(row)) || '-',
+                render: (row: EncounterListVM) =>
+                    formatEnumString(row.coverageType || '') || '—',
             },
             {
                 key: 'paymentType',
                 title: 'Self Pay / Insurance',
-                render: (row: any) =>
-                    getPaymentType(row),
+                render: (row: EncounterListVM) =>
+                    formatEnumString(row.paymentType || '') || '—',
             },
             {
                 key: 'insuranceName',
                 title: 'Insurance Name',
-                render: (row: any) =>
-                    getInsuranceName(row),
+                render: (row: EncounterListVM) => row.insuranceName || '—',
             },
             {
                 key: 'triageStarted',
                 title: 'Triage Started',
-                render: (row: any) => {
-                    const status = String(row?.status ?? '').toUpperCase();
-
-                    return triageStartedStatuses.has(status) ? 'True' : 'False';
-                },
+                render: (row: EncounterListVM) =>
+                    row.triageStarted ? 'True' : 'False',
             },
             {
                 key: 'doctorStartDateTime',
                 title: 'Doctor Start Date/Time',
-                render: (row: any) =>
-                    row?.startedDate
-                        ? formatDateWithoutSeconds(row.startedDate)
-                        : '-',
+                render: (row: EncounterListVM) =>
+                    row.doctorStartDateTime
+                        ? formatDateWithoutSeconds(row.doctorStartDateTime)
+                        : '—',
+            },
+            {
+                key: 'services',
+                title: '',
+                width: 56,
+                render: (row: EncounterListVM) => (
+                    <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Services & products</Tooltip>}
+                    >
+                        <button
+                            type="button"
+                            className="encounter-services-action"
+                            aria-label="Services and products"
+                            onClick={() => setServicesEncounter(row)}
+                        >
+                            <MdOutlineReceiptLong size={18} />
+                        </button>
+                    </Whisper>
+                ),
             },
         ],
-        [
-            departmentMap,
-            practitionerMap,
-            insuranceData,
-            billingData,
-        ]
+        []
     );
 
     const handleSearch = () => {
@@ -591,8 +381,6 @@ const PatientsEncounters = () => {
             size: rowsPerPage,
             sort: 'id,desc',
         };
-
-        console.log('SEARCH FILTERS:', newFilters);
 
         setPage(0);
         setAppliedFilters(newFilters);
@@ -675,110 +463,6 @@ const PatientsEncounters = () => {
             size: newSize,
         }));
     };
-
-    useEffect(() => {
-        if (!tableData.length) {
-            setBillingData({});
-            setInsuranceData({});
-            return;
-        }
-
-        const loadExtraData = async () => {
-            const billingResults = await Promise.all(
-                tableData.map(async (row: any) => {
-                    if (!row?.id) {
-                        return null;
-                    }
-
-                    try {
-                        const result =
-                            await getEncounterBillingSummary({
-                                encounterId: row.id
-                            }).unwrap();
-
-                        return {
-                            id: row.id,
-                            data: result
-                        };
-                    } catch (error) {
-                        console.error(
-                            `Failed to load billing summary for encounter ${row.id}`,
-                            error
-                        );
-
-                        return null;
-                    }
-                })
-            );
-
-            const nextBillingData: Record<number, any> = {};
-
-            billingResults.forEach(result => {
-                if (result?.id) {
-                    nextBillingData[result.id] = result.data;
-                }
-            });
-
-            const patientIds: number[] = Array.from(
-                new Set<number>(
-                    tableData
-                        .map(
-                            (row: any) =>
-                                row?.patient?.id ??
-                                row?.patient?.key ??
-                                row?.patientId
-                        )
-                        .filter(Boolean)
-                )
-            );
-
-            const insuranceResults = await Promise.all(
-                patientIds.map(async (patientId: number) => {
-                    try {
-                        const result =
-                            await getInsurancesByPatient({
-                                patientId,
-                                page: 0,
-                                size: 200,
-                                sort: 'id,desc'
-                            }).unwrap();
-
-                        return {
-                            patientId,
-                            data: result?.data ?? []
-                        };
-                    } catch (error) {
-                        console.log('=== INSURANCE ERROR ===', {
-                            patientId,
-                            error
-                        });
-
-                        return null;
-                    }
-                })
-            );
-
-            const nextInsuranceData: Record<number, any[]> = {};
-
-            insuranceResults.forEach(result => {
-                if (result?.patientId) {
-                    nextInsuranceData[result.patientId] =
-                        result.data;
-                }
-            });
-
-            setBillingData(nextBillingData);
-            setInsuranceData(nextInsuranceData);
-        };
-
-        loadExtraData();
-    }, [
-        tableData,
-        getEncounterBillingSummary,
-        getInsurancesByPatient
-    ]);
-
-
 
     return (
         <SectionContainer
@@ -932,6 +616,12 @@ const PatientsEncounters = () => {
                         totalCount={totalCount}
                         onPageChange={handlePageChange}
                         onRowsPerPageChange={handleRowsPerPageChange}
+                    />
+
+                    <EncounterServicesModal
+                        open={servicesEncounter != null}
+                        encounter={servicesEncounter}
+                        onClose={() => setServicesEncounter(null)}
                     />
                 </>
             }

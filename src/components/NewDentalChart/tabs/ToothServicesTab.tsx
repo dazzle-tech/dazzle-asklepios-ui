@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Panel, SelectPicker } from 'rsuite';
 import Trash from '@rsuite/icons/Trash';
 import MyTable from '../../MyTable/MyTable';
@@ -6,6 +6,8 @@ import Translate from '../../Translate';
 import { Box, Typography } from '@mui/material';
 import MyButton from '@/components/MyButton/MyButton';
 import { useLazyGetServicesBulkByIdsQuery} from '@/services/setup/serviceService';
+import { useCancelToothServiceMutation } from '@/services/dental/dentalChartService';
+import CancellationModal from '@/components/CancellationModal/CancellationModal';
 import { formatEnumString } from '@/utils';
 interface ToothServicesTabProps {
   selectedTooth: any;
@@ -28,12 +30,17 @@ const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
   servicesLoading
 }) => {
 const [getServicesBulk, servicesBulkRes] = useLazyGetServicesBulkByIdsQuery();
+const [cancelToothService] = useCancelToothServiceMutation();
+const [cancelModalOpen, setCancelModalOpen] = useState(false);
+const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
+const [rowToCancel, setRowToCancel] = useState<any>(null);
+
 const toothServiceIds = useMemo<Id[]>(() => {
-  const list = selectedTooth?.toothServices || [];
+  const list = selectedTooth?.services || [];
   return Array.from(
-    new Set(list.map((item: any) => item.serviceKey).filter(Boolean))
+    new Set(list.map((item: any) => item.serviceId).filter(Boolean))
   ) as Id[];
-}, [selectedTooth?.toothServices]);
+}, [selectedTooth?.services]);
 
 useEffect(() => {
   if (toothServiceIds.length > 0) {
@@ -47,13 +54,34 @@ const fetchedServicesMap = useMemo(() => {
     return acc;
   }, {});
 }, [servicesBulkRes.data]);
+
+const openCancelModal = (rowData: any) => {
+  setRowToCancel(rowData);
+  setCancelForm({ cancellationReason: '' });
+  setCancelModalOpen(true);
+};
+
+const handleCancelService = async () => {
+  if (!rowToCancel) return;
+  try {
+    await cancelToothService({
+      id: rowToCancel.id,
+      body: { cancellationReason: cancelForm.cancellationReason || '' }
+    }).unwrap();
+    setCancelModalOpen(false);
+    setRowToCancel(null);
+  } catch (error) {
+    setCancelModalOpen(false);
+  }
+};
+
 const columns = [
   {
     key: 'service',
     title: 'Service',
     align: 'center' as const,
     render: (rowData: any) => (
-     <Translate>{fetchedServicesMap[rowData.serviceKey]?.name || rowData.serviceKey}</Translate>
+     <Translate>{fetchedServicesMap[rowData.serviceId]?.name || rowData.serviceId}</Translate>
     )
   },
   {
@@ -75,7 +103,13 @@ const columns = [
     title: 'Remove',
     align: 'center' as const,
     render: (rowData: any, rowIndex: number) => (
-      <Button appearance="primary" color="red" size="sm">
+      <Button
+        appearance="primary"
+        color="red"
+        size="sm"
+        disabled={rowData?.cancelled}
+        onClick={() => openCancelModal(rowData)}
+      >
         <Trash />
       </Button>
     )
@@ -94,12 +128,12 @@ const columns = [
               <SelectPicker
                 style={{ width: '300px', marginRight: '10px' }}
                 placeholder={<Translate>Select Service From List</Translate>}
-                value={currentToothService.serviceKey}
+                value={currentToothService.serviceId}
                 loading={servicesLoading}
                 onChange={e =>
                   setCurrentToothService({
                     ...currentToothService,
-                    serviceKey: e
+                    serviceId: e
                   })
                 }
                 data={dentalServicesList}
@@ -115,8 +149,20 @@ const columns = [
           </Box>
         }
       >
-        <MyTable data={selectedTooth.toothServices || []} columns={columns} height={400} />
+        <MyTable data={selectedTooth.services || []} columns={columns} height={400} />
       </Panel>
+
+      <CancellationModal
+        title="Cancel Tooth Service"
+        fieldLabel="Cancellation Reason"
+        open={cancelModalOpen}
+        setOpen={setCancelModalOpen}
+        object={cancelForm}
+        setObject={setCancelForm}
+        handleCancle={handleCancelService}
+        fieldName="cancellationReason"
+        required={true}
+      />
     </div>
   );
 };

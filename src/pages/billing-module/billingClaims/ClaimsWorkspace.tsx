@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FaArrowsRotate } from 'react-icons/fa6';
+import { FaArrowRotateLeft, FaArrowsRotate } from 'react-icons/fa6';
 
 import MyTable from '@/components/MyTable';
+import { useAppSelector } from '@/hooks';
 import {
   useGetClaimTrackingQuery,
   useRefreshClaimStatusMutation,
   useRefreshClaimUploadSummaryMutation,
-  useSubmitClaimForInvoiceMutation
+  useReturnClaimsForResubmitMutation,
+  type ClaimTrackingQuery
 } from '@/services/waseel-integration/claimService';
 import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
+import { useLazyGetUserByLoginQuery } from '@/services/userService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import type { ClaimTrackingResponse, WaseelClaimUploadResponse } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
@@ -19,14 +22,28 @@ import ClaimPreview from './ClaimPreview';
 import ClaimBatchPanel from './ClaimBatchPanel';
 import ClaimUploadSummaryModal from './ClaimUploadSummaryModal';
 import { getClaimColumns } from './claimColumns';
-import { filterClaimRows } from './utils';
+import { canReturnClaimForResubmit } from './utils';
 import { initialFilters, type Filters } from './types';
 
 const ClaimsWorkspace: React.FC = () => {
   const dispatch = useAppDispatch();
+  const authUser = useAppSelector(state => state.auth.user);
+  const [getUserByLogin, { data: userByLogin }] = useLazyGetUserByLoginQuery();
+
+  useEffect(() => {
+    if (authUser?.login) {
+      getUserByLogin(authUser.login);
+    }
+  }, [authUser?.login, getUserByLogin]);
+
+  const canReturnClaims = Boolean(userByLogin?.canReturnClaimForResubmit);
 
   const [filters, setFilters] = useState<Filters>({ ...initialFilters });
-  const [appliedFilters, setAppliedFilters] = useState<Filters>({ ...initialFilters });
+  const [appliedSearch, setAppliedSearch] = useState<{
+    field: keyof Filters | null;
+    value: string;
+    token: number;
+  }>({ field: null, value: '', token: 0 });
   const [filtersKey, setFiltersKey] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
@@ -37,14 +54,25 @@ const ClaimsWorkspace: React.FC = () => {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedClaimIds, setSelectedClaimIds] = useState<number[]>([]);
 
-  const { data, refetch, isLoading, isFetching } = useGetClaimTrackingQuery({
-    page,
-    size: rowsPerPage,
-    sort: 'id,desc'
-  });
+  const trackingQuery = useMemo<ClaimTrackingQuery>(() => {
+    const query: ClaimTrackingQuery = {
+      page,
+      size: rowsPerPage,
+      sort: 'id,desc',
+      timestamp: appliedSearch.token
+    };
+    if (appliedSearch.field && appliedSearch.value) {
+      query[appliedSearch.field] = appliedSearch.value;
+    }
+    return query;
+  }, [appliedSearch, page, rowsPerPage]);
 
-  const [submitClaim] = useSubmitClaimForInvoiceMutation();
+  const { data, refetch, isLoading, isFetching } = useGetClaimTrackingQuery(trackingQuery);
+
+  const [returnClaimsForResubmit, { isLoading: returningClaims }] =
+    useReturnClaimsForResubmitMutation();
   const [refreshUploadSummary] = useRefreshClaimUploadSummaryMutation();
   const [refreshClaimStatus] = useRefreshClaimStatusMutation();
 
@@ -62,15 +90,10 @@ const ClaimsWorkspace: React.FC = () => {
     return [];
   }, [data]);
 
-  const filteredRows = useMemo(
-    () => filterClaimRows(claimRows, appliedFilters),
-    [claimRows, appliedFilters]
-  );
-
   const encounterIds = useMemo(() => {
-    const ids = filteredRows.map(item => item.encounterId);
+    const ids = claimRows.map(item => item.encounterId);
     return Array.from(new Set(ids.filter((id): id is number => id != null)));
-  }, [filteredRows]);
+  }, [claimRows]);
 
   useEffect(() => {
     if (!encounterIds.length) return;
@@ -83,12 +106,12 @@ const ClaimsWorkspace: React.FC = () => {
   }, [encountersData]);
 
   const patientIdsForBulk = useMemo(() => {
-    const ids = filteredRows
+    const ids = claimRows
       .map(row => row.patientId)
       .filter(v => v !== null && v !== undefined)
       .map(v => String(v));
     return Array.from(new Set(ids));
-  }, [filteredRows]);
+  }, [claimRows]);
 
   useEffect(() => {
     if (!patientIdsForBulk.length) return;
@@ -111,15 +134,7 @@ const ClaimsWorkspace: React.FC = () => {
     return map;
   }, [patientsBasicInfo]);
 
-  const totalCount = useMemo(() => {
-    const response: any = data;
-    return (
-      response?.totalElements ??
-      response?.totalCount ??
-      response?.data?.totalElements ??
-      filteredRows.length
-    );
-  }, [data, filteredRows.length]);
+  const totalCount = data?.totalCount ?? 0;
 
   const statusSummary = useMemo(() => {
     const counts = { submitted: 0, accepted: 0, failed: 0, rejected: 0 };
@@ -142,48 +157,6 @@ const ClaimsWorkspace: React.FC = () => {
     setOpenPreview(false);
     setSelectedRow(null);
   }, []);
-
-  const handleResubmit = useCallback(
-    async (row: ClaimTrackingResponse) => {
-      if (!row.financialDocumentId) {
-        dispatch(notify({ msg: 'Invoice document is missing for this claim', sev: 'warning' }));
-        return;
-      }
-      try {
-        dispatch(showSystemLoader());
-        const result = await submitClaim({
-          financialDocumentId: row.financialDocumentId,
-          claimType: row.claimType,
-          claimSubType: row.claimSubType
-        }).unwrap();
-        dispatch(
-          notify({
-            msg:
-              String(result.status ?? '').toUpperCase() === 'FAILED' ||
-              String(result.status ?? '').toUpperCase() === 'REJECTED'
-                ? result.message || 'Claim submission was not accepted by Waseel'
-                : 'Claim submitted successfully',
-            sev:
-              String(result.status ?? '').toUpperCase() === 'FAILED' ||
-              String(result.status ?? '').toUpperCase() === 'REJECTED'
-                ? 'error'
-                : 'success'
-          })
-        );
-        refetch();
-      } catch (error: any) {
-        dispatch(
-          notify({
-            msg: error?.data?.detail || error?.data?.message || 'Failed to submit claim',
-            sev: 'error'
-          })
-        );
-      } finally {
-        dispatch(hideSystemLoader());
-      }
-    },
-    [dispatch, refetch, submitClaim]
-  );
 
   const handleRefreshUpload = useCallback(
     async (row: ClaimTrackingResponse) => {
@@ -215,26 +188,113 @@ const ClaimsWorkspace: React.FC = () => {
     [dispatch, refetch, refreshClaimStatus, refreshUploadSummary]
   );
 
+  const pageReturnableIds = useMemo(
+    () =>
+      claimRows
+        .filter(canReturnClaimForResubmit)
+        .map(row => row.id)
+        .filter((id): id is number => id != null),
+    [claimRows]
+  );
+
+  const toggleClaim = useCallback((claimId: number) => {
+    setSelectedClaimIds(current =>
+      current.includes(claimId) ? current.filter(id => id !== claimId) : [...current, claimId]
+    );
+  }, []);
+
+  const togglePageClaims = useCallback(() => {
+    const pageIds = new Set(pageReturnableIds);
+    const allPageSelected =
+      pageReturnableIds.length > 0 && pageReturnableIds.every(id => selectedClaimIds.includes(id));
+
+    if (allPageSelected) {
+      setSelectedClaimIds(current => current.filter(id => !pageIds.has(id)));
+      return;
+    }
+
+    setSelectedClaimIds(current => [...new Set([...current, ...pageReturnableIds])]);
+  }, [pageReturnableIds, selectedClaimIds]);
+
+  const handleReturnForResubmit = useCallback(async () => {
+    if (!selectedClaimIds.length) {
+      dispatch(notify({ msg: 'Select at least one claim.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+      const result = await returnClaimsForResubmit({ claimIds: selectedClaimIds }).unwrap();
+      const skipped = Number(result?.skippedCount ?? 0);
+      dispatch(
+        notify({
+          msg:
+            skipped > 0
+              ? `Returned ${result.returnedCount} claim(s) to the batch. Skipped ${skipped} that cannot be resubmitted.`
+              : `Returned ${result.returnedCount} claim(s) to the monthly batch. Search above to resubmit them.`,
+          sev: 'success'
+        })
+      );
+      setSelectedClaimIds([]);
+      refetch();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.detail ||
+            error?.data?.message ||
+            'Failed to return the selected claims for resubmit',
+          sev: 'error'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  }, [dispatch, refetch, returnClaimsForResubmit, selectedClaimIds]);
+
   const columns = useMemo(
     () =>
       getClaimColumns({
-        handlers: { onPreview: handlePreview, onResubmit: handleResubmit, onRefreshUpload: handleRefreshUpload },
+        handlers: { onPreview: handlePreview, onRefreshUpload: handleRefreshUpload },
         encounterMap,
-        patientMap
+        patientMap,
+        canSelect: canReturnClaims,
+        selectedIds: selectedClaimIds,
+        pageReturnableIds,
+        onToggleRow: toggleClaim,
+        onTogglePage: togglePageClaims
       }),
-    [encounterMap, handlePreview, handleRefreshUpload, handleResubmit, patientMap]
+    [
+      canReturnClaims,
+      encounterMap,
+      handlePreview,
+      handleRefreshUpload,
+      pageReturnableIds,
+      patientMap,
+      selectedClaimIds,
+      toggleClaim,
+      togglePageClaims
+    ]
   );
 
   const onSearch = () => {
-    setAppliedFilters({ ...filters });
+    const field = selectedFilter as keyof Filters | null;
+    const value = field ? String(filters[field] ?? '').trim() : '';
+    setAppliedSearch({
+      field: field && value ? field : null,
+      value,
+      token: Date.now()
+    });
+    setSelectedClaimIds([]);
     setPage(0);
   };
 
   const onReset = () => {
     setFilters({ ...initialFilters });
-    setAppliedFilters({ ...initialFilters });
+    setAppliedSearch({ field: null, value: '', token: Date.now() });
     setSelectedFilter(null);
     setFiltersKey(key => key + 1);
+    setSelectedClaimIds([]);
     setPage(0);
   };
 
@@ -273,7 +333,7 @@ const ClaimsWorkspace: React.FC = () => {
         </button>
       </div>
 
-      <div className={`bc-body${openPreview ? ' bc-body--split' : ''}`}>
+      <div className="bc-body">
         <main className="bc-main">
           <ClaimBatchPanel onSubmitted={() => refetch()} />
 
@@ -284,9 +344,23 @@ const ClaimsWorkspace: React.FC = () => {
                 <div className="bc-card__head-meta">
                   {tableLoading
                     ? 'Loading…'
-                    : `${filteredRows.length} displayed · ${totalCount} total`}
+                    : `${claimRows.length} on this page · ${totalCount} matching`}
                 </div>
               </div>
+              {canReturnClaims && (
+                <button
+                  type="button"
+                  className="bc-return-btn"
+                  disabled={!selectedClaimIds.length || returningClaims}
+                  onClick={() => {
+                    void handleReturnForResubmit();
+                  }}
+                >
+                  <FaArrowRotateLeft size={13} />
+                  <span>{returningClaims ? 'Returning…' : 'Return for resubmit'}</span>
+                  <span className="bc-return-btn__count">{selectedClaimIds.length}</span>
+                </button>
+              )}
             </div>
 
             <div className="bc-filters">
@@ -304,12 +378,12 @@ const ClaimsWorkspace: React.FC = () => {
             <div className="bc-table-wrap">
               <MyTable
                 columns={columns}
-                data={filteredRows}
+                data={claimRows}
                 loading={tableLoading}
                 page={page}
                 rowsPerPage={rowsPerPage}
                 totalCount={totalCount}
-                height={openPreview ? 480 : 520}
+                height={520}
                 onRowClick={(row: ClaimTrackingResponse) => handlePreview(row)}
                 onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
                 onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,24 +394,24 @@ const ClaimsWorkspace: React.FC = () => {
             </div>
           </div>
         </main>
-
-        {openPreview && selectedRow && (
-          <ClaimPreview
-            claim={selectedRow}
-            patient={
-              selectedRow.patientId != null
-                ? patientMap.get(String(selectedRow.patientId))
-                : undefined
-            }
-            encounter={
-              selectedRow.encounterId != null
-                ? encounterMap.get(Number(selectedRow.encounterId))
-                : undefined
-            }
-            onClose={closePreview}
-          />
-        )}
       </div>
+
+      {openPreview && selectedRow && (
+        <ClaimPreview
+          claim={selectedRow}
+          patient={
+            selectedRow.patientId != null
+              ? patientMap.get(String(selectedRow.patientId))
+              : undefined
+          }
+          encounter={
+            selectedRow.encounterId != null
+              ? encounterMap.get(Number(selectedRow.encounterId))
+              : undefined
+          }
+          onClose={closePreview}
+        />
+      )}
 
       <ClaimUploadSummaryModal
         open={openUploadSummary}

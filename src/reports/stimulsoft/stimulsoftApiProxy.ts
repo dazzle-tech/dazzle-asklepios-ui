@@ -198,11 +198,18 @@ const coerceVariableValue = (raw: unknown): string | null => {
 /** Values from Preview → Parameters → Submit (onPrepareVariables). */
 const previewVariableCache = new Map<string, string>();
 
-export const cachePreviewVariables = (
-  variables?: { name?: string; alias?: string; value?: unknown }[]
-) => {
-  if (!Array.isArray(variables)) return;
-  variables.forEach(item => {
+const variableItems = (
+  variables: any
+): { name?: string; alias?: string; value?: unknown }[] => {
+  if (!variables) return [];
+  if (Array.isArray(variables)) return variables;
+  if (Array.isArray(variables.list)) return variables.list;
+  if (Array.isArray(variables.values)) return variables.values;
+  return [];
+};
+
+export const cachePreviewVariables = (variables?: any) => {
+  variableItems(variables).forEach(item => {
     const coerced = coerceVariableValue(item?.value);
     if (coerced == null) return;
     if (item?.name) previewVariableCache.set(normalizeVarName(item.name), coerced);
@@ -1050,11 +1057,69 @@ const parameterMatches = (item: { name?: string }, name: string) => {
 const isDateParam = (name: string) =>
   /^(startDate|endDate|fromDate|toDate|date)$/i.test(name);
 
+const isIsoDate = (value: string | null | undefined) =>
+  /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
+
+const asIsoDate = (raw: unknown): string | null => {
+  const text = String(raw ?? '').trim();
+  if (!text || /^\{[A-Za-z_][A-Za-z0-9_]*\}$/.test(text)) return null;
+  if (/^(startDate|endDate|fromDate|toDate|date)$/i.test(text)) return null;
+  const coerced = coerceVariableValue(raw);
+  return isIsoDate(coerced) ? String(coerced).slice(0, 10) : null;
+};
+
+const runtimeVariableDate = (report: any, name: string): string | null => {
+  try {
+    const fromGetter = asIsoDate(report?.getVariable?.(name));
+    if (fromGetter) return fromGetter;
+  } catch {
+    /* report has no runtime variable bag yet */
+  }
+  try {
+    const bag = report?.variables;
+    const fromBag = asIsoDate(bag?.get?.(name) ?? bag?.[name]);
+    if (fromBag) return fromBag;
+  } catch {
+    /* hashtable lookup is optional */
+  }
+  return null;
+};
+
+/** Dates from the dashboard panel, shared by every SQL data source. */
+const dashboardDate = (report: any, args: any, name: string): string | null => {
+  const fromRequest = variableItems(args?.variables).find(item =>
+    parameterMatches(item, name)
+  );
+  const requested = asIsoDate(fromRequest?.value);
+  if (requested) return requested;
+
+  const runtime = runtimeVariableDate(report, name);
+  if (runtime) return runtime;
+
+  const cached = previewVariableCache.get(normalizeVarName(name));
+  if (isIsoDate(cached)) return String(cached).slice(0, 10);
+
+  const variable = findVariable(report, name);
+  const fromVariable = asIsoDate(
+    variable?.valueObject ?? variable?.value ?? variable?.val
+  );
+  if (fromVariable) return fromVariable;
+
+  return null;
+};
+
+const plainParameter = (item: any) => ({
+  name: item?.name,
+  value: item?.parameterValue ?? item?.value,
+  typeGroup: item?.typeGroup,
+  typeName: item?.typeName,
+  type: item?.type,
+});
+
 /**
- * JSON dates are filled into /api URLs. A PostgreSQL query only receives a
- * value when @name is a command parameter. Preview creates startDate/endDate
- * in memory, so they are missing from the dictionary and from the SQL command.
- * Copy the same values onto any @parameter the query already names.
+ * Each SQL data source has its own startDate/endDate parameter. A new one often
+ * still contains the text "startDate" instead of the dashboard date, and that
+ * text blocks the variable. Fill any date parameter that did not resolve.
  */
 const applySqlVariableParameters = (report: any, args: any) => {
   const query = String(args?.queryString || '');
@@ -1066,13 +1131,26 @@ const applySqlVariableParameters = (report: any, args: any) => {
   const names = sqlParameterNames(query);
   if (!names.length) return;
 
-  const existing = parameterItems(args.parameters);
-  const next = Array.isArray(args?.parameters) ? args.parameters : existing.slice();
+  const next = parameterItems(args.parameters).map(plainParameter);
+  let sql = query;
 
   names.forEach(name => {
+    const found = next.find(item => parameterMatches(item, name));
+    if (isDateParam(name)) {
+      const already = asIsoDate(found?.value);
+      const resolved =
+        already ?? dashboardDate(report, args, name) ?? defaultForVariable(name);
+      if (!resolved) return;
+      // Write the date into the SQL. A text parameter makes PostgreSQL reject
+      // the comparison, which empties every source that uses these dates.
+      sql = sql.replace(new RegExp(`@${name}\\b`, 'gi'), `DATE '${resolved}'`);
+      const index = next.indexOf(found);
+      if (index >= 0) next.splice(index, 1);
+      return;
+    }
+
     const value = getVariableValue(report, name) ?? defaultForVariable(name);
     if (value == null || value === '') return;
-    const found = next.find(item => parameterMatches(item, name));
     if (found) {
       if (found.value == null || found.value === '') found.value = value;
       return;
@@ -1080,14 +1158,69 @@ const applySqlVariableParameters = (report: any, args: any) => {
     next.push({
       name,
       value,
-      // Keep ISO dates as strings so PostgreSQL casts them in the session
-      // timezone. typeGroup "datetime" would parse them as UTC midnight.
       typeGroup: 'string',
-      typeName: isDateParam(name) ? 'DateTime' : 'String',
+      typeName: 'String',
     });
   });
 
+  args.queryString = sql;
   args.parameters = next;
+};
+
+const reportIsDashboard = (report: any) => {
+  const pages = report?.pages;
+  if (!pages) return false;
+  const count = Number(pages.count ?? pages.list?.length ?? 0);
+  for (let i = 0; i < count; i++) {
+    const page = pages.getByIndex?.(i) ?? pages.list?.[i];
+    if (page?.isDashboard) return true;
+  }
+  return false;
+};
+
+const DASHBOARD_DATE_PARAMETERS = [
+  { name: 'startDate', alias: 'Start Date' },
+  { name: 'endDate', alias: 'End Date' },
+] as const;
+
+/**
+ * Every dashboard gets startDate and endDate in Variables → Parameters.
+ * SQL sources then bind @startDate / @endDate without the user creating them.
+ */
+const ensureDashboardDateParameters = (Stimulsoft: any, report: any) => {
+  if (!Stimulsoft?.Report?.Dictionary?.StiVariable || !report?.dictionary?.variables) {
+    return;
+  }
+  if (!reportIsDashboard(report)) return;
+
+  const dateType = Stimulsoft.System?.DateTime ?? String;
+  const initBy = Stimulsoft.Report.StiVariableInitBy?.Value ?? 0;
+
+  DASHBOARD_DATE_PARAMETERS.forEach(({ name, alias }) => {
+    const existing = findVariable(report, name);
+    if (existing) {
+      if (!String(existing.category || '').trim()) {
+        existing.category = 'Parameters';
+      }
+      existing.allowUseAsSqlParameter = true;
+      existing.requestFromUser = true;
+      return;
+    }
+
+    const variable = new Stimulsoft.Report.Dictionary.StiVariable(
+      'Parameters',
+      name,
+      alias,
+      '',
+      dateType,
+      defaultForVariable(name) ?? '',
+      false,
+      initBy,
+      true
+    );
+    variable.allowUseAsSqlParameter = true;
+    report.dictionary.variables.add(variable);
+  });
 };
 
 const ensureVariablesFromApiPaths = (Stimulsoft: any, report: any) => {
@@ -1109,6 +1242,7 @@ const ensureVariablesFromApiPaths = (Stimulsoft: any, report: any) => {
         Stimulsoft.Report.StiVariableInitBy?.Value ?? 0,
         true
       );
+      variable.allowUseAsSqlParameter = true;
       report.dictionary.variables.add(variable);
     });
   });
@@ -1229,6 +1363,7 @@ export const enableDynamicStimulsoftApis = (Stimulsoft: any, report: any) => {
   patchStimulsoftParsePath(Stimulsoft);
   installStimulsoftApiInterceptor();
   patchStimulsoftHttp(Stimulsoft);
+  ensureDashboardDateParameters(Stimulsoft, report);
   ensureVariablesFromApiPaths(Stimulsoft, report);
   applyDashboardScrollLayout(Stimulsoft, report);
   listDatabases(report).forEach(applyAuthHeadersToDatabase);

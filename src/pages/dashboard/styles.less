@@ -71,7 +71,29 @@
 .stimulsoft-dashboard-toolbar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.stimulsoft-dashboard-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stimulsoft-dashboard-default-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--primary-blue);
+  color: #fff;
 }
 
 .stimulsoft-dashboard-page.rs-panel {

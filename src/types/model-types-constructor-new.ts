@@ -29,6 +29,7 @@ export const newApUser: modelTypes.ApUser = {
   allowOngoingVisit: false,
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
+  canReturnClaimForResubmit: false,
 };
 
 // ------------------- Candidate -------------------
@@ -1737,7 +1738,7 @@ export const newPatient: modelTypes.Patient = {
   lastNameSecondaryLang: '',
 
   primaryMobileNumber: '',
-  receiveSms: false,
+  receiveSms: true,
   secondMobileNumber: '',
   homePhone: '',
   workPhone: '',

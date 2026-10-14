@@ -28,6 +28,8 @@ import { patientMergeService } from './services/patients/patientMergeService';
 import { setupService } from '@/services/setupService';
 import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
+import { dentalChartService } from '@/services/dental/dentalChartService';
+import { dentalTreatmentPlanService } from '@/services/dental/dentalTreatmentPlanService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
@@ -257,6 +259,7 @@ import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfS
 import { billingTransactionService } from './services/billing/billingTransactionService';
 import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -372,6 +375,8 @@ export const store = configureStore({
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
+    [dentalChartService.reducerPath]: dentalChartService.reducer,
+    [dentalTreatmentPlanService.reducerPath]: dentalTreatmentPlanService.reducer,
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
@@ -698,6 +703,7 @@ export const store = configureStore({
       serializableCheck: false
     })
       .prepend(rtkDispatchLoopGuard)
+      .prepend(patientBillingSidebarRefreshMiddleware.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
@@ -728,6 +734,8 @@ export const store = configureStore({
         activeIngredientsService.middleware,
         dvmService.middleware,
         encounterService.middleware,
+        dentalChartService.middleware,
+        dentalTreatmentPlanService.middleware,
         dentalService.middleware,
         observationService.middleware,
         attachmentService.middleware,

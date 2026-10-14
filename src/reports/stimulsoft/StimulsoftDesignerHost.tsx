@@ -347,6 +347,7 @@ const StimulsoftDesignerHost = forwardRef<StimulsoftDesignerHostHandle, Props>(
           prepareReportDictionary(created);
           enableDynamicStimulsoftApis(Stimulsoft, created);
           reportRef.current = created;
+          refreshDesignerDictionary(designer, created);
         };
 
         if (typeof designer.onOpenedReport !== 'undefined') {
