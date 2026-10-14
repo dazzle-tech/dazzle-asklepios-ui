@@ -11,6 +11,20 @@ export interface CreatePointOfSaleTransactionDTO {
 
   amount: number;
 }
+
+export interface CreateManualPointOfSaleTransactionDTO {
+  patientId: number;
+
+  sourceType: "ENCOUNTER" | "WALLET_BALANCE";
+
+  sourceReferenceId: number;
+
+  amount: number;
+
+  panNumber: string;
+
+  transactionId: string;
+}
 export interface GenerateWebhookUrlRequest {
   clientId: string;
   terminalId: string;
@@ -73,6 +87,8 @@ export interface PointOfSaleTransactionDTO {
   schemeLabel?: string;
 
   panNumber?: string;
+
+  entryMode?: "TERMINAL" | "MANUAL";
 
   transactionDate?: string;
 
@@ -146,6 +162,21 @@ export const PointOfSaleTransactionService = createApi({
       ],
     }),
 
+    recordManualEntry: builder.mutation<
+      PointOfSaleTransactionDTO,
+      CreateManualPointOfSaleTransactionDTO
+    >({
+      query: body => ({
+        url: "/api/patient/point-of-sale-transactions/manual",
+        method: "POST",
+        body,
+      }),
+
+      invalidatesTags: [
+        "PointOfSaleTransaction",
+      ],
+    }),
+
   }),
 });
 
@@ -156,5 +187,7 @@ export const {
   useRefreshTransactionStatusMutation,
 
   useCompletePaymentMutation,
+
+  useRecordManualEntryMutation,
 
 } = PointOfSaleTransactionService;
