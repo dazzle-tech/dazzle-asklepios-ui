@@ -1006,7 +1006,6 @@ export interface Analyzer {
   id?: number;
   code: string;
   type: string;
-  facilityId?: number; // FK
   isActive?: boolean;
   createdBy?: string;
   createdDate?: Date | null;

@@ -1,21 +1,14 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useState } from 'react';
+import React from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { FaMicroscope } from 'react-icons/fa';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
-import { initialListRequest, ListRequest } from '@/types/types';
 
 const AddEditAnalyzer = ({ open, setOpen, width, analyzer, setAnalyzer, handleSave }) => {
   // Fetch Analyzer Type Lov response
   const { data: AnalyzerTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
-
-  const [facilityListRequest] = useState<ListRequest>({
-    ...initialListRequest
-  });
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -23,19 +16,6 @@ const AddEditAnalyzer = ({ open, setOpen, width, analyzer, setAnalyzer, handleSa
       case 0:
         return (
           <Form fluid>
-            <MyInput
-              required
-              width="100%"
-              fieldLabel="Facility"
-              fieldName="facilityId"
-              fieldType="select"
-              selectData={facilityListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={analyzer}
-              setRecord={setAnalyzer}
-              disabled={analyzer?.id}
-            />
             <MyInput
               required
               width="100%"

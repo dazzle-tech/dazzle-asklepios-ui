@@ -20,15 +20,12 @@ import {
   useUpdateAnalyzerMutation,
   useToggleAnalyzerIsActiveMutation,
   useLazyGetAnalyzersByTypeQuery,
-  useLazyGetAnalyzersByCodeQuery,
-  useLazyGetAnalyzersByFacilityQuery
+  useLazyGetAnalyzersByCodeQuery
 } from '@/services/setup/analyzerService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Analyzer } from '@/types/model-types-new';
 import { newAnalyzer } from '@/types/model-types-constructor-new';
-import { initialListRequest, ListRequest } from '@/types/types';
 
 const AnalyzerSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -88,25 +85,14 @@ const AnalyzerSetup: React.FC = () => {
 
   const [fetchByType] = useLazyGetAnalyzersByTypeQuery();
   const [fetchByCode] = useLazyGetAnalyzersByCodeQuery();
-  const [fetchByFacility] = useLazyGetAnalyzersByFacilityQuery();
 
-  // Analyzer type LOV (used for the filter dropdown)
-  const { data: analyzerTypeLov } = useGetLovValuesByCodeQuery('ANALYZER_TYPE');
+  // Analyzer type LOV (used for the filter dropdown) - same LAB_CATEGORIES list
+  // as the Add/Edit form's type field.
+  const { data: analyzerTypeLov } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const analyzerTypeOptions = useMemo(
     () => analyzerTypeLov?.object ?? [],
     [analyzerTypeLov]
   );
-
-  // Facilities (used for the filter dropdown and resolving facility names in the table)
-  const [facilityListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
-  const facilityNameById = useMemo(() => {
-    const map: Record<number, string> = {};
-    (facilityListResponse ?? []).forEach((facility: any) => {
-      map[facility.id] = facility.name;
-    });
-    return map;
-  }, [facilityListResponse]);
 
   // Derived data
   const totalCount = useMemo(
@@ -122,8 +108,7 @@ const AnalyzerSetup: React.FC = () => {
   // Filter fields
   const filterFields = [
     { label: 'Analyzer Type', value: 'type' },
-    { label: 'Analyzer Code', value: 'code' },
-    { label: 'Facility', value: 'facility' }
+    { label: 'Analyzer Code', value: 'code' }
   ];
 
   // Helpers
@@ -150,8 +135,6 @@ const AnalyzerSetup: React.FC = () => {
       return await fetchByType({ type: String(value), page, size, sort }).unwrap();
     } else if (fieldName === 'code') {
       return await fetchByCode({ code: String(value), page, size, sort }).unwrap();
-    } else if (fieldName === 'facility') {
-      return await fetchByFacility({ facilityId: Number(value), page, size, sort }).unwrap();
     }
     return undefined;
   };
@@ -219,8 +202,6 @@ const AnalyzerSetup: React.FC = () => {
             matchesFilter = (created.code ?? '')
               .toLowerCase()
               .includes(String(filterValue).toLowerCase());
-          } else if (filterField === 'facility') {
-            matchesFilter = created.facilityId === Number(filterValue);
           }
 
           if (matchesFilter) {
@@ -255,7 +236,6 @@ const AnalyzerSetup: React.FC = () => {
           id: 'Id',
           code: 'Code',
           type: 'Type',
-          facilityId: 'Facility',
           isActive: 'Active'
         };
         const normalizeMsg = (msg: string) => {
@@ -424,12 +404,6 @@ const AnalyzerSetup: React.FC = () => {
       render: (rowData: any) => <LovValueCell valueKey={rowData.type} />
     },
     {
-      key: 'facilityId',
-      title: <Translate>Facility</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) => facilityNameById[rowData.facilityId] ?? ''
-    },
-    {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
@@ -489,19 +463,6 @@ const AnalyzerSetup: React.FC = () => {
           selectData={analyzerTypeOptions}
           selectDataLabel="lovDisplayVale"
           selectDataValue="key"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          searchable={false}
-        />
-      ) : selected === 'facility' ? (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           searchable={false}
