@@ -144,6 +144,9 @@ export type EncounterExecutedServiceLine = {
   currency: string | null;
   grossAmount: number | null;
   patientPaidAmount: number | null;
+  setupUnitPrice: number | null;
+  discountPercentage: number | null;
+  coverageStatus: string | null;
 };
 
 export type EncounterListVM = {

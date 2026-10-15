@@ -56,10 +56,85 @@ flex-wrap: wrap;
 }
 
 .encounter-services-identity span {
-  color: #667085;
+  color: var(--primary-gray);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.encounter-services-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.encounter-services-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 88px;
+  padding: 14px 16px;
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+  border-top: 3px solid var(--primary-blue);
+  border-radius: 10px;
+  background: var(--background-light);
+}
+
+.encounter-services-summary-card--amount {
+  border-top-color: var(--primary-blue);
+  background: var(--extra-light-blue);
+}
+
+.encounter-services-summary-card--copayment {
+  border-top-color: var(--primary-orange);
+  background: var(--light-orange);
+}
+
+.encounter-services-summary-card--claim {
+  border-top-color: var(--primary-green);
+  background: var(--light-green);
+}
+
+.encounter-services-summary-card--paid {
+  border-top-color: var(--deep-blue);
+  background: var(--very-light-blue);
+}
+
+.encounter-services-summary-label {
+  color: var(--gray-dark);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.encounter-services-summary-card--amount .encounter-services-summary-value {
+  color: var(--primary-blue);
+}
+
+.encounter-services-summary-card--copayment .encounter-services-summary-value {
+  color: var(--primary-orange);
+}
+
+.encounter-services-summary-card--claim .encounter-services-summary-value {
+  color: var(--primary-green);
+}
+
+.encounter-services-summary-card--paid .encounter-services-summary-value {
+  color: var(--deep-blue);
+}
+
+.encounter-services-summary-value {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+  .encounter-services-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .encounter-services-state {
@@ -87,4 +162,13 @@ flex-wrap: wrap;
 .encounter-services-modal .my-table-container td,
 .encounter-services-modal .my-table-container th {
   white-space: nowrap;
+}
+
+.encounter-services-modal .encounter-services-total-row.main-row .MuiTableCell-root,
+.encounter-services-modal .encounter-services-total-row.main-row.even-row .MuiTableCell-root,
+.encounter-services-modal .encounter-services-total-row.main-row:hover .MuiTableCell-root {
+  background-color: var(--extra-light-blue) !important;
+  border-top: 2px solid var(--primary-blue) !important;
+  font-weight: 700;
+  color: var(--primary-blue);
 }
