@@ -29,6 +29,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Orders from './Orders';
 import SampleModal from '@/pages/lab-module-new/SampleModal';
 import PrintSampleLabelAction from '@/pages/lab-module-new/PrintSampleLabelAction';
+import PrintSelectedSampleLabelsAction from '@/pages/lab-module-new/PrintSelectedSampleLabelsAction';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -673,6 +674,12 @@ const CollectSambleModal = ({
                                         >
                                             Bulk Collect Sample
                                         </MyButton>
+                                    </span>
+                                </Whisper>
+
+                                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
+                                    <span>
+                                        <PrintSelectedSampleLabelsAction orderTestIds={selectedRows} />
                                     </span>
                                 </Whisper>
                                 <MyTable
