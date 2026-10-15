@@ -3,7 +3,6 @@ import { BaseQuery } from '../../newApi';
 import type {
   PatientActivity,
   PatientActivityCancelDTO,
-  PatientActivityCatalog,
   PatientActivityCompleteDTO,
   PatientActivityCreateDTO,
   PatientActivityUpdateDTO
@@ -16,6 +15,12 @@ export type PatientActivityPage = {
   totalCount: number;
 };
 
+export type PatientActivitySummary = {
+  openTasks: number;
+  overdue: number;
+  completed: number;
+};
+
 export type PatientActivityQuery = {
   patientId: Id;
   page?: number;
@@ -23,29 +28,33 @@ export type PatientActivityQuery = {
   sort?: string;
   category?: string;
   status?: string;
+  search?: string;
 };
 
 export const patientActivityService = createApi({
   reducerPath: 'patientActivityApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PatientActivity', 'PatientActivityCatalog'],
+  tagTypes: ['PatientActivity'],
   endpoints: builder => ({
-    getPatientActivityCatalog: builder.query<PatientActivityCatalog, void>({
-      query: () => ({
-        url: '/api/patient/activities/catalog'
+    getPatientActivitySummary: builder.query<PatientActivitySummary, Id>({
+      query: patientId => ({
+        url: `/api/patient/activities/patient/${patientId}/summary`
       }),
-      providesTags: ['PatientActivityCatalog']
+      providesTags: (_result, _error, patientId) => [
+        { type: 'PatientActivity', id: `LIST-${patientId}` }
+      ]
     }),
 
     getPatientActivities: builder.query<PatientActivityPage, PatientActivityQuery>({
-      query: ({ patientId, page = 0, size = 15, sort = 'createdDate,desc', category, status }) => ({
+      query: ({ patientId, page = 0, size = 15, sort = 'createdDate,desc', category, status, search }) => ({
         url: `/api/patient/activities/patient/${patientId}`,
         params: {
           page,
           size,
           sort,
           ...(category ? { category } : {}),
-          ...(status ? { status } : {})
+          ...(status ? { status } : {}),
+          ...(search ? { search } : {})
         }
       }),
       transformResponse: (response: PatientActivity[], meta) => ({
@@ -113,7 +122,7 @@ export const patientActivityService = createApi({
 });
 
 export const {
-  useGetPatientActivityCatalogQuery,
+  useGetPatientActivitySummaryQuery,
   useGetPatientActivitiesQuery,
   useAddPatientActivityMutation,
   useUpdatePatientActivityMutation,

@@ -8638,17 +8638,3 @@ export interface PatientActivityCancelDTO {
   cancellationReason: string;
 }
 
-export interface PatientActivityTypeOption {
-  value: string;
-  category: string;
-  defaultStatus: string;
-  defaultPriority: string;
-}
-
-export interface PatientActivityCatalog {
-  categories: string[];
-  types: PatientActivityTypeOption[];
-  statuses: string[];
-  creatableStatuses: string[];
-  priorities: string[];
-}

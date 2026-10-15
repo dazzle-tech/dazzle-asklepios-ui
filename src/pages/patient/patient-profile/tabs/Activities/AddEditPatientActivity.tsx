@@ -8,14 +8,18 @@ import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import {
   useAddPatientActivityMutation,
-  useGetPatientActivityCatalogQuery,
   useUpdatePatientActivityMutation
 } from '@/services/patients/patientActivityService';
 import type { PatientActivity } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { useEnumOptions } from '@/services/enumsApi';
 import { useGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import { useGetAppointmentsByPatientQuery } from '@/services/appointment/appointmentService';
-import { emptyPatientActivityForm } from './activityCatalog';
+import {
+  defaultActivityPriority,
+  defaultActivityStatus,
+  emptyPatientActivityForm
+} from './activityCatalog';
 
 type ActivityForm = ReturnType<typeof emptyPatientActivityForm>;
 
@@ -34,15 +38,14 @@ const toOptionalId = (value: unknown): number | null => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
 
+const CREATE_STATUS_EXCLUDE = ['CANCELLED'];
+
 const toDueAt = (value: string): string | null => {
   const date = value?.trim();
   if (!date) return null;
   if (date.includes('T')) return date;
   return `${date}T00:00:00Z`;
 };
-
-const toSelectOptions = (values: string[]) =>
-  values.map(value => ({ value, label: formatEnumString(value) }));
 
 const AddEditPatientActivity: React.FC<Props> = ({
   open,
@@ -56,7 +59,13 @@ const AddEditPatientActivity: React.FC<Props> = ({
   const isEdit = Boolean(activity?.id);
   const [addActivity, { isLoading: isAdding }] = useAddPatientActivityMutation();
   const [updateActivity, { isLoading: isUpdating }] = useUpdatePatientActivityMutation();
-  const { data: catalog } = useGetPatientActivityCatalogQuery();
+  const categoryOptions = useEnumOptions('PatientActivityCategory');
+  const typeOptions = useEnumOptions('PatientActivityType');
+  const statusOptions = useEnumOptions(
+    'PatientActivityStatus',
+    isEdit ? undefined : { exclude: CREATE_STATUS_EXCLUDE }
+  );
+  const priorityOptions = useEnumOptions('PatientActivityPriority');
   const { data: encountersPage } = useGetEncountersByPatientQuery(
     { patientId, page: 0, size: 200, sort: 'createdDate,desc' },
     { skip: !open || !patientId }
@@ -64,28 +73,6 @@ const AddEditPatientActivity: React.FC<Props> = ({
   const { data: appointmentsPage } = useGetAppointmentsByPatientQuery(
     { patientId, page: 0, size: 200, sort: 'startDatetime,desc' },
     { skip: !open || !patientId }
-  );
-
-  const categoryOptions = useMemo(
-    () => toSelectOptions(catalog?.categories ?? []),
-    [catalog?.categories]
-  );
-  const typeOptions = useMemo(
-    () =>
-      toSelectOptions(
-        (catalog?.types ?? [])
-          .filter(type => type.category === form.category)
-          .map(type => type.value)
-      ),
-    [catalog?.types, form.category]
-  );
-  const statusOptions = useMemo(() => {
-    if (isEdit) return toSelectOptions(form.status ? [form.status] : []);
-    return toSelectOptions(catalog?.creatableStatuses ?? []);
-  }, [catalog?.creatableStatuses, form.status, isEdit]);
-  const priorityOptions = useMemo(
-    () => toSelectOptions(catalog?.priorities ?? []),
-    [catalog?.priorities]
   );
 
   const encounterOptions = useMemo(() => {
@@ -132,23 +119,12 @@ const AddEditPatientActivity: React.FC<Props> = ({
 
   const applyForm = (next: ActivityForm | ((current: ActivityForm) => ActivityForm)) => {
     const resolved = typeof next === 'function' ? next(form) : next;
-    const categoryChanged = resolved.category !== form.category;
     const typeChanged = resolved.activityType !== form.activityType;
     const nextForm = { ...resolved };
 
-    if (categoryChanged) {
-      const stillValid = (catalog?.types ?? []).some(
-        type => type.category === nextForm.category && type.value === nextForm.activityType
-      );
-      if (!stillValid) nextForm.activityType = '';
-    }
-
     if (typeChanged && nextForm.activityType) {
-      const selectedType = (catalog?.types ?? []).find(type => type.value === nextForm.activityType);
-      if (selectedType) {
-        nextForm.priority = selectedType.defaultPriority;
-        if (!isEdit) nextForm.status = selectedType.defaultStatus;
-      }
+      nextForm.priority = defaultActivityPriority(nextForm.activityType);
+      if (!isEdit) nextForm.status = defaultActivityStatus(nextForm.activityType);
     }
 
     setForm(nextForm);
@@ -241,7 +217,8 @@ const AddEditPatientActivity: React.FC<Props> = ({
                 fieldType="select"
                 fieldName="category"
                 fieldLabel="Category"
-                selectData={categoryOptions}
+                isEnum
+                selectData={categoryOptions ?? []}
                 selectDataLabel="label"
                 selectDataValue="value"
                 record={form}
@@ -255,13 +232,13 @@ const AddEditPatientActivity: React.FC<Props> = ({
                 fieldType="select"
                 fieldName="activityType"
                 fieldLabel="Activity"
-                selectData={typeOptions}
+                isEnum
+                selectData={typeOptions ?? []}
                 selectDataLabel="label"
                 selectDataValue="value"
                 record={form}
                 setRecord={applyForm}
                 required
-                disabled={!form.category}
               />
             </Col>
           </Row>
