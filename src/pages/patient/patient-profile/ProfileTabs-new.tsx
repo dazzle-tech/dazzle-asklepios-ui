@@ -14,6 +14,7 @@ import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import NextOfKin from './tabs/NextOfKin/NextOfKin';
+import PatientActivities from './tabs/Activities/PatientActivities';
 import { Patient, Address, PatientInsurance } from '@/types/model-types-new';
 import { Panel } from 'rsuite';
 import { Translate } from '@mui/icons-material';
@@ -201,6 +202,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     {
       title: 'Next of Kin',
       content: <NextOfKin patient={localPatient} isClick={!localPatient.id} />
+    },
+    {
+      title: 'Activities & Follow-up',
+      content: <PatientActivities patient={localPatient} />
     },
     {
       title: 'Attachments',

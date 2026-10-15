@@ -1,0 +1,218 @@
+.patient-activity-tab {
+  padding: 8px 4px 16px;
+}
+
+.patient-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+}
+
+.patient-activity-filters {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end !important;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+
+  > .my-input-container,
+  > .rs-form-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch;
+    width: 240px;
+    min-width: 240px;
+    margin: 0 !important;
+  }
+
+  .rs-form-control-label {
+    display: block;
+    width: 100%;
+    margin: 0 0 6px !important;
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .rs-picker,
+  .rs-picker-toggle-wrapper {
+    width: 240px !important;
+  }
+}
+
+.patient-activity-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+
+  .bt {
+    height: 36px;
+  }
+}
+
+.patient-activity-summary {
+  display: flex;
+  gap: 72px;
+  padding: 4px 4px 18px;
+}
+
+.patient-activity-summary-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.patient-activity-summary-value {
+  margin-top: 6px;
+  color: #111827;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.patient-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.patient-activity-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e6e8ee;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.patient-activity-icon {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 28px;
+  padding-top: 2px;
+  color: #3b82f6;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.patient-activity-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-activity-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.patient-activity-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.patient-activity-meta {
+  margin-top: 2px;
+  color: #8b93a7;
+  font-size: 13px;
+}
+
+.patient-activity-note {
+  margin: 8px 0 10px;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.patient-activity-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patient-activity-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-done {
+  color: #178a52;
+  background: #e8f8ef;
+}
+
+.status-open {
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.status-cancelled {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.patient-activity-due {
+  color: #9aa3b5;
+  font-size: 13px;
+}
+
+.patient-activity-actions {
+  display: flex;
+  gap: 8px;
+  color: #9aa3b5;
+
+  svg {
+    cursor: pointer;
+  }
+
+  .complete {
+    color: #22a06b;
+  }
+
+  .cancel {
+    color: #e11d48;
+  }
+}
+
+.patient-activity-empty {
+  padding: 24px 8px;
+  color: #6b7280;
+}
+
+.patient-activity-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+
+  button {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: default;
+      color: #9ca3af;
+    }
+  }
+}
