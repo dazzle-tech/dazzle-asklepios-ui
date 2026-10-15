@@ -9,6 +9,9 @@ import { useLazyGetServicesBulkByIdsQuery} from '@/services/setup/serviceService
 import { useCancelToothServiceMutation } from '@/services/dental/dentalChartService';
 import CancellationModal from '@/components/CancellationModal/CancellationModal';
 import { formatEnumString } from '@/utils';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 interface ToothServicesTabProps {
   selectedTooth: any;
   currentToothService: any;
@@ -29,6 +32,7 @@ const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
   addService,
   servicesLoading
 }) => {
+const dispatch = useAppDispatch();
 const [getServicesBulk, servicesBulkRes] = useLazyGetServicesBulkByIdsQuery();
 const [cancelToothService] = useCancelToothServiceMutation();
 const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -70,7 +74,11 @@ const handleCancelService = async () => {
     }).unwrap();
     setCancelModalOpen(false);
     setRowToCancel(null);
-  } catch (error) {
+  } catch (error: any) {
+    dispatch(notify({
+      msg: extractApiErrorMessage(error) || 'Cancel service error',
+      sev: 'error'
+    }));
     setCancelModalOpen(false);
   }
 };

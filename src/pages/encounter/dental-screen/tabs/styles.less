@@ -3,9 +3,13 @@
   gap: 16px;
 
   .dental-visit-chart {
-    width: 600px;
+    width: 700px;
     padding: 16px;
     min-height: calc(100vh - 200px);
+    // rsuite's base .rs-panel sets overflow:hidden for rounded corners, which
+    // clips the arc's outermost teeth -- they're centered via translate(-50%)
+    // right at the container's left/right edges.
+    overflow: visible;
   }
   .dental-actions-table {
     width: 100%;

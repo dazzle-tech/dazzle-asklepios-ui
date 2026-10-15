@@ -16,8 +16,8 @@ interface ToothStateTabProps {
   selectedTooth: any;
   currentToothAction: any;
   setCurrentToothAction: (action: any) => void;
-  selectedCdt: string;
-  setSelectedCdt: (cdt: string) => void;
+  selectedCdt: string | null;
+  setSelectedCdt: (cdt: string | null) => void;
   dentalActionsList: any[];
   dentalActionsMap: any;
   removeToothAction: any;
@@ -111,7 +111,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
               record={currentToothAction}
               setRecord={r => {
                 setCurrentToothAction(r);
-                if (r.existing) setSelectedCdt('');
+                if (r.existing) setSelectedCdt(null);
               }}
               disabled={
                 !dentalActionsMap[currentToothAction.dentalActionId] ||
@@ -123,6 +123,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
             />
 
             <MyInput
+            fieldLabel='CDT Code ID'
               fieldName="cdtCodeId"
               fieldType="select"
               required={
@@ -268,6 +269,8 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     surface={SURFACE_LABELS[action.surface] || action.surface || 'N/A'}
                     note={action.note || 'No notes'}
                     existing={action.existing}
+                    anesthesiaUsed={action.anesthesiaUsed}
+                    dose={action.dose}
                   />
                 </Box>
               ))}

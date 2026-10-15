@@ -7,6 +7,7 @@ import {
   useCancelToothServiceMutation
 } from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
+import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix } from '@/utils/toothNumber';
 import { useEffect, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
@@ -73,7 +74,10 @@ const DentalChart = ({
     serviceId: null
   });
 
-  const [selectedCdt, setSelectedCdt] = useState('');
+  // null (not '') for "no CDT selected" -- MyInput's SelectPicker treats an
+  // empty string as a real selected value (no matching item -> renders
+  // "[object Object]" instead of the placeholder), but treats null correctly.
+  const [selectedCdt, setSelectedCdt] = useState<string | null>(null);
 
   const [addToothAction, addToothActionMutation] = useSaveToothActionMutation();
   const [addToothService, addToothServiceMutation] = useSaveToothServiceMutation();
@@ -126,7 +130,7 @@ const DentalChart = ({
       cdtCodeId: selectedCdt,
       anesthesiaUsed: currentToothAction.anesthesiaUsed,
       dose: currentToothAction.dose
-    }).unwrap();
+    });
   };
 
   useEffect(() => {
@@ -140,7 +144,7 @@ const DentalChart = ({
         anesthesiaUsed: '',
         dose: ''
       });
-      setSelectedCdt('');
+      setSelectedCdt(null);
 
       setChartObject(addToothActionMutation.data);
       for (const toothKey in addToothActionMutation.data.teeth) {
@@ -154,7 +158,7 @@ const DentalChart = ({
       dispatch(hideLoading());
     } else if (addToothActionMutation.status === 'rejected') {
       dispatch(hideLoading());
-      dispatch(notify({ msg: 'Add action error', sev: 'error' }));
+      dispatch(notify({ msg: extractApiErrorMessage(addToothActionMutation.error) || 'Add action error', sev: 'error' }));
     } else if (addToothActionMutation.status === 'pending') {
       dispatch(showLoading());
     }
@@ -164,7 +168,7 @@ const DentalChart = ({
     addToothService({
       toothId: selectedTooth.id,
       serviceId: currentToothService.serviceId
-    }).unwrap();
+    });
   };
 
   useEffect(() => {
@@ -185,7 +189,7 @@ const DentalChart = ({
       dispatch(hideLoading());
     } else if (addToothServiceMutation.status === 'rejected') {
       dispatch(hideLoading());
-      dispatch(notify({ msg: 'Add service error', sev: 'error' }));
+      dispatch(notify({ msg: extractApiErrorMessage(addToothServiceMutation.error) || 'Add service error', sev: 'error' }));
     } else if (addToothServiceMutation.status === 'pending') {
       dispatch(showLoading());
     }
@@ -202,7 +206,7 @@ const DentalChart = ({
         anesthesiaUsed: '',
         dose: ''
       });
-      setSelectedCdt('');
+      setSelectedCdt(null);
 
       setChartObject(removeToothActionMutation.data);
       for (const toothKey in removeToothActionMutation.data.teeth) {
@@ -216,7 +220,7 @@ const DentalChart = ({
       dispatch(hideLoading());
     } else if (removeToothActionMutation.status === 'rejected') {
       dispatch(hideLoading());
-      dispatch(notify({ msg: 'Add action error', sev: 'error' }));
+      dispatch(notify({ msg: extractApiErrorMessage(removeToothActionMutation.error) || 'Remove action error', sev: 'error' }));
     } else if (removeToothActionMutation.status === 'pending') {
       dispatch(showLoading());
     }
@@ -232,7 +236,7 @@ const DentalChart = ({
       anesthesiaUsed: '',
       dose: ''
     });
-    setSelectedCdt('');
+    setSelectedCdt(null);
   };
 
   const clearCurrentService = () => {
@@ -249,8 +253,8 @@ const DentalChart = ({
           {upperTeeth.map((_tooth: any, idx: number) => {
             const total = upperTeeth.length;
             const angle = (Math.PI * idx) / (total - 1);
-            const x = 50 + 50 * Math.cos(angle - Math.PI);
-            const y = 50 + 60 * Math.sin(angle - Math.PI);
+            const x = 50 + 44 * Math.cos(angle - Math.PI);
+            const y = 50 + 65 * Math.sin(angle - Math.PI);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
             const hasCondition = (_tooth as any).actions?.some(
@@ -281,7 +285,8 @@ const DentalChart = ({
                   }
                   className={clsx(`tooth-btn tooth_${toothCssClassSuffix(_tooth.toothNumber)}`)}
                 >
-                  <div>
+                  {/* Upper jaw: root attaches to the gum above, crown points down into the mouth. */}
+                  <div style={{ transform: 'scaleY(-1)' }}>
                     <Tooth
                       chartTooth={_tooth}
                       selected={selected}
@@ -306,8 +311,8 @@ const DentalChart = ({
           {lowerTeeth.map((_tooth: any, idx: number) => {
             const total = lowerTeeth.length;
             const angle = (Math.PI * idx) / (total - 1);
-            const x = 50 + 50 * Math.cos(angle);
-            const y = 50 + 65 * Math.sin(angle);
+            const x = 50 + 44 * Math.cos(angle);
+            const y = 50 + 70 * Math.sin(angle);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
             const hasCondition = (_tooth as any).actions?.some(

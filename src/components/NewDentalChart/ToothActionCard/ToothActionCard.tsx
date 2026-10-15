@@ -11,6 +11,8 @@ interface ToothActionCardProps {
   surface: string;
   note: string;
   existing: boolean;
+  anesthesiaUsed?: string;
+  dose?: string;
 }
 
 const ToothActionCard = ({
@@ -20,7 +22,9 @@ const ToothActionCard = ({
   type,
   surface,
   note,
-  existing
+  existing,
+  anesthesiaUsed,
+  dose
 }: ToothActionCardProps) => {
   const formattedDate = new Date(date);
 
@@ -64,6 +68,18 @@ const ToothActionCard = ({
             <Typography className="tooth-action-info-label">Existing</Typography>
             <Typography className="tooth-action-info-value">{existing ? 'Yes' : 'No'}</Typography>
           </Box>
+          {anesthesiaUsed && (
+            <Box className="tooth-info-item">
+              <Typography className="tooth-action-info-label">Anesthesia</Typography>
+              <Typography className="tooth-action-info-value">{anesthesiaUsed}</Typography>
+            </Box>
+          )}
+          {dose && (
+            <Box className="tooth-info-item">
+              <Typography className="tooth-action-info-label">Dose</Typography>
+              <Typography className="tooth-action-info-value">{dose}</Typography>
+            </Box>
+          )}
         </Box>
         <Box className="tooth-action-note">
           <StickyNote2OutlinedIcon />

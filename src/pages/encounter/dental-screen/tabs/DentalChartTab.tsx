@@ -187,6 +187,8 @@ const ChartTab = ({
               surface={tooth.surface ?? '-'}
               note={tooth.note}
               existing={tooth.existing}
+              anesthesiaUsed={tooth.anesthesiaUsed}
+              dose={tooth.dose}
             />
           ))
         ) : (
