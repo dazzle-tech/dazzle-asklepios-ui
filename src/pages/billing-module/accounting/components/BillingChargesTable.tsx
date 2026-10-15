@@ -371,9 +371,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       key: 'unitPrice',
 
-      title: 'Unit price',
+      title: 'Unit price (Gross amount)',
 
-      width: 110,
+      width: 170,
 
       render: (row: UnifiedBillingChargeRow) =>
         formatMoney(row.unitPrice, row.currency || currency)
@@ -384,7 +384,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       key: 'setupUnitPrice',
 
-      title: 'Setup price',
+      title: 'Cash price',
 
       width: 110,
 
@@ -399,9 +399,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       key: 'netAmount',
 
-      title: 'Net',
+      title: 'Net amount',
 
-      width: 100,
+      width: 110,
 
       render: (row: UnifiedBillingChargeRow) =>
 
@@ -420,6 +420,20 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       render: (row: UnifiedBillingChargeRow) =>
 
         formatMoney(row.patientAmount, row.currency || currency)
+
+    },
+
+    {
+
+      key: 'insuranceAmount',
+
+      title: 'Claim share',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) =>
+
+        formatMoney(row.insuranceAmount ?? 0, row.currency || currency)
 
     },
 

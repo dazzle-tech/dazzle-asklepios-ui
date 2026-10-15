@@ -258,8 +258,13 @@ const PatientsEncounters = () => {
             },
             {
                 key: 'patientTotal',
-                title: 'Co-payment',
+                title: 'Patient share',
                 render: (row: EncounterListVM) => formatAmount(row.patientTotal),
+            },
+            {
+                key: 'insuranceTotal',
+                title: 'Claim share',
+                render: (row: EncounterListVM) => formatAmount(row.insuranceTotal ?? 0),
             },
             {
                 key: 'patientPaidTotal',
