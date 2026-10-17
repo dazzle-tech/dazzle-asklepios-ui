@@ -1,94 +1,216 @@
 .patient-summary-container {
-  padding: 10px;
-  height: auto;
-  flex-wrap: wrap;
-  display: flex;
-  margin: 5px;
-  border-radius: 8px;
-  gap: 0 !important;
-}
+  --dashboard-columns: 3;
 
-.patient-summary-Column {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 11px;
-  min-width: 0;
-}
+  gap: 12px;
 
-.patient-summary-panel {
-  height: 255px;
-  width: 358px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-.panel-header {
-  flex-direction: row;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 4px;
-  width: 355px;
-  height: 20px;
-  margin-bottom: 10px;
-}
-
-.full-view {
-  color: #2264e5 !important;
-  font-family: 'Inter Medium';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 12px;
-  line-height: 20px;
-  text-decoration-line: underline;
-}
-
-.title {
-  color: #2d3b4c !important;
-  margin: 0 auto;
-  font-family: 'Inter Medium';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.image-style {
   width: 100%;
-  height: 200px;
-  object-fit: contain;
-  border-radius: 8px;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+
+  margin: 0;
+  padding: 10px;
+  box-sizing: border-box;
+
+  .patient-summary-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(
+      var(--dashboard-columns),
+      minmax(0, 1fr)
+    );
+    align-items: start;
+    gap: 12px;
+
+    min-width: 0;
+    min-height: 48px;
+  }
+
+  // Drag position and size stay on the library's inline styles.
+  .patient-summary-widget {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 320px;
+    box-sizing: border-box;
+
+    &:focus-visible {
+      outline: 2px solid #2264e5;
+      outline-offset: 4px;
+      border-radius: 14px;
+    }
+  }
+
+  .patient-summary-row > [data-rbd-placeholder-context-id] {
+    min-width: 0;
+    min-height: 48px;
+  }
+
+  .patient-summary-widget > .medical-dashboard-main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .patient-summary-widget > .medical-dashboard-main-container > .medical-dashboard-container-div {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .patient-summary-widget {
+    .medical-dashboard-header-div,
+    .divider-line-section-comp {
+      flex-shrink: 0;
+    }
+
+    .medical-dashboard-table-div {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .medical-dashboard-table-div:not(:has(.my-table-wrapper)) {
+      overflow: auto;
+    }
+
+    .my-table-wrapper,
+    .my-table-content-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+
+      width: 100%;
+      min-width: 0;
+      min-height: 0;
+      margin-top: 0;
+      overflow: hidden;
+    }
+
+    .my-table-filters,
+    .my-table-buttons-wrapper,
+    .MuiTablePagination-root {
+      flex-shrink: 0;
+    }
+
+    .my-table-container {
+      flex: 1 1 0%;
+      align-self: stretch;
+      min-width: 0;
+      min-height: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: auto !important;
+    }
+  }
 }
 
-@media (max-width: 1200px) {
-  .image-style {
-    height: 200px;
+.patient-summary-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 180px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  color: #526174;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.dashboard-preference-feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin: 0 14px 8px;
+  padding: 12px 14px;
+
+  color: #526174;
+  background: #f8faff;
+  border: 1px solid #e4eaf2;
+  border-inline-start: 3px solid #2264e5;
+  border-radius: 10px;
+
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.dashboard-preference-retry {
+  padding: 3px 8px;
+
+  color: #2264e5;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
+
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover {
+    background: #edf4ff;
   }
 
-  .title {
-    line-height: 18;
+  &:focus-visible {
+    outline: 2px solid #2264e5;
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 768px) {
+  .patient-summary-container {
+    gap: 12px;
+    padding: 8px;
+
+    .patient-summary-row {
+      gap: 12px;
+    }
   }
 
-  .panel-header {
-    width: 348px;
-    height: 18px;
-  }
-
-  .patient-summary-panel {
-    height: 250px;
-    width: 350px;
+  .dashboard-preference-feedback {
+    margin-inline: 8px;
   }
 }
 
 .choose-sections-dashboard {
   .rs-form:not(.rs-form-inline) .rs-form-group:not(:last-child) {
-    margin-bottom: 0px !important;
+    margin-bottom: 0 !important;
   }
 }
+
 .margin-div {
+  margin-top: 10px;
+
   .rs-picker-input-group.rs-input-group.rs-input-group-inside {
     width: 200px !important;
   }
@@ -111,7 +233,6 @@
   display: flex;
   align-items: center;
   gap: 25px;
-  // height: 56.17px;
 }
 
 .flex-center-5 {
@@ -120,12 +241,8 @@
   gap: 5px;
 }
 
-.margin-div {
-  margin-top: 10px;
-}
-
 .flex-end-5 {
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
   gap: 5px;
 }

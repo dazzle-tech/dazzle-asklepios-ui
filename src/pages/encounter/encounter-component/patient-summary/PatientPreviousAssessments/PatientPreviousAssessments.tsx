@@ -11,9 +11,10 @@ import {
 
 type Props = {
   encounter: any;
+  loadingHeight?: number | string;
 };
 
-const PatientPreviousAssessments = ({ encounter }: Props) => {
+const PatientPreviousAssessments = ({ encounter, loadingHeight }: Props) => {
 
   const encounterId = encounter?.id;
 
@@ -62,6 +63,7 @@ const PatientPreviousAssessments = ({ encounter }: Props) => {
           data={tableData}
           columns={columns}
           loading={isFetching}
+          loadingHeight={loadingHeight}
         />
       }
     />
