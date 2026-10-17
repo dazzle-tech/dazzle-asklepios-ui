@@ -1,228 +1,250 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Form, Loader } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
-import {
-  useAddUserDashboardComponentsMutation,
-  useDeleteUserDashboardComponentsMutation
-} from '@/services/encounterService';
-import Translate from '@/components/Translate';
+import { useSaveEncounterDashboardPreferenceMutation } from '@/services/encounters/patientEncounterService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { DASHBOARD_WIDGET_KEYS } from './dashboardWidgets';
+
+type DraftMap = Record<string, boolean>;
+
+const emptyDraft = (): DraftMap =>
+  Object.fromEntries(DASHBOARD_WIDGET_KEYS.map(key => [key, false]));
+
+const draftFromKeys = (keys: string[]): DraftMap => {
+  const selected = new Set(keys);
+  return Object.fromEntries(DASHBOARD_WIDGET_KEYS.map(key => [key, selected.has(key)]));
+};
+
 const ChooseDashboardSections = ({
   open,
   setOpen,
-  displays,
-  setDisplays,
-  setColumns,
-  arrOfComponentKeys,
-  userId
+  initialSelectedKeys = [],
+  selectionReady,
+  encounterId,
+  userId,
+  loadError,
+  onRetry
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  initialSelectedKeys?: string[];
+  selectionReady: boolean;
+  encounterId?: number | null;
+  userId?: string | number;
+  loadError?: string | null;
+  onRetry?: () => void;
 }) => {
-  const [saveComponent] = useAddUserDashboardComponentsMutation();
-  const [deleteComponent] = useDeleteUserDashboardComponentsMutation();
-  const [selectedAll, setSelectedAll] = useState({all: false});
-  // Handle save when choose sections
-  const handleSave = () => {
-    setColumns(prev => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach(colKey => {
-        updated[colKey] = updated[colKey].map(item => ({
-          ...item,
-          display: displays[item.id]
-        }));
-      });
-      return updated;
-    });
-    setOpen(false);
+  const dispatch = useAppDispatch();
+  const [savePreference] = useSaveEncounterDashboardPreferenceMutation();
+  const [draft, setDraft] = useState<DraftMap>(emptyDraft);
+  const [draftReady, setDraftReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-    Object.entries(displays).forEach(([key, value]) => {
-      if (!arrOfComponentKeys.includes(key) && value) {
-        saveComponent({ user_id: userId, component_key: key })
-          .unwrap()
-          .then(() => {})
-          .catch(() => {});
-      }
-      if (arrOfComponentKeys.includes(key) && !value) {
-        deleteComponent({ user_id: userId, component_key: key })
-          .unwrap()
-          .then(() => {})
-          .catch(() => {});
-      }
+  useEffect(() => {
+    if (!open) {
+      setDraftReady(false);
+      setSaveError(null);
+      setSaving(false);
+      return;
+    }
+    if (!selectionReady || draftReady) return;
+    setDraft(draftFromKeys(initialSelectedKeys));
+    setDraftReady(true);
+  }, [open, selectionReady, initialSelectedKeys, draftReady]);
+
+  const selectAllRecord = useMemo(
+    () => ({
+      all: DASHBOARD_WIDGET_KEYS.every(key => draft[key])
+    }),
+    [draft]
+  );
+
+  const handleDraftChange = (record: DraftMap) => {
+    setDraft(prev => {
+      const next = { ...prev };
+      DASHBOARD_WIDGET_KEYS.forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(record, key)) {
+          next[key] = !!record[key];
+        }
+      });
+      return next;
     });
   };
-  // Modal content
+
+  const handleSelectAllChange = (record: { all?: boolean }) => {
+    const checked = !!record?.all;
+    setDraft(Object.fromEntries(DASHBOARD_WIDGET_KEYS.map(key => [key, checked])));
+  };
+
+  const handleCancel = () => {
+    setDraft(draftFromKeys(initialSelectedKeys));
+    setSaveError(null);
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    if (encounterId == null || userId == null) {
+      const msg = 'Open an encounter while signed in to save dashboard preferences.';
+      setSaveError(msg);
+      dispatch(notify({ sev: 'error', msg }));
+      throw new Error('dashboard-preferences-save-failed');
+    }
+
+    const nextKeys = DASHBOARD_WIDGET_KEYS.filter(key => draft[key]);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await savePreference({
+        encounterId,
+        userId,
+        widgetKeys: nextKeys
+      }).unwrap();
+      setOpen(false);
+    } catch {
+      const msg = 'Failed to save dashboard preferences. Please try again.';
+      setSaveError(msg);
+      dispatch(notify({ sev: 'error', msg }));
+      throw new Error('dashboard-preferences-save-failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
           <div className="choose-sections-dashboard">
-            <Form layout="vertical" fluid>
-              <MyInput
-                fieldType="check"
-                fieldName="all"
-                fieldLabel={<Translate>Select All</Translate>}
-                record={selectedAll}
-                setRecord={setSelectedAll}
-                showLabel={false}
-              />
-              {/* <MyInput
-                fieldType="check"
-                fieldName="c1"
-                fieldLabel={<Translate>Body Diagram</Translate>}
-                record={displays}
-                setRecord={setDisplays}
-                showLabel={false}
-              /> */}
-              <MyInput
-                fieldType="check"
-                fieldName="c2"
-                fieldLabel={<Translate>Previous Visit</Translate>}
-                record={displays}
-                showLabel={false}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c3"
-                fieldLabel={<Translate>Chronic Diseases</Translate>}
-                record={displays}
-                setRecord={setDisplays}
-                showLabel={false}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c4"
-                fieldLabel={<Translate>Patient Chronic Medication</Translate>}
-                record={displays}
-                setRecord={setDisplays}
-                showLabel={false}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c5"
-                fieldLabel={<Translate>Patient Observation</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              {/* <MyInput
-                fieldType="check"
-                fieldName="c6"
-                fieldLabel={<Translate>Functional Assessment</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              /> */}
-              <MyInput
-                fieldType="check"
-                fieldName="c7"
-                fieldLabel={<Translate>Active Allergies</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c8"
-                fieldLabel={<Translate>Medical Warnings</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c9"
-                fieldLabel="Patient Plan"
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-
-              {/* <MyInput
-                fieldType="check"
-                fieldName="c10"
-                fieldLabel={<Translate>General Assessment</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              /> */}
-              <MyInput
-                fieldType="check"
-                fieldName="c11"
-                fieldLabel={<Translate>Procedures</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c12"
-                fieldLabel="Recent Test Results"
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c13"
-                fieldLabel={<Translate>Primary Care Provider</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c14"
-
-                fieldLabel={
-                <Translate>
-                Previous Assessments
-                </Translate>
-                }
-
-                showLabel={false}
-
-                record={displays}
-                setRecord={setDisplays}
-
+            {loadError && (
+              <div className="dashboard-preference-feedback">
+                <span>{loadError}</span>
+                {onRetry && (
+                  <button type="button" className="dashboard-preference-retry" onClick={onRetry}>
+                    Retry
+                  </button>
+                )}
+              </div>
+            )}
+            {saveError && <div className="dashboard-preference-feedback">{saveError}</div>}
+            {!selectionReady && !loadError && (
+              <div className="dashboard-preference-feedback">
+                <Loader size="sm" />
+                <span>Loading dashboard preferences...</span>
+              </div>
+            )}
+            {selectionReady && draftReady && (
+              <Form layout="vertical" fluid>
+                <MyInput
+                  fieldType="check"
+                  fieldName="all"
+                  fieldLabel="Select All"
+                  record={selectAllRecord}
+                  setRecord={handleSelectAllChange}
+                  showLabel={false}
                 />
-              {/* <MyInput
-                fieldType="check"
-                fieldName="c13"
-                fieldLabel={<Translate>Last 24-h Medications</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c14"
-                fieldLabel={<Translate>Intake Outputs</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              />
-              <MyInput
-                fieldType="check"
-                fieldName="c15"
-                fieldLabel={<Translate>Chief Complain</Translate>}
-                showLabel={false}
-                record={displays}
-                setRecord={setDisplays}
-              /> */}
-            </Form>
+                <MyInput
+                  fieldType="check"
+                  fieldName="c2"
+                  fieldLabel="Previous Visit"
+                  record={draft}
+                  showLabel={false}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c3"
+                  fieldLabel="Chronic Diseases"
+                  record={draft}
+                  setRecord={handleDraftChange}
+                  showLabel={false}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c4"
+                  fieldLabel="Patient Chronic Medication"
+                  record={draft}
+                  setRecord={handleDraftChange}
+                  showLabel={false}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c5"
+                  fieldLabel="Patient Observation"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c7"
+                  fieldLabel="Active Allergies"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c8"
+                  fieldLabel="Medical Warnings"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c9"
+                  fieldLabel="Patient Plan"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c11"
+                  fieldLabel="Procedures"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c12"
+                  fieldLabel="Recent Test Results"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c13"
+                  fieldLabel="Primary Care Provider"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+                <MyInput
+                  fieldType="check"
+                  fieldName="c14"
+                  fieldLabel="Previous Assessments"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={handleDraftChange}
+                />
+              </Form>
+            )}
           </div>
         );
+      default:
+        return null;
     }
   };
-  useEffect(() => {
-    if(selectedAll['all'])
-     setDisplays({...displays, c1: true, c2: true, c3: true, c4: true, c5: true, c7: true, c8: true,c9:true, c11: true, c12: true, c13: true, c14:true});
-    else
-     setDisplays({...displays, c1: false, c2: false, c3: false, c4: false, c5: false, c7: false, c8: false, c9: true, c11: false, c12: false,c13: false, c14:false});
 
-  },[selectedAll]);
   return (
     <MyModal
       open={open}
@@ -232,9 +254,13 @@ const ChooseDashboardSections = ({
       content={conjureFormContent}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
+      actionButtonLoading={saving}
+      isDisabledActionBtn={saving || !selectionReady || !draftReady}
+      handleCancelFunction={handleCancel}
       size="300px"
       steps={[{ title: 'Select Component', icon: <FontAwesomeIcon icon={faChartLine} /> }]}
     />
   );
 };
+
 export default ChooseDashboardSections;

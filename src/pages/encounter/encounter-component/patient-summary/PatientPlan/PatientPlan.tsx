@@ -6,7 +6,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { useGetEncounterPlansByPatientQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 
-const PatientPlan = ({ patient, title = null }) => {
+const PatientPlan = ({ patient, title = null, loadingHeight = undefined }) => {
   const dispatch = useAppDispatch();
 
   const [sortColumn, setSortColumn] = useState('createdDate');
@@ -94,6 +94,7 @@ const PatientPlan = ({ patient, title = null }) => {
           columns={tableColumns}
           totalCount={totalCount}
           loading={isLoading || isFetching}
+          loadingHeight={loadingHeight}
           data={ patientPlan?.data ?? []}
           page={paginationParams.page}
           rowsPerPage={paginationParams.size}
