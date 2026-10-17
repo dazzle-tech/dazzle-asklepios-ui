@@ -23,6 +23,13 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
+import {
+  DURATION_TYPE_OPTIONS,
+  getSavedDuration,
+  isIncompleteDuration,
+  isSameCalendarDay,
+  resolveDurationInput
+} from '@/utils/durationDate';
 
 const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Patient problem payload is required.',
@@ -34,6 +41,13 @@ const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'field.required': 'This field is required.',
   'validation.failed': 'Please fix validation errors.',
   'duplicate.entry': 'A patient problem with these values already exists.',
+  'dateOfDiagnosis.required': 'Date of Diagnosis is required.',
+  'diagnosisDuration.incomplete': 'Date Type and Number must be provided together.',
+  'diagnosisDurationType.invalid': 'Date Type must be Years, Months or Days.',
+  'diagnosisDuration.negative': 'Number must not be negative.',
+  'diagnosisDuration.fraction': 'Number must be a whole number.',
+  'diagnosisDuration.overflow': 'Number is too large.',
+  'diagnosisDuration.outOfRange': 'The resulting date of diagnosis is out of range.',
   notfound: 'Patient problem not found.'
 };
 
@@ -65,6 +79,8 @@ const emptyPatientProblem = {
   patientId: undefined,
   condition: '',
   dateOfDiagnosis: null,
+  diagnosisDurationType: null,
+  diagnosisDuration: null,
   conditionStatus: null,
   type: null,
   dateOfResolution: null,
@@ -119,6 +135,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
   useEffect(() => {
     if (initialData) {
       setFormData({
+        ...emptyPatientProblem,
         ...initialData,
         patientId: Number(patient?.id)
       });
@@ -129,6 +146,43 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       });
     }
   }, [initialData, open, patient?.id]);
+
+  const savedDiagnosisDuration = getSavedDuration(
+    initialData?.diagnosisDurationType,
+    initialData?.diagnosisDuration,
+    initialData?.dateOfDiagnosis
+  );
+
+  const handleDiagnosisDurationChange = (next: any) => {
+    const { durationType, duration, date, error } = resolveDurationInput(
+      next?.diagnosisDurationType,
+      next?.diagnosisDuration,
+      savedDiagnosisDuration
+    );
+
+    if (error) {
+      dispatch(notify({ msg: error, sev: 'warning' }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      diagnosisDurationType: durationType,
+      diagnosisDuration: duration,
+      ...(date ? { dateOfDiagnosis: date } : {})
+    }));
+  };
+
+  const handleDateOfDiagnosisChange = (next: any) => {
+    const dateOfDiagnosis = next?.dateOfDiagnosis ?? null;
+    if (isSameCalendarDay(dateOfDiagnosis, formData.dateOfDiagnosis)) return;
+    setFormData(prev => ({
+      ...prev,
+      dateOfDiagnosis,
+      diagnosisDurationType: null,
+      diagnosisDuration: null
+    }));
+  };
 
   const handleSave = async () => {
     const normalizedType = normalizeSavedValue(formData.type);
@@ -142,6 +196,8 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       patientId: Number(patient.id),
       condition: String(formData.condition ?? '').trim(),
       dateOfDiagnosis: formData.dateOfDiagnosis,
+      diagnosisDurationType: formData.diagnosisDurationType ?? null,
+      diagnosisDuration: formData.diagnosisDuration ?? null,
       conditionStatus: normalizedConditionStatus,
       type: normalizedType,
       dateOfResolution: formData.dateOfResolution,
@@ -155,6 +211,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
     if (!payload.patientIsFree) {
       if (!payload.condition) {
         errors.push('Condition is required');
+      }
+
+      if (isIncompleteDuration(payload.diagnosisDurationType, payload.diagnosisDuration)) {
+        errors.push('Date Type and Number must be provided together');
       }
 
       if (!payload.dateOfDiagnosis) {
@@ -254,6 +314,8 @@ useEffect(() => {
       ...prev,
       condition: '',
       dateOfDiagnosis: null,
+      diagnosisDurationType: null,
+      diagnosisDuration: null,
       conditionStatus: null,
       type: null,
       dateOfResolution: null,
@@ -276,7 +338,7 @@ useEffect(() => {
 
         />
         <Row>
-          <Col md={12}>
+          <Col md={24}>
             <div style={{ marginBottom: 12 }}>
               <MultiSelectAppender
                 disabled={formData.patientIsFree}
@@ -295,8 +357,43 @@ useEffect(() => {
               />
             </div>
           </Col>
+        </Row>
 
-          <Col md={12}>
+        <Row>
+          <Col md={8}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date Type"
+              fieldType="select"
+              fieldName="diagnosisDurationType"
+              selectData={DURATION_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={formData}
+              setRecord={handleDiagnosisDurationChange}
+              searchable={false}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+
+          <Col md={8}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Number"
+              fieldType="number"
+              fieldName="diagnosisDuration"
+              record={formData}
+              setRecord={handleDiagnosisDurationChange}
+              min={0}
+              step={1}
+              showZero
+              disabled={formData.patientIsFree || !formData.diagnosisDurationType}
+            />
+          </Col>
+
+          <Col md={8}>
             <MyInput
               width="100%"
               column
@@ -304,7 +401,7 @@ useEffect(() => {
               fieldType="date"
               fieldName="dateOfDiagnosis"
               record={formData}
-              setRecord={setFormData}
+              setRecord={handleDateOfDiagnosisChange}
               disableFutureDates
               required={!formData.patientIsFree}
               disabled={formData.patientIsFree}

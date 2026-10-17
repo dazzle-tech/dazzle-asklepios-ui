@@ -22,6 +22,8 @@ type PatientProblemCreateRequest = {
   patientId: number;
   condition?: string | null;
   dateOfDiagnosis?: string | Date | null;
+  diagnosisDurationType?: 'YEARS' | 'MONTHS' | 'DAYS' | null;
+  diagnosisDuration?: number | null;
   conditionStatus?: string | null;
   type?: string | null;
   dateOfResolution?: string | Date | null;

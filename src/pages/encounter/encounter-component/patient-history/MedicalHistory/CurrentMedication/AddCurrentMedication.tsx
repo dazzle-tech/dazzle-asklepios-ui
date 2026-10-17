@@ -16,6 +16,13 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import {
+  DURATION_TYPE_OPTIONS,
+  getSavedDuration,
+  isIncompleteDuration,
+  isSameCalendarDay,
+  resolveDurationInput
+} from '@/utils/durationDate';
 
 import {
   CurrentMedicationForm,
@@ -91,6 +98,8 @@ const AddCurrentMedication = ({
     unit: null,
     frequency: null,
     startDate: null,
+    startDurationType: null,
+    startDuration: null,
     patientIsFree: false,
     freeText: null
   });
@@ -124,6 +133,8 @@ const AddCurrentMedication = ({
     if (initialData) {
       setFormData({
         ...initialData,
+        startDurationType: initialData.startDurationType ?? null,
+        startDuration: initialData.startDuration ?? null,
         patientId: Number(patient?.id),
         patientIsFree: false,
         freeText: null
@@ -137,6 +148,8 @@ const AddCurrentMedication = ({
         unit: null,
         frequency: null,
         startDate: null,
+        startDurationType: null,
+        startDuration: null,
         patientIsFree: false,
         freeText: null
       });
@@ -145,11 +158,58 @@ const AddCurrentMedication = ({
     setStartDateResetKey(prev => prev + 1);
   }, [initialData, open, patient?.id]);
 
+  const savedStartDuration = getSavedDuration(
+    initialData?.startDurationType,
+    initialData?.startDuration,
+    initialData?.startDate
+  );
+
+  const handleStartDurationChange = (next: any) => {
+    const { durationType, duration, date, error } = resolveDurationInput(
+      next?.startDurationType,
+      next?.startDuration,
+      savedStartDuration
+    );
+
+    if (error) {
+      dispatch(notify({ msg: error, sev: 'warning' }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      startDurationType: durationType,
+      startDuration: duration,
+      ...(date ? { startDate: date } : {})
+    }));
+  };
+
+  const handleStartDateChange = (next: any) => {
+    const startDate = next?.startDate ?? null;
+    if (isSameCalendarDay(startDate, formData.startDate)) return;
+    setFormData(prev => ({
+      ...prev,
+      startDate,
+      startDurationType: null,
+      startDuration: null
+    }));
+  };
+
   const handleSave = async () => {
     if (!formData.activeIngredientId) {
       dispatch(
         notify({
           msg: 'Medication is required',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (isIncompleteDuration(formData.startDurationType, formData.startDuration)) {
+      dispatch(
+        notify({
+          msg: 'Date Type and Number must be provided together',
           sev: 'warning'
         })
       );
@@ -176,6 +236,8 @@ const AddCurrentMedication = ({
           unit: formData.unit,
           frequency: formData.frequency,
           startDate: formData.startDate,
+          startDurationType: formData.startDurationType ?? null,
+          startDuration: formData.startDuration ?? null,
           patientIsFree: false,
           freeText: null
         };
@@ -198,6 +260,8 @@ const AddCurrentMedication = ({
           unit: formData.unit,
           frequency: formData.frequency,
           startDate: formData.startDate,
+          startDurationType: formData.startDurationType ?? null,
+          startDuration: formData.startDuration ?? null,
           patientIsFree: false,
           freeText: null
         };
@@ -219,6 +283,8 @@ const AddCurrentMedication = ({
           unit: null,
           frequency: null,
           startDate: null,
+          startDurationType: null,
+          startDuration: null,
           patientIsFree: false,
           freeText: null
         });
@@ -237,7 +303,7 @@ const AddCurrentMedication = ({
   const content = (
     <Form fluid className="fields-container">
       <Row gutter={16}>
-        <Col md={12}>
+        <Col md={24}>
           <MyInput
             width="100%"
             column
@@ -253,8 +319,42 @@ const AddCurrentMedication = ({
             required
           />
         </Col>
+      </Row>
 
-        <Col md={12}>
+      <Row gutter={16} style={{ marginTop: 10 }}>
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Date Type"
+            fieldType="select"
+            fieldName="startDurationType"
+            selectData={DURATION_TYPE_OPTIONS}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={formData}
+            setRecord={handleStartDurationChange}
+            searchable={false}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Number"
+            fieldType="number"
+            fieldName="startDuration"
+            record={formData}
+            setRecord={handleStartDurationChange}
+            min={0}
+            step={1}
+            showZero
+            disabled={!formData.startDurationType}
+          />
+        </Col>
+
+        <Col md={8}>
           <MyInput
             key={startDateResetKey}
             width="100%"
@@ -264,7 +364,7 @@ const AddCurrentMedication = ({
             fieldName="startDate"
             disableFutureDates
             record={formData}
-            setRecord={setFormData}
+            setRecord={handleStartDateChange}
             required
           />
         </Col>
