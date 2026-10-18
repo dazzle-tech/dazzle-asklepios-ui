@@ -24,7 +24,11 @@ import {
     useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
 
-import { useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
+import {
+    useGetDepartmentByFacilityQuery,
+    useLazyGetDepartmentByIdQuery
+} from '@/services/security/departmentService';
+import { useLazyGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
 
 import { useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 
@@ -36,9 +40,12 @@ import {
 
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
+import { setSelectedDepartment } from '@/reducers/authSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+
+const PENDING_NURSE_STATION_OPEN_KEY = 'opd-visit-list.pending-nurse-station-open';
 
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
 
@@ -119,11 +126,16 @@ const OpdVisitList = () => {
     const dispatch = useDispatch();
 
     const authSlice = useAppSelector(state => state.auth);
+    const selectedDepartment = authSlice?.selectedDepartment;
+    const userId = authSlice?.user?.id;
 
     const facilityId =
         authSlice?.tenant?.selectedFacility?.id ?? authSlice?.selectedDepartment?.facilityId;
     const departmentId =
         authSlice?.selectedDepartment?.departmentId ?? authSlice?.selectedDepartment?.id;
+
+    const [fetchDepartmentById] = useLazyGetDepartmentByIdQuery();
+    const [fetchActiveDepartments] = useLazyGetActiveUserDepartmentsByUserQuery();
 
     const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
     const [openCollectSampleModal, setOpenCollectSampleModal] = useState(false);
@@ -196,6 +208,59 @@ const OpdVisitList = () => {
             dispatch(setDivContent(' '));
         };
     }, [dispatch]);
+
+    useEffect(() => {
+        const raw = sessionStorage.getItem(PENDING_NURSE_STATION_OPEN_KEY);
+        if (!raw) return;
+        sessionStorage.removeItem(PENDING_NURSE_STATION_OPEN_KEY);
+
+        let pending: {
+            departmentId?: string | number | null;
+            facilityId?: string | number | null;
+            state?: Record<string, unknown>;
+        };
+        try {
+            pending = JSON.parse(raw);
+        } catch {
+            return;
+        }
+
+        const departmentApplied =
+            String(selectedDepartment?.departmentId ?? '') === String(pending.departmentId ?? '') &&
+            String(selectedDepartment?.facilityId ?? '') === String(pending.facilityId ?? '');
+
+        if (!departmentApplied || pending.state == null) {
+            dispatch(
+                notify({
+                    msg: 'The department could not be switched. Nurse Station was not opened.',
+                    sev: 'warning'
+                })
+            );
+            return;
+        }
+
+        const navigationState = pending.state as {
+            patient?: any;
+            encounter?: any;
+            info?: string | undefined;
+            edit?: boolean;
+            fromPage?: string;
+        };
+
+        if (navigationState.encounter) {
+            dispatch(setEncounter(navigationState.encounter));
+        }
+        if (navigationState.patient) {
+            dispatch(setPatient(navigationState.patient));
+        }
+
+        navigate('/nurse-station', { state: navigationState });
+    }, [
+        dispatch,
+        navigate,
+        selectedDepartment?.departmentId,
+        selectedDepartment?.facilityId
+    ]);
 
     const {
         data: encountersPaged,
@@ -454,34 +519,139 @@ const OpdVisitList = () => {
     const handleGoToPreVisitObservations = async (encounterData: any) => {
         dispatch(showSystemLoader());
 
-        const fullPatient = await fetchPatientForEncounter(encounterData);
+        try {
+            const fullPatient = await fetchPatientForEncounter(encounterData);
 
-        dispatch(hideSystemLoader());
+            if (!fullPatient) {
+                dispatch(
+                    notify({
+                        msg: 'Failed to load patient data.',
+                        sev: 'error'
+                    })
+                );
+                return;
+            }
 
-        if (!fullPatient) {
-            dispatch(
-                notify({
-                    msg: 'Failed to load patient data.',
-                    sev: 'error'
+            const targetDepartmentId = encounterData?.departmentId;
+            if (targetDepartmentId == null) {
+                dispatch(
+                    notify({
+                        msg: 'This encounter has no department.',
+                        sev: 'warning'
+                    })
+                );
+                return;
+            }
+
+            let department: {
+                id?: number;
+                name?: string;
+                facilityId?: string | number | null;
+            } | undefined;
+            try {
+                department = await fetchDepartmentById(targetDepartmentId).unwrap();
+            } catch {
+                department = undefined;
+            }
+            if (department?.id == null) {
+                dispatch(
+                    notify({
+                        msg: 'The encounter department could not be found.',
+                        sev: 'warning'
+                    })
+                );
+                return;
+            }
+
+            if (userId == null) {
+                dispatch(
+                    notify({
+                        msg: 'You do not have permission to access this department.',
+                        sev: 'warning'
+                    })
+                );
+                return;
+            }
+
+            let assignments: Array<{
+                departmentId?: string | number | null;
+                facilityId?: string | number | null;
+                departmentName?: string | null;
+                facilityName?: string | null;
+            }> = [];
+            try {
+                assignments = await fetchActiveDepartments({
+                    userId,
+                    facilityId:
+                        department.facilityId ?? selectedDepartment?.facilityId ?? 'no-facility'
+                }).unwrap();
+            } catch {
+                dispatch(
+                    notify({
+                        msg: 'You do not have permission to access this department.',
+                        sev: 'warning'
+                    })
+                );
+                return;
+            }
+
+            const assignment = assignments.find(
+                item => String(item.departmentId ?? '') === String(targetDepartmentId)
+            );
+            if (!assignment) {
+                dispatch(
+                    notify({
+                        msg: 'You do not have permission to access this department.',
+                        sev: 'warning'
+                    })
+                );
+                return;
+            }
+
+            const nextDepartment = {
+                departmentId: targetDepartmentId,
+                facilityId: assignment.facilityId ?? department.facilityId ?? null,
+                departmentName: assignment.departmentName ?? department.name ?? null,
+                facilityName: assignment.facilityName ?? null
+            };
+
+            const navigationState = {
+                info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
+                patient: fullPatient,
+                encounter: encounterData,
+                edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+                fromPage: 'OpdVisitList'
+            };
+
+            const alreadySelected =
+                String(selectedDepartment?.departmentId ?? '') ===
+                    String(nextDepartment.departmentId ?? '') &&
+                String(selectedDepartment?.facilityId ?? '') ===
+                    String(nextDepartment.facilityId ?? '');
+
+            dispatch(setEncounter(encounterData));
+            dispatch(setPatient(fullPatient));
+
+            if (alreadySelected) {
+                navigate('/nurse-station', { state: navigationState });
+                return;
+            }
+
+            dispatch(setSelectedDepartment(nextDepartment));
+            sessionStorage.setItem(
+                PENDING_NURSE_STATION_OPEN_KEY,
+                JSON.stringify({
+                    departmentId: nextDepartment.departmentId,
+                    facilityId: nextDepartment.facilityId,
+                    state: navigationState
                 })
             );
-
-            return;
+            setTimeout(() => {
+                window.location.reload();
+            }, 50);
+        } finally {
+            dispatch(hideSystemLoader());
         }
-
-        dispatch(setEncounter(encounterData));
-
-        dispatch(setPatient(fullPatient));
-
-        navigate('/nurse-station', {
-        state: {
-            info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
-            patient: fullPatient,
-            encounter: encounterData,
-            edit: encounterData?.status?.toUpperCase() === 'CLOSED',
-            fromPage: 'OpdVisitList'
-        }
-        });
     };
 
     const isAdmin = !!authSlice.user?.admin;
