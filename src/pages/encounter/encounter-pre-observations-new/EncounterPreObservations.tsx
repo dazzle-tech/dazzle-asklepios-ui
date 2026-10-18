@@ -288,14 +288,7 @@ useEffect(() => {
             {!inModal && (
               <div className="right">
                 <NurseSummeryReportButton encounterId={localEncounter?.id} />
-                <MyButton
-                  disabled={edit && !isAmendmentOpen}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
+              
               </div>
             )}
           </div>
