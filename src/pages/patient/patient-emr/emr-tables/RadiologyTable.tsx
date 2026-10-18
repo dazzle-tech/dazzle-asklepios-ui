@@ -430,6 +430,15 @@ const handleViewImage = async (reportId: number) => {
       page={page}
       rowsPerPage={rowsPerPage}
       totalCount={totalCount}
+      rowClassName={(row: any) =>
+        selectedReport && row.id === selectedReport.id
+          ? 'selected-row'
+          : ''
+      }
+      onRowClick={(row:any)=>{
+        setSelectedReport(row);
+      }} 
+
       onPageChange={(_, p) => setPage(p)}
       onRowsPerPageChange={(e) => {
         setRowsPerPage(Number(e.target.value));
