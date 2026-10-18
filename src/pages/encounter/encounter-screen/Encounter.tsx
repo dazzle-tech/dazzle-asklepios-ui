@@ -6,6 +6,7 @@ import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
+import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
@@ -26,9 +27,12 @@ import {
   faCheckDouble,
   faClockRotateLeft,
   faFileLines,
+  faIdCard,
   faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
+import { newPatient } from '@/types/model-types-constructor-new';
+import { Patient } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
@@ -77,7 +81,6 @@ export interface CompletionValidationItem {
   missingItems?: string[];
 }
 
-``
 type EncounterModalProps = {
   patient?: any;
   encounter?: any;
@@ -148,6 +151,8 @@ const Encounter = ({
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [openScanDocumentModal, setOpenScanDocumentModal] = useState(false);
+  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -298,6 +303,12 @@ const Encounter = ({
   // useEffect(() => {
   //   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
   // }, [propsData?.viewMode, propsData?.readOnly]);
+  useEffect(() => {
+    if (patientToSend) {
+      setLocalPatient({ ...newPatient, ...patientToSend });
+    }
+  }, [patientToSend]);
+
   useEffect(() => {
 
     const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
@@ -1055,8 +1066,8 @@ const handleGoBack = () => {
 
         <div className="left-box">
           <Panel>
-            <div className="container-bt">
-              <div className="left">
+            <div className="container-bt encounter-toolbar">
+              <div className="left encounter-toolbar-nav">
                 {!inModal && <BackButton onClick={handleGoBack} text="To Patients list" />}
                 {!inModal && (
                   <MyButton
@@ -1065,7 +1076,7 @@ const handleGoBack = () => {
                     prefixIcon={() => <FaArrowLeft />}
                   />
                 )}
-                <Form fluid>
+                <Form fluid className="encounter-toolbar-search">
                   <MyInput
                     width="100%"
                     placeholder="Medical Sheets"
@@ -1078,136 +1089,150 @@ const handleGoBack = () => {
                 </Form>
               </div>
 
-              {!inModal && <div className="right">
-                {isMedicalHistoryTab && (
-                  <MyButton
-                    disabled={edit}
-                    onClick={() => {
-                      setSummaryModalOpen(true);
-                    }}
-                  >
-                    patient summary
-                  </MyButton>
-                )}
-
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
-                  onClick={() => {
-                    setModalOpen(true);
-                  }}
-                >
-                  Create Follow-up
-                </MyButton>
-
-
-
-                <MyButton
-                  disabled={edit}
-                  size="small"
-                  backgroundColor="orange"
-                  prefixIcon={() => <FontAwesomeIcon icon={faFileLines} />}
-                  onClick={() => setOpenSickLeaveModal(true)}
-                >
-                  Sick Leave
-                </MyButton>
-
-                <VisitReportPrintButton
-                  row={localEncounter}
-                  systemColor={true}
-                />
-
-                <MyButton
-                  prefixIcon={() => (
-                    <FontAwesomeIcon icon={faCheckDouble} />
-                  )}
-                  onClick={async () => {
-                    try {
-                      if (!encounterId) {
-                        dispatch(
-                          notify({
-                            msg: 'Encounter not found',
-                            sev: 'error'
-                          })
-                        );
-                        return;
-                      }
-
-                      if (isAmendmentOpen) {
-                        await completeEncounterNow();
-                        return;
-                      }
-
-                      const exists = await checkDiagnosisExists({
-                        encounterId
-                      }).unwrap();
-
-                      if (!exists) {
-                        dispatch(
-                          notify({
-                            msg: 'Please add patient diagnosis before completing the visit',
-                            sev: 'warning'
-                          })
-                        );
-                        return;
-                      }
-
-                      await handleSubmitEncounter();
-                    } catch (error) {
-                      console.error(
-                        'Completion validation error:',
-                        error
-                      );
-
-                      dispatch(
-                        notify({
-                          msg: 'Failed to validate encounter completion',
-                          sev: 'error'
-                        })
-                      );
-                    }
-                  }}
-                  disabled={
-                    localEncounter?.encounterType !== 'EMERGENCY' &&
-                    (!encounterId || isCheckingPatientDiagnosis)
-                  }
-                  appearance="ghost"
-                >
-                  <Translate>
-                    {!isAmendmentOpen && localEncounter?.encounterType === 'EMERGENCY'
-                      ? 'Disposition'
-                      : 'Complete Visit'}
-                  </Translate>
-                </MyButton>
-
-                {location.pathname == '/encounter' && (
-                  <MyButton
-                    prefixIcon={() => (
-                      <Whisper
-                        trigger="hover"
-                        placement="top"
-                        speaker={<Tooltip>Customize Dashboard</Tooltip>}
+              {!inModal && (
+                <div className="right encounter-toolbar-actions">
+                  <div className="encounter-toolbar-actions-main">
+                    {isMedicalHistoryTab && (
+                      <MyButton
+                        disabled={edit}
+                        onClick={() => {
+                          setSummaryModalOpen(true);
+                        }}
                       >
-                        <FontAwesomeIcon icon={faChartLine} />
-                      </Whisper>
+                        patient summary
+                      </MyButton>
                     )}
-                    onClick={action}
-                    backgroundColor="#8360BF"
-                  />
-                )}
 
-                {location.pathname !== '/encounter' && (
-                  <MyButton
-                    prefixIcon={() => (
-                      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Summary</Tooltip>}>
-                        <FontAwesomeIcon icon={faChartLine} />
-                      </Whisper>
+                    <MyButton
+                      disabled={edit}
+                      prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+                      onClick={() => {
+                        setModalOpen(true);
+                      }}
+                    >
+                      Create Follow-up
+                    </MyButton>
+
+                    <MyButton
+                      disabled={edit}
+                      prefixIcon={() => <FontAwesomeIcon icon={faIdCard} />}
+                      onClick={() => {
+                        setOpenScanDocumentModal(true);
+                      }}
+                    >
+                      Scan Document
+                    </MyButton>
+
+                    <MyButton
+                      disabled={edit}
+                      size="small"
+                      backgroundColor="orange"
+                      prefixIcon={() => <FontAwesomeIcon icon={faFileLines} />}
+                      onClick={() => setOpenSickLeaveModal(true)}
+                    >
+                      Sick Leave
+                    </MyButton>
+                  </div>
+
+                  <div className="encounter-toolbar-actions-trailing">
+                    <VisitReportPrintButton
+                      row={localEncounter}
+                      systemColor={true}
+                    />
+
+                    <MyButton
+                      prefixIcon={() => (
+                        <FontAwesomeIcon icon={faCheckDouble} />
+                      )}
+                      onClick={async () => {
+                        try {
+                          if (!encounterId) {
+                            dispatch(
+                              notify({
+                                msg: 'Encounter not found',
+                                sev: 'error'
+                              })
+                            );
+                            return;
+                          }
+
+                          if (isAmendmentOpen) {
+                            await completeEncounterNow();
+                            return;
+                          }
+
+                          const exists = await checkDiagnosisExists({
+                            encounterId
+                          }).unwrap();
+
+                          if (!exists) {
+                            dispatch(
+                              notify({
+                                msg: 'Please add patient diagnosis before completing the visit',
+                                sev: 'warning'
+                              })
+                            );
+                            return;
+                          }
+
+                          await handleSubmitEncounter();
+                        } catch (error) {
+                          console.error(
+                            'Completion validation error:',
+                            error
+                          );
+
+                          dispatch(
+                            notify({
+                              msg: 'Failed to validate encounter completion',
+                              sev: 'error'
+                            })
+                          );
+                        }
+                      }}
+                      disabled={
+                        localEncounter?.encounterType !== 'EMERGENCY' &&
+                        (!encounterId || isCheckingPatientDiagnosis)
+                      }
+                      appearance="ghost"
+                    >
+                      <Translate>
+                        {!isAmendmentOpen && localEncounter?.encounterType === 'EMERGENCY'
+                          ? 'Disposition'
+                          : 'Complete Visit'}
+                      </Translate>
+                    </MyButton>
+
+                    {location.pathname == '/encounter' && (
+                      <MyButton
+                        prefixIcon={() => (
+                          <Whisper
+                            trigger="hover"
+                            placement="top"
+                            speaker={<Tooltip>Customize Dashboard</Tooltip>}
+                          >
+                            <FontAwesomeIcon icon={faChartLine} />
+                          </Whisper>
+                        )}
+                        onClick={action}
+                        backgroundColor="#8360BF"
+                      />
                     )}
-                    onClick={() => setExpand(!expand)}
-                    backgroundColor="#8360BF"
-                  />
-                )}
-              </div>}
+
+                    {location.pathname !== '/encounter' && (
+                      <MyButton
+                        prefixIcon={() => (
+                          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Summary</Tooltip>}>
+                            <FontAwesomeIcon icon={faChartLine} />
+                          </Whisper>
+                        )}
+                        onClick={() => setExpand(!expand)}
+                        backgroundColor="#8360BF"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Divider />
@@ -1326,6 +1351,19 @@ const handleGoBack = () => {
         onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
+      />
+
+      <ScanDocumentModal
+        open={openScanDocumentModal}
+        setOpen={setOpenScanDocumentModal}
+        patientId={
+          localPatient?.id ??
+          (patientToSend as any)?.id ??
+          (patientToSend as any)?.key ??
+          patientIdToFetch
+        }
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
 
       <PatientHistorySummaryModal
