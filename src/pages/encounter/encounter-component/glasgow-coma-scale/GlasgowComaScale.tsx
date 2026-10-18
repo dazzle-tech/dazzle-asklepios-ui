@@ -90,6 +90,13 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 };
 
 const getRiskBadgeColors = (scoreInterpretation?: string | null) => {
+  if (scoreInterpretation === 'NORMAL') {
+    return {
+      backgroundColor: 'var(--light-green)',
+      color: 'var(--primary-green)'
+    };
+  }
+
   if (scoreInterpretation === 'MILD_TRAUMATIC_BRAIN_INJURY') {
     return {
       backgroundColor: 'var(--light-green)',

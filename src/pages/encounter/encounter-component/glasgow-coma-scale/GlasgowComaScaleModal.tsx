@@ -45,7 +45,11 @@ const getGcsScore = (
 };
 
 const getGcsInterpretation = (totalScore: number) => {
-  if (totalScore >= 13 && totalScore <= 15) {
+  if (totalScore === 15) {
+    return 'NORMAL';
+  }
+
+  if (totalScore >= 13 && totalScore <= 14) {
     return 'MILD_TRAUMATIC_BRAIN_INJURY';
   }
 
@@ -61,6 +65,13 @@ const getGcsInterpretation = (totalScore: number) => {
 };
 
 const getRiskBadgeColors = (scoreInterpretation?: string | null) => {
+  if (scoreInterpretation === 'NORMAL') {
+    return {
+      backgroundColor: 'var(--light-green)',
+      color: 'var(--primary-green)'
+    };
+  }
+
   if (scoreInterpretation === 'MILD_TRAUMATIC_BRAIN_INJURY') {
     return {
       backgroundColor: 'var(--light-green)',
