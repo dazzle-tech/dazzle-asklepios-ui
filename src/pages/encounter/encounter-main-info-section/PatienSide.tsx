@@ -901,19 +901,20 @@ const coverageTypeLabel =
             </span>
           </Text>
           <div className="info-section">
-
           <div className="info-column">
-              <Text className="info-label">
-                <Translate>Coverage Type</Translate>
-              </Text>
-              <Text className="info-value">
+            <Text className="info-label">
+              <Translate>Coverage Type</Translate>
+            </Text>
+
+            <Text className="info-value">
+              <span className="coverage-alert">
                 <MyBadgeStatus
                   contant={<Translate>{coverageTypeLabel}</Translate>}
-                  color={'#45b887'}
+                  color="#45b887"
                 />
-              </Text>
-                              
-            </div>
+              </span>
+            </Text>
+          </div>
           </div>
 
           {encounter?.encounterType !== 'INPATIENT' && (
