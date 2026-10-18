@@ -25,8 +25,8 @@ type Props = {
   schedulePatientFilter: any;
   setSchedulePatientFilter: React.Dispatch<React.SetStateAction<any>>;
   AppointmentStatusEnum: any[];
-  selectedAppointmentStatus: { status: string | null };
-  setSelectedAppointmentStatus: React.Dispatch<React.SetStateAction<{ status: string | null }>>;
+  selectedAppointmentStatus: { status: string[] };
+  setSelectedAppointmentStatus: React.Dispatch<React.SetStateAction<{ status: string[] }>>;
   BookingModeEnum: any[];
   selectedBookingMode: { bookingMode: string | string[] | null };
   setSelectedBookingMode: React.Dispatch<
@@ -162,8 +162,9 @@ const ScheduleFiltersPanel = ({
                   width={'11.5vw'}
                   column
                   fieldLabel="Status"
-                  fieldType="select"
+                  fieldType="checkPicker"
                   fieldName="status"
+                  placeholder="All statuses"
                   selectData={AppointmentStatusEnum ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"

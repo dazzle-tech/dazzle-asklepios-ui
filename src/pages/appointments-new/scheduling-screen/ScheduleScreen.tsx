@@ -207,8 +207,8 @@ const ScheduleScreen = () => {
   const [selectedResources, setSelectedResources] = useState<{ resourceKey: string | null }>({
     resourceKey: null
   });
-  const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState<{ status: string | null }>({
-    status: null
+  const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState<{ status: string[] }>({
+    status: []
   });
   const [selectedBookingMode, setSelectedBookingMode] = useState<{
     bookingMode: string | string[] | null;
@@ -245,6 +245,9 @@ const ScheduleScreen = () => {
         ? Number(rk)
         : null;
     const patientId = schedulePatientIdForSearch;
+    const status = (selectedAppointmentStatus?.status ?? []).filter(
+      s => s != null && String(s).trim() !== ''
+    );
     const rawBookingMode = selectedBookingMode?.bookingMode;
     const bookingMode = Array.isArray(rawBookingMode)
       ? rawBookingMode
@@ -264,7 +267,7 @@ const ScheduleScreen = () => {
       departmentIds,
       resourceType: selectedResourceTypeValue?.value ?? null,
       resourceId: firstResourceId,
-      status: selectedAppointmentStatus?.status ?? null,
+      status: status.length > 0 ? status : null,
       bookingMode: bookingMode as any,
       patientId
     };
