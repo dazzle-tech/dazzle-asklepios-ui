@@ -318,6 +318,32 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentsByPatient: builder.query<
+      PagedResult<{
+        id: number;
+        startDatetime?: string | null;
+        endDatetime?: string | null;
+        status?: string | null;
+        service?: string | null;
+      }>,
+      { patientId: Id; page?: number; size?: number; sort?: string }
+    >({
+      query: ({ patientId, page = 0, size = 200, sort = 'startDatetime,desc' }) => ({
+        url: `${APPOINTMENT_BASE_URL}/by-patient/${patientId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? response?.length ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { filter: AppointmentSearchFilterMultiDepartmentDTO } & PagedParams
@@ -537,6 +563,7 @@ export const {
   useLazyGetAppointmentsByDepartmentBetweenDatesQuery,
   useGetAppointmentByIdQuery,
   useLazyGetAppointmentByIdQuery,
+  useGetAppointmentsByPatientQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useFilterAppointmentsWithoutPaginationQuery,
