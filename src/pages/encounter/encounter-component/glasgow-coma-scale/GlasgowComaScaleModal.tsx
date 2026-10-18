@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -43,6 +43,21 @@ const getGcsScore = (
 
   return scores[type][value] ?? 0;
 };
+
+// Retired GCS values: hidden from the dropdown for new choices, shown only when an opened record already uses them
+const RETIRED_GCS_VALUES: Record<'eyeOpening' | 'verbalResponse', string[]> = {
+  eyeOpening: ['EYES_CLOSED_DUE_TO_SWELLING'],
+  verbalResponse: ['INTUBATED_TRACHEOSTOMY']
+};
+
+const withoutRetired = (
+  options: { label: string; value: string }[],
+  field: 'eyeOpening' | 'verbalResponse',
+  savedValue?: string | null
+) =>
+  (options ?? []).filter(
+    option => !RETIRED_GCS_VALUES[field].includes(option.value) || option.value === savedValue
+  );
 
 const getGcsInterpretation = (totalScore: number) => {
   if (totalScore === 15) {
@@ -112,6 +127,27 @@ const GlasgowComaScaleModal = ({
   const verbalResponseOptions = useEnumOptions('GCSVerbal');
   const motorResponseOptions = useEnumOptions('GCSMotor');
 
+  // Values saved on the record when the modal opened (only an existing record can keep a retired value)
+  const [savedValues, setSavedValues] = useState<{ eyeOpening?: string; verbalResponse?: string }>({});
+  useEffect(() => {
+    if (!open) return;
+    setSavedValues(
+      gcsAssessment?.id
+        ? { eyeOpening: gcsAssessment.eyeOpening, verbalResponse: gcsAssessment.verbalResponse }
+        : {}
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, gcsAssessment?.id]);
+
+  const visibleEyeOpeningOptions = useMemo(
+    () => withoutRetired(eyeOpeningOptions, 'eyeOpening', savedValues.eyeOpening),
+    [eyeOpeningOptions, savedValues.eyeOpening]
+  );
+  const visibleVerbalResponseOptions = useMemo(
+    () => withoutRetired(verbalResponseOptions, 'verbalResponse', savedValues.verbalResponse),
+    [verbalResponseOptions, savedValues.verbalResponse]
+  );
+
   const eyeOpeningScore = useMemo(
     () => getGcsScore('eye', gcsAssessment?.eyeOpening),
     [gcsAssessment?.eyeOpening]
@@ -151,7 +187,7 @@ const GlasgowComaScaleModal = ({
         fieldName="eyeOpening"
         fieldLabel="Eye Opening"
         fieldType="select"
-        selectData={eyeOpeningOptions ?? []}
+        selectData={visibleEyeOpeningOptions}
         selectDataLabel="label"
         selectDataValue="value"
         record={gcsAssessment}
@@ -165,7 +201,7 @@ const GlasgowComaScaleModal = ({
         fieldName="verbalResponse"
         fieldLabel="Verbal Response"
         fieldType="select"
-        selectData={verbalResponseOptions ?? []}
+        selectData={visibleVerbalResponseOptions}
         selectDataLabel="label"
         selectDataValue="value"
         record={gcsAssessment}

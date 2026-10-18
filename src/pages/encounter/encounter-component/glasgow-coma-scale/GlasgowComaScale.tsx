@@ -29,6 +29,8 @@ const GCS_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'patient.encounter.mismatch': 'The provided patient does not belong to the provided encounter.',
   'gcs.score.invalid': 'Invalid GCS total score.',
+  'eyeOpening.retired': 'This Eye Opening value is no longer available. Please choose another value.',
+  'verbalResponse.retired': 'This Verbal Response value is no longer available. Please choose another value.',
   'gcs.cancel.invalid':
     'Cancelled By and Cancellation Reason are required when cancelling Glasgow Coma Scale assessment.',
   'db.constraint':
