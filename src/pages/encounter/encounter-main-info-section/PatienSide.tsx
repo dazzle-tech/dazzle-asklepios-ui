@@ -86,6 +86,7 @@ const {
     { skip: !patient?.id }
 );
 
+
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
@@ -674,6 +675,19 @@ const coverageTypeLabel =
                 <Translate>Blood Group</Translate>
               </Text>
               <Text className="info-value">{textOr(bloodGroupLabel, '')}</Text>
+            </div>
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Phone Number</Translate>
+              </Text>
+              <Text className="info-value">
+                <span dir="ltr">
+                  {textOr(
+                    freshPatient?.primaryMobileNumber,
+                    '-'
+                  )}
+                </span>
+              </Text>
             </div>
           </div>
 

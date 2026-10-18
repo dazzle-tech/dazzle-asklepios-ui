@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -14,6 +14,10 @@ import {
 import type { EncounterPlan, Patient, PatientEncounter } from '@/types/model-types-new';
 import './styles.less';
 import FieldAuditHistoryModal from '../../encounter-component/s.o.a.p/FieldAuditHistory';
+import OrdersPickerModal, {
+  formatSelectedOrdersForTreatmentPlan,
+  type OrderPickerItem
+} from './OrdersPickerModal';
 
 type PatientPlanProps = {
   patient: Patient;
@@ -34,8 +38,11 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
   const encounterIdNumber: number | null = localEncounter?.id ? Number(localEncounter?.id) : null;
-   const [auditModalOpen, setAuditModalOpen] = useState(false);
-   const [selectedAuditField, setSelectedAuditField] = useState('');
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedAuditField, setSelectedAuditField] = useState('');
+  const [ordersModalOpen, setOrdersModalOpen] = useState(false);
+  const skipNextTreatmentPlanBlurSave = useRef(false);
+
   const {
     data: latestPlan,
     isFetching: isFetchingLatest,
@@ -47,11 +54,11 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   );
 
   const {
-      data: planAudit = []
-    } = useGetPlanAuditQuery(
-      { id: latestPlan?.id },
-      { skip: !latestPlan?.id }
-    );
+    data: planAudit = []
+  } = useGetPlanAuditQuery(
+    { id: latestPlan?.id },
+    { skip: !latestPlan?.id }
+  );
 
   const [createEncounterPlan, { isLoading: isSavingCreate }] = useCreateEncounterPlanMutation();
   const [updateEncounterPlan, { isLoading: isSavingUpdate }] = useUpdateEncounterPlanMutation();
@@ -66,6 +73,11 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     setTreatmentPlan(latestPlan?.treatmentPlan ?? '');
   }, [latestPlan?.id, encounterIdNumber]);
 
+  useEffect(() => {
+    setOrdersModalOpen(false);
+    skipNextTreatmentPlanBlurSave.current = false;
+  }, [patientIdNumber, encounterIdNumber]);
+
   const normalizeFieldErrorMessage = (message: string) => {
     const m = (message || '').toLowerCase();
     if (m.includes('must not be null')) return 'must not be empty';
@@ -77,7 +89,6 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   };
 
   const showApiError = (error: any) => {
-
     const data = error?.data ?? {};
     const traceId = data?.traceId || data?.requestId || data?.correlationId;
     const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
@@ -183,67 +194,111 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       showApiError(error);
     }
   };
- const openAuditHistory = (fieldName: string) => {
-   setSelectedAuditField(fieldName);
-   setAuditModalOpen(true);
+
+  const openAuditHistory = (fieldName: string) => {
+    setSelectedAuditField(fieldName);
+    setAuditModalOpen(true);
   };
+
+  const openOrdersModal = () => {
+    skipNextTreatmentPlanBlurSave.current = true;
+    setOrdersModalOpen(true);
+  };
+
+  const handleTreatmentPlanBlur = () => {
+    if (disabled || ordersModalOpen || skipNextTreatmentPlanBlurSave.current) {
+      skipNextTreatmentPlanBlurSave.current = false;
+      return;
+    }
+    handleSave();
+  };
+
+  const handleAddOrders = (items: OrderPickerItem[]) => {
+    const block = formatSelectedOrdersForTreatmentPlan(items);
+    if (!block) return;
+
+    setTreatmentPlan(prev => {
+      const existing = (prev ?? '').trimEnd();
+      if (!existing) return block;
+      return `${existing}\n\n${block}`;
+    });
+  };
+
   return (
     <>
-    <SectionContainer
-      collapsible
-      title={title}
-      action={
-        <>
-        <MyButton onClick={() => openAuditHistory('treatmentPlan')} disabled={isFetchingLatest || isSaving}>
-          Plan History
-           </MyButton>
-           <MyButton onClick={() => openAuditHistory('goals')} disabled={isFetchingLatest || isSaving}>
-          Goal History
-           </MyButton>
-        <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
-          Save
-        </MyButton>
-        </>
-      }
-      content={
-        <div style={width ? { width } : {}}>
-          <Form fluid>
-            <MyInput
-              width="100%"
-              fieldType="textarea"
-              fieldName="treatmentPlan"
-              record={{ treatmentPlan }}
-              setRecord={(r: any) => setTreatmentPlan(r?.treatmentPlan ?? '')}
-              fieldLabel="Treatment Plan / Management"
-              disabled={disabled}
-              required
-              onBlur={() => {
-                if (!disabled) handleSave();
-              }}
-            />
+      <SectionContainer
+        collapsible
+        title={title}
+        action={
+          <>
+            <MyButton onClick={() => openAuditHistory('treatmentPlan')} disabled={isFetchingLatest || isSaving}>
+              Plan History
+            </MyButton>
+            <MyButton onClick={() => openAuditHistory('goals')} disabled={isFetchingLatest || isSaving}>
+              Goal History
+            </MyButton>
+            <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
+              Save
+            </MyButton>
+          </>
+        }
+        content={
+          <div style={width ? { width } : {}}>
+            <Form fluid>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                <span
+                  onMouseDown={e => {
+                    // Prevent textarea blur→save when opening the Orders modal.
+                    e.preventDefault();
+                  }}
+                >
+                  <MyButton disabled={disabled} onClick={openOrdersModal}>
+                    Orders
+                  </MyButton>
+                </span>
+              </div>
 
-            <MyInput
-              width="100%"
-              fieldType="textarea"
-              fieldName="goals"
-              record={{ goals }}
-              setRecord={(r: any) => setGoals(r?.goals ?? '')}
-              fieldLabel="Goals"
-              disabled={disabled}
-              onBlur={() => {
-                if (!disabled) handleSave();
-              }}
-            />
-          </Form>
-        </div>
-      }
-    />
-    <FieldAuditHistoryModal
-                open={auditModalOpen}
-                setOpen={setAuditModalOpen}
-                audit={planAudit}
-                fieldName={selectedAuditField}
-        />
+              <MyInput
+                width="100%"
+                fieldType="textarea"
+                fieldName="treatmentPlan"
+                record={{ treatmentPlan }}
+                setRecord={(r: any) => setTreatmentPlan(r?.treatmentPlan ?? '')}
+                fieldLabel="Treatment Plan / Management"
+                disabled={disabled}
+                required
+                onBlur={handleTreatmentPlanBlur}
+              />
+
+              <MyInput
+                width="100%"
+                fieldType="textarea"
+                fieldName="goals"
+                record={{ goals }}
+                setRecord={(r: any) => setGoals(r?.goals ?? '')}
+                fieldLabel="Goals"
+                disabled={disabled}
+                onBlur={() => {
+                  if (!disabled) handleSave();
+                }}
+              />
+            </Form>
+          </div>
+        }
+      />
+      <FieldAuditHistoryModal
+        open={auditModalOpen}
+        setOpen={setAuditModalOpen}
+        audit={planAudit}
+        fieldName={selectedAuditField}
+      />
+      <OrdersPickerModal
+        open={ordersModalOpen}
+        setOpen={setOrdersModalOpen}
+        patientId={patientIdNumber}
+        encounterId={encounterIdNumber}
+        onAddSelected={handleAddOrders}
+      />
     </>
   );
 };
