@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Tag, TagGroup } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import './styles.less';
@@ -14,52 +14,59 @@ const MultiSelectAppender = ({
   disabled = false
 }) => {
   const [selected, setSelected] = useState({ item: null });
-  const [values, setValues] = useState<string[]>([]);
 
   const normalizedOptions = useMemo(() => {
     if (!Array.isArray(options)) return [];
+
     if (options.length && typeof options[0] === 'string') {
       return options.map(v => ({ value: v, label: v }));
     }
+
     return options;
   }, [options]);
 
   const valueKey = optionValue || 'value';
   const labelKey = optionLabel || 'label';
 
-  const parseCsv = (text: string) =>
-    (text || '')
-      .split(separator)
-      .map(s => s.trim())
-      .filter(Boolean);
+  const values = useMemo<string[]>(
+    () =>
+      Array.from(
+        new Set(
+          String(object ?? '')
+            .split(separator)
+            .map(value => value.trim())
+            .filter(Boolean)
+        )
+      ),
+    [object, separator]
+  );
 
-  const joinCsv = (arr: string[]) => (arr || []).filter(Boolean).join(separator);
+  const findLabel = (value: string) => {
+    const option = normalizedOptions.find(
+      (item: any) => String(item[valueKey]) === value
+    );
 
-  const findLabel = (val: string) => {
-    const opt = normalizedOptions.find((o: any) => String(o[valueKey]) === String(val));
-    return opt ? String(opt[labelKey]) : val;
+    return option ? String(option[labelKey]) : value;
   };
 
-  useEffect(() => {
-    setValues(parseCsv(object ?? ''));
-  }, [object]);
-
-  useEffect(() => {
-    setObject(joinCsv(values));
-  }, [values]);
-
-  useEffect(() => {
-    if (!selected?.item) return;
-    const raw = String(selected.item);
-    setValues(prev => {
-      if (prev.includes(raw)) return prev;
-      return [...prev, raw];
-    });
+  const handleSelect = (record: any) => {
     setSelected({ item: null });
-  }, [selected?.item]);
+
+    if (disabled) return;
+
+    const item = record?.item;
+    if (item === null || item === undefined || item === '') return;
+
+    const value = String(item).trim();
+    if (!value || values.includes(value)) return;
+
+    setObject([...values, value].join(separator));
+  };
 
   const removeTag = (value: string) => {
-    setValues(prev => prev.filter(v => v !== value));
+    if (disabled) return;
+
+    setObject(values.filter(item => item !== value).join(separator));
   };
 
   return (
@@ -73,14 +80,19 @@ const MultiSelectAppender = ({
         selectDataValue={valueKey}
         fieldName="item"
         record={selected}
-        setRecord={setSelected}
+        setRecord={handleSelect}
         disabled={disabled}
       />
+
       <div className="multi-select-tags-container">
         <TagGroup>
-          {values.map(v => (
-            <Tag key={v} closable={!disabled} onClose={() => removeTag(v)}>
-              {findLabel(v)}
+          {values.map(value => (
+            <Tag
+              key={value}
+              closable={!disabled}
+              onClose={() => removeTag(value)}
+            >
+              {findLabel(value)}
             </Tag>
           ))}
         </TagGroup>

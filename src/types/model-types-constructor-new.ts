@@ -3405,6 +3405,8 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   patient: null,
   condition: null,
   dateOfDiagnosis: null,
+  diagnosisDurationType: null,
+  diagnosisDuration: null,
   conditionStatus: null,
   type: null,
   dateOfResolution: null,

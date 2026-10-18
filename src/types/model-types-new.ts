@@ -5217,6 +5217,8 @@ export interface Hospitalization {
   reason: string | null;
   admissionType: string | null;
   dateOfAdmission: string | Date | null;
+  admissionDurationType?: 'YEARS' | 'MONTHS' | 'DAYS' | null;
+  admissionDuration?: number | null;
   lengthOfStayDays?: number | null;
   outcomes?: string | null;
   medicalInterventionsPerformed?: string | null;
@@ -5240,6 +5242,8 @@ export interface CurrentMedication {
   unit?: string | null;
   frequency?: string | null;
   startDate: string | Date | null;
+  startDurationType?: 'YEARS' | 'MONTHS' | 'DAYS' | null;
+  startDuration?: number | null;
   patientIsFree?: boolean;
   freeText?: string | null;
 }
@@ -5641,6 +5645,8 @@ export type PreAuthorizationCancelRequest = {
 
     condition: string | null;
     dateOfDiagnosis?: string | Date | null;
+    diagnosisDurationType?: 'YEARS' | 'MONTHS' | 'DAYS' | null;
+    diagnosisDuration?: number | null;
     conditionStatus: string | null;
     type: string | null;
     dateOfResolution?: string | Date | null;
