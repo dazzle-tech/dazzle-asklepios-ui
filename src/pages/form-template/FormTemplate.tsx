@@ -16,12 +16,9 @@ import { FormTemplate } from '@/types/model-types-new';
 import { newFormTemplate } from '@/types/model-types-constructor-new';
 
 import {
-  useGetFormTemplateQuery,
-  useLazyGetFormTemplatesByFacilityQuery,
-  useLazyGetFormTemplatesByDepartmentQuery,
-  useLazyGetFormTemplatesByNameQuery,
   useDeleteFormTemplateMutation,
-  useGetFormTemplatesQuery
+  useGetFormTemplatesQuery,
+  useLazyGetFormTemplatesQuery
 } from '@/services/setup/formTemplateService'; // adjust path
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -101,9 +98,8 @@ const FormTemplates = () => {
     const { data: departmentListResponse } = useGetDepartmentsQuery(paginationParam);
 
   // Filter hooks (lazy)
-  const [getByFacility] = useLazyGetFormTemplatesByFacilityQuery();
-  const [getByDepartment] = useLazyGetFormTemplatesByDepartmentQuery();
-  const [getByName] = useLazyGetFormTemplatesByNameQuery();
+  // All filters go through the main list endpoint (facilityId / departmentId / q / description params)
+  const [getFiltered] = useLazyGetFormTemplatesQuery();
 
   // Delete
   const [deleteTemplate, deleteMutation] = useDeleteFormTemplateMutation();
@@ -111,8 +107,17 @@ const FormTemplates = () => {
   const filterFields = [
     { label: 'Facility', value: 'facilityId' },
     { label: 'Department', value: 'departmentId' },
-    { label: 'Template Name', value: 'name' }
+    { label: 'Template Name', value: 'name' },
+    { label: 'Description', value: 'description' }
   ];
+
+  // Maps each filter field to the query param the list endpoint expects
+  const filterParamByField: Record<string, string> = {
+    facilityId: 'facilityId',
+    departmentId: 'departmentId',
+    name: 'q',
+    description: 'description'
+  };
 
   const handleNew = () => {
     setTemplate({ ...newFormTemplate });
@@ -147,15 +152,15 @@ const FormTemplates = () => {
     }
 
     try {
-      let response: any;
+      const paramName = filterParamByField[fieldName];
+      if (!paramName) return;
 
-      if (fieldName === 'facilityId') {
-        response = await getByFacility({ facilityId: value, page, size, sort: filterPagination.sort }).unwrap();
-      } else if (fieldName === 'departmentId') {
-        response = await getByDepartment({ departmentId: value, page, size, sort: filterPagination.sort }).unwrap();
-      } else if (fieldName === 'name') {
-        response = await getByName({ name: value, page, size, sort: filterPagination.sort }).unwrap();
-      }
+      const response: any = await getFiltered({
+        page,
+        size,
+        sort: filterPagination.sort,
+        params: { [paramName]: typeof value === 'string' ? value.trim() : value }
+      }).unwrap();
 
       setTemplateList(response?.data ?? []);
       setIsFiltered(true);
@@ -170,90 +175,90 @@ const FormTemplates = () => {
     }
   };
 
-  // const filters = () => {
-  //   const selectedFilter = record.filter;
-  //   let dynamicInput: any = null;
+  const filters = () => {
+    const selectedFilter = record.filter;
+    let dynamicInput: any = null;
 
-  //   if (selectedFilter === 'facilityId') {
-  //     dynamicInput = (
-  //       <MyInput
-  //         width={220}
-  //         fieldLabel=""
-  //         fieldName="value"
-  //         fieldType="select"
-  //         selectData={facilityListResponse ?? []}
-  //         selectDataLabel="name"
-  //         selectDataValue="id"
-  //         record={record}
-  //         setRecord={setRecord}
-  //         showLabel={false}
-  //         searchable
-  //       />
-  //     );
-  //   } else if (selectedFilter === 'departmentId') {
-  //     dynamicInput = (
-  //       <MyInput
-  //         width={220}
-  //         fieldLabel=""
-  //         fieldName="value"
-  //         fieldType="select"
-  //         selectData={departmentListResponse?.data ?? []}
-  //         selectDataLabel="name"
-  //         selectDataValue="id"
-  //         record={record}
-  //         setRecord={setRecord}
-  //         showLabel={false}
-  //         searchable
-  //       />
-  //     );
-  //   } else {
-  //     dynamicInput = (
-  //       <MyInput
-  //         width={220}
-  //         fieldName="value"
-  //         fieldLabel=""
-  //         fieldType="text"
-  //         record={record}
-  //         setRecord={setRecord}
-  //         showLabel={false}
-  //         placeholder="Enter Value"
-  //       />
-  //     );
-  //   }
+    if (selectedFilter === 'facilityId') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldLabel=""
+          fieldName="value"
+          fieldType="select"
+          selectData={facilityListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={record}
+          setRecord={setRecord}
+          showLabel={false}
+          searchable
+        />
+      );
+    } else if (selectedFilter === 'departmentId') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldLabel=""
+          fieldName="value"
+          fieldType="select"
+          selectData={departmentListResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={record}
+          setRecord={setRecord}
+          showLabel={false}
+          searchable
+        />
+      );
+    } else {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="text"
+          record={record}
+          setRecord={setRecord}
+          showLabel={false}
+          placeholder="Enter Value"
+        />
+      );
+    }
 
-  //   return (
-  //     <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
-  //       <MyInput
-  //         selectDataValue="value"
-  //         selectDataLabel="label"
-  //         selectData={filterFields}
-  //         fieldName="filter"
-  //         fieldType="select"
-  //         record={record}
-  //         setRecord={(updatedRecord: any) =>
-  //           setRecord({
-  //             filter: updatedRecord.filter,
-  //             value: ''
-  //           })
-  //         }
-  //         showLabel={false}
-  //         placeholder="Select Filter"
-  //         searchable={false}
-  //         width={200}
-  //       />
+    return (
+      <Form fluid className="form-of-filters-set-up">
+        <MyInput
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={record}
+          setRecord={(updatedRecord: any) =>
+            setRecord({
+              filter: updatedRecord.filter,
+              value: ''
+            })
+          }
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width={200}
+        />
 
-  //       {dynamicInput}
+        {dynamicInput}
 
-  //       <MyButton
-  //         color="var(--deep-blue)"
-  //         onClick={() => handleFilterChange(record.filter, record.value)}
-  //         width="80px"
-  //       >
-  //         Search
-  //       </MyButton>
-  //     </Form>
-  //   );
-  // };
+        <MyButton
+          color="var(--deep-blue)"
+          onClick={() => handleFilterChange(record.filter, record.value)}
+          width="80px"
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
+  };
 
   const iconsForActions = (rowData: FormTemplate) => (
     <div className="container-of-icons">
@@ -367,7 +372,7 @@ const FormTemplates = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={(rowData: any) => setTemplate(rowData)}
-        // filters={filters()}
+        filters={filters()}
         page={isFiltered ? filterPagination.page : pageIndex}
         rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
