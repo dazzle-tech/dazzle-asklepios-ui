@@ -142,6 +142,40 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
+    getDiagnosticTestsByShortName: builder.query({
+      query: ({ shortName, ...params }) => ({
+        url: `/api/setup/diagnostic-test/by-short-name/${encodeURIComponent(shortName)}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
+    getDiagnosticTestsByStatus: builder.query({
+      query: ({ isActive, ...params }) => ({
+        url: `/api/setup/diagnostic-test/by-status/${isActive}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
     getDiagnosticTestsByName: builder.query({
       query: ({ name, ...params }) => ({
         url: `/api/setup/diagnostic-test/by-name/${name}`,
@@ -219,6 +253,8 @@ export const {
   useGetDiagnosticTestsByTypeQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useLazyGetDiagnosticTestsByNameQuery,
+  useLazyGetDiagnosticTestsByShortNameQuery,
+  useLazyGetDiagnosticTestsByStatusQuery,
   useGetDiagnosticTestsByNameQuery,
   useGetDiagnosticTestsByInternalCodeQuery,
   useLazyGetDiagnosticTestsByInternalCodeQuery,

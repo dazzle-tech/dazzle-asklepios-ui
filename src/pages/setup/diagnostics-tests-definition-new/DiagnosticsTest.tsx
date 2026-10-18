@@ -15,6 +15,8 @@ import {
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
   useLazyGetDiagnosticTestsByInternalCodeQuery,
+  useLazyGetDiagnosticTestsByShortNameQuery,
+  useLazyGetDiagnosticTestsByStatusQuery,
   useUpdateDiagnosticTestMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
@@ -94,6 +96,8 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
   const [diagnosticTestByInternalCode] = useLazyGetDiagnosticTestsByInternalCodeQuery();
+  const [diagnosticTestByShortName] = useLazyGetDiagnosticTestsByShortNameQuery();
+  const [diagnosticTestByStatus] = useLazyGetDiagnosticTestsByStatusQuery();
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
@@ -534,6 +538,22 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           sort,
           _cb: cacheBuster
         }).unwrap();
+      } else if (field === 'shortName') {
+        response = await diagnosticTestByShortName({
+          shortName: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
+      } else if (field === 'status') {
+        response = await diagnosticTestByStatus({
+          isActive: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
       } else {
         setIsFiltered(false);
         setFilteredTotal(0);
@@ -573,7 +593,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const filterFields = [
     { label: 'Type', value: 'type' },
     { label: 'Name', value: 'name' },
-    { label: 'Internal Code', value: 'internalCode' }
+    { label: 'Short Name', value: 'shortName' },
+    { label: 'Internal Code', value: 'internalCode' },
+    { label: 'Status', value: 'status' }
   ];
 
   // Header page setUp
@@ -794,7 +816,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         searchable={false}
       />
 
-      {recordOfFilter.filter !== 'type' && (
+      {recordOfFilter.filter !== 'type' && recordOfFilter.filter !== 'status' && (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -802,6 +824,24 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder="Search"
+        />
+      )}
+
+      {recordOfFilter.filter === 'status' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: 'true' },
+            { label: 'Inactive', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Status"
+          searchable={false}
         />
       )}
 
