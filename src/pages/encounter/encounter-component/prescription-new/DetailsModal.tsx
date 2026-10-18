@@ -1248,6 +1248,7 @@ const createPayload: any = {
                             fieldType="number"
                             fieldLabel="Duration"
                             fieldName={'duration'}
+                            allowDecimal
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
