@@ -580,6 +580,8 @@ export interface AppointmentFromTemplateQuickAppointmentDTO {
   followUpEncounterId?: number | null;
   originType?: string | null;
   originName?: string | null;
+  promotionName?: string | null;
+  promotionCode?: string | null;
 }
 
 export interface AppointmentFromTemplateQuickAppointmentResponseVM {
@@ -2486,6 +2488,9 @@ export interface PatientEncounter {
   originType?: string | null;
   originName?: string | null;
 
+  promotionName?: string | null;
+  promotionCode?: string | null;
+
   notes?: string | null;
 
   encounterStatus?: string | null;
@@ -2688,6 +2693,8 @@ export interface PatientEncounter {
 
   originType?: string | null;
   originName?: string | null;
+  promotionName?: string | null;
+  promotionCode?: string | null;
   notes?: string | null;
   chiefComplaint?: string | null;
 
@@ -2979,6 +2986,9 @@ export interface PatientEncounter {
 
   originType?: string | null;
   originName?: string | null;
+
+  promotionName?: string | null;
+  promotionCode?: string | null;
 
   notes?: string | null;
 
