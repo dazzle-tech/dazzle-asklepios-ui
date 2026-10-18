@@ -680,6 +680,14 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   price: 0,
   currency: '',
   billingRuleId: null,
+  facilityId: null,
+  priceBaseUomId: null,
+  registrationNumber: '',
+  integrationCode: '',
+  gtinCode: '',
+  descriptionCode: '',
+  medDistributeArea: [],
+  localMarket: false,
 };
 
 // ------------------- Substitute -------------------

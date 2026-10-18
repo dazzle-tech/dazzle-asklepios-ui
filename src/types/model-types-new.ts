@@ -1394,8 +1394,19 @@ export interface BrandMedication {
   uomGroupUnitId?: number;
   hasActiveIngredient?: boolean;
   price: number;
+  /** Read-only: always taken from the facility's default currency */
   currency: string;
   billingRuleId?: number | null;
+  facilityId?: number | null;
+  /** Unit from the selected UOM group that the price is based on */
+  priceBaseUomId?: number | null;
+  registrationNumber?: string | null;
+  integrationCode?: string | null;
+  gtinCode?: string | null;
+  descriptionCode?: string | null;
+  /** Multi-select of MedDistributeArea values (PHARMACY, HOSPITAL) */
+  medDistributeArea?: string[];
+  localMarket?: boolean;
 }
 
 export interface MedicationCategoryClass {

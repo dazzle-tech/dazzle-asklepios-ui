@@ -60,6 +60,14 @@ const FIELD_LABELS: Record<string, string> = {
   uomGroupUnitId: "Base UOM",
   price: "Price",
   currency: "Currency",
+  facilityId: "Facility",
+  priceBaseUomId: "Price Base Unit",
+  registrationNumber: "Registration Number",
+  integrationCode: "Integration Code",
+  gtinCode: "GTIN Code",
+  descriptionCode: "Description Code",
+  medDistributeArea: "Med Distribute Area",
+  localMarket: "Local Market",
 };
 
 const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
@@ -67,6 +75,9 @@ const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
   dosageformrequired: "Dosage Form is required.",
   uomGrouprequired: "UOM Group is required.",
   uomGroupUnitrequired: "Base UOM is required.",
+  facilityrequired: "Facility is required.",
+  priceBaseUomrequired: "Price Base Unit is required.",
+  priceBaseUomNotInGroup: "Price Base Unit must belong to the selected UOM Group.",
   notfound: "Requested Brand Medication record was not found.",
 };
 
