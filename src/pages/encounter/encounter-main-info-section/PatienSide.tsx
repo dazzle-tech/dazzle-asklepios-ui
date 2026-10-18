@@ -901,20 +901,24 @@ const coverageTypeLabel =
             </span>
           </Text>
           <div className="info-section">
-          <div className="info-column">
-            <Text className="info-label">
-              <Translate>Coverage Type</Translate>
-            </Text>
+            <div className="info-column coverage-full">
+              <Text className="info-label">
+                <Translate>Coverage Type</Translate>
+              </Text>
 
-            <Text className="info-value">
-              <span className="coverage-alert">
-                <MyBadgeStatus
-                  contant={<Translate>{coverageTypeLabel}</Translate>}
-                  color="#45b887"
-                />
-              </span>
-            </Text>
-          </div>
+              <Text className="info-value">
+                <span className="coverage-alert">
+                  <MyBadgeStatus
+                    contant={
+                      <span style={{ fontSize: '13px', fontWeight: 600 }}>
+                        <Translate>{coverageTypeLabel}</Translate>
+                      </span>
+                    }
+                    color="#45b887"
+                  />
+                </span>
+              </Text>
+            </div>
           </div>
 
           {encounter?.encounterType !== 'INPATIENT' && (
