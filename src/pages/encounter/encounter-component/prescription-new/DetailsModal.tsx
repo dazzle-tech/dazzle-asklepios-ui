@@ -101,7 +101,6 @@ const DetailsModal = ({
   const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [instr, setInstruc] = useState(null);
-  const [editDuration, setEditDuration] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [capturedSourceId, setCapturedSourceId] = useState<number>(0);
 
@@ -517,16 +516,6 @@ if (!aiId) {
       }
     })();
   }, [open, selectedGeneric, selectedActiveIngredient, fetchPreRequestedTests]);
-
-  const isChronicMedication = !!prescriptionMedication?.chronicMedication;
-  useEffect(() => {
-    setEditDuration(isChronicMedication);
-    setPrescriptionMedications(prev => ({
-      ...prev,
-      duration: null,
-      durationTypeLkey: null
-    }));
-  }, [isChronicMedication]);
 
   useEffect(() => {
     if (indicationsIcd.indicationIcd) {
@@ -1242,9 +1231,9 @@ const createPayload: any = {
                       <div className="prescription-full-block">
                         <div className="prescription-inputs-inline">
                           <MyInput
-                            disabled={preKey != null ? editDuration : true}
-                            required={!editDuration}
-                            width={'100%'}
+                            disabled={preKey == null}
+                            required={!prescriptionMedication?.chronicMedication}
+                            width="11vw"
                             fieldType="number"
                             fieldLabel="Duration"
                             fieldName={'duration'}
@@ -1252,9 +1241,9 @@ const createPayload: any = {
                             setRecord={setPrescriptionMedications}
                           />
                           <MyInput
-                            disabled={preKey != null ? editDuration : true}
-                            required={!editDuration}
-                            width={'100%'}
+                            disabled={preKey == null}
+                            required={!prescriptionMedication?.chronicMedication}
+                            width={160}
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
@@ -1284,7 +1273,7 @@ const createPayload: any = {
                         <div className="prescription-inputs-inline">
                           <MyInput
                             disabled={preKey != null ? false : true}
-                            width={120}
+                            width="11vw"
                             fieldType="number"
                             fieldLabel="Maximum Dose"
                             fieldName="maximumDose"
