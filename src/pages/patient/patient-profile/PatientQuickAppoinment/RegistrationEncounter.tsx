@@ -80,6 +80,7 @@ const RegistrationEncounter = ({
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
+  const { data: patPromotionLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_PROMOTION');
 
   useEffect(() => {
     if (!localEncounter) {
@@ -828,6 +829,32 @@ useEffect(() => {
         column
         fieldLabel="Origin Name"
         fieldName="originName"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldType="select"
+        fieldLabel="Promotion Name"
+        fieldName="promotionName"
+        selectData={patPromotionLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        searchable={false}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldLabel="Promotion Code"
+        fieldName="promotionCode"
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}

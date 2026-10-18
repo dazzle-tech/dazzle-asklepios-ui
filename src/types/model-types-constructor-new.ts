@@ -1205,7 +1205,9 @@ export const newAppointmentFromTemplateQuickAppointmentDTO: modelTypes.Appointme
   note: null,
   followUpEncounterId: null,
   originType: null,
-  originName: null
+  originName: null,
+  promotionName: null,
+  promotionCode: null
 };
 
 export const newAppointmentFromTemplateQuickAppointmentResponseVM: modelTypes.AppointmentFromTemplateQuickAppointmentResponseVM = {
@@ -1963,6 +1965,9 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   originType: null,
   originName: null,
+
+  promotionName: null,
+  promotionCode: null,
 
   notes: null,
 
