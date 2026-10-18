@@ -83,6 +83,13 @@ export type AmendmentHistoryFieldChange = {
   newValue?: string | null;
 };
 
+export type EncounterDashboardPreference = {
+  userId: number;
+  encounterId: number;
+  customized: boolean;
+  widgetKeys: string[];
+};
+
 export type AmendmentHistoryChange = {
   module: string;
   medicalSheet?: string | null;
@@ -196,7 +203,7 @@ const mapPaged = (response: any[], meta: any): PagedResult<any> => {
 export const patientEncounterService = createApi({
   reducerPath: 'patientEncountersApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PatientEncounter'],
+  tagTypes: ['PatientEncounter', 'EncounterDashboardPreference'],
   endpoints: builder => ({
     createEncounter: builder.mutation<PatientEncounter, { body: PatientEncounter }>({
       query: ({ body }) => ({
@@ -1107,6 +1114,46 @@ export const patientEncounterService = createApi({
     'PatientEncounter',
   ],
 }),
+    getEncounterDashboardPreference: builder.query<
+      EncounterDashboardPreference,
+      { encounterId: number; userId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter-dashboard-preferences/${encounterId}`,
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, { encounterId, userId }) => [
+        { type: 'EncounterDashboardPreference', id: `${userId}:${encounterId}` }
+      ]
+    }),
+    saveEncounterDashboardPreference: builder.mutation<
+      EncounterDashboardPreference,
+      { encounterId: number; userId: Id; widgetKeys: string[] }
+    >({
+      query: ({ encounterId, widgetKeys }) => ({
+        url: `/api/patient/encounter-dashboard-preferences/${encounterId}`,
+        method: 'PUT',
+        body: { widgetKeys }
+      }),
+      async onQueryStarted({ encounterId, userId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            patientEncounterService.util.upsertQueryData(
+              'getEncounterDashboardPreference',
+              { encounterId, userId },
+              data
+            )
+          );
+        } catch {
+          // Customize reports the failure and leaves the previous cache in place.
+        }
+      },
+      invalidatesTags: (_result, error, { encounterId, userId }) =>
+        error
+          ? []
+          : [{ type: 'EncounterDashboardPreference', id: `${userId}:${encounterId}` }]
+    })
   }),
 
 });
@@ -1174,5 +1221,8 @@ export const {
   useGetAmendmentHistoryQuery,
   useLazyGetEncounterAuditQuery,
   useGetEncounterAuditQuery,
-  useAssignNurseMutation
+  useAssignNurseMutation,
+  useGetEncounterDashboardPreferenceQuery,
+  useLazyGetEncounterDashboardPreferenceQuery,
+  useSaveEncounterDashboardPreferenceMutation
 } = patientEncounterService;

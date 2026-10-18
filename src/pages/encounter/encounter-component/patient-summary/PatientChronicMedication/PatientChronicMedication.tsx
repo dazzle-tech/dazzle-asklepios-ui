@@ -15,7 +15,7 @@ import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
 
-const PatientChronicMedication = ({ patient, title = null }) => {
+const PatientChronicMedication = ({ patient, title = null, loadingHeight = undefined }) => {
   const [open, setOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
@@ -260,6 +260,7 @@ const activeIngredientsMap = useMemo(() => {
           columns={tableColumns}
           totalCount={totalCount}
           loading={isLoading || isLoadingCustomeInstructions || isLoadingGenericMedication || isLoadingPredefinedInstructions}
+          loadingHeight={loadingHeight}
           data={chronicMedications?.data ?? []}
           page={paginationParams.page}
           rowsPerPage={paginationParams.size}

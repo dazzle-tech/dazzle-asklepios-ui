@@ -31,6 +31,7 @@ import FullViewTable from './FullViewTable';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 type Props = {
   patient: any;
+  loadingHeight?: number | string;
 };
 
 const renderMarker = (marker?: string) => {
@@ -60,7 +61,7 @@ const renderMarker = (marker?: string) => {
   }
 };
 
-const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
+const RecentTestResults = forwardRef<any, Props>(({ patient, loadingHeight }, ref) => {
   void ref;
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -350,6 +351,7 @@ if (resultType === 'LOV') {
           columns={columns}
           data={normalizedResults}
           loading={isFetching || isOrderTestsFetching || isAllTestsFetching}
+          loadingHeight={loadingHeight}
           page={pageIndex}
           rowsPerPage={rowsPerPage}
           totalCount={totalCount}

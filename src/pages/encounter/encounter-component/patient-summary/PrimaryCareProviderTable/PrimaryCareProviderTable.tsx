@@ -7,7 +7,7 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 import PrimaryCareProviderTableFullView from './PrimaryCareProviderTableFullView';
 import MyModal from '@/components/MyModal/MyModal';
 
-const PrimaryCareProviderTable = ({ patient }: any) => {
+const PrimaryCareProviderTable = ({ patient, loadingHeight }: any) => {
   const [practitionersMap, setPractitionersMap] = useState<Record<number, any>>({});
   const [open, setOpen] = useState(false); // 🔥 مهم
 
@@ -93,6 +93,7 @@ const PrimaryCareProviderTable = ({ patient }: any) => {
           <MyTable
             data={patient?.id ? preferredHPResponse?.data ?? [] : []}
             loading={isFetching}
+            loadingHeight={loadingHeight}
             columns={columns}
           />
         }

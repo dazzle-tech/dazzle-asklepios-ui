@@ -892,10 +892,13 @@ const coverageTypeLabel =
               <Text className="info-label">
                 <Translate>Coverage Type</Translate>
               </Text>
-
               <Text className="info-value">
-                <Translate>{coverageTypeLabel || '-'}</Translate>
+                <MyBadgeStatus
+                  contant={<Translate>{coverageTypeLabel}</Translate>}
+                  color={'#45b887'}
+                />
               </Text>
+                              
             </div>
           </div>
 
