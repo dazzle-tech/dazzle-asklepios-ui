@@ -31,6 +31,9 @@ import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
 import { Patient, Address } from '@/types/model-types-new';
+import RegistrationPendingPaymentModal, {
+  RegistrationPendingPaymentFab
+} from './RegistrationPendingPayment';
 
 const { getHeight } = DOMHelper;
 
@@ -281,6 +284,9 @@ const PatientProfile = () => {
   const [profileActiveTab, setProfileActiveTab] = useState<string>('1');
 
   const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
+    useState<boolean>(false);
+
+  const [openRegistrationPendingPayment, setOpenRegistrationPendingPayment] =
     useState<boolean>(false);
 
   const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
@@ -630,6 +636,16 @@ const PatientProfile = () => {
       <RegistrationWarningsSummary
         open={openRegistrationWarningsSummary}
         setOpen={setOpenRegistrationWarningsSummary}
+      />
+
+      <RegistrationPendingPaymentFab
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
+        onClick={() => setOpenRegistrationPendingPayment(true)}
+      />
+      <RegistrationPendingPaymentModal
+        open={openRegistrationPendingPayment}
+        setOpen={setOpenRegistrationPendingPayment}
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
       />
 
       <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
