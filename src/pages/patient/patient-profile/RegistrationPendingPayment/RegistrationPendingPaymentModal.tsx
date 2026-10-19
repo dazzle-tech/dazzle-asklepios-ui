@@ -13,6 +13,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import type { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import {
   useGetRegistrationPendingItemChangesQuery,
@@ -77,6 +79,66 @@ const isEncounterCollectible = (
   encounter: RegistrationPendingPaymentEncounter
 ) => (encounter.items ?? []).some(item => item.collectible);
 
+const SERVICE_COLUMNS: ColumnConfig[] = [
+  {
+    key: 'itemName',
+    title: 'Service / Investigation',
+    width: 320,
+  render: (row: RegistrationPendingPaymentItem) => {
+    console.log('Service row:', row);
+    return row.itemName || '—';
+  }
+  },
+  {
+    key: 'patientShareAmount',
+    title: 'Patient Co-payment',
+    width: 150,
+    render: (row: RegistrationPendingPaymentItem) => (
+      <MyBadgeStatus
+        color="#2563eb"
+        contant={formatAmount(row, 'patientShareAmount')}
+      />
+    )
+  },
+  {
+    key: 'insuranceShareAmount',
+    title: 'Insurance Share',
+    width: 150,
+    render: (row: RegistrationPendingPaymentItem) => (
+      <MyBadgeStatus
+        color="#7c3aed"
+        contant={formatAmount(row, 'insuranceShareAmount')}
+      />
+    )
+  },
+  {
+    key: 'patientRemainingAmount',
+    title: 'Patient Remaining Amount',
+    width: 170,
+    render: (row: RegistrationPendingPaymentItem) => (
+      <MyBadgeStatus
+        color="#45b887"
+        contant={formatAmount(row, 'patientRemainingAmount')}
+      />
+    )
+  },
+  {
+    key: 'paymentStatus',
+    title: 'Payment Status',
+    width: 180,
+    render: (row: RegistrationPendingPaymentItem) => {
+      const status = row.displayPaymentStatus || row.paymentStatus;
+
+      return (
+        <MyBadgeStatus
+          color={statusColor(status)}
+          contant={statusLabel(status)}
+        />
+      );
+    }
+  }
+];
+
 const RegistrationPendingPaymentModal: React.FC<
   RegistrationPendingPaymentModalProps
 > = ({ open, setOpen, facilityId }) => {
@@ -85,6 +147,7 @@ const RegistrationPendingPaymentModal: React.FC<
   const [size, setSize] = useState(15);
   const [filterRecord, setFilterRecord] = useState({ patientName: '' });
   const [debouncedPatientName, setDebouncedPatientName] = useState('');
+  const [listPollingInterval, setListPollingInterval] = useState(0);
 
   useEffect(() => {
     setPage(0);
@@ -104,6 +167,24 @@ const RegistrationPendingPaymentModal: React.FC<
     setPage(0);
   }, [debouncedPatientName]);
 
+  useEffect(() => {
+    if (!open) {
+      setListPollingInterval(0);
+      return;
+    }
+
+    const syncVisibility = () => {
+      setListPollingInterval(document.hidden ? 0 : POLL_INTERVAL_MS);
+    };
+
+    syncVisibility();
+    document.addEventListener('visibilitychange', syncVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', syncVisibility);
+    };
+  }, [open]);
+
   const {
     currentData: pendingItemsData,
     isLoading,
@@ -120,8 +201,7 @@ const RegistrationPendingPaymentModal: React.FC<
     },
     {
       skip: !open || !facilityId,
-      pollingInterval: open ? POLL_INTERVAL_MS : 0,
-      skipPollingIfUnfocused: true,
+      pollingInterval: listPollingInterval,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true
@@ -259,9 +339,28 @@ const RegistrationPendingPaymentModal: React.FC<
                   key={encounter.encounterId}
                 >
                   <div className="registration-pending-payment-card__header">
-                    <h4 className="registration-pending-payment-card__patient">
-                      {encounter.patientName || '—'}
-                    </h4>
+                    <div className="registration-pending-payment-card__header-main">
+                      <h4 className="registration-pending-payment-card__patient">
+                        {encounter.patientName || '—'}
+                      </h4>
+
+                      <div className="registration-pending-payment-card__metadata">
+                        <div>
+                          <span className="registration-pending-payment-card__label">
+                            <Translate>Encounter Number</Translate>
+                          </span>
+                          <strong>{encounter.encounterNumber || '—'}</strong>
+                        </div>
+
+                        <div>
+                          <span className="registration-pending-payment-card__label">
+                            <FontAwesomeIcon icon={faBed} />
+                            <Translate>Bed</Translate>
+                          </span>
+                          <strong>{encounter.bedName || '—'}</strong>
+                        </div>
+                      </div>
+                    </div>
 
                     <span
                       className="registration-pending-payment-card__count"
@@ -275,97 +374,14 @@ const RegistrationPendingPaymentModal: React.FC<
                     </span>
                   </div>
 
-                  <div className="registration-pending-payment-card__metadata">
-                    <div>
-                      <span className="registration-pending-payment-card__label">
-                        <Translate>Encounter Number</Translate>
-                      </span>
-
-                      <strong>{encounter.encounterNumber || '—'}</strong>
-                    </div>
-
-                    <div>
-                      <span className="registration-pending-payment-card__label">
-                        <FontAwesomeIcon icon={faBed} />
-                        <Translate>Bed</Translate>
-                      </span>
-
-                      <strong>{encounter.bedName || '—'}</strong>
-                    </div>
-                  </div>
-
                   <div className="registration-pending-payment-card__services">
-                    {items.map(item => {
-                      const status =
-                        item.displayPaymentStatus || item.paymentStatus;
-
-                      return (
-                        <section
-                          className="registration-pending-payment-card__service"
-                          key={item.patientServiceProductId}
-                        >
-                          <div className="registration-pending-payment-card__service-header">
-                            <div className="registration-pending-payment-card__service-name">
-                              <span className="registration-pending-payment-card__label">
-                                <Translate>Service / Investigation</Translate>
-                              </span>
-
-                              <h5>{item.itemName || '—'}</h5>
-                            </div>
-
-                            <span className="registration-pending-payment-card__status">
-                              <MyBadgeStatus
-                                color={statusColor(status)}
-                                contant={
-                                  <Translate>{statusLabel(status)}</Translate>
-                                }
-                              />
-                            </span>
-                          </div>
-
-                          <div className="registration-pending-payment-card__amounts">
-                            <div className="registration-pending-payment-card__amount-row">
-                              <span>
-                                <Translate>Patient Co-payment</Translate>
-                              </span>
-                              <MyBadgeStatus
-                                color="#2563eb"
-                                contant={formatAmount(
-                                  item,
-                                  'patientShareAmount'
-                                )}
-                              />
-                            </div>
-
-                            <div className="registration-pending-payment-card__amount-row">
-                              <span>
-                                <Translate>Insurance Share</Translate>
-                              </span>
-                              <MyBadgeStatus
-                                color="#7c3aed"
-                                contant={formatAmount(
-                                  item,
-                                  'insuranceShareAmount'
-                                )}
-                              />
-                            </div>
-
-                            <div className="registration-pending-payment-card__amount-row registration-pending-payment-card__amount-row--remaining">
-                              <strong>
-                                <Translate>Patient Remaining Amount</Translate>
-                              </strong>
-                              <MyBadgeStatus
-                                color="#45b887"
-                                contant={formatAmount(
-                                  item,
-                                  'patientRemainingAmount'
-                                )}
-                              />
-                            </div>
-                          </div>
-                        </section>
-                      );
-                    })}
+                    <MyTable
+                      data={items}
+                      columns={SERVICE_COLUMNS}
+                      height={280}
+                      loading={false}
+                      dontTranslateData
+                    />
                   </div>
 
                   <div className="registration-pending-payment-card__footer">
@@ -424,31 +440,45 @@ const RegistrationPendingPaymentModal: React.FC<
       </div>
 
       <div className="registration-pending-payment-pagination__navigation">
-        <MyButton
-          disabled={page === 0 || isFetching}
-          onClick={() => setPage(value => Math.max(0, value - 1))}
-          aria-label="Previous page"
-          title="Previous page"
+        <Whisper
+          trigger="hover"
+          placement="top"
+          speaker={<Tooltip>Previous page</Tooltip>}
         >
-          <FontAwesomeIcon
-            icon={direction === 'rtl' ? faChevronRight : faChevronLeft}
-          />
-        </MyButton>
+          <div>
+            <MyButton
+              disabled={page === 0 || isFetching}
+              onClick={() => setPage(value => Math.max(0, value - 1))}
+            >
+              <FontAwesomeIcon
+                icon={direction === 'rtl' ? faChevronRight : faChevronLeft}
+              />
+            </MyButton>
+          </div>
+        </Whisper>
 
         <span aria-live="polite">
           {page + 1} / {pageCount}
         </span>
 
-        <MyButton
-          disabled={page >= pageCount - 1 || isFetching}
-          onClick={() => setPage(value => Math.min(pageCount - 1, value + 1))}
-          aria-label="Next page"
-          title="Next page"
+        <Whisper
+          trigger="hover"
+          placement="top"
+          speaker={<Tooltip>Next page</Tooltip>}
         >
-          <FontAwesomeIcon
-            icon={direction === 'rtl' ? faChevronLeft : faChevronRight}
-          />
-        </MyButton>
+          <div>
+            <MyButton
+              disabled={page >= pageCount - 1 || isFetching}
+              onClick={() =>
+                setPage(value => Math.min(pageCount - 1, value + 1))
+              }
+            >
+              <FontAwesomeIcon
+                icon={direction === 'rtl' ? faChevronLeft : faChevronRight}
+              />
+            </MyButton>
+          </div>
+        </Whisper>
       </div>
       
         </div>
@@ -586,8 +616,7 @@ export const RegistrationPendingPaymentFab: React.FC<{
         disabled={!facilityId}
         aria-label={label}
       >
-        <FontAwesomeIcon icon={faBed} size="lg" aria-hidden="true" />
-
+        <FontAwesomeIcon icon={faBed} size="2x" aria-hidden="true" />
         {badgeText ? (
           <span className="registration-pending-payment-fab__badge">
             {badgeText}

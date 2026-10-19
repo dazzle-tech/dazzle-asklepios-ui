@@ -71,17 +71,16 @@
 
 .registration-pending-payment-cards {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
+  flex-direction: column;
   gap: 16px;
 }
 
 .registration-pending-payment-card {
   display: flex;
   flex-direction: column;
-  flex: 0 0 calc((100% - 32px) / 3);
+  width: 100%;
   min-width: 0;
-  padding: 20px;
+  padding: 18px 20px;
   border: 1px solid var(--rs-border-primary, #e6ebf0);
   border-radius: 16px;
   background: var(--rs-bg-card, #fff);
@@ -102,21 +101,25 @@
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 12px 16px;
+  min-width: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rs-border-primary, #edf1f5);
+}
+
+.registration-pending-payment-card__header-main {
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
   gap: 10px;
   min-width: 0;
 }
 
-.registration-pending-payment-card__header > * {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
 .registration-pending-payment-card__patient {
-  flex: 1 1 140px;
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
@@ -132,17 +135,13 @@
 .registration-pending-payment-card__metadata {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 18px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--rs-border-primary, #edf1f5);
+  gap: 16px 24px;
 }
 
 .registration-pending-payment-card__metadata > div {
   display: flex;
-  flex: 1 1 100px;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -157,97 +156,31 @@
 }
 
 .registration-pending-payment-card__services {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: 280px;
-  margin-top: 4px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-inline-end: 4px;
-}
-
-.registration-pending-payment-card__service {
-  padding: 14px 0 16px;
-}
-
-.registration-pending-payment-card__service + .registration-pending-payment-card__service {
-  border-top: 1px solid var(--rs-border-primary, #edf1f5);
-}
-
-.registration-pending-payment-card__service-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.registration-pending-payment-card__service-name {
-  flex: 1 1 160px;
   min-width: 0;
-}
-
-.registration-pending-payment-card__service-name h5 {
-  margin: 7px 0 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.registration-pending-payment-card__status {
-  flex-shrink: 0;
-  max-width: 100%;
-}
-
-.registration-pending-payment-card__amounts {
   margin-top: 12px;
-  padding: 0 12px;
-  border: 1px solid var(--rs-border-primary, #edf1f5);
-  border-radius: 12px;
-  background: var(--rs-bg-well, #f8fafc);
-}
-
-.registration-pending-payment-card__amount-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 11px 0;
-  font-size: 12px;
-}
-
-.registration-pending-payment-card__amount-row > * {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-.registration-pending-payment-card__amount-row + .registration-pending-payment-card__amount-row {
-  border-top: 1px solid var(--rs-border-primary, #e9eef3);
-}
-
-.registration-pending-payment-card__amount-row--remaining {
-  padding-block: 13px;
 }
 
 .registration-pending-payment-card__footer {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  align-items: flex-end;
   gap: 10px;
-  margin-top: auto;
-  padding-top: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rs-border-primary, #edf1f5);
 }
 
 .registration-pending-payment-card__footer > button {
-  width: 100%;
+  width: auto;
+  min-width: 160px;
 }
 
 .registration-pending-payment-card__note {
+  width: 100%;
   color: var(--rs-text-secondary, #718096);
   font-size: 11px;
   line-height: 1.5;
+  text-align: start;
 }
 
 .registration-pending-payment-message {
@@ -359,9 +292,21 @@
 }
 
 .registration-pending-payment-pagination__navigation > span {
-  min-width: 46px;
-  text-align: center;
+  min-width: 56px;
+  font-size: 13px;
   font-weight: 600;
+  text-align: center;
+}
+
+.registration-pending-payment-pagination__navigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
 }
 
 .registration-pending-payment-fab {
@@ -372,8 +317,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   padding: 0;
   border: 0;
   border-radius: 18px;
@@ -420,16 +365,9 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 1200px) {
-  .registration-pending-payment-card {
-    flex-basis: calc((100% - 16px) / 2);
-  }
-}
-
 @media (max-width: 700px) {
   .registration-pending-payment-card {
-    flex-basis: 100%;
-    padding: 16px;
+    padding: 14px 16px;
   }
 
   .registration-pending-payment-toolbar__subtitle {
@@ -451,26 +389,16 @@
     justify-content: center;
   }
 
+  .registration-pending-payment-card__footer {
+    align-items: stretch;
+  }
+
+  .registration-pending-payment-card__footer > button {
+    width: 100%;
+  }
+
   .registration-pending-payment-fab {
     inset-inline-end: 16px;
     bottom: 16px;
   }
-}
-
-.registration-pending-payment-pagination__navigation > button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 10px;
-}
-
-.registration-pending-payment-pagination__navigation > span {
-  min-width: 56px;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
 }
