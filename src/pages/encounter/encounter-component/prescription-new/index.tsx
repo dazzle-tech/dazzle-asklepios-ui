@@ -9,6 +9,7 @@ import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment
 
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetPharmaceuticalsByIdsQuery } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
@@ -238,6 +239,42 @@ const Prescription = (props: Props) => {
     showCanceled ? true : !isCanceledStatus((m as any)?.status)
   );
 
+  // Medications are prescribed as pharmaceuticals; brand names remain only for older records.
+  const pharmaceuticalIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          patientPrescriptionMedications
+            .map((m: any) => m?.pharmaceuticalId)
+            .filter(Boolean)
+            .map((id: any) => Number(id))
+        )
+      ).sort((a, b) => a - b),
+    [patientPrescriptionMedications]
+  );
+
+  const { data: pharmaceuticalsForNames = [] } = useGetPharmaceuticalsByIdsQuery(
+    pharmaceuticalIds,
+    { skip: !pharmaceuticalIds.length }
+  );
+
+  const getMedicationDisplayName = (row: any): string => {
+    if (row?.otherMedicationName?.trim()) return row.otherMedicationName.trim();
+
+    if (row?.pharmaceuticalId) {
+      const pharmaceutical = pharmaceuticalsForNames.find(
+        (item: any) => String(item.id) === String(row.pharmaceuticalId)
+      );
+      if (pharmaceutical?.pharmaceuticalName) return pharmaceutical.pharmaceuticalName;
+    }
+
+    const brandId = row?.medicationsId ?? row?.genericMedicationsId;
+    const brandName = genericMedicationListResponse?.data?.find(
+      (item: any) => String(item.id) === String(brandId)
+    )?.name;
+    return brandName ? String(brandName) : '';
+  };
+
   const { data: customeInstructions } = useGetCustomeInstructionsQuery({
     ...({} as any)
   });
@@ -428,7 +465,7 @@ const Prescription = (props: Props) => {
 
     const medicationsAsStrings: string[] = (meds ?? []).map((row: any) => {
       const medId = row?.medicationsId ?? row?.genericMedicationsId;
-      const medicationName = getMedicationName(brandMedicationsForNames, medId);
+      const medicationName = getMedicationDisplayName(row);
       const activeIngredientsText = formatActiveIngredientsLikeUI(medId);
 
       const instructionsText = formatInstructionsLikeTable(
@@ -601,6 +638,7 @@ const Prescription = (props: Props) => {
           setSelectedMedicationForAttachments={setSelectedMedicationForAttachments as any}
           setAttachmentsModalOpen={setAttachmentsModalOpen}
           genericMedicationListResponse={genericMedicationListResponse}
+          getMedicationDisplayName={getMedicationDisplayName}
           predefinedInstructionsListResponse={predefinedInstructionsListResponse}
           customeInstructions={customeInstructions}
           unitLovQueryResponse={unitLovQueryResponse}
@@ -661,14 +699,7 @@ const Prescription = (props: Props) => {
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
         title={`Attachments - ${selectedMedicationForAttachments
-            ? genericMedicationListResponse?.data?.find(
-              (item: any) =>
-                String(item.id) ===
-                String(
-                  (selectedMedicationForAttachments as any)?.medicationsId ??
-                  (selectedMedicationForAttachments as any)?.genericMedicationsId
-                )
-            )?.name || 'Medication'
+            ? getMedicationDisplayName(selectedMedicationForAttachments) || 'Medication'
             : 'Medication'
           }`}
         size="lg"

@@ -26,6 +26,7 @@ type Props = {
   setSelectedMedicationForAttachments: React.Dispatch<React.SetStateAction<any>>;
   setAttachmentsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   genericMedicationListResponse: any;
+  getMedicationDisplayName: (row: any) => string;
   predefinedInstructionsListResponse: any;
   customeInstructions: any;
   unitLovQueryResponse: any;
@@ -51,6 +52,7 @@ const PrescriptionTable = ({
   setSelectedMedicationForAttachments,
   setAttachmentsModalOpen,
   genericMedicationListResponse,
+  getMedicationDisplayName,
   predefinedInstructionsListResponse,
   customeInstructions,
   unitLovQueryResponse,
@@ -90,27 +92,7 @@ const PrescriptionTable = ({
       dataKey: 'medicationsId',
       title: <Translate>Medication Name</Translate>,
       flexGrow: 2,
-      render: (rowData: any) => {
-        // Other Medication
-        if (rowData?.otherMedicationName?.trim()) {
-          return rowData.otherMedicationName.trim();
-        }
-
-        // Normal Medication
-        const medId =
-          rowData?.medicationsId ??
-          rowData?.genericMedicationsId;
-
-        if (!medId) {
-          return '-';
-        }
-
-        return (
-          genericMedicationListResponse?.data?.find(
-            (item: any) => String(item.id) === String(medId)
-          )?.name ?? '-'
-        );
-      }
+      render: (rowData: any) => getMedicationDisplayName(rowData) || '-'
     },
     {
       key: 'instructions',

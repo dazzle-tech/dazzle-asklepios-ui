@@ -36,6 +36,7 @@ import { observationService } from '@/services/observationService';
 import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { pharmaceuticalService } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
@@ -357,6 +358,7 @@ export const store = configureStore({
     // medication / active ingredients
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [pharmaceuticalService.reducerPath]: pharmaceuticalService.reducer,
     [activeIngredientSpecialPopulationService.reducerPath]:
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
@@ -729,6 +731,7 @@ export const store = configureStore({
         setupService.middleware,
         medicationsSetupService.middleware,
         activeIngredientSynonymsService.middleware,
+        pharmaceuticalService.middleware,
         activeIngredientAdverseEffectService.middleware,
         activeIngredientIndicationService.middleware,
         activeIngredientSpecialPopulationService.middleware,
