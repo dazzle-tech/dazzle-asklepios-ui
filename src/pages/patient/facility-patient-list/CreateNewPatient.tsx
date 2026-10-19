@@ -16,6 +16,7 @@ import {
 
 import { notify } from '@/utils/uiReducerActions';
 import { formatEnumString } from '@/utils';
+import { isCitizenFromDocumentType } from '@/utils/patientCitizen';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
@@ -1143,7 +1144,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
         await addNoDocument({
           patientId: localPatient.id,
           type: 'NO_DOCUMENT',
-          isPrimary: secondaryDocument.isPrimary ?? false
+          isPrimary: secondaryDocument.isPrimary ?? false,
+          isCitizen: Boolean(localPatient?.isCitizen)
         }).unwrap();
 
         dispatch(notify({ msg: 'No Document Added Successfully', sev: 'success' }));
@@ -1159,7 +1161,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      number: String(secondaryDocument.number ?? '').trim()
+      number: String(secondaryDocument.number ?? '').trim(),
+      isCitizen: Boolean(localPatient?.isCitizen)
     };
 
     try {
@@ -1217,6 +1220,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }));
     }
   }, [secondaryDocument.type, secondaryDocument.isPrimary]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const isCitizen = isCitizenFromDocumentType(secondaryDocument?.type);
+    setLocalPatient(prev =>
+      Boolean(prev?.isCitizen) === isCitizen ? prev : { ...prev, isCitizen }
+    );
+  }, [open, secondaryDocument?.type]);
 
   useEffect(() => {
     if (!open) {
@@ -1302,6 +1316,16 @@ const CreateNewPatient = ({ open, setOpen }) => {
               selectData={genderEnum ?? []}
               selectDataLabel="label"
               selectDataValue="value"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
+            <MyInput
+              width={200}
+              required
+              column
+              fieldLabel="Citizen"
+              fieldType="checkbox"
+              fieldName="isCitizen"
               record={localPatient}
               setRecord={setLocalPatient}
             />
@@ -1442,6 +1466,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 }
               />
             )}
+
+            <MyInput
+              required
+              column
+              width={300}
+              fieldLabel="Citizen"
+              fieldType="checkbox"
+              fieldName="isCitizen"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
 
             {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
           </Form>
