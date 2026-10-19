@@ -1753,6 +1753,7 @@ export interface Patient {
 
   isCchiPatient?: boolean | null;
   documentId?: string | null;
+  isCitizen?: boolean | null;
 
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
@@ -6209,9 +6210,18 @@ export type TaxCalculationType =
 
 export type TaxApplicableOn =
   | 'INVOICE'
-  | 'INVOICE_LINE'
+  | 'CHARGE_LINE'
   | 'SERVICE'
-  | 'PRODUCT';
+  | 'PROCEDURE'
+  | 'MEDICATION'
+  | 'LABORATORY'
+  | 'RADIOLOGY'
+  | 'PATHOLOGY';
+
+export type TaxCitizenCategory =
+  | 'ALL'
+  | 'CITIZEN'
+  | 'NON_CITIZEN';
 
 /*
  * إذا كان Currency موجودًا عندك مسبقًا،
@@ -6242,6 +6252,9 @@ export type Tax = {
 
   applicableOn?:
     TaxApplicableOn;
+
+  citizenCategory?:
+    TaxCitizenCategory;
 
   validFrom?: string;
 
@@ -6274,6 +6287,9 @@ export type SaveTaxRequest = {
 
   applicableOn:
     TaxApplicableOn;
+
+  citizenCategory?:
+    TaxCitizenCategory;
 
   validFrom: string;
 
@@ -6551,6 +6567,7 @@ export type EncounterBillingItemSummary = {
   discountAmount: number;
   exemptionAmount: number;
   taxAmount: number;
+  taxRate?: number | null;
   netAmount: number;
   patientResponsibilityAmount: number;
   insuranceResponsibilityAmount: number;

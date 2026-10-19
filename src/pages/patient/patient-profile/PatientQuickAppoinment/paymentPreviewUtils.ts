@@ -287,6 +287,7 @@ export const computePreviewBillingTotals = (
   let patientResponsibilityAmount = 0;
   let insuranceResponsibilityAmount = 0;
   let taxAmount = 0;
+  let netAmount = 0;
 
   selectedRows.forEach(row => {
     if (row.previewNetAmount != null) {
@@ -302,6 +303,7 @@ export const computePreviewBillingTotals = (
       }
 
       const lineNet = toAmount(row.previewNetAmount);
+      netAmount += lineNet;
 
       if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
         patientResponsibilityAmount += toAmount(row.patientShare);
@@ -323,6 +325,8 @@ export const computePreviewBillingTotals = (
       return;
     }
 
+    netAmount += lineGross;
+
     if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
       patientResponsibilityAmount += toAmount(row.patientShare);
       insuranceResponsibilityAmount += toAmount(row.insuranceShare);
@@ -332,7 +336,7 @@ export const computePreviewBillingTotals = (
     patientResponsibilityAmount += lineGross;
   });
 
-  const netAmount = Math.max(0, grossAmount - discountAmount - exemptionAmount);
+  netAmount = Math.max(0, netAmount);
 
   return {
     grossAmount,

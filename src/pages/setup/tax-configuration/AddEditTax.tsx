@@ -1,5 +1,6 @@
 import React, {
-  useEffect
+  useEffect,
+  useMemo
 } from 'react';
 
 import {
@@ -43,6 +44,7 @@ import type {
   Tax,
   TaxApplicableOn,
   TaxCalculationType,
+  TaxCitizenCategory,
   TaxType
 } from '@/types/model-types-new';
 
@@ -118,6 +120,9 @@ Record<string, string> = {
 
   applicableOn:
     'Applicable On',
+
+  citizenCategory:
+    'Citizen Category',
 
   validFrom:
     'Valid From',
@@ -446,10 +451,84 @@ React.FC<Props> = ({
       'TaxCalculationType'
     );
 
-  const applicableOnOptions =
+  const billingCategoryOptions =
     useEnumOptions(
-      'TaxApplicableOn'
+      'BillingItemTypes',
+      {
+        exclude: [
+          'PATHOLOGY'
+        ]
+      }
     );
+
+  const applicableOnOptions =
+    useMemo(
+      () => [
+        {
+          value:
+            'INVOICE',
+
+          label:
+            'Invoice'
+        },
+        {
+          value:
+            'CHARGE_LINE',
+
+          label:
+            'Charge Line'
+        },
+        ...billingCategoryOptions
+      ],
+      [
+        billingCategoryOptions
+      ]
+    );
+
+  const citizenCategoryOptions =
+    useEnumOptions(
+      'TaxCitizenCategory',
+      {
+        labelOverrides: {
+          ALL:
+            'All',
+
+          CITIZEN:
+            'Citizens',
+
+          NON_CITIZEN:
+            'Non-Citizens'
+        }
+      }
+    );
+
+  const citizenCategorySelectData =
+    citizenCategoryOptions.length >
+    0
+      ? citizenCategoryOptions
+      : [
+          {
+            value:
+              'ALL',
+
+            label:
+              'All'
+          },
+          {
+            value:
+              'CITIZEN',
+
+            label:
+              'Citizens'
+          },
+          {
+            value:
+              'NON_CITIZEN',
+
+            label:
+              'Non-Citizens'
+          }
+        ];
 
   const currencyOptions =
     useEnumOptions(
@@ -510,6 +589,10 @@ React.FC<Props> = ({
         applicableOn:
           previous.applicableOn ??
           'INVOICE',
+
+        citizenCategory:
+          previous.citizenCategory ??
+          'ALL',
 
         validFrom:
           previous.validFrom ||
@@ -686,6 +769,10 @@ React.FC<Props> = ({
       return 'Applicable on is required.';
     }
 
+    if (!tax.citizenCategory) {
+      return 'Citizen category is required.';
+    }
+
     if (!tax.validFrom) {
       return 'Valid from date is required.';
     }
@@ -784,6 +871,10 @@ React.FC<Props> = ({
         applicableOn:
           tax.applicableOn as
             TaxApplicableOn,
+
+        citizenCategory:
+          tax.citizenCategory as
+            TaxCitizenCategory,
 
         validFrom:
           String(
@@ -1062,6 +1153,29 @@ React.FC<Props> = ({
             searchable={false}
           />
         </div>
+
+        <br />
+
+        <MyInput
+          required
+          width="100%"
+          fieldLabel="Citizen Category"
+          fieldType="select"
+          fieldName="citizenCategory"
+          selectData={
+            citizenCategorySelectData
+          }
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={
+            tax
+          }
+          setRecord={
+            setTax
+          }
+          placeholder="Select Citizen Category"
+          searchable={false}
+        />
 
         <br />
 

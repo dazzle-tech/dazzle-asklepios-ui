@@ -45,6 +45,8 @@ export type UnifiedBillingChargeRow = {
   unitPrice: number;
   setupUnitPrice?: number | null;
   priceSource?: string | null;
+  taxAmount?: number | null;
+  taxRate?: number | null;
   netAmount: number;
   patientAmount: number;
   insuranceAmount: number;
@@ -1774,6 +1776,10 @@ export const mapSummaryItemToRow = (
     item.setupUnitPrice ??
     null,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
+  taxAmount:
+    readChargeLineNumber(item, 'taxAmount', 'tax_amount') ?? item.taxAmount ?? 0,
+  taxRate:
+    readChargeLineNumber(item, 'taxRate', 'tax_rate') ?? item.taxRate ?? null,
   netAmount: readChargeLineNumber(item, 'netAmount', 'net_amount') ?? item.netAmount ?? 0,
   patientAmount,
   insuranceAmount: item.insuranceResponsibilityAmount,
@@ -1835,6 +1841,7 @@ export const mapPspItemToRow = (
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     priceSource: rowAny.priceSource?.trim() || null,
+    taxAmount: Number(row.taxAmount ?? 0),
     netAmount,
     patientAmount,
     insuranceAmount: hasStoredSplit ? insuranceShare : 0,
@@ -1868,6 +1875,7 @@ export const mapInvoiceLineItemToRow = (item: InvoiceLineItem): UnifiedBillingCh
     itemName: item.itemDescription?.trim() || item.itemCode?.trim() || 'Service',
     quantity: Number(item.quantity ?? 1),
     unitPrice: Number(item.unitPrice ?? 0),
+    taxAmount: Number(item.taxAmount ?? 0),
     netAmount,
     patientAmount: netAmount,
     insuranceAmount: 0,

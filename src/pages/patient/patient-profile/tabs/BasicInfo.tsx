@@ -139,6 +139,17 @@ const BasicInfo = ({
         width={170}
       />
       <MyInput
+        required
+        vr={validationResult}
+        column
+        fieldLabel="Citizen"
+        fieldType="checkbox"
+        fieldName="isCitizen"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
         vr={validationResult}
         width={170}
         column

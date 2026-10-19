@@ -144,6 +144,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: (
         <SecondaryIDTab
           localPatient={localPatient}
+          setLocalPatient={setLocalPatient}
           cchiDocument={cchiDocument}
           openCchiDocumentPopup={openCchiDocumentPopup}
           setOpenCchiDocumentPopup={setOpenCchiDocumentPopup}

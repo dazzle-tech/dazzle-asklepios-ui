@@ -67,7 +67,9 @@ const TestTypeSection: React.FC<SectionProps> = ({
 
   // Catalog ids only needed to narrow a fixed list (favorites); paged API path filters by catalogId on the backend
   const { data: catalogTestsResponse, isFetching: isFetchingCatalogTests } = useGetCatalogTestsQuery(
-    open && hasFixedItems && activeCatalogId ? { catalogId: activeCatalogId, page: 0, size: 1000 } : skipToken
+    open && hasFixedItems && activeCatalogId
+      ? { catalogId: activeCatalogId, page: 0, size: 1000 }
+      : skipToken
   );
 
   const catalogTestIds = useMemo(() => {
@@ -92,7 +94,11 @@ const TestTypeSection: React.FC<SectionProps> = ({
 
   const requestKey = `${type}|${activeSearch}|${activeCatalogId ?? ''}|${page}`;
 
-  const { data: testsResponse, isFetching, originalArgs } = useGetActiveDiagnosticTestsByTypeQuery(
+  const {
+    currentData: testsResponse,
+    isFetching,
+    originalArgs
+  } = useGetActiveDiagnosticTestsByTypeQuery(
     open && !hasFixedItems ? queryArgs : skipToken
   );
 

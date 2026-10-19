@@ -228,8 +228,20 @@ export const formatApplicableOnLabel = (value?: string | null) => {
       return 'Invoice';
     case 'INVOICE_LINE':
       return 'Invoice line';
+    case 'CHARGE_LINE':
+      return 'Charge line';
     case 'SERVICE':
       return 'Service';
+    case 'PROCEDURE':
+      return 'Procedure';
+    case 'MEDICATION':
+      return 'Medication';
+    case 'LABORATORY':
+      return 'Laboratory';
+    case 'RADIOLOGY':
+      return 'Radiology';
+    case 'PATHOLOGY':
+      return 'Pathology';
     case 'PRODUCT':
       return 'Product';
     default:
