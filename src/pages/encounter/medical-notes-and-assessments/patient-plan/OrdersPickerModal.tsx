@@ -160,7 +160,10 @@ const buildUccDetails = (o: any, maps: LookupMaps): string | undefined => {
   const dosePart = formatDoseWithUnit(o?.dose, unitLabel);
 
   let frequencyPart: string | undefined;
-  if (o?.frequencyNumber != null && String(o.frequencyNumber).trim() !== '') {
+  if (o?.frequency) {
+    // New orders: MedFrequency value
+    frequencyPart = formatEnumString(o.frequency);
+  } else if (o?.frequencyNumber != null && String(o.frequencyNumber).trim() !== '') {
     frequencyPart = frequencyUnitLabel
       ? `${String(o.frequencyNumber).trim()} ${frequencyUnitLabel}`
       : String(o.frequencyNumber).trim();

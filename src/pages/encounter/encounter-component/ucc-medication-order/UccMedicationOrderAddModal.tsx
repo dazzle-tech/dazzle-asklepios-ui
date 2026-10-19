@@ -15,6 +15,9 @@ import {
 import { useGetMedicationCategoryClassByClassIdQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { useEnumOptions } from '@/services/enumsApi';
 
+// Medical convention: STAT is written in capitals (stable object so the enum options are not rebuilt every render)
+const FREQUENCY_OPTIONS_PARAMS = { labelOverrides: { STAT: 'STAT' } };
+
 const UccMedicationOrderAddModal = ({
   open,
   setOpen,
@@ -29,13 +32,9 @@ const UccMedicationOrderAddModal = ({
 const emptyRecord = {
   ...newPatientUccMedicationOrder,
   instructionText: '',
-  isStat: false,
   dose: '',
   unit: null,
-  frequencyNumber: '',
-  frequencyUnit: null,
-  duration: '',
-  startTime: new Date().toTimeString().slice(0, 5),
+  frequency: null,
   roa: null
 };
 
@@ -61,7 +60,7 @@ const emptyRecord = {
 console.log('unitLov', unitLov);
 
   const roaOptions = useEnumOptions('RouteOfAdministration');
-  const frequencyUnitOptions = useEnumOptions('FrequencyList');
+  const frequencyOptions = useEnumOptions('MedFrequency', FREQUENCY_OPTIONS_PARAMS);
   const { data: classData } = useGetMedicationCategoryClassByClassIdQuery(
     selectedActiveIngredient?.drugClassId,
     { skip: !selectedActiveIngredient?.drugClassId }
@@ -134,9 +133,9 @@ console.log('unitLov', unitLov);
       return;
     }
 
-    let finalInstruction = record.isStat ? 'STAT' : record.instructionText;
+    let finalInstruction = record.instructionText;
 
-    if (!record.isStat && selectedOption === 'MANUAL_INSTRUCTIONS') {
+    if (selectedOption === 'MANUAL_INSTRUCTIONS') {
       if (!record.instructionText?.trim()) {
         dispatch(
           notify({
@@ -148,16 +147,13 @@ console.log('unitLov', unitLov);
       }
     }
 
-    if (!record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS') {
+    if (selectedOption === 'CUSTOM_INSTRUCTIONS') {
       const missing: string[] = [];
 
       if (!record?.dose) missing.push('Dose');
       if (!record?.unit) missing.push('Unit');
-      if (!record?.frequencyNumber) missing.push('Frequency Number');
-      if (!record?.frequencyUnit) missing.push('Frequency Unit');
-      if (!record?.duration) missing.push('Duration');
-      if (!record?.startTime) missing.push('Start Time');
       if (!record?.roa) missing.push('ROA');
+      if (!record?.frequency) missing.push('Frequency');
 
       if (missing.length > 0) {
         dispatch(
@@ -179,80 +175,29 @@ console.log('unitLov', unitLov);
         return;
       }
 
-      if (Number(record.frequencyNumber) <= 0) {
-        dispatch(
-          notify({
-            msg: 'Frequency Number must be greater than 0',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
-      if (Number(record.duration) <= 0) {
-        dispatch(
-          notify({
-            msg: 'Duration must be greater than 0',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
       finalInstruction = [
         record.dose,
         record.unit,
-        `${record.frequencyNumber} ${record.frequencyUnit}`,
+        frequencyOptions?.find(o => o.value === record.frequency)?.label ?? record.frequency,
         record.roa
       ]
         .filter(Boolean)
         .join(', ');
     }
 
+    const isCustom = selectedOption === 'CUSTOM_INSTRUCTIONS';
+
     const payload = {
       patientId: patient.id,
       encounterId: encounter.id,
       activeIngredientId: record.activeIngredientId,
       instructionType: selectedOption,
-      instructionText: record.isStat ? 'STAT' : finalInstruction,
-      isStat: !!record.isStat,
+      instructionText: finalInstruction,
 
-      dose:
-        record.isStat
-          ? null
-          : record?.dose
-            ? Number(record.dose)
-            : null,
-
-      doseUnit:
-        record.isStat
-          ? null
-          : record?.unit || null,
-
-      route:
-        record.isStat
-          ? null
-          : record?.roa || null,
-
-      frequencyNumber:
-        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
-          ? Number(record.frequencyNumber)
-          : null,
-
-      frequencyUnit:
-        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
-          ? record.frequencyUnit
-          : null,
-
-      duration:
-        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
-          ? Number(record.duration)
-          : null,
-
-      startTime:
-        !record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS'
-          ? record.startTime
-          : null
+      dose: isCustom && record?.dose ? Number(record.dose) : null,
+      doseUnit: isCustom ? record?.unit || null : null,
+      route: isCustom ? record?.roa || null : null,
+      frequency: isCustom ? record?.frequency || null : null
     };
 
     try {
@@ -289,14 +234,10 @@ console.log('unitLov', unitLov);
     setRecord({
       ...emptyRecord,
       activeIngredientId: editRow.activeIngredientId ?? null,
-      instructionText: editRow.isStat ? 'STAT' : editRow.instructionText ?? '',
-      isStat: !!editRow.isStat,
+      instructionText: editRow.instructionText ?? '',
       dose: editRow.dose ?? '',
       unit: editRow.doseUnit ?? null,
-      frequencyNumber: editRow.frequencyNumber ?? '',
-      frequencyUnit: editRow.frequencyUnit ?? null,
-      duration: editRow.duration ?? '',
-      startTime: editRow.startTime ?? '',
+      frequency: editRow.frequency ?? null,
       roa: editRow.route ?? null
     });
 
@@ -373,46 +314,20 @@ console.log('unitLov', unitLov);
                 disabled
               />
 
-              <MyInput
-                width="100%"
-                fieldType="checkbox"
-                fieldLabel="STAT"
-                fieldName="isStat"
-                record={record}
-                setRecord={setRecord}
-              />
             </div>
 
             {/* Instruction Type */}
             <RadioGroup
               value={selectedOption}
               inline
-              disabled={record.isStat}
               onChange={value => setSelectedOption(value)}
             >
               <Radio value="MANUAL_INSTRUCTIONS">Manual</Radio>
               <Radio value="CUSTOM_INSTRUCTIONS">Custom</Radio>
             </RadioGroup>
-            {record.isStat && (
-              <div
-                style={{
-                  width: '100%',
-                  minHeight: 80,
-                  padding: '10px 12px',
-                  marginTop: 10,
-                  border: '1px solid #e5e5ea',
-                  borderRadius: 6,
-                  background: '#f7f7fa',
-                  color: 'red',
-                  fontWeight: 500
-                }}
-              >
-                STAT
-              </div>
-            )}
 
             {/* Manual */}
-            {!record.isStat && selectedOption === 'MANUAL_INSTRUCTIONS' && (
+            {selectedOption === 'MANUAL_INSTRUCTIONS' && (
               <MyInput
                 fieldName="instructionText"
                 fieldType="textarea"
@@ -426,91 +341,61 @@ console.log('unitLov', unitLov);
             )}
 
             {/* Custom */}
-            {!record.isStat && selectedOption === 'CUSTOM_INSTRUCTIONS' && (
-              <div className="custom-instruction-container">
+            {selectedOption === 'CUSTOM_INSTRUCTIONS' && (
+              <>
+                <div className="ucc-custom-instruction-grid">
+                  <MyInput
+                    width="100%"
+                    fieldType="number"
+                    fieldName="dose"
+                    fieldLabel="Dose"
+                    record={record}
+                    setRecord={setRecord}
+                    required
+                  />
 
+                  <MyInput
+                    width="100%"
+                    fieldType="select"
+                    fieldLabel="Unit"
+                    selectData={unitLov?.object || []}
+                    selectDataLabel="lovDisplayVale"
+                    disableByField="isValid"
+                    selectDataValue="key"
+                    fieldName="unit"
+                    record={record}
+                    setRecord={setRecord}
+                    required
+                  />
+
+                  <MyInput
+                    width="100%"
+                    fieldType="select"
+                    fieldLabel="ROA"
+                    selectData={roaOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    fieldName="roa"
+                    record={record}
+                    setRecord={setRecord}
+                    required
+                  />
+                </div>
+
+                {/* MedFrequency (STAT included) */}
                 <MyInput
-                  width="12vw"
-                  fieldType="number"
-                  fieldName="dose"
-                  fieldLabel="Dose"
-                  record={record}
-                  setRecord={setRecord}
-                  required
-                />
-
-                    <MyInput
-                      width="12vw"
-                      fieldType="select"
-                      fieldLabel="Unit"
-                      selectData={unitLov?.object || []}
-                       selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                      selectDataValue="key"
-                      fieldName="unit"
-                      record={record}
-                      setRecord={setRecord}
-                      required
-                    />
-
-                <MyInput
-                  width="12vw"
-                  fieldType="number"
-                  fieldName="frequencyNumber"
-                  fieldLabel="Frequency Number"
-                  record={record}
-                  setRecord={setRecord}
-                  required
-                />
-
-                <MyInput
-                  width="12vw"
+                  width="100%"
                   fieldType="select"
-                  fieldLabel="Frequency Unit"
-                  selectData={frequencyUnitOptions}
+                  fieldLabel="Frequency"
+                  selectData={frequencyOptions}
                   selectDataLabel="label"
                   selectDataValue="value"
-                  fieldName="frequencyUnit"
+                  fieldName="frequency"
                   record={record}
                   setRecord={setRecord}
                   required
                 />
-
-                <MyInput
-                  width="12vw"
-                  fieldType="number"
-                  fieldName="duration"
-                  fieldLabel="Duration"
-                  record={record}
-                  setRecord={setRecord}
-                  required
-                />
-
-                <MyInput
-                  width="12vw"
-                  fieldType="time"
-                  fieldName="startTime"
-                  fieldLabel="Start Time"
-                  record={record}
-                  setRecord={setRecord}
-                  required
-                />
-
-                <MyInput
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="ROA"
-                  selectData={roaOptions}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  fieldName="roa"
-                  record={record}
-                  setRecord={setRecord}
-                  required
-                />
-
-              </div>
+              </>
             )}
 
           </Form>

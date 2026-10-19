@@ -7,3 +7,11 @@ flex-direction: row;
 gap: 1vw;
 box-sizing: border-box;
 flex-wrap: wrap;}
+// Custom instructions: Dose | Unit | ROA on one row
+.ucc-custom-instruction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
