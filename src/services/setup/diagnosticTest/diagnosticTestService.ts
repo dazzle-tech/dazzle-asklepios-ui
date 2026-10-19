@@ -107,11 +107,11 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
-      query: ({ type, page, size, sort = "id,asc" }) => ({
+    getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string; name?: string } & PagedParams>({
+      query: ({ type, name, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/diagnostic-test/active/by-type/${type}`,
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort, ...(name ? { name } : {}) },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
