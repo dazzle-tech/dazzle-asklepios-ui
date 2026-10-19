@@ -15,6 +15,7 @@ import { Form } from 'rsuite';
 import '../styles.less';
 
 const PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 400;
 
 export const getItemKey = (item: any) => item?.id ?? item?.key;
 export const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
@@ -48,7 +49,8 @@ const TestTypeSection: React.FC<SectionProps> = ({
 }) => {
   const hasFixedItems = Array.isArray(items);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [page, setPage] = useState(0);
+  // Paged query: the name is sent to the backend, so changing it starts again from page 0
+  const [pagedQuery, setPagedQuery] = useState<{ name: string; page: number }>({ name: '', page: 0 });
   const [tests, setTests] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,9 +81,33 @@ const TestTypeSection: React.FC<SectionProps> = ({
     [catalogTestsFull, type]
   );
 
-  const { data: testsResponse, isFetching } = useGetActiveDiagnosticTestsByTypeQuery(
-    open && !hasFixedItems ? { type, page, size: PAGE_SIZE, sort: 'id,asc' } : skipToken
+  const {
+    data: testsResponse,
+    currentData: currentTestsResponse,
+    originalArgs: testsArgs,
+    isFetching
+  } = useGetActiveDiagnosticTestsByTypeQuery(
+    open && !hasFixedItems
+      ? {
+        type,
+        ...(pagedQuery.name ? { name: pagedQuery.name } : {}),
+        page: pagedQuery.page,
+        size: PAGE_SIZE,
+        sort: 'id,asc'
+      }
+      : skipToken
   );
+
+  // Send the search to the backend (debounced while typing)
+  const applyServerSearch = (value: string) => {
+    const name = String(value ?? '').trim();
+    setPagedQuery(prev => (prev.name === name ? prev : { name, page: 0 }));
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => applyServerSearch(searchTerm), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fixedItemsOfType = useMemo(
     () =>
@@ -97,14 +123,19 @@ const TestTypeSection: React.FC<SectionProps> = ({
     setCatalogFilter({});
   }, [open]);
 
-  // Accumulate pages (Load More)
+  // Accumulate pages (Load More); page 0 (new search) replaces the list
   useEffect(() => {
-    if (!testsResponse?.data) return;
+    const pageData = currentTestsResponse?.data;
+    if (!pageData) return;
+    if (!testsArgs?.page) {
+      setTests(pageData);
+      return;
+    }
     setTests(prev => {
       const existing = new Set(prev.map(getItemKey));
-      return [...prev, ...testsResponse.data.filter((t: any) => !existing.has(getItemKey(t)))];
+      return [...prev, ...pageData.filter((t: any) => !existing.has(getItemKey(t)))];
     });
-  }, [testsResponse]);
+  }, [currentTestsResponse]);
 
   // Source list:
   //  - fixed items: this type's items, narrowed to the catalog's tests when a catalog is selected
@@ -124,7 +155,7 @@ const TestTypeSection: React.FC<SectionProps> = ({
     ? !!loading || (!!catalogId && isFetchingCatalogTests)
     : catalogId
       ? isFetchingCatalogTests || isFetchingCatalogFull
-      : isFetching && tests.length === 0;
+      : isFetching && pagedQuery.page === 0;
 
   const filteredTests = useMemo(() => {
     const term = normalizeSearchText(searchTerm);
@@ -183,10 +214,16 @@ const TestTypeSection: React.FC<SectionProps> = ({
             rightAddon={
               <SearchIcon
                 className="search-icon-test-name-icon"
-                onClick={() => setSearchTerm(searchInput)}
+                onClick={() => {
+                  setSearchTerm(searchInput);
+                  applyServerSearch(searchInput);
+                }}
               />
             }
-            enterClick={() => setSearchTerm(searchInput)}
+            enterClick={() => {
+              setSearchTerm(searchInput);
+              applyServerSearch(searchInput);
+            }}
           />
         </div>
       </Form>
@@ -225,7 +262,7 @@ const TestTypeSection: React.FC<SectionProps> = ({
 
       {hasMore && (
         <div className="test-type-section-footer">
-          <MyButton appearance="ghost" onClick={() => setPage(p => p + 1)} disabled={isFetching}>
+          <MyButton appearance="ghost" onClick={() => setPagedQuery(q => ({ ...q, page: q.page + 1 }))} disabled={isFetching}>
             Load More
           </MyButton>
         </div>
