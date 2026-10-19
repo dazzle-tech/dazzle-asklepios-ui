@@ -53,8 +53,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   refetchData,
   setRefetchData,
   searchRef,
-  showPhoneNumberSearch = false,
-  showEncounterNumberSearch = false
+  showPhoneNumberSearch = true,
+  showEncounterNumberSearch = true
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
