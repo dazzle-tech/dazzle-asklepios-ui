@@ -4,7 +4,7 @@ import { MdModeEdit } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
@@ -18,12 +18,12 @@ import {
   useLazyGetPrescriptionInstructionsByCategoryQuery,
   useLazyGetPrescriptionInstructionsByFrequencyQuery,
   useLazyGetPrescriptionInstructionsByRouteQuery,
-  useLazyGetPrescriptionInstructionsByUnitQuery
+  useLazyGetPrescriptionInstructionsByUnitQuery,
+  useLazyGetPrescriptionInstructionsByDoseQuery
 } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 const PrescriptionInstructions = () => {
   const dispatch = useAppDispatch();
   const [prescriptionInstructions, setPrescriptionInstructions] =
@@ -37,6 +37,7 @@ const PrescriptionInstructions = () => {
   const [fetchByUnit] = useLazyGetPrescriptionInstructionsByUnitQuery();
   const [fetchByRoute] = useLazyGetPrescriptionInstructionsByRouteQuery();
   const [fetchByFrequency] = useLazyGetPrescriptionInstructionsByFrequencyQuery();
+  const [fetchByDose] = useLazyGetPrescriptionInstructionsByDoseQuery();
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -65,7 +66,7 @@ const PrescriptionInstructions = () => {
   const routEnumList = useEnumOptions('MedRoa');
 
 
-  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+  const frequencyEnumList = useEnumOptions('MedFrequency');
 
   // Pagination values
   const pageIndex = paginationParams.page;
@@ -77,6 +78,7 @@ const PrescriptionInstructions = () => {
   // Available fields for filtering
   const filterFields = [
     { label: 'Category', value: 'category' },
+    { label: 'Dose', value: 'dose' },
     { label: 'Unit', value: 'unit' },
     { label: 'Rout', value: 'rout' },
     { label: 'Frequency', value: 'frequency' }
@@ -200,15 +202,23 @@ const PrescriptionInstructions = () => {
         <MyInput
           fieldName="value"
           fieldType="select"
-          selectData={frequencyLov?.object ?? []}
-           selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-          selectDataValue="key"
+          selectData={frequencyEnumList ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder="Enter Value"
+          width={220}
+        />
+      ) : recordOfFilter['filter'] == 'dose' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="number"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Dose"
           width={220}
         />
       ) : (
@@ -257,6 +267,8 @@ const PrescriptionInstructions = () => {
         response = await fetchByCategory({ category: value, ...params }).unwrap();
       } else if (field === 'unit') {
         response = await fetchByUnit({ unit: value, ...params }).unwrap();
+      } else if (field === 'dose') {
+        response = await fetchByDose({ dose: value, ...params }).unwrap();
       } else if (field === 'frequency') {
         response = await fetchByFrequency({ frequency: value, ...params }).unwrap();
       }
@@ -308,12 +320,7 @@ const PrescriptionInstructions = () => {
     {
       key: 'frequency',
       title: 'Frequency',
-      render: (row: any) =>
-        conjureValueBasedOnKeyFromList(
-          frequencyLov?.object ?? [],
-          row.frequency,
-          'lovDisplayVale'
-        ) ?? '-'
+      render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '-')
     },
     {
       key: 'icons',
