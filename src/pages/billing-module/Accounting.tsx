@@ -54,6 +54,7 @@ const Accounting: React.FC = () => {
   const location = useLocation();
 
   const navigationTargetPatientIdRef = useRef<number | null>(null);
+  const navigationTargetEncounterIdRef = useRef<number | null>(null);
 
   const [patient, setPatient] = useState<any>({ ...newApPatient });
   const [expand, setExpand] = useState(false);
@@ -85,6 +86,7 @@ const Accounting: React.FC = () => {
     facilityCurrency,
     encounters,
     loadingEncounters,
+    encountersReady,
     selectedEncounter,
     summary,
     loadingSummary,
@@ -158,8 +160,14 @@ const Accounting: React.FC = () => {
           encounterId?: number;
       } | null;
 
+      const allowedFromPages = [
+          'BillingPendingQueue',
+          'RegistrationPendingPayment'
+      ];
+
       if (
-          navigationState?.fromPage !== 'BillingPendingQueue' ||
+          !navigationState?.fromPage ||
+          !allowedFromPages.includes(navigationState.fromPage) ||
           !navigationState.patient ||
           navigationState.encounterId == null
       ) {
@@ -167,16 +175,23 @@ const Accounting: React.FC = () => {
       }
 
       const targetPatientId = resolvePatientId(navigationState.patient);
+      const targetEncounterId = Number(navigationState.encounterId);
+
+      if (targetPatientId == null || !Number.isFinite(targetEncounterId)) {
+          return;
+      }
 
       navigationTargetPatientIdRef.current = targetPatientId;
+      navigationTargetEncounterIdRef.current = targetEncounterId;
 
       setPatient(navigationState.patient);
-      setSelectedEncounterId(Number(navigationState.encounterId));
+      setSelectedEncounterId(targetEncounterId);
   }, [location.state]);
 
   useEffect(() => {
+      const targetPatientId = navigationTargetPatientIdRef.current;
       const isNavigationPatient =
-          navigationTargetPatientIdRef.current === patientId;
+          targetPatientId != null && targetPatientId === patientId;
 
       if (isNavigationPatient) {
           navigationTargetPatientIdRef.current = null;
@@ -198,6 +213,13 @@ const Accounting: React.FC = () => {
           return;
       }
 
+      // Patient from navigation state has not flushed yet (fresh mount race).
+      // Keep the requested encounter selected until the target patient applies.
+      if (targetPatientId != null) {
+          return;
+      }
+
+      navigationTargetEncounterIdRef.current = null;
       setSelectedEncounterId(null);
       setCoverageType('SELF_PAY');
       setSelectedInsuranceId(null);
@@ -213,6 +235,46 @@ const Accounting: React.FC = () => {
       setCanCloseCalculation(true);
       setBillingRefreshPending(false);
   }, [patientId]);
+
+  useEffect(() => {
+    const targetEncounterId = navigationTargetEncounterIdRef.current;
+
+    if (targetEncounterId == null || patientId == null || !encountersReady) {
+      return;
+    }
+
+    if (loadingEncounters) {
+      return;
+    }
+
+    const matchedEncounter = encounters.find(
+      encounter => Number(encounter.id) === Number(targetEncounterId)
+    );
+
+    if (matchedEncounter) {
+      if (selectedEncounterId !== targetEncounterId) {
+        setSelectedEncounterId(targetEncounterId);
+      }
+      navigationTargetEncounterIdRef.current = null;
+      return;
+    }
+
+    navigationTargetEncounterIdRef.current = null;
+    setSelectedEncounterId(null);
+    dispatch(
+      notify({
+        msg: 'Encounter not found',
+        sev: 'warning'
+      })
+    );
+  }, [
+    dispatch,
+    encounters,
+    encountersReady,
+    loadingEncounters,
+    patientId,
+    selectedEncounterId
+  ]);
 
   useEffect(() => {
     setSelectedChargeRowIds([]);
@@ -328,6 +390,8 @@ const Accounting: React.FC = () => {
   ]);
 
   const handleClosePatient = () => {
+    navigationTargetPatientIdRef.current = null;
+    navigationTargetEncounterIdRef.current = null;
     setPatient({ ...newApPatient });
     setSelectedEncounterId(null);
     setCoverageType('SELF_PAY');

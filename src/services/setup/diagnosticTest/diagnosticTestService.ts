@@ -3,7 +3,14 @@ import { DiagnosticTest } from "@/types/model-types-new";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  timestamp?: number;
+  name?: string;
+  catalogId?: number;
+};
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -107,11 +114,17 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
-    getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string; name?: string } & PagedParams>({
-      query: ({ type, name, page, size, sort = "id,asc" }) => ({
+    getActiveDiagnosticTestsByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
+      query: ({ type, page, size, sort = "id,asc", name, catalogId }) => ({
         url: `/api/setup/diagnostic-test/active/by-type/${type}`,
         method: "GET",
-        params: { page, size, sort, ...(name ? { name } : {}) },
+        params: {
+          page,
+          size,
+          sort,
+          ...(name ? { name } : {}),
+          ...(catalogId != null ? { catalogId } : {}),
+        },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
