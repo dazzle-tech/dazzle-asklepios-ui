@@ -1425,6 +1425,18 @@ export interface ActiveIngredientSynonym {
   synonym: string;
 }
 
+export interface Pharmaceutical {
+  id?: number;
+  activeIngredientId: number;
+  activeIngredientName?: string;
+  pharmaceuticalName: string;
+  code?: string;
+  billingCode?: string;
+  itemDescription?: string;
+  secondDescription?: string;
+  isActive: boolean;
+}
+
 export interface ActiveIngredientIndication {
   id?: number;
   activeIngredientId: number;
@@ -4661,6 +4673,11 @@ export interface PatientObservationsComplaints {
   cognitiveCheck?: string | null;
 
   bloodGroup?: string | null;
+
+  // Female patients only.
+  isPregnant?: boolean | null;
+
+  isLactating?: boolean | null;
 
   createdDate?: Date | string | null;
 

@@ -577,6 +577,18 @@ export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   cdtId: 0
 };
 
+// ------------------- Pharmaceutical -------------------
+export const newPharmaceutical: modelTypes.Pharmaceutical = {
+  id: undefined,
+  activeIngredientId: 0,
+  pharmaceuticalName: '',
+  code: '',
+  billingCode: '',
+  itemDescription: '',
+  secondDescription: '',
+  isActive: true
+};
+
 // ------------------- Special Population -------------------
 export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
   id: undefined,
@@ -2948,6 +2960,8 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   functionalStatus: null,
   cognitiveCheck: null,
   bloodGroup: null,
+  isPregnant: null,
+  isLactating: null,
   createdDate: null,
   lastModifiedDate: null
 };
