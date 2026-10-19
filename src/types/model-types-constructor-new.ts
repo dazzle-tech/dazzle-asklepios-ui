@@ -1791,6 +1791,7 @@ export const newPatient: modelTypes.Patient = {
 
   isCchiPatient: false,
   documentId: '',
+  isCitizen: false,
    
   isVerified: false,
   isCompletedPatient: false,
@@ -3658,6 +3659,9 @@ modelTypes.Tax = {
 
   applicableOn:
     'INVOICE',
+
+  citizenCategory:
+    'ALL',
 
   validFrom:
     '',

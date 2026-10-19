@@ -42,6 +42,20 @@ const formatAmount = (value?: number | null, currency?: string | null) => {
   return currency ? `${amount} ${currency}` : amount;
 };
 
+const formatTax = (
+  amount?: number | null,
+  rate?: number | null,
+  currency?: string | null
+) => {
+  const formattedAmount = formatAmount(amount ?? 0, currency);
+  const numericRate = Number(rate);
+  if (!Number.isFinite(numericRate) || numericRate <= 0) {
+    return formattedAmount;
+  }
+
+  return `${formattedAmount} (${formatPercent(numericRate)})`;
+};
+
 const formatPercent = (value?: number | null) => {
   if (value == null || Number.isNaN(Number(value))) {
     return '—';
@@ -108,6 +122,8 @@ const EncounterServicesModal = ({
         ? cashPrices.reduce((total, value) => total + Number(value), 0)
         : null,
       discountPercentage: null,
+      taxAmount: sumAmount(billableLines, line => line.taxAmount),
+      taxRate: null,
       coverageStatus: null,
     };
 
@@ -233,6 +249,14 @@ const EncounterServicesModal = ({
         align: 'right' as const,
         render: (row: ServiceLineRow) =>
           row.isTotal ? '' : formatPercent(row.discountPercentage),
+      },
+      {
+        key: 'taxAmount',
+        title: 'Tax',
+        width: 180,
+        align: 'right' as const,
+        render: (row: ServiceLineRow) =>
+          formatTax(row.taxAmount, row.taxRate, row.currency),
       },
       {
         key: 'netAmount',

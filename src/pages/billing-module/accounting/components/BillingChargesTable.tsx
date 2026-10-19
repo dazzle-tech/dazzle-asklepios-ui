@@ -397,6 +397,31 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
+      key: 'taxAmount',
+
+      title: 'Tax',
+
+      width: 170,
+
+      render: (row: UnifiedBillingChargeRow) => {
+        const amount = formatMoney(row.taxAmount ?? 0, row.currency || currency);
+        const rate = Number(row.taxRate);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          return amount;
+        }
+
+        const percent = rate.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        });
+
+        return `${amount} (${percent}%)`;
+      }
+
+    },
+
+    {
+
       key: 'netAmount',
 
       title: 'Net amount',

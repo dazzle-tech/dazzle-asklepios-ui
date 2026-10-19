@@ -13,6 +13,7 @@ import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { formatEnumString } from '@/utils';
+import { isCitizenFromDocumentType } from '@/utils/patientCitizen';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
@@ -86,10 +87,12 @@ const toHumanPatientDocumentError = (
 
 const AddExtraDetails = ({
   localPatient,
+  setLocalPatient,
   open,
   setOpen,
   secondaryDocument,
   setSecondaryDocument,
+  updatesCitizenFlag,
   refetch
 }) => {
   const dispatch = useAppDispatch();
@@ -158,6 +161,31 @@ const AddExtraDetails = ({
 
     return true;
   };
+
+  const documentTypeRef = useRef(secondaryDocument?.type);
+
+  useEffect(() => {
+    if (!open) {
+      documentTypeRef.current = undefined;
+      return;
+    }
+
+    if (documentTypeRef.current === undefined) {
+      documentTypeRef.current = secondaryDocument?.type;
+      return;
+    }
+
+    if (documentTypeRef.current === secondaryDocument?.type || !updatesCitizenFlag || !setLocalPatient) {
+      return;
+    }
+
+    documentTypeRef.current = secondaryDocument?.type;
+    const isCitizen = isCitizenFromDocumentType(secondaryDocument?.type);
+    setLocalPatient((current: any) => ({
+      ...current,
+      isCitizen
+    }));
+  }, [open, secondaryDocument?.type, updatesCitizenFlag]);
 
   useEffect(() => {
     if (open && !secondaryDocument.id) {
@@ -228,6 +256,19 @@ const AddExtraDetails = ({
           }
         />
       )}
+
+      {updatesCitizenFlag && (
+        <MyInput
+          required
+          column
+          width={300}
+          fieldLabel="Citizen"
+          fieldType="checkbox"
+          fieldName="isCitizen"
+          record={localPatient}
+          setRecord={setLocalPatient}
+        />
+      )}
     </Form>
   );
 
@@ -243,25 +284,26 @@ const AddExtraDetails = ({
       return;
     }
 
-     if (!isNoDoc) {
-    try {
+    if (!isNoDoc) {
+      try {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
           number: String(secondaryDocument.number ?? '').trim(),
+          isCitizen: Boolean(localPatient?.isCitizen)
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
 
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      refetch();
-      handleClear();
-    } catch (err) {
-      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
+        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+        refetch();
+        handleClear();
+      } catch (err) {
+        dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
+      }
     }
-  }
   };
 
   return (

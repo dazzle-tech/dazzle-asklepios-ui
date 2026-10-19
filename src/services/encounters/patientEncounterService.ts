@@ -153,6 +153,8 @@ export type EncounterExecutedServiceLine = {
   patientPaidAmount: number | null;
   setupUnitPrice: number | null;
   discountPercentage: number | null;
+  taxAmount: number | null;
+  taxRate: number | null;
   coverageStatus: string | null;
 };
 

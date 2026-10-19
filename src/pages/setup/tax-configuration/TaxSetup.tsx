@@ -196,6 +196,9 @@ const taxFieldLabels:
     applicableOn:
         'Applicable On',
 
+    citizenCategory:
+        'Citizen Category',
+
     validFrom:
         'Valid From',
 
@@ -1154,6 +1157,9 @@ const TaxSetup:
                     applicableOn:
                         'INVOICE',
 
+                    citizenCategory:
+                        'ALL',
+
                     validFrom:
                         new Date()
                             .toISOString()
@@ -1600,6 +1606,30 @@ const TaxSetup:
                             row.applicableOn
                         )
                         : '-'
+            },
+            {
+                key:
+                    'citizenCategory',
+
+                title:
+                    <Translate>
+                        Citizen Category
+                    </Translate>,
+
+                flexGrow:
+                    2,
+
+                render: (
+                    row:
+                        Tax
+                ) =>
+                    row.citizenCategory ===
+                    'CITIZEN'
+                        ? 'Citizens'
+                        : row.citizenCategory ===
+                          'NON_CITIZEN'
+                            ? 'Non-Citizens'
+                            : 'All'
             },
             {
                 key:
