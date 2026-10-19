@@ -154,7 +154,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
       !record.guarantorType ||
       !record.companyId ||
       !record.code ||
-      !record.policyNumber ||
       !record.coverageBasis ||
       !record.insurancePayerId ||
       !record.priceListSetupId
@@ -262,14 +261,6 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             }}
           />
           <MyInput required width="100%" fieldLabel="Code" fieldName="code" record={record} setRecord={setRecord} />
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Policy Number"
-            fieldName="policyNumber"
-            record={record}
-            setRecord={setRecord}
-          />
           <MyInput
             required
             width="100%"

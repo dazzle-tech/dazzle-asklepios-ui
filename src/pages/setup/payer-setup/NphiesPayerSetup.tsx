@@ -7,7 +7,7 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTab from '@/components/MyTab';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdBusiness, MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
+import { MdAssignment, MdBusiness, MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
@@ -32,6 +32,8 @@ import PayerLinkTpasModal from './PayerLinkTpasModal';
 import PayerLinkChildCompaniesModal from './PayerLinkChildCompaniesModal';
 import TpaDefinitionSection from './TpaDefinitionSection';
 import PayerRelationshipDashboard from './PayerRelationshipDashboard';
+import InsuranceCompanyPolicyModal from './InsuranceCompanyPolicyModal';
+import InsuranceCompanyPoliciesPanel from './InsuranceCompanyPoliciesPanel';
 import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr';
@@ -59,6 +61,7 @@ const NphiesPayerSetup = () => {
   const [openModal, setOpenModal] = useState(false);
   const [openLinkTpas, setOpenLinkTpas] = useState(false);
   const [openLinkChildCompanies, setOpenLinkChildCompanies] = useState(false);
+  const [openPolicyModal, setOpenPolicyModal] = useState(false);
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
     'deactivate'
@@ -442,6 +445,21 @@ const NphiesPayerSetup = () => {
           setOpenModal(true);
         }}
       />
+      <MdAssignment
+        className="icons-style"
+        title="Define Policy"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={event => {
+          event.stopPropagation();
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? [])],
+            childCompanyIds: [...new Set(rowData.childCompanyIds ?? [])]
+          });
+          setOpenPolicyModal(true);
+        }}
+      />
       <MdLink
         className="icons-style"
         title="Link TPAs"
@@ -590,7 +608,7 @@ const NphiesPayerSetup = () => {
     {
       key: 'actions',
       title: <Translate></Translate>,
-      width: 190,
+      width: 230,
       flexGrow: 3.4,
       render: (rowData: NphiesPayer) => iconsForActions(rowData)
     }
@@ -766,6 +784,9 @@ const NphiesPayerSetup = () => {
                     </div>
                   }
                 />
+                <InsuranceCompanyPoliciesPanel
+                  insuranceCompany={selectedPayer?.id ? selectedPayer : null}
+                />
               </div>
             )
           },
@@ -802,6 +823,12 @@ const NphiesPayerSetup = () => {
         open={openLinkChildCompanies}
         setOpen={setOpenLinkChildCompanies}
         payer={selectedPayer}
+      />
+
+      <InsuranceCompanyPolicyModal
+        open={openPolicyModal}
+        setOpen={setOpenPolicyModal}
+        insuranceCompany={selectedPayer?.id ? selectedPayer : null}
       />
     </Panel>
   );

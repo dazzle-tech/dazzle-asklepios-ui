@@ -54,7 +54,6 @@ export type CoverageContract = {
   companyName?: string;
   companyCode?: string;
   code?: string;
-  policyNumber?: string;
   coverageBasis?: string;
   insurancePayerId?: number;
   insurancePayerName?: string;
@@ -77,6 +76,10 @@ export type CoverageClass = {
   coverageContractId?: number;
   name?: string;
   isActive?: boolean;
+  insuranceCompanyPolicyId?: number | null;
+  policyName?: string | null;
+  policyCode?: string | null;
+  policyNumber?: string | null;
 };
 
 export type CoverageCopayment = {
@@ -251,7 +254,6 @@ const toContractPayload = (body: CoverageContract) => ({
   guarantorType: body.guarantorType,
   companyId: body.companyId,
   code: body.code,
-  policyNumber: body.policyNumber,
   coverageBasis: body.coverageBasis,
   insurancePayerId: body.insurancePayerId,
   priceListSetupId: body.priceListSetupId,
@@ -305,7 +307,6 @@ export const normalizeCoverageContract = (
     companyName: firstDefined(row.companyName, row.company_name),
     companyCode: firstDefined(row.companyCode, row.company_code),
     code: firstDefined(row.code, row.coverageCode),
-    policyNumber: firstDefined(row.policyNumber, row.policy_number),
     insurancePayerId,
     insurancePayerName: firstDefined(row.insurancePayerName, row.insurance_payer_name),
     parentPayerId: firstDefined(row.parentPayerId, row.parent_payer_id),
@@ -552,6 +553,17 @@ export const coverageManagementService = createApi({
       query: id => ({ url: `/api/setup/coverage-classes/${id}/toggle-active`, method: 'PATCH' }),
       invalidatesTags: ['CoverageClass']
     }),
+    linkCoverageClassPolicy: builder.mutation<
+      CoverageClass,
+      { id: number; insuranceCompanyPolicyId: number }
+    >({
+      query: ({ id, insuranceCompanyPolicyId }) => ({
+        url: `/api/setup/coverage-classes/${id}/policy`,
+        method: 'PUT',
+        body: { insuranceCompanyPolicyId }
+      }),
+      invalidatesTags: ['CoverageClass']
+    }),
     listCopayments: builder.query<
       PagedResult<CoverageCopayment>,
       PagedParams & { classId: number; isActive?: boolean }
@@ -769,6 +781,7 @@ export const {
   useCreateCoverageClassMutation,
   useUpdateCoverageClassMutation,
   useToggleCoverageClassActiveMutation,
+  useLinkCoverageClassPolicyMutation,
   useSearchCoverageCompaniesQuery,
   useSearchCoverageInsurancePayersQuery,
   useSearchCoverageTpaInsurancePayersQuery,

@@ -146,7 +146,7 @@ const CoverageManagement = () => {
               record={filter}
               setRecord={setFilter}
               showLabel={false}
-              placeholder="Code / Policy"
+              placeholder="Code"
             />
             <MyButton
               color="var(--deep-blue)"
@@ -174,7 +174,6 @@ const CoverageManagement = () => {
         }
         columns={[
           { key: 'code', title: <Translate>Code</Translate>, flexGrow: 1 },
-          { key: 'policyNumber', title: <Translate>Policy Number</Translate>, flexGrow: 2 },
           {
             key: 'guarantorType',
             title: <Translate>Coverage Type</Translate>,

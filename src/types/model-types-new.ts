@@ -2063,6 +2063,16 @@ export interface LinkedInsuranceCompany {
   isActive: boolean;
 }
 
+export interface InsuranceCompanyPolicy {
+  id: number;
+  insuranceCompanyId: number;
+  policyName: string;
+  policyNumber: string;
+  policyCode: string;
+  validFrom: string;
+  validTo: string;
+}
+
 export interface TpaDefinition {
   id?: number;
   tpaCode: string;

@@ -151,9 +151,8 @@ export function useStatusFilter() {
 export function coverageHeaderName(contract?: {
   companyName?: string | null;
   insurancePayerName?: string | null;
-  policyNumber?: string | null;
 } | null) {
-  return String(contract?.companyName || contract?.insurancePayerName || contract?.policyNumber || '').trim();
+  return String(contract?.companyName || contract?.insurancePayerName || '').trim();
 }
 
 export function emptyContract(): any {
@@ -161,7 +160,6 @@ export function emptyContract(): any {
     guarantorType: '',
     companyId: undefined,
     code: '',
-    policyNumber: '',
     coverageBasis: 'GROSS',
     insurancePayerId: undefined,
     priceListSetupId: undefined,
