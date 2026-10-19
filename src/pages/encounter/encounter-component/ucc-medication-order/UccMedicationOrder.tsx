@@ -107,10 +107,7 @@ const {
           dose: payload.dose,
           doseUnit: payload.doseUnit,
           route: payload.route,
-          frequencyNumber: payload.frequencyNumber,
-          frequencyUnit: payload.frequencyUnit,
-          duration: payload.duration,
-          startTime: payload.startTime
+          frequency: payload.frequency
         };
 
         await updateOrderGroup({

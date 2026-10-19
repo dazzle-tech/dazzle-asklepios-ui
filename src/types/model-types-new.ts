@@ -5332,6 +5332,7 @@ export type CurrentMedicationForm = CurrentMedication & {
     doseUnit?: string | null;
     route?: string | null;
 
+    frequency?: string | null;
     frequencyNumber?: number | null;
     frequencyUnit?: string | null;
     duration?: number | null;

@@ -54,6 +54,7 @@ type MedicationOrderRow = {
   doseUnit?: string;
   route?: string;
 
+  frequency?: string;
   frequencyNumber?: number;
   frequencyUnit?: string;
   duration?: number;
@@ -118,9 +119,11 @@ const InstructionsCell = ({
     row?.doseUnit
       ? unitMap[String(row.doseUnit)] || row.doseUnit
       : null,
-    row?.frequencyNumber && row?.frequencyUnit
-      ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
-      : null,
+    row?.frequency
+      ? formatEnumString(row.frequency)
+      : row?.frequencyNumber && row?.frequencyUnit
+        ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
+        : null,
     row?.route
       ? roaMap[String(row.route)] || row.route
       : null
