@@ -33,23 +33,51 @@ import {
   useGetRoomsQuery,
   useGetRoomsByDepartmentIdQuery,
   useGetRoomsByNameQuery,
-  useChangeRoomActivationStatusMutation
+  useGetRoomsByFilterQuery,
+  useChangeRoomActivationStatusMutation,
+  RoomFilterCriteria,
+  ROOM_NOT_GENDER_SPECIFIC
 } from '@/services/setup/room/roomService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 
 const PAGE_SIZE = 20;
 
-type FilterCriteria = '' | 'department' | 'name';
+type FilterCriteria = '' | 'department' | 'name' | RoomFilterCriteria;
 
+// Same order as the table columns
 const filterCriteriaOptions = [
+  { label: 'Room Name', value: 'name' },
+  { label: 'Facility', value: 'facility' },
+  { label: 'Floor', value: 'floor' },
   { label: 'Department', value: 'department' },
-  { label: 'Room Name', value: 'name' }
+  { label: 'Type', value: 'type' },
+  { label: 'Gender Specific', value: 'gender' },
+  { label: 'Status', value: 'status' },
+  { label: 'Parallel Capacity', value: 'parallelCapacity' }
+];
+
+// Criteria served by the generic column-filter query (department and name keep their own queries)
+const GENERIC_FILTER_CRITERIA: FilterCriteria[] = [
+  'facility',
+  'floor',
+  'type',
+  'gender',
+  'status',
+  'parallelCapacity'
+];
+
+const STATUS_FILTER_OPTIONS = [
+  { label: 'Active', value: 'true' },
+  { label: 'Inactive', value: 'false' }
 ];
 
 const initialRoomFilter = {
   criteria: '' as FilterCriteria,
   departmentId: null as string | null,
-  name: ''
+  name: '',
+  value: ''
 };
 
 const ROOM_ERROR_MAP: Record<string, string> = {
@@ -134,12 +162,14 @@ const RoomSection = () => {
     criteria: FilterCriteria;
     departmentId: string | null;
     name: string;
+    value: string;
   }>(initialRoomFilter);
 
   const [appliedRoomFilter, setAppliedRoomFilter] = useState<{
     criteria: FilterCriteria;
     departmentId: string | null;
     name: string;
+    value: string;
   }>(initialRoomFilter);
 
   const [deptPage, setDeptPage] = useState(0);
@@ -158,6 +188,17 @@ const RoomSection = () => {
     appliedRoomFilter.criteria === 'department' && !!appliedRoomFilter.departmentId;
   const hasNameFilter =
     appliedRoomFilter.criteria === 'name' && !!appliedRoomFilter.name?.trim();
+  const hasGenericFilter =
+    GENERIC_FILTER_CRITERIA.includes(appliedRoomFilter.criteria) &&
+    String(appliedRoomFilter.value ?? '').trim() !== '';
+
+  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
+  const roomTypeOptions = useEnumOptions('RoomType');
+  const genderEnumOptions = useEnumOptions('Gender');
+  const genderFilterOptions = useMemo(
+    () => [{ label: 'Not Gender Specific', value: ROOM_NOT_GENDER_SPECIFIC }, ...(genderEnumOptions ?? [])],
+    [genderEnumOptions]
+  );
 
   const roomsQuery = useGetRoomsQuery(
     {
@@ -166,7 +207,20 @@ const RoomSection = () => {
       sort: roomPagination.sort
     },
     {
-      skip: hasDepartmentFilter || hasNameFilter
+      skip: hasDepartmentFilter || hasNameFilter || hasGenericFilter
+    }
+  );
+
+  const roomsByFilterQuery = useGetRoomsByFilterQuery(
+    {
+      criteria: appliedRoomFilter.criteria as RoomFilterCriteria,
+      value: String(appliedRoomFilter.value ?? '').trim(),
+      page: roomPagination.page,
+      size: roomPagination.size,
+      sort: roomPagination.sort
+    },
+    {
+      skip: !hasGenericFilter
     }
   );
 
@@ -236,10 +290,15 @@ const RoomSection = () => {
     ? roomsByDepartmentQuery.data
     : hasNameFilter
       ? roomsByNameQuery.data
-      : roomsQuery.data;
+      : hasGenericFilter
+        ? roomsByFilterQuery.data
+        : roomsQuery.data;
 
   const isFetching =
-    roomsQuery.isFetching || roomsByDepartmentQuery.isFetching || roomsByNameQuery.isFetching;
+    roomsQuery.isFetching ||
+    roomsByDepartmentQuery.isFetching ||
+    roomsByNameQuery.isFetching ||
+    roomsByFilterQuery.isFetching;
 
   const tableData = useMemo(() => {
     return activeRoomsResponse?.data ?? [];
@@ -257,6 +316,11 @@ const RoomSection = () => {
 
     if (hasNameFilter) {
       await roomsByNameQuery.refetch();
+      return;
+    }
+
+    if (hasGenericFilter) {
+      await roomsByFilterQuery.refetch();
       return;
     }
 
@@ -368,7 +432,8 @@ const RoomSection = () => {
           setRoomFilter({
             criteria: nextCriteria,
             departmentId: null,
-            name: ''
+            name: '',
+            value: ''
           });
 
           setDeptPage(0);
@@ -444,13 +509,121 @@ const RoomSection = () => {
         />
       )}
 
+      {roomFilter.criteria === 'facility' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="select"
+          selectData={facilitiesResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Select Facility"
+          searchable
+        />
+      )}
+
+      {roomFilter.criteria === 'floor' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="text"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Search Floor"
+        />
+      )}
+
+      {roomFilter.criteria === 'type' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="select"
+          selectData={roomTypeOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Select Type"
+          searchable={false}
+        />
+      )}
+
+      {roomFilter.criteria === 'gender' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="select"
+          selectData={genderFilterOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Select Gender"
+          searchable={false}
+        />
+      )}
+
+      {roomFilter.criteria === 'status' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="select"
+          selectData={STATUS_FILTER_OPTIONS}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Select Status"
+          searchable={false}
+        />
+      )}
+
+      {roomFilter.criteria === 'parallelCapacity' && (
+        <MyInput
+          width="220px"
+          fieldName="value"
+          fieldType="number"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
+          }}
+          showLabel={false}
+          placeholder="Enter Parallel Capacity"
+        />
+      )}
+
       <MyButton
         color="var(--deep-blue)"
         onClick={() => {
           if (
             !roomFilter.criteria ||
             (roomFilter.criteria === 'department' && !roomFilter.departmentId) ||
-            (roomFilter.criteria === 'name' && !roomFilter.name.trim())
+            (roomFilter.criteria === 'name' && !roomFilter.name.trim()) ||
+            (GENERIC_FILTER_CRITERIA.includes(roomFilter.criteria) &&
+              String(roomFilter.value ?? '').trim() === '')
           ) {
             handleResetFilter();
             return;
@@ -459,7 +632,8 @@ const RoomSection = () => {
           setAppliedRoomFilter({
             criteria: roomFilter.criteria,
             departmentId: roomFilter.departmentId,
-            name: roomFilter.name
+            name: roomFilter.name,
+            value: String(roomFilter.value ?? '')
           });
 
           setRoomPagination(prev => ({
