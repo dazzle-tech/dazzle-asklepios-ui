@@ -392,6 +392,9 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultBufferAfterMinutes: 0,
   modality:null,
   billingRuleId: null,
+  loincCodeId: null,
+  loincCode: null,
+  loincDescription: null,
 };
 
 
