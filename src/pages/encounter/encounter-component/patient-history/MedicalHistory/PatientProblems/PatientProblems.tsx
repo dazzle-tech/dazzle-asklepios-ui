@@ -198,7 +198,16 @@ const handleSaveFreeText = async () => {
       : '';
 
 const handleEdit = (row: any) => {
-  if (row?.patientIsFree === true) {
+  const freeTextValue = String(row?.freeText ?? '').trim();
+  const isPatientIsFreeCheckboxRecord =
+    row?.patientIsFree === true && freeTextValue === 'Patient is Free';
+
+  if (
+    showFreeText &&
+    row?.patientIsFree === true &&
+    freeTextValue &&
+    !isPatientIsFreeCheckboxRecord
+  ) {
     setEditingFreeTextId(row.id);
 
     setFreeTextRecord({

@@ -152,7 +152,16 @@ const CurrentMedication = ({ patient, edit, toShowData = false, showFreeText = f
   };
 
   const handleEdit = (row: any) => {
-    if (row?.patientIsFree === true) {
+    const freeTextValue = String(row?.freeText ?? '').trim();
+    const isPatientIsFreeCheckboxRecord =
+      row?.patientIsFree === true && freeTextValue === 'Patient is Free';
+
+    if (
+      showFreeText &&
+      row?.patientIsFree === true &&
+      freeTextValue &&
+      !isPatientIsFreeCheckboxRecord
+    ) {
       setEditingFreeTextId(row.id);
       setFreeTextRecord({
         freeText: row.freeText || ''
@@ -292,9 +301,7 @@ const CurrentMedication = ({ patient, edit, toShowData = false, showFreeText = f
       title: 'MEDICATION NAME',
       flexGrow: 4,
       render: (row: any) =>
-        activeIngredientMap.get(
-          String(row.activeIngredientId)
-        ) ?? ''
+        activeIngredientMap.get(String(row.activeIngredientId)) ?? ''
     },
     {
       key: 'dosage',
