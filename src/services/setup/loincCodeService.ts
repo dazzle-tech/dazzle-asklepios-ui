@@ -4,7 +4,15 @@ import { parseLinkHeader } from "@/utils/paginationHelper";
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = { next?: string | null; prev?: string | null; first?: string | null; last?: string | null };
-type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
+export type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
+
+export type LoincCode = {
+  id: number;
+  code: string;
+  category?: string;
+  description: string;
+  lastUpdated?: string;
+};
 
 export type Conflict = {
   code: string;
@@ -23,10 +31,10 @@ export type ImportResult = {
 
 export type LioncCategory = "BOTH" | "ORDER" | "OBSERVATION";
 
-const mapPaged = (response: any[], meta): PagedResult<any> => {
+const mapPaged = (response: LoincCode[], meta: any): PagedResult<LoincCode> => {
   const headers = meta?.response?.headers;
   return {
-    data: response,
+    data: response ?? [],
     totalCount: Number(headers?.get("X-Total-Count") ?? 0),
     links: parseLinkHeader(headers?.get("Link")),
   };
@@ -38,7 +46,7 @@ export const loincCodeService = createApi({
   tagTypes: ["LOINC"],
 
   endpoints: (builder) => ({
-    getAllLoinc: builder.query<PagedResult<any>, PagedParams>({
+    getAllLoinc: builder.query<PagedResult<LoincCode>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/loinc/all",
         method: "GET",
@@ -48,7 +56,15 @@ export const loincCodeService = createApi({
       providesTags: ["LOINC"],
     }),
 
-    getLoincByCategory: builder.query<PagedResult<any>, { category: LioncCategory } & PagedParams>({
+    getLoincById: builder.query<LoincCode, { id: number; timestamp?: number }>({
+      query: ({ id }) => ({
+        url: `/api/setup/loinc/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["LOINC"],
+    }),
+
+    getLoincByCategory: builder.query<PagedResult<LoincCode>, { category: LioncCategory } & PagedParams>({
       query: ({ category, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/loinc/by-category/${encodeURIComponent(category)}`,
         method: "GET",
@@ -58,7 +74,7 @@ export const loincCodeService = createApi({
       providesTags: ["LOINC"],
     }),
 
-    getLoincByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
+    getLoincByCode: builder.query<PagedResult<LoincCode>, { code: string } & PagedParams>({
       query: ({ code, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/loinc/by-code/${encodeURIComponent(code)}`,
         method: "GET",
@@ -68,7 +84,7 @@ export const loincCodeService = createApi({
       providesTags: ["LOINC"],
     }),
 
-    getLoincByDescription: builder.query<PagedResult<any>, { description: string } & PagedParams>({
+    getLoincByDescription: builder.query<PagedResult<LoincCode>, { description: string } & PagedParams>({
       query: ({ description, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/loinc/by-description/${encodeURIComponent(description)}`,
         method: "GET",
@@ -98,6 +114,8 @@ export const loincCodeService = createApi({
 
 export const {
   useGetAllLoincQuery,
+  useGetLoincByIdQuery,
+  useLazyGetLoincByIdQuery,
   useGetLoincByCategoryQuery,
   useLazyGetLoincByCategoryQuery,
   useGetLoincByCodeQuery,

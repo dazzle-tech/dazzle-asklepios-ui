@@ -1071,6 +1071,9 @@ export interface DiagnosticTest {
   defaultBufferAfterMinutes: number,
   modality:string
   billingRuleId?: number | null;
+  loincCodeId?: number | null;
+  loincCode?: string | null;
+  loincDescription?: string | null;
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
