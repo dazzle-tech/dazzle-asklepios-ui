@@ -14,7 +14,7 @@ type Props = {
   currentPrescription: any;
   medications: any[];
   loading: boolean;
-  tableFilters: React.ReactNode;
+  tableFilters?: React.ReactNode;
   showCanceled: boolean;
   setShowCanceled: React.Dispatch<React.SetStateAction<boolean>>;
   patientPrescriptionMedicationObject: any;

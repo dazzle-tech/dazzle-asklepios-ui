@@ -180,11 +180,6 @@ const Prescription = (props: Props) => {
     showCanceled ? true : !isCanceledStatus(p.status)
   );
 
-  const prescriptionOptions = filteredPrescriptions.map(p => ({
-    key: p.id,
-    label: String(p.prescriptionNum ?? p.id)
-  }));
-
   const [createOrGetPrescription, { isLoading: isLoadingCreateOrGet }] =
     useCreateOrGetPatientPrescriptionMutation();
 
@@ -594,16 +589,15 @@ const Prescription = (props: Props) => {
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  const tableFilters = (
+  const prescriptionHeader = (
     <PrescriptionToolbar
       edit={edit}
       isNurse={isNurse}
       isLoadingPrescriptions={isLoadingPrescriptions}
       isLoadingCreateOrGet={isLoadingCreateOrGet}
       currentPrescription={currentPrescription}
-      preKeyRecord={preKeyRecord}
       setPreKeyRecord={setPreKeyRecord}
-      prescriptionOptions={prescriptionOptions}
+      prescriptions={filteredPrescriptions}
       selectedRows={selectedRows}
       patientPrescriptionMedicationObject={patientPrescriptionMedicationObject}
       setSelectedRows={setSelectedRows as any}
@@ -619,6 +613,8 @@ const Prescription = (props: Props) => {
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
       ))}
 
+      {prescriptionHeader}
+
       <Divider />
 
       <div ref={tableContainerRef}>
@@ -627,7 +623,6 @@ const Prescription = (props: Props) => {
           currentPrescription={currentPrescription}
           medications={visiblePatientPrescriptionMedications}
           loading={isLoadingPrescriptionMedications}
-          tableFilters={tableFilters}
           showCanceled={showCanceled}
           setShowCanceled={setShowCanceled}
           patientPrescriptionMedicationObject={patientPrescriptionMedicationObject}
