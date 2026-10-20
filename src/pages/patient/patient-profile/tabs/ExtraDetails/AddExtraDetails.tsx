@@ -20,6 +20,7 @@ import '../styles.less';
 import clsx from 'clsx';
 
 const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
+const NATIONAL_ID_TYPE = 'NATIONAL_ID';
 
 const toHumanPatientDocumentError = (
   err,
@@ -128,6 +129,21 @@ const AddExtraDetails = ({
     () => (activeCountriesResp?.data ?? []).find(c => c.name === SAUDI_ARABIA_CODE)?.id ?? null,
     [activeCountriesResp]
   );
+
+  const matchesSaudiNationalIdCitizenRule = (document: {
+    type?: string | null;
+    countryId?: number | string | null;
+    number?: string | number | null;
+  }) =>
+    saudiCountryId != null &&
+    document?.countryId != null &&
+    String(document.countryId) === String(saudiCountryId) &&
+    String(document.type ?? '')
+      .trim()
+      .toUpperCase() === NATIONAL_ID_TYPE &&
+    String(document.number ?? '')
+      .trim()
+      .startsWith('1');
 
   const validateDocument = () => {
     const { type, number, countryId } = secondaryDocument;
@@ -257,7 +273,7 @@ const AddExtraDetails = ({
         />
       )}
 
-      {updatesCitizenFlag && (
+      {/* {updatesCitizenFlag && (
         <MyInput
           required
           column
@@ -268,7 +284,7 @@ const AddExtraDetails = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-      )}
+      )} */}
     </Form>
   );
 
@@ -285,17 +301,29 @@ const AddExtraDetails = ({
     }
 
     if (!isNoDoc) {
+      const number = String(secondaryDocument.number ?? '').trim();
+      const matchesCitizenRule = matchesSaudiNationalIdCitizenRule({
+        ...secondaryDocument,
+        number
+      });
+
       try {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
-          number: String(secondaryDocument.number ?? '').trim(),
-          isCitizen: Boolean(localPatient?.isCitizen)
+          number,
+          isCitizen: matchesCitizenRule ? true : Boolean(localPatient?.isCitizen)
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
+
+        if (matchesCitizenRule && setLocalPatient) {
+          setLocalPatient((current: any) =>
+            current?.isCitizen === true ? current : { ...current, isCitizen: true }
+          );
+        }
 
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
         refetch();

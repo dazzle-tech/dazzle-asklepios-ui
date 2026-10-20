@@ -120,10 +120,12 @@ const IDTab: React.FC<IDTabProps> = ({
         handleClearDocument();
       })
       .catch(error => {
-        dispatch( notify({
+        dispatch(
+          notify({
             msg: extractErrorMessage(error) || 'Failed to delete document',
-            sev: 'warning',
-          }));
+            sev: 'warning'
+          })
+        );
       });
   };
 
