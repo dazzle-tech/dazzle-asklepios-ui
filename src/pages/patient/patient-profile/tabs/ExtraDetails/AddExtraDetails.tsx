@@ -7,7 +7,6 @@ import {
   useAddPatientDocumentMutation,
   useUpdatePatientDocumentMutation
 } from '@/services/patients/patientDocumentsService';
-import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
@@ -21,6 +20,7 @@ import '../styles.less';
 import clsx from 'clsx';
 
 const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
+const NATIONAL_ID_TYPE = 'NATIONAL_ID';
 
 const toHumanPatientDocumentError = (
   err,
@@ -101,23 +101,6 @@ const AddExtraDetails = ({
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
-  const [fetchPatientById] = useLazyGetPatientByIdQuery();
-
-  const syncCitizenFromServer = async (patientId: number | string | null | undefined) => {
-    if (patientId == null || !setLocalPatient) return;
-
-    try {
-      const fetched = await fetchPatientById({ id: patientId }).unwrap();
-      if (!fetched || String(fetched.id) !== String(patientId)) return;
-
-      setLocalPatient((prev: any) => {
-        if (!prev || String(prev.id) !== String(patientId)) return prev;
-        if (Boolean(prev.isCitizen) === Boolean(fetched.isCitizen)) return prev;
-        return { ...prev, isCitizen: Boolean(fetched.isCitizen) };
-      });
-    } catch {
-    }
-  };
 
   const patientDocumentEnum = useEnumOptions('DocumentType', {
     exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE', 'SOCIAL_CARD']
@@ -146,6 +129,21 @@ const AddExtraDetails = ({
     () => (activeCountriesResp?.data ?? []).find(c => c.name === SAUDI_ARABIA_CODE)?.id ?? null,
     [activeCountriesResp]
   );
+
+  const matchesSaudiNationalIdCitizenRule = (document: {
+    type?: string | null;
+    countryId?: number | string | null;
+    number?: string | number | null;
+  }) =>
+    saudiCountryId != null &&
+    document?.countryId != null &&
+    String(document.countryId) === String(saudiCountryId) &&
+    String(document.type ?? '')
+      .trim()
+      .toUpperCase() === NATIONAL_ID_TYPE &&
+    String(document.number ?? '')
+      .trim()
+      .startsWith('1');
 
   const validateDocument = () => {
     const { type, number, countryId } = secondaryDocument;
@@ -303,19 +301,29 @@ const AddExtraDetails = ({
     }
 
     if (!isNoDoc) {
+      const number = String(secondaryDocument.number ?? '').trim();
+      const matchesCitizenRule = matchesSaudiNationalIdCitizenRule({
+        ...secondaryDocument,
+        number
+      });
+
       try {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
-          number: String(secondaryDocument.number ?? '').trim(),
-          isCitizen: Boolean(localPatient?.isCitizen)
+          number,
+          isCitizen: matchesCitizenRule ? true : Boolean(localPatient?.isCitizen)
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
 
-        await syncCitizenFromServer(localPatient.id);
+        if (matchesCitizenRule && setLocalPatient) {
+          setLocalPatient((current: any) =>
+            current?.isCitizen === true ? current : { ...current, isCitizen: true }
+          );
+        }
 
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
         refetch();
