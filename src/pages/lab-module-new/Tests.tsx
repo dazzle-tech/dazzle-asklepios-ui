@@ -912,11 +912,11 @@ const Tests = forwardRef<any, Props>(
           </span>
         </Whisper>
 
-        <Whisper placement="top" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
+        {/* <Whisper placement="top" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
           <span style={{ display: 'inline-block' }}>
             <PrintSelectedSampleLabelsAction orderTestIds={selectedRows} />
           </span>
-        </Whisper>
+        </Whisper> */}
       </HStack>
     );
 
