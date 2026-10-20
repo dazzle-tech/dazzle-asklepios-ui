@@ -12,6 +12,7 @@ import {
 import { useGetBrandMedicationsByActiveIdsMutation } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllUnitsByGroupIdQuery } from '@/services/setup/uom-group/uomGroupService';
 import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
+import { patientServicesAndProductsService } from '@/services/encounters/patientServicesAndProductsService';
 
 type MedicationAdministrationModalProps = {
   orderId: number | null;
@@ -22,7 +23,7 @@ type MedicationAdministrationModalProps = {
 
 type AdministrationRecord = {
   actualAdministerTime: Date;
-  // Display only for now: not sent with the administration
+  // The brand given and the unit it is charged in on the patient's services and products
   brandId: number | null;
   uomUnitId: number | null;
   quantity: number | string | null;
@@ -97,16 +98,39 @@ const MedicationAdministrationModal: React.FC<
     setRecord(updated.brandId !== record.brandId ? { ...updated, uomUnitId: null } : updated);
   };
 
+  const quantity = Number(record.quantity);
+  const isQuantityValid = Number.isInteger(quantity) && quantity > 0;
+  const isRecordComplete =
+    !!record.actualAdministerTime && !!record.brandId && !!record.uomUnitId && isQuantityValid;
+
   const handleConfirm = async () => {
     if (isAmendmentOpen || !orderId) {
+      return;
+    }
+
+    if (!isRecordComplete) {
+      dispatch(
+        notify({
+          msg: 'Select the brand and UOM, and enter a whole quantity greater than zero',
+          sev: 'warning'
+        })
+      );
       return;
     }
 
     try {
       await administerOrder({
         id: orderId,
-        actualAdministerTime: record.actualAdministerTime
+        actualAdministerTime: record.actualAdministerTime,
+        brandMedicationId: record.brandId as number,
+        uomGroupUnitId: record.uomUnitId as number,
+        quantity
       }).unwrap();
+
+      // The administration is charged on the patient's services and products
+      dispatch(
+        patientServicesAndProductsService.util.invalidateTags(['PatientServiceAndProduct'])
+      );
 
       dispatch(
         notify({
@@ -153,6 +177,7 @@ const MedicationAdministrationModal: React.FC<
           />
 
           <MyInput
+            required
             fieldName="brandId"
             fieldLabel="Brand"
             fieldType="select"
@@ -168,6 +193,7 @@ const MedicationAdministrationModal: React.FC<
           {record.brandId && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
               <MyInput
+                required
                 fieldName="uomUnitId"
                 fieldLabel="UOM"
                 fieldType="select"
@@ -181,6 +207,7 @@ const MedicationAdministrationModal: React.FC<
               />
 
               <MyInput
+                required
                 fieldName="quantity"
                 fieldLabel="Quantity"
                 fieldType="number"
