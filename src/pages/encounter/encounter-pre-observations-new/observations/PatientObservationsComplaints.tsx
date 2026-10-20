@@ -443,8 +443,8 @@ useEffect(() => {
           </div>
 
           {isFemale && (
-            <div className="source-information-row">
-              <div className="source-information-col">
+            <div className="functional-cognitive-row">
+              <div className="functional-cognitive-col">
                 <MyInput
                   width="100%"
                   fieldLabel="Pregnant"
@@ -455,7 +455,7 @@ useEffect(() => {
                   disabled={disabled}
                 />
               </div>
-              <div className="source-information-col">
+              <div className="functional-cognitive-col">
                 <MyInput
                   width="100%"
                   fieldLabel="Lactating"

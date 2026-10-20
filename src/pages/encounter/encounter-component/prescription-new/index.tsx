@@ -561,6 +561,7 @@ const Prescription = (props: Props) => {
   const {
     handleCancle,
     handleConfirmSubmitPres,
+    isSubmitting,
     handleNewPrescriptionAndAddMedication
   } = usePrescriptionActions({
     dispatch,
@@ -692,6 +693,7 @@ const Prescription = (props: Props) => {
         open={summaryModalOpen}
         setOpen={setSummaryModalOpen}
         handleSave={handleConfirmSubmitPres}
+        saving={isSubmitting}
         medicationValidationPayload={payload}
       />
 
