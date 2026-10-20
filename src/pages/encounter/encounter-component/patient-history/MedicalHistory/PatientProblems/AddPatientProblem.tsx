@@ -74,6 +74,8 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   );
 };
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 const emptyPatientProblem = {
   id: undefined,
   patientId: undefined,
@@ -86,7 +88,8 @@ const emptyPatientProblem = {
   dateOfResolution: null,
   byPatient: true,
   sourceOfInformation: null,
-  patientIsFree: false
+  patientIsFree: false,
+  freeText: null
 };
 
 const normalizeConditions = (value = '') =>
@@ -191,24 +194,27 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       formData.byPatient ? null : formData.sourceOfInformation
     );
 
+    const isFree = formData.patientIsFree === true;
+
     const payload = {
       id: formData.id,
       patientId: Number(patient.id),
-      condition: String(formData.condition ?? '').trim(),
-      dateOfDiagnosis: formData.dateOfDiagnosis,
-      diagnosisDurationType: formData.diagnosisDurationType ?? null,
-      diagnosisDuration: formData.diagnosisDuration ?? null,
-      conditionStatus: normalizedConditionStatus,
-      type: normalizedType,
-      dateOfResolution: formData.dateOfResolution,
-      byPatient: formData.byPatient,
-      sourceOfInformation: normalizedSourceOfInformation,
-      patientIsFree: formData.patientIsFree
+      condition: isFree ? '' : String(formData.condition ?? '').trim(),
+      dateOfDiagnosis: isFree ? null : formData.dateOfDiagnosis,
+      diagnosisDurationType: isFree ? null : formData.diagnosisDurationType ?? null,
+      diagnosisDuration: isFree ? null : formData.diagnosisDuration ?? null,
+      conditionStatus: isFree ? null : normalizedConditionStatus,
+      type: isFree ? null : normalizedType,
+      dateOfResolution: isFree ? null : formData.dateOfResolution,
+      byPatient: isFree ? true : formData.byPatient,
+      sourceOfInformation: isFree ? null : normalizedSourceOfInformation,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
     const errors: string[] = [];
 
-    if (!payload.patientIsFree) {
+    if (!isFree) {
       if (!payload.condition) {
         errors.push('Condition is required');
       }
@@ -258,15 +264,18 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
         true
       ).unwrap();
 
+      const withoutFreeLabel = (values: string[]) =>
+        values.filter(value => value.toLowerCase() !== 'patient is free');
+
       const conditions = Array.from(
         new Set(
-          [
+          withoutFreeLabel([
             ...normalizeConditions(patient?.patientConditions),
             ...(response.data ?? []).flatMap((problem: any) =>
-              normalizeConditions(problem.condition)
+              problem?.patientIsFree === true ? [] : normalizeConditions(problem.condition)
             ),
-            ...normalizeConditions(payload.condition)
-          ]
+            ...(payload.patientIsFree ? [] : normalizeConditions(payload.condition))
+          ])
         )
       ).join(',');
 
@@ -307,23 +316,34 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => 
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
   };
-useEffect(() => {
-  console.log('Patient Is Free changed:', formData.patientIsFree);
-  if (formData.patientIsFree) {
-    setFormData(prev => ({
-      ...prev,
-      condition: '',
-      dateOfDiagnosis: null,
-      diagnosisDurationType: null,
-      diagnosisDuration: null,
-      conditionStatus: null,
-      type: null,
-      dateOfResolution: null,
-      byPatient: true,
-      sourceOfInformation: null
-    }));
-  }
-}, [formData.patientIsFree]);
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          condition: '',
+          dateOfDiagnosis: null,
+          diagnosisDurationType: null,
+          diagnosisDuration: null,
+          conditionStatus: null,
+          type: null,
+          dateOfResolution: null,
+          byPatient: true,
+          sourceOfInformation: null,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
   const content = (
     <Form fluid className="fields-container">
       <Row>

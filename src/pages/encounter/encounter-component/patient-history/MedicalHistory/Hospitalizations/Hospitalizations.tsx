@@ -131,7 +131,16 @@ const Hospitalizations = ({ patient, edit, toShowData = false, showFreeText = fa
   };
 
   const handleEdit = (row: any) => {
-    if (row?.patientIsFree === true) {
+    const freeTextValue = String(row?.freeText ?? '').trim();
+    const isPatientIsFreeCheckboxRecord =
+      row?.patientIsFree === true && freeTextValue === 'Patient is Free';
+
+    if (
+      showFreeText &&
+      row?.patientIsFree === true &&
+      freeTextValue &&
+      !isPatientIsFreeCheckboxRecord
+    ) {
       setEditingFreeTextId(row.id);
       setFreeTextRecord({
         freeText: row.freeText || ''
@@ -245,7 +254,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false, showFreeText = fa
     {
       key: 'facility',
       title: 'FACILITY',
-
       dataKey: 'facility'
     },
     {

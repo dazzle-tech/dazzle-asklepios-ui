@@ -107,12 +107,16 @@ const FAMILY_HISTORY_ERROR_MAP: Record<string, string> = {
 
 /*  DEFAULT MODEL  */
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 const emptyFamilyHistory = {
   id: undefined,
   patientId: undefined,
   condition: '',
   relation: null,
-  inheritedDiseases: false
+  inheritedDiseases: false,
+  patientIsFree: false,
+  freeText: null
 };
 
 /*  COMPONENT  */
@@ -155,8 +159,11 @@ const relations = useEnumOptions('Relations', {
   useEffect(() => {
     if (initialData) {
       setFormData({
+        ...emptyFamilyHistory,
         ...initialData,
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null
       });
     } else {
       setFormData({
@@ -166,17 +173,43 @@ const relations = useEnumOptions('Relations', {
     }
   }, [initialData, open, patient?.id]);
 
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          condition: '',
+          relation: null,
+          inheritedDiseases: false,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
+
   /* SAVE */
 
   const handleSave = async () => {
+    const isFree = formData.patientIsFree === true;
     let errorMsg = '';
 
-    if (!formData.condition) {
-      errorMsg = 'Condition can’t be empty';
-    }
+    if (!isFree) {
+      if (!formData.condition) {
+        errorMsg = 'Condition can’t be empty';
+      }
 
-    if (!formData.relation) {
-      errorMsg = errorMsg ? `${errorMsg}, Relation can’t be empty` : 'Relation can’t be empty';
+      if (!formData.relation) {
+        errorMsg = errorMsg ? `${errorMsg}, Relation can’t be empty` : 'Relation can’t be empty';
+      }
     }
 
     if (errorMsg) {
@@ -187,11 +220,11 @@ const relations = useEnumOptions('Relations', {
     const payload = {
       ...(formData.id ? { id: formData.id } : {}),
       patientId: Number(patient?.id),
-      condition: formData.condition,
-      relation: formData.relation,
-      inheritedDiseases: formData.inheritedDiseases,
-      patientIsFree: false,
-      freeText: null
+      condition: isFree ? '' : formData.condition,
+      relation: isFree ? null : formData.relation,
+      inheritedDiseases: isFree ? false : formData.inheritedDiseases,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
     try {
@@ -216,11 +249,22 @@ const relations = useEnumOptions('Relations', {
       <MyInput
         width={'14vw'}
         column
+        fieldLabel="Patient Is Free"
+        fieldType="checkbox"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+      <MyInput
+        width={'14vw'}
+        column
         fieldLabel="Condition"
         fieldName="condition"
         record={formData}
         setRecord={setFormData}
-        required
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
       />
 
       <MyInput
@@ -235,7 +279,8 @@ const relations = useEnumOptions('Relations', {
         record={formData}
         setRecord={setFormData}
         searchable={false}
-        required
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
       />
 
       <MyInput
@@ -246,6 +291,7 @@ const relations = useEnumOptions('Relations', {
         fieldName="inheritedDiseases"
         record={formData}
         setRecord={setFormData}
+        disabled={formData.patientIsFree}
       />
     </Form>
   );

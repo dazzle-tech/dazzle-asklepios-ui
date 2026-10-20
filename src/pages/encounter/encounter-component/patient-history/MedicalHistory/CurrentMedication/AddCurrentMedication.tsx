@@ -30,6 +30,8 @@ import {
   CurrentMedicationUpdate
 } from '@/types/model-types-new';
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 const handleCrudError = (err: any, dispatch: any) => {
   const data = err?.data ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -136,8 +138,8 @@ const AddCurrentMedication = ({
         startDurationType: initialData.startDurationType ?? null,
         startDuration: initialData.startDuration ?? null,
         patientId: Number(patient?.id),
-        patientIsFree: false,
-        freeText: null
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null
       });
     } else {
       setFormData({
@@ -157,6 +159,33 @@ const AddCurrentMedication = ({
 
     setStartDateResetKey(prev => prev + 1);
   }, [initialData, open, patient?.id]);
+
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          activeIngredientId: undefined,
+          dosage: null,
+          unit: null,
+          frequency: null,
+          startDate: null,
+          startDurationType: null,
+          startDuration: null,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
 
   const savedStartDuration = getSavedDuration(
     initialData?.startDurationType,
@@ -196,34 +225,38 @@ const AddCurrentMedication = ({
   };
 
   const handleSave = async () => {
-    if (!formData.activeIngredientId) {
-      dispatch(
-        notify({
-          msg: 'Medication is required',
-          sev: 'warning'
-        })
-      );
-      return;
-    }
+    const isFree = formData.patientIsFree === true;
 
-    if (isIncompleteDuration(formData.startDurationType, formData.startDuration)) {
-      dispatch(
-        notify({
-          msg: 'Date Type and Number must be provided together',
-          sev: 'warning'
-        })
-      );
-      return;
-    }
+    if (!isFree) {
+      if (!formData.activeIngredientId) {
+        dispatch(
+          notify({
+            msg: 'Medication is required',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
-    if (!formData.startDate) {
-      dispatch(
-        notify({
-          msg: 'Start Date is required',
-          sev: 'warning'
-        })
-      );
-      return;
+      if (isIncompleteDuration(formData.startDurationType, formData.startDuration)) {
+        dispatch(
+          notify({
+            msg: 'Date Type and Number must be provided together',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!formData.startDate) {
+        dispatch(
+          notify({
+            msg: 'Start Date is required',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
     }
 
     try {
@@ -231,15 +264,15 @@ const AddCurrentMedication = ({
         const payload: CurrentMedicationUpdate = {
           id: formData.id,
           patientId: Number(patient?.id),
-          activeIngredientId: formData.activeIngredientId,
-          dosage: formData.dosage,
-          unit: formData.unit,
-          frequency: formData.frequency,
-          startDate: formData.startDate,
-          startDurationType: formData.startDurationType ?? null,
-          startDuration: formData.startDuration ?? null,
-          patientIsFree: false,
-          freeText: null
+          activeIngredientId: isFree ? null : formData.activeIngredientId,
+          dosage: isFree ? null : formData.dosage,
+          unit: isFree ? null : formData.unit,
+          frequency: isFree ? null : formData.frequency,
+          startDate: isFree ? null : formData.startDate,
+          startDurationType: isFree ? null : formData.startDurationType ?? null,
+          startDuration: isFree ? null : formData.startDuration ?? null,
+          patientIsFree: isFree,
+          freeText: isFree ? PATIENT_IS_FREE_TEXT : null
         };
 
         await updateCurrentMedication(payload).unwrap();
@@ -255,15 +288,15 @@ const AddCurrentMedication = ({
       } else {
         const payload: CurrentMedicationCreate = {
           patientId: Number(patient?.id),
-          activeIngredientId: formData.activeIngredientId,
-          dosage: formData.dosage,
-          unit: formData.unit,
-          frequency: formData.frequency,
-          startDate: formData.startDate,
-          startDurationType: formData.startDurationType ?? null,
-          startDuration: formData.startDuration ?? null,
-          patientIsFree: false,
-          freeText: null
+          activeIngredientId: isFree ? null : formData.activeIngredientId,
+          dosage: isFree ? null : formData.dosage,
+          unit: isFree ? null : formData.unit,
+          frequency: isFree ? null : formData.frequency,
+          startDate: isFree ? null : formData.startDate,
+          startDurationType: isFree ? null : formData.startDurationType ?? null,
+          startDuration: isFree ? null : formData.startDuration ?? null,
+          patientIsFree: isFree,
+          freeText: isFree ? PATIENT_IS_FREE_TEXT : null
         };
 
         await addCurrentMedication(payload).unwrap();
@@ -307,6 +340,20 @@ const AddCurrentMedication = ({
           <MyInput
             width="100%"
             column
+            fieldLabel="Patient Is Free"
+            fieldType="checkbox"
+            fieldName="patientIsFree"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col md={24}>
+          <MyInput
+            width="100%"
+            column
             fieldLabel="Medication"
             fieldName="activeIngredientId"
             fieldType="select"
@@ -316,7 +363,8 @@ const AddCurrentMedication = ({
             record={formData}
             setRecord={setFormData}
             searchable
-            required
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
           />
         </Col>
       </Row>
@@ -335,6 +383,7 @@ const AddCurrentMedication = ({
             record={formData}
             setRecord={handleStartDurationChange}
             searchable={false}
+            disabled={formData.patientIsFree}
           />
         </Col>
 
@@ -350,7 +399,7 @@ const AddCurrentMedication = ({
             min={0}
             step={1}
             showZero
-            disabled={!formData.startDurationType}
+            disabled={formData.patientIsFree || !formData.startDurationType}
           />
         </Col>
 
@@ -365,7 +414,8 @@ const AddCurrentMedication = ({
             disableFutureDates
             record={formData}
             setRecord={handleStartDateChange}
-            required
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
           />
         </Col>
       </Row>
@@ -380,6 +430,7 @@ const AddCurrentMedication = ({
             fieldName="dosage"
             record={formData}
             setRecord={setFormData}
+            disabled={formData.patientIsFree}
           />
         </Col>
 
@@ -395,6 +446,7 @@ const AddCurrentMedication = ({
             fieldName="unit"
             record={formData}
             setRecord={setFormData}
+            disabled={formData.patientIsFree}
           />
         </Col>
 
@@ -410,6 +462,7 @@ const AddCurrentMedication = ({
             fieldName="frequency"
             record={formData}
             setRecord={setFormData}
+            disabled={formData.patientIsFree}
           />
         </Col>
       </Row>
