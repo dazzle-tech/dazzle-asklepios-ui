@@ -218,13 +218,14 @@ const MedicationRecord = () => {
     discardReason: ''
   });
 
-  const [orderedParams, setOrderedParams] = useState({
+  // Default: newest medication first, its doses in time order (first dose on top)
+  const [orderedParams, setOrderedParams] = useState<{ page: number; size: number; sort: string | string[] }>({
     page: 0,
     size: 5,
-    sort: 'createdDate,desc'
+    sort: ['orderGroupId,desc', 'doseTime,asc', 'id,asc']
   });
 
-  const [orderedSortColumn, setOrderedSortColumn] = useState('createdDate');
+  const [orderedSortColumn, setOrderedSortColumn] = useState('');
   const [orderedSortType, setOrderedSortType] = useState<'asc' | 'desc'>('desc');
 
   const [adminParams, setAdminParams] = useState({

@@ -34,6 +34,7 @@ import MedicationAdministrationModal from '@/pages/encounter/urgent-care/Medicat
 import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
 import { Tooltip, Whisper } from 'rsuite';
 import { useLocation } from 'react-router-dom';
+import UccCreatePlanIcon from './UccCreatePlanIcon';
 
 type Props = {
   patient: any;
@@ -60,6 +61,7 @@ type MedicationOrderRow = {
   duration?: number;
   startTime?: string;
   doseTime?: string;
+  orderGroupId?: number;
 
   status?: string;
   isHighAlert?: boolean;
@@ -166,10 +168,11 @@ const UCCMedications = ({ patient, ...props }: Props) => {
   const weekAgo = new Date();
   weekAgo.setDate(today.getDate() - 7);
 
+  // Newest medication first; its doses in time order (first dose on top)
   const [orderedParams, setOrderedParams] = useState({
     page: 0,
     size: 10,
-    sort: 'createdDate,desc'
+    sort: ['orderGroupId,desc', 'doseTime,asc', 'id,asc']
   });
 
   const [adminParams, setAdminParams] = useState({
@@ -446,7 +449,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
     {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
-      width: 120,
+      width: 150,
       align: 'center',
       render: (row: MedicationOrderRow) => {
         return (
@@ -520,6 +523,8 @@ const UCCMedications = ({ patient, ...props }: Props) => {
                     }}
                   />
                 </Whisper>
+
+                <UccCreatePlanIcon row={row} disabled={edit} onSaved={() => refetchOrdered()} />
 
               </>
             )}

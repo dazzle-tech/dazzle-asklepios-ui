@@ -155,6 +155,7 @@ const ListOfRequisition = lazy (() => import ( './pages/list-of-requisition'));
 const ActiveIngredientsSetup = lazy (() => import ( './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup'));
 const GenericMedications = lazy (() => import ( './pages/medications/generic-medications-new'));
 const PrescriptionInstructions = lazy (() => import ( './pages/medications/prescription_instructions-new'));
+const MedFrequencySetup = lazy (() => import ( './pages/medications/med-frequency-setup'));
 const Operation = lazy (() => import ( './pages/operation-module'));
 const OperationRoomMaterials = lazy (() => import ( './pages/operation-theater/operation-room-materials/OperationRoomMaterials'));
 const PatientOldFacilityPatientList = lazy (() => import ( './pages/patient-old/facility-patient-list'));
@@ -957,6 +958,7 @@ const App = () => {
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroupSetup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
+              <Route path="med-frequency-setup" element={<MedFrequencySetup />} />
               <Route path="brand-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
