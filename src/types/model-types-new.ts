@@ -2040,9 +2040,6 @@ export interface NphiesPayer {
 
   tpaIds?: number[];
   tpas?: LinkedTpa[];
-  childCompanyIds?: number[];
-  childCompanies?: LinkedInsuranceCompany[];
-  parentCompany?: LinkedInsuranceCompany | null;
 
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
@@ -2052,14 +2049,6 @@ export interface LinkedTpa {
   id: number;
   tpaCode: string;
   name: string;
-  isActive: boolean;
-}
-
-export interface LinkedInsuranceCompany {
-  id: number;
-  nphiesId: string;
-  nameEn: string;
-  nameAr?: string | null;
   isActive: boolean;
 }
 
@@ -2109,8 +2098,6 @@ export interface TpaLinkedInsuranceCompany {
 export interface PayerDashboardSummary {
   insuranceCount: number;
   tpaCount: number;
-  parentCompanyCount: number;
-  childCompanyCount: number;
   insurancesWithContracts: number;
   insurancesWithPriceLists: number;
   tpasWithContracts: number;
@@ -2135,13 +2122,13 @@ export interface PayerDashboardPriceList {
 
 export interface PayerDashboardContract {
   id: number;
-  code?: string | null;
   policyNumber?: string | null;
   guarantorType?: string | null;
   className?: string | null;
   isActive?: boolean | null;
   insurancePayerId?: number | null;
   insurancePayerName?: string | null;
+  parentPayerName?: string | null;
   priceListSetupId?: number | null;
   priceListName?: string | null;
 }
@@ -2152,7 +2139,6 @@ export interface PayerDashboardInsuranceListItem {
   nameEn: string;
   nameAr?: string | null;
   isActive: boolean;
-  role: 'PARENT' | 'CHILD' | 'STANDALONE' | string;
 }
 
 export interface PayerDashboardTpaListItem {
@@ -2170,9 +2156,6 @@ export interface PayerDashboardInsuranceCard {
   isActive: boolean;
   approvalCoverageCompany?: string | null;
   facilityName?: string | null;
-  role: 'PARENT' | 'CHILD' | 'STANDALONE' | string;
-  parent?: PayerDashboardLinkedParty | null;
-  childCompanies: PayerDashboardLinkedParty[];
   tpas: PayerDashboardLinkedParty[];
   priceLists: PayerDashboardPriceList[];
   contracts: PayerDashboardContract[];

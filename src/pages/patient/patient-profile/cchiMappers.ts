@@ -964,14 +964,14 @@ export const getCchiPayorResolutionErrorMessage = (
   }
 
   if (!resolution.foundInNphiesPayers && !resolution.foundInPayorSetup) {
-    return `Could not find payer "${lookupLabel}" in NPHIES Payers or Payor Setup. Configure it under Setup.`;
+    return `Could not find payer "${lookupLabel}" in Insurance Companies. Add it under TPA & Insurance Companies.`;
   }
 
   if (resolution.foundInNphiesPayers && !resolution.foundInPayorSetup) {
     return `Payer "${lookupLabel}" exists in NPHIES Payers but has no matching Payor in Setup. Add a Payor with NPHIES ID "${lookupLabel}".`;
   }
 
-  return `Could not resolve a Payor for payer "${lookupLabel}". Configure it under Payor Setup.`;
+  return `Could not resolve payer "${lookupLabel}". Add it under TPA & Insurance Companies.`;
 };
 
 export const resolvePayorIdFromCchiInsurance = (

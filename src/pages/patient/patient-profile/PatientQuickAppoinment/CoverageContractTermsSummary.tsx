@@ -64,7 +64,7 @@ const CoverageContractTermsSummary = ({
         <Message type={isWaseel ? 'info' : 'success'} showIcon>
           <div className="coverage-contract-summary__body">
             <div>
-              Contract {data.contract?.code || '-'} · Policy {data.contract?.policyNumber || insurance?.policyNumber} ·
+              Contract {data.contract?.insurancePayerName || data.contract?.companyName || data.contract?.priceListName || '-'} · Policy {insurance?.policyNumber || '-'} ·
               Class {data.contract?.className || insurance?.policyClassName || '-'}
             </div>
             {isWaseel ? (

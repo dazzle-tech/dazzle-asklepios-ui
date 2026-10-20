@@ -333,6 +333,14 @@ export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
     'An active price list already exists for this insurance company.',
   'payer.required':
     'Insurance company is required for insurance price lists.',
+  'payer.notNphies':
+    'The insurance company must be selected from NPHIES. An internal payor cannot be saved on a price list.',
+  'payer.fk':
+    'The selected company could not be saved because an old database link still allows only NPHIES ids. Apply the latest database update and try again.',
+  'version.duplicate':
+    'A price list with this facility, type, company, and version already exists.',
+  'item.catalogMissing':
+    'Some items point at a catalog record that no longer exists. Turn off Also clone items, or fix the source price list.',
   'effectiveDate.invalidRange':
     'The end date must be later than the start date.',
   'effectiveDate.startInPast':
@@ -351,6 +359,8 @@ export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
     'This item code already exists on the selected price list.',
   'item.idSequenceOutOfSync':
     'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.',
+  'clone.constraint':
+    'Unable to clone the price list because of a data constraint. Change the name or dates and try again.',
   'item.import.fileRequired':
     'Please choose an Excel or CSV file to import.',
   'item.import.badFileType':

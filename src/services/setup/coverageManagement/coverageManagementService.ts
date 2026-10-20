@@ -53,7 +53,6 @@ export type CoverageContract = {
   companyId?: number;
   companyName?: string;
   companyCode?: string;
-  code?: string;
   coverageBasis?: string;
   insurancePayerId?: number;
   insurancePayerName?: string;
@@ -253,11 +252,10 @@ const toContractPayload = (body: CoverageContract) => ({
   ...(body.id != null ? { id: body.id } : {}),
   guarantorType: body.guarantorType,
   companyId: body.companyId,
-  code: body.code,
   coverageBasis: body.coverageBasis,
   insurancePayerId: body.insurancePayerId,
   priceListSetupId: body.priceListSetupId,
-  parentPayerId: body.parentPayerId,
+  parentPayerId: body.parentPayerId ? Number(body.parentPayerId) : null,
   approvalCoverageCompany: body.approvalCoverageCompany || null,
   isActive: body.isActive
 });
@@ -306,7 +304,6 @@ export const normalizeCoverageContract = (
     companyId,
     companyName: firstDefined(row.companyName, row.company_name),
     companyCode: firstDefined(row.companyCode, row.company_code),
-    code: firstDefined(row.code, row.coverageCode),
     insurancePayerId,
     insurancePayerName: firstDefined(row.insurancePayerName, row.insurance_payer_name),
     parentPayerId: firstDefined(row.parentPayerId, row.parent_payer_id),

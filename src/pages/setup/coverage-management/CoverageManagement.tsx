@@ -26,7 +26,7 @@ import {
 } from '@/services/setup/coverageManagement/coverageManagementService';
 import './styles.less';
 
-const CoverageManagement = () => {
+const CoverageManagement = ({ embedded = false }: { embedded?: boolean }) => {
   const dispatch = useAppDispatch();
   const guarantorTypes = useEnumOptions('GuarantorType');
   const [headerOpen, setHeaderOpen] = useState(false);
@@ -64,21 +64,24 @@ const CoverageManagement = () => {
   const [toggleActive] = useToggleCoverageContractActiveMutation();
 
   useEffect(() => {
+    if (embedded) return;
     dispatch(setPageCode('COVERAGE_MANAGEMENT'));
     dispatch(setDivContent('Coverage Management'));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
     };
-  }, [dispatch]);
+  }, [dispatch, embedded]);
 
   const openHeader = (contract: CoverageContract) => {
     setHeaderRecord(contract);
     setHeaderOpen(true);
   };
 
+  const Wrapper = embedded ? 'div' : Panel;
+
   return (
-    <Panel>
+    <Wrapper className={embedded ? 'coverage-management-embedded' : undefined}>
       <MyTable
         data={contractsQuery.data?.data ?? []}
         totalCount={contractsQuery.data?.totalCount ?? 0}
@@ -146,7 +149,7 @@ const CoverageManagement = () => {
               record={filter}
               setRecord={setFilter}
               showLabel={false}
-              placeholder="Code"
+              placeholder="Insurance or price list"
             />
             <MyButton
               color="var(--deep-blue)"
@@ -173,7 +176,6 @@ const CoverageManagement = () => {
           </div>
         }
         columns={[
-          { key: 'code', title: <Translate>Code</Translate>, flexGrow: 1 },
           {
             key: 'guarantorType',
             title: <Translate>Coverage Type</Translate>,
@@ -188,6 +190,7 @@ const CoverageManagement = () => {
             render: (row: CoverageContract) => approvalCoverageCompanyLabel(row.approvalCoverageCompany)
           },
           { key: 'insurancePayerName', title: <Translate>Insurance Name</Translate>, flexGrow: 2 },
+          { key: 'parentPayerName', title: <Translate>Parent Name</Translate>, flexGrow: 2 },
           { key: 'priceListName', title: <Translate>Price List</Translate>, flexGrow: 2 },
           { key: 'startDate', title: <Translate>Start date</Translate>, flexGrow: 1 },
           { key: 'endDate', title: <Translate>End Date</Translate>, flexGrow: 1 },
@@ -298,7 +301,7 @@ const CoverageManagement = () => {
           }
         }}
       />
-    </Panel>
+    </Wrapper>
   );
 };
 

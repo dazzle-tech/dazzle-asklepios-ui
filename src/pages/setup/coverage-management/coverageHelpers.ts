@@ -159,7 +159,6 @@ export function emptyContract(): any {
   return {
     guarantorType: '',
     companyId: undefined,
-    code: '',
     coverageBasis: 'GROSS',
     insurancePayerId: undefined,
     priceListSetupId: undefined,
@@ -172,21 +171,36 @@ export function emptyContract(): any {
   };
 }
 
+const COVERAGE_ERROR_MESSAGES: Record<string, string> = {
+  activeContractPeriodOverlap:
+    'This insurance company already has an active contract for this period. Only one active contract is allowed for the same dates.',
+  parentSameAsInsurance: 'Parent insurance cannot be the same insurance company.'
+};
+
+function readableProblemText(value: unknown) {
+  const text = String(value ?? '').trim();
+  if (!text || text.toLowerCase() === 'bad request' || text.startsWith('400 ')) {
+    return '';
+  }
+  if (/^error\.[A-Za-z0-9.]+$/.test(text) || /^[a-z][A-Za-z0-9.]*$/.test(text)) {
+    return '';
+  }
+  return text;
+}
+
 export function coverageApiError(error: any, fallback: string) {
   const data = error?.data ?? error?.error?.data ?? {};
-  const rawMessage = String(data?.properties?.message || data?.message || '').replace(/^error\./i, '').trim();
-  if (rawMessage && rawMessage.toLowerCase() !== 'bad request' && !rawMessage.startsWith('400 ')) {
-    return rawMessage;
+  const messageProp = String(data?.properties?.message || data?.message || '');
+  const errorKey = messageProp.replace(/^error\./i, '').trim();
+  if (errorKey && COVERAGE_ERROR_MESSAGES[errorKey]) {
+    return COVERAGE_ERROR_MESSAGES[errorKey];
   }
-  const title = String(data?.title || '').trim();
-  if (title && title.toLowerCase() !== 'bad request') {
-    return title;
-  }
-  const detail = String(data?.detail || '');
-  if (detail && !detail.includes('ProblemDetail') && !detail.toLowerCase().includes('failed to read request')) {
-    return detail;
-  }
-  return fallback;
+  return (
+    readableProblemText(data?.title) ||
+    readableProblemText(data?.detail) ||
+    readableProblemText(messageProp) ||
+    fallback
+  );
 }
 
 export function notifySuccess(dispatch: any, msg: string) {

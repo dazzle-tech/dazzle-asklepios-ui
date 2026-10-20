@@ -58,7 +58,6 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
   });
   const rows = classesQuery.data?.data ?? [];
   const headerName = coverageHeaderName(contract);
-  const headerCode = String(contract.code || '').trim();
 
   useEffect(() => {
     if (!selected?.id && rows.length) {
@@ -135,12 +134,6 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
             <>
               {' '}
               <span className="coverage-class-title-name">{headerName}</span>
-            </>
-          ) : null}
-          {headerCode && headerCode !== headerName ? (
-            <>
-              {' · '}
-              <span className="coverage-class-title-code">{headerCode}</span>
             </>
           ) : null}
         </div>

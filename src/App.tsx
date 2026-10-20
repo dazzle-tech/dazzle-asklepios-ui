@@ -263,7 +263,6 @@ const CountrySetup = React.lazy(() =>
 const CountryDistrictPage = lazy (() => import ( './pages/setup/country-setup/district-country/CountryDistrictPage'));
 const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
-const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
 const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
@@ -293,7 +292,6 @@ import BillingConfigurationSetup from './pages/setup/billing-configuration/Billi
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
-import CoverageManagement from './pages/setup/coverage-management/CoverageManagement';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 import PatientsLists from './pages/billing-module/patientList/PatientsLists';
 const PointOfSaleConfiguration =lazy (()=> import('./pages/point-of-sale/pos-configration/PointOfSaleConfiguration')) 
@@ -814,7 +812,10 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="discount-setup" element={<DiscountSetup />} />
-              <Route path="coverage-management" element={<CoverageManagement />} />
+              <Route
+                path="coverage-management"
+                element={<Navigate to="/nphies-payers?tab=coverage" replace />}
+              />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
@@ -991,7 +992,10 @@ const App = () => {
               <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
-              <Route path="payor-setup" element={<PayerSetup />} />
+              <Route
+                path="payor-setup"
+                element={<Navigate to="/nphies-payers?tab=insurance" replace />}
+              />
               <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"

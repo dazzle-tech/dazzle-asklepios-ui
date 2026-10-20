@@ -184,25 +184,6 @@ export const NphiesPayerService = createApi({
       providesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 
-    getAvailableChildCompaniesForPayer: builder.query<
-      Array<{
-        id: number;
-        nphiesId: string;
-        nameEn: string;
-        nameAr?: string | null;
-        isActive: boolean;
-      }>,
-      number | string
-    >({
-      query: id => ({
-        url: `/api/setup/nphies-payers/${id}/available-child-companies`,
-        method: 'GET'
-      }),
-      transformResponse: (res: any) =>
-        Array.isArray(res) ? res : res?.data ?? res?.content ?? [],
-      providesTags: ['NphiesPayer']
-    }),
-
     createNphiesPayer: builder.mutation<NphiesPayer, Partial<NphiesPayer>>({
       query: body => ({
         url: '/api/setup/nphies-payers',
@@ -228,18 +209,6 @@ export const NphiesPayerService = createApi({
         body: { tpaIds }
       }),
       invalidatesTags: ['NphiesPayer', 'TpaDefinition']
-    }),
-
-    updateNphiesPayerChildCompanies: builder.mutation<
-      NphiesPayer,
-      { id: number | string; childCompanyIds: number[] }
-    >({
-      query: ({ id, childCompanyIds }) => ({
-        url: `/api/setup/nphies-payers/${id}/child-companies`,
-        method: 'PATCH',
-        body: { childCompanyIds }
-      }),
-      invalidatesTags: ['NphiesPayer']
     }),
 
     toggleNphiesPayerActive: builder.mutation<NphiesPayer, number | string>({
@@ -271,10 +240,8 @@ export const {
   useGetPayerRelationshipInsuranceQuery,
   useGetPayerRelationshipTpaQuery,
   useGetAvailableTpasForPayerQuery,
-  useGetAvailableChildCompaniesForPayerQuery,
   useCreateNphiesPayerMutation,
   useUpdateNphiesPayerMutation,
   useUpdateNphiesPayerTpasMutation,
-  useUpdateNphiesPayerChildCompaniesMutation,
   useToggleNphiesPayerActiveMutation
 } = NphiesPayerService;

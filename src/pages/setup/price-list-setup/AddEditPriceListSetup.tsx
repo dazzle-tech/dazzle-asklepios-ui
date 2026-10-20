@@ -51,7 +51,6 @@ import {
   useGetAllNphiesPayersQuery,
   useGetNphiesPayerByIdQuery
 } from '@/services/setup/payer/NphiesPayerSetupService';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetActiveTaxesByFacilityQuery } from '@/services/billing/taxService';
 import { useEnumOptions } from '@/services/enumsApi';
 
@@ -269,20 +268,6 @@ React.FC<Props> = ({
     },
     {
       skip: !priceList.facilityId && !defaultFacility?.id
-    }
-  );
-
-  const {
-    data: internalPayorResponse
-  } = useGetAllPayorsQuery(
-    {
-      page: 0,
-      size: 200,
-      sort: 'name,asc',
-      category: 'INSURANCE'
-    },
-    {
-      skip: priceList.type !== 'INSURANCE'
     }
   );
 
@@ -507,6 +492,11 @@ React.FC<Props> = ({
 
         status:
           previous.status ??
+          'ACTIVE',
+
+        isActive:
+          (previous.status ??
+            'ACTIVE') ===
           'ACTIVE',
 
         versionNumber:
@@ -899,10 +889,9 @@ React.FC<Props> = ({
     if (
       priceList.type ===
         'INSURANCE' &&
-      !priceList.payerId &&
       !priceList.nphiesPayerId
     ) {
-      return 'Insurance company is required. Select a NPHIES payer or an internal insurance company.';
+      return 'Insurance company is required.';
     }
 
     if (
@@ -929,6 +918,15 @@ React.FC<Props> = ({
     }
 
     if (
+      isClone &&
+      priceList.status ===
+        'ACTIVE' &&
+      !priceList.effectiveFrom
+    ) {
+      return 'Effective start date is required for an active price list.';
+    }
+
+    if (
       !isClone &&
       !isEdit &&
       toDateValue(priceList.effectiveFrom) &&
@@ -950,6 +948,14 @@ React.FC<Props> = ({
 
     if (!priceList.currency) {
       return 'Currency is required.';
+    }
+
+    if (
+      isClone &&
+      priceList.status !==
+        'ACTIVE'
+    ) {
+      return null;
     }
 
     const overlappingList =
@@ -1056,15 +1062,7 @@ React.FC<Props> = ({
             .type as
             PriceListSetupType,
 
-        payerId:
-          priceList.type ===
-            'INSURANCE' &&
-          priceList.payerId &&
-          !priceList.nphiesPayerId
-            ? Number(
-                priceList.payerId
-              )
-            : null,
+        payerId: null,
 
         nphiesPayerId:
           priceList.type ===
@@ -1111,7 +1109,7 @@ React.FC<Props> = ({
 
         status:
           (priceList.status as SavePriceListSetupRequest['status']) ??
-          (isClone ? 'INACTIVE' : 'ACTIVE'),
+          'ACTIVE',
 
         appliesToAllFacilities:
           Boolean(
@@ -1410,9 +1408,9 @@ React.FC<Props> = ({
         <>
           <MyInput
             key="nphies-payer-select"
-            required={false}
+            required
             width="100%"
-            fieldLabel="NPHIES Insurance Company"
+            fieldLabel="Insurance Company"
             fieldType="selectPagination"
             fieldName="nphiesPayerId"
             selectData={
@@ -1486,33 +1484,8 @@ React.FC<Props> = ({
                 ? 'Loading payers...'
                 : payerCache.length === 0
                 ? 'No active payers found'
-                : 'Select NPHIES payer'
+                : 'Select insurance company'
             }
-          />
-
-          <br />
-
-          <MyInput
-            width="100%"
-            fieldLabel="Internal insurance company (if not in NPHIES)"
-            fieldType="select"
-            fieldName="payerId"
-            selectData={(internalPayorResponse?.data ?? []).filter(
-              payor => payor?.isActive !== false
-            )}
-            selectDataLabel="name"
-            selectDataValue="id"
-            record={priceList}
-            setRecord={(updated: PriceListSetup) => {
-              setPriceList({
-                ...updated,
-                nphiesPayerId: updated.payerId
-                  ? undefined
-                  : updated.nphiesPayerId
-              });
-            }}
-            searchable
-            placeholder="Select from Payor master data"
           />
 
           {selectedPayer && (
@@ -1555,7 +1528,10 @@ React.FC<Props> = ({
 
       <div className="price-list-two-columns">
         <MyInput
-          required={!isClone}
+          required={
+            !isClone ||
+            priceList.status === 'ACTIVE'
+          }
           width="100%"
           fieldLabel="Effective From"
           fieldType="date"
@@ -1627,7 +1603,16 @@ React.FC<Props> = ({
         selectDataLabel="label"
         selectDataValue="value"
         record={priceList}
-        setRecord={setPriceList}
+        setRecord={(
+          updated: PriceListSetup
+        ) => {
+          setPriceList({
+            ...updated,
+            isActive:
+              updated.status ===
+              'ACTIVE'
+          });
+        }}
         searchable={false}
       />
 
@@ -1703,8 +1688,9 @@ React.FC<Props> = ({
           />
 
           <p className="price-list-clone-hint">
-            A cloned price list is created as Inactive with an empty
-            Effective Start Date. Set the start date before activating.
+            The clone is Active by default, and the start and end dates
+            are saved. Change the dates if this company already has an
+            active list for the same period.
           </p>
         </>
       )}

@@ -222,16 +222,31 @@ const PriceListSetup: React.FC = () => {
   ) => {
     setCloneSourceId(undefined);
 
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
     setSelectedPriceList({
       ...row,
-      nphiesPayerId:
-        row.nphiesPayerId != null
-          ? Number(row.nphiesPayerId)
-          : undefined,
-      payerId:
-        row.payerId != null
-          ? Number(row.payerId)
-          : undefined
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      isActive: row.status === 'ACTIVE'
     });
 
     setHeaderModalOpen(true);
@@ -246,6 +261,16 @@ const PriceListSetup: React.FC = () => {
 
     setCloneSourceId(row.id);
 
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
     setSelectedPriceList({
       ...row,
       id: undefined,
@@ -254,9 +279,20 @@ const PriceListSetup: React.FC = () => {
         : undefined,
       versionNumber:
         (row.versionNumber ?? 1) + 1,
-      effectiveFrom: undefined,
-      effectiveTo: undefined,
-      status: 'INACTIVE'
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      status: 'ACTIVE',
+      isActive: true
     });
 
     setHeaderModalOpen(true);

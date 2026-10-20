@@ -187,12 +187,14 @@ const formatInsuranceCompanyLabel = (
 };
 
 const formatActiveContractLabel = (contract: CoverageContract): string => {
-  const policyNumber = String(contract.policyNumber || '').trim();
-  const code = String(contract.code || '').trim();
-  if (policyNumber && code && policyNumber !== code) {
-    return `${code} · ${policyNumber}`;
+  const insurance = String(contract.insurancePayerName || contract.companyName || '').trim();
+  const priceList = String(contract.priceListName || '').trim();
+  const period = [contract.startDate, contract.endDate].filter(Boolean).join(' → ');
+  const title = [insurance, priceList].filter(Boolean).join(' · ');
+  if (title && period) {
+    return `${title} (${period})`;
   }
-  return policyNumber || code || `Contract #${contract.id}`;
+  return title || period || `Contract #${contract.id}`;
 };
 
 type ContractedInsuranceChoice = CoverageContractedInsurance & {
@@ -486,8 +488,8 @@ const InsuranceModal = ({
   const contractsForSelectedInsurance = useMemo(
     () =>
       [...selectedCoverageContracts].sort((left, right) =>
-        String(left.policyNumber || left.code || '').localeCompare(
-          String(right.policyNumber || right.code || ''),
+        String(left.priceListName || left.insurancePayerName || left.id || '').localeCompare(
+          String(right.priceListName || right.insurancePayerName || right.id || ''),
           undefined,
           { sensitivity: 'base' }
         )
