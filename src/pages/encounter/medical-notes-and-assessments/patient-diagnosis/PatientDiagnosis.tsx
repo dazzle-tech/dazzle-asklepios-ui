@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -377,9 +377,54 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     [icdMap, disabled, isDeleting, encounterIdNumber]
   );
 
+  // Copies a diagnosis from a previous visit into this visit with the same attributes
+  const handleClone = async (row: PatientDiagnosisType) => {
+    if (!patientIdNumber || !encounterIdNumber) {
+      dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      await createPatientDiagnosis({
+        patientId: patientIdNumber,
+        encounterId: encounterIdNumber,
+        diagnosisId: row.diagnosisId ?? null,
+        type: row.type ?? null,
+        suspected: row.suspected ?? false,
+        major: row.major ?? false
+      } as PatientDiagnosisType).unwrap();
+
+      dispatch(notify({ msg: 'Diagnosis cloned to current visit', sev: 'success' }));
+      await refetchTables();
+
+      onDiagnosisSaved?.();
+    } catch (error: any) {
+      showApiError(error);
+    }
+  };
+
   const previousTableColumns = useMemo(
-    () => tableColumns.filter(col => col.key !== 'actions'),
-    [tableColumns]
+    () => [
+      ...tableColumns.filter(col => col.key !== 'actions'),
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        flexGrow: 1,
+        render: (row: any) => (
+          <button
+            type="button"
+            className="pd-delete-btn"
+            title="Clone to current visit"
+            onClick={() => handleClone(row)}
+            disabled={disabled || isSaving}
+            style={{ cursor: disabled || isSaving ? 'not-allowed' : 'pointer' }}
+          >
+            <FontAwesomeIcon icon={faCopy} />
+          </button>
+        )
+      }
+    ],
+    [tableColumns, disabled, isSaving, patientIdNumber, encounterIdNumber]
   );
 
   const savingBusy = isFetchingLatest || isSaving;
