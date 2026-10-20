@@ -123,6 +123,7 @@ import { BrandMedicationSubstituteService } from '@/services/setup/brandmedicati
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+import { medFrequencySetupService } from './services/setup/med-frequency-setup/medFrequencySetupService';
 
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 
@@ -404,6 +405,7 @@ export const store = configureStore({
 
     // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
+    [medFrequencySetupService.reducerPath]: medFrequencySetupService.reducer,
 
     // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
@@ -802,6 +804,7 @@ export const store = configureStore({
         BrandMedicationSubstituteService.middleware,
         BrandMedicationActiveIngredientService.middleware,
         prescriptionInstructionService.middleware,
+        medFrequencySetupService.middleware,
         uomGroupService.middleware,
         countryService.middleware,
         countryDistrictService.middleware,
