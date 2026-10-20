@@ -7,6 +7,7 @@ import {
   useAddPatientDocumentMutation,
   useUpdatePatientDocumentMutation
 } from '@/services/patients/patientDocumentsService';
+import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
@@ -100,6 +101,23 @@ const AddExtraDetails = ({
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [updatePatientDocument] = useUpdatePatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
+  const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+  const syncCitizenFromServer = async (patientId: number | string | null | undefined) => {
+    if (patientId == null || !setLocalPatient) return;
+
+    try {
+      const fetched = await fetchPatientById({ id: patientId }).unwrap();
+      if (!fetched || String(fetched.id) !== String(patientId)) return;
+
+      setLocalPatient((prev: any) => {
+        if (!prev || String(prev.id) !== String(patientId)) return prev;
+        if (Boolean(prev.isCitizen) === Boolean(fetched.isCitizen)) return prev;
+        return { ...prev, isCitizen: Boolean(fetched.isCitizen) };
+      });
+    } catch {
+    }
+  };
 
   const patientDocumentEnum = useEnumOptions('DocumentType', {
     exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE', 'SOCIAL_CARD']
@@ -257,7 +275,7 @@ const AddExtraDetails = ({
         />
       )}
 
-      {updatesCitizenFlag && (
+      {/* {updatesCitizenFlag && (
         <MyInput
           required
           column
@@ -268,7 +286,7 @@ const AddExtraDetails = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-      )}
+      )} */}
     </Form>
   );
 
@@ -296,6 +314,8 @@ const AddExtraDetails = ({
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
+
+        await syncCitizenFromServer(localPatient.id);
 
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
         refetch();

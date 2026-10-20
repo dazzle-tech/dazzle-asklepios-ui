@@ -4,6 +4,7 @@ import {
   useDeletePatientDocumentMutation,
   useGetDocumentsByPatientQuery
 } from '@/services/patients/patientDocumentsService';
+import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { faFilePen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -39,6 +40,7 @@ const IDTab: React.FC<IDTabProps> = ({
   setOpenCchiDocumentPopup
 }) => {
   const dispatch = useAppDispatch();
+  const [fetchPatientById] = useLazyGetPatientByIdQuery();
 
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
   const [secondaryDocument, setSecondaryDocument] = useState<any>(newPatientDocument);
@@ -46,6 +48,22 @@ const IDTab: React.FC<IDTabProps> = ({
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
     ...newPatientDocument
   });
+
+  const syncCitizenFromServer = async (patientId: number | string | null | undefined) => {
+    if (patientId == null || !setLocalPatient) return;
+
+    try {
+      const fetched = await fetchPatientById({ id: patientId }).unwrap();
+      if (!fetched || String(fetched.id) !== String(patientId)) return;
+
+      setLocalPatient((prev: any) => {
+        if (!prev || String(prev.id) !== String(patientId)) return prev;
+        if (Boolean(prev.isCitizen) === Boolean(fetched.isCitizen)) return prev;
+        return { ...prev, isCitizen: Boolean(fetched.isCitizen) };
+      });
+    } catch {
+    }
+  };
 
   const enumLabels = useEnumOptions('CountryName');
 
@@ -109,21 +127,25 @@ const IDTab: React.FC<IDTabProps> = ({
     rowData?.id === secondaryDocument?.id ? 'selected-row' : '';
 
   const handleDeleteSecondaryDocument = () => {
+    const patientId = localPatient?.id;
     deletePatientDocument({
       id: selectedSecondaryDocument.id
     })
       .unwrap()
-      .then(() => {
+      .then(async () => {
+        await syncCitizenFromServer(patientId);
         patientSecondaryDocuments();
         dispatch(notify({ msg: 'Document Deleted Successfully', sev: 'success' }));
         setDeleteDocModalOpen(false);
         handleClearDocument();
       })
       .catch(error => {
-        dispatch( notify({
+        dispatch(
+          notify({
             msg: extractErrorMessage(error) || 'Failed to delete document',
-            sev: 'warning',
-          }));
+            sev: 'warning'
+          })
+        );
       });
   };
 
