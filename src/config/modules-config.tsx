@@ -228,6 +228,7 @@ export const MODULES: Module[] =
         // { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
         { name: "Uom Group", code: "UOM_GROUP", description: "", icon: "FaBox", viewOrder: 7, navPath: "uom-group" },
         { name: "Prescription Instructions", code: "PRESCRIPTION_INSTRUCTIONS", description: "", icon: "FaPrescriptionBottle", viewOrder: 15, navPath: "prescription-instructions" },
+        { name: "Frequency Setup", code: "MED_FREQUENCY_SETUP", description: "How each medication frequency is split into doses", icon: "FaClock", viewOrder: 15, navPath: "med-frequency-setup" },
         { name: "Age Group", code: "AGE_GROUP", description: "Age Group Setup", icon: "FaBaby", viewOrder: 10, navPath: "age-group" },
         { name: "Practitioners", code: "PRACTITIONERS", description: "", icon: "FaBriefcaseMedical", viewOrder: 5, navPath: "practitioners" },
         { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
