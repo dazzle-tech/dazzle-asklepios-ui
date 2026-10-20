@@ -152,10 +152,18 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
     });
   }, [open, referral?.toFacilityId, resetDepartmentsState, loadDepartments]);
 
-  const toDepartmentOptions = allDepartments.map(d => ({
-    label: d.name ?? '',
-    value: d.id
-  }));
+  const toDepartmentOptions = allDepartments
+    .filter(
+      d =>
+        !(
+          Number(referral?.toFacilityId) === Number(selectedFacility?.id) &&
+          Number(d.id) === Number(selectedDepartment?.departmentId)
+        )
+    )
+    .map(d => ({
+      label: d.name ?? '',
+      value: d.id
+    }));
 
   const conjureFormContent = () => (
     <Form fluid>
