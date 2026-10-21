@@ -67,8 +67,10 @@ import { useGetPayorByIdQuery } from '@/services/setup/payer/PayorService';
 import { extractPatientInsurancesList,
   getTodayServiceDate,
   resolveDisplayedEligibilityStatus,
+  resolveExpirationEligibilityStatus,
   shouldShowCheckEligibilityAction
 } from '../cchiMappers';
+import { useResolveCoverageContractQuery } from '@/services/setup/coverageManagement/coverageManagementService';
 
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import CoverageContractTermsSummary from './CoverageContractTermsSummary';
@@ -1115,6 +1117,55 @@ const PatientPaymentInfo =
         selectedPayor?.isWaseelEnabled !==
         false;
 
+      const resolvedPayerNphiesId =
+        (patientInsurance?.payerNphiesId
+          ? String(patientInsurance.payerNphiesId)
+          : '') ||
+        (selectedPayor?.nphiesId
+          ? String(selectedPayor.nphiesId)
+          : '');
+
+      const canResolveContract = Boolean(
+        formState.coverageType === 'INSURANCE' &&
+          patientInsurance?.id &&
+          patientInsurance.policyNumber &&
+          resolvedPayerNphiesId
+      );
+
+      const resolvedContract =
+        useResolveCoverageContractQuery(
+          {
+            payerNphiesId:
+              resolvedPayerNphiesId || undefined,
+            tpaName:
+              patientInsurance?.tpaName || undefined,
+            policyNumber:
+              patientInsurance?.policyNumber
+                ? String(patientInsurance.policyNumber)
+                : undefined,
+            className:
+              patientInsurance?.policyClassName || undefined,
+            encounterType:
+              localEncounter?.encounterType || undefined
+          },
+          { skip: !canResolveContract }
+        );
+
+      const contractDrivesShare =
+        String(
+          resolvedContract.data?.contract?.approvalCoverageCompany || ''
+        ).toUpperCase() === 'NPHIES';
+
+      const waitingForContractDecision =
+        canResolveContract &&
+        resolvedContract.isFetching &&
+        !resolvedContract.data;
+
+      const requiresWaseelEligibility =
+        isWaseelCoverage &&
+        !contractDrivesShare &&
+        !waitingForContractDecision;
+
       const {
         data: waseelCoverage,
         isFetching:
@@ -1132,6 +1183,7 @@ const PatientPaymentInfo =
           },
           {
             skip:
+              !requiresWaseelEligibility ||
               !patientId ||
               formState.coverageType !==
                 'INSURANCE' ||
@@ -1294,11 +1346,16 @@ const PatientPaymentInfo =
       const displayedEligibilityStatus =
         useMemo(
           () =>
-            resolveDisplayedEligibilityStatus(
-              patientInsurance ??
-                null
-            ),
+            contractDrivesShare
+              ? resolveExpirationEligibilityStatus(
+                  patientInsurance ?? null
+                )
+              : resolveDisplayedEligibilityStatus(
+                  patientInsurance ??
+                    null
+                ),
           [
+            contractDrivesShare,
             patientInsurance
           ]
         );
@@ -1306,7 +1363,7 @@ const PatientPaymentInfo =
       const showCheckEligibilityButton =
         useMemo(
           () =>
-            isWaseelCoverage &&
+            requiresWaseelEligibility &&
             shouldShowCheckEligibilityAction(
               patientInsurance ??
                 null
@@ -1314,7 +1371,7 @@ const PatientPaymentInfo =
             !isLocked &&
             !isViewOnlyMode,
           [
-            isWaseelCoverage,
+            requiresWaseelEligibility,
             patientInsurance,
             isLocked,
             isViewOnlyMode
@@ -5581,7 +5638,7 @@ const PatientPaymentInfo =
             ) : null}
 
             {isInsurance &&
-            isWaseelCoverage ? (
+            requiresWaseelEligibility ? (
               <Panel
                 bordered
                 className="payment-info__panel payment-info__panel--nested"
