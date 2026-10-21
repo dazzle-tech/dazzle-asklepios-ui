@@ -1183,6 +1183,32 @@ const normalizeEligibilitySyncedDate = (
   return parsed.toISOString().split('T')[0];
 };
 
+export const isInsuranceExpirationInForce = (
+  insurance?: { expirationDate?: string | Date | null } | null,
+  serviceDate: string = getTodayServiceDate()
+): boolean => {
+  if (!insurance?.expirationDate) {
+    return false;
+  }
+
+  const raw = insurance.expirationDate;
+  const expiration =
+    raw instanceof Date ? raw.toISOString().slice(0, 10) : String(raw).slice(0, 10);
+
+  return Boolean(expiration) && expiration >= serviceDate;
+};
+
+export const resolveExpirationEligibilityStatus = (
+  insurance?: { expirationDate?: string | Date | null } | null,
+  serviceDate: string = getTodayServiceDate()
+): string => {
+  if (!insurance?.expirationDate) {
+    return 'Not eligible';
+  }
+
+  return isInsuranceExpirationInForce(insurance, serviceDate) ? 'Active' : 'Expired';
+};
+
 export const isEligibilityValidForServiceDate = (
   insurance?: PatientInsurance | Record<string, unknown> | null,
   serviceDate: string = getTodayServiceDate()

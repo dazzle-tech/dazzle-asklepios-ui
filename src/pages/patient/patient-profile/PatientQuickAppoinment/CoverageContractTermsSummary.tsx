@@ -41,7 +41,14 @@ const CoverageContractTermsSummary = ({
     return null;
   }
 
-  const isWaseel = isWaseelEnabled !== false;
+  const waseelIntegration = isWaseelEnabled === true;
+  if (waseelIntegration && !data?.matched) {
+    return null;
+  }
+
+  const contractDrivesShare =
+    String(data?.contract?.approvalCoverageCompany || '').toUpperCase() === 'NPHIES';
+  const isWaseel = isWaseelEnabled !== false && !contractDrivesShare;
   const copayment = data?.copayment;
   const copaymentLabel = copayment
     ? copayment.valueType === 'FIXED' || String(copayment.valueType).toUpperCase() === 'FIXED'
@@ -74,16 +81,17 @@ const CoverageContractTermsSummary = ({
               </div>
             ) : copaymentLabel ? (
               <div>
-                Patient share from Contract Terms: {copaymentLabel}
+                This visit follows the coverage contract tabs. Patient share from Contract Terms: {copaymentLabel}
                 {copayment?.encounterType
                   ? ` (${formatEnumString(copayment.encounterType)})`
                   : ''}
-                . Wasel eligibility is not required for this payer.
+                . Eligibility follows the insurance expiration date. A Waseel eligibility check is not required.
               </div>
             ) : (
               <div>
-                Coverage contract matched, but no co-payment rule was found for this encounter type. Existing
-                insurance defaults will be used if available.
+                Coverage contract matched, but no co-payment rule was found for this encounter type. Other contract
+                tab rules still apply when they match this visit. Eligibility follows the insurance expiration date.
+                A Waseel eligibility check is not required.
               </div>
             )}
           </div>
