@@ -10,7 +10,16 @@ export type InsuranceCompanyPolicySave = {
   validTo: string;
 };
 
-const toList = (res: InsuranceCompanyPolicy[] | { data?: InsuranceCompanyPolicy[] }) =>
+export type PolicyCoverageClass = {
+  id: number;
+  name: string;
+  isActive?: boolean;
+  coverageContractId?: number | null;
+  guarantorType?: string | null;
+  coverageName?: string | null;
+};
+
+const toList = <T,>(res: T[] | { data?: T[] } | null | undefined): T[] =>
   Array.isArray(res) ? res : res?.data ?? [];
 
 export const InsuranceCompanyPolicyService = createApi({
@@ -41,11 +50,23 @@ export const InsuranceCompanyPolicyService = createApi({
       invalidatesTags: (_result, _error, { insuranceCompanyId }) => [
         { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
       ]
+    }),
+
+    getPolicyCoverageClasses: builder.query<
+      PolicyCoverageClass[],
+      { insuranceCompanyId: number; policyId: number }
+    >({
+      query: ({ insuranceCompanyId, policyId }) => ({
+        url: `/api/setup/nphies-payers/${insuranceCompanyId}/policies/${policyId}/classes`,
+        method: 'GET'
+      }),
+      transformResponse: (res: PolicyCoverageClass[] | { data?: PolicyCoverageClass[] }) => toList(res)
     })
   })
 });
 
 export const {
   useGetInsuranceCompanyPoliciesQuery,
-  useCreateInsuranceCompanyPolicyMutation
+  useCreateInsuranceCompanyPolicyMutation,
+  useGetPolicyCoverageClassesQuery
 } = InsuranceCompanyPolicyService;

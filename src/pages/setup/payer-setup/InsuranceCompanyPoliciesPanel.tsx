@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { MdLayers } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { NphiesPayer } from '@/types/model-types-new';
+import { InsuranceCompanyPolicy, NphiesPayer } from '@/types/model-types-new';
 import { useGetInsuranceCompanyPoliciesQuery } from '@/services/setup/payer/InsuranceCompanyPolicyService';
+import PolicyClassesModal from './PolicyClassesModal';
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -20,9 +22,16 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
   insuranceCompany
 }) => {
   const companyId = insuranceCompany?.id;
+  const [classesOpen, setClassesOpen] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState<InsuranceCompanyPolicy | null>(null);
   const { data, isFetching } = useGetInsuranceCompanyPoliciesQuery(companyId as number, {
     skip: !companyId
   });
+
+  useEffect(() => {
+    setClassesOpen(false);
+    setSelectedPolicy(null);
+  }, [companyId]);
 
   if (!companyId) {
     return null;
@@ -55,6 +64,26 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
       title: <Translate>Valid To</Translate>,
       flexGrow: 2,
       render: (row: { validTo?: string }) => <span>{formatDate(row.validTo)}</span>
+    },
+    {
+      key: 'actions',
+      title: '',
+      width: 70,
+      render: (row: InsuranceCompanyPolicy) => (
+        <div className="container-of-icons">
+          <MdLayers
+            className="icons-style"
+            title="Classes"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              setSelectedPolicy(row);
+              setClassesOpen(true);
+            }}
+          />
+        </div>
+      )
     }
   ];
 
@@ -64,6 +93,12 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
         Policies - {insuranceCompany?.nameEn || insuranceCompany?.nphiesId}
       </h4>
       <MyTable data={data ?? []} columns={columns} loading={isFetching} height={260} />
+      <PolicyClassesModal
+        open={classesOpen}
+        setOpen={setClassesOpen}
+        insuranceCompanyId={companyId}
+        policy={selectedPolicy}
+      />
     </div>
   );
 };
