@@ -288,6 +288,8 @@ import { claimEncounterCopyCurrentMedicationService } from './services/billing/c
 import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
 import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
 import { clinicalSummaryVoiceService } from './services/ai-services/clinicalSummaryVoiceService';
+import { ambientDraftService } from './services/ai-services/ambientDraftService';
+import { encounterAmbientService } from './services/encounters/encounterAmbientService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -342,6 +344,8 @@ export const store = configureStore({
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
+    [ambientDraftService.reducerPath]: ambientDraftService.reducer,
+    [encounterAmbientService.reducerPath]: encounterAmbientService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -958,7 +962,9 @@ export const store = configureStore({
         claimEncounterCopyCurrentMedicationService.middleware,
         claimEncounterCopyDiagnosticOrderTestResultService.middleware,
         claimEncounterCopyDiagnosticOrderTestReportService.middleware,
-        clinicalSummaryVoiceService.middleware
+        clinicalSummaryVoiceService.middleware,
+        ambientDraftService.middleware,
+        encounterAmbientService.middleware
       ) as any
 });
 

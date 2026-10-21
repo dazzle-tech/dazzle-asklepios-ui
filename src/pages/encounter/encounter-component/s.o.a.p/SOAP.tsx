@@ -40,6 +40,7 @@ import FieldAuditHistoryModal from './FieldAuditHistory';
 import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
 import Allergies from '../../encounter-pre-observations-new/AllergiesNurse';
 import AutoPopulationSection from './AutoPopulationSection';
+import AmbientScribe from './AmbientScribe';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -384,6 +385,18 @@ const SOAP = props => {
         // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
           <div className="top-section">
+            <AmbientScribe
+              disabled={edit}
+              patientId={patient?.id}
+              encounterId={localEncounter?.id || encounterId}
+              patientLine={[
+                [patient?.firstName, patient?.secondName, patient?.lastName].filter(Boolean).join(' '),
+                patient?.medicalRecordNumber ? `# ${patient.medicalRecordNumber}` : '',
+                patient?.sexAtBirth || ''
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
              <AutoPopulationSection
 
 
