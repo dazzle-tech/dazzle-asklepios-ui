@@ -36,6 +36,7 @@ import { observationService } from '@/services/observationService';
 import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { pharmaceuticalService } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
@@ -122,6 +123,7 @@ import { BrandMedicationSubstituteService } from '@/services/setup/brandmedicati
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+import { medFrequencySetupService } from './services/setup/med-frequency-setup/medFrequencySetupService';
 
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 
@@ -361,6 +363,7 @@ export const store = configureStore({
     // medication / active ingredients
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [pharmaceuticalService.reducerPath]: pharmaceuticalService.reducer,
     [activeIngredientSpecialPopulationService.reducerPath]:
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
@@ -406,6 +409,7 @@ export const store = configureStore({
 
     // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
+    [medFrequencySetupService.reducerPath]: medFrequencySetupService.reducer,
 
     // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
@@ -733,6 +737,7 @@ export const store = configureStore({
         setupService.middleware,
         medicationsSetupService.middleware,
         activeIngredientSynonymsService.middleware,
+        pharmaceuticalService.middleware,
         activeIngredientAdverseEffectService.middleware,
         activeIngredientIndicationService.middleware,
         activeIngredientSpecialPopulationService.middleware,
@@ -803,6 +808,7 @@ export const store = configureStore({
         BrandMedicationSubstituteService.middleware,
         BrandMedicationActiveIngredientService.middleware,
         prescriptionInstructionService.middleware,
+        medFrequencySetupService.middleware,
         uomGroupService.middleware,
         countryService.middleware,
         countryDistrictService.middleware,

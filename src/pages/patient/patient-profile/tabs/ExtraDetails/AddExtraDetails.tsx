@@ -13,12 +13,14 @@ import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { formatEnumString } from '@/utils';
+import { isCitizenFromDocumentType } from '@/utils/patientCitizen';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
 import clsx from 'clsx';
 
 const SAUDI_ARABIA_CODE = 'SAUDI_ARABIA';
+const NATIONAL_ID_TYPE = 'NATIONAL_ID';
 
 const toHumanPatientDocumentError = (
   err,
@@ -86,10 +88,12 @@ const toHumanPatientDocumentError = (
 
 const AddExtraDetails = ({
   localPatient,
+  setLocalPatient,
   open,
   setOpen,
   secondaryDocument,
   setSecondaryDocument,
+  updatesCitizenFlag,
   refetch
 }) => {
   const dispatch = useAppDispatch();
@@ -126,6 +130,21 @@ const AddExtraDetails = ({
     [activeCountriesResp]
   );
 
+  const matchesSaudiNationalIdCitizenRule = (document: {
+    type?: string | null;
+    countryId?: number | string | null;
+    number?: string | number | null;
+  }) =>
+    saudiCountryId != null &&
+    document?.countryId != null &&
+    String(document.countryId) === String(saudiCountryId) &&
+    String(document.type ?? '')
+      .trim()
+      .toUpperCase() === NATIONAL_ID_TYPE &&
+    String(document.number ?? '')
+      .trim()
+      .startsWith('1');
+
   const validateDocument = () => {
     const { type, number, countryId } = secondaryDocument;
     const numberStr = String(number ?? '').trim();
@@ -158,6 +177,31 @@ const AddExtraDetails = ({
 
     return true;
   };
+
+  const documentTypeRef = useRef(secondaryDocument?.type);
+
+  useEffect(() => {
+    if (!open) {
+      documentTypeRef.current = undefined;
+      return;
+    }
+
+    if (documentTypeRef.current === undefined) {
+      documentTypeRef.current = secondaryDocument?.type;
+      return;
+    }
+
+    if (documentTypeRef.current === secondaryDocument?.type || !updatesCitizenFlag || !setLocalPatient) {
+      return;
+    }
+
+    documentTypeRef.current = secondaryDocument?.type;
+    const isCitizen = isCitizenFromDocumentType(secondaryDocument?.type);
+    setLocalPatient((current: any) => ({
+      ...current,
+      isCitizen
+    }));
+  }, [open, secondaryDocument?.type, updatesCitizenFlag]);
 
   useEffect(() => {
     if (open && !secondaryDocument.id) {
@@ -228,6 +272,19 @@ const AddExtraDetails = ({
           }
         />
       )}
+
+      {/* {updatesCitizenFlag && (
+        <MyInput
+          required
+          column
+          width={300}
+          fieldLabel="Citizen"
+          fieldType="checkbox"
+          fieldName="isCitizen"
+          record={localPatient}
+          setRecord={setLocalPatient}
+        />
+      )} */}
     </Form>
   );
 
@@ -243,25 +300,38 @@ const AddExtraDetails = ({
       return;
     }
 
-     if (!isNoDoc) {
-    try {
+    if (!isNoDoc) {
+      const number = String(secondaryDocument.number ?? '').trim();
+      const matchesCitizenRule = matchesSaudiNationalIdCitizenRule({
+        ...secondaryDocument,
+        number
+      });
+
+      try {
         const payload = {
           ...secondaryDocument,
           patientId: localPatient.id,
-          number: String(secondaryDocument.number ?? '').trim(),
+          number,
+          isCitizen: matchesCitizenRule ? true : Boolean(localPatient?.isCitizen)
         };
 
         secondaryDocument.id
           ? await updatePatientDocument(payload).unwrap()
           : await addPatientDocument(payload).unwrap();
 
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      refetch();
-      handleClear();
-    } catch (err) {
-      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
+        if (matchesCitizenRule && setLocalPatient) {
+          setLocalPatient((current: any) =>
+            current?.isCitizen === true ? current : { ...current, isCitizen: true }
+          );
+        }
+
+        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+        refetch();
+        handleClear();
+      } catch (err) {
+        dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
+      }
     }
-  }
   };
 
   return (

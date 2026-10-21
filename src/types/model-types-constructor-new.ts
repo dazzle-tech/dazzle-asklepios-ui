@@ -392,6 +392,9 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultBufferAfterMinutes: 0,
   modality:null,
   billingRuleId: null,
+  loincCodeId: null,
+  loincCode: null,
+  loincDescription: null,
 };
 
 
@@ -575,6 +578,18 @@ export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   synonym: '',
   dentalActionId: 0,
   cdtId: 0
+};
+
+// ------------------- Pharmaceutical -------------------
+export const newPharmaceutical: modelTypes.Pharmaceutical = {
+  id: undefined,
+  activeIngredientId: 0,
+  pharmaceuticalName: '',
+  code: '',
+  billingCode: '',
+  itemDescription: '',
+  secondDescription: '',
+  isActive: true
 };
 
 // ------------------- Special Population -------------------
@@ -1791,6 +1806,7 @@ export const newPatient: modelTypes.Patient = {
 
   isCchiPatient: false,
   documentId: '',
+  isCitizen: false,
    
   isVerified: false,
   isCompletedPatient: false,
@@ -2948,6 +2964,8 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   functionalStatus: null,
   cognitiveCheck: null,
   bloodGroup: null,
+  isPregnant: null,
+  isLactating: null,
   createdDate: null,
   lastModifiedDate: null
 };
@@ -3658,6 +3676,9 @@ modelTypes.Tax = {
 
   applicableOn:
     'INVOICE',
+
+  citizenCategory:
+    'ALL',
 
   validFrom:
     '',

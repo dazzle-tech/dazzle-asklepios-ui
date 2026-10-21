@@ -249,7 +249,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
-        modality: diagnosticsTest?.modality
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
 
       };
 
@@ -371,7 +373,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
-        modality: diagnosticsTest?.modality
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
 
       };
 
@@ -768,6 +772,20 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     {
       key: 'internalCode',
       title: <Translate>Internal Code</Translate>
+    },
+    {
+      key: 'loincCode',
+      title: <Translate>LOINC</Translate>,
+      flexGrow: 2,
+      render: (rowData: DiagnosticTest) => {
+        if (!rowData?.loincCode) return <p>—</p>;
+        return (
+          <p>
+            {rowData.loincCode}
+            {rowData.loincDescription ? ` — ${rowData.loincDescription}` : ''}
+          </p>
+        );
+      }
     },
 
     {

@@ -57,6 +57,7 @@ export const useBillingAccountingData = ({
   const {
     data: encountersResponse,
     isFetching: loadingEncounters,
+    isSuccess: encountersQuerySuccess,
     refetch: refetchEncounters
   } = useGetEncountersByPatientQuery(
     { patientId: patientId as number, page: 0, size: 100, sort: 'createdDate,desc' },
@@ -329,6 +330,7 @@ export const useBillingAccountingData = ({
     facilityCurrency,
     encounters,
     loadingEncounters,
+    encountersReady: patientId != null && encountersQuerySuccess,
     selectedEncounter,
     summary: effectiveSummary,
     summaryForDisplay: summaryMatchesEncounter ? billingSummary ?? null : null,

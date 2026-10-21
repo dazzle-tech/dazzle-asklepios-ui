@@ -128,6 +128,16 @@ submitUccMedicationOrderGroup: builder.mutation<
   invalidatesTags: ['UccMedicationOrder'],
 }),
 
+    // ================= CREATE PLAN =================
+    // Splits a submitted order that was not split on submit, using the frequency setup (from the submit time, over 24h)
+    createUccMedicationOrderPlan: builder.mutation<modelTypes.PatientUccMedicationOrder[], { orderGroupId: Id }>({
+      query: ({ orderGroupId }) => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}/plan`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['UccMedicationOrder']
+    }),
+
     // ================= GET BY ID =================
     getUccMedicationOrderById: builder.query<
       modelTypes.PatientUccMedicationOrder,
@@ -156,7 +166,8 @@ submitUccMedicationOrderGroup: builder.mutation<
         frequency?: string;
         page?: number;
         size?: number;
-        sort?: string;
+        // Several sort orders are sent as repeated sort params, e.g. ['orderGroupId,desc', 'doseTime,asc']
+        sort?: string | string[];
         timestamp?: number;
         orderDateFrom?: string;
         orderDateTo?: string;
@@ -181,7 +192,9 @@ submitUccMedicationOrderGroup: builder.mutation<
         size = 10,
         sort = 'createdDate,desc',
       }) => ({
-        url: `/api/patient/urgent-care-medication-orders/filter`,
+        url: `/api/patient/urgent-care-medication-orders/filter?${new URLSearchParams(
+          (Array.isArray(sort) ? sort : [sort]).map(s => ['sort', s])
+        ).toString()}`,
         params: {
           patientId,
           patientIds,
@@ -198,7 +211,6 @@ submitUccMedicationOrderGroup: builder.mutation<
           frequency,
           page,
           size,
-          sort,
         },
       }),
 
@@ -246,13 +258,19 @@ submitUccMedicationOrderGroup: builder.mutation<
   {
     id: Id;
     actualAdministerTime: Date;
+    brandMedicationId: number;
+    uomGroupUnitId: number;
+    quantity: number;
   }
 >({
-  query: ({ id, actualAdministerTime }) => ({
+  query: ({ id, actualAdministerTime, brandMedicationId, uomGroupUnitId, quantity }) => ({
     url: `/api/patient/urgent-care-medication-orders/${id}/administer`,
     method: 'POST',
     body: {
       actualAdministerTime,
+      brandMedicationId,
+      uomGroupUnitId,
+      quantity,
     },
   }),
   invalidatesTags: (_res, _err, { id }) => [
@@ -339,6 +357,7 @@ export const {
 
   useSubmitUccMedicationOrderMutation,
   useSubmitUccMedicationOrderGroupMutation,
+  useCreateUccMedicationOrderPlanMutation,
   useUpdateUccMedicationOrderGroupMutation,
   useAdministerUccMedicationOrderMutation,
   useDoubleCheckUccMedicationOrderMutation,

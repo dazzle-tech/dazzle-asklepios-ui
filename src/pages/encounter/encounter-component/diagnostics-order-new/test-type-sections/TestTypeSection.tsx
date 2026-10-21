@@ -2,19 +2,17 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
-import {
-  useGetActiveDiagnosticTestsByTypeQuery,
-  useGetDiagnosticTestsByIdsQuery
-} from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetActiveDiagnosticTestsByTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { CircularProgress } from '@mui/material';
 import { skipToken } from '@reduxjs/toolkit/query';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Form } from 'rsuite';
 import '../styles.less';
 
 const PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export const getItemKey = (item: any) => item?.id ?? item?.key;
 export const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
@@ -33,6 +31,12 @@ type SectionProps = {
   loading?: boolean;
 };
 
+type QueryFilters = {
+  search: string;
+  catalogId?: number;
+  page: number;
+};
+
 /* ================= one section (Laboratory or Radiology) ================= */
 
 const TestTypeSection: React.FC<SectionProps> = ({
@@ -48,16 +52,24 @@ const TestTypeSection: React.FC<SectionProps> = ({
 }) => {
   const hasFixedItems = Array.isArray(items);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [page, setPage] = useState(0);
-  const [tests, setTests] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [catalogFilter, setCatalogFilter] = useState<{ catalogId?: number }>({});
-  const catalogId = catalogFilter?.catalogId;
+  const [filters, setFilters] = useState<QueryFilters>({ search: '', page: 0 });
+  const [tests, setTests] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const appliedRequestKeyRef = useRef<string | null>(null);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
-  // Catalog filter: catalog → its test ids → full (active) test objects of this section's type
+  const activeSearch = filters.search.trim();
+  const activeCatalogId = filters.catalogId;
+  const page = filters.page;
+
+  // Catalog ids only needed to narrow a fixed list (favorites); paged API path filters by catalogId on the backend
   const { data: catalogTestsResponse, isFetching: isFetchingCatalogTests } = useGetCatalogTestsQuery(
-    open && catalogId ? { catalogId, page: 0, size: 1000 } : skipToken
+    open && hasFixedItems && activeCatalogId
+      ? { catalogId: activeCatalogId, page: 0, size: 1000 }
+      : skipToken
   );
 
   const catalogTestIds = useMemo(() => {
@@ -66,75 +78,120 @@ const TestTypeSection: React.FC<SectionProps> = ({
     return list.map((t: any) => t.diagnosticTestId ?? t.testId ?? t.id).filter(Boolean);
   }, [catalogTestsResponse]);
 
-  // A fixed list already has the full test objects, so it only needs the catalog's ids
-  const { data: catalogTestsFull, isFetching: isFetchingCatalogFull } = useGetDiagnosticTestsByIdsQuery(
-    open && !hasFixedItems && catalogId && catalogTestIds.length ? { ids: catalogTestIds } : skipToken
+  const catalogTestIdSet = useMemo(() => new Set(catalogTestIds.map(String)), [catalogTestIds]);
+
+  const queryArgs = useMemo(
+    () => ({
+      type,
+      page,
+      size: PAGE_SIZE,
+      sort: 'id,asc' as const,
+      ...(activeSearch ? { name: activeSearch } : {}),
+      ...(activeCatalogId != null ? { catalogId: activeCatalogId } : {})
+    }),
+    [type, page, activeSearch, activeCatalogId]
   );
 
-  const catalogTests = useMemo(
-    () =>
-      (catalogTestsFull ?? []).filter(
-        (t: any) => t?.isActive !== false && normalizeSearchText(t?.type) === normalizeSearchText(type)
-      ),
-    [catalogTestsFull, type]
-  );
+  const requestKey = `${type}|${activeSearch}|${activeCatalogId ?? ''}|${page}`;
 
-  const { data: testsResponse, isFetching } = useGetActiveDiagnosticTestsByTypeQuery(
-    open && !hasFixedItems ? { type, page, size: PAGE_SIZE, sort: 'id,asc' } : skipToken
+  const {
+    currentData: testsResponse,
+    isFetching,
+    originalArgs
+  } = useGetActiveDiagnosticTestsByTypeQuery(
+    open && !hasFixedItems ? queryArgs : skipToken
   );
 
   const fixedItemsOfType = useMemo(
-    () =>
-      (items ?? []).filter(t => normalizeSearchText(t?.type) === normalizeSearchText(type)),
+    () => (items ?? []).filter(t => normalizeSearchText(t?.type) === normalizeSearchText(type)),
     [items, type]
   );
 
-  // Clear the search/catalog every time the popup opens (loaded tests are kept, they come from the RTK cache anyway)
+  const replaceFilters = (next: QueryFilters) => {
+    appliedRequestKeyRef.current = null;
+    setTests([]);
+    setTotalCount(0);
+    setFilters(next);
+  };
+
+  const commitSearch = (raw: string) => {
+    const nextSearch = String(raw ?? '');
+    const prev = filtersRef.current;
+    if (prev.search === nextSearch) return;
+    replaceFilters({ ...prev, search: nextSearch, page: 0 });
+  };
+
+  // Debounce search input (~300ms) before querying the backend
+  useEffect(() => {
+    const timer = setTimeout(() => commitSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Clear filters when the popup opens; reset local paging state
   useEffect(() => {
     if (!open) return;
     setSearchInput('');
-    setSearchTerm('');
     setCatalogFilter({});
+    replaceFilters({ search: '', page: 0 });
   }, [open]);
 
-  // Accumulate pages (Load More)
+  // Apply server pages: replace on page 0, append on Load More; ignore stale responses
   useEffect(() => {
-    if (!testsResponse?.data) return;
-    setTests(prev => {
-      const existing = new Set(prev.map(getItemKey));
-      return [...prev, ...testsResponse.data.filter((t: any) => !existing.has(getItemKey(t)))];
-    });
-  }, [testsResponse]);
+    if (hasFixedItems || !testsResponse?.data || !originalArgs) return;
+
+    const argsName = String(originalArgs.name ?? '').trim();
+    const argsCatalogId = originalArgs.catalogId ?? undefined;
+    const argsPage = originalArgs.page ?? 0;
+
+    if (argsName !== activeSearch) return;
+    if ((argsCatalogId ?? undefined) !== (activeCatalogId ?? undefined)) return;
+    if (argsPage !== page) return;
+    if (appliedRequestKeyRef.current === requestKey) return;
+
+    appliedRequestKeyRef.current = requestKey;
+
+    if (page === 0) {
+      setTests(testsResponse.data);
+    } else {
+      setTests(prev => {
+        const existing = new Set(prev.map(getItemKey));
+        return [...prev, ...testsResponse.data.filter((t: any) => !existing.has(getItemKey(t)))];
+      });
+    }
+    setTotalCount(testsResponse.totalCount ?? 0);
+  }, [
+    testsResponse,
+    originalArgs,
+    page,
+    activeSearch,
+    activeCatalogId,
+    hasFixedItems,
+    requestKey
+  ]);
 
   // Source list:
-  //  - fixed items: this type's items, narrowed to the catalog's tests when a catalog is selected
-  //  - otherwise:   the catalog's tests (fully loaded) when a catalog is selected, else the paged list
-  const catalogTestIdSet = useMemo(() => new Set(catalogTestIds.map(String)), [catalogTestIds]);
-  const sourceTests = useMemo(() => {
+  //  - fixed items: this type's items, narrowed by catalog + client search
+  //  - otherwise: server-filtered/paged list (type + catalog + name applied on backend)
+  const displayedTests = useMemo(() => {
     if (hasFixedItems) {
-      return catalogId
+      const term = normalizeSearchText(activeSearch);
+      let list = activeCatalogId
         ? fixedItemsOfType.filter(t => catalogTestIdSet.has(String(getItemKey(t))))
         : fixedItemsOfType;
+      if (term) {
+        list = list.filter(t => normalizeSearchText(getItemName(t)).includes(term));
+      }
+      return list;
     }
-    return catalogId ? catalogTests : tests;
-  }, [hasFixedItems, catalogId, fixedItemsOfType, catalogTestIdSet, catalogTests, tests]);
+    return tests;
+  }, [hasFixedItems, activeCatalogId, fixedItemsOfType, catalogTestIdSet, activeSearch, tests]);
 
-  const hasMore = !hasFixedItems && !catalogId && tests.length < (testsResponse?.totalCount ?? 0);
+  const hasMore = !hasFixedItems && tests.length < totalCount;
   const isLoading = hasFixedItems
-    ? !!loading || (!!catalogId && isFetchingCatalogTests)
-    : catalogId
-      ? isFetchingCatalogTests || isFetchingCatalogFull
-      : isFetching && tests.length === 0;
+    ? !!loading || (!!activeCatalogId && isFetchingCatalogTests)
+    : isFetching && tests.length === 0;
 
-  const filteredTests = useMemo(() => {
-    const term = normalizeSearchText(searchTerm);
-    if (!term) return sourceTests;
-    return sourceTests.filter(t => normalizeSearchText(getItemName(t)).includes(term));
-  }, [sourceTests, searchTerm]);
-
-  // "tests" = what is shown in the list right now (catalog, search and Load More all change it);
-  // "selected" (selectedCount) never follows the list — it is everything chosen in this section
-  const displayedTotal = filteredTests.length;
+  const displayedTotal = hasFixedItems ? displayedTests.length : totalCount || displayedTests.length;
 
   return (
     <div className="test-type-section">
@@ -164,7 +221,15 @@ const TestTypeSection: React.FC<SectionProps> = ({
             selectDataValue="id"
             width="100%"
             record={catalogFilter}
-            setRecord={setCatalogFilter}
+            setRecord={(r: any) => {
+              const rawId = r?.catalogId;
+              const parsedId = rawId == null || rawId === '' ? NaN : Number(rawId);
+              const nextCatalogId = Number.isFinite(parsedId) ? parsedId : undefined;
+              setCatalogFilter(r ?? {});
+              const prev = filtersRef.current;
+              if (prev.catalogId === nextCatalogId) return;
+              replaceFilters({ ...prev, catalogId: nextCatalogId, page: 0 });
+            }}
           />
         </div>
         <div className="test-name-field-main-container">
@@ -174,19 +239,17 @@ const TestTypeSection: React.FC<SectionProps> = ({
             placeholder="Search Test"
             record={{ testName: searchInput }}
             setRecord={(r: any) => {
-              const val = r?.testName ?? '';
-              setSearchInput(val);
-              setSearchTerm(val);
+              setSearchInput(r?.testName ?? '');
             }}
             width="100%"
             showLabel={false}
             rightAddon={
               <SearchIcon
                 className="search-icon-test-name-icon"
-                onClick={() => setSearchTerm(searchInput)}
+                onClick={() => commitSearch(searchInput)}
               />
             }
-            enterClick={() => setSearchTerm(searchInput)}
+            enterClick={() => commitSearch(searchInput)}
           />
         </div>
       </Form>
@@ -199,12 +262,12 @@ const TestTypeSection: React.FC<SectionProps> = ({
           <div className="test-type-section-loading">
             <CircularProgress size={28} />
           </div>
-        ) : filteredTests.length === 0 ? (
+        ) : displayedTests.length === 0 ? (
           <div className="test-type-section-empty">
             <Translate>No tests found</Translate>
           </div>
         ) : (
-          filteredTests.map(item => {
+          displayedTests.map(item => {
             const key = getItemKey(item);
             return (
               <div key={key} className="test-type-section-item">
@@ -225,7 +288,11 @@ const TestTypeSection: React.FC<SectionProps> = ({
 
       {hasMore && (
         <div className="test-type-section-footer">
-          <MyButton appearance="ghost" onClick={() => setPage(p => p + 1)} disabled={isFetching}>
+          <MyButton
+            appearance="ghost"
+            onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+            disabled={isFetching}
+          >
             Load More
           </MyButton>
         </div>

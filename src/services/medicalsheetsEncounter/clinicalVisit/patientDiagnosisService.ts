@@ -66,11 +66,24 @@ export const patientDiagnosisService = createApi({
 
     getPatientDiagnosesByPatientId: builder.query<
       modelTypes.PatientDiagnosis[],
-      { patientId: Id; page?: number; size?: number; sort?: string; timestamp?: number }
+      {
+        patientId: Id;
+        encounterId?: Id;
+        currentEncounter?: boolean;
+        page?: number;
+        size?: number;
+        sort?: string;
+        timestamp?: number;
+      }
     >({
-      query: ({ patientId, page = 0, size = 20, sort = 'createdDate,desc' }) => ({
+      query: ({ patientId, encounterId, currentEncounter, page = 0, size = 20, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/patient-diagnoses/patient/${patientId}`,
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          ...(encounterId != null ? { encounterId, currentEncounter: currentEncounter ?? true } : {})
+        }
       }),
       providesTags: (_res, _err, { patientId }) => [
         { type: 'PatientDiagnosis', id: `patient-${patientId}` },

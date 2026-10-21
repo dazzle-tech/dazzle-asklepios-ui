@@ -1071,6 +1071,9 @@ export interface DiagnosticTest {
   defaultBufferAfterMinutes: number,
   modality:string
   billingRuleId?: number | null;
+  loincCodeId?: number | null;
+  loincCode?: string | null;
+  loincDescription?: string | null;
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -1425,6 +1428,18 @@ export interface ActiveIngredientSynonym {
   synonym: string;
 }
 
+export interface Pharmaceutical {
+  id?: number;
+  activeIngredientId: number;
+  activeIngredientName?: string;
+  pharmaceuticalName: string;
+  code?: string;
+  billingCode?: string;
+  itemDescription?: string;
+  secondDescription?: string;
+  isActive: boolean;
+}
+
 export interface ActiveIngredientIndication {
   id?: number;
   activeIngredientId: number;
@@ -1741,6 +1756,7 @@ export interface Patient {
 
   isCchiPatient?: boolean | null;
   documentId?: string | null;
+  isCitizen?: boolean | null;
 
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
@@ -4662,6 +4678,11 @@ export interface PatientObservationsComplaints {
 
   bloodGroup?: string | null;
 
+  // Female patients only.
+  isPregnant?: boolean | null;
+
+  isLactating?: boolean | null;
+
   createdDate?: Date | string | null;
 
   lastModifiedDate?: Date | string | null;
@@ -5332,6 +5353,7 @@ export type CurrentMedicationForm = CurrentMedication & {
     doseUnit?: string | null;
     route?: string | null;
 
+    frequency?: string | null;
     frequencyNumber?: number | null;
     frequencyUnit?: string | null;
     duration?: number | null;
@@ -6191,9 +6213,18 @@ export type TaxCalculationType =
 
 export type TaxApplicableOn =
   | 'INVOICE'
-  | 'INVOICE_LINE'
+  | 'CHARGE_LINE'
   | 'SERVICE'
-  | 'PRODUCT';
+  | 'PROCEDURE'
+  | 'MEDICATION'
+  | 'LABORATORY'
+  | 'RADIOLOGY'
+  | 'PATHOLOGY';
+
+export type TaxCitizenCategory =
+  | 'ALL'
+  | 'CITIZEN'
+  | 'NON_CITIZEN';
 
 /*
  * إذا كان Currency موجودًا عندك مسبقًا،
@@ -6224,6 +6255,9 @@ export type Tax = {
 
   applicableOn?:
     TaxApplicableOn;
+
+  citizenCategory?:
+    TaxCitizenCategory;
 
   validFrom?: string;
 
@@ -6256,6 +6290,9 @@ export type SaveTaxRequest = {
 
   applicableOn:
     TaxApplicableOn;
+
+  citizenCategory?:
+    TaxCitizenCategory;
 
   validFrom: string;
 
@@ -6533,6 +6570,7 @@ export type EncounterBillingItemSummary = {
   discountAmount: number;
   exemptionAmount: number;
   taxAmount: number;
+  taxRate?: number | null;
   netAmount: number;
   patientResponsibilityAmount: number;
   insuranceResponsibilityAmount: number;

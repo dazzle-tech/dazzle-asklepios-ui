@@ -75,6 +75,23 @@ export const prescriptionInstructionService = createApi({
     providesTags: ["prescriptionInstructions"],
     }),
 
+    getPrescriptionInstructionsByDose: builder.query({
+      query: ({ dose, ...params }) => ({
+        url: `/api/setup/prescription-instruction/by-dose/${encodeURIComponent(dose)}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["prescriptionInstructions"],
+    }),
+
     getPrescriptionInstructionsByRoute: builder.query({
       query: ({ route, ...params }) => ({
         url: `/api/setup/prescription-instruction/by-route/${route}`,
@@ -172,6 +189,7 @@ export const {
   useLazyGetPrescriptionInstructionsByFrequencyQuery,
   useLazyGetPrescriptionInstructionsByRouteQuery,
   useLazyGetPrescriptionInstructionsByUnitQuery,
+  useLazyGetPrescriptionInstructionsByDoseQuery,
   useCreatePrescriptionInstructionMutation,
   useUpdatePrescriptionInstructionMutation,
   useDeletePrescriptionInstructionMutation

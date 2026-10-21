@@ -677,11 +677,11 @@ const CollectSambleModal = ({
                                     </span>
                                 </Whisper>
 
-                                {/* <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
+                                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
                                     <span>
                                         <PrintSelectedSampleLabelsAction orderTestIds={selectedRows} />
                                     </span>
-                                </Whisper> */}
+                                </Whisper>
                                 <MyTable
                                     data={collectableTests}
                                     columns={testColumns}
