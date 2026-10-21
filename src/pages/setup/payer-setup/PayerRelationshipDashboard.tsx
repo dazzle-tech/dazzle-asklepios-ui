@@ -21,22 +21,7 @@ import type {
 type Kind = 'INSURANCE' | 'TPA';
 type Selected = { kind: Kind; id: number } | null;
 
-const ROLE_LABEL: Record<string, string> = {
-  PARENT: 'Parent',
-  CHILD: 'Child',
-  STANDALONE: 'Standalone'
-};
-
 const statusText = (active?: boolean | null) => (active === false ? 'Inactive' : 'Active');
-
-const partyName = (party?: PayerDashboardLinkedParty | null) => {
-  if (!party) {
-    return '';
-  }
-  const code = String(party.code ?? '').trim();
-  const name = String(party.name ?? '').trim();
-  return code && name ? `${code} — ${name}` : name || code;
-};
 
 const PayerRelationshipDashboard = ({ active = true }: { active?: boolean }) => {
   const [kind, setKind] = useState<Kind>('INSURANCE');
@@ -84,7 +69,7 @@ const PayerRelationshipDashboard = ({ active = true }: { active?: boolean }) => 
             <Translate>TPA & Insurance Dashboard</Translate>
           </h2>
           <p className="payer-dashboard-copy">
-            <Translate>Click a company to open its parent, children, contracts, and price lists.</Translate>
+            <Translate>Click a company to open its contracts, price lists, and linked companies.</Translate>
           </p>
         </div>
         <button type="button" className="payer-dashboard-refresh" onClick={() => refetch()} disabled={!active}>
@@ -95,8 +80,6 @@ const PayerRelationshipDashboard = ({ active = true }: { active?: boolean }) => 
       <div className="payer-dashboard-kpis">
         <Kpi label="Insurances" value={summary?.insuranceCount} />
         <Kpi label="TPAs" value={summary?.tpaCount} accent="purple" />
-        <Kpi label="Parents" value={summary?.parentCompanyCount} accent="info" />
-        <Kpi label="Children" value={summary?.childCompanyCount} accent="info" />
         <Kpi label="With contracts" value={summary?.insurancesWithContracts} accent="success" />
         <Kpi label="With price lists" value={summary?.insurancesWithPriceLists} accent="warning" />
       </div>
@@ -153,7 +136,7 @@ const PayerRelationshipDashboard = ({ active = true }: { active?: boolean }) => 
                     selected={selected?.kind === 'INSURANCE' && selected.id === item.id}
                     code={item.nphiesId}
                     name={item.nameEn || item.nameAr || ''}
-                    meta={ROLE_LABEL[item.role] ?? item.role}
+                    meta={statusText(item.isActive)}
                     onClick={() => selectItem('INSURANCE', item.id)}
                   />
                 ))
@@ -186,7 +169,6 @@ const PayerRelationshipDashboard = ({ active = true }: { active?: boolean }) => 
                 card={selectedInsurance}
                 detailTab={detailTab}
                 setDetailTab={setDetailTab}
-                onOpenInsurance={id => selectItem('INSURANCE', id)}
                 onOpenTpa={id => selectItem('TPA', id)}
               />
             ) : selectedTpa ? (
@@ -238,13 +220,11 @@ const InsuranceDetail = ({
   card,
   detailTab,
   setDetailTab,
-  onOpenInsurance,
   onOpenTpa
 }: {
   card: PayerDashboardInsuranceCard;
   detailTab: string;
   setDetailTab: (key: string) => void;
-  onOpenInsurance: (id: number) => void;
   onOpenTpa: (id: number) => void;
 }) => (
   <>
@@ -252,7 +232,7 @@ const InsuranceDetail = ({
       code={card.nphiesId}
       name={card.nameEn || card.nameAr || ''}
       active={card.isActive}
-      badge={ROLE_LABEL[card.role] ?? card.role}
+      badge="Insurance"
       extra={card.facilityName}
     />
     <Tabs appearance="subtle" activeKey={detailTab} onSelect={key => setDetailTab(String(key))}>
@@ -260,10 +240,7 @@ const InsuranceDetail = ({
         <OverviewList
           items={[
             { label: 'Status', value: statusText(card.isActive) },
-            { label: 'Role', value: ROLE_LABEL[card.role] ?? card.role },
             { label: 'Approval Coverage Co.', value: approvalCoverageCompanyLabel(card.approvalCoverageCompany) },
-            { label: 'Parent', value: partyName(card.parent) || 'None' },
-            { label: 'Child companies', value: String(card.childCompanies?.length ?? 0) },
             { label: 'Linked TPAs', value: String(card.tpas?.length ?? 0) },
             { label: 'Coverage contracts', value: String(card.contracts?.length ?? 0) },
             { label: 'Price lists', value: String(card.priceLists?.length ?? 0) }
@@ -271,20 +248,6 @@ const InsuranceDetail = ({
         />
       </Tabs.Tab>
       <Tabs.Tab eventKey="links" title={<Translate>Links</Translate>}>
-        <Section title="Parent insurance" count={card.parent ? 1 : 0}>
-          <PartyTable
-            parties={card.parent ? [card.parent] : []}
-            empty="No parent insurance linked"
-            onOpen={onOpenInsurance}
-          />
-        </Section>
-        <Section title="Companies underneath" count={card.childCompanies?.length ?? 0}>
-          <PartyTable
-            parties={card.childCompanies ?? []}
-            empty="No child insurance companies"
-            onOpen={onOpenInsurance}
-          />
-        </Section>
         <Section title="Linked TPAs" count={card.tpas?.length ?? 0}>
           <PartyTable parties={card.tpas ?? []} empty="No TPA linked" onOpen={onOpenTpa} />
         </Section>
@@ -422,9 +385,8 @@ const ContractTable = ({ contracts }: { contracts: PayerDashboardContract[] }) =
     rows={contracts}
     empty="No coverage contract in Coverage Management"
     columns={[
-      { label: 'Code', render: contract => contract.code || '—' },
-      { label: 'Policy', render: contract => contract.policyNumber || '—' },
       { label: 'Classes', render: contract => contract.className || '—' },
+      { label: 'Parent', render: contract => contract.parentPayerName || '—' },
       { label: 'Type', render: contract => contract.guarantorType || '—' },
       { label: 'Insurance', render: contract => contract.insurancePayerName || '—' },
       { label: 'Price list', render: contract => contract.priceListName || '—' },

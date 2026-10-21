@@ -53,8 +53,6 @@ export type CoverageContract = {
   companyId?: number;
   companyName?: string;
   companyCode?: string;
-  code?: string;
-  policyNumber?: string;
   coverageBasis?: string;
   insurancePayerId?: number;
   insurancePayerName?: string;
@@ -77,6 +75,10 @@ export type CoverageClass = {
   coverageContractId?: number;
   name?: string;
   isActive?: boolean;
+  insuranceCompanyPolicyId?: number | null;
+  policyName?: string | null;
+  policyCode?: string | null;
+  policyNumber?: string | null;
 };
 
 export type CoverageCopayment = {
@@ -84,9 +86,6 @@ export type CoverageCopayment = {
   encounterType?: string;
   valueType?: string;
   valueAmount?: number | string;
-  discountOnExcluded?: boolean;
-  discountOnCash?: boolean;
-  discountOnExceededCash?: boolean;
   isActive?: boolean;
 };
 
@@ -250,12 +249,10 @@ const toContractPayload = (body: CoverageContract) => ({
   ...(body.id != null ? { id: body.id } : {}),
   guarantorType: body.guarantorType,
   companyId: body.companyId,
-  code: body.code,
-  policyNumber: body.policyNumber,
   coverageBasis: body.coverageBasis,
   insurancePayerId: body.insurancePayerId,
   priceListSetupId: body.priceListSetupId,
-  parentPayerId: body.parentPayerId,
+  parentPayerId: body.parentPayerId ? Number(body.parentPayerId) : null,
   approvalCoverageCompany: body.approvalCoverageCompany || null,
   isActive: body.isActive
 });
@@ -304,8 +301,6 @@ export const normalizeCoverageContract = (
     companyId,
     companyName: firstDefined(row.companyName, row.company_name),
     companyCode: firstDefined(row.companyCode, row.company_code),
-    code: firstDefined(row.code, row.coverageCode),
-    policyNumber: firstDefined(row.policyNumber, row.policy_number),
     insurancePayerId,
     insurancePayerName: firstDefined(row.insurancePayerName, row.insurance_payer_name),
     parentPayerId: firstDefined(row.parentPayerId, row.parent_payer_id),
@@ -552,6 +547,17 @@ export const coverageManagementService = createApi({
       query: id => ({ url: `/api/setup/coverage-classes/${id}/toggle-active`, method: 'PATCH' }),
       invalidatesTags: ['CoverageClass']
     }),
+    linkCoverageClassPolicy: builder.mutation<
+      CoverageClass,
+      { id: number; insuranceCompanyPolicyId: number }
+    >({
+      query: ({ id, insuranceCompanyPolicyId }) => ({
+        url: `/api/setup/coverage-classes/${id}/policy`,
+        method: 'PUT',
+        body: { insuranceCompanyPolicyId }
+      }),
+      invalidatesTags: ['CoverageClass']
+    }),
     listCopayments: builder.query<
       PagedResult<CoverageCopayment>,
       PagedParams & { classId: number; isActive?: boolean }
@@ -571,6 +577,13 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoverageCopayment']
     }),
+    toggleCopaymentActive: builder.mutation<CoverageCopayment, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/copayments/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['CoverageCopayment']
+    }),
     listTerms: builder.query<
       PagedResult<CoverageTerm>,
       PagedParams & { classId: number; termType: string; isActive?: boolean }
@@ -587,6 +600,13 @@ export const coverageManagementService = createApi({
         url: `/api/setup/coverage-classes/${classId}/terms`,
         method: body.id ? 'PUT' : 'POST',
         body
+      }),
+      invalidatesTags: ['CoverageTerm']
+    }),
+    toggleTermActive: builder.mutation<CoverageTerm, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/terms/${id}/toggle-active`,
+        method: 'PATCH'
       }),
       invalidatesTags: ['CoverageTerm']
     }),
@@ -640,7 +660,7 @@ export const coverageManagementService = createApi({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/discounts`
           : `/api/setup/coverage-classes/${classId}/discounts`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoverageDiscount']
@@ -678,7 +698,7 @@ export const coverageManagementService = createApi({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
           : `/api/setup/coverage-classes/${classId}/exclusions`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoverageExclusion']
@@ -716,13 +736,25 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoveragePreApproval']
     }),
+    togglePreApprovalActive: builder.mutation<CoveragePreApproval, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/pre-approvals/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['CoveragePreApproval']
+    }),
     listPreApprovalItems: builder.query<
       PagedResult<CoveragePreApprovalItem>,
       PagedParams & { preApprovalId: number; isActive?: boolean }
     >({
       query: ({ preApprovalId, page, size, sort = 'id,desc', isActive }) => ({
         url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
-        params: { page, size, sort, isActive }
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
       }),
       transformResponse: (res: CoveragePreApprovalItem[], meta) => toPagedResult(res, meta),
       providesTags: ['CoveragePreApprovalItem']
@@ -733,7 +765,7 @@ export const coverageManagementService = createApi({
     >({
       query: ({ preApprovalId, body }) => ({
         url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoveragePreApprovalItem']
@@ -769,6 +801,7 @@ export const {
   useCreateCoverageClassMutation,
   useUpdateCoverageClassMutation,
   useToggleCoverageClassActiveMutation,
+  useLinkCoverageClassPolicyMutation,
   useSearchCoverageCompaniesQuery,
   useSearchCoverageInsurancePayersQuery,
   useSearchCoverageTpaInsurancePayersQuery,
@@ -779,8 +812,10 @@ export const {
   useSearchCoverageDiagnosesQuery,
   useListCopaymentsQuery,
   useSaveCopaymentMutation,
+  useToggleCopaymentActiveMutation,
   useListTermsQuery,
   useSaveTermMutation,
+  useToggleTermActiveMutation,
   useListTermItemsQuery,
   useSaveTermItemMutation,
   useListDiscountsQuery,
@@ -791,6 +826,7 @@ export const {
   useDeactivateExclusionMutation,
   useListPreApprovalsQuery,
   useSavePreApprovalMutation,
+  useTogglePreApprovalActiveMutation,
   useListPreApprovalItemsQuery,
   useCreatePreApprovalItemMutation,
   useDeactivatePreApprovalItemMutation,

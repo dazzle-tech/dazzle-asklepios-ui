@@ -5,7 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
-import { emptyContract, notifyError, notifySuccess, notifyWarning, APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions, formatLinkedInsuranceLabel } from './coverageHelpers';
+import { emptyContract, notifyError, notifySuccess, notifyWarning, APPROVAL_COVERAGE_COMPANY_LABELS, approvalCoverageCompanyOptions } from './coverageHelpers';
 import {
   useCreateCoverageContractMutation,
   useSearchCoverageCompaniesQuery,
@@ -17,7 +17,6 @@ import {
   type CoverageContract,
   type CoverageLookupItem
 } from '@/services/setup/coverageManagement/coverageManagementService';
-import { useGetNphiesPayerByIdQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 type Props = {
   open: boolean;
@@ -39,6 +38,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
   const companyLookup = useLookupPaging(`${record.guarantorType || ''}`);
   const tpaInsuranceLookup = useLookupPaging(String(record.companyId || ''));
   const priceListLookup = useLookupPaging(String(record.insurancePayerId || ''));
+  const parentLookup = useLookupPaging('parent-insurance');
   const isTpa = record.guarantorType === 'TPA';
   const selectedInsuranceId = record.insurancePayerId || (!isTpa ? record.companyId : undefined);
 
@@ -71,9 +71,15 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     { skip: !open || !selectedInsuranceId }
   );
 
-  const { currentData: selectedNphiesPayer, isFetching: isParentPayerLoading } = useGetNphiesPayerByIdQuery(
-    selectedInsuranceId as number,
-    { skip: !open || !selectedInsuranceId, refetchOnMountOrArgChange: true }
+  const parentCompanies = useSearchCoverageCompaniesQuery(
+    {
+      guarantorType: 'INSURANCE',
+      page: parentLookup.page,
+      size: 15,
+      search: parentLookup.appliedSearch,
+      sort: 'nameEn,asc'
+    },
+    { skip: !open }
   );
 
   const [createContract] = useCreateCoverageContractMutation();
@@ -86,51 +92,11 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     endDate: null as string | null
   };
 
-  const clearParentFields = {
-    parentPayerId: null as number | null,
-    parentPayerName: ''
-  };
-
   useEffect(() => {
     if (open) {
       setRecord(normalizeCoverageContract({ ...emptyContract(), ...contract }));
     }
   }, [open, contract]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    if (!selectedInsuranceId) {
-      setRecord(previous => ({
-        ...previous,
-        ...clearParentFields
-      }));
-      return;
-    }
-    const fetchedMatchesSelected =
-      selectedNphiesPayer != null && Number(selectedNphiesPayer.id) === Number(selectedInsuranceId);
-    if (!fetchedMatchesSelected) {
-      return;
-    }
-    const parent = selectedNphiesPayer.parentCompany ?? null;
-    const parentPayerId = parent?.id ?? null;
-    const parentPayerName = formatLinkedInsuranceLabel(parent);
-    setRecord(previous => {
-      const previousInsuranceId = previous.insurancePayerId || (previous.guarantorType !== 'TPA' ? previous.companyId : undefined);
-      if (Number(previousInsuranceId) !== Number(selectedNphiesPayer.id)) {
-        return previous;
-      }
-      if (previous.parentPayerId === parentPayerId && previous.parentPayerName === parentPayerName) {
-        return previous;
-      }
-      return {
-        ...previous,
-        parentPayerId,
-        parentPayerName
-      };
-    });
-  }, [open, selectedInsuranceId, selectedNphiesPayer]);
 
   const applyPriceListSelection = (priceListId?: number, selectedItem?: CoverageLookupItem | null) => {
     const selected =
@@ -153,13 +119,15 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
     if (
       !record.guarantorType ||
       !record.companyId ||
-      !record.code ||
-      !record.policyNumber ||
       !record.coverageBasis ||
       !record.insurancePayerId ||
       !record.priceListSetupId
     ) {
       notifyWarning(dispatch, 'Please complete the required beneficiary details');
+      return;
+    }
+    if (record.parentPayerId && Number(record.parentPayerId) === Number(selectedInsuranceId)) {
+      notifyWarning(dispatch, 'Parent insurance cannot be the same insurance company');
       return;
     }
     try {
@@ -200,8 +168,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 companyName: undefined,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields,
-                ...clearParentFields
+                ...clearPriceListFields
               })
             }
             selectData={guarantorTypes}
@@ -218,8 +185,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   ...next,
                   insurancePayerId: next.companyId,
                   insurancePayerName: undefined,
-                  ...clearPriceListFields,
-                  ...clearParentFields
+                  ...clearPriceListFields
                 });
                 return;
               }
@@ -227,8 +193,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 ...next,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields,
-                ...clearParentFields
+                ...clearPriceListFields
               });
             }}
             result={companies}
@@ -245,8 +210,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   companyName: item?.name,
                   insurancePayerId: item?.id,
                   insurancePayerName: item?.name,
-                  ...clearPriceListFields,
-                  ...clearParentFields
+                  ...clearPriceListFields
                 }));
                 return;
               }
@@ -256,19 +220,9 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                 companyName: item?.name,
                 insurancePayerId: undefined,
                 insurancePayerName: undefined,
-                ...clearPriceListFields,
-                ...clearParentFields
+                ...clearPriceListFields
               }));
             }}
-          />
-          <MyInput required width="100%" fieldLabel="Code" fieldName="code" record={record} setRecord={setRecord} />
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Policy Number"
-            fieldName="policyNumber"
-            record={record}
-            setRecord={setRecord}
           />
           <MyInput
             required
@@ -300,8 +254,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
               setRecord={(next: CoverageContract) =>
                 setRecord({
                   ...next,
-                  ...clearPriceListFields,
-                  ...clearParentFields
+                  ...clearPriceListFields
                 })
               }
               result={tpaInsurances}
@@ -316,8 +269,7 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
                   ...previous,
                   insurancePayerId: item?.id,
                   insurancePayerName: item?.name,
-                  ...clearPriceListFields,
-                  ...clearParentFields
+                  ...clearPriceListFields
                 }));
               }}
             />
@@ -376,21 +328,56 @@ const CoverageContractEditor = ({ open, setOpen, contract, onSaved }: Props) => 
             setRecord={setRecord}
             disabled
           />
-          <MyInput
-            disabled
-            width="100%"
+          <CoveragePagedSelect
+            fieldName="parentPayerId"
             fieldLabel="Parent Name"
-            fieldName="parentPayerName"
             record={record}
             setRecord={setRecord}
-            loading={isParentPayerLoading}
-            placeholder={
-              !selectedInsuranceId
-                ? 'Filled from the selected insurance company'
-                : isParentPayerLoading
-                  ? 'Loading parent insurance...'
-                  : 'No parent insurance linked'
-            }
+            result={{
+              ...parentCompanies,
+              data: parentCompanies.data
+                ? {
+                    ...parentCompanies.data,
+                    data: [
+                      ...(record.parentPayerId
+                        ? [
+                            {
+                              id: Number(record.parentPayerId),
+                              name: record.parentPayerName || `Insurance #${record.parentPayerId}`,
+                              code: ''
+                            }
+                          ]
+                        : []),
+                      ...(parentCompanies.data.data ?? []).filter(
+                        item =>
+                          Number(item.id) !== Number(record.parentPayerId) &&
+                          Number(item.id) !== Number(selectedInsuranceId)
+                      )
+                    ]
+                  }
+                : parentCompanies.data
+            }}
+            page={parentLookup.page}
+            setPage={parentLookup.setPage}
+            search={parentLookup.search}
+            setSearch={parentLookup.setSearch}
+            placeholder="Select parent insurance"
+            onSelected={item => {
+              if (item?.id && Number(item.id) === Number(selectedInsuranceId)) {
+                notifyWarning(dispatch, 'Parent insurance cannot be the same insurance company');
+                setRecord(previous => ({
+                  ...previous,
+                  parentPayerId: null,
+                  parentPayerName: ''
+                }));
+                return;
+              }
+              setRecord(previous => ({
+                ...previous,
+                parentPayerId: item?.id ?? null,
+                parentPayerName: item?.name ?? ''
+              }));
+            }}
           />
         </Form>
       }

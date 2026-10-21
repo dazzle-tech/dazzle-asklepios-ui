@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdLink, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -13,12 +13,14 @@ import { useAppDispatch } from '@/hooks';
 import { coverageHeaderName, notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
 import {
   useCreateCoverageClassMutation,
+  useLinkCoverageClassPolicyMutation,
   useListCoverageClassesQuery,
   useToggleCoverageClassActiveMutation,
   useUpdateCoverageClassMutation,
   type CoverageClass,
   type CoverageContract
 } from '@/services/setup/coverageManagement/coverageManagementService';
+import { useGetInsuranceCompanyPoliciesQuery } from '@/services/setup/payer/InsuranceCompanyPolicyService';
 
 type Props = {
   contract: CoverageContract;
@@ -39,6 +41,9 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [pending, setPending] = useState<CoverageClass | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkClass, setLinkClass] = useState<CoverageClass | null>(null);
+  const [linkForm, setLinkForm] = useState<{ insuranceCompanyPolicyId?: number | null }>({});
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 10, sort: 'name,asc' });
   const classesQuery = useListCoverageClassesQuery(
     { contractId: Number(contract.id), ...paginationParams },
@@ -47,15 +52,52 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
   const [createClass] = useCreateCoverageClassMutation();
   const [updateClass] = useUpdateCoverageClassMutation();
   const [toggleActive] = useToggleCoverageClassActiveMutation();
+  const [linkPolicy] = useLinkCoverageClassPolicyMutation();
+  const policiesQuery = useGetInsuranceCompanyPoliciesQuery(Number(contract.insurancePayerId), {
+    skip: !linkOpen || !contract.insurancePayerId
+  });
   const rows = classesQuery.data?.data ?? [];
   const headerName = coverageHeaderName(contract);
-  const headerCode = String(contract.code || '').trim();
 
   useEffect(() => {
     if (!selected?.id && rows.length) {
       onSelect(rows[0]);
     }
   }, [onSelect, rows, selected?.id]);
+
+  const policyOptions = (policiesQuery.data ?? []).map(policy => ({
+    label: `${policy.policyName} (${policy.policyCode})`,
+    value: policy.id
+  }));
+
+  const openPolicyLink = (coverageClass: CoverageClass) => {
+    if (!contract.insurancePayerId) {
+      notifyWarning(dispatch, 'Select an insurance company on the coverage contract first');
+      return;
+    }
+    onSelect(coverageClass);
+    setLinkClass(coverageClass);
+    setLinkForm({ insuranceCompanyPolicyId: coverageClass.insuranceCompanyPolicyId ?? null });
+    setLinkOpen(true);
+  };
+
+  const savePolicyLink = async () => {
+    if (!linkClass?.id || !linkForm.insuranceCompanyPolicyId) {
+      notifyWarning(dispatch, 'Policy is required');
+      return;
+    }
+    try {
+      const saved = await linkPolicy({
+        id: linkClass.id,
+        insuranceCompanyPolicyId: Number(linkForm.insuranceCompanyPolicyId)
+      }).unwrap();
+      notifySuccess(dispatch, 'Policy linked to class');
+      onSelect(saved);
+      setLinkOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to link policy');
+    }
+  };
 
   const openEditor = (coverageClass: CoverageClass) => {
     setRecord({ ...emptyClass(contract.id), ...coverageClass });
@@ -94,12 +136,6 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
               <span className="coverage-class-title-name">{headerName}</span>
             </>
           ) : null}
-          {headerCode && headerCode !== headerName ? (
-            <>
-              {' · '}
-              <span className="coverage-class-title-code">{headerCode}</span>
-            </>
-          ) : null}
         </div>
         {contract.isActive ? (
           <MyButton
@@ -129,6 +165,12 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
         columns={[
           { key: 'name', title: <Translate>Class</Translate>, flexGrow: 2 },
           {
+            key: 'policyName',
+            title: <Translate>Policy</Translate>,
+            flexGrow: 2,
+            render: (row: CoverageClass) => row.policyName || '-'
+          },
+          {
             key: 'isActive',
             title: <Translate>Status</Translate>,
             flexGrow: 1,
@@ -140,6 +182,16 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
             flexGrow: 1,
             render: (row: CoverageClass) => (
               <div className="coverage-row-actions">
+                <MdLink
+                  className="icons-style"
+                  title="Link Policy"
+                  size={22}
+                  fill="var(--primary-gray)"
+                  onClick={event => {
+                    event.stopPropagation();
+                    openPolicyLink(row);
+                  }}
+                />
                 <MdModeEdit
                   className="icons-style"
                   size={22}
@@ -200,6 +252,35 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
               record={record}
               setRecord={setRecord}
               placeholder="VIP, Gold, A..."
+            />
+          </Form>
+        }
+      />
+
+      <MyModal
+        open={linkOpen}
+        setOpen={setLinkOpen}
+        title={linkClass?.name ? `Link Policy - ${linkClass.name}` : 'Link Policy'}
+        size="480px"
+        bodyheight="32vh"
+        actionButtonLabel="Save"
+        actionButtonFunction={savePolicyLink}
+        modalColor="var(--primary-blue)"
+        content={
+          <Form fluid>
+            <MyInput
+              required
+              width="100%"
+              fieldLabel="Policy"
+              fieldType="select"
+              fieldName="insuranceCompanyPolicyId"
+              record={linkForm}
+              setRecord={setLinkForm}
+              selectData={policyOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              placeholder="Select a policy for this insurance company"
+              searchable
             />
           </Form>
         }

@@ -9,7 +9,7 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
 import { useGetFacilityPatientsQuery } from '@/services/patient/patientService';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import './styles.less';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -78,10 +78,10 @@ const FacilityPatients = () => {
 
     const requestedDocumentsRef = useRef<Set<number>>(new Set());
 
-    const { data: payors } = useGetAllPayorsQuery({
+    const { data: payors } = useGetAllNphiesPayersQuery({
         page: 0,
         size: 1000,
-        sort: 'name,asc'
+        sort: 'nameEn,asc'
     });
 
     useEffect(() => {
@@ -432,8 +432,8 @@ const FacilityPatients = () => {
                                 record={filterRecord}
                                 setRecord={setFilterRecord}
                                 width={"12vw"}
-                                selectData={payors?.data ?? []}
-                                selectDataLabel="name"
+                                selectData={(payors?.data ?? []).filter(payer => payer?.isActive !== false)}
+                                selectDataLabel="nameEn"
                                 selectDataValue="id"
                             />
                         </Form>

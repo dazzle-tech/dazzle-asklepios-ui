@@ -33,6 +33,9 @@ import {
   useSavePreApprovalMutation,
   useSaveTermItemMutation,
   useSaveTermMutation,
+  useToggleCopaymentActiveMutation,
+  useTogglePreApprovalActiveMutation,
+  useToggleTermActiveMutation,
   useSearchCoverageDepartmentsQuery,
   useSearchCoverageFacilitiesQuery,
   useSearchCoverageServicesQuery
@@ -68,6 +71,54 @@ const statusOptions = [
   { label: 'Active', value: true },
   { label: 'Inactive', value: false }
 ];
+
+const RuleActions = ({
+  readOnly,
+  onEdit,
+  isActive,
+  onToggle,
+  extra
+}: {
+  readOnly?: boolean;
+  onEdit: () => void;
+  isActive?: boolean;
+  onToggle: () => void;
+  extra?: React.ReactNode;
+}) => {
+  if (readOnly) {
+    return null;
+  }
+  return (
+    <div className="coverage-row-actions">
+      <MdModeEdit className="icons-style" size={22} title="Edit" onClick={event => {
+        event.stopPropagation();
+        onEdit();
+      }} />
+      {extra}
+      {isActive ? (
+        <MdToggleOff
+          className="icons-style"
+          size={24}
+          title="Deactivate"
+          onClick={event => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          size={18}
+          title="Activate"
+          onClick={event => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
 const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
 
@@ -157,14 +208,24 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
   const [record, setRecord] = useState<any>({});
   const { data, isFetching } = useListCopaymentsQuery({ classId, isActive, ...paging });
   const [save] = useSaveCopaymentMutation();
+  const [toggleActive] = useToggleCopaymentActiveMutation();
 
   const saveRow = async () => {
     try {
       await save({ classId, body: record }).unwrap();
-      notifySuccess(dispatch, 'Co-payment saved');
+      notifySuccess(dispatch, record.id ? 'Co-payment updated' : 'Co-payment saved');
       setOpen(false);
     } catch (error: any) {
       notifyError(dispatch, error, 'Unable to save co-payment');
+    }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await toggleActive(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Co-payment deactivated' : 'Co-payment activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update co-payment status');
     }
   };
 
@@ -180,10 +241,7 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
         onAdd={() => {
           setRecord({
             encounterType: 'ALL',
-            valueType: 'PERCENTAGE',
-            discountOnExcluded: false,
-            discountOnCash: false,
-            discountOnExceededCash: false
+            valueType: 'PERCENTAGE'
           });
           setOpen(true);
         }}
@@ -206,21 +264,25 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
             key: 'actions',
             title: '',
             flexGrow: 1,
-            render: (row: any) =>
-              readOnly ? null : (
-                <MdModeEdit className="icons-style" size={22} onClick={() => { setRecord(row); setOpen(true); }} />
-              )
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => {
+                  setRecord(row);
+                  setOpen(true);
+                }}
+                onToggle={() => changeStatus(row)}
+              />
+            )
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title="Patient Co-Payment" size="56vw" bodyheight="68vh" actionButtonFunction={saveRow} content={
+      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Patient Co-Payment' : 'Patient Co-Payment'} size="56vw" bodyheight="40vh" actionButtonFunction={saveRow} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
           <MyInput required width="100%" fieldLabel="Value Type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
           <MyInput required width="100%" fieldLabel="Value Entry" fieldType="number" fieldName="valueAmount" record={record} setRecord={setRecord} />
-          <MyInput width="100%" fieldLabel="Discount on excluded" fieldType="check" fieldName="discountOnExcluded" record={record} setRecord={setRecord} />
-          <MyInput width="100%" fieldLabel="Discount on Cash" fieldType="check" fieldName="discountOnCash" record={record} setRecord={setRecord} />
-          <MyInput width="100%" fieldLabel="Discount on exceeded cash" fieldType="check" fieldName="discountOnExceededCash" record={record} setRecord={setRecord} />
         </Form>
       } />
     </>
@@ -268,6 +330,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
   );
   const [saveTerm] = useSaveTermMutation();
   const [saveItem] = useSaveTermItemMutation();
+  const [toggleActive] = useToggleTermActiveMutation();
 
   const encounterOptions = useMemo(() => {
     const selectedDept = (departments.data?.data ?? []).find(row => Number(row.id) === Number(record.departmentId));
@@ -296,10 +359,19 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
           departmentId: !record.departmentId || Number(record.departmentId) === 0 ? null : record.departmentId
         }
       }).unwrap();
-      notifySuccess(dispatch, 'Coverage rule saved');
+      notifySuccess(dispatch, record.id ? 'Coverage rule updated' : 'Coverage rule saved');
       setOpen(false);
     } catch (error: any) {
       notifyError(dispatch, error, 'Unable to save coverage rule');
+    }
+  };
+
+  const changeTermStatus = async (row: any) => {
+    try {
+      await toggleActive(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Coverage rule deactivated' : 'Coverage rule activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update coverage rule status');
     }
   };
 
@@ -418,20 +490,17 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
             key: 'actions',
             title: '',
             flexGrow: 1,
-            render: (row: any) =>
-              readOnly ? null : (
-                <div className="coverage-row-actions">
-                  <MdModeEdit
-                    className="icons-style"
-                    size={22}
-                    title="Edit"
-                    onClick={event => {
-                      event.stopPropagation();
-                      setRecord(row);
-                      setOpen(true);
-                    }}
-                  />
-                  {hasReadings && (
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => {
+                  setRecord(row);
+                  setOpen(true);
+                }}
+                onToggle={() => changeTermStatus(row)}
+                extra={
+                  hasReadings ? (
                     <MdAdd
                       className="icons-style"
                       size={22}
@@ -441,9 +510,10 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
                         openCoverageReading(row);
                       }}
                     />
-                  )}
-                </div>
-              )
+                  ) : null
+                }
+              />
+            )
           }
         ]}
       />
@@ -520,7 +590,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
         </div>
       )}
 
-      <MyModal open={open} setOpen={setOpen} title="Coverage Rule" size="72vw" bodyheight="72vh" actionButtonFunction={persistTerm} content={
+      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Coverage Rule' : 'Coverage Rule'} size="72vw" bodyheight="72vh" actionButtonFunction={persistTerm} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Coverage Type" fieldType="select" fieldName="diagnosisScope" record={record} setRecord={setRecord} selectData={diagnosisScopes} />
           {record.diagnosisScope === 'SPECIFIC_DIAGNOSIS' && (
@@ -596,6 +666,7 @@ const DiscountPanel = ({
       await create({
         ...owner,
         body: {
+          id: record.id,
           targetType: billingItemType ? (itemId ? 'SERVICE' : 'CATEGORY') : 'ALL',
           billingItemType,
           serviceId: Number.isFinite(itemId as number) ? itemId : null,
@@ -605,11 +676,34 @@ const DiscountPanel = ({
           discountValue: record.discountValue
         }
       }).unwrap();
-      notifySuccess(dispatch, 'Discount added');
+      notifySuccess(dispatch, record.id ? 'Discount updated' : 'Discount added');
       setOpen(false);
     } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to add discount');
+      notifyError(dispatch, error, record.id ? 'Unable to update discount' : 'Unable to add discount');
     }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await deactivate(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Discount deactivated' : 'Discount activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update discount status');
+    }
+  };
+
+  const openDiscount = (row?: any) => {
+    setRecord(
+      row
+        ? {
+            ...row,
+            billingItemType: row.billingItemType ?? 'ALL',
+            itemId: row.serviceId ?? null,
+            itemName: row.serviceId ? row.serviceName ?? null : null
+          }
+        : { encounterType: 'ALL', discountType: 'PERCENTAGE', billingItemType: null, itemId: null }
+    );
+    setOpen(true);
   };
 
   return (
@@ -619,10 +713,7 @@ const DiscountPanel = ({
         includeAll
         isActive={isActive}
         setIsActive={setIsActive}
-        onAdd={() => {
-        setRecord({ encounterType: 'ALL', discountType: 'PERCENTAGE', billingItemType: null, itemId: null });
-        setOpen(true);
-      }} />
+        onAdd={() => openDiscount()} />
       <MyTable
         data={data?.data ?? []}
         totalCount={data?.totalCount ?? 0}
@@ -643,28 +734,18 @@ const DiscountPanel = ({
             key: 'actions',
             title: '',
             flexGrow: 1,
-            render: (row: any) =>
-              !readOnly ? (
-                row.isActive ? (
-                  <MdToggleOff
-                    className="icons-style"
-                    size={24}
-                    title="Deactivate"
-                    onClick={() => deactivate(row.id)}
-                  />
-                ) : (
-                  <FaUndo
-                    className="icons-style"
-                    size={18}
-                    title="Activate"
-                    onClick={() => deactivate(row.id)}
-                  />
-                )
-              ) : null
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => openDiscount(row)}
+                onToggle={() => changeStatus(row)}
+              />
+            )
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title="Discount" size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Discount' : 'Discount'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Discount type" fieldType="select" fieldName="discountType" record={record} setRecord={setRecord} selectData={discountTypes} />
           <MyInput required width="100%" fieldLabel="Value" fieldType="number" fieldName="discountValue" record={record} setRecord={setRecord} />
@@ -735,6 +816,7 @@ const ExclusionPanel = ({
       await create({
         ...owner,
         body: {
+          id: record.id,
           exclusionType:
             record.exclusionType === 'DIAGNOSIS'
               ? 'DIAGNOSIS'
@@ -759,11 +841,42 @@ const ExclusionPanel = ({
           excludedResult: record.excludedResult
         }
       }).unwrap();
-      notifySuccess(dispatch, 'Exclusion added');
+      notifySuccess(dispatch, record.id ? 'Exclusion updated' : 'Exclusion added');
       setOpen(false);
     } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to add exclusion');
+      notifyError(dispatch, error, record.id ? 'Unable to update exclusion' : 'Unable to add exclusion');
     }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await deactivate(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Exclusion deactivated' : 'Exclusion activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update exclusion status');
+    }
+  };
+
+  const openExclusion = (row?: any) => {
+    setRecord(
+      row
+        ? {
+            ...row,
+            exclusionType: row.exclusionType === 'DIAGNOSIS' ? 'DIAGNOSIS' : 'CATEGORY',
+            billingItemType: row.exclusionType === 'DIAGNOSIS' ? null : row.billingItemType ?? 'ALL',
+            itemId: row.serviceId ?? null,
+            itemName: row.serviceId ? row.serviceName ?? null : null
+          }
+        : {
+            exclusionType: 'CATEGORY',
+            encounterType: 'ALL',
+            excludedResult: 'YES',
+            allDiagnoses: false,
+            billingItemType: null,
+            itemId: null
+          }
+    );
+    setOpen(true);
   };
 
   return (
@@ -773,17 +886,7 @@ const ExclusionPanel = ({
         includeAll
         isActive={isActive}
         setIsActive={setIsActive}
-        onAdd={() => {
-        setRecord({
-          exclusionType: 'CATEGORY',
-          encounterType: 'ALL',
-          excludedResult: 'YES',
-          allDiagnoses: false,
-          billingItemType: null,
-          itemId: null
-        });
-        setOpen(true);
-      }} />
+        onAdd={() => openExclusion()} />
       <MyTable
         data={data?.data ?? []}
         totalCount={data?.totalCount ?? 0}
@@ -803,28 +906,18 @@ const ExclusionPanel = ({
             key: 'actions',
             title: '',
             flexGrow: 1,
-            render: (row: any) =>
-              !readOnly ? (
-                row.isActive ? (
-                  <MdToggleOff
-                    className="icons-style"
-                    size={24}
-                    title="Deactivate"
-                    onClick={() => deactivate(row.id)}
-                  />
-                ) : (
-                  <FaUndo
-                    className="icons-style"
-                    size={18}
-                    title="Activate"
-                    onClick={() => deactivate(row.id)}
-                  />
-                )
-              ) : null
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => openExclusion(row)}
+                onToggle={() => changeStatus(row)}
+              />
+            )
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title="Exclusion" size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Exclusion' : 'Exclusion'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput
             required
@@ -906,20 +999,33 @@ const PreApprovalPanel = ({
   const owner = tpaId ? { tpaId } : { classId: Number(classId) };
   const { data, isFetching } = useListPreApprovalsQuery({ ...owner, isActive, ...paging });
   const itemsQuery = useListPreApprovalItemsQuery(
-    { preApprovalId: Number(selected?.id), isActive: true, page: 0, size: 10 },
+    { preApprovalId: Number(selected?.id), page: 0, size: 10 },
     { skip: !selected?.id }
   );
   const [save] = useSavePreApprovalMutation();
+  const [toggleActive] = useTogglePreApprovalActiveMutation();
   const [createItem] = useCreatePreApprovalItemMutation();
   const [deactivateItem] = useDeactivatePreApprovalItemMutation();
 
   const persist = async () => {
     try {
       await save({ ...owner, body: record }).unwrap();
-      notifySuccess(dispatch, 'Pre-approval saved');
+      notifySuccess(dispatch, record.id ? 'Pre-approval updated' : 'Pre-approval saved');
       setOpen(false);
     } catch (error: any) {
       notifyError(dispatch, error, 'Unable to save pre-approval');
+    }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await toggleActive(row.id).unwrap();
+      if (selected?.id === row.id) {
+        setSelected({ ...row, isActive: !row.isActive });
+      }
+      notifySuccess(dispatch, row.isActive ? 'Pre-approval deactivated' : 'Pre-approval activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update pre-approval status');
     }
   };
 
@@ -933,17 +1039,31 @@ const PreApprovalPanel = ({
       await createItem({
         preApprovalId: Number(selected.id),
         body: {
-          ...item,
+          id: item.id,
+          itemType: item.itemType,
+          serviceCategory: item.itemType === 'CATEGORY' ? item.serviceCategory : null,
+          serviceId: item.itemType === 'SERVICE' ? item.serviceId : null,
+          serviceName: item.itemType === 'SERVICE' ? item.serviceName || null : null,
+          allDiagnoses: item.itemType === 'DIAGNOSIS' ? Boolean(item.allDiagnoses) : item.itemType === 'ALL',
           diagnoses: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses
             ? selectedDiagnoses.map(diagnosisId => ({ diagnosisId }))
             : [],
           diagnosisId: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses ? selectedDiagnoses[0] ?? null : null
         }
       }).unwrap();
-      notifySuccess(dispatch, 'Pre-approval item added');
+      notifySuccess(dispatch, item.id ? 'Pre-approval item updated' : 'Pre-approval item added');
       setItemOpen(false);
     } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to add item');
+      notifyError(dispatch, error, item.id ? 'Unable to update item' : 'Unable to add item');
+    }
+  };
+
+  const changeItemStatus = async (row: any) => {
+    try {
+      await deactivateItem(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Pre-approval item deactivated' : 'Pre-approval item activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update pre-approval item status');
     }
   };
 
@@ -974,10 +1094,17 @@ const PreApprovalPanel = ({
             key: 'actions',
             title: '',
             flexGrow: 1,
-            render: (row: any) =>
-              readOnly ? null : (
-                <MdModeEdit className="icons-style" size={22} onClick={() => { setRecord(row); setOpen(true); }} />
-              )
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => {
+                  setRecord(row);
+                  setOpen(true);
+                }}
+                onToggle={() => changeStatus(row)}
+              />
+            )
           }
         ]}
       />
@@ -1007,16 +1134,23 @@ const PreApprovalPanel = ({
                 key: 'actions',
                 title: '',
                 flexGrow: 1,
-                render: (row: any) =>
-                  !readOnly && row.isActive ? (
-                    <MdToggleOff className="icons-style" size={24} title="Deactivate" onClick={() => deactivateItem(row.id)} />
-                  ) : null
+                render: (row: any) => (
+                  <RuleActions
+                    readOnly={readOnly}
+                    isActive={row.isActive}
+                    onEdit={() => {
+                      setItem(row);
+                      setItemOpen(true);
+                    }}
+                    onToggle={() => changeItemStatus(row)}
+                  />
+                )
               }
             ]}
           />
         </div>
       )}
-      <MyModal open={open} setOpen={setOpen} title="Pre-Approval" size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Pre-Approval' : 'Pre-Approval'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Approval type" fieldType="select" fieldName="approvalScope" record={record} setRecord={setRecord} selectData={scopes} />
           {record.approvalScope === 'FACILITY' && (
@@ -1033,7 +1167,7 @@ const PreApprovalPanel = ({
           )}
         </Form>
       } />
-      <MyModal open={itemOpen} setOpen={setItemOpen} title="Pre-Approval Item" size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
+      <MyModal open={itemOpen} setOpen={setItemOpen} title={item.id ? 'Edit Pre-Approval Item' : 'Pre-Approval Item'} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Pre Approval type" fieldType="select" fieldName="itemType" record={item} setRecord={setItem} selectData={itemTypes} />
           {item.itemType === 'CATEGORY' && (
