@@ -86,9 +86,6 @@ export type CoverageCopayment = {
   encounterType?: string;
   valueType?: string;
   valueAmount?: number | string;
-  discountOnExcluded?: boolean;
-  discountOnCash?: boolean;
-  discountOnExceededCash?: boolean;
   isActive?: boolean;
 };
 
@@ -580,6 +577,13 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoverageCopayment']
     }),
+    toggleCopaymentActive: builder.mutation<CoverageCopayment, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/copayments/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['CoverageCopayment']
+    }),
     listTerms: builder.query<
       PagedResult<CoverageTerm>,
       PagedParams & { classId: number; termType: string; isActive?: boolean }
@@ -596,6 +600,13 @@ export const coverageManagementService = createApi({
         url: `/api/setup/coverage-classes/${classId}/terms`,
         method: body.id ? 'PUT' : 'POST',
         body
+      }),
+      invalidatesTags: ['CoverageTerm']
+    }),
+    toggleTermActive: builder.mutation<CoverageTerm, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/terms/${id}/toggle-active`,
+        method: 'PATCH'
       }),
       invalidatesTags: ['CoverageTerm']
     }),
@@ -649,7 +660,7 @@ export const coverageManagementService = createApi({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/discounts`
           : `/api/setup/coverage-classes/${classId}/discounts`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoverageDiscount']
@@ -687,7 +698,7 @@ export const coverageManagementService = createApi({
         url: tpaId
           ? `/api/setup/tpa-definitions/${tpaId}/exclusions`
           : `/api/setup/coverage-classes/${classId}/exclusions`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoverageExclusion']
@@ -725,13 +736,25 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoveragePreApproval']
     }),
+    togglePreApprovalActive: builder.mutation<CoveragePreApproval, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/pre-approvals/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['CoveragePreApproval']
+    }),
     listPreApprovalItems: builder.query<
       PagedResult<CoveragePreApprovalItem>,
       PagedParams & { preApprovalId: number; isActive?: boolean }
     >({
       query: ({ preApprovalId, page, size, sort = 'id,desc', isActive }) => ({
         url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
-        params: { page, size, sort, isActive }
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
       }),
       transformResponse: (res: CoveragePreApprovalItem[], meta) => toPagedResult(res, meta),
       providesTags: ['CoveragePreApprovalItem']
@@ -742,7 +765,7 @@ export const coverageManagementService = createApi({
     >({
       query: ({ preApprovalId, body }) => ({
         url: `/api/setup/coverage-classes/pre-approvals/${preApprovalId}/items`,
-        method: 'POST',
+        method: body.id ? 'PUT' : 'POST',
         body
       }),
       invalidatesTags: ['CoveragePreApprovalItem']
@@ -789,8 +812,10 @@ export const {
   useSearchCoverageDiagnosesQuery,
   useListCopaymentsQuery,
   useSaveCopaymentMutation,
+  useToggleCopaymentActiveMutation,
   useListTermsQuery,
   useSaveTermMutation,
+  useToggleTermActiveMutation,
   useListTermItemsQuery,
   useSaveTermItemMutation,
   useListDiscountsQuery,
@@ -801,6 +826,7 @@ export const {
   useDeactivateExclusionMutation,
   useListPreApprovalsQuery,
   useSavePreApprovalMutation,
+  useTogglePreApprovalActiveMutation,
   useListPreApprovalItemsQuery,
   useCreatePreApprovalItemMutation,
   useDeactivatePreApprovalItemMutation,
