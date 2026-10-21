@@ -117,7 +117,7 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
       ...prev,
       toDepartmentId: null
     }));
-  }, [open, resetDepartmentsState, setReferral]);
+    }, [open, resetDepartmentsState, setReferral]);
 
   useEffect(() => {
     if (!open) return;

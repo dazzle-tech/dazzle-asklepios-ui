@@ -3,6 +3,7 @@ import MyInput from '@/components/MyInput';
 import BillingRuleSelect, {
   testTypeToBillingItemType
 } from '@/components/BillingRuleSelect/BillingRuleSelect';
+import LoincSearchable from '@/components/LoincSearchComponent';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
@@ -365,7 +366,10 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   onSelectItem={() => {
                     setDiagnosticsTest(prev => ({
                       ...prev,
-                      billingRuleId: null
+                      billingRuleId: null,
+                      loincCodeId: null,
+                      loincCode: null,
+                      loincDescription: null
                     }));
                   }}
                 />
@@ -392,6 +396,17 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
 
             {diagnosticsTest.type === 'LABORATORY' && (
               <>
+                <br />
+                <div className="container-of-two-fields-diagnostic">
+                  <div className="container-of-two-loinc-diagnostic">
+                    <LoincSearchable
+                      object={diagnosticsTest}
+                      setOpject={setDiagnosticsTest}
+                      fieldName="loincCodeId"
+                      label="LOINC"
+                    />
+                  </div>
+                </div>
                 <br />
                 <div className="container-of-two-fields-diagnostic">
                   <div className="container-of-field-diagnostic">
