@@ -249,6 +249,7 @@ export const MODULES: Module[] =
         { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+        { name: "AI Services", code: "AI_SERVICES", description: "Setup for AI services", icon: "FaRobot", viewOrder: 9.5, navPath: "ai-services" },
         {
           name: "Patient Satisfaction Survey Responses",
           code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",

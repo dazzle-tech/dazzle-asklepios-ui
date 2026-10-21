@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  faArrowsRotate,
   faCircleExclamation,
+  faEye,
   faMicrophone,
   faPause,
   faPlay,
   faStop
 } from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { Tooltip, Whisper } from 'rsuite';
 import { useSelector } from 'react-redux';
 
 import MyButton from '@/components/MyButton/MyButton';
@@ -25,13 +29,15 @@ import {
 } from '@/services/encounters/encounterAmbientService';
 import AmbientDraftModal from './AmbientDraftModal';
 import type { AutoPopulationResponse } from '@/types/model-types-new';
+import { useGetAmbientScribeSetupQuery } from '@/services/setup/ambientScribeSetupService';
+import type { AmbientScribeClinic } from '@/services/setup/ambientScribeSetupService';
+import { useGetPractitionerByUserIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 import { extractErrorMessage } from '@/utils/extractErrorMessage';
 import { notify } from '@/utils/uiReducerActions';
 import './ambient-scribe.less';
 
-type ConsentMethod = 'verbal' | 'tablet';
-type MicrophoneSource = 'computer' | 'phone';
 type ConsentStatus = 'pending' | 'given' | 'declined';
 type SessionPhase = 'idle' | 'recording' | 'paused' | 'processing' | 'stopped';
 
@@ -39,7 +45,19 @@ type AmbientScribeProps = {
   disabled?: boolean;
   patientId?: number | string | null;
   encounterId?: number | string | null;
+  facilityId?: number | string | null;
+  departmentId?: number | string | null;
   patientLine?: string;
+};
+
+const CONSENT_METHOD_HINTS: Record<string, string> = {
+  VERBAL: 'Logged with your name and time',
+  TABLET: 'Patient signs the consent form'
+};
+
+const MICROPHONE_HINTS: Record<string, string> = {
+  COMPUTER: 'Desk mic · signal good',
+  PHONE: 'Scan with the Asklepios app'
 };
 
 const PATIENT_SCRIPT =
@@ -193,6 +211,57 @@ const formatMedication = (item: Record<string, any> | string) => {
   return [name, dosage, frequency, route].filter(Boolean).join(' · ');
 };
 
+const findingsFromDraft = (draft: AmbientDraft): Finding[] => {
+  const items: Finding[] = [];
+  const note = draft.soap_note;
+  const reviewed = draft.review?.texts;
+
+  const add = (id: string, label: string, value?: string | null) => {
+    const text = value?.trim();
+    if (text) {
+      items.push({ id, label, value: text });
+    }
+  };
+
+  add('complaint', 'Chief complaint', reviewed?.chief_complaint || note?.ChiefComplaint);
+  add('hpi', 'History of present illness', reviewed?.hpi || note?.HPI);
+  add('exam', 'Physical examination', reviewed?.physical_exam || note?.PhysicalExamination);
+  add('assessment', 'Assessment', reviewed?.assessment_plan || note?.Assessments);
+  add('plan', 'Plan', note?.TreatmentPlans);
+
+  draft.diagnoses?.forEach((diagnosis, index) => {
+    const value = [diagnosis.icd10, diagnosis.label].filter(Boolean).join(' · ');
+    add(`diagnosis-${diagnosis.id || index}`, 'Diagnosis', value);
+  });
+
+  draft.mentions
+    ?.filter(mention => mention.confirm_required && mention.text?.trim())
+    .forEach((mention, index) => {
+      items.push({
+        id: `mention-${index}-${mention.text}`,
+        label: 'Dose to confirm',
+        value: mention.text.trim(),
+        confirmDose: true
+      });
+    });
+
+  return items;
+};
+
+const transcriptFromDraft = (draft: AmbientDraft) =>
+  (draft.transcript ?? [])
+    .map(segment => {
+      const text = segment.text?.trim();
+      if (!text) {
+        return '';
+      }
+
+      const speaker = segment.speaker?.trim();
+      return speaker ? `${speaker}: ${text}` : text;
+    })
+    .filter(Boolean)
+    .join('\n');
+
 const buildFindings = (result: AutoPopulationResponse, summary?: string): Finding[] => {
   const items: Finding[] = [];
   const fields = result.structured_fields;
@@ -277,12 +346,48 @@ type RecordingWorkspaceProps = {
   confirmedDoses: string[];
   liveTranscript: boolean;
   mode: string;
+  audioUrl?: string | null;
+  hasDraft?: boolean;
+  recreatingDraft?: boolean;
   onViewDraft?: () => void;
+  onRecreateDraft?: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
   onConfirmDose: (value: string) => void;
 };
+
+const StoppedIconButton = ({
+  label,
+  icon,
+  disabled,
+  loading,
+  onClick
+}: {
+  label: string;
+  icon: IconDefinition;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
+}) => (
+  <Whisper trigger="hover" placement="top" speaker={<Tooltip>{label}</Tooltip>}>
+    <span className="ambient-recording-icon-btn">
+      <MyButton
+        appearance="ghost"
+        color="#ffffff"
+        size="small"
+        radius="8px"
+        disabled={disabled}
+        loading={loading}
+        style={{ border: '1px solid rgba(255,255,255,0.75)', padding: 0 }}
+        onClick={onClick}
+      >
+        <FontAwesomeIcon icon={icon} />
+        <span className="ambient-recording-sr">{label}</span>
+      </MyButton>
+    </span>
+  </Whisper>
+);
 
 const RecordingWorkspace = ({
   phase,
@@ -293,39 +398,92 @@ const RecordingWorkspace = ({
   confirmedDoses,
   liveTranscript,
   mode,
+  audioUrl,
+  hasDraft,
+  recreatingDraft,
   onViewDraft,
+  onRecreateDraft,
   onPause,
   onResume,
   onStop,
   onConfirmDose
 }: RecordingWorkspaceProps) => {
+  const playbackRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [playSeconds, setPlaySeconds] = useState(0);
   const barLabel =
     phase === 'paused'
       ? 'Paused'
       : phase === 'processing'
         ? 'Creating draft'
-        : phase === 'stopped'
-          ? 'Recording stopped'
-          : 'Recording';
+        : playing
+          ? 'Playing'
+          : phase === 'stopped'
+            ? 'Recording stopped'
+            : 'Recording';
+
+  useEffect(() => {
+    setPlaying(false);
+    setPlaySeconds(0);
+  }, [audioUrl]);
+
+  const togglePlayback = () => {
+    const audio = playbackRef.current;
+    if (!audio) {
+      return;
+    }
+
+    if (audio.paused) {
+      void audio.play();
+      return;
+    }
+
+    audio.pause();
+  };
 
   return (
     <div className={`ambient-recording ${mode === 'dark' ? 'dark' : 'light'}`}>
       <div className={`ambient-recording-bar is-${phase}`} role="status">
         <span className="ambient-recording-dot" />
         <span className="ambient-recording-label">{barLabel}</span>
-        <span className="ambient-recording-timer">{formatElapsed(elapsed)}</span>
-        {phase === 'stopped' && onViewDraft && (
+        <span className="ambient-recording-timer">
+          {formatElapsed(playing ? playSeconds : elapsed)}
+        </span>
+        {phase === 'stopped' && (
           <div className="ambient-recording-actions">
-            <MyButton
-              appearance="ghost"
-              color="#ffffff"
-              size="small"
-              radius="8px"
-              style={{ border: '1px solid rgba(255,255,255,0.75)', padding: '0 12px' }}
+            <audio
+              ref={playbackRef}
+              src={audioUrl || undefined}
+              preload="metadata"
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => {
+                setPlaying(false);
+                setPlaySeconds(0);
+              }}
+              onTimeUpdate={event => setPlaySeconds(Math.floor(event.currentTarget.currentTime))}
+            />
+            <StoppedIconButton
+              label={playing ? 'Pause' : 'Play'}
+              icon={playing ? faPause : faPlay}
+              disabled={!audioUrl}
+              onClick={togglePlayback}
+            />
+            <StoppedIconButton
+              label="View draft"
+              icon={faEye}
+              disabled={!hasDraft}
               onClick={onViewDraft}
-            >
-              View draft
-            </MyButton>
+            />
+            {!hasDraft && (
+              <StoppedIconButton
+                label="Recreate draft"
+                icon={faArrowsRotate}
+                loading={recreatingDraft}
+                disabled={recreatingDraft}
+                onClick={onRecreateDraft}
+              />
+            )}
           </div>
         )}
         {phase !== 'stopped' && phase !== 'processing' && (
@@ -370,9 +528,11 @@ const RecordingWorkspace = ({
             <div className="ambient-transcript">
               {!turns.length && !interim && (
                 <div className="ambient-empty">
-                  {liveTranscript
-                    ? 'Listening…'
-                    : 'Live transcription is not available in this browser. The transcript will appear after you stop.'}
+                  {phase === 'stopped'
+                    ? 'No transcript was saved with this recording.'
+                    : liveTranscript
+                      ? 'Listening…'
+                      : 'Live transcription is not available in this browser. The transcript will appear after you stop.'}
                 </div>
               )}
               {turns.map(turn => (
@@ -401,9 +561,11 @@ const RecordingWorkspace = ({
             <div className="ambient-findings">
               {!findings.length && (
                 <div className="ambient-empty">
-                  {phase === 'processing'
-                    ? 'Reading the recording…'
-                    : 'Findings appear here as the visit is transcribed.'}
+                  {phase === 'stopped'
+                    ? 'No findings were saved with this recording.'
+                    : phase === 'processing'
+                      ? 'Reading the recording…'
+                      : 'Findings appear here as the visit is transcribed.'}
                 </div>
               )}
               {findings.map(finding => {
@@ -463,21 +625,91 @@ const ChoiceCard = ({ title, hint, selected, onSelect, extra }: ChoiceCardProps)
   </button>
 );
 
+const startAccess = (
+  clinic: AmbientScribeClinic | undefined,
+  practitionerId?: number | null
+) => {
+  if (!clinic || !clinic.enabled) {
+    return { allowed: false, reason: 'Ambient Scribe is turned off for this clinic.' };
+  }
+  if (!practitionerId) {
+    return { allowed: false, reason: 'Ambient Scribe can be started by a physician in this clinic.' };
+  }
+
+  const selected = clinic.practitioners.filter(practitioner => practitioner.enabled);
+  const allowed =
+    selected.length === 0
+      ? clinic.practitioners.some(practitioner => practitioner.id === practitionerId)
+      : selected.some(practitioner => practitioner.id === practitionerId);
+
+  return allowed
+    ? { allowed: true, reason: '' }
+    : {
+        allowed: false,
+        reason:
+          selected.length === 0
+            ? 'Ambient Scribe can be started by a physician in this clinic.'
+            : 'Ambient Scribe is limited to the physicians selected for this clinic.'
+      };
+};
+
 const AmbientScribe = ({
   disabled = false,
   patientId,
   encounterId,
+  facilityId,
+  departmentId,
   patientLine
 }: AmbientScribeProps) => {
+  const consentMethodOptions = useEnumOptions('AmbientConsentMethod', {
+    labelOverrides: {
+      VERBAL: 'Verbal consent',
+      TABLET: 'Signed on tablet'
+    }
+  });
+  const microphoneOptions = useEnumOptions('AmbientMicrophoneSource', {
+    labelOverrides: {
+      COMPUTER: 'This computer',
+      PHONE: 'Pair phone or tablet'
+    }
+  });
+  const consentStatusOptions = useEnumOptions('AmbientConsentStatus');
+  const givenConsent =
+    consentStatusOptions.find(option => option.value === 'GIVEN')?.value ?? 'GIVEN';
+  const declinedConsent =
+    consentStatusOptions.find(option => option.value === 'DECLINED')?.value ?? 'DECLINED';
   const dispatch = useAppDispatch();
   const ui = useSelector((state: { ui: { mode: string; lang: string } }) => state.ui);
+  const userId = useSelector((state: { auth: { user?: { id?: number } } }) => state.auth.user?.id);
+  const resolvedFacilityId = facilityId || (() => {
+    try {
+      const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+      return tenant?.selectedFacility?.id ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  const { data: scribeSetup, isLoading: scribeSetupLoading, isError: scribeSetupError } =
+    useGetAmbientScribeSetupQuery(resolvedFacilityId as number | string, { skip: !resolvedFacilityId });
+  const { data: currentPractitioner, isLoading: practitionerLoading, isError: practitionerError } =
+    useGetPractitionerByUserIdQuery(Number(userId), { skip: !userId });
+  const visitClinic = scribeSetup?.clinics.find(
+    clinic => Number(clinic.departmentId) === Number(departmentId)
+  );
+  const accessLoading = Boolean(resolvedFacilityId && departmentId && (scribeSetupLoading || practitionerLoading));
+  const setupAdded = Boolean(scribeSetup?.id);
+  const access = startAccess(
+    scribeSetupError || !setupAdded ? undefined : visitClinic,
+    practitionerError ? null : currentPractitioner?.id
+  );
+  const canStartAmbient = setupAdded && !accessLoading && access.allowed;
   const [open, setOpen] = useState(false);
   const [starting, setStarting] = useState(false);
   const [status, setStatus] = useState<ConsentStatus>('pending');
   const [phase, setPhase] = useState<SessionPhase>('idle');
   const [elapsed, setElapsed] = useState(0);
-  const [consentMethod, setConsentMethod] = useState<ConsentMethod>('verbal');
-  const [microphone, setMicrophone] = useState<MicrophoneSource>('computer');
+  const [consentMethod, setConsentMethod] = useState('VERBAL');
+  const [microphone, setMicrophone] = useState('COMPUTER');
   const [transcriptText, setTranscriptText] = useState('');
   const [interim, setInterim] = useState('');
   const [findings, setFindings] = useState<Finding[]>([]);
@@ -486,6 +718,8 @@ const AmbientScribe = ({
   const [draft, setDraft] = useState<AmbientDraft | null>(null);
   const [draftOpen, setDraftOpen] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [savedSessionReady, setSavedSessionReady] = useState(false);
+  const [recreatingDraft, setRecreatingDraft] = useState(false);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -653,7 +887,7 @@ const AmbientScribe = ({
   };
 
   const saveAmbientSession = async (input: {
-    consentStatus: 'GIVEN' | 'DECLINED';
+    consentStatus: string;
     audio?: File;
     draft?: AmbientDraft | null;
     recordingStoppedAt?: string;
@@ -669,8 +903,8 @@ const AmbientScribe = ({
       patientId: Number(currentPatientId),
       encounterId: Number(currentEncounterId),
       consentStatus: input.consentStatus,
-      consentMethod: consentMethodRef.current === 'tablet' ? 'TABLET' : 'VERBAL',
-      microphoneSource: microphoneRef.current === 'phone' ? 'PHONE' : 'COMPUTER',
+      consentMethod: consentMethodRef.current,
+      microphoneSource: microphoneRef.current,
       consentAt: consentAtRef.current,
       recordingStartedAt: recordingStartedAtRef.current,
       recordingStoppedAt: input.recordingStoppedAt ?? null,
@@ -728,7 +962,7 @@ const AmbientScribe = ({
       setPhase('stopped');
       try {
         await saveAmbientSession({
-          consentStatus: 'GIVEN',
+          consentStatus: givenConsent,
           recordingStoppedAt,
           recordingDurationMs
         });
@@ -797,7 +1031,7 @@ const AmbientScribe = ({
 
     try {
       await saveAmbientSession({
-        consentStatus: 'GIVEN',
+        consentStatus: givenConsent,
         audio: audioFile,
         draft: createdDraft,
         recordingStoppedAt,
@@ -866,7 +1100,7 @@ const AmbientScribe = ({
       shouldListenRef.current = true;
       startRecognition();
 
-      if (microphoneRef.current === 'phone') {
+      if (microphoneRef.current === 'PHONE') {
         dispatch(
           notify({
             msg: 'Phone pairing is not connected. This recording is using this computer’s microphone.',
@@ -978,50 +1212,81 @@ const AmbientScribe = ({
   }, []);
 
   useEffect(() => {
-    if (!encounterId || phaseRef.current !== 'idle') {
+    if (!encounterId) {
+      setSavedSessionReady(true);
+      return undefined;
+    }
+
+    if (phaseRef.current !== 'idle') {
+      setSavedSessionReady(true);
       return undefined;
     }
 
     let cancelled = false;
+    setSavedSessionReady(false);
 
     const restoreStoredSession = async () => {
       try {
         const sessions = await loadEncounterAmbient(encounterId).unwrap();
         const latest = sessions.find(
-          session => session.consentStatus === 'GIVEN' && session.draftCreatedAt
+          session =>
+            session.consentStatus === givenConsent && (session.hasRecording || session.draftCreatedAt)
         );
         if (!latest || cancelled || phaseRef.current !== 'idle') {
           return;
         }
 
         const detail = await loadEncounterAmbientDetail(latest.id).unwrap();
-        if (!detail.draft || cancelled || phaseRef.current !== 'idle') {
-          return;
-        }
-
-        setDraft(detail.draft);
-        setStatus('given');
-        ambientIdRef.current = detail.id;
-        setStoredDurationMs(detail.recordingDurationMs ?? latest.recordingDurationMs ?? 0);
-
-        if (!detail.hasRecording) {
-          return;
-        }
-
-        const recording = await loadEncounterAmbientRecording(detail.id).unwrap();
         if (cancelled || phaseRef.current !== 'idle') {
           return;
         }
 
-        if (audioUrlRef.current) {
-          URL.revokeObjectURL(audioUrlRef.current);
+        ambientIdRef.current = detail.id;
+        setStatus('given');
+        if (detail.consentMethod) {
+          setConsentMethod(detail.consentMethod);
+        }
+        if (detail.microphoneSource) {
+          setMicrophone(detail.microphoneSource);
         }
 
-        const nextAudioUrl = URL.createObjectURL(recording);
-        audioUrlRef.current = nextAudioUrl;
-        setAudioUrl(nextAudioUrl);
+        const durationMs = detail.recordingDurationMs ?? latest.recordingDurationMs ?? 0;
+        setStoredDurationMs(durationMs);
+        setElapsed(Math.max(0, Math.round(durationMs / 1000)));
+
+        if (detail.draft) {
+          setDraft(detail.draft);
+          const savedTranscript = transcriptFromDraft(detail.draft);
+          if (savedTranscript) {
+            publishTranscript(savedTranscript, '', '');
+          }
+          setFindings(findingsFromDraft(detail.draft));
+        }
+
+        if (detail.hasRecording || latest.hasRecording) {
+          const recording = await loadEncounterAmbientRecording(detail.id).unwrap();
+          if (cancelled || phaseRef.current !== 'idle') {
+            return;
+          }
+
+          if (audioUrlRef.current) {
+            URL.revokeObjectURL(audioUrlRef.current);
+          }
+
+          const nextAudioUrl = URL.createObjectURL(recording);
+          audioUrlRef.current = nextAudioUrl;
+          setAudioUrl(nextAudioUrl);
+        }
+
+        if (!cancelled && phaseRef.current === 'idle') {
+          setPhase('stopped');
+        }
       } catch {
         /* A missing history should still leave Start Ambient usable. */
+      } finally {
+        if (!cancelled) {
+          setSavedSessionReady(true);
+        }
       }
     };
 
@@ -1030,12 +1295,156 @@ const AmbientScribe = ({
     return () => {
       cancelled = true;
     };
-  }, [encounterId, loadEncounterAmbient, loadEncounterAmbientDetail, loadEncounterAmbientRecording]);
+  }, [encounterId, givenConsent, loadEncounterAmbient, loadEncounterAmbientDetail, loadEncounterAmbientRecording]);
 
   const openModal = () => {
-    setConsentMethod('verbal');
-    setMicrophone('computer');
+    if (!setupAdded) {
+      dispatch(
+        notify({
+          msg: 'Ambient Scribe is not set up for this facility.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    if (!canStartAmbient) {
+      dispatch(
+        notify({
+          msg: access.reason || 'Ambient Scribe cannot be started for this visit.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setConsentMethod(consentMethodOptions[0]?.value ?? 'VERBAL');
+    setMicrophone(microphoneOptions[0]?.value ?? 'COMPUTER');
     setOpen(true);
+  };
+
+  const openStoredDraft = async () => {
+    if (draft) {
+      setDraftOpen(true);
+      return;
+    }
+
+    const sessionId = ambientIdRef.current;
+    if (!sessionId) {
+      dispatch(
+        notify({
+          msg: 'No draft is saved for this recording yet.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const detail = await loadEncounterAmbientDetail(sessionId).unwrap();
+      if (!detail.draft) {
+        dispatch(
+          notify({
+            msg: 'No draft is saved for this recording yet.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      setDraft(detail.draft);
+      setStoredDurationMs(detail.recordingDurationMs ?? storedDurationMs);
+      setDraftOpen(true);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'The draft could not be opened.',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const recreateDraft = async () => {
+    if (recreatingDraft || draft) {
+      return;
+    }
+
+    setRecreatingDraft(true);
+    try {
+      let recordingBlob: Blob | null = null;
+      if (audioUrlRef.current) {
+        try {
+          const response = await fetch(audioUrlRef.current);
+          if (response.ok) {
+            recordingBlob = await response.blob();
+          }
+        } catch {
+          recordingBlob = null;
+        }
+      }
+      if ((!recordingBlob || !recordingBlob.size) && ambientIdRef.current) {
+        recordingBlob = await loadEncounterAmbientRecording(ambientIdRef.current).unwrap();
+      }
+      if (!recordingBlob?.size) {
+        dispatch(
+          notify({
+            msg: 'The saved recording is not available to create a draft.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const extension = recordingBlob.type.includes('mp4') ? 'mp4' : 'webm';
+      const audioFile = new File([recordingBlob], `ambient-scribe.${extension}`, {
+        type: recordingBlob.type || 'audio/webm'
+      });
+      const formData = new FormData();
+      formData.append('audio', audioFile);
+      if (patientIdRef.current) {
+        formData.append('patientId', String(patientIdRef.current));
+      }
+      if (encounterIdRef.current) {
+        formData.append('encounterId', String(encounterIdRef.current));
+      }
+
+      const result = await createAmbientDraft(formData).unwrap();
+      if (ambientIdRef.current) {
+        const saved = await updateEncounterAmbientDraft({
+          id: ambientIdRef.current,
+          draft: result
+        }).unwrap();
+        setDraft(saved.draft ?? result);
+      } else {
+        const saved = await saveAmbientSession({
+          consentStatus: givenConsent,
+          audio: audioFile,
+          draft: result
+        });
+        setDraft(saved?.draft ?? result);
+      }
+
+      const savedTranscript = transcriptFromDraft(result);
+      if (savedTranscript) {
+        publishTranscript(savedTranscript, '', '');
+      }
+      setFindings(findingsFromDraft(result));
+      setDraftOpen(true);
+      dispatch(
+        notify({
+          msg: 'Ambient draft is ready for review.',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'The draft could not be created.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setRecreatingDraft(false);
+    }
   };
 
   const statusLabel =
@@ -1047,7 +1456,19 @@ const AmbientScribe = ({
 
   return (
     <>
-      {phase !== 'idle' ? (
+      {!savedSessionReady ? (
+        <div className={`ambient-scribe-launch ${ui.mode === 'dark' ? 'dark' : 'light'}`}>
+          <div className="ambient-scribe-launch-copy">
+            <span className="ambient-scribe-launch-icon">
+              <FontAwesomeIcon icon={faMicrophone} />
+            </span>
+            <div>
+              <div className="ambient-scribe-launch-title">Ambient Scribe</div>
+              <div className="ambient-scribe-launch-status">Loading saved recording…</div>
+            </div>
+          </div>
+        </div>
+      ) : phase !== 'idle' ? (
         <RecordingWorkspace
           phase={phase}
           elapsed={elapsed}
@@ -1057,7 +1478,15 @@ const AmbientScribe = ({
           confirmedDoses={confirmedDoses}
           liveTranscript={liveTranscript}
           mode={ui.mode}
-          onViewDraft={draft ? () => setDraftOpen(true) : undefined}
+          audioUrl={audioUrl}
+          hasDraft={Boolean(draft)}
+          recreatingDraft={recreatingDraft}
+          onViewDraft={() => {
+            void openStoredDraft();
+          }}
+          onRecreateDraft={() => {
+            void recreateDraft();
+          }}
           onPause={pauseRecording}
           onResume={resumeRecording}
           onStop={stopRecording}
@@ -1065,7 +1494,7 @@ const AmbientScribe = ({
             setConfirmedDoses(current => (current.includes(value) ? current : [...current, value]))
           }
         />
-      ) : (
+      ) : setupAdded ? (
       <div className={`ambient-scribe-launch ${ui.mode === 'dark' ? 'dark' : 'light'}`}>
         <div className="ambient-scribe-launch-copy">
           <span className="ambient-scribe-launch-icon">
@@ -1073,7 +1502,9 @@ const AmbientScribe = ({
           </span>
           <div>
             <div className="ambient-scribe-launch-title">Ambient Scribe</div>
-            <div className={`ambient-scribe-launch-status is-${status}`}>{statusLabel}</div>
+              <div className={`ambient-scribe-launch-status is-${status}`}>
+                {accessLoading ? 'Checking who can start Ambient…' : canStartAmbient ? statusLabel : access.reason}
+              </div>
           </div>
         </div>
         <div className="ambient-scribe-launch-actions">
@@ -1085,13 +1516,13 @@ const AmbientScribe = ({
           <MyButton
             prefixIcon={() => <FontAwesomeIcon icon={faMicrophone} />}
             onClick={openModal}
-            disabled={disabled}
+            disabled={disabled || !canStartAmbient}
           >
             Start Ambient
           </MyButton>
         </div>
       </div>
-      )}
+      ) : null}
 
       <MyModal
         open={open}
@@ -1132,37 +1563,43 @@ const AmbientScribe = ({
             <div className="ambient-scribe-section">
               <div className="ambient-scribe-section-title">How did the patient consent?</div>
               <div className="ambient-scribe-choices">
-                <ChoiceCard
-                  title="Verbal consent"
-                  hint="Logged with your name and time"
-                  selected={consentMethod === 'verbal'}
-                  onSelect={() => setConsentMethod('verbal')}
-                />
-                <ChoiceCard
-                  title="Signed on tablet"
-                  hint="Patient signs the consent form"
-                  selected={consentMethod === 'tablet'}
-                  onSelect={() => setConsentMethod('tablet')}
-                />
+                {(consentMethodOptions.length
+                  ? consentMethodOptions
+                  : [
+                      { value: 'VERBAL', label: 'Verbal consent' },
+                      { value: 'TABLET', label: 'Signed on tablet' }
+                    ]
+                ).map(option => (
+                  <ChoiceCard
+                    key={option.value}
+                    title={option.label}
+                    hint={CONSENT_METHOD_HINTS[option.value] ?? ''}
+                    selected={consentMethod === option.value}
+                    onSelect={() => setConsentMethod(option.value)}
+                  />
+                ))}
               </div>
             </div>
 
             <div className="ambient-scribe-section">
               <div className="ambient-scribe-section-title">Microphone</div>
               <div className="ambient-scribe-choices">
-                <ChoiceCard
-                  title="This computer"
-                  hint="Desk mic · signal good"
-                  selected={microphone === 'computer'}
-                  onSelect={() => setMicrophone('computer')}
-                />
-                <ChoiceCard
-                  title="Pair phone or tablet"
-                  hint="Scan with the Asklepios app"
-                  selected={microphone === 'phone'}
-                  onSelect={() => setMicrophone('phone')}
-                  extra={<QrMark />}
-                />
+                {(microphoneOptions.length
+                  ? microphoneOptions
+                  : [
+                      { value: 'COMPUTER', label: 'This computer' },
+                      { value: 'PHONE', label: 'Pair phone or tablet' }
+                    ]
+                ).map(option => (
+                  <ChoiceCard
+                    key={option.value}
+                    title={option.label}
+                    hint={MICROPHONE_HINTS[option.value] ?? ''}
+                    selected={microphone === option.value}
+                    onSelect={() => setMicrophone(option.value)}
+                    extra={option.value === 'PHONE' ? <QrMark /> : undefined}
+                  />
+                ))}
               </div>
             </div>
 
@@ -1190,7 +1627,7 @@ const AmbientScribe = ({
                   recordingStartedAtRef.current = null;
                   setStatus('declined');
                   setOpen(false);
-                  void saveAmbientSession({ consentStatus: 'DECLINED' }).catch(error => {
+                  void saveAmbientSession({ consentStatus: declinedConsent }).catch(error => {
                     dispatch(
                       notify({
                         msg: extractErrorMessage(error) || 'The declined consent could not be saved.',

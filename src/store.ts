@@ -292,6 +292,7 @@ import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/b
 import { clinicalSummaryVoiceService } from './services/ai-services/clinicalSummaryVoiceService';
 import { ambientDraftService } from './services/ai-services/ambientDraftService';
 import { encounterAmbientService } from './services/encounters/encounterAmbientService';
+import { ambientScribeSetupService } from './services/setup/ambientScribeSetupService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -348,6 +349,7 @@ export const store = configureStore({
     [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
     [ambientDraftService.reducerPath]: ambientDraftService.reducer,
     [encounterAmbientService.reducerPath]: encounterAmbientService.reducer,
+    [ambientScribeSetupService.reducerPath]: ambientScribeSetupService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -970,7 +972,8 @@ export const store = configureStore({
         claimEncounterCopyDiagnosticOrderTestReportService.middleware,
         clinicalSummaryVoiceService.middleware,
         ambientDraftService.middleware,
-        encounterAmbientService.middleware
+        encounterAmbientService.middleware,
+        ambientScribeSetupService.middleware
       ) as any
 });
 

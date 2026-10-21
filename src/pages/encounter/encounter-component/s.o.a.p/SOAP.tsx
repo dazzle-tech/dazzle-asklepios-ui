@@ -389,6 +389,8 @@ const SOAP = props => {
               disabled={edit}
               patientId={patient?.id}
               encounterId={localEncounter?.id || encounterId}
+              facilityId={localEncounter?.facilityId}
+              departmentId={localEncounter?.departmentId}
               patientLine={[
                 [patient?.firstName, patient?.secondName, patient?.lastName].filter(Boolean).join(' '),
                 patient?.medicalRecordNumber ? `# ${patient.medicalRecordNumber}` : '',
