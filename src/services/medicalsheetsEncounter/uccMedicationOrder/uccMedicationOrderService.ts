@@ -258,13 +258,19 @@ submitUccMedicationOrderGroup: builder.mutation<
   {
     id: Id;
     actualAdministerTime: Date;
+    brandMedicationId: number;
+    uomGroupUnitId: number;
+    quantity: number;
   }
 >({
-  query: ({ id, actualAdministerTime }) => ({
+  query: ({ id, actualAdministerTime, brandMedicationId, uomGroupUnitId, quantity }) => ({
     url: `/api/patient/urgent-care-medication-orders/${id}/administer`,
     method: 'POST',
     body: {
       actualAdministerTime,
+      brandMedicationId,
+      uomGroupUnitId,
+      quantity,
     },
   }),
   invalidatesTags: (_res, _err, { id }) => [
