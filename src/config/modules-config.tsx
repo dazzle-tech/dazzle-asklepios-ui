@@ -268,6 +268,14 @@ export const MODULES: Module[] =
         { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
         { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
         {
+          name: "Supportive Document Setup",
+          code: "SUPPORTIVE_DOCUMENT_SETUP",
+          description: "Configure Payor required clinical documentation",
+          icon: "FaFileLines",
+          viewOrder: 22,
+          navPath: "supportive-document-setup"
+        },
+        {
           name: "Price Lists",
           code: "PRICE_LISTS",
           description: "",

@@ -29,6 +29,14 @@ export type DiagnosticCheckoutApproval = {
   results?: DiagnosticCheckoutResultLine[] | null;
 };
 
+export type MissingSupportiveDocumentRequirement = {
+  code: string;
+  label: string;
+  medicalSheetCode: string;
+  medicalSheetName: string;
+  medicalSheetPath: string;
+};
+
 export type PatientEncounterCompletionValidation = {
   encounterId: number;
   coverageType: 'SELF_PAY' | 'INSURANCE' | null;
@@ -52,6 +60,7 @@ export type PatientEncounterCompletionValidation = {
   canComplete: boolean;
   missing: string[];
   diagnosticApprovals?: DiagnosticCheckoutApproval[];
+  missingRequirements?: MissingSupportiveDocumentRequirement[];
 };
 
 export type EncounterAmendment = {
