@@ -17,11 +17,7 @@ import {
 } from '@/services/patients/emergency/encounterAssignToBedService';
 
 import { useGetAvailableRoomsByDepartmentAndGenderQuery } from '@/services/setup/room/roomService';
-import {
-  useGetActiveBedsByRoomIdQuery,
-  useOccupyBedMutation,
-  useMarkBedAsInCleaningMutation
-} from '@/services/setup/room/bedService';
+import { useGetActiveBedsByRoomIdQuery } from '@/services/setup/room/bedService';
 
 type Id = number | string;
 
@@ -39,6 +35,7 @@ const CHANGE_BED_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'room.notfound': 'Room not found.',
   'bed.notfound': 'Bed not found.',
+  'bed.notAvailable': 'Selected bed is no longer available. Please choose another bed.',
   'department.notfound': 'Department not found.',
   'bed.alreadyAssigned': 'Selected bed is already assigned.',
   'transfer.sameBed.notAllowed': 'Changing to the same bed is not allowed.',
@@ -135,10 +132,6 @@ const ChangeBedModal: React.FC<Props> = ({
 
   const [updateEncounterAssignToBed, { isLoading: isUpdatingAssignment }] =
     useUpdateEncounterAssignToBedMutation();
-
-  const [occupyBed, { isLoading: isOccupyingNewBed }] = useOccupyBedMutation();
-  const [markBedAsInCleaning, { isLoading: isMarkingOldBedInCleaning }] =
-    useMarkBedAsInCleaningMutation();
 
   const {
     data: roomsResponse,
@@ -262,10 +255,6 @@ const ChangeBedModal: React.FC<Props> = ({
         isActive: true
       }).unwrap();
 
-      await markBedAsInCleaning({ id: currentBedId }).unwrap();
-
-      await occupyBed({ id: Number(record.bedId) }).unwrap();
-
       dispatch(
         notify({
           msg: 'Bed changed successfully.',
@@ -336,9 +325,7 @@ const ChangeBedModal: React.FC<Props> = ({
       actionButtonLabel="Move"
       actionButtonLoading={
         isFetchingActiveAssignment ||
-        isUpdatingAssignment ||
-        isOccupyingNewBed ||
-        isMarkingOldBedInCleaning
+        isUpdatingAssignment
       }
       content={<div dir={dir}>{modalContent}</div>}
     />

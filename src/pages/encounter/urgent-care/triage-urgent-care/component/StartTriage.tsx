@@ -36,6 +36,7 @@ import {
 } from "@/services/encounters/er-triage/emergencyTriageService";
 
 import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from "@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService";
+import { useGetActiveAssignmentByEncounterIdQuery } from "@/services/patients/emergency/encounterAssignToBedService";
 
 import { useEnumOptions } from "@/services/enumsApi";
 
@@ -94,6 +95,11 @@ const StartTriage = ({
   });
 
   const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
+    { encounterId },
+    { skip: !encounterId }
+  );
+
+  const { data: activeAssignment } = useGetActiveAssignmentByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId }
   );
@@ -347,12 +353,12 @@ const StartTriage = ({
     ""
   ).toUpperCase();
   const isTriageStarted = encounterStatus === "TRIAGE_STARTED";
-  const filledEmergencyLevel = triage?.emergencyLevel ?? null;
   const savedEmergencyLevel = latestTriageFromServer?.emergencyLevel ?? null;
-  const hasEmergencyLevel = Boolean(savedEmergencyLevel || filledEmergencyLevel);
+  // Once the patient has a bed the triage is locked
+  const isAssignedToBed =
+    encounterStatus === "ASSIGNED_TO_BED" || Boolean(activeAssignment?.id);
   const canAssignBed =
-    !isReceptionist &&
-    (Boolean(savedEmergencyLevel) || (isTriageStarted && Boolean(filledEmergencyLevel)));
+    !isReceptionist && !isAssignedToBed && Boolean(savedEmergencyLevel);
   const isAssignBedDisabled = !canAssignBed;
 
   const selectedDepartment = useMemo(() => {
@@ -370,10 +376,12 @@ const StartTriage = ({
     selectedDepartment?.id ??
     null;
 
-  const assignBedTooltip = !isTriageStarted && !savedEmergencyLevel ? (
+  const assignBedTooltip = isAssignedToBed ? (
+    <Tooltip>Patient is already assigned to a bed</Tooltip>
+  ) : !isTriageStarted && !savedEmergencyLevel ? (
     <Tooltip>Assign Bed is only available when triage is started</Tooltip>
-  ) : !hasEmergencyLevel ? (
-    <Tooltip>Please set Emergency Level first</Tooltip>
+  ) : !savedEmergencyLevel ? (
+    <Tooltip>Please save Emergency Level first</Tooltip>
   ) : (
     <Tooltip>Assign Bed</Tooltip>
   );
@@ -450,12 +458,14 @@ const handleGoBackToTriageList = () => {
             triage={triage}
             setTriage={setTriage}
             onSave={handleSaveCTASLevelNew}
+            readOnly={isAssignedToBed}
           />
         ) :
           (<EmergencyLevelAssessment
             triage={triage}
             setTriage={setTriage}
             onSave={handleSaveLevelAssessmentNew}
+            readOnly={isAssignedToBed}
           />)}
       </Row>
 
@@ -469,6 +479,7 @@ const handleGoBackToTriageList = () => {
                   patientId={patientId}
                   encounterId={safeEncounterId}
                   isTriage
+                  disabled={isAssignedToBed}
                   title="Vital Signs"
                 />
               </Form>
@@ -483,6 +494,7 @@ const handleGoBackToTriageList = () => {
               patientId={patientId}
               encounterId={safeEncounterId}
               encounter={encounter}
+              disabled={isAssignedToBed}
               title="Pain Assessment"
             />
           </Form>
@@ -499,7 +511,7 @@ const handleGoBackToTriageList = () => {
                   patientId={patientId}
                   encounterId={safeEncounterId}
                   encounter={encounter}
-                  disabled={false}
+                  disabled={isAssignedToBed}
                   width="100%"
                 />
               </Form>
@@ -511,7 +523,7 @@ const handleGoBackToTriageList = () => {
         {!Number.isNaN(patientId) && (
           <SectionContainer
             title={<Translate>Allergies</Translate>}
-            content={<Allergies patient={patient} encounter={encounter} showTableActions={false} showTableButtons={false} />}
+            content={<Allergies patient={patient} encounter={encounter} showTableActions={false} showTableButtons={false} readonly={isAssignedToBed} />}
           />
         )}
       </Row>
@@ -523,6 +535,7 @@ const handleGoBackToTriageList = () => {
               <GlasgowComaScale
                 patient={patient}
                 encounter={encounter}
+                viewMode={isAssignedToBed ? "View" : undefined}
               />
             }
           />
@@ -542,6 +555,7 @@ const handleGoBackToTriageList = () => {
                 fieldName="chiefComplaint"
                 record={localEncounter}
                 setRecord={setLocalEncounter}
+                disabled={isAssignedToBed}
               />
             </Form>
           }
@@ -549,7 +563,7 @@ const handleGoBackToTriageList = () => {
             <MyButton
               size="small"
               onClick={saveChiefComplaint}
-              disabled={!localEncounter?.chiefComplaint}
+              disabled={isAssignedToBed || !localEncounter?.chiefComplaint}
             >
               Save
             </MyButton>
