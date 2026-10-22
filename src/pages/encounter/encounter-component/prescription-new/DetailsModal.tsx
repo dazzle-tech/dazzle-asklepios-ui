@@ -1263,6 +1263,7 @@ const createPayload: any = {
                             fieldType="number"
                             fieldLabel="Maximum Dose"
                             fieldName="maximumDose"
+                            allowDecimal
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />

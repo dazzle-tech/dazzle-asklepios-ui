@@ -418,7 +418,7 @@ const patientConditionItems =
 
 const getAllergenName = (allergy: any) => {
   if (allergy?.allergenType === 'OTHER') {
-    return <p>{allergy?.allergenName || '-'}</p>;
+    return <p>{allergy?.allergenName || 'Unknown'}</p>;
   }
 
   if (allergy?.allergenId && allergensListResponse?.data) {
@@ -426,7 +426,7 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.allergenId
     );
 
-    return <p>{allergen?.name ?? '-'}</p>;
+    return <p>{allergen?.name ?? 'Unknown'}</p>;
   }
 
   if (allergy?.medicationClassId && medicationClassesListResponse) {
@@ -434,10 +434,10 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.medicationClassId
     );
 
-    return <p>{medicationClass?.name ?? '-'}</p>;
+    return <p>{medicationClass?.name ?? 'Unknown'}</p>;
   }
 
-  return <p>-</p>;
+  return <p>Unknown</p>;
 };
 
   const activeAllergies =
@@ -1043,8 +1043,16 @@ const coverageTypeLabel =
               <span>
                 <MyBadgeStatus
                   key={`allergy-${allergy.id || index}`}
-                  backgroundColor={getAllergySeverityColors(allergy.severity || '').bg}
-                  color={getAllergySeverityColors(allergy.severity || '').text}
+                  backgroundColor={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--light-green)'
+                      : getAllergySeverityColors(allergy.severity).bg
+                  }
+                  color={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--primary-green)'
+                      : getAllergySeverityColors(allergy.severity).text
+                  }
                   contant={
                     <div className="diagnosis-badge-content">
                       <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />
