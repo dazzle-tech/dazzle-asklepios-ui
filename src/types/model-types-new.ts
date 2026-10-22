@@ -4255,6 +4255,8 @@ export type PatientServiceAndProduct = {
   netAmount?: number | null;
   patientShareAmount?: number | null;
   insuranceShareAmount?: number | null;
+  // MEDICATION: UOM unit the quantity is charged in (null = the brand's price base unit)
+  uomGroupUnitId?: number | null;
 };
 
 export enum ServiceSource {
@@ -4287,6 +4289,7 @@ export type PatientServiceProductCreateDTO = {
   serviceSource: ServiceSource;
   SourceId?: number | null; // ID of the source entity (e.g., diagnostic order test ID, procedure ID, etc.)
   acceptUncoveredAsCash?: boolean | null;
+  uomGroupUnitId?: number | null;
 };
 
 export type PatientServiceProductUpdateDTO = {
@@ -4308,6 +4311,7 @@ export type PatientServiceProductUpdateDTO = {
   isBilled?: boolean | null;
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
+  uomGroupUnitId?: number | null;
 };
 
 // =============================

@@ -212,6 +212,8 @@ export type PreviewCatalogItemPricingRequest = {
   coverageType?: 'SELF_PAY' | 'INSURANCE';
   patientInsuranceId?: number | null;
   invoiceId?: number | null;
+  // MEDICATION: UOM unit to price in (null = the brand's price base unit)
+  uomGroupUnitId?: number | null;
 };
 
 export type PreviewCatalogItemPricingResult = {
