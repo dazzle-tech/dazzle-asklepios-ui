@@ -324,6 +324,8 @@ export const WASEEL_ELIGIBILITY_ERROR_MAP: Record<string, string> = {
   'insurance.patientMismatch': 'The selected insurance does not belong to this patient.',
   'patient.notFound': 'Patient was not found.',
   'request.required': 'Eligibility check request is invalid.',
+  'waseel.eligibility.insuranceNotFound':
+    'This insurance was not found at Waseel. Check the payer, policy number, and member card ID, then try again.',
   'waseel.eligibility.invalidRequest':
     'Waseel rejected the eligibility request because the payload was invalid. Verify patient and insurance details, then try again.',
   'waseel.eligibility.badRequest': 'Waseel rejected the eligibility request. Verify insurance details and try again.',
