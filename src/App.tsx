@@ -267,6 +267,7 @@ const CountryDistrictPage = lazy (() => import ( './pages/setup/country-setup/di
 const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
 const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
+const SupportiveDocumentSetup = lazy (() => import ( './pages/setup/supportive-document-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
 const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
@@ -1003,6 +1004,7 @@ const App = () => {
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
               <Route path="payor-setup" element={<PayerSetup />} />
+              <Route path="supportive-document-setup" element={<SupportiveDocumentSetup />} />
               <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"

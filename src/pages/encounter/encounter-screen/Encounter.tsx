@@ -10,9 +10,11 @@ import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
+  MissingSupportiveDocumentRequirement,
   useCompleteEncounterMutation,
   useLazyGetEncounterCompletionValidationQuery
 } from '@/services/encounters/patientEncounterService';
+import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
@@ -380,6 +382,60 @@ const handleGoBack = () => {
     };
   }, [patientToSend, encounterId]);
 
+  const completeEncounterErrorMap: Record<string, string> = {
+    'complete.notAllowed':
+      'Cannot complete unless status is NEW, ONGOING, or TRIAGE STARTED',
+    'complete.documentationIncomplete':
+      'Required documentation is incomplete for this insurance visit.',
+    'completion.insuranceMissing':
+      'This insurance visit is missing a linked patient insurance.',
+    'completion.insuranceInvalid':
+      'The linked patient insurance is invalid for this visit.',
+    'completion.payorUnresolved':
+      'Unable to resolve the Payor for this insurance visit.',
+    'completion.supportiveDocumentConfigFailed':
+      'Unable to load Payor documentation requirements. Try again.',
+    'completion.supportiveDocumentConfigMalformed':
+      'Payor documentation configuration is invalid. Contact an administrator.',
+    'completion.supportiveDocumentCatalogFailed':
+      'Unable to load the documentation requirement catalog. Try again.',
+    'completion.supportiveDocumentCatalogMalformed':
+      'The documentation requirement catalog is invalid. Contact an administrator.',
+    'completion.requirementCode.unsupported':
+      'This Payor has an unsupported documentation requirement. Contact an administrator.',
+    'completion.requirementCode.invalid':
+      'This Payor has an invalid documentation requirement. Contact an administrator.',
+    'amendment.completeNotAllowed':
+      'This encounter has an open amendment. Finish the amendment before completing the encounter.',
+    'id.notfound': 'Encounter not found'
+  };
+
+  const refreshDocumentationValidationItems = async (): Promise<
+    CompletionValidationItem[] | null
+  > => {
+    if (!encounterId) {
+      return null;
+    }
+
+    try {
+      const completionValidation = await validateEncounterCompletion({
+        encounterId
+      }).unwrap();
+
+      if (
+        completionValidation?.insuranceVisit &&
+        !completionValidation?.canComplete
+      ) {
+        return buildInsuranceDocumentationItems(completionValidation);
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Failed to refresh documentation validation:', error);
+      return null;
+    }
+  };
+
   const completeEncounterNow = async () => {
     try {
       if (propsData?.encounter) {
@@ -390,15 +446,35 @@ const handleGoBack = () => {
         }));
       }
     } catch (err: any) {
-      const errorMap: Record<string, string> = {
-        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
-        'error.amendment.completeNotAllowed':
-          'This encounter has an open amendment. Finish the amendment before completing the encounter.',
-        'error.id.notfound': 'Encounter not found'
-      };
+      const backendMessage = String(err?.data?.message ?? '');
+      const normalizedKey = backendMessage.startsWith('error.')
+        ? backendMessage.substring(6)
+        : backendMessage;
 
-      const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error completing encounter';
+      if (normalizedKey === 'complete.documentationIncomplete') {
+        const refreshedItems = await refreshDocumentationValidationItems();
+        if (refreshedItems && refreshedItems.length > 0) {
+          setValidationItems(refreshedItems);
+          setShowValidationModal(true);
+          return;
+        }
+
+        dispatch(
+          notify({
+            msg:
+              refreshedItems == null
+                ? 'Required documentation is incomplete, but the current missing list could not be refreshed.'
+                : 'Required documentation is incomplete for this insurance visit.',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const msg =
+        extractApiErrorMessage(err, completeEncounterErrorMap) ||
+        completeEncounterErrorMap[normalizedKey] ||
+        'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
     }
@@ -491,6 +567,7 @@ const handleGoBack = () => {
         'History Of Present Illness',
         'Physical Examination Summary',
         'Patient Diagnosis',
+        'Primary Diagnosis',
         'Assessment',
         'Treatment Plan / Management'
       ]
@@ -500,6 +577,7 @@ const handleGoBack = () => {
       name: 'Patient History',
       path: '/patient-history',
       items: [
+        'Medical History',
         "Patient's Problems",
         'Family History',
         'Hospitalizations',
@@ -525,6 +603,81 @@ const handleGoBack = () => {
       ]
     }
   ];
+
+  const resolveNavigableSheetPath = (sheetCode?: string, path?: string) => {
+    if (!sheetCode || !path) {
+      return undefined;
+    }
+    const allowedCodes = new Set(
+      (departmentSheets ?? []).map((sheet: any) => sheet.medicalSheet)
+    );
+    if (!allowedCodes.has(sheetCode)) {
+      return undefined;
+    }
+    return path;
+  };
+
+  const buildStructuredMissingRequirementItems = (
+    missingRequirements: MissingSupportiveDocumentRequirement[]
+  ): CompletionValidationItem[] => {
+    const byCode = new Map<string, MissingSupportiveDocumentRequirement>();
+
+    for (const requirement of missingRequirements) {
+      if (!requirement?.code) {
+        continue;
+      }
+      const normalizedCode = String(requirement.code).trim().toUpperCase();
+      if (!byCode.has(normalizedCode)) {
+        byCode.set(normalizedCode, requirement);
+      }
+    }
+
+    const grouped = new Map<
+      string,
+      {
+        medicalSheetCode: string;
+        medicalSheetName: string;
+        medicalSheetPath?: string;
+        missingItems: string[];
+      }
+    >();
+
+    for (const requirement of byCode.values()) {
+      const sheetCode = requirement.medicalSheetCode || 'UNKNOWN';
+      const existing = grouped.get(sheetCode);
+      const label =
+        requirement.label?.trim() ||
+        requirement.code;
+
+      if (existing) {
+        if (!existing.missingItems.includes(label)) {
+          existing.missingItems.push(label);
+        }
+      } else {
+        grouped.set(sheetCode, {
+          medicalSheetCode: sheetCode,
+          medicalSheetName:
+            requirement.medicalSheetName || sheetCode,
+          medicalSheetPath: resolveNavigableSheetPath(
+            sheetCode,
+            requirement.medicalSheetPath
+          ),
+          missingItems: [label]
+        });
+      }
+    }
+
+    return Array.from(grouped.values()).map((group, index) => ({
+      id: index + 1,
+      type: 'MEDICAL_SHEET' as const,
+      referenceNumber: group.medicalSheetCode,
+      medicalSheetCode: group.medicalSheetCode,
+      medicalSheetName: group.medicalSheetName,
+      medicalSheetPath: group.medicalSheetPath,
+      missingItems: group.missingItems,
+      status: 'INCOMPLETE'
+    }));
+  };
 
   const buildMedicalSheetValidationItems = (
     missing: string[]
@@ -571,7 +724,7 @@ const handleGoBack = () => {
           referenceNumber: sheet.code,
           medicalSheetCode: sheet.code,
           medicalSheetName: sheet.name,
-          medicalSheetPath: sheet.path,
+          medicalSheetPath: resolveNavigableSheetPath(sheet.code, sheet.path),
           missingItems: sheetMissingItems,
           status: 'INCOMPLETE'
         });
@@ -579,6 +732,79 @@ const handleGoBack = () => {
     });
 
     return result;
+  };
+
+  const buildInsuranceDocumentationItems = (
+    completionValidation: {
+      missing?: string[];
+      missingRequirements?: MissingSupportiveDocumentRequirement[];
+    }
+  ): CompletionValidationItem[] => {
+    const structured = Array.isArray(completionValidation.missingRequirements)
+      ? completionValidation.missingRequirements
+      : [];
+
+    if (structured.length > 0) {
+      return buildStructuredMissingRequirementItems(structured);
+    }
+
+    const missingItems = Array.isArray(completionValidation.missing)
+      ? completionValidation.missing
+      : [];
+
+    const medicalSheetItems = buildMedicalSheetValidationItems(missingItems);
+    const items: CompletionValidationItem[] = [...medicalSheetItems];
+
+    const handledMissing = new Set(
+      medicalSheetItems.flatMap(item => item.missingItems ?? [])
+    );
+
+    const remainingMissing = missingItems.filter(
+      (missingItem: string) => !handledMissing.has(missingItem)
+    );
+
+    if (remainingMissing.length > 0) {
+      items.push({
+        id: Number(encounterId),
+        type: 'INSURANCE',
+        referenceNumber: String(encounterId),
+        status: 'INVALID',
+        details: remainingMissing.join(', ')
+      });
+    }
+
+    return items;
+  };
+
+  const mapCompletionValidationError = (error: any): CompletionValidationItem => {
+    const message = extractApiErrorMessage(error, {
+      'completion.insuranceMissing':
+        'This insurance visit is missing a linked patient insurance.',
+      'completion.insuranceInvalid':
+        'The linked patient insurance is invalid for this visit.',
+      'completion.payorUnresolved':
+        'Unable to resolve the Payor for this insurance visit.',
+      'completion.supportiveDocumentConfigFailed':
+        'Unable to load Payor documentation requirements. Try again.',
+      'completion.supportiveDocumentConfigMalformed':
+        'Payor documentation configuration is invalid. Contact an administrator.',
+      'completion.supportiveDocumentCatalogFailed':
+        'Unable to load the documentation requirement catalog. Try again.',
+      'completion.supportiveDocumentCatalogMalformed':
+        'The documentation requirement catalog is invalid. Contact an administrator.',
+      'completion.requirementCode.unsupported':
+        'This Payor has an unsupported documentation requirement. Contact an administrator.',
+      'completion.requirementCode.invalid':
+        'This Payor has an invalid documentation requirement. Contact an administrator.'
+    });
+
+    return {
+      id: Number(encounterId),
+      type: 'INSURANCE',
+      referenceNumber: String(encounterId),
+      status: 'VALIDATION_ERROR',
+      details: message || 'Unable to validate insurance documentation requirements'
+    };
   };
 
   const handleSubmitEncounter = async () => {
@@ -599,37 +825,9 @@ const handleGoBack = () => {
           completionValidation?.insuranceVisit &&
           !completionValidation?.canComplete
         ) {
-          const missingItems = Array.isArray(
-            completionValidation?.missing
-          )
-            ? completionValidation.missing
-            : [];
-
-          const medicalSheetItems =
-            buildMedicalSheetValidationItems(missingItems);
-
-          items.push(...medicalSheetItems);
-
-          const handledMissing = new Set(
-            medicalSheetItems.flatMap(
-              item => item.missingItems ?? []
-            )
+          items.push(
+            ...buildInsuranceDocumentationItems(completionValidation)
           );
-
-          const remainingMissing = missingItems.filter(
-            (missingItem: string) =>
-              !handledMissing.has(missingItem)
-          );
-
-          if (remainingMissing.length > 0) {
-            items.push({
-              id: Number(encounterId),
-              type: 'INSURANCE',
-              referenceNumber: String(encounterId),
-              status: 'INVALID',
-              details: remainingMissing.join(', ')
-            });
-          }
         }
       } catch (error) {
         console.error(
@@ -637,13 +835,7 @@ const handleGoBack = () => {
           error
         );
 
-        items.push({
-          id: Number(encounterId),
-          type: 'INSURANCE',
-          referenceNumber: String(encounterId),
-          status: 'VALIDATION_ERROR',
-          details: 'Unable to validate insurance requirements'
-        });
+        items.push(mapCompletionValidationError(error));
       }
     }
 
