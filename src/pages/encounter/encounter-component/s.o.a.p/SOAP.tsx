@@ -388,6 +388,8 @@ const SOAP = props => {
             <AmbientScribe
               disabled={edit}
               patientId={patient?.id}
+              encounter={localEncounter}
+              onEncounterSaved={setLocalEncounter}
               encounterId={localEncounter?.id || encounterId}
               facilityId={localEncounter?.facilityId}
               departmentId={localEncounter?.departmentId}

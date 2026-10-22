@@ -34,6 +34,8 @@ const AmbientScribeSetup = ({ facilityId }: AmbientScribeSetupProps) => {
   const noteLanguages = useEnumOptions('AmbientNoteLanguage');
   const instructionLanguages = useEnumOptions('AmbientInstructionLanguage');
   const noteStyles = useEnumOptions('AmbientNoteStyle');
+  const specialties = useEnumOptions('AmbientSpecialty');
+  const noteForms = useEnumOptions('AmbientNoteForm');
   const retentions = useEnumOptions('AmbientAudioRetention');
   const audiences = useEnumOptions('AmbientRecordingAccess');
 
@@ -68,11 +70,15 @@ const AmbientScribeSetup = ({ facilityId }: AmbientScribeSetupProps) => {
       !next.noteLanguage ||
       !next.instructionLanguage ||
       !next.noteStyle ||
+      !next.specialty ||
+      !next.noteForm ||
       !next.audioRetention ||
       !next.recordingAccess ||
       (next.noteLanguage === data.noteLanguage &&
         next.instructionLanguage === data.instructionLanguage &&
         next.noteStyle === data.noteStyle &&
+        next.specialty === data.specialty &&
+        next.noteForm === data.noteForm &&
         next.suggestIcd10 === data.suggestIcd10 &&
         next.suggestOrders === data.suggestOrders &&
         next.audioRetention === data.audioRetention &&
@@ -287,8 +293,36 @@ const AmbientScribeSetup = ({ facilityId }: AmbientScribeSetupProps) => {
               width="100%"
               fieldType="select"
               fieldName="noteStyle"
-              fieldLabel="Default note style"
+              fieldLabel="Note length"
               selectData={noteStyles}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={data}
+              setRecord={setSetting}
+              disabled={busy}
+              searchable={false}
+              cleanable={false}
+            />
+            <MyInput
+              width="100%"
+              fieldType="select"
+              fieldName="specialty"
+              fieldLabel="Specialty"
+              selectData={specialties}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={data}
+              setRecord={setSetting}
+              disabled={busy}
+              searchable={false}
+              cleanable={false}
+            />
+            <MyInput
+              width="100%"
+              fieldType="select"
+              fieldName="noteForm"
+              fieldLabel="Note form"
+              selectData={noteForms}
               selectDataLabel="label"
               selectDataValue="value"
               record={data}

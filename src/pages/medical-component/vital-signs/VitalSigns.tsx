@@ -35,7 +35,8 @@ type VitalSignsProps = {
   showFluidAssessment?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
-
+  prefill?: Partial<VitalSignsModelObject> | null;
+  onSaved?: (saved?: VitalSignsModelObject) => void;
 };
 
 const VitalSigns: React.FC<VitalSignsProps> = ({
@@ -50,6 +51,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   showFluidAssessment = false,
   collapsible = false,
   defaultCollapsed = false,
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -79,12 +82,14 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
   const [vitalSigns, setVitalSigns] = useState<VitalSignsModelObject>({
     ...newVitalSigns,
+    ...(prefill ?? {}),
     patientId,
     encounterId,
     isTriage
   });
 
   useEffect(() => {
+    if (prefill) return;
     const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
     if (!source) return;
 
@@ -102,7 +107,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     latestVitalSignsByEncounterId,
     latestTriageVitalSignsByEncounterId,
     patientId,
-    encounterId
+    encounterId,
+    prefill
   ]);
 
   useEffect(() => {
@@ -268,6 +274,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
+      onSaved?.(createResponse);
     } catch (error: any) {
       showApiError(error);
     }

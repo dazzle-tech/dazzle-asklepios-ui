@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowsRotate,
@@ -10,7 +10,7 @@ import {
   faStop
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { Tooltip, Whisper } from 'rsuite';
+import { Loader, Tooltip, Whisper } from 'rsuite';
 import { useSelector } from 'react-redux';
 
 import MyButton from '@/components/MyButton/MyButton';
@@ -19,7 +19,10 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
 import type { AmbientDraft } from '@/services/ai-services/ambientDraft';
-import { useCreateAmbientDraftMutation } from '@/services/ai-services/ambientDraftService';
+import {
+  useCreateAmbientDraftMutation,
+  type AmbientDraftRequest
+} from '@/services/ai-services/ambientDraftService';
 import {
   useCreateEncounterAmbientMutation,
   useLazyGetEncounterAmbientByEncounterQuery,
@@ -29,11 +32,20 @@ import {
 } from '@/services/encounters/encounterAmbientService';
 import AmbientDraftModal from './AmbientDraftModal';
 import type { AutoPopulationResponse } from '@/types/model-types-new';
-import { useGetAmbientScribeSetupQuery } from '@/services/setup/ambientScribeSetupService';
-import type { AmbientScribeClinic } from '@/services/setup/ambientScribeSetupService';
+import { useGetPatientDiagnosesByPatientIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetPreviousClosedEncounterQuery } from '@/services/encounters/patientEncounterService';
+import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+import { useGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import { formatEnumString } from '@/utils';
+import {
+  useGetAmbientScribeSetupQuery,
+  type AmbientScribeClinic
+} from '@/services/setup/ambientScribeSetupService';
 import { useGetPractitionerByUserIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { formatEnumString } from '@/utils';
+import { preferredRecorderMimeType, toSupportedAudioFile } from '@/services/ai-services/supportedAudio';
 import { extractErrorMessage } from '@/utils/extractErrorMessage';
 import { notify } from '@/utils/uiReducerActions';
 import './ambient-scribe.less';
@@ -44,6 +56,8 @@ type SessionPhase = 'idle' | 'recording' | 'paused' | 'processing' | 'stopped';
 type AmbientScribeProps = {
   disabled?: boolean;
   patientId?: number | string | null;
+  encounter?: any;
+  onEncounterSaved?: (encounter: any) => void;
   encounterId?: number | string | null;
   facilityId?: number | string | null;
   departmentId?: number | string | null;
@@ -65,6 +79,21 @@ const PATIENT_SCRIPT =
 
 const PATIENT_SCRIPT_AR =
   'أود استخدام أداة تستمع إلى حديثنا وتساعدني في كتابة ملاحظاتك. أراجع كل شيء بنفسي، ويُحذف التسجيل بعد ٣٠ يوما. هل توافق؟';
+
+const isoDate = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+  const text = value instanceof Date ? value.toISOString() : String(value);
+  return text.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? '';
+};
+
+const dosePhrase = (dose?: number | null, unit?: string | null, frequency?: string | null) =>
+  [dose == null ? '' : String(dose), formatEnumString(unit || ''), formatEnumString(frequency || '')]
+    .map(part => part.trim())
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
 
 const QR_SIZE = 21;
 
@@ -345,9 +374,11 @@ type RecordingWorkspaceProps = {
   findings: Finding[];
   confirmedDoses: string[];
   liveTranscript: boolean;
+  languageLabel: string;
   mode: string;
   audioUrl?: string | null;
   hasDraft?: boolean;
+  canRecreateDraft?: boolean;
   recreatingDraft?: boolean;
   onViewDraft?: () => void;
   onRecreateDraft?: () => void;
@@ -374,53 +405,57 @@ const StoppedIconButton = ({
     <span className="ambient-recording-icon-btn">
       <MyButton
         appearance="ghost"
-        color="#ffffff"
+        color="var(--primary-blue)"
         size="small"
         radius="8px"
         disabled={disabled}
         loading={loading}
-        style={{ border: '1px solid rgba(255,255,255,0.75)', padding: 0 }}
+        style={{ border: '1px solid var(--primary-blue)', background: 'transparent', padding: 0 }}
         onClick={onClick}
       >
-        <FontAwesomeIcon icon={icon} />
+        <FontAwesomeIcon icon={icon} style={{ color: 'var(--primary-blue)' }} />
         <span className="ambient-recording-sr">{label}</span>
       </MyButton>
     </span>
   </Whisper>
 );
 
+const RecordingWave = ({ live }: { live: boolean }) => (
+  <span className={`ambient-recording-wave${live ? ' is-live' : ''}`} aria-hidden="true">
+    {Array.from({ length: 18 }, (_, index) => (
+      <span key={index} />
+    ))}
+  </span>
+);
+
 const RecordingWorkspace = ({
   phase,
   elapsed,
-  turns,
-  interim,
-  findings,
-  confirmedDoses,
-  liveTranscript,
+  languageLabel,
   mode,
   audioUrl,
   hasDraft,
+  canRecreateDraft = true,
   recreatingDraft,
   onViewDraft,
   onRecreateDraft,
   onPause,
   onResume,
-  onStop,
-  onConfirmDose
+  onStop
 }: RecordingWorkspaceProps) => {
   const playbackRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playSeconds, setPlaySeconds] = useState(0);
-  const barLabel =
-    phase === 'paused'
+  const creatingDraft = phase === 'processing' || Boolean(recreatingDraft);
+  const barLabel = creatingDraft
+    ? 'Creating draft'
+    : phase === 'paused'
       ? 'Paused'
-      : phase === 'processing'
-        ? 'Creating draft'
-        : playing
-          ? 'Playing'
-          : phase === 'stopped'
-            ? 'Recording stopped'
-            : 'Recording';
+      : playing
+        ? 'Playing'
+        : phase === 'stopped'
+          ? 'Recording stopped'
+          : 'Recording';
 
   useEffect(() => {
     setPlaying(false);
@@ -443,13 +478,24 @@ const RecordingWorkspace = ({
 
   return (
     <div className={`ambient-recording ${mode === 'dark' ? 'dark' : 'light'}`}>
-      <div className={`ambient-recording-bar is-${phase}`} role="status">
+      <div
+        className={`ambient-recording-bar is-${phase}${creatingDraft ? ' is-creating' : ''}`}
+        role="status"
+        aria-busy={creatingDraft}
+      >
         <span className="ambient-recording-dot" />
         <span className="ambient-recording-label">{barLabel}</span>
         <span className="ambient-recording-timer">
           {formatElapsed(playing ? playSeconds : elapsed)}
         </span>
-        {phase === 'stopped' && (
+        <RecordingWave live={phase === 'recording'} />
+        <span className="ambient-recording-lang">{languageLabel}</span>
+        {creatingDraft && (
+          <span className="ambient-recording-actions">
+            <Loader size="sm" />
+          </span>
+        )}
+        {phase === 'stopped' && !creatingDraft && (
           <div className="ambient-recording-actions">
             <audio
               ref={playbackRef}
@@ -477,10 +523,14 @@ const RecordingWorkspace = ({
             />
             {!hasDraft && (
               <StoppedIconButton
-                label="Recreate draft"
+                label={
+                  canRecreateDraft
+                    ? 'Recreate draft'
+                    : 'Ambient Scribe is not set up for this facility.'
+                }
                 icon={faArrowsRotate}
                 loading={recreatingDraft}
-                disabled={recreatingDraft}
+                disabled={recreatingDraft || !canRecreateDraft}
                 onClick={onRecreateDraft}
               />
             )}
@@ -490,119 +540,46 @@ const RecordingWorkspace = ({
           <div className="ambient-recording-actions">
             <MyButton
               appearance="ghost"
-              color="#ffffff"
+              color="#1f2937"
               size="small"
               radius="8px"
               prefixIcon={() => (
                 <FontAwesomeIcon icon={phase === 'paused' ? faPlay : faPause} />
               )}
-              style={{ border: '1px solid rgba(255,255,255,0.75)', padding: '0 12px' }}
+              style={{ border: '1px solid #d7dbe3', background: '#ffffff', padding: '0 14px' }}
               onClick={phase === 'paused' ? onResume : onPause}
             >
               {phase === 'paused' ? 'Resume' : 'Pause'}
             </MyButton>
             <MyButton
-              appearance="ghost"
-              color="#7f1d1d"
+              appearance="primary"
+              backgroundColor="#e11d2e"
               size="small"
               radius="8px"
               prefixIcon={() => <FontAwesomeIcon icon={faStop} />}
-              style={{
-                border: '1px solid #ffffff',
-                background: '#ffffff',
-                color: '#7f1d1d',
-                padding: '0 12px'
-              }}
+              style={{ padding: '0 14px' }}
               onClick={onStop}
             >
-              Stop
+              Stop & create draft
             </MyButton>
           </div>
         )}
       </div>
 
       <div className="ambient-recording-body">
+        {creatingDraft && (
+          <div className="ambient-recording-loading" role="status">
+            <Loader size="md" content="Creating the ambient draft…" vertical />
+          </div>
+        )}
         <SectionContainer
           title="Live transcript"
-          content={
-            <div className="ambient-transcript">
-              {!turns.length && !interim && (
-                <div className="ambient-empty">
-                  {phase === 'stopped'
-                    ? 'No transcript was saved with this recording.'
-                    : liveTranscript
-                      ? 'Listening…'
-                      : 'Live transcription is not available in this browser. The transcript will appear after you stop.'}
-                </div>
-              )}
-              {turns.map(turn => (
-                <div key={turn.id} className="ambient-turn">
-                  {turn.speaker && (
-                    <div
-                      className={`ambient-turn-speaker is-${turn.speaker.toLowerCase().split(' ')[0]}`}
-                    >
-                      {turn.speaker}
-                    </div>
-                  )}
-                  <p>{turn.text}</p>
-                </div>
-              ))}
-              {interim && <div className="ambient-turn is-live">{interim}</div>}
-              {phase === 'recording' && !interim && !!turns.length && (
-                <div className="ambient-turn is-live">Listening…</div>
-              )}
-            </div>
-          }
+          content={<div className="ambient-empty">Live transcript will be enabled soon.</div>}
         />
 
         <SectionContainer
-          title="Picked up"
-          content={
-            <div className="ambient-findings">
-              {!findings.length && (
-                <div className="ambient-empty">
-                  {phase === 'stopped'
-                    ? 'No findings were saved with this recording.'
-                    : phase === 'processing'
-                      ? 'Reading the recording…'
-                      : 'Findings appear here as the visit is transcribed.'}
-                </div>
-              )}
-              {findings.map(finding => {
-                const confirmed = finding.confirmDose && confirmedDoses.includes(finding.value);
-                const flagged = finding.confirmDose && !confirmed;
-
-                return (
-                  <div
-                    key={finding.id}
-                    className={`ambient-finding${flagged ? ' is-flagged' : ''}${
-                      confirmed ? ' is-confirmed' : ''
-                    }`}
-                  >
-                    <div className="ambient-finding-label">
-                      {flagged && <FontAwesomeIcon icon={faCircleExclamation} />}
-                      <span>{confirmed ? 'Dose confirmed' : finding.label}</span>
-                    </div>
-                    <p>{finding.value}</p>
-                    {flagged && (
-                      <>
-                        <p className="ambient-finding-hint">
-                          Said out loud. Nothing is saved to the chart until you confirm it.
-                        </p>
-                        <MyButton
-                          size="small"
-                          backgroundColor="#b45309"
-                          onClick={() => onConfirmDose(finding.value)}
-                        >
-                          Confirm dose
-                        </MyButton>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          }
+          title="Picked up so far"
+          content={<div className="ambient-empty">Picked up so far will be enabled soon.</div>}
         />
       </div>
     </div>
@@ -656,6 +633,8 @@ const startAccess = (
 const AmbientScribe = ({
   disabled = false,
   patientId,
+  encounter,
+  onEncounterSaved,
   encounterId,
   facilityId,
   departmentId,
@@ -696,6 +675,94 @@ const AmbientScribe = ({
   const visitClinic = scribeSetup?.clinics.find(
     clinic => Number(clinic.departmentId) === Number(departmentId)
   );
+  const patientIdNumber = patientId == null || patientId === '' ? null : Number(patientId);
+  const encounterIdNumber = encounterId == null || encounterId === '' ? null : Number(encounterId);
+  const { data: patientDiagnoses } = useGetPatientDiagnosesByPatientIdQuery(
+    { patientId: patientIdNumber as number },
+    { skip: patientIdNumber == null }
+  );
+  const chronicDiagnosisIds = useMemo(
+    () =>
+      (Array.isArray(patientDiagnoses) ? patientDiagnoses : [])
+        .filter(diagnosis => diagnosis?.major && diagnosis.diagnosisId)
+        .map(diagnosis => diagnosis.diagnosisId as number),
+    [patientDiagnoses]
+  );
+  const { data: icdDiagnoses } = useGetIcdDiagnosesByIdsQuery(
+    { ids: chronicDiagnosisIds },
+    { skip: chronicDiagnosisIds.length === 0 }
+  );
+  const { data: chronicMedications } = useGetAllChronicRawQuery(
+    { patientId: patientIdNumber as number, page: 0, size: 50, sort: 'id,asc' },
+    { skip: patientIdNumber == null }
+  );
+  const medicationIds = useMemo(
+    () =>
+      (chronicMedications?.data ?? [])
+        .map(medication => medication.medicationsId)
+        .filter((id): id is number => id != null),
+    [chronicMedications]
+  );
+  const { data: brandMedications } = useGetBrandMedicationsByIdsQuery(
+    { ids: medicationIds },
+    { skip: medicationIds.length === 0 }
+  );
+  const { data: patientAllergies } = useGetPatientAllergiesByPatientIdQuery(
+    { patientId: patientIdNumber as number, page: 0, size: 50, showCancelled: false },
+    { skip: patientIdNumber == null }
+  );
+  const { data: previousEncounter } = useGetPreviousClosedEncounterQuery(
+    { encounterId: encounterIdNumber as number },
+    { skip: encounterIdNumber == null }
+  );
+  const patientContext = useMemo(() => {
+    const icdById = new Map((icdDiagnoses ?? []).map(diagnosis => [Number(diagnosis.id), diagnosis]));
+    const chronicDiseases = (Array.isArray(patientDiagnoses) ? patientDiagnoses : [])
+      .filter(diagnosis => diagnosis?.major)
+      .map(diagnosis => {
+        const icd = icdById.get(Number(diagnosis.diagnosisId));
+        return (icd?.icdShortDescription || icd?.icdFullDescription || '').trim();
+      })
+      .filter(Boolean);
+    const brands = new Map((brandMedications ?? []).map(medication => [String(medication.id), medication]));
+    const activeMedications = (chronicMedications?.data ?? [])
+      .map(medication => {
+        const brand = brands.get(String(medication.medicationsId));
+        const name = medication.otherMedicationName?.trim() || brand?.name || brand?.medicationName || '';
+        const instructions = dosePhrase(medication.dose, medication.doesUnit, medication.frequency);
+        return [name, instructions].filter(Boolean).join(' ').trim();
+      })
+      .filter(Boolean);
+    const allergies = (patientAllergies?.data ?? [])
+      .filter(allergy => !allergy.status || allergy.status === 'ACTIVE')
+      .map(allergy => (allergy.allergenName || '').trim())
+      .filter(Boolean);
+    const lastVisitDate = isoDate(
+      previousEncounter?.encounterDate || previousEncounter?.startedDate || previousEncounter?.createdDate
+    );
+    const lastVisitSummary = [
+      previousEncounter?.historyOfPresentIllness,
+      previousEncounter?.notes,
+      previousEncounter?.encounterReason
+    ]
+      .map(value => (value || '').trim())
+      .find(Boolean);
+    return JSON.stringify({
+      chronic_diseases: chronicDiseases,
+      active_medications: activeMedications,
+      allergies,
+      ...(lastVisitDate || lastVisitSummary
+        ? { last_visit: { date: lastVisitDate, summary: lastVisitSummary || '' } }
+        : {})
+    });
+  }, [
+    brandMedications,
+    chronicMedications,
+    icdDiagnoses,
+    patientAllergies,
+    patientDiagnoses,
+    previousEncounter
+  ]);
   const accessLoading = Boolean(resolvedFacilityId && departmentId && (scribeSetupLoading || practitionerLoading));
   const setupAdded = Boolean(scribeSetup?.id);
   const access = startAccess(
@@ -705,6 +772,8 @@ const AmbientScribe = ({
   const canStartAmbient = setupAdded && !accessLoading && access.allowed;
   const [open, setOpen] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<ConsentStatus>('pending');
   const [phase, setPhase] = useState<SessionPhase>('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -739,6 +808,7 @@ const AmbientScribe = ({
   const ambientIdRef = useRef<number | null>(null);
   const phaseRef = useRef(phase);
   const langRef = useRef(ui.lang);
+  const draftOptionsRef = useRef<Omit<AmbientDraftRequest, 'audio'>>({});
   const populateSeqRef = useRef(0);
   const [storedDurationMs, setStoredDurationMs] = useState(0);
 
@@ -756,6 +826,16 @@ const AmbientScribe = ({
   consentMethodRef.current = consentMethod;
   phaseRef.current = phase;
   langRef.current = ui.lang;
+  draftOptionsRef.current = {
+    noteLanguage: scribeSetup?.noteLanguage,
+    instructionLanguage: scribeSetup?.instructionLanguage,
+    specialty: scribeSetup?.specialty,
+    noteLength: scribeSetup?.noteStyle,
+    noteForm: scribeSetup?.noteForm,
+    patientContext,
+    suggestIcd10: scribeSetup?.suggestIcd10,
+    suggestOrders: scribeSetup?.suggestOrders
+  };
 
   const publishTranscript = (committed: string, sessionFinal: string, nextInterim: string) => {
     committedRef.current = committed;
@@ -977,33 +1057,43 @@ const AmbientScribe = ({
       return;
     }
 
-    const extension = audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
-    const audioFile = new File([audioBlob], `ambient-scribe.${extension}`, {
-      type: audioBlob.type || 'audio/webm'
+    await submitCapturedAudio(audioBlob, {
+      recordingDurationMs,
+      recordingStoppedAt,
+      liveText
     });
-    const formData = new FormData();
-    formData.append('audio', audioFile);
+  };
 
-    if (patientIdRef.current) {
-      formData.append('patientId', String(patientIdRef.current));
-    }
-
-    if (encounterIdRef.current) {
-      formData.append('encounterId', String(encounterIdRef.current));
+  const submitCapturedAudio = async (
+    audioBlob: Blob,
+    details: { recordingDurationMs: number; recordingStoppedAt: string; liveText?: string }
+  ) => {
+    let audioFile: File;
+    try {
+      audioFile = await toSupportedAudioFile(audioBlob);
+    } catch {
+      dispatch(
+        notify({
+          msg: 'The recording could not be saved as wav, mp3, or m4a.',
+          sev: 'error'
+        })
+      );
+      setPhase('stopped');
+      return;
     }
 
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
     }
 
-    const nextAudioUrl = URL.createObjectURL(audioBlob);
+    const nextAudioUrl = URL.createObjectURL(audioFile);
     audioUrlRef.current = nextAudioUrl;
     setAudioUrl(nextAudioUrl);
 
     let createdDraft: AmbientDraft | null = null;
 
     try {
-      const result = await createAmbientDraft(formData).unwrap();
+      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
       createdDraft = result;
 
       const serverText = (result.transcript ?? [])
@@ -1016,8 +1106,8 @@ const AmbientScribe = ({
       }
     } catch (error) {
       const message = extractErrorMessage(error);
-      if (liveText) {
-        await refreshFindings(liveText);
+      if (details.liveText) {
+        await refreshFindings(details.liveText);
       }
       dispatch(
         notify({
@@ -1034,13 +1124,13 @@ const AmbientScribe = ({
         consentStatus: givenConsent,
         audio: audioFile,
         draft: createdDraft,
-        recordingStoppedAt,
-        recordingDurationMs
+        recordingStoppedAt: details.recordingStoppedAt,
+        recordingDurationMs: details.recordingDurationMs
       });
 
       if (createdDraft) {
         setDraft(createdDraft);
-        setStoredDurationMs(recordingDurationMs);
+        setStoredDurationMs(details.recordingDurationMs);
         setDraftOpen(true);
         dispatch(
           notify({
@@ -1052,7 +1142,7 @@ const AmbientScribe = ({
     } catch (error) {
       if (createdDraft) {
         setDraft(createdDraft);
-        setStoredDurationMs(recordingDurationMs);
+        setStoredDurationMs(details.recordingDurationMs);
         setDraftOpen(true);
       }
       dispatch(
@@ -1064,7 +1154,73 @@ const AmbientScribe = ({
     }
   };
 
+  const readAudioDuration = (file: File) =>
+    new Promise<number>(resolve => {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      audio.onloadedmetadata = () => {
+        const durationMs = Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : 0;
+        URL.revokeObjectURL(url);
+        resolve(durationMs);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(0);
+      };
+      audio.src = url;
+    });
+
+  const uploadRecording = async (file: File) => {
+    if (!setupAdded) {
+      dispatch(
+        notify({
+          msg: 'Ambient Scribe is not set up for this facility.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    if (!/\.(wav|mp3|m4a)$/i.test(file.name)) {
+      dispatch(
+        notify({
+          msg: 'Upload a wav, mp3, or m4a recording.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    const startedAt = new Date().toISOString();
+    consentAtRef.current = startedAt;
+    recordingStartedAtRef.current = startedAt;
+    setStatus('given');
+    setOpen(false);
+    setPhase('processing');
+    setElapsed(0);
+    setUploading(true);
+    try {
+      const recordingDurationMs = await readAudioDuration(file);
+      await submitCapturedAudio(file, {
+        recordingDurationMs,
+        recordingStoppedAt: new Date().toISOString()
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const startRecording = async () => {
+    if (!setupAdded) {
+      dispatch(
+        notify({
+          msg: 'Ambient Scribe is not set up for this facility.',
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       dispatch(
         notify({
@@ -1083,7 +1239,8 @@ const AmbientScribe = ({
       setFindings([]);
       setConfirmedDoses([]);
 
-      const recorder = new MediaRecorder(stream);
+      const mimeType = preferredRecorderMimeType();
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       recorderRef.current = recorder;
 
       recorder.ondataavailable = event => {
@@ -1367,6 +1524,15 @@ const AmbientScribe = ({
     if (recreatingDraft || draft) {
       return;
     }
+    if (!setupAdded) {
+      dispatch(
+        notify({
+          msg: 'Ambient Scribe is not set up for this facility.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
     setRecreatingDraft(true);
     try {
@@ -1394,20 +1560,9 @@ const AmbientScribe = ({
         return;
       }
 
-      const extension = recordingBlob.type.includes('mp4') ? 'mp4' : 'webm';
-      const audioFile = new File([recordingBlob], `ambient-scribe.${extension}`, {
-        type: recordingBlob.type || 'audio/webm'
-      });
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      if (patientIdRef.current) {
-        formData.append('patientId', String(patientIdRef.current));
-      }
-      if (encounterIdRef.current) {
-        formData.append('encounterId', String(encounterIdRef.current));
-      }
+      const audioFile = await toSupportedAudioFile(recordingBlob);
 
-      const result = await createAmbientDraft(formData).unwrap();
+      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
       if (ambientIdRef.current) {
         const saved = await updateEncounterAmbientDraft({
           id: ambientIdRef.current,
@@ -1477,9 +1632,11 @@ const AmbientScribe = ({
           findings={findings}
           confirmedDoses={confirmedDoses}
           liveTranscript={liveTranscript}
+          languageLabel="Arabic + English detected"
           mode={ui.mode}
           audioUrl={audioUrl}
           hasDraft={Boolean(draft)}
+          canRecreateDraft={setupAdded}
           recreatingDraft={recreatingDraft}
           onViewDraft={() => {
             void openStoredDraft();
@@ -1494,7 +1651,7 @@ const AmbientScribe = ({
             setConfirmedDoses(current => (current.includes(value) ? current : [...current, value]))
           }
         />
-      ) : setupAdded ? (
+      ) : (
       <div className={`ambient-scribe-launch ${ui.mode === 'dark' ? 'dark' : 'light'}`}>
         <div className="ambient-scribe-launch-copy">
           <span className="ambient-scribe-launch-icon">
@@ -1503,7 +1660,13 @@ const AmbientScribe = ({
           <div>
             <div className="ambient-scribe-launch-title">Ambient Scribe</div>
               <div className={`ambient-scribe-launch-status is-${status}`}>
-                {accessLoading ? 'Checking who can start Ambient…' : canStartAmbient ? statusLabel : access.reason}
+                {accessLoading
+                  ? 'Checking who can start Ambient…'
+                  : !setupAdded
+                    ? 'Ambient Scribe is not set up for this facility.'
+                    : canStartAmbient
+                      ? statusLabel
+                      : access.reason}
               </div>
           </div>
         </div>
@@ -1522,7 +1685,7 @@ const AmbientScribe = ({
           </MyButton>
         </div>
       </div>
-      ) : null}
+      )}
 
       <MyModal
         open={open}
@@ -1613,15 +1776,6 @@ const AmbientScribe = ({
 
             <div className="ambient-scribe-actions">
               <MyButton
-                appearance="ghost"
-                color="#4b5563"
-                size="medium"
-                radius="8px"
-                style={{
-                  border: '1px solid #d5dae3',
-                  background: '#fff',
-                  padding: '0 16px'
-                }}
                 onClick={() => {
                   consentAtRef.current = new Date().toISOString();
                   recordingStartedAtRef.current = null;
@@ -1640,12 +1794,28 @@ const AmbientScribe = ({
                 Patient declined
               </MyButton>
               <MyButton
-                size="medium"
-                radius="8px"
-                backgroundColor="#6d4cff"
-                style={{ padding: '0 16px' }}
+                loading={uploading}
+                disabled={starting || uploading || !canStartAmbient}
+                onClick={() => uploadInputRef.current?.click()}
+              >
+                Upload from device
+              </MyButton>
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4,audio/x-m4a"
+                hidden
+                onChange={event => {
+                  const file = event.target.files?.[0];
+                  event.target.value = '';
+                  if (file) {
+                    void uploadRecording(file);
+                  }
+                }}
+              />
+              <MyButton
                 loading={starting}
-                disabled={starting}
+                disabled={starting || uploading || !canStartAmbient}
                 onClick={async () => {
                   setStarting(true);
                   const started = await startRecording();
@@ -1677,7 +1847,20 @@ const AmbientScribe = ({
         audioUrl={audioUrl}
         durationMs={elapsed > 0 ? elapsed * 1000 : storedDurationMs}
         patientLine={patientLine}
+        patientId={patientId}
+        encounter={encounter}
+        onEncounterSaved={onEncounterSaved}
         onSave={saveReviewedDraft}
+        regenerateDefaults={{
+          noteLanguage: scribeSetup?.noteLanguage,
+          instructionLanguage: scribeSetup?.instructionLanguage,
+          specialty: scribeSetup?.specialty,
+          noteLength: scribeSetup?.noteStyle,
+          noteForm: scribeSetup?.noteForm,
+          patientContext,
+          suggestIcd10: scribeSetup?.suggestIcd10,
+          suggestOrders: scribeSetup?.suggestOrders
+        }}
       />
     </>
   );

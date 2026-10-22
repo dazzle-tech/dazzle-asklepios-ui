@@ -28,6 +28,8 @@ type BodyMeasurementsProps = {
   defaultCollapsed?: boolean;
   /** Keep specialty sheets limited to weight, height and BMI. */
   showExtendedMeasurements?: boolean;
+  prefill?: Partial<BodyMeasurementsModelObject> | null;
+  onSaved?: (saved?: BodyMeasurementsModelObject) => void;
 };
 
 const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
@@ -40,7 +42,9 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   title = 'Body Measurements',
   showExtendedMeasurements = true,
   collapsible = false,
-  defaultCollapsed = false
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -53,6 +57,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   // === Local state ===
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurementsModelObject>({
     ...newBodyMeasurements,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
@@ -83,7 +88,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
 
   useEffect(() => {
-    if (!latestBodyMeasurementsByEncounterId) return;
+    if (prefill || !latestBodyMeasurementsByEncounterId) return;
 
     setBodyMeasurements(previousBodyMeasurements => ({
       ...previousBodyMeasurements,
@@ -96,7 +101,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
           ? (latestBodyMeasurementsByEncounterId as any).isActive
           : true
     }));
-  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId]);
+  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId, prefill]);
 
   /**
    * Compute BMI & BSA based on weight/height.
@@ -236,6 +241,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
+      onSaved?.(createResponse);
     } catch (error: any) {
       showApiError(error);
     }

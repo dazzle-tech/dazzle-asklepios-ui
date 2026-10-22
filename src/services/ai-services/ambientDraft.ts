@@ -72,6 +72,13 @@ export type AmbientDraft = {
   } | null;
   possible_transcription_errors?: AmbientTranscriptionError[];
   record_evidence?: Record<string, string[]>;
+  record?: {
+    vital_sign?: Record<string, any> | null;
+    body_measurements?: Record<string, any> | null;
+    pain_assessment?: Record<string, any> | null;
+    nursing_assessment?: Record<string, any> | null;
+    [key: string]: any;
+  } | null;
   elapsed_ms?: number;
   review?: {
     texts?: Partial<Record<ReviewKey, string>>;
@@ -82,5 +89,13 @@ export type AmbientDraft = {
   };
 };
 
-export type ReviewKey = 'chief_complaint' | 'hpi' | 'physical_exam' | 'assessment_plan';
+export type ReviewKey =
+  | 'chief_complaint'
+  | 'hpi'
+  | 'physical_exam'
+  | 'assessment_plan'
+  | 'vital_signs'
+  | 'body_measurements'
+  | 'pain_assessment'
+  | 'nursing_assessment';
 export type ReviewStatus = 'pending' | 'accepted' | 'rejected';

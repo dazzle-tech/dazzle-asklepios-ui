@@ -21,6 +21,8 @@ export type AmbientScribeSetting = {
   noteLanguage: string;
   instructionLanguage: string;
   noteStyle: string;
+  specialty: string;
+  noteForm: string;
   suggestIcd10: boolean;
   suggestOrders: boolean;
   audioRetention: string;
@@ -35,6 +37,8 @@ export type AmbientScribeUpdate = {
   noteLanguage: string;
   instructionLanguage: string;
   noteStyle: string;
+  specialty: string;
+  noteForm: string;
   suggestIcd10: boolean;
   suggestOrders: boolean;
   audioRetention: string;
@@ -53,6 +57,8 @@ export const toAmbientScribeUpdate = (setting: AmbientScribeSetting): AmbientScr
   noteLanguage: setting.noteLanguage,
   instructionLanguage: setting.instructionLanguage,
   noteStyle: setting.noteStyle,
+  specialty: setting.specialty,
+  noteForm: setting.noteForm,
   suggestIcd10: setting.suggestIcd10,
   suggestOrders: setting.suggestOrders,
   audioRetention: setting.audioRetention,

@@ -31,6 +31,8 @@ type PatientObservationsComplaintsProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  prefill?: Partial<PatientObservationsComplaintsModel> | null;
+  onSaved?: (saved?: PatientObservationsComplaintsModel) => void;
 };
 
 const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
@@ -40,7 +42,9 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   setEncounter,
   disabled = false,
   width = '100%',
-  title = 'Nursing Assessment'
+  title = 'Nursing Assessment',
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -76,6 +80,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   const [record, setRecord] = useState<PatientObservationsComplaintsModel>({
     ...newPatientObservationsComplaints,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
@@ -96,14 +101,14 @@ const sourceOfInformationOptions = useMemo(
 
 
 
-  const [byPatient, setByPatient] = useState(true);
+  const [byPatient, setByPatient] = useState(prefill?.byPatient !== false);
   const [clearKey, setClearKey] = useState(0);
 
   // Populate form from latest encounter observations.
   // Blood group and patient conditions are intentionally excluded — they are
   // patient-level data managed by the effects below.
 useEffect(() => {
-  if (!latestByEncounter) return;
+  if (prefill || !latestByEncounter) return;
 
   setByPatient(latestByEncounter.byPatient ?? true);
 
@@ -124,7 +129,7 @@ useEffect(() => {
         ? latestByEncounter.isActive
         : true
   }));
-}, [latestByEncounter, patientId, encounterId]);
+}, [latestByEncounter, patientId, encounterId, prefill]);
 
   // Blood group and patient conditions are always driven by the patient record.
   // Both run on initial load and after every save (refetchPatient updates patientData).
@@ -310,6 +315,7 @@ useEffect(() => {
       await refetchPatient();
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+      onSaved?.(created);
     } catch (err: any) {
       showApiError(err);
     }
