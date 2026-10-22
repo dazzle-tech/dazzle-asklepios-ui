@@ -54,6 +54,17 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
 
+  // Conditions first, then treatments; alphabetical within each group
+  const sortedDentalActions = useMemo(
+    () =>
+      [...(dentalActionsList ?? [])].sort((a, b) => {
+        const typeDiff = (a.type === 'TREATMENT' ? 1 : 0) - (b.type === 'TREATMENT' ? 1 : 0);
+        if (typeDiff !== 0) return typeDiff;
+        return (a.description ?? '').localeCompare(b.description ?? '');
+      }),
+    [dentalActionsList]
+  );
+
   const { data: cdtDentalActionRows } = useGetByDentalActionQuery(
     currentToothAction.dentalActionId,
     { skip: !currentToothAction.dentalActionId }
@@ -95,7 +106,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
               setRecord={setCurrentToothAction}
               placeholder={<Translate>Select Action From List</Translate>}
               disabled={!!currentToothAction.id}
-              selectData={dentalActionsList}
+              selectData={sortedDentalActions}
               selectDataLabel="description"
               selectDataValue="id"
               renderMenuItem={(label, action) => (
