@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 
 import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
 
 import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
 import DetailsModal from './DetailsModal';
@@ -82,6 +83,7 @@ type Props = {
   // handlers
   handleSaveTest: () => void;
   handleSaveTests: () => void;
+  handleSaveAndSubmitTests: () => void;
   handleCancle: () => void;
 
   orderTestRefetch: () => any;
@@ -154,6 +156,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
 
     handleSaveTest,
     handleSaveTests,
+    handleSaveAndSubmitTests,
     handleCancle,
 
     orderTestRefetch,
@@ -241,6 +244,9 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenTestsModal}
         title="Select Tests"
         actionButtonFunction={handleSaveTests}
+        footerButtons={
+          <MyButton onClick={handleSaveAndSubmitTests}>Save &amp; Submit</MyButton>
+        }
         size="96vw"
         bodyheight="calc(100vh - 230px)"
         content={

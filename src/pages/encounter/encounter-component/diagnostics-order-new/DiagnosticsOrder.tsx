@@ -190,6 +190,10 @@ const DiagnosticsOrder = (props: any) => {
         resolveFromDepartmentId={vm.resolveFromDepartmentId}
         handleSaveTest={vm.handleSaveTest}
         handleSaveTests={vm.handleSaveTests}
+        handleSaveAndSubmitTests={async () => {
+          const ok = await vm.handleSaveTests();
+          if (ok) setOpenValidationSummaryModal(true);
+        }}
         handleCancle={vm.handleCancle}
         orderTestRefetch={vm.orderTestRefetch}
         setSelectedRows={vm.setSelectedRows}
