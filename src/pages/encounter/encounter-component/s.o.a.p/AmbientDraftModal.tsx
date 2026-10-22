@@ -1341,6 +1341,10 @@ const AmbientDraftModal = ({
       await onSave?.(snapshot(signed));
       if (signed) {
         setSignedLock(true);
+        setEditing(null);
+        setRegenerateSection(null);
+        setDiagnosisEdit(null);
+        setOrderEdit(null);
       } else {
         setOpen(false);
       }
@@ -1450,7 +1454,7 @@ const AmbientDraftModal = ({
                         </span>
                       </div>
 
-                      {editing === section.key ? (
+                      {editing === section.key && !locked ? (
                         isObservationKey(section.key) ? (
                           <div className="ambient-draft-observation-form">
                             <Form fluid>
@@ -1548,7 +1552,7 @@ const AmbientDraftModal = ({
                           {evidence ? `Evidence: ${evidence}` : 'Evidence: —'}
                         </span>
                         <div className="ambient-draft-card-actions">
-                          {editing === section.key ? (
+                          {editing === section.key && !locked ? (
                             isObservationKey(section.key) ? (
                               <MyButton
                                 appearance="ghost"
@@ -1871,7 +1875,7 @@ const AmbientDraftModal = ({
 
             <div className="ambient-draft-footer">
               <p>
-                Review all {REVIEW_SECTIONS.length} sections to sign. Accepted sections stay on this draft; rejected ones are left blank.
+                Accepted sections stay on this draft; rejected ones are left blank. Signing locks every action on this draft.
               </p>
               <div>
                 <MyButton
@@ -1889,7 +1893,7 @@ const AmbientDraftModal = ({
                 <MyButton
                   backgroundColor="var(--primary-blue)"
                   loading={saving}
-                  disabled={locked || saving || reviewedCount < REVIEW_SECTIONS.length}
+                  disabled={locked || saving || !draft}
                   onClick={() => {
                     void persist(true);
                   }}
