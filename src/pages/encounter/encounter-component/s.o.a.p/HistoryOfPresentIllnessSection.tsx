@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { SaveableSectionHandle } from '@/types/saveableSection';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -17,9 +18,15 @@ type HistoryOfPresentIllnessSectionProps = {
   onShowHistory?: () => void;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  /** Text to start from instead of the saved one (e.g. an ambient draft) */
+  prefill?: string | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionProps> = ({
+const HistoryOfPresentIllnessSection = forwardRef<SaveableSectionHandle, HistoryOfPresentIllnessSectionProps>(({
   encounter,
   setEncounter,
   disabled = false,
@@ -27,8 +34,11 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   width = '100%',
   onShowHistory,
   collapsible = true,
-  defaultCollapsed = false
-}) => {
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   const encounterId = encounter?.id ? Number(encounter.id) : null;
@@ -39,15 +49,20 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
   const [historyOfPresentIllness, setHistoryOfPresentIllness] = useState('');
 
   useEffect(() => {
+    // A prefill replaces the saved text
+    if (prefill) {
+      setHistoryOfPresentIllness(prefill);
+      return;
+    }
     setHistoryOfPresentIllness(encounter?.historyOfPresentIllness ?? '');
-  }, [encounter?.id, encounter?.historyOfPresentIllness]);
+  }, [encounter?.id, encounter?.historyOfPresentIllness, prefill]);
 
-  const handleSave = async (silent = false) => {
+  const handleSave = async (silent = false): Promise<boolean> => {
     if (!encounterId) {
       if (!silent) {
         dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       }
-      return;
+      return false;
     }
 
     if (!historyOfPresentIllness?.trim()) {
@@ -59,12 +74,12 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
           })
         );
       }
-      return;
+      return false;
     }
 
-    // Don't resave if no changes
+    // Don't resave if no changes (already saved)
     if (historyOfPresentIllness.trim() === (encounter?.historyOfPresentIllness ?? '').trim()) {
-      return;
+      return true;
     }
 
     try {
@@ -81,6 +96,8 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
           sev: 'success',
         })
       );
+      onSaved?.();
+      return true;
     } catch (e: any) {
       dispatch(
         notify({
@@ -88,8 +105,11 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
           sev: 'error',
         })
       );
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: () => handleSave(false) }));
 
   return (
     <SectionContainer
@@ -134,10 +154,13 @@ const HistoryOfPresentIllnessSection: React.FC<HistoryOfPresentIllnessSectionPro
         >
           Save
         </MyButton>
+        {extraActions}
         </>
       }
     />
   );
-};
+});
+
+HistoryOfPresentIllnessSection.displayName = 'HistoryOfPresentIllnessSection';
 
 export default HistoryOfPresentIllnessSection;

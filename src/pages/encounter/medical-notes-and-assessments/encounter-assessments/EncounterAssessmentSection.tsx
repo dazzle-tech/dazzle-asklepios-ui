@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { SaveableSectionHandle } from '@/types/saveableSection';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -20,16 +21,24 @@ type EncounterAssessmentSectionProps = {
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
+  /** Text to start from instead of the latest saved one (e.g. an ambient draft) */
+  prefill?: { assessment?: string | null } | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
+const EncounterAssessmentSection = forwardRef<SaveableSectionHandle, EncounterAssessmentSectionProps>(({
   patient,
   encounterId,
   disabled = false,
   title = <Translate>Assessment</Translate>,
   width = '100%',
-  
-}) => {
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
@@ -62,8 +71,13 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   const [assessmentText, setAssessmentText] = useState<string>('');
 
   useEffect(() => {
+    // A prefill replaces the latest saved text
+    if (prefill?.assessment) {
+      setAssessmentText(prefill.assessment);
+      return;
+    }
     setAssessmentText(latestAssessment?.assessment ?? '');
-  }, [latestAssessment?.id, encounterIdNumber]);
+  }, [latestAssessment?.id, encounterIdNumber, prefill]);
 
   const showApiError = (error: any) => {
     const data = error?.data ?? {};
@@ -120,24 +134,24 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
     } as any;
   }, [latestAssessment?.id, patientIdNumber, encounterIdNumber, assessmentText]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!payload.patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.assessment?.trim()) {
       dispatch(notify({ msg: 'Assessment cannot be empty.', sev: 'warning' }));
-      return;
+      return false;
     }
-    // Don't resave if no changes
+    // Don't resave if no changes (already saved)
     if (payload.assessment?.trim() === (latestAssessment?.assessment ?? '').trim()) {
-      return;
+      return true;
     }
 
     try {
@@ -153,10 +167,15 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
       dispatch(notify({ msg: 'Assessment saved successfully', sev: 'success' }));
 
       refetch();
+      onSaved?.();
+      return true;
     } catch (error: any) {
       showApiError(error);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSave }));
 
   return (
     <>
@@ -192,11 +211,12 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
                 </MyButton>
         <MyButton
           size="small"
-          onClick={handleSave}
+          onClick={() => handleSave()}
           disabled={disabled || isFetchingLatest || isSaving}
         >
           Save
         </MyButton>
+        {extraActions}
         </>
       }
     />
@@ -208,6 +228,8 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
     />
     </>
   );
-};
+});
+
+EncounterAssessmentSection.displayName = 'EncounterAssessmentSection';
 
 export default EncounterAssessmentSection;

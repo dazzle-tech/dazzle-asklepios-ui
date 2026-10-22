@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { SaveableSectionHandle, withoutEmptyValues } from '@/types/saveableSection';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -34,6 +35,14 @@ type PatientDiagnosisProps = {
   title?: React.ReactNode;
   width?: string;
   onDiagnosisSaved?: () => void;
+  /** Diagnosis to start from (e.g. an ambient draft) */
+  prefill?: Partial<PatientDiagnosisType> | null;
+  /** Only the add form, without the current / previous visit tables */
+  hideTables?: boolean;
+  /** Keep the saved values in the form instead of clearing it (e.g. the ambient draft popup) */
+  keepAfterSave?: boolean;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
 const extractRows = (resp: any): any[] => {
@@ -90,14 +99,18 @@ const useDiagnosesPage = (
   return { rows, totalCount, isFetching, refetch, pagination, handlePageChange, handleRowsPerPageChange };
 };
 
-const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
+const PatientDiagnosis = forwardRef<SaveableSectionHandle, PatientDiagnosisProps>(({
   patient,
   encounter,
   disabled = false,
   title = 'Patient Diagnosis',
   width = '100%',
-  onDiagnosisSaved
-}) => {
+  onDiagnosisSaved,
+  prefill = null,
+  hideTables = false,
+  keepAfterSave = false,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
@@ -125,6 +138,11 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     suspected: false,
     major: false
   });
+
+  useEffect(() => {
+    if (!prefill) return;
+    setDiagnosis(prev => ({ ...prev, ...withoutEmptyValues(prefill) }));
+  }, [prefill]);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDiagnosisToDelete, setSelectedDiagnosisToDelete] =
@@ -433,25 +451,25 @@ useEffect(() => {
   console.log('DIAGNOSIS', diagnosis);
 }, [diagnosis]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!payload.patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.diagnosisId) {
       dispatch(notify({ msg: 'Diagnosis is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.type) {
       dispatch(notify({ msg: 'Type is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     try {
@@ -464,15 +482,19 @@ useEffect(() => {
         })
       );
 
-      clearForm();
+      if (!keepAfterSave) clearForm();
       console.log('CLEARED');
       await refetchTables();
 
       onDiagnosisSaved?.();
+      return true;
     } catch (error: any) {
       showApiError(error);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSave }));
 
   const handleClear = () => {
     clearForm();
@@ -533,9 +555,10 @@ useEffect(() => {
             </div>
 
             <div className="pd-footer">
-              <MyButton onClick={handleSave} disabled={disabled || savingBusy}>
+              <MyButton onClick={() => handleSave()} disabled={disabled || savingBusy}>
                 Save
               </MyButton>
+              {extraActions}
 
               <MyButton onClick={handleClear} disabled={disabled || savingBusy}>
                 Clear
@@ -544,6 +567,7 @@ useEffect(() => {
           </Form>
         </div>
 
+        {!hideTables && (
         <div className="pd-card">
           <div className="pd-card-title">
             <Translate>{encounterIdNumber ? 'Current Visit Diagnoses' : 'Diagnoses'}</Translate>
@@ -579,6 +603,7 @@ useEffect(() => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       <DeletionConfirmationModal
@@ -592,6 +617,8 @@ useEffect(() => {
       />
     </div>
   );
-};
+});
+
+PatientDiagnosis.displayName = 'PatientDiagnosis';
 
 export default PatientDiagnosis;

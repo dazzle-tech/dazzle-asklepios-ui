@@ -15,7 +15,8 @@ import type { VitalSigns as VitalSignsModelObject } from '@/types/model-types-ne
 import { notify } from '@/utils/uiReducerActions';
 import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { SaveableSectionHandle, withoutEmptyValues } from '@/types/saveableSection';
 import { Form } from 'rsuite';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { Tooltip, Whisper } from 'rsuite';
@@ -36,9 +37,15 @@ type VitalSignsProps = {
   collapsible?: boolean;
   defaultCollapsed?: boolean;
 
+  /** Values to start from instead of the latest saved ones (e.g. an ambient draft) */
+  prefill?: Partial<VitalSignsModelObject> | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const VitalSigns: React.FC<VitalSignsProps> = ({
+const VitalSigns = forwardRef<SaveableSectionHandle, VitalSignsProps>(({
   patientId,
   encounterId,
   isTriage = false,
@@ -50,7 +57,10 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   showFluidAssessment = false,
   collapsible = false,
   defaultCollapsed = false,
-}) => {
+  prefill = null,
+  onSaved,
+  extraActions,
+}, ref) => {
   const dispatch = useAppDispatch();
 
   // === LOVs ===
@@ -85,6 +95,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   });
 
   useEffect(() => {
+    // A prefill replaces the latest saved values
+    if (prefill) return;
     const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
     if (!source) return;
 
@@ -102,8 +114,21 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     latestVitalSignsByEncounterId,
     latestTriageVitalSignsByEncounterId,
     patientId,
-    encounterId
+    encounterId,
+    prefill
   ]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    setVitalSigns(previousVitalSigns => ({
+      ...previousVitalSigns,
+      ...withoutEmptyValues(prefill),
+      id: undefined,
+      patientId,
+      encounterId,
+      isTriage
+    }));
+  }, [prefill, patientId, encounterId, isTriage]);
 
   useEffect(() => {
     const diastolicValue = Number(vitalSigns?.bloodPressureDiastolic);
@@ -220,15 +245,15 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
-  const handleSaveVitalSigns = async () => {
+  const handleSaveVitalSigns = async (): Promise<boolean> => {
     if (!patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     const missingFields: string[] = [];
@@ -252,7 +277,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
           sev: 'warning'
         })
       );
-      return;
+      return false;
     }
 
     try {
@@ -268,10 +293,15 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
+      onSaved?.();
+      return true;
     } catch (error: any) {
       showApiError(error);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSaveVitalSigns }));
   const handleClearVitalSigns = () => {
     setVitalSigns({
       ...newVitalSigns,
@@ -324,9 +354,10 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       title={titleContent}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
-          <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
+          <MyButton onClick={() => handleSaveVitalSigns()} disabled={disabled}>
             Save
           </MyButton>
+          {extraActions}
           <MyButton onClick={handleClearVitalSigns} disabled={disabled}>
             Clear
           </MyButton>
@@ -522,6 +553,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       }
     />
   );
-};
+});
+
+VitalSigns.displayName = 'VitalSigns';
 
 export default VitalSigns;

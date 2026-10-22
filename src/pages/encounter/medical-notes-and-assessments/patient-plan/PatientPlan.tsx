@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { SaveableSectionHandle } from '@/types/saveableSection';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -25,15 +26,24 @@ type PatientPlanProps = {
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
+  /** Text to start from instead of the latest saved one (e.g. an ambient draft) */
+  prefill?: { goals?: string | null; treatmentPlan?: string | null } | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const PatientPlan: React.FC<PatientPlanProps> = ({
+const PatientPlan = forwardRef<SaveableSectionHandle, PatientPlanProps>(({
   patient,
   localEncounter,
   disabled = false,
   title = 'Plan of Care',
-  width = '100%'
-}) => {
+  width = '100%',
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
@@ -69,9 +79,15 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   const [treatmentPlan, setTreatmentPlan] = useState<string>('');
 
   useEffect(() => {
+    // A prefill replaces the latest saved text
+    if (prefill) {
+      setGoals(prefill.goals ?? '');
+      setTreatmentPlan(prefill.treatmentPlan ?? '');
+      return;
+    }
     setGoals(latestPlan?.goals ?? '');
     setTreatmentPlan(latestPlan?.treatmentPlan ?? '');
-  }, [latestPlan?.id, encounterIdNumber]);
+  }, [latestPlan?.id, encounterIdNumber, prefill]);
 
   useEffect(() => {
     setOrdersModalOpen(false);
@@ -160,15 +176,15 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     } as any;
   }, [latestPlan?.id, patientIdNumber, encounterIdNumber, goals, treatmentPlan]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!payload.patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!payload.goals?.trim() && !payload.treatmentPlan?.trim()) {
@@ -178,7 +194,7 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
           sev: 'warning'
         })
       );
-      return;
+      return false;
     }
 
     try {
@@ -190,10 +206,15 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
 
       dispatch(notify({ msg: 'Plan of Care saved successfully', sev: 'success' }));
       refetch();
+      onSaved?.();
+      return true;
     } catch (error: any) {
       showApiError(error);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSave }));
 
   const openAuditHistory = (fieldName: string) => {
     setSelectedAuditField(fieldName);
@@ -237,9 +258,10 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
             <MyButton onClick={() => openAuditHistory('goals')} disabled={isFetchingLatest || isSaving}>
               Goal History
             </MyButton>
-            <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
+            <MyButton onClick={() => handleSave()} disabled={disabled || isFetchingLatest || isSaving}>
               Save
             </MyButton>
+            {extraActions}
           </>
         }
         content={
@@ -301,6 +323,8 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       />
     </>
   );
-};
+});
+
+PatientPlan.displayName = 'PatientPlan';
 
 export default PatientPlan;

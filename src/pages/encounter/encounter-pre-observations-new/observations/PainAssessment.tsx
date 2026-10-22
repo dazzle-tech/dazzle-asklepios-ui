@@ -3,7 +3,8 @@ import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { SaveableSectionHandle, withoutEmptyValues } from '@/types/saveableSection';
 import { Col, Row, } from 'rsuite';
 
 import type { PainAssessment as PainAssessmentModel } from '@/types/model-types-new';
@@ -30,16 +31,25 @@ type PainAssessmentProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  /** Values to start from instead of the latest saved ones (e.g. an ambient draft) */
+  prefill?: Partial<PainAssessmentModel> | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const PainAssessment: React.FC<PainAssessmentProps> = ({
+const PainAssessment = forwardRef<SaveableSectionHandle, PainAssessmentProps>(({
   patientId,
   encounterId,
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Pain Assessment'
-}) => {
+  title = 'Pain Assessment',
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
   const skipFlaccSyncRef = useRef(false);
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
@@ -187,6 +197,8 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   ]);
 
   useEffect(() => {
+    // A prefill replaces the latest saved values
+    if (prefill) return;
     if (!latestByEncounter) return;
 
     if ((latestByEncounter as any)?.painAssessmentType === 'FLACC') {
@@ -204,7 +216,18 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           ? (latestByEncounter as any).isActive
           : true
     }));
-  }, [latestByEncounter, patientId, encounterId]);
+  }, [latestByEncounter, patientId, encounterId, prefill]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    setRecord(prev => ({
+      ...prev,
+      ...withoutEmptyValues(prefill),
+      id: undefined,
+      patientId,
+      encounterId
+    }));
+  }, [prefill, patientId, encounterId]);
 
 
   const createPayload = useMemo(() => {
@@ -291,14 +314,14 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   };
 
   // Actions
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!record.painDegree) {
@@ -308,7 +331,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           sev: 'warning'
         })
       );
-      return;
+      return false;
     }
 
     try {
@@ -326,10 +349,15 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       }));
 
       dispatch(notify({ msg: 'Pain assessment saved successfully', sev: 'success' }));
+      onSaved?.();
+      return true;
     } catch (err: any) {
       showApiError(err);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSave }));
 
   const handleClear = () => {
     setRecord({
@@ -344,9 +372,10 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
-          <MyButton onClick={handleSave} disabled={disabled}>
+          <MyButton onClick={() => handleSave()} disabled={disabled}>
             Save
           </MyButton>
+          {extraActions}
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
@@ -482,6 +511,8 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       }
     />
   );
-};
+});
+
+PainAssessment.displayName = 'PainAssessment';
 
 export default PainAssessment;

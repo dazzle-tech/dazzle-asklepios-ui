@@ -3,7 +3,8 @@ import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { SaveableSectionHandle, withoutEmptyValues } from '@/types/saveableSection';
 
 import './styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -31,17 +32,26 @@ type PatientObservationsComplaintsProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  /** Values to start from instead of the latest saved ones (e.g. an ambient draft) */
+  prefill?: Partial<PatientObservationsComplaintsModel> | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
+const PatientObservationsComplaints = forwardRef<SaveableSectionHandle, PatientObservationsComplaintsProps>(({
   patientId,
   encounterId,
   encounter,
   setEncounter,
   disabled = false,
   width = '100%',
-  title = 'Nursing Assessment'
-}) => {
+  title = 'Nursing Assessment',
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   const patientConditions = useEnumOptions('Condition');
@@ -103,6 +113,8 @@ const sourceOfInformationOptions = useMemo(
   // Blood group and patient conditions are intentionally excluded — they are
   // patient-level data managed by the effects below.
 useEffect(() => {
+  // A prefill replaces the latest saved values
+  if (prefill) return;
   if (!latestByEncounter) return;
 
   setByPatient(latestByEncounter.byPatient ?? true);
@@ -124,7 +136,23 @@ useEffect(() => {
         ? latestByEncounter.isActive
         : true
   }));
-}, [latestByEncounter, patientId, encounterId]);
+}, [latestByEncounter, patientId, encounterId, prefill]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    const values = withoutEmptyValues(prefill);
+    if (typeof values.byPatient === 'boolean') setByPatient(values.byPatient);
+    setRecord(prev => ({
+      ...prev,
+      ...values,
+      // Patient-level data stays from the patient record
+      bloodGroup: prev.bloodGroup,
+      patientConditions: prev.patientConditions,
+      id: undefined,
+      patientId,
+      encounterId
+    }));
+  }, [prefill, patientId, encounterId]);
 
   // Blood group and patient conditions are always driven by the patient record.
   // Both run on initial load and after every save (refetchPatient updates patientData).
@@ -268,15 +296,15 @@ useEffect(() => {
     dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     const missing: string[] = [];
@@ -287,7 +315,7 @@ useEffect(() => {
       dispatch(
         notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
       );
-      return;
+      return false;
     }
 
     try {
@@ -310,10 +338,15 @@ useEffect(() => {
       await refetchPatient();
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+      onSaved?.();
+      return true;
     } catch (err: any) {
       showApiError(err);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSave }));
 
   const handleClear = () => {
     setRecord({
@@ -339,9 +372,10 @@ useEffect(() => {
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
-          <MyButton onClick={handleSave} disabled={disabled}>
+          <MyButton onClick={() => handleSave()} disabled={disabled}>
             Save
           </MyButton>
+          {extraActions}
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
@@ -516,6 +550,8 @@ useEffect(() => {
       }
     />
   );
-};
+});
+
+PatientObservationsComplaints.displayName = 'PatientObservationsComplaints';
 
 export default PatientObservationsComplaints;

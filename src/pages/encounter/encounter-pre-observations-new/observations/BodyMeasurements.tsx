@@ -12,8 +12,9 @@ import { newBodyMeasurements } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import { SaveableSectionHandle, withoutEmptyValues } from '@/types/saveableSection';
 import { Patient } from '@/types/model-types-new';
 
 type BodyMeasurementsProps = {
@@ -28,9 +29,15 @@ type BodyMeasurementsProps = {
   defaultCollapsed?: boolean;
   /** Keep specialty sheets limited to weight, height and BMI. */
   showExtendedMeasurements?: boolean;
+  /** Values to start from instead of the latest saved ones (e.g. an ambient draft) */
+  prefill?: Partial<BodyMeasurementsModelObject> | null;
+  /** Called after a successful save (e.g. the ambient draft popup marks the section saved) */
+  onSaved?: () => void;
+  /** More buttons next to Save (e.g. Reject in the ambient draft popup) */
+  extraActions?: React.ReactNode;
 };
 
-const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
+const BodyMeasurements = forwardRef<SaveableSectionHandle, BodyMeasurementsProps>(({
   patient,
   patientId,
   encounterId,
@@ -40,8 +47,11 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   title = 'Body Measurements',
   showExtendedMeasurements = true,
   collapsible = false,
-  defaultCollapsed = false
-}) => {
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved,
+  extraActions
+}, ref) => {
   const dispatch = useAppDispatch();
 
   // === API ===
@@ -83,6 +93,8 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
 
   useEffect(() => {
+    // A prefill replaces the latest saved values
+    if (prefill) return;
     if (!latestBodyMeasurementsByEncounterId) return;
 
     setBodyMeasurements(previousBodyMeasurements => ({
@@ -96,7 +108,18 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
           ? (latestBodyMeasurementsByEncounterId as any).isActive
           : true
     }));
-  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId]);
+  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId, prefill]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    setBodyMeasurements(previousBodyMeasurements => ({
+      ...previousBodyMeasurements,
+      ...withoutEmptyValues(prefill),
+      id: undefined,
+      patientId,
+      encounterId
+    }));
+  }, [prefill, patientId, encounterId]);
 
   /**
    * Compute BMI & BSA based on weight/height.
@@ -200,15 +223,15 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
-  const handleSaveBodyMeasurements = async () => {
+  const handleSaveBodyMeasurements = async (): Promise<boolean> => {
     if (!patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
-      return;
+      return false;
     }
 
     const missing: string[] = [];
@@ -219,7 +242,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       dispatch(
         notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
       );
-      return;
+      return false;
     }
 
     try {
@@ -236,10 +259,15 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
+      onSaved?.();
+      return true;
     } catch (error: any) {
       showApiError(error);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: handleSaveBodyMeasurements }));
 
   const handleClearBodyMeasurements = () => {
     setBodyMeasurements({
@@ -258,9 +286,10 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
-          <MyButton onClick={handleSaveBodyMeasurements} disabled={disabled}>
+          <MyButton onClick={() => handleSaveBodyMeasurements()} disabled={disabled}>
             Save
           </MyButton>
+          {extraActions}
           <MyButton onClick={handleClearBodyMeasurements} disabled={disabled}>
             Clear
           </MyButton>
@@ -347,6 +376,8 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       }
     />
   );
-};
+});
+
+BodyMeasurements.displayName = 'BodyMeasurements';
 
 export default BodyMeasurements;

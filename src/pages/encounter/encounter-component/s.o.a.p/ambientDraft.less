@@ -1,0 +1,153 @@
+// Ambient draft preview
+.ambient-state {
+  padding: 24px;
+  text-align: center;
+  color: var(--primary-gray);
+}
+
+.ambient-error {
+  color: var(--primary-pink);
+}
+
+.ambient-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.ambient-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  color: var(--primary-gray);
+}
+
+.ambient-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--primary-blue);
+  cursor: pointer;
+}
+
+.ambient-block {
+  border: 1px solid var(--gray-dark, #e5e5ea);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.ambient-block-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ambient-field {
+  margin-bottom: 8px;
+}
+
+.ambient-label {
+  font-weight: 600;
+  color: var(--primary-gray);
+}
+
+.ambient-value {
+  white-space: pre-wrap;
+}
+
+.ambient-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  margin-bottom: 4px;
+
+  code {
+    white-space: pre-wrap;
+    font-size: 12px;
+  }
+}
+
+.ambient-tag {
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 11px;
+  background: rgba(127, 127, 127, 0.15);
+
+  &.status-complete {
+    background: rgba(69, 184, 135, 0.2);
+  }
+
+  &.status-partial {
+    background: rgba(255, 170, 0, 0.2);
+  }
+}
+
+.ambient-missing {
+  color: var(--primary-pink);
+  font-size: 12px;
+}
+
+.ambient-empty {
+  color: var(--primary-gray);
+}
+
+.ambient-record-group {
+  margin-bottom: 6px;
+}
+
+.ambient-pre {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  font-size: 12px;
+  background: rgba(127, 127, 127, 0.08);
+  padding: 8px;
+  border-radius: 6px;
+
+  &.small {
+    max-height: 180px;
+  }
+}
+
+// Visit forms prefilled from the draft (same forms as in the encounter)
+.ambient-forms {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ambient-forms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// Each draft section: Reject above the form; a rejected one collapses to one line with Undo
+.ambient-section-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.ambient-rejected-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px dashed var(--primary-gray);
+  border-radius: 8px;
+  color: var(--primary-gray);
+}
+
+// A saved section stays visible, read-only
+.ambient-saved-tag {
+  color: #45b887;
+  font-weight: 600;
+}
+
+.ambient-section-locked {
+  pointer-events: none;
+  opacity: 0.6;
+}
