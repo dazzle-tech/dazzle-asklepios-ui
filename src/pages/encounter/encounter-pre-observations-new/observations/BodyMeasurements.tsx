@@ -120,13 +120,20 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     setBodySurfaceArea('');
   }, [bodyMeasurements?.weight, bodyMeasurements?.height]);
 
+  const toMeasurementNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    const numericValue =
+      typeof value === 'number' ? value : Number(String(value).replace(',', '.').trim());
+    return Number.isFinite(numericValue) ? numericValue : null;
+  };
+
   const bodyMeasurementsCreatePayload = useMemo(() => {
     return {
       patientId,
       encounterId,
-      weight: bodyMeasurements.weight ?? null,
-      height: bodyMeasurements.height ?? null,
-      headCircumference: bodyMeasurements.headCircumference ?? null,
+      weight: toMeasurementNumber(bodyMeasurements.weight),
+      height: toMeasurementNumber(bodyMeasurements.height),
+      headCircumference: toMeasurementNumber(bodyMeasurements.headCircumference),
       isActive: typeof bodyMeasurements.isActive === 'boolean' ? bodyMeasurements.isActive : true
     };
   }, [bodyMeasurements, patientId, encounterId]);
@@ -211,9 +218,12 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       return;
     }
 
+    const weight = toMeasurementNumber(bodyMeasurements.weight);
+    const height = toMeasurementNumber(bodyMeasurements.height);
+
     const missing: string[] = [];
-    if (bodyMeasurements.weight == null) missing.push('• Weight: must not be empty');
-    if (bodyMeasurements.height == null) missing.push('• Height: must not be empty');
+    if (weight == null) missing.push('• Weight: must not be empty');
+    if (height == null) missing.push('• Height: must not be empty');
 
     if (missing.length > 0) {
       dispatch(
@@ -276,6 +286,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                 fieldName="weight"
                 rightAddon="Kg"
                 fieldType="number"
+                allowDecimal
                 record={bodyMeasurements}
                 setRecord={setBodyMeasurements}
                 disabled={disabled}
@@ -300,6 +311,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                 fieldName="height"
                 rightAddon="Cm"
                 fieldType="number"
+                allowDecimal
                 record={bodyMeasurements}
                 setRecord={setBodyMeasurements}
                 disabled={disabled}
@@ -332,6 +344,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                     rightAddon="Cm"
                     rightAddonwidth={40}
                     fieldType="number"
+                    allowDecimal
                     record={bodyMeasurements}
                     setRecord={setBodyMeasurements}
                     disabled={disabled}

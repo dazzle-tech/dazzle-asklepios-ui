@@ -344,10 +344,10 @@ const PatientProfile = () => {
     }
 
       try {
-        if (localPatient?.id) {
+        if (patientToSave?.id) {
           const updated = await updatePatient({
-            id: localPatient.id,
-            data: buildPatientSavePayload(localPatient)
+            id: patientToSave.id,
+            data: buildPatientSavePayload(patientToSave)
           }).unwrap();
 
           setLocalPatient(updated);
@@ -374,14 +374,14 @@ const PatientProfile = () => {
         const duplicationResponse = await checkDuplication({
           dto: {
             ruleId: selectedFacility?.ruleId,
-            dateOfBirth: localPatient?.dateOfBirth
-              ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
+            dateOfBirth: patientToSave?.dateOfBirth
+              ? new Date(patientToSave.dateOfBirth).toISOString().split('T')[0]
               : null,
-            gender: localPatient?.sexAtBirth,
-            firstName: localPatient?.firstName,
-            lastName: localPatient?.lastName,
+            gender: patientToSave?.sexAtBirth,
+            firstName: patientToSave?.firstName,
+            lastName: patientToSave?.lastName,
             documentNo: '',
-            mobileNumber: localPatient?.primaryMobileNumber
+            mobileNumber: patientToSave?.primaryMobileNumber
           },
           page: 0,
           size: 20
@@ -393,9 +393,9 @@ const PatientProfile = () => {
           return;
         }
 
-        const patientBeforeSave = { ...localPatient };
+        const patientBeforeSave = { ...patientToSave };
 
-        const saved = await addPatient(buildPatientSavePayload(localPatient)).unwrap();
+        const saved = await addPatient(buildPatientSavePayload(patientToSave)).unwrap();
 
         setLocalPatient(saved);
         dispatch(setPatient(saved));
@@ -660,9 +660,12 @@ const PatientProfile = () => {
         setOpen={setOpenPatientsDuplicateModal}
         list={patientList}
         handleSelect={handleSelectExistingPatient}
-        handleSave={() =>
-          addPatient({
-            ...buildPatientSavePayload(localPatient),
+        handleSave={() => {
+          const patientToSave = applyPatientDefaults(localPatient);
+          setLocalPatient(patientToSave);
+
+          return addPatient({
+            ...buildPatientSavePayload(patientToSave),
             isCompletedPatient: false
           })
             .unwrap()
@@ -672,7 +675,7 @@ const PatientProfile = () => {
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
 
-              if (shouldOpenCchiDocumentAfterSave(localPatient, cchiDocument)) {
+              if (shouldOpenCchiDocumentAfterSave(patientToSave, cchiDocument)) {
                 openCchiDocumentModalAfterSave();
               }
 
@@ -694,8 +697,8 @@ const PatientProfile = () => {
               });
 
               dispatch(notify({ msg, sev: 'warning' }));
-            })
-        }
+            });
+        }}
       />
     </div>
   );
