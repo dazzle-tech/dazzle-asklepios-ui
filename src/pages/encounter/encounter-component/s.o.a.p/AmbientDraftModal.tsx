@@ -310,53 +310,96 @@ const painLevelValue = (value: unknown) => {
   return text;
 };
 
-const REGENERATE_SECTION: Record<ReviewKey, string> = {
+const REGENERATE_SECTION: Partial<Record<ReviewKey, string>> = {
   chief_complaint: 'chief_complaint',
   hpi: 'hpi',
-  physical_exam: 'physical_exam',
-  assessment_plan: 'assessment_plan',
-  vital_signs: 'vital_sign',
-  body_measurements: 'body_measurements',
-  pain_assessment: 'pain_assessment',
-  nursing_assessment: 'nursing_assessment'
+  physical_exam: 'review_of_systems',
+  vital_signs: 'physical_exam',
+  assessment_plan: 'assessment_plan'
 };
 
-const regeneratedSectionText = (key: ReviewKey, current: AmbientDraft | null, response: unknown) => {
-  if (typeof response === 'string' && response.trim()) return response.trim();
-  if (!response || typeof response !== 'object' || Array.isArray(response)) return '';
+const REGENERATE_TARGETS: Record<string, ReviewKey[]> = {
+  chief_complaint: ['chief_complaint'],
+  hpi: ['hpi'],
+  review_of_systems: ['physical_exam'],
+  physical_exam: ['vital_signs', 'physical_exam'],
+  assessment_plan: ['assessment_plan']
+};
+
+const SOAP_FIELDS = [
+  'ChiefComplaint',
+  'HPI',
+  'MedicalHistory',
+  'Vitals',
+  'PhysicalExamination',
+  'Assessments',
+  'TreatmentPlans'
+] as const;
+
+const soapFieldsOf = (value: unknown) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const source = value as Record<string, any>;
+  const note = source.soap_note && typeof source.soap_note === 'object' ? source.soap_note : source;
+  const picked: NonNullable<AmbientDraft['soap_note']> = {};
+  SOAP_FIELDS.forEach(name => {
+    if (typeof note[name] === 'string' && note[name].trim()) picked[name] = note[name].trim();
+  });
+  return Object.keys(picked).length ? picked : null;
+};
+
+const regeneratedTexts = (apiSection: string, current: AmbientDraft | null, response: unknown) => {
+  const targets = REGENERATE_TARGETS[apiSection] ?? [];
+  const updates: Partial<Record<ReviewKey, string>> = {};
+  if (typeof response === 'string' && response.trim() && targets[0]) {
+    updates[targets[0]] = response.trim();
+    return updates;
+  }
+  if (!response || typeof response !== 'object' || Array.isArray(response)) return updates;
   const data = response as Record<string, any>;
-  if (typeof data.text === 'string' && data.text.trim()) return data.text.trim();
-  if (typeof data.content === 'string' && data.content.trim()) return data.content.trim();
   const nested = data.draft || data.result;
-  const candidate = nested && typeof nested === 'object' ? nested : data;
-  const looksLikeDraft =
-    candidate.soap_note || candidate.record || candidate.sections || candidate.transcript;
-  if (looksLikeDraft) {
-    const merged: AmbientDraft = {
-      ...(current ?? {}),
-      ...candidate,
-      soap_note: { ...(current?.soap_note ?? {}), ...(candidate.soap_note ?? {}) },
-      record: { ...(current?.record ?? {}), ...(candidate.record ?? {}) },
-      sections: { ...(current?.sections ?? {}), ...(candidate.sections ?? {}) }
-    };
-    const text = sectionSourceText(merged, key);
-    if (text) return text;
-  }
-  const sectionName = REGENERATE_SECTION[key];
-  const direct = data[sectionName];
-  if (typeof direct === 'string' && direct.trim()) return direct.trim();
-  if (Array.isArray(data.sentences)) {
-    const sentenceText = data.sentences
-      .map((sentence: { text?: string }) => sentence?.text?.trim())
-      .filter(Boolean)
-      .join(' ');
-    if (sentenceText) return sentenceText;
-  }
-  const recordValue = data[sectionName] || data.record?.[sectionName];
-  if (isObservationKey(key) && recordValue && typeof recordValue === 'object') {
-    return formatObservation(key, readObservation({ record: { [sectionName]: recordValue } } as AmbientDraft, key));
-  }
-  return '';
+  const candidate = nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : data;
+  const note = soapFieldsOf(candidate) || soapFieldsOf(data);
+  const direct = typeof data.text === 'string' && data.text.trim()
+    ? data.text.trim()
+    : typeof data.content === 'string' && data.content.trim()
+      ? data.content.trim()
+      : '';
+  const responseRecord = asRecord(candidate.record ?? data.record);
+
+  targets.forEach(key => {
+    if (key === 'vital_signs') {
+      const vitalRecord = OBSERVATION_RECORD_KEYS.vital_signs
+        .map(name => responseRecord[name] ?? responseRecord[camelizeKey(name)])
+        .find(value => value && typeof value === 'object');
+      if (vitalRecord) {
+        const formatted = formatObservation(
+          'vital_signs',
+          readObservation({ record: { vital_sign: vitalRecord } } as AmbientDraft, 'vital_signs')
+        );
+        if (formatted) {
+          updates.vital_signs = formatted;
+          return;
+        }
+      }
+      if (note?.Vitals) updates.vital_signs = note.Vitals;
+      return;
+    }
+    const hasField =
+      (key === 'chief_complaint' && note?.ChiefComplaint) ||
+      (key === 'hpi' && (note?.HPI || note?.MedicalHistory)) ||
+      (key === 'physical_exam' && note?.PhysicalExamination) ||
+      (key === 'assessment_plan' && (note?.Assessments || note?.TreatmentPlans));
+    if (hasField && note) {
+      const fromNote = sectionSourceText(
+        { ...(current ?? {}), soap_note: { ...(current?.soap_note ?? {}), ...note } },
+        key
+      );
+      if (fromNote) updates[key] = fromNote;
+      return;
+    }
+    if (direct && targets[0] === key) updates[key] = direct;
+  });
+  return updates;
 };
 
 const joinSentences = (draft: AmbientDraft, key: string) =>
@@ -978,7 +1021,7 @@ const AmbientDraftModal = ({
   };
 
   const openRegenerate = (key: ReviewKey) => {
-    if (locked) return;
+    if (locked || !REGENERATE_SECTION[key]) return;
     setRegenerateSection(key);
     setRegenerateForm({
       instruction: '',
@@ -994,6 +1037,8 @@ const AmbientDraftModal = ({
 
   const runRegenerate = async () => {
     if (!regenerateSection || locked) return;
+    const apiSection = REGENERATE_SECTION[regenerateSection];
+    if (!apiSection) return;
     const instruction = regenerateForm.instruction.trim();
     if (!instruction) {
       dispatch(notify({ msg: 'Describe the change for this section.', sev: 'warning' }));
@@ -1006,7 +1051,7 @@ const AmbientDraftModal = ({
     try {
       const response = await regenerateAmbientSection({
         transcript: draft.transcript,
-        section: REGENERATE_SECTION[regenerateSection],
+        section: apiSection,
         instruction,
         noteLanguage: regenerateForm.noteLanguage,
         instructionLanguage: regenerateForm.instructionLanguage,
@@ -1017,13 +1062,21 @@ const AmbientDraftModal = ({
         suggestIcd10: regenerateForm.suggestIcd10,
         suggestOrders: regenerateForm.suggestOrders
       }).unwrap();
-      const text = regeneratedSectionText(regenerateSection, draft, response);
-      if (!text) {
+      const updates = regeneratedTexts(apiSection, draft, response);
+      const clickedText = updates[regenerateSection];
+      if (!clickedText) {
         dispatch(notify({ msg: 'Regenerate did not return section text.', sev: 'warning' }));
         return;
       }
       const sectionKey = regenerateSection;
-      setTexts(current => ({ ...current, [sectionKey]: text }));
+      setTexts(current => {
+        const next = { ...current };
+        (Object.entries(updates) as [ReviewKey, string][]).forEach(([key, value]) => {
+          if (!value) return;
+          if (key === sectionKey || statuses[key] === 'pending') next[key] = value;
+        });
+        return next;
+      });
       setEditing(current => (current === sectionKey ? null : current));
       setRegenerateSection(null);
       dispatch(notify({ msg: 'Section regenerated.', sev: 'success' }));
@@ -1588,6 +1641,7 @@ const AmbientDraftModal = ({
                             )
                           ) : (
                             <>
+                              {REGENERATE_SECTION[section.key] && (
                               <MyButton
                                 appearance="ghost"
                                 color="var(--primary-blue)"
@@ -1598,6 +1652,7 @@ const AmbientDraftModal = ({
                               >
                                 Regenerate
                               </MyButton>
+                              )}
                               <MyButton
                                 appearance="ghost"
                                 color="var(--primary-blue)"
