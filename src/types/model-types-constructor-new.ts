@@ -4095,4 +4095,15 @@ export const newTimelineResponse: modelTypes.TimelineResponse = {
     input_fields_count: 0,
     timeline_event_count: 0
   }
-}
+};
+
+export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM = {
+  id: undefined,
+  configKey: '',
+  configValue: ''
+};
+
+export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
+  configKey: '',
+  configValue: ''
+};

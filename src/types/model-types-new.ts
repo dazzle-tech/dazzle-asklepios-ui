@@ -8728,3 +8728,23 @@ export interface PatientActivityCancelDTO {
   cancellationReason: string;
 }
 
+export interface MobileAppConfigResponseVM {
+  id?: number;
+  configKey: string;
+  configValue: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface MobileAppConfigCreateDTO {
+  configKey: string;
+  configValue: string;
+}
+
+export interface MobileAppConfigUpdateDTO {
+  id: number;
+  configValue: string;
+}
+
