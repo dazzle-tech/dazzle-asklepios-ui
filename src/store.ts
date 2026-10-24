@@ -211,6 +211,7 @@ import { patientAdministrativeWarningsService } from './services/patient/patient
 import { radiologyReportService } from './services/reports/radiologyReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
 import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
 import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
 import { notificationService } from './services/notification-management/notificationService';
@@ -424,6 +425,7 @@ export const store = configureStore({
     [emailSettingsService.reducerPath]: emailSettingsService.reducer,
     [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
+    [mobileAppConfigService.reducerPath]: mobileAppConfigService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
     [notificationService.reducerPath]: notificationService.reducer,
@@ -889,6 +891,7 @@ export const store = configureStore({
         radiologyReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        mobileAppConfigService.middleware,
         notificationHeaderService.middleware,
         notificationTemplateService.middleware,
         notificationService.middleware,
