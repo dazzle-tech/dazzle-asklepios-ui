@@ -22,6 +22,7 @@ import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildBillingPaymentReceipt,
   computeRowRemainingAmount,
+  capPaymentToBalance,
   computeWalletCollectAmounts,
   formatMoney,
   isCreditCardPaymentMethod,
@@ -31,6 +32,7 @@ import {
   normalizeBillingError,
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber,
+  roundMoney,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -100,7 +102,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     });
   }, [selectedRows]);
 
-  const suggestedAmount = useMemo(
+  const rawSuggestedAmount = useMemo(
     () =>
       dedupedSelectedRows.reduce(
         (sum, row) => sum + computeRowRemainingAmount(row),
@@ -108,6 +110,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       ),
     [dedupedSelectedRows]
   );
+  const suggestedAmount = roundMoney(rawSuggestedAmount);
 
   const totalReservedOnSelection = useMemo(
     () =>
@@ -209,7 +212,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       return;
     }
 
-    if (!isWalletMethod && form.amount > suggestedAmount + 0.0001) {
+    if (!isWalletMethod && roundMoney(form.amount) > suggestedAmount) {
       dispatch(
         notify({
           msg: `Amount cannot exceed the selected balance of ${formatMoney(suggestedAmount, currency)}.`,
@@ -233,9 +236,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       option => String(option?.value) === String(form.paymentMethodCode)
     );
 
-    const paymentAmount = isWalletMethod
+    let paymentAmount = isWalletMethod
       ? walletCollectPreview.applyAmount
       : Number(form.amount);
+    paymentAmount = capPaymentToBalance(paymentAmount, rawSuggestedAmount);
     const chargeCreditCardIfNeeded =
       async () => {
 

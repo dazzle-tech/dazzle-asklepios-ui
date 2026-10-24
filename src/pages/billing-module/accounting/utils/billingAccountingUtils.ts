@@ -631,6 +631,17 @@ export const formatMoney = (
   })} ${currency}`;
 };
 
+export const roundMoney = (value: number | null | undefined): number =>
+  Number(Number(value || 0).toFixed(2));
+
+export const capPaymentToBalance = (amount: number, balance: number): number => {
+  if (amount > balance) {
+    return Number(Number(balance).toFixed(4));
+  }
+
+  return amount;
+};
+
 export const resolvePaymentReceiptNumber = (paymentResult?: {
   receiptNumber?: string | null;
   paymentNumber?: string | null;
