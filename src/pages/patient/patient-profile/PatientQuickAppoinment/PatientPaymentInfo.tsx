@@ -39,7 +39,9 @@ import {
 
 import {
   BILLING_PAYMENT_METHOD_LABELS,
-  mergeBillingPaymentMethodOptions
+  capPaymentToBalance,
+  mergeBillingPaymentMethodOptions,
+  roundMoney
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
@@ -3183,8 +3185,8 @@ const PatientPaymentInfo =
               }
 
               if (
-                formState.paymentAmount >
-                previewTotals.patientOutstandingAmount
+                roundMoney(formState.paymentAmount) >
+                roundMoney(previewTotals.patientOutstandingAmount)
               ) {
                 reject(
                   'paymentAmount',
@@ -3525,7 +3527,7 @@ const PatientPaymentInfo =
           }
 
           const paymentAmount =
-            Math.min(
+            capPaymentToBalance(
               formState.paymentAmount,
               outstanding
             );

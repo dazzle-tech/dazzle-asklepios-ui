@@ -14,6 +14,10 @@ import type {
   BillingInvoiceItemResponseVM,
   PatientPaymentCreateVM,
 } from '@/types/model-types-new';
+import {
+  capPaymentToBalance,
+  roundMoney
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 type PaymentModalProps = {
   open: boolean;
@@ -113,8 +117,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         (sum, item) => sum + Number(item.totalPrice ?? item.price * (item.quantity || 1)),
         0
       );
-      const enteredAmount = Number(partialPayment.amount ?? 0);
-      if (enteredAmount <= 0 || enteredAmount > selectedTotal) {
+      const enteredAmount = capPaymentToBalance(
+        Number(partialPayment.amount ?? 0),
+        selectedTotal
+      );
+      if (enteredAmount <= 0 || roundMoney(Number(partialPayment.amount ?? 0)) > roundMoney(selectedTotal)) {
         toaster.push(
           <Message showIcon type="warning" closable>
             Entered amount is invalid for selected invoice items.

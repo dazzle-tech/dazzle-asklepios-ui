@@ -17,12 +17,14 @@ import { notify } from '@/utils/uiReducerActions';
 import PaymentMethodSelector from '@/pages/billing-module/accounting/components/PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  capPaymentToBalance,
   computeWalletCollectAmounts,
   formatMoney,
   isCreditCardPaymentMethod,
   isWalletPaymentMethod,
   makeRequestId,
-  mergeBillingPaymentMethodOptions
+  mergeBillingPaymentMethodOptions,
+  roundMoney
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
 import { useCreditCardMachinePayment } from '@/utils/cardMachinePayment';
@@ -235,7 +237,7 @@ console.log("Resolved Patient ID:", resolvedPatientId);
       return;
     }
 
-    if (Number(paymentAmount.toFixed(4)) > Number(outstandingAmount.toFixed(4))) {
+    if (roundMoney(paymentAmount) > roundMoney(outstandingAmount)) {
       dispatch(
         notify({
           msg: `Amount exceeds outstanding balance (${formatMoney(outstandingAmount, currency)}).`,
@@ -244,6 +246,8 @@ console.log("Resolved Patient ID:", resolvedPatientId);
       );
       return;
     }
+
+    paymentAmount = capPaymentToBalance(paymentAmount, outstandingAmount);
     const chargeCreditCardIfNeeded = async () => {
       if (resolvedPatientId == null || resolvedEncounterId == null) {
         return { proceed: true, cardResult: null };
