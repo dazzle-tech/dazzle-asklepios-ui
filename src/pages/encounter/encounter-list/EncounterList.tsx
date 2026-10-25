@@ -11,8 +11,7 @@ import {
   faFileWaveform,
   faRectangleXmark,
   faEye,
-  faVialCircleCheck,
-  faRotateLeft
+  faVialCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -49,8 +48,7 @@ import {
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
   useStartEncounterMutation,
-  useCancelEncounterMutation,
-  useReopenEncounterMutation
+  useCancelEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 
 import { useAppSelector } from '@/hooks';
@@ -273,8 +271,6 @@ const EncounterList = () => {
 
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
-  const [reopenEncounter, { isLoading }] =
-    useReopenEncounterMutation();
 
 
   const TreatmentStatusEnum = useEnumOptions('TreatmentStatus', {
@@ -665,17 +661,6 @@ const EncounterList = () => {
     });
   };
 
-  const handleReopen = async (encounterId: number) => {
-    try {
-      await reopenEncounter({ id: encounterId }).unwrap();
-      dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
-
-    } catch (error) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-
-    }
-  };
-  
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
@@ -1037,13 +1022,9 @@ const EncounterList = () => {
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
-        const tooltipReopen = <Tooltip>Reopen Encounter</Tooltip>;
         const statusUpper = getEncounterTreatmentStatus(row);
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
-        const canReopen =
-          statusUpper === 'COMPLETED' ||
-          statusUpper === 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             {canSeeNurseStation && !isViewOnlyStatus && (
@@ -1132,24 +1113,6 @@ const EncounterList = () => {
                     }}
                   >
                     <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
-            {canReopen && (
-              <Whisper
-                trigger="hover"
-                placement="top"
-                speaker={tooltipReopen}
-              >
-                <div>
-                  <MyButton
-                    size="small"
-                    backgroundColor="#0d6efd"
-                    loading={isLoading}
-                    onClick={() => { handleReopen(row.id) }}
-                  >
-                    <FontAwesomeIcon icon={faRotateLeft} />
                   </MyButton>
                 </div>
               </Whisper>
