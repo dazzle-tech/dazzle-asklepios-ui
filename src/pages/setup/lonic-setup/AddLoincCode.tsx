@@ -47,10 +47,10 @@ const AddLoincCode = ({ open, setOpen, loincCode, setLoincCode, handleSave, widt
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="New LOINC Code"
+      title={loincCode?.id ? 'Edit LOINC Code' : 'New LOINC Code'}
       position="right"
       content={() => <div dir={dir}>{conjureFormContent()}</div>}
-      actionButtonLabel="Create"
+      actionButtonLabel={loincCode?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'LOINC Code Info', icon: <FaBarcode /> }]}
       size={width > 600 ? '36vw' : '70vw'}
