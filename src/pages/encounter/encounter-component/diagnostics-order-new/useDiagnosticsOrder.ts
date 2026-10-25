@@ -712,7 +712,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     return warnings;
   };
 
-  const handleSaveTests = async () => {
+  // Resolves true when every selected test was saved without errors
+  const handleSaveTests = async (): Promise<boolean> => {
     setOpenTestsModal(false);
 
 
@@ -721,12 +722,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!fromDepartmentId) {
       dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
-      return;
+      return false;
     }
 
     try {
@@ -848,9 +849,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
+      return failed.length === 0;
     } catch (error: any) {
       if (isUncoveredCashCancelled(error)) {
-        return;
+        return false;
       }
       console.error('Save tests failed:', error);
       dispatch(
@@ -859,6 +861,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           sev: 'error'
         })
       );
+      return false;
     }
     finally {
       console.log("Fainaly ")
