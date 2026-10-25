@@ -177,6 +177,8 @@ export const claimApi = createApi({
         claimSubType?: string | null;
         encounterDateFrom?: string | null;
         encounterDateTo?: string | null;
+        medicalRecordNumber?: string | null;
+        encounterNumber?: string | null;
         page: number;
         size: number;
       }
@@ -190,6 +192,8 @@ export const claimApi = createApi({
         claimSubType,
         encounterDateFrom,
         encounterDateTo,
+        medicalRecordNumber,
+        encounterNumber,
         page,
         size
       }) => ({
@@ -204,6 +208,12 @@ export const claimApi = createApi({
           ...(claimSubType ? { claimSubType } : {}),
           ...(encounterDateFrom ? { encounterDateFrom } : {}),
           ...(encounterDateTo ? { encounterDateTo } : {}),
+          ...(medicalRecordNumber?.trim()
+            ? { medicalRecordNumber: medicalRecordNumber.trim() }
+            : {}),
+          ...(encounterNumber?.trim()
+            ? { encounterNumber: encounterNumber.trim() }
+            : {}),
           page,
           size
         }
