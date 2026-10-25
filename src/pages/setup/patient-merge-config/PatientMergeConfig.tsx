@@ -48,10 +48,6 @@ const filterSelectOptions: Record<string, { label: string; value: string }[]> = 
   enabled: [
     { label: 'Enabled', value: 'true' },
     { label: 'Disabled', value: 'false' }
-  ],
-  autoDiscoverFields: [
-    { label: 'Yes', value: 'true' },
-    { label: 'No', value: 'false' }
   ]
 };
 
@@ -93,10 +89,8 @@ const PatientMergeConfig = () => {
     { label: 'Entity Name', value: 'entityName' },
     { label: 'Category', value: 'mergeCategory' },
     { label: 'Status', value: 'enabled' },
-    { label: 'Auto Fields', value: 'autoDiscoverFields' },
     { label: 'Match Keys', value: 'matchKeyColumns' },
-    { label: 'Excluded Columns', value: 'excludedColumns' },
-    { label: 'Sort', value: 'sortOrder' }
+    { label: 'Excluded Columns', value: 'excludedColumns' }
   ];
 
   useEffect(() => {
@@ -130,13 +124,12 @@ const PatientMergeConfig = () => {
       result = result.filter((item: any) => {
         const itemValue = item?.[filterKey];
 
-        // Yes/No fields: an empty value counts as No, the same as the table shows it
-        if (filterKey === 'enabled' || filterKey === 'autoDiscoverFields') {
+        // An empty status counts as Disabled, the same as the table shows it
+        if (filterKey === 'enabled') {
           return Boolean(itemValue) === (filterValue === 'true');
         }
 
-        // Category and the sort number match the exact value
-        if (filterSelectOptions[filterKey] || filterKey === 'sortOrder') {
+        if (filterSelectOptions[filterKey]) {
           return String(itemValue ?? '').toLowerCase() === filterValue;
         }
 
@@ -326,7 +319,7 @@ const PatientMergeConfig = () => {
       ) : (
         <MyInput
           fieldName="value"
-          fieldType={recordOfFilter.filter === 'sortOrder' ? 'number' : 'text'}
+          fieldType="text"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           showLabel={false}
@@ -371,12 +364,6 @@ const PatientMergeConfig = () => {
       render: (rowData: any) => (rowData.enabled ? 'Enabled' : 'Disabled')
     },
     {
-      key: 'autoDiscoverFields',
-      title: <Translate>Auto Fields</Translate>,
-      flexGrow: 3,
-      render: (rowData: any) => (rowData.autoDiscoverFields ? 'Yes' : 'No')
-    },
-    {
       key: 'matchKeyColumns',
       title: <Translate>Match Keys</Translate>,
       flexGrow: 4,
@@ -389,11 +376,6 @@ const PatientMergeConfig = () => {
       flexGrow: 4,
       render: (rowData: any) =>
         rowData.excludedColumns?.length ? rowData.excludedColumns.join(', ') : '-'
-    },
-    {
-      key: 'sortOrder',
-      title: <Translate>Sort</Translate>,
-      flexGrow: 2
     },
     {
       key: 'icons',
