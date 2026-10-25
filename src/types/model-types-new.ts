@@ -6575,6 +6575,10 @@ export type EncounterBillingItemSummary = {
   exemptionAmount: number;
   taxAmount: number;
   taxRate?: number | null;
+  discountType?: string | null;
+  discountRate?: number | null;
+  discountSource?: string | null;
+  discountReason?: string | null;
   netAmount: number;
   patientResponsibilityAmount: number;
   insuranceResponsibilityAmount: number;
@@ -6678,6 +6682,8 @@ export type EncounterBillingSummary = {
   items: EncounterBillingItemSummary[];
   coverageType?: string | null;
   patientInsuranceId?: number | null;
+  /** Wallet reserved or applied on this encounter only. */
+  encounterWalletAmount?: number;
 };
 
 export type CreateAdvancePaymentRequest = {
@@ -7346,6 +7352,8 @@ export interface PendingClaimInvoiceResponse {
   matchingItemCount?: number | null;
   matchingNetAmount?: number | null;
   selectable?: boolean | null;
+  rejectedClaim?: boolean | null;
+  rejectionMessage?: string | null;
 }
 
 export interface ClaimBatchSubmitResponse {

@@ -934,6 +934,51 @@ export const isRowCollectable = (
 export const isRowAwaitingBilling = (row: UnifiedBillingChargeRow): boolean =>
   row.chargeLineId == null && isRowCollectable(row);
 
+const sumUnbilledEncounterAmount = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[],
+  pick: (item: EncounterBillingItemSummary) => number | null | undefined
+): number => {
+  const awaitingIds = new Set(
+    chargeRows
+      .filter(isRowAwaitingBilling)
+      .map(row => row.patientServiceProductId)
+      .filter((id): id is number => id != null)
+  );
+
+  if (awaitingIds.size === 0) {
+    return 0;
+  }
+
+  return (summary?.items ?? [])
+    .filter(
+      item =>
+        item.chargeLineId == null &&
+        item.patientServiceProductId != null &&
+        awaitingIds.has(item.patientServiceProductId)
+    )
+    .reduce((total, item) => total + Number(pick(item) ?? 0), 0);
+};
+
+/** Charge totals for the open encounter. Wallet balances stay on the patient account. */
+export const computeEncounterLedgerAmounts = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+) => {
+  return {
+    grossAmount:
+      Number(summary?.grossAmount ?? 0) +
+      sumUnbilledEncounterAmount(summary, chargeRows, item => item.grossAmount),
+    netAmount:
+      Number(summary?.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows),
+    discountAmount:
+      Number(summary?.discountAmount ?? 0) +
+      sumUnbilledEncounterAmount(summary, chargeRows, item => item.discountAmount),
+    copaymentAmount: computeEncounterPatientShare(summary, chargeRows),
+    collectAmount: computeEncounterRemainingToPay(summary, chargeRows)
+  };
+};
+
 export const formatBillingTimestamp = (value?: string | null): string => {
   if (!value) return '-';
   return formatDateWithoutSeconds(value);

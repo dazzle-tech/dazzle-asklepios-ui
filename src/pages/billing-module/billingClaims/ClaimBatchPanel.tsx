@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Checkbox, DateRangePicker, Form, Tag, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, DateRangePicker, Form, Tooltip, Whisper } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -22,8 +22,13 @@ import {
 import Translate from '@/components/Translate';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faFileWaveform
+  faCircleCheck,
+  faCircleXmark,
+  faClock,
+  faFileWaveform,
+  faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 
@@ -34,6 +39,47 @@ type ClaimBatchPanelProps = {
 const UNAPPROVED_RESULT_LABEL = 'Result not approved';
 const UNAPPROVED_RESULT_MESSAGE =
   'Select is locked because a test result on this invoice is not Result Approved.';
+const REJECTED_CLAIM_LABEL = 'Rejected';
+const REJECTED_CLAIM_MESSAGE =
+  'This claim was submitted and rejected. It leaves this list once Waseel accepts it.';
+const READY_LABEL = 'Ready';
+const READY_MESSAGE = 'This invoice can be selected and submitted.';
+const NOT_SUBMITTED_LABEL = 'Not submitted';
+const NOT_SUBMITTED_MESSAGE = 'This invoice has not been submitted to Waseel yet.';
+
+const STATUS_GREEN = '#16a34a';
+const STATUS_BLUE = '#2563eb';
+const STATUS_AMBER = '#d97706';
+const STATUS_RED = '#dc2626';
+
+const StatusMark = ({
+  label,
+  color,
+  icon,
+  hint
+}: {
+  label: string;
+  color: string;
+  icon: IconDefinition;
+  hint?: string;
+}) => {
+  const mark = (
+    <span className="bc-status-mark" style={{ ['--mark-color' as string]: color }}>
+      <FontAwesomeIcon icon={icon} />
+      <Translate>{label}</Translate>
+    </span>
+  );
+
+  if (!hint) {
+    return mark;
+  }
+
+  return (
+    <Whisper trigger="hover" placement="top" speaker={<Tooltip>{hint}</Tooltip>}>
+      <span>{mark}</span>
+    </Whisper>
+  );
+};
 
 const isSelectableInvoice = (row: PendingClaimInvoiceResponse) => row.selectable !== false;
 
@@ -63,6 +109,10 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
   const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
   const [appliedEncounterDateFrom, setAppliedEncounterDateFrom] = useState<string | null>(null);
   const [appliedEncounterDateTo, setAppliedEncounterDateTo] = useState<string | null>(null);
+  const [medicalRecordNumber, setMedicalRecordNumber] = useState('');
+  const [encounterNumber, setEncounterNumber] = useState('');
+  const [appliedMedicalRecordNumber, setAppliedMedicalRecordNumber] = useState('');
+  const [appliedEncounterNumber, setAppliedEncounterNumber] = useState('');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -80,6 +130,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
       claimSubType: appliedClaimSubType,
       encounterDateFrom: appliedEncounterDateFrom,
       encounterDateTo: appliedEncounterDateTo,
+      medicalRecordNumber: appliedMedicalRecordNumber,
+      encounterNumber: appliedEncounterNumber,
       page,
       size: rowsPerPage
     },
@@ -186,6 +238,8 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
     setAppliedEncounterDateFrom(toIsoDateString(encounterDateRange?.[0]));
     setAppliedEncounterDateTo(toIsoDateString(encounterDateRange?.[1]));
+    setAppliedMedicalRecordNumber(medicalRecordNumber.trim());
+    setAppliedEncounterNumber(encounterNumber.trim());
     setSelectedInvoiceIds([]);
     setPage(0);
   };
@@ -280,26 +334,39 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
     {
       key: 'selectionReason',
       title: 'Selection',
-      width: 170,
-      render: (row: PendingClaimInvoiceResponse) => {
-        if (isSelectableInvoice(row)) {
-          return '-';
-        }
-
-        return (
-          <Whisper
-            trigger="hover"
-            placement="top"
-            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
-          >
-            <span>
-              <Tag color="red" size="sm">
-                {UNAPPROVED_RESULT_LABEL}
-              </Tag>
-            </span>
-          </Whisper>
-        );
-      }
+      width: 190,
+      render: (row: PendingClaimInvoiceResponse) =>
+        isSelectableInvoice(row) ? (
+          <StatusMark label={READY_LABEL} color={STATUS_GREEN} icon={faCircleCheck} hint={READY_MESSAGE} />
+        ) : (
+          <StatusMark
+            label={UNAPPROVED_RESULT_LABEL}
+            color={STATUS_AMBER}
+            icon={faTriangleExclamation}
+            hint={UNAPPROVED_RESULT_MESSAGE}
+          />
+        )
+    },
+    {
+      key: 'rejectedClaim',
+      title: 'Claim',
+      width: 160,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.rejectedClaim ? (
+          <StatusMark
+            label={REJECTED_CLAIM_LABEL}
+            color={STATUS_RED}
+            icon={faCircleXmark}
+            hint={row.rejectionMessage || REJECTED_CLAIM_MESSAGE}
+          />
+        ) : (
+          <StatusMark
+            label={NOT_SUBMITTED_LABEL}
+            color={STATUS_BLUE}
+            icon={faClock}
+            hint={NOT_SUBMITTED_MESSAGE}
+          />
+        )
     },
     {
       key: 'documentNumber',
@@ -532,6 +599,32 @@ const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
               size="sm"
               style={{ width: '220px' }}
               container={() => document.body}
+            />
+          </div>
+
+          <div style={{ width: '160px' }}>
+            <MyInput
+              fieldLabel="MRN"
+              fieldName="medicalRecordNumber"
+              fieldType="text"
+              record={{ medicalRecordNumber }}
+              setRecord={(value: { medicalRecordNumber?: string | null }) =>
+                setMedicalRecordNumber(value.medicalRecordNumber ?? '')
+              }
+              width="100%"
+            />
+          </div>
+
+          <div style={{ width: '180px' }}>
+            <MyInput
+              fieldLabel="Encounter number"
+              fieldName="encounterNumber"
+              fieldType="text"
+              record={{ encounterNumber }}
+              setRecord={(value: { encounterNumber?: string | null }) =>
+                setEncounterNumber(value.encounterNumber ?? '')
+              }
+              width="100%"
             />
           </div>
 

@@ -55,6 +55,28 @@ export type BillingPaymentSummaryDTO = {
   notes?: string | null;
 };
 
+export type PatientWalletMovement = {
+  ledgerId: number;
+  transactionDate?: string | null;
+  movement: 'ADDITION' | 'DEDUCTION' | string;
+  transactionType?: string | null;
+  amount: number;
+  currency?: string | null;
+  balanceAfter?: number | null;
+  description?: string | null;
+  reason?: string | null;
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentCategory?: string | null;
+  paymentMethod?: string | null;
+  encounterNumber?: string | null;
+  encounterId?: number | null;
+  serviceName?: string | null;
+  serviceCode?: string | null;
+  referenceNumber?: string | null;
+  notes?: string | null;
+};
+
 export type RegistrationPendingPaymentItem = {
   patientServiceProductId: number;
   patientId?: number | null;
@@ -306,6 +328,58 @@ export const billingTransactionService =
 
             providesTags: [
               'BillingPayment'
+            ]
+          }),
+
+        getPatientWalletMovements:
+          builder.query<
+            {
+              data: PatientWalletMovement[];
+              totalCount: number;
+            },
+            {
+              patientId: BillingId;
+              page?: number;
+              size?: number;
+            }
+          >({
+            query:
+              ({
+                patientId,
+                page = 0,
+                size = 10
+              }) => ({
+                url:
+                  `/api/patient/billing/wallet/by-patient/${patientId}/movements`,
+                params: {
+                  page,
+                  size
+                }
+              }),
+
+            transformResponse: (
+              response: PatientWalletMovement[],
+              meta
+            ) => {
+              const rows = Array.isArray(response)
+                ? response
+                : [];
+              const headerCount =
+                meta?.response?.headers?.get(
+                  'X-Total-Count'
+                );
+
+              return {
+                data: rows,
+                totalCount:
+                  headerCount == null
+                    ? rows.length
+                    : Number(headerCount)
+              };
+            },
+
+            providesTags: [
+              'BillingWallet'
             ]
           }),
 
@@ -628,6 +702,9 @@ export const {
 
   useGetPaymentsByPatientQuery,
   useLazyGetPaymentsByPatientQuery,
+
+  useGetPatientWalletMovementsQuery,
+  useLazyGetPatientWalletMovementsQuery,
 
   useGetBillingPaymentByIdQuery,
   useLazyGetBillingPaymentByIdQuery,
