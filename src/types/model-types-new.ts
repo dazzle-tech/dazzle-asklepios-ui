@@ -8731,6 +8731,7 @@ export interface PatientActivityCancelDTO {
 export interface MobileAppConfigResponseVM {
   id?: number;
   configKey: string;
+  configType: string;
   configValue: string;
   createdBy?: string | null;
   createdDate?: string | null;
@@ -8740,11 +8741,13 @@ export interface MobileAppConfigResponseVM {
 
 export interface MobileAppConfigCreateDTO {
   configKey: string;
+  configType: string;
   configValue: string;
 }
 
 export interface MobileAppConfigUpdateDTO {
   id: number;
+  configType: string;
   configValue: string;
 }
 

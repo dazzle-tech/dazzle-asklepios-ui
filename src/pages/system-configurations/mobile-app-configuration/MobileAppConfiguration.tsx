@@ -76,19 +76,23 @@ const MobileAppConfiguration = () => {
 
   const columns = [
     { key: 'configKey', title: 'Key', flexGrow: 2 },
+    { key: 'configType', title: 'Type', flexGrow: 1 },
     {
       key: 'configValue',
       title: 'Value',
       flexGrow: 3,
-      render: (row: MobileAppConfigResponseVM) => (
-        <Whisper placement="top" speaker={<Tooltip>{row.configValue}</Tooltip>}>
-          <span>
-            {row.configValue && row.configValue.length > 80
-              ? `${row.configValue.substring(0, 80)}...`
-              : row.configValue}
-          </span>
-        </Whisper>
-      ),
+      render: (row: MobileAppConfigResponseVM) =>
+        row.configType === 'IMAGE' ? (
+          <img className="mobile-app-config-image" src={row.configValue} alt={row.configKey} />
+        ) : (
+          <Whisper placement="top" speaker={<Tooltip>{row.configValue}</Tooltip>}>
+            <span>
+              {row.configValue && row.configValue.length > 80
+                ? `${row.configValue.substring(0, 80)}...`
+                : row.configValue}
+            </span>
+          </Whisper>
+        ),
     },
     {
       key: 'icons',

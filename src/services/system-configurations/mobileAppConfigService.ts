@@ -19,10 +19,14 @@ export const mobileAppConfigService = createApi({
       providesTags: ['MobileAppConfig'],
     }),
 
-    getMobileAppConfigValue: builder.query<{ configKey: string; configValue: string }, string>({
-      query: configKey => ({
-        url: `/api/setup/mobile-app-config/value/${configKey}`,
+    getMobileAppConfigValues: builder.query<
+      { configKey: string; configType: string | null; configValue: string | null }[],
+      string[]
+    >({
+      query: keys => ({
+        url: '/api/setup/mobile-app-config/value',
         method: 'GET',
+        params: { keys },
       }),
       providesTags: ['MobileAppConfig'],
     }),
@@ -37,10 +41,10 @@ export const mobileAppConfigService = createApi({
     }),
 
     updateMobileAppConfig: builder.mutation<MobileAppConfigResponseVM, MobileAppConfigUpdateDTO>({
-      query: ({ id, configValue }) => ({
+      query: ({ id, configType, configValue }) => ({
         url: `/api/setup/mobile-app-config/${id}`,
         method: 'PUT',
-        body: { configValue },
+        body: { configType, configValue },
       }),
       invalidatesTags: ['MobileAppConfig'],
     }),
@@ -52,13 +56,45 @@ export const mobileAppConfigService = createApi({
       }),
       invalidatesTags: ['MobileAppConfig'],
     }),
+
+    createMobileAppConfigImage: builder.mutation<
+      MobileAppConfigResponseVM,
+      { configKey: string; file: File }
+    >({
+      query: ({ configKey, file }) => {
+        const body = new FormData();
+        body.append('configKey', configKey);
+        body.append('file', file);
+        return {
+          url: '/api/setup/mobile-app-config/image',
+          method: 'POST',
+          body,
+        };
+      },
+      invalidatesTags: ['MobileAppConfig'],
+    }),
+
+    updateMobileAppConfigImage: builder.mutation<MobileAppConfigResponseVM, { id: number; file: File }>({
+      query: ({ id, file }) => {
+        const body = new FormData();
+        body.append('file', file);
+        return {
+          url: `/api/setup/mobile-app-config/${id}/image`,
+          method: 'PUT',
+          body,
+        };
+      },
+      invalidatesTags: ['MobileAppConfig'],
+    }),
   }),
 });
 
 export const {
   useGetAllMobileAppConfigsQuery,
-  useGetMobileAppConfigValueQuery,
+  useGetMobileAppConfigValuesQuery,
   useCreateMobileAppConfigMutation,
   useUpdateMobileAppConfigMutation,
   useDeleteMobileAppConfigMutation,
+  useCreateMobileAppConfigImageMutation,
+  useUpdateMobileAppConfigImageMutation,
 } = mobileAppConfigService;
