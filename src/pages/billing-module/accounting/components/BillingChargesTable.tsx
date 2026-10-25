@@ -31,6 +31,8 @@ import {
 
   isPreAuthApproved,
 
+  isPreAuthPending,
+
   isPreAuthRequiredRow,
 
   shouldShowPreAuthRowActions,
@@ -592,6 +594,14 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
           return (
             <Tag color="green" size="sm">
               Pre-auth approved
+            </Tag>
+          );
+        }
+
+        if (isPreAuthPending(row.preAuthorizationStatus)) {
+          return (
+            <Tag color="blue" size="sm">
+              Pending pre-approval
             </Tag>
           );
         }

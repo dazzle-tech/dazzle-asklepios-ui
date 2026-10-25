@@ -978,6 +978,7 @@ const PreApprovalPanel = ({
   const dispatch = useAppDispatch();
   const scopes = useEnumOptions('CoverageApprovalScope');
   const encounterTypes = useEnumOptions('EncounterType');
+  const valueTypes = useEnumOptions('InsuranceCoverageType');
   const itemTypes = useEnumOptions('CoverageRuleTarget');
   const categories = useEnumOptions('ServiceCategory');
   const [isActive, setIsActive] = useState(true);
@@ -1008,6 +1009,18 @@ const PreApprovalPanel = ({
   const [deactivateItem] = useDeactivatePreApprovalItemMutation();
 
   const persist = async () => {
+    if (!record.valueType) {
+      notifyWarning(dispatch, 'Value type is required');
+      return;
+    }
+    if (record.limitValue == null || Number(record.limitValue) <= 0) {
+      notifyWarning(dispatch, 'Limit value must be greater than zero');
+      return;
+    }
+    if (record.valueType === 'PERCENTAGE' && Number(record.limitValue) > 100) {
+      notifyWarning(dispatch, 'Percentage limit cannot be greater than 100');
+      return;
+    }
     try {
       await save({ ...owner, body: record }).unwrap();
       notifySuccess(dispatch, record.id ? 'Pre-approval updated' : 'Pre-approval saved');
@@ -1070,7 +1083,7 @@ const PreApprovalPanel = ({
   return (
     <>
       <RuleToolbar readOnly={readOnly} isActive={isActive} setIsActive={setIsActive} onAdd={() => {
-        setRecord({ approvalScope: 'FACILITY', encounterType: 'ALL' });
+        setRecord({ approvalScope: 'FACILITY', encounterType: 'ALL', valueType: 'PERCENTAGE' });
         setOpen(true);
       }} />
       <MyTable
@@ -1089,6 +1102,8 @@ const PreApprovalPanel = ({
           { key: 'facilityName', title: 'Facility', flexGrow: 2 },
           { key: 'departmentName', title: 'Department', flexGrow: 2 },
           { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
+          { key: 'valueType', title: 'Value Type', flexGrow: 1, render: (row: any) => formatEnumString(row.valueType) },
+          { key: 'limitValue', title: 'Limit Value', flexGrow: 1 },
           { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
           {
             key: 'actions',
@@ -1165,6 +1180,8 @@ const PreApprovalPanel = ({
               <CoveragePagedSelect fieldName="departmentId" fieldLabel="Department name" record={record} setRecord={setRecord} result={departments} page={departmentLookup.page} setPage={departmentLookup.setPage} search={departmentLookup.search} setSearch={departmentLookup.setSearch} required disabled={!record.facilityId} />
             </>
           )}
+          <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
+          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={record} setRecord={setRecord} />
         </Form>
       } />
       <MyModal open={itemOpen} setOpen={setItemOpen} title={item.id ? 'Edit Pre-Approval Item' : 'Pre-Approval Item'} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={

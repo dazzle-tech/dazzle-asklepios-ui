@@ -168,6 +168,8 @@ export type CoveragePreApproval = {
   departmentId?: number | null;
   departmentName?: string | null;
   encounterType?: string | null;
+  valueType?: string | null;
+  limitValue?: number | string | null;
   isActive?: boolean;
 };
 
@@ -243,6 +245,8 @@ export type CoveragePreApprovalReading = {
   allDiagnoses?: boolean;
   diagnosisId?: number | null;
   diagnosisIds?: number[] | null;
+  valueType?: string | null;
+  limitValue?: number | string | null;
 };
 
 const toContractPayload = (body: CoverageContract) => ({

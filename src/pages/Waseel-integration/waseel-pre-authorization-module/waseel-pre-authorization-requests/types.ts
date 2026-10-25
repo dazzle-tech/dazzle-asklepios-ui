@@ -26,6 +26,7 @@ export const initialFilters: Filters = {
 
 export const statusOptions = [
   { label: 'Draft', value: 'DRAFT' },
+  { label: 'Pending Approval', value: 'Pending Approval' },
   { label: 'Submitting', value: 'SUBMITTING' },
   { label: 'Submitted', value: 'SUBMITTED' },
   { label: 'Approved', value: 'APPROVED' },
