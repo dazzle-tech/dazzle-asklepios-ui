@@ -4,7 +4,7 @@ import React, {
   useState
 } from 'react';
 
-import { Panel } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 
 import {
   MdCheckCircle,
@@ -18,6 +18,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
@@ -42,11 +43,21 @@ import {
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import {
   useActivatePriceListSetupMutation,
   useDeletePriceListSetupMutation,
-  useGetPriceListSetupsQuery
+  useGetPriceListSetupsQuery,
+  useLazyGetPriceListSetupsByFacilityQuery,
+  useLazyGetPriceListSetupsByNameQuery,
+  useLazyGetPriceListSetupsByTypeQuery,
+  useLazyGetPriceListSetupsByPayerQuery,
+  useLazyGetPriceListSetupsByVersionQuery,
+  useLazyGetPriceListSetupsByEffectiveFromQuery,
+  useLazyGetPriceListSetupsByEffectiveToQuery,
+  useLazyGetPriceListSetupsByCurrencyQuery,
+  useLazyGetPriceListSetupsByStatusQuery
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
 import type {
@@ -136,6 +147,33 @@ const PriceListSetup: React.FC = () => {
     sort: 'nameEn,asc'
   });
 
+  const [recordOfFilter, setRecordOfFilter] = useState({
+    filter: '',
+    value: ''
+  });
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredList, setFilteredList] = useState<PriceListSetupModel[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc'
+  });
+
+  const [getByFacility] = useLazyGetPriceListSetupsByFacilityQuery();
+  const [getByName] = useLazyGetPriceListSetupsByNameQuery();
+  const [getByType] = useLazyGetPriceListSetupsByTypeQuery();
+  const [getByPayer] = useLazyGetPriceListSetupsByPayerQuery();
+  const [getByVersion] = useLazyGetPriceListSetupsByVersionQuery();
+  const [getByEffectiveFrom] = useLazyGetPriceListSetupsByEffectiveFromQuery();
+  const [getByEffectiveTo] = useLazyGetPriceListSetupsByEffectiveToQuery();
+  const [getByCurrency] = useLazyGetPriceListSetupsByCurrencyQuery();
+  const [getByStatus] = useLazyGetPriceListSetupsByStatusQuery();
+
+  const typeOptions = useEnumOptions('PriceListSetupType');
+  const statusOptions = useEnumOptions('PriceListSetupStatus');
+  const currencyOptions = useEnumOptions('Currency');
+
   const [
     deletePriceListSetup
   ] = useDeletePriceListSetupMutation();
@@ -179,6 +217,79 @@ const PriceListSetup: React.FC = () => {
       );
     };
   }, []);
+
+  // ──────────────────────────── FILTER LOGIC ────────────────────────────
+  const filterFields = [
+    { label: 'Facility', value: 'facility' },
+    { label: 'Name', value: 'name' },
+    { label: 'Type', value: 'type' },
+    { label: 'Payer', value: 'payer' },
+    { label: 'Version', value: 'version' },
+    { label: 'Effective From', value: 'effectiveFrom' },
+    { label: 'Effective To', value: 'effectiveTo' },
+    { label: 'Currency', value: 'currency' },
+    { label: 'Status', value: 'status' }
+  ];
+
+  const handleFilterChange = async (
+    field: string,
+    value: string,
+    page = 0,
+    size?: number
+  ) => {
+    try {
+      if (!field || value === '' || value == null) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
+
+      const currentSize = size ?? filterPagination.size;
+
+      let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
+
+      if (field === 'facility') {
+        response = await getByFacility({ facilityId: value, ...params }).unwrap();
+      } else if (field === 'name') {
+        response = await getByName({ name: value, ...params }).unwrap();
+      } else if (field === 'type') {
+        response = await getByType({ type: value, ...params }).unwrap();
+      } else if (field === 'payer') {
+        response = await getByPayer({ payerId: value, ...params }).unwrap();
+      } else if (field === 'version') {
+        response = await getByVersion({ versionNumber: value, ...params }).unwrap();
+      } else if (field === 'effectiveFrom') {
+        response = await getByEffectiveFrom({ effectiveFrom: value, ...params }).unwrap();
+      } else if (field === 'effectiveTo') {
+        response = await getByEffectiveTo({ effectiveTo: value, ...params }).unwrap();
+      } else if (field === 'currency') {
+        response = await getByCurrency({ currency: value, ...params }).unwrap();
+      } else if (field === 'status') {
+        response = await getByStatus({ status: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response?.data ?? []);
+      setFilteredTotal(response?.totalCount ?? 0);
+      setIsFiltered(true);
+      setFilterPagination({ ...filterPagination, page, size: currentSize });
+    } catch (error) {
+      console.error('Error filtering price lists:', error);
+      dispatch(notify({ msg: 'Failed to filter price lists', sev: 'error' }));
+      setIsFiltered(false);
+    }
+  };
+
+  const refetchList = async () => {
+    if (isFiltered) {
+      await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page);
+    }
+    await refetch();
+  };
 
   const handleNew = () => {
     setSelectedPriceList({
@@ -253,6 +364,10 @@ const PriceListSetup: React.FC = () => {
           sev: 'success'
         })
       );
+
+      if (isFiltered) {
+        await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page);
+      }
     } catch (error: any) {
       dispatch(
         notify({
@@ -290,7 +405,7 @@ const PriceListSetup: React.FC = () => {
         ...newPriceListSetup
       });
 
-      await refetch();
+      await refetchList();
     } catch (error: any) {
       dispatch(
         notify({
@@ -314,13 +429,18 @@ const PriceListSetup: React.FC = () => {
       timestamp: Date.now()
     }));
 
-    await refetch();
+    await refetchList();
   };
 
   const handlePageChange = (
     _: unknown,
     newPage: number
   ) => {
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+      return;
+    }
+
     setPaginationParams(previous => ({
       ...previous,
       page: newPage,
@@ -335,6 +455,11 @@ const PriceListSetup: React.FC = () => {
       event.target.value
     );
 
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+      return;
+    }
+
     setPaginationParams(previous => ({
       ...previous,
       page: 0,
@@ -342,6 +467,140 @@ const PriceListSetup: React.FC = () => {
       timestamp: Date.now()
     }));
   };
+
+  const filters = () => (
+    <Form fluid className="form-of-filters-set-up">
+      <MyInput
+        fieldName="filter"
+        fieldType="select"
+        selectData={filterFields}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={recordOfFilter}
+        setRecord={u => setRecordOfFilter({ filter: u.filter, value: '' })}
+        placeholder="Select Filter"
+        showLabel={false}
+        width="180px"
+      />
+
+      {recordOfFilter.filter === 'facility' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={facilityListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Facility"
+        />
+      )}
+
+      {recordOfFilter.filter === 'type' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={typeOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Type"
+        />
+      )}
+
+      {recordOfFilter.filter === 'payer' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={payerListResponse?.data ?? []}
+          selectDataLabel="nameEn"
+          selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Payer"
+        />
+      )}
+
+      {recordOfFilter.filter === 'version' && (
+        <MyInput
+          fieldName="value"
+          fieldType="number"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value ?? '' })}
+          showLabel={false}
+          placeholder="Enter Version"
+        />
+      )}
+
+      {(recordOfFilter.filter === 'effectiveFrom' || recordOfFilter.filter === 'effectiveTo') && (
+        <MyInput
+          fieldName="value"
+          fieldType="date"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value ?? '' })}
+          showLabel={false}
+        />
+      )}
+
+      {recordOfFilter.filter === 'currency' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={currencyOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Currency"
+        />
+      )}
+
+      {recordOfFilter.filter === 'status' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={statusOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Status"
+        />
+      )}
+
+      {recordOfFilter.filter !== 'facility' &&
+        recordOfFilter.filter !== 'type' &&
+        recordOfFilter.filter !== 'payer' &&
+        recordOfFilter.filter !== 'version' &&
+        recordOfFilter.filter !== 'effectiveFrom' &&
+        recordOfFilter.filter !== 'effectiveTo' &&
+        recordOfFilter.filter !== 'currency' &&
+        recordOfFilter.filter !== 'status' && (
+          <MyInput
+            fieldName="value"
+            fieldType="text"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            placeholder="Enter Value"
+            showLabel={false}
+          />
+        )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        width="80px"
+        onClick={() => handleFilterChange(recordOfFilter.filter, String(recordOfFilter.value ?? ''))}
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
 
   const tableColumns = [
     {
@@ -548,16 +807,17 @@ const PriceListSetup: React.FC = () => {
   return (
     <Panel dir={dir}>
       <MyTable
-        data={tableData}
-        totalCount={totalCount}
+        data={isFiltered ? filteredList : tableData}
+        totalCount={isFiltered ? filteredTotal : totalCount}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={selectedRowClass}
         onRowClick={row =>
           setSelectedPriceList(row)
         }
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
+        filters={filters()}
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={
           handleRowsPerPageChange
