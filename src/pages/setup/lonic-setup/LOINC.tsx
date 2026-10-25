@@ -3,8 +3,10 @@ import { useDispatch } from 'react-redux';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {
   useGetAllLoincQuery,
+  useCreateLoincMutation,
   useImportLoincMutation,
   useLazyGetLoincByCategoryQuery,
   useLazyGetLoincByCodeQuery,
@@ -20,6 +22,9 @@ import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
+import AddLoincCode from './AddLoincCode';
+
+const newLoincCode = { code: '', category: '', description: '' };
 
 const LOINCSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -230,6 +235,50 @@ const LOINCSetup: React.FC = () => {
       dispatch(
         notify({
           msg: error?.data?.detail || 'Overwrite failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  // add new LOINC code
+  const [createLoinc] = useCreateLoincMutation();
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [loincCode, setLoincCode] = useState<any>({ ...newLoincCode });
+  const [width, setWidth] = useState<number>(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNew = () => {
+    setLoincCode({ ...newLoincCode });
+    setAddModalOpen(true);
+  };
+
+  const handleCreate = async () => {
+    const code = loincCode.code?.trim();
+    const description = loincCode.description?.trim();
+    if (!code || !loincCode.category || !description) {
+      dispatch(notify({ msg: 'Code, category and description are required', sev: 'warning' }));
+      return;
+    }
+    try {
+      await createLoinc({ code, category: loincCode.category, description }).unwrap();
+      setAddModalOpen(false);
+      dispatch(notify({ msg: 'LOINC code added successfully', sev: 'success' }));
+
+      if (isFiltered) {
+        await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
+      } else {
+        refetch();
+      }
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.detail || error?.data?.message || 'Error adding LOINC code',
           sev: 'error'
         })
       );
@@ -448,6 +497,14 @@ const LOINCSetup: React.FC = () => {
             <div>{filters()}</div>
 
             <div style={{ display: 'flex', gap: 10 }}>
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={handleNew}
+                width="109px"
+              >
+                Add New
+              </MyButton>
               <MyButton onClick={() => setOpenCodesImportModal(true)}>
                 Import LOINC (Excel / CSV)
               </MyButton>
@@ -460,6 +517,16 @@ const LOINCSetup: React.FC = () => {
         rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+      />
+
+      {/* Add new LOINC code */}
+      <AddLoincCode
+        open={addModalOpen}
+        setOpen={setAddModalOpen}
+        loincCode={loincCode}
+        setLoincCode={setLoincCode}
+        handleSave={handleCreate}
+        width={width}
       />
 
       {/* Import modal (Excel/CSV) */}
