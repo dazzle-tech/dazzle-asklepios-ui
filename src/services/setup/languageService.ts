@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi'; 
-import { LanguageTranslation } from '@/types/model-types-new';
+import { Language, LanguageTranslation } from '@/types/model-types-new';
 
 export const languageService = createApi({
   reducerPath: 'languageApi',
@@ -62,6 +62,27 @@ export const languageService = createApi({
         method: 'GET',
       }),
     }),
+
+    getLanguagesByName: builder.query<Language[], string>({
+      query: (langName) => ({
+        url: `/api/setup/languages/search/by-name/${encodeURIComponent(langName)}`,
+        method: 'GET',
+      }),
+    }),
+
+    getLanguagesByCode: builder.query<Language[], string>({
+      query: (langKey) => ({
+        url: `/api/setup/languages/search/by-code/${encodeURIComponent(langKey)}`,
+        method: 'GET',
+      }),
+    }),
+
+    getLanguagesByDirection: builder.query<Language[], string>({
+      query: (direction) => ({
+        url: `/api/setup/languages/search/by-direction/${encodeURIComponent(direction)}`,
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -72,4 +93,7 @@ export const {
   useGetAllLanguagesQuery,
   useGetLanguageQuery,
   useGetLanguageByKeyQuery,
+  useLazyGetLanguagesByNameQuery,
+  useLazyGetLanguagesByCodeQuery,
+  useLazyGetLanguagesByDirectionQuery,
 } = languageService;
