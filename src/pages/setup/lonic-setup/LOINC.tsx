@@ -4,9 +4,11 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { MdModeEdit } from 'react-icons/md';
 import {
   useGetAllLoincQuery,
   useCreateLoincMutation,
+  useUpdateLoincMutation,
   useImportLoincMutation,
   useLazyGetLoincByCategoryQuery,
   useLazyGetLoincByCodeQuery,
@@ -241,8 +243,9 @@ const LOINCSetup: React.FC = () => {
     }
   };
 
-  // add new LOINC code
+  // add / edit LOINC code
   const [createLoinc] = useCreateLoincMutation();
+  const [updateLoinc] = useUpdateLoincMutation();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [loincCode, setLoincCode] = useState<any>({ ...newLoincCode });
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -258,7 +261,12 @@ const LOINCSetup: React.FC = () => {
     setAddModalOpen(true);
   };
 
-  const handleCreate = async () => {
+  const handleEdit = (row: any) => {
+    setLoincCode({ id: row.id, code: row.code, category: row.category, description: row.description });
+    setAddModalOpen(true);
+  };
+
+  const handleSave = async () => {
     const code = loincCode.code?.trim();
     const description = loincCode.description?.trim();
     if (!code || !loincCode.category || !description) {
@@ -266,9 +274,19 @@ const LOINCSetup: React.FC = () => {
       return;
     }
     try {
-      await createLoinc({ code, category: loincCode.category, description }).unwrap();
+      const isEdit = !!loincCode.id;
+      if (isEdit) {
+        await updateLoinc({ id: loincCode.id, code, category: loincCode.category, description }).unwrap();
+      } else {
+        await createLoinc({ code, category: loincCode.category, description }).unwrap();
+      }
       setAddModalOpen(false);
-      dispatch(notify({ msg: 'LOINC code added successfully', sev: 'success' }));
+      dispatch(
+        notify({
+          msg: isEdit ? 'LOINC code updated successfully' : 'LOINC code added successfully',
+          sev: 'success'
+        })
+      );
 
       if (isFiltered) {
         await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
@@ -278,7 +296,7 @@ const LOINCSetup: React.FC = () => {
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || error?.data?.message || 'Error adding LOINC code',
+          msg: error?.data?.detail || error?.data?.message || 'Error saving LOINC code',
           sev: 'error'
         })
       );
@@ -434,6 +452,21 @@ const LOINCSetup: React.FC = () => {
         const d = new Date(row.lastUpdated);
         return d.toLocaleDateString();
       }
+    },
+    {
+      key: 'icons',
+      title: '',
+      render: (row: any) => (
+        <div className="container-of-icons">
+          <MdModeEdit
+            className="icons-style"
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => handleEdit(row)}
+          />
+        </div>
+      )
     }
   ];
 
@@ -519,13 +552,13 @@ const LOINCSetup: React.FC = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      {/* Add new LOINC code */}
+      {/* Add / edit LOINC code */}
       <AddLoincCode
         open={addModalOpen}
         setOpen={setAddModalOpen}
         loincCode={loincCode}
         setLoincCode={setLoincCode}
-        handleSave={handleCreate}
+        handleSave={handleSave}
         width={width}
       />
 

@@ -98,6 +98,15 @@ export const loincCodeService = createApi({
       query: (body) => ({
         url: "/api/setup/loinc",
         method: "POST",
+            body,
+      }),
+      invalidatesTags: ["LOINC"],
+    }),
+
+    updateLoinc: builder.mutation<LoincCode, { id: number; code: string; category: LioncCategory; description: string }>({
+      query: ({ id, ...body }) => ({
+        url: `/api/setup/loinc/${id}`,
+        method: "PUT",
         body,
       }),
       invalidatesTags: ["LOINC"],
@@ -132,5 +141,6 @@ export const {
   useGetLoincByDescriptionQuery,
   useLazyGetLoincByDescriptionQuery,
   useCreateLoincMutation,
+  useUpdateLoincMutation,
   useImportLoincMutation,
 } = loincCodeService;
