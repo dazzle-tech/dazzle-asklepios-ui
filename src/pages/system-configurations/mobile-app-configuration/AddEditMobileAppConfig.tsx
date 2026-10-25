@@ -8,7 +8,9 @@ import { notify } from '@/utils/uiReducerActions';
 import { extractErrorMessage } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
+  useCreateMobileAppConfigImageMutation,
   useCreateMobileAppConfigMutation,
+  useUpdateMobileAppConfigImageMutation,
   useUpdateMobileAppConfigMutation,
 } from '@/services/system-configurations/mobileAppConfigService';
 import { MobileAppConfigResponseVM } from '@/types/model-types-new';
@@ -32,17 +34,27 @@ const AddEditMobileAppConfig = ({
 }: AddEditMobileAppConfigProps) => {
   const dispatch = useAppDispatch();
   const enumOptions = useEnumOptions('MobileAppConfigKey');
+  const typeOptions = useEnumOptions('MobileAppConfigType');
   const [record, setRecord] = useState({ ...newMobileAppConfigCreateDTO });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [createConfig, { isLoading: isCreating }] = useCreateMobileAppConfigMutation();
   const [updateConfig, { isLoading: isUpdating }] = useUpdateMobileAppConfigMutation();
+  const [createImage, { isLoading: isCreatingImage }] = useCreateMobileAppConfigImageMutation();
+  const [updateImage, { isLoading: isUpdatingImage }] = useUpdateMobileAppConfigImageMutation();
 
   const isEdit = Boolean(config?.id);
+  const isImageType = record.configType === 'IMAGE';
+  const isSaving = isCreating || isUpdating || isCreatingImage || isUpdatingImage;
 
   useEffect(() => {
     if (!open) return;
+    setImageFile(null);
+    setImagePreview('');
     if (config?.id) {
       setRecord({
         configKey: config.configKey,
+        configType: config.configType ?? '',
         configValue: config.configValue ?? '',
       });
     } else {
@@ -50,36 +62,73 @@ const AddEditMobileAppConfig = ({
     }
   }, [open, config]);
 
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview('');
+      return;
+    }
+    const previewUrl = URL.createObjectURL(imageFile);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [imageFile]);
+
   const handleSubmit = async () => {
     const configKey = String(record.configKey ?? '').trim();
+    const configType = String(record.configType ?? '').trim();
     const configValue = String(record.configValue ?? '').trim();
 
     if (!configKey) {
       dispatch(notify({ msg: 'Key is required', sev: 'warning' }));
       return;
     }
-    if (!configValue) {
-      dispatch(notify({ msg: 'Value is required', sev: 'warning' }));
+    if (!configType) {
+      dispatch(notify({ msg: 'Type is required', sev: 'warning' }));
       return;
     }
-    if (configValue.length > VALUE_MAX_LENGTH) {
-      dispatch(
-        notify({
-          msg: `Value must be at most ${VALUE_MAX_LENGTH} characters`,
-          sev: 'warning',
-        })
-      );
-      return;
+    if (isImageType) {
+      const hasCurrentImage = isEdit && config.configType === 'IMAGE' && config.configValue;
+      if (!imageFile && !hasCurrentImage) {
+        dispatch(notify({ msg: 'Image is required', sev: 'warning' }));
+        return;
+      }
+    } else {
+      if (!configValue) {
+        dispatch(notify({ msg: 'Value is required', sev: 'warning' }));
+        return;
+      }
+      if (configValue.length > VALUE_MAX_LENGTH) {
+        dispatch(
+          notify({
+            msg: `Value must be at most ${VALUE_MAX_LENGTH} characters`,
+            sev: 'warning',
+          })
+        );
+        return;
+      }
     }
 
     try {
-      if (isEdit && config.id) {
-        await updateConfig({ id: config.id, configValue }).unwrap();
-        dispatch(notify({ msg: 'The configuration was successfully updated', sev: 'success' }));
+      if (isImageType) {
+        if (imageFile) {
+          if (isEdit && config.id) {
+            await updateImage({ id: config.id, file: imageFile }).unwrap();
+          } else {
+            await createImage({ configKey, file: imageFile }).unwrap();
+          }
+        }
+      } else if (isEdit && config.id) {
+        await updateConfig({ id: config.id, configType, configValue }).unwrap();
       } else {
-        await createConfig({ configKey, configValue }).unwrap();
-        dispatch(notify({ msg: 'The configuration was successfully created', sev: 'success' }));
+        await createConfig({ configKey, configType, configValue }).unwrap();
       }
+      dispatch(
+        notify({
+          msg: isEdit
+            ? 'The configuration was successfully updated'
+            : 'The configuration was successfully created',
+          sev: 'success',
+        })
+      );
       refetch();
       setOpen(false);
     } catch (error) {
@@ -119,18 +168,49 @@ const AddEditMobileAppConfig = ({
                 setRecord={setRecord}
                 width="100%"
                 required
-                disabled={isEdit || isCreating || isUpdating}
+                disabled={isEdit || isSaving}
               />
               <MyInput
-                fieldName="configValue"
-                fieldLabel="Value"
-                fieldType="textarea"
+                fieldName="configType"
+                fieldLabel="Type"
+                fieldType="select"
+                selectData={typeOptions}
+                selectDataLabel="value"
+                selectDataValue="value"
                 record={record}
                 setRecord={setRecord}
                 width="100%"
                 required
-                disabled={isCreating || isUpdating}
+                disabled={isSaving}
               />
+              {isImageType ? (
+                <div>
+                  {(imagePreview || (isEdit && config.configValue)) && (
+                    <img
+                      className="mobile-app-config-image-preview"
+                      src={imagePreview || config.configValue}
+                      alt={record.configKey}
+                    />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isSaving}
+                    onChange={event => setImageFile(event.target.files?.[0] ?? null)}
+                  />
+                </div>
+              ) : (
+                <MyInput
+                  fieldName="configValue"
+                  fieldLabel="Value"
+                  fieldType="textarea"
+                  record={record}
+                  setRecord={setRecord}
+                  width="100%"
+                  required
+                  disabled={isSaving}
+                />
+              )}
             </div>
           </Form>
         </div>
