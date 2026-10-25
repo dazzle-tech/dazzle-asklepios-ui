@@ -1,0 +1,663 @@
+.ambient-scribe-launch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(24, 23, 23, 0.25);
+  box-sizing: border-box;
+}
+
+.ambient-scribe-launch-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ambient-scribe-launch-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ambient-scribe-launch-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: #efeaff;
+  color: #6d4cff;
+  font-size: 15px;
+}
+
+.ambient-scribe-launch-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1f2430;
+}
+
+.ambient-scribe-launch-status {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #8b93a1;
+}
+
+.ambient-scribe-launch-status.is-given {
+  color: #1f8a4c;
+}
+
+.ambient-scribe-launch-status.is-declined {
+  color: #b45309;
+}
+
+.ambient-scribe-launch.dark {
+  background: var(--dark-black);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 255, 255, 0.05);
+
+  .ambient-scribe-launch-title {
+    color: #fff;
+  }
+
+  .ambient-scribe-launch-status {
+    color: #b7bec9;
+  }
+}
+
+.ambient-scribe-modal {
+  .rs-modal-dialog {
+    width: min(740px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+  }
+
+  .rs-modal-title {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+    width: 100%;
+  }
+
+  .rs-modal-header {
+    align-items: flex-start !important;
+    padding: 20px 22px 4px !important;
+  }
+
+  .rs-modal-header-close {
+    margin-top: 6px;
+  }
+
+  .divider-line,
+  .rs-modal-footer {
+    display: none !important;
+  }
+
+  .rs-modal-body {
+    padding: 8px 22px 20px !important;
+    max-height: calc(100vh - 120px);
+    overflow: auto;
+  }
+}
+
+.ambient-scribe-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-right: 28px;
+}
+
+.ambient-scribe-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: #efeaff;
+  color: #6d4cff;
+  font-size: 16px;
+}
+
+.ambient-scribe-header-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1f2430;
+}
+
+.ambient-scribe-header-subtitle {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #8b93a1;
+}
+
+.ambient-scribe-scripts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ambient-scribe-script {
+  border: 1px solid #e6e9ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 14px 12px;
+  min-height: 132px;
+}
+
+.ambient-scribe-script-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9aa3b2;
+  margin-bottom: 8px;
+}
+
+.ambient-scribe-script p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #3a4250;
+}
+
+.ambient-scribe-section {
+  margin-top: 18px;
+}
+
+.ambient-scribe-section-title {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2430;
+}
+
+.ambient-scribe-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ambient-scribe-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 1.5px solid #e4e7ee;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px 14px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.ambient-scribe-choice:hover {
+  border-color: #c9d4ea;
+}
+
+.ambient-scribe-choice.is-selected {
+  border-color: #3b7cff;
+  background: #f4f8ff;
+}
+
+.ambient-scribe-radio {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.5px solid #c5cad3;
+  background: #fff;
+  flex: none;
+  box-sizing: border-box;
+}
+
+.ambient-scribe-choice.is-selected .ambient-scribe-radio {
+  border-color: #3b7cff;
+  background: #3b7cff;
+  box-shadow: inset 0 0 0 4px #fff;
+}
+
+.ambient-scribe-choice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ambient-scribe-choice-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1f2430;
+}
+
+.ambient-scribe-choice-hint {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: #8b93a7;
+}
+
+.ambient-scribe-qr {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.ambient-scribe-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff8ec;
+  border: 1px solid #f3e2b8;
+  color: #6a5840;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ambient-scribe-note svg {
+  margin-top: 2px;
+  color: #e09a2b;
+  flex: none;
+}
+
+.ambient-scribe-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ambient-scribe-modal.modal-dark {
+  .ambient-scribe-header-title,
+  .ambient-scribe-section-title,
+  .ambient-scribe-choice-title,
+  .ambient-scribe-script p {
+    color: #f3f4f6;
+  }
+
+  .ambient-scribe-header-subtitle,
+  .ambient-scribe-script-label,
+  .ambient-scribe-choice-hint {
+    color: #b7bec9;
+  }
+
+  .ambient-scribe-script,
+  .ambient-scribe-choice {
+    background: #1e1e1e;
+    border-color: #3a3a3a;
+  }
+
+  .ambient-scribe-choice.is-selected {
+    background: #1c2740;
+    border-color: #3b7cff;
+  }
+
+  .ambient-scribe-note {
+    background: #3a2e1a;
+    border-color: #6b5428;
+    color: #f3e6cf;
+  }
+}
+
+.ambient-recording {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.ambient-recording-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff;
+  color: #1f2937;
+  border: 1.5px solid #e11d2e;
+}
+
+.ambient-recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e11d2e;
+  flex: none;
+  box-shadow: 0 0 0 4px rgba(225, 29, 46, 0.14);
+  animation: ambient-recording-pulse 1.4s ease-out infinite;
+}
+
+.ambient-recording-bar.is-paused .ambient-recording-dot,
+.ambient-recording-bar.is-stopped:not(.is-creating) .ambient-recording-dot {
+  animation: none;
+}
+
+.ambient-recording-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ambient-recording-timer {
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+
+.ambient-recording-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+
+  span {
+    display: block;
+    width: 3px;
+    height: 8px;
+    border-radius: 99px;
+    background: #7c6cf6;
+    opacity: 0.4;
+    transform-origin: center;
+  }
+
+  span:nth-child(3n) {
+    height: 14px;
+  }
+
+  span:nth-child(4n) {
+    height: 20px;
+  }
+
+  span:nth-child(5n) {
+    height: 11px;
+  }
+}
+
+.ambient-recording-wave.is-live span {
+  opacity: 1;
+  animation: ambient-recording-wave 0.9s ease-in-out infinite;
+}
+
+.ambient-recording-wave.is-live span:nth-child(odd) {
+  animation-delay: 0.15s;
+}
+
+.ambient-recording-wave.is-live span:nth-child(3n) {
+  animation-delay: 0.3s;
+}
+
+.ambient-recording-lang {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #3b6fd8;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ambient-recording-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ambient-recording-icon-btn {
+  display: inline-flex;
+
+  .bt {
+    width: 32px;
+    min-width: 32px;
+    justify-content: center;
+    gap: 0;
+    color: var(--primary-blue);
+  }
+
+  .bt svg,
+  .bt .svg-inline--fa {
+    color: var(--primary-blue) !important;
+  }
+}
+
+.ambient-recording-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ambient-recording-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.ambient-recording-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 8px;
+}
+
+.ambient-transcript,
+.ambient-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ambient-transcript {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.ambient-empty {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #8b93a1;
+}
+
+.ambient-turn p,
+.ambient-finding p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #3a4250;
+}
+
+.ambient-turn-speaker {
+  margin-bottom: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ambient-turn-speaker.is-clinician {
+  color: #006264;
+}
+
+.ambient-turn-speaker.is-patient {
+  color: #6d4cff;
+}
+
+.ambient-turn.is-live {
+  font-size: 13px;
+  color: #8b93a1;
+}
+
+.ambient-finding-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b93a1;
+}
+
+.ambient-finding.is-flagged,
+.ambient-finding.is-confirmed {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.ambient-finding.is-flagged {
+  background: #fff8ec;
+  border: 1px solid #f3e2b8;
+}
+
+.ambient-finding.is-flagged .ambient-finding-label {
+  color: #b45309;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+}
+
+.ambient-finding.is-confirmed {
+  background: #f3faf6;
+  border: 1px solid #cdeed9;
+}
+
+.ambient-finding.is-confirmed .ambient-finding-label {
+  color: #1f8a4c;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+}
+
+.ambient-finding-hint {
+  margin-top: 4px !important;
+  font-size: 12px !important;
+  color: #8a6a3b !important;
+}
+
+.ambient-finding .bt {
+  margin-top: 8px;
+}
+
+.ambient-recording.dark {
+  .ambient-recording-bar {
+    background: #1c1c1c;
+    color: #f3f4f6;
+    border-color: #e11d2e;
+  }
+
+  .ambient-recording-label {
+    color: #f9fafb;
+  }
+
+  .ambient-recording-timer {
+    color: #d1d5db;
+  }
+
+  .ambient-recording-lang {
+    background: #1e2a44;
+    color: #93c5fd;
+  }
+
+  .ambient-recording-loading {
+    background: rgba(18, 18, 18, 0.78);
+  }
+
+  .ambient-turn p,
+  .ambient-finding p {
+    color: #f3f4f6;
+  }
+
+  .ambient-finding:not(.is-flagged):not(.is-confirmed) .ambient-finding-label,
+  .ambient-turn.is-live,
+  .ambient-empty {
+    color: #b7bec9;
+  }
+
+  .ambient-finding.is-flagged {
+    background: #3a2e1a;
+    border-color: #6b5428;
+  }
+
+  .ambient-finding.is-confirmed {
+    background: #163224;
+    border-color: #246b45;
+  }
+}
+
+@keyframes ambient-recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(225, 29, 46, 0.45);
+  }
+
+  100% {
+    box-shadow: 0 0 0 8px rgba(225, 29, 46, 0);
+  }
+}
+
+@keyframes ambient-recording-wave {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .ambient-scribe-launch,
+  .ambient-scribe-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ambient-scribe-scripts,
+  .ambient-scribe-choices,
+  .ambient-recording-body {
+    grid-template-columns: 1fr;
+  }
+
+  .ambient-recording-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}

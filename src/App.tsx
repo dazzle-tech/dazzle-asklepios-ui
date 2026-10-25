@@ -214,6 +214,7 @@ const SurgicalKitsSetup = lazy (() => import ( './pages/setup/surgical-kits-setu
 const UOMGroup = lazy (() => import ( './pages/setup/uom-group-new'));
 const Vaccine = lazy (() => import ( './pages/setup/vaccine-setup'));
 const VisitDurationSetup = lazy (() => import ( './pages/setup/visit-duration-setup'));
+const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
 );
@@ -906,6 +907,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
+              <Route path="ai-services" element={<AiServices />} />
               <Route
                 path="patient-satisfaction-survey-responses"
                 element={<PatientSatisfactionSurveyResponses />}
