@@ -14,22 +14,30 @@ import {
   useGetAllNphiesPayersQuery,
   useGetNphiesPayersByNphiesIdQuery,
   useGetNphiesPayersByNameEnQuery,
-  useGetNphiesPayersByNameArQuery
+  useGetNphiesPayersByNameArQuery,
+  useGetNphiesPayersByStatusQuery
 } from '@/services/setup/payer/NphiesPayerSetupService';
 
-type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr';
+type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr' | 'isActive';
 
 const filterCriteriaOptions = [
   { label: 'NPHIES ID', value: 'nphiesId' },
   { label: 'English Name', value: 'nameEn' },
-  { label: 'Arabic Name', value: 'nameAr' }
+  { label: 'Arabic Name', value: 'nameAr' },
+  { label: 'Active', value: 'isActive' }
+];
+
+const ACTIVE_FILTER_OPTIONS = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' }
 ];
 
 const initialNphiesPayerFilter = {
   criteria: '' as FilterCriteria,
   nphiesId: '',
   nameEn: '',
-  nameAr: ''
+  nameAr: '',
+  isActive: ''
 };
 
 const NphiesPayerSetup = () => {
@@ -51,6 +59,7 @@ const NphiesPayerSetup = () => {
     nphiesId: string;
     nameEn: string;
     nameAr: string;
+    isActive: string;
   }>(initialNphiesPayerFilter);
 
   const [appliedPayerFilter, setAppliedPayerFilter] = useState<{
@@ -58,6 +67,7 @@ const NphiesPayerSetup = () => {
     nphiesId: string;
     nameEn: string;
     nameAr: string;
+    isActive: string;
   }>(initialNphiesPayerFilter);
 
   const hasNphiesIdFilter =
@@ -69,6 +79,9 @@ const NphiesPayerSetup = () => {
   const hasNameArFilter =
     appliedPayerFilter.criteria === 'nameAr' && !!appliedPayerFilter.nameAr?.trim();
 
+  const hasIsActiveFilter =
+    appliedPayerFilter.criteria === 'isActive' && !!appliedPayerFilter.isActive;
+
   const allPayersQuery = useGetAllNphiesPayersQuery(
     {
       page: paginationParams.page,
@@ -76,7 +89,7 @@ const NphiesPayerSetup = () => {
       sort: paginationParams.sort
     },
     {
-      skip: hasNphiesIdFilter || hasNameEnFilter || hasNameArFilter
+      skip: hasNphiesIdFilter || hasNameEnFilter || hasNameArFilter || hasIsActiveFilter
     }
   );
 
@@ -116,19 +129,34 @@ const NphiesPayerSetup = () => {
     }
   );
 
+  const payersByStatusQuery = useGetNphiesPayersByStatusQuery(
+    {
+      isActive: appliedPayerFilter.isActive,
+      page: paginationParams.page,
+      size: paginationParams.size,
+      sort: paginationParams.sort
+    },
+    {
+      skip: !hasIsActiveFilter
+    }
+  );
+
   const activePayersResponse = hasNphiesIdFilter
     ? payersByNphiesIdQuery.data
     : hasNameEnFilter
       ? payersByNameEnQuery.data
       : hasNameArFilter
         ? payersByNameArQuery.data
-        : allPayersQuery.data;
+        : hasIsActiveFilter
+          ? payersByStatusQuery.data
+          : allPayersQuery.data;
 
   const isFetching =
     allPayersQuery.isFetching ||
     payersByNphiesIdQuery.isFetching ||
     payersByNameEnQuery.isFetching ||
-    payersByNameArQuery.isFetching;
+    payersByNameArQuery.isFetching ||
+    payersByStatusQuery.isFetching;
 
   useEffect(() => {
     dispatch(setPageCode('NPHIES_PAYER'));
@@ -190,7 +218,8 @@ const NphiesPayerSetup = () => {
       !payerFilter.criteria ||
       (payerFilter.criteria === 'nphiesId' && !payerFilter.nphiesId.trim()) ||
       (payerFilter.criteria === 'nameEn' && !payerFilter.nameEn.trim()) ||
-      (payerFilter.criteria === 'nameAr' && !payerFilter.nameAr.trim())
+      (payerFilter.criteria === 'nameAr' && !payerFilter.nameAr.trim()) ||
+      (payerFilter.criteria === 'isActive' && !payerFilter.isActive)
     ) {
       handleResetFilter();
       return;
@@ -200,7 +229,8 @@ const NphiesPayerSetup = () => {
       criteria: payerFilter.criteria,
       nphiesId: payerFilter.nphiesId,
       nameEn: payerFilter.nameEn,
-      nameAr: payerFilter.nameAr
+      nameAr: payerFilter.nameAr,
+      isActive: payerFilter.isActive
     });
 
     setPaginationParams(prev => ({
@@ -256,7 +286,8 @@ const NphiesPayerSetup = () => {
             criteria: nextCriteria,
             nphiesId: '',
             nameEn: '',
-            nameAr: ''
+            nameAr: '',
+            isActive: ''
           });
         }}
         showLabel={false}
@@ -336,6 +367,28 @@ const NphiesPayerSetup = () => {
           }}
           showLabel={false}
           placeholder="Search Arabic Name"
+        />
+      )}
+
+      {payerFilter.criteria === 'isActive' && (
+        <MyInput
+          width="220px"
+          fieldName="isActive"
+          fieldType="select"
+          selectData={ACTIVE_FILTER_OPTIONS}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={payerFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(payerFilter) : updated;
+            setPayerFilter(prev => ({
+              ...prev,
+              isActive: next?.isActive ?? ''
+            }));
+          }}
+          showLabel={false}
+          placeholder="Select Active"
+          searchable={false}
         />
       )}
 
