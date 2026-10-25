@@ -51,20 +51,37 @@ const PayorSetup = () => {
 
   const payorCategories = useEnumOptions('PayorCategory');
 
+  const initialSearchFilters = {
+    category: null,
+    name: '',
+    code: '',
+    startDate: null,
+    expiryDate: null,
+    nphiesId: null,
+    isWaseelEnabled: null,
+    isActive: null
+  };
+
   const [searchFilters, setSearchFilters] = useState<{
     category: string | null;
     name: string;
     code: string;
-  }>({
-    category: null,
-    name: '',
-    code: ''
-  });
+    startDate: string | null;
+    expiryDate: string | null;
+    nphiesId: string | null;
+    isWaseelEnabled: string | null;
+    isActive: string | null;
+  }>(initialSearchFilters);
 
   const [appliedFilters, setAppliedFilters] = useState<{
     category?: string | null;
     name?: string;
     code?: string;
+    startDate?: string;
+    expiryDate?: string;
+    nphiesId?: string;
+    isWaseelEnabled?: string;
+    isActive?: string;
   }>({});
 
   // RTK Query hooks
@@ -74,7 +91,12 @@ const PayorSetup = () => {
     sort: paginationParams.sort,
     ...(appliedFilters.category ? { category: appliedFilters.category } : {}),
     ...(appliedFilters.name ? { name: appliedFilters.name } : {}),
-    ...(appliedFilters.code ? { code: appliedFilters.code } : {})
+    ...(appliedFilters.code ? { code: appliedFilters.code } : {}),
+    ...(appliedFilters.startDate ? { startDate: appliedFilters.startDate } : {}),
+    ...(appliedFilters.expiryDate ? { expiryDate: appliedFilters.expiryDate } : {}),
+    ...(appliedFilters.nphiesId ? { nphiesId: appliedFilters.nphiesId } : {}),
+    ...(appliedFilters.isWaseelEnabled ? { isWaseelEnabled: appliedFilters.isWaseelEnabled } : {}),
+    ...(appliedFilters.isActive ? { isActive: appliedFilters.isActive } : {})
   });
 
   const [createPayor] = useCreatePayorMutation();
@@ -407,11 +429,109 @@ const PayorSetup = () => {
       />
 
       <AdvancedSearchFilters
+        hideSearchBtn
         clearOnClick={() => {
-          setSearchFilters({ category: null, name: '', code: '' });
+          setSearchFilters(initialSearchFilters);
           setAppliedFilters({});
           setPaginationParams(prev => ({ ...prev, page: 0 }));
         }}
+        content={
+          <div className="advanced-filters">
+            <div className="dissss">
+              <MyInput
+                width="10vw"
+                fieldName="startDate"
+                fieldType="date"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    startDate: updated.startDate
+                  }))
+                }
+                showLabel={false}
+                placeholder="Start Date"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="nphiesId"
+                fieldType="select"
+                selectData={nphiesPayersList}
+                selectDataLabel="nameEn"
+                selectDataValue="nphiesId"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    nphiesId: updated.nphiesId
+                  }))
+                }
+                showLabel={false}
+                placeholder="NPHIES Payer"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="isWaseelEnabled"
+                fieldType="select"
+                selectData={[
+                  { label: 'Yes', value: 'true' },
+                  { label: 'No', value: 'false' }
+                ]}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    isWaseelEnabled: updated.isWaseelEnabled
+                  }))
+                }
+                showLabel={false}
+                placeholder="Waseel"
+                searchable={false}
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="expiryDate"
+                fieldType="date"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    expiryDate: updated.expiryDate
+                  }))
+                }
+                showLabel={false}
+                placeholder="Contract Expiry Date"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="isActive"
+                fieldType="select"
+                selectData={[
+                  { label: 'Active', value: 'true' },
+                  { label: 'Inactive', value: 'false' }
+                ]}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    isActive: updated.isActive
+                  }))
+                }
+                showLabel={false}
+                placeholder="Status"
+                searchable={false}
+              />
+            </div>
+          </div>
+        }
       />
     </Form>
   );
@@ -425,7 +545,12 @@ const PayorSetup = () => {
       setAppliedFilters({
         category: searchFilters.category || undefined,
         name: searchFilters.name?.trim() || undefined,
-        code: searchFilters.code?.trim() || undefined
+        code: searchFilters.code?.trim() || undefined,
+        startDate: searchFilters.startDate || undefined,
+        expiryDate: searchFilters.expiryDate || undefined,
+        nphiesId: searchFilters.nphiesId || undefined,
+        isWaseelEnabled: searchFilters.isWaseelEnabled || undefined,
+        isActive: searchFilters.isActive || undefined
       });
 
       setPaginationParams(prev => ({ ...prev, page: 0 }));
