@@ -19,6 +19,7 @@ import {
   useLazyGetPolicyDefinitionsByFacilityQuery,
   useLazyGetPolicyDefinitionsByCodeQuery,
   useLazyGetPolicyDefinitionsByNameQuery,
+  useLazyGetPolicyDefinitionsByStatusQuery,
   useTogglePolicyDefinitionActiveMutation
 } from '@/services/setup/policyDefinition/policyDefinitionService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -67,6 +68,7 @@ const PolicyDefinitions = () => {
   const [fetchByFacility] = useLazyGetPolicyDefinitionsByFacilityQuery();
   const [fetchByCode] = useLazyGetPolicyDefinitionsByCodeQuery();
   const [fetchByName] = useLazyGetPolicyDefinitionsByNameQuery();
+  const [fetchByStatus] = useLazyGetPolicyDefinitionsByStatusQuery();
   const [togglePolicyActive] = useTogglePolicyDefinitionActiveMutation();
 
   useEffect(() => {
@@ -242,7 +244,8 @@ const PolicyDefinitions = () => {
   const filterFields = [
     { label: 'Facility', value: 'facilityId' },
     { label: 'Code', value: 'code' },
-    { label: 'Name', value: 'name' }
+    { label: 'Name', value: 'name' },
+    { label: 'Status', value: 'status' }
   ];
 
   const handleFilterChange = async (field: string, value: any, page = 0, size?: number) => {
@@ -268,6 +271,8 @@ const PolicyDefinitions = () => {
         response = await fetchByCode({ code: value, ...params }).unwrap();
       } else if (field === 'name') {
         response = await fetchByName({ name: value, ...params }).unwrap();
+      } else if (field === 'status') {
+        response = await fetchByStatus({ isActive: value, ...params }).unwrap();
       }
 
       setFilteredList(response?.data ?? []);
@@ -311,6 +316,22 @@ const PolicyDefinitions = () => {
           setRecord={setRecordOfFilter}
           menuMaxHeight={150}
           showLabel={false}
+          searchable={false}
+        />
+      ) : recordOfFilter.filter === 'status' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: 'true' },
+            { label: 'Inactive', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Select Status"
           searchable={false}
         />
       ) : (
