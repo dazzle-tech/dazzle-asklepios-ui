@@ -94,6 +94,15 @@ export const loincCodeService = createApi({
       providesTags: ["LOINC"],
     }),
 
+    createLoinc: builder.mutation<LoincCode, { code: string; category: LioncCategory; description: string }>({
+      query: (body) => ({
+        url: "/api/setup/loinc",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["LOINC"],
+    }),
+
     importLoinc: builder.mutation<ImportResult, { file: File; overwrite?: boolean }>({
       query: ({ file, overwrite = false }) => {
         const formData = new FormData();
@@ -122,5 +131,6 @@ export const {
   useLazyGetLoincByCodeQuery,
   useGetLoincByDescriptionQuery,
   useLazyGetLoincByDescriptionQuery,
+  useCreateLoincMutation,
   useImportLoincMutation,
 } = loincCodeService;
