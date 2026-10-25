@@ -8,7 +8,6 @@ import {
   faFileWaveform,
   faRectangleXmark,
   faEye,
-  faRotateLeft,
   faMoneyBillWave,
   faFlag,
   faPause,
@@ -50,8 +49,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import {
   useGetEncounterListQuery,
   useStartEncounterMutation,
-  useCancelEncounterMutation,
-  useReopenEncounterMutation
+  useCancelEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useAppSelector } from '@/hooks';
@@ -454,7 +452,6 @@ const PatientsLists = () => {
   const [getPatientById, getPatientState] = useLazyGetPatientByIdQuery();
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
-  const [reopenEncounter, { isLoading: reopening }] = useReopenEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const [startTriageEncounter, { isLoading: isStartTriageEncounterLoading }] =
     useStartTriageEncounterMutation();
@@ -716,18 +713,6 @@ const PatientsLists = () => {
         viewMode: 'edit'
       }
     });
-  };
-
-  const handleReopen = async (id: number) => {
-    try {
-      await reopenEncounter({ id }).unwrap();
-      dispatch(notify({ msg: 'Encounter reopened successfully', sev: 'success' }));
-      refetch();
-    } catch (error: any) {
-      dispatch(
-        notify({ msg: error?.data?.message ?? 'Unable to reopen encounter', sev: 'warning' })
-      );
-    }
   };
 
   const handleCancel = async () => {
@@ -1633,13 +1618,6 @@ const PatientsLists = () => {
             isEmergencyListWorkflow &&
             canSeeEMR;
 
-          const showEmergencyListReopen =
-            isEmergencyListWorkflow &&
-            (
-              isCompleted ||
-              isDischarged
-            );
-
           const showEmergencyListCancel =
             isEmergencyListWorkflow &&
             canSeeCancel &&
@@ -1674,13 +1652,6 @@ const clinicViewOnly =
             canSeeCancel &&
             isNew &&
             !row?.isObserved;
-
-          const showClinicReopen =
-            isClinic &&
-            (
-              isCompleted ||
-              isDischarged
-            );
 
           const showClinicPrint =
             isClinic &&
@@ -2060,29 +2031,6 @@ const clinicViewOnly =
                 </Whisper>
               )}
 
-              {showEmergencyListReopen && (
-                <Whisper
-                  trigger="hover"
-                  placement="top"
-                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
-                >
-                  <div>
-                    <MyButton
-                      size="small"
-                      backgroundColor="#0d6efd"
-                      loading={reopening}
-                      onClick={() => {
-                        void handleReopen(row.id);
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faRotateLeft}
-                      />
-                    </MyButton>
-                  </div>
-                </Whisper>
-              )}
-
               {showEmergencyListCancel && (
                 <Whisper
                   trigger="hover"
@@ -2236,29 +2184,6 @@ const clinicViewOnly =
                 </Whisper>
               )}
 
-              {showClinicReopen && (
-                <Whisper
-                  trigger="hover"
-                  placement="top"
-                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
-                >
-                  <div>
-                    <MyButton
-                      size="small"
-                      backgroundColor="#0d6efd"
-                      loading={reopening}
-                      onClick={() => {
-                        void handleReopen(row.id);
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faRotateLeft}
-                      />
-                    </MyButton>
-                  </div>
-                </Whisper>
-              )}
-
               {showClinicPrint && (
                 <div>
                   <VisitReportPrintButton row={row} />
@@ -2278,7 +2203,6 @@ const clinicViewOnly =
       canSeeEMR,
       canSeeNurseStation,
       canSeePrint,
-      reopening,
       EncounterPriorityEnum,
       priorityDotColor,
       handleUpdateEncounterPriority,

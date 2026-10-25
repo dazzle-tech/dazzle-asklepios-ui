@@ -13,7 +13,6 @@ import {
   faUserNurse,
   faEye,
   faVialCircleCheck,
-  faRotateLeft,
   faShareFromSquare
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs';
@@ -49,8 +48,7 @@ import {
   useCountDepartmentTotalByDateRangeQuery,
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
-  useCountDepartmentDischargedByDateRangeQuery,
-  useReopenEncounterMutation
+  useCountDepartmentDischargedByDateRangeQuery
 } from '@/services/encounters/patientEncounterService';
 import {
   useGetBulkPatientBasicInfoMutation,
@@ -494,8 +492,6 @@ const UrgentCareList = () => {
       )
     );
   }, [normalizedTableData]);
-  const [reopenEncounter, { isLoadingReopen }] =
-    useReopenEncounterMutation();
   const {
     data: activeAssignments = [],
     isLoading: isAssignmentsLoading,
@@ -605,16 +601,6 @@ const UrgentCareList = () => {
       };
     });
   }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
-  const handleReopen = async (encounterId: number) => {
-    try {
-      await reopenEncounter({ id: encounterId }).unwrap();
-      dispatch(notify({ msg: "Encounter reopened successfully", sev: "success" }))
-
-    } catch (error) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-
-    }
-  };
   const handleRefreshAfterBedChange = useCallback(async () => {
     await refetch();
 
@@ -1220,14 +1206,10 @@ const handleRowsPerPageChange = useCallback(
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
-        const tooltipReopen = <Tooltip>Reopen Encounter</Tooltip>;
 
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
-        const canReopen =
-          statusUpper === 'COMPLETED' ||
-          statusUpper === 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -1356,24 +1338,6 @@ const handleRowsPerPageChange = useCallback(
                 </MyButton>
               </div>
             </Whisper>
-            {canReopen && (
-              <Whisper
-                trigger="hover"
-                placement="top"
-                speaker={tooltipReopen}
-              >
-                <div>
-                  <MyButton
-                    size="small"
-                    backgroundColor="#0d6efd"
-                    loading={isLoadingReopen}
-                    onClick={() => { handleReopen(row.id) }}
-                  >
-                    <FontAwesomeIcon icon={faRotateLeft} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
             {isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
