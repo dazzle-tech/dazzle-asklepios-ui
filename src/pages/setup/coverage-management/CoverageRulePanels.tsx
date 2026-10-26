@@ -980,7 +980,7 @@ const PreApprovalPanel = ({
   const encounterTypes = useEnumOptions('EncounterType');
   const valueTypes = useEnumOptions('InsuranceCoverageType');
   const itemTypes = useEnumOptions('CoverageRuleTarget');
-  const categories = useEnumOptions('ServiceCategory');
+  const categories = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
   const [isActive, setIsActive] = useState(true);
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
@@ -1044,6 +1044,10 @@ const PreApprovalPanel = ({
 
   const persistItem = async () => {
     const selectedDiagnoses = diagnosisIdsOf(item);
+    if (item.itemType === 'CATEGORY' && !item.serviceCategory) {
+      notifyWarning(dispatch, 'Category is required');
+      return;
+    }
     if (item.itemType === 'DIAGNOSIS' && !item.allDiagnoses && !selectedDiagnoses.length) {
       notifyWarning(dispatch, 'Select at least one diagnosis');
       return;
@@ -1143,7 +1147,20 @@ const PreApprovalPanel = ({
             height={220}
             columns={[
               { key: 'itemType', title: 'Pre Approval type', flexGrow: 2, render: (row: any) => formatEnumString(row.itemType) },
-              { key: 'serviceName', title: 'Scope', flexGrow: 3, render: (row: any) => row.serviceName || diagnosisLabel(row) || formatEnumString(row.serviceCategory) || 'All' },
+              {
+                key: 'serviceName',
+                title: 'Scope',
+                flexGrow: 3,
+                render: (row: any) => {
+                  if (row.itemType === 'CATEGORY') {
+                    return formatEnumString(row.serviceCategory) || '-';
+                  }
+                  if (row.itemType === 'DIAGNOSIS') {
+                    return diagnosisLabel(row);
+                  }
+                  return row.serviceName || 'All';
+                }
+              },
               { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
               {
                 key: 'actions',
