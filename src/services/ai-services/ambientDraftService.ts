@@ -13,12 +13,13 @@ export type AmbientDraftRequest = {
   patientContext?: string | null;
   suggestIcd10?: boolean | null;
   suggestOrders?: boolean | null;
+  ambientId?: number | string | null;
 };
 
 const appendDraftField = (
   formData: FormData,
   name: string,
-  value: string | boolean | null | undefined,
+  value: string | number | boolean | null | undefined,
   lowercase = false
 ) => {
   if (value == null || value === '') {
@@ -74,6 +75,7 @@ export const ambientDraftService = createApi({
         appendDraftField(formData, 'patientContext', request.patientContext);
         appendDraftField(formData, 'suggestIcd10', request.suggestIcd10);
         appendDraftField(formData, 'suggestOrders', request.suggestOrders);
+        appendDraftField(formData, 'ambientId', request.ambientId);
         const result = await baseQuery({
           url: '/api/analytics/ambient-draft',
           method: 'POST',

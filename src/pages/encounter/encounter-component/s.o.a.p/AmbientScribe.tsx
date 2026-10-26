@@ -1090,11 +1090,30 @@ const AmbientScribe = ({
     audioUrlRef.current = nextAudioUrl;
     setAudioUrl(nextAudioUrl);
 
-    let createdDraft: AmbientDraft | null = null;
+    let sessionId = ambientIdRef.current;
+    try {
+      const saved = await saveAmbientSession({
+        consentStatus: givenConsent,
+        audio: audioFile,
+        recordingStoppedAt: details.recordingStoppedAt,
+        recordingDurationMs: details.recordingDurationMs
+      });
+      sessionId = saved?.id ?? sessionId;
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'The ambient session could not be saved.',
+          sev: 'error'
+        })
+      );
+    }
 
     try {
-      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
-      createdDraft = result;
+      const result = await createAmbientDraft({
+        audio: audioFile,
+        ambientId: sessionId,
+        ...draftOptionsRef.current
+      }).unwrap();
 
       const serverText = (result.transcript ?? [])
         .map(segment => segment.text)
@@ -1104,6 +1123,33 @@ const AmbientScribe = ({
       if (serverText) {
         publishTranscript(serverText, '', '');
       }
+
+      if (sessionId) {
+        try {
+          const stored = await updateEncounterAmbientDraft({ id: sessionId, draft: result }).unwrap();
+          setDraft(stored.draft ?? result);
+        } catch {
+          setDraft(result);
+        }
+      } else {
+        const saved = await saveAmbientSession({
+          consentStatus: givenConsent,
+          audio: audioFile,
+          draft: result,
+          recordingStoppedAt: details.recordingStoppedAt,
+          recordingDurationMs: details.recordingDurationMs
+        });
+        setDraft(saved?.draft ?? result);
+      }
+
+      setStoredDurationMs(details.recordingDurationMs);
+      setDraftOpen(true);
+      dispatch(
+        notify({
+          msg: 'Ambient draft is ready for review.',
+          sev: 'success'
+        })
+      );
     } catch (error) {
       const message = extractErrorMessage(error);
       if (details.liveText) {
@@ -1111,46 +1157,14 @@ const AmbientScribe = ({
       }
       dispatch(
         notify({
-          msg: message || 'The recording was captured, but the draft could not be created.',
-          sev: 'error'
+          msg: sessionId
+            ? 'The recording is saved. The draft is still processing and will be stored on this visit when it finishes.'
+            : message || 'The recording was captured, but the draft could not be created.',
+          sev: sessionId ? 'warning' : 'error'
         })
       );
     } finally {
       setPhase('stopped');
-    }
-
-    try {
-      await saveAmbientSession({
-        consentStatus: givenConsent,
-        audio: audioFile,
-        draft: createdDraft,
-        recordingStoppedAt: details.recordingStoppedAt,
-        recordingDurationMs: details.recordingDurationMs
-      });
-
-      if (createdDraft) {
-        setDraft(createdDraft);
-        setStoredDurationMs(details.recordingDurationMs);
-        setDraftOpen(true);
-        dispatch(
-          notify({
-            msg: 'Ambient draft is ready for review.',
-            sev: 'success'
-          })
-        );
-      }
-    } catch (error) {
-      if (createdDraft) {
-        setDraft(createdDraft);
-        setStoredDurationMs(details.recordingDurationMs);
-        setDraftOpen(true);
-      }
-      dispatch(
-        notify({
-          msg: extractErrorMessage(error) || 'The ambient session could not be saved.',
-          sev: 'error'
-        })
-      );
     }
   };
 
@@ -1562,7 +1576,11 @@ const AmbientScribe = ({
 
       const audioFile = await toSupportedAudioFile(recordingBlob);
 
-      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
+      const result = await createAmbientDraft({
+        audio: audioFile,
+        ambientId: ambientIdRef.current,
+        ...draftOptionsRef.current
+      }).unwrap();
       if (ambientIdRef.current) {
         const saved = await updateEncounterAmbientDraft({
           id: ambientIdRef.current,
