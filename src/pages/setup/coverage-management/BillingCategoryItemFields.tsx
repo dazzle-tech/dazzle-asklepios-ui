@@ -31,20 +31,32 @@ type Props = {
   open: boolean;
   record: any;
   setRecord: React.Dispatch<React.SetStateAction<any>>;
+  includeAll?: boolean;
+  categoryField?: string;
+  itemField?: string;
+  nameField?: string;
 };
 
 const itemNameOf = (item: any) =>
   String(item?.name ?? item?.brandName ?? item?.code ?? '').trim() || null;
 
-const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
+const BillingCategoryItemFields = ({
+  open,
+  record,
+  setRecord,
+  includeAll = true,
+  categoryField = 'billingItemType',
+  itemField = 'itemId',
+  nameField = 'itemName'
+}: Props) => {
   const auth = useAppSelector(state => state.auth);
   const selectedFacilityId =
     auth?.selectedDepartment?.facilityId ?? auth?.tenant?.selectedFacility?.id;
 
   const billingItemTypeOptions = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
   const categoryOptions = useMemo(
-    () => [{ value: 'ALL', label: 'All' }, ...billingItemTypeOptions],
-    [billingItemTypeOptions]
+    () => (includeAll ? [{ value: 'ALL', label: 'All' }, ...billingItemTypeOptions] : billingItemTypeOptions),
+    [billingItemTypeOptions, includeAll]
   );
 
   const [selectPage, setSelectPage] = useState(0);
@@ -53,7 +65,9 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
   const [selectData, setSelectData] = useState<any[]>([]);
   const [selectedSelectItem, setSelectedSelectItem] = useState<any>(null);
 
-  const category = record?.billingItemType;
+  const category = record?.[categoryField];
+  const selectedItemId = record?.[itemField];
+  const selectedItemName = record?.[nameField];
   const showItems = Boolean(category && category !== 'ALL');
 
   useEffect(() => {
@@ -68,6 +82,12 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
     setSelectData([]);
     setSelectedSelectItem(null);
   }, [category]);
+
+  useEffect(() => {
+    setSelectedSelectItem(current =>
+      current?.id != null && String(current.id) === String(selectedItemId) ? current : null
+    );
+  }, [selectedItemId]);
 
   const skipType = (type: string) => !open || !showItems || category !== type;
   const skipList = (type: string) => skipType(type) || Boolean(debouncedSelectSearch);
@@ -191,15 +211,15 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
     const current =
       selectedSelectItem?.id
         ? selectedSelectItem
-        : record?.itemId
-          ? { id: record.itemId, name: record.itemName || `Item #${record.itemId}` }
+        : selectedItemId
+          ? { id: selectedItemId, name: selectedItemName || `Item #${selectedItemId}` }
           : null;
     if (!current?.id) {
       return selectData;
     }
     const exists = selectData.some(row => String(row?.id) === String(current.id));
     return exists ? selectData : [current, ...selectData];
-  }, [selectData, selectedSelectItem, record?.itemId, record?.itemName]);
+  }, [selectData, selectedSelectItem, selectedItemId, selectedItemName]);
 
   return (
     <>
@@ -208,15 +228,15 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
         width="100%"
         fieldLabel="Category"
         fieldType="select"
-        fieldName="billingItemType"
+        fieldName={categoryField}
         record={record}
         setRecord={(next: any) => {
-          const nextCategory = next?.billingItemType;
+          const nextCategory = next?.[categoryField];
           if (nextCategory !== category) {
             setRecord({
               ...next,
-              itemId: null,
-              itemName: null
+              [itemField]: null,
+              [nameField]: null
             });
             return;
           }
@@ -233,7 +253,7 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
           width="100%"
           fieldLabel={ITEM_LABELS[category] || 'Item'}
           fieldType="selectPagination"
-          fieldName="itemId"
+          fieldName={itemField}
           record={record}
           setRecord={setRecord}
           selectData={selectDataWithSelectedItem}
@@ -259,8 +279,8 @@ const BillingCategoryItemFields = ({ open, record, setRecord }: Props) => {
             setSelectedSelectItem(item);
             setRecord((prev: any) => ({
               ...prev,
-              itemId: item?.id ?? null,
-              itemName: itemNameOf(item)
+              [itemField]: item?.id ?? null,
+              [nameField]: itemNameOf(item)
             }));
           }}
         />

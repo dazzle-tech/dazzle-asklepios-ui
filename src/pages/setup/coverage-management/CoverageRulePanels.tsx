@@ -980,7 +980,6 @@ const PreApprovalPanel = ({
   const encounterTypes = useEnumOptions('EncounterType');
   const valueTypes = useEnumOptions('InsuranceCoverageType');
   const itemTypes = useEnumOptions('CoverageRuleTarget');
-  const categories = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
   const [isActive, setIsActive] = useState(true);
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
@@ -1044,6 +1043,7 @@ const PreApprovalPanel = ({
 
   const persistItem = async () => {
     const selectedDiagnoses = diagnosisIdsOf(item);
+    const categoryItemId = item.serviceId == null || item.serviceId === '' ? null : Number(item.serviceId);
     if (item.itemType === 'CATEGORY' && !item.serviceCategory) {
       notifyWarning(dispatch, 'Category is required');
       return;
@@ -1059,8 +1059,12 @@ const PreApprovalPanel = ({
           id: item.id,
           itemType: item.itemType,
           serviceCategory: item.itemType === 'CATEGORY' ? item.serviceCategory : null,
-          serviceId: item.itemType === 'SERVICE' ? item.serviceId : null,
-          serviceName: item.itemType === 'SERVICE' ? item.serviceName || null : null,
+          serviceId: item.itemType === 'CATEGORY'
+            ? (Number.isFinite(categoryItemId) ? categoryItemId : null)
+            : item.itemType === 'SERVICE' ? item.serviceId : null,
+          serviceName: item.itemType === 'CATEGORY'
+            ? (Number.isFinite(categoryItemId) ? item.serviceName || null : null)
+            : item.itemType === 'SERVICE' ? item.serviceName || null : null,
           allDiagnoses: item.itemType === 'DIAGNOSIS' ? Boolean(item.allDiagnoses) : item.itemType === 'ALL',
           diagnoses: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses
             ? selectedDiagnoses.map(diagnosisId => ({ diagnosisId }))
@@ -1153,7 +1157,11 @@ const PreApprovalPanel = ({
                 flexGrow: 3,
                 render: (row: any) => {
                   if (row.itemType === 'CATEGORY') {
-                    return formatEnumString(row.serviceCategory) || '-';
+                    const category = formatEnumString(row.serviceCategory);
+                    if (row.serviceName) {
+                      return category ? `${category} - ${row.serviceName}` : row.serviceName;
+                    }
+                    return category ? `All ${category}` : '-';
                   }
                   if (row.itemType === 'DIAGNOSIS') {
                     return diagnosisLabel(row);
@@ -1205,7 +1213,15 @@ const PreApprovalPanel = ({
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Pre Approval type" fieldType="select" fieldName="itemType" record={item} setRecord={setItem} selectData={itemTypes} />
           {item.itemType === 'CATEGORY' && (
-            <MyInput required width="100%" fieldLabel="Category" fieldType="select" fieldName="serviceCategory" record={item} setRecord={setItem} selectData={categories} />
+            <BillingCategoryItemFields
+              open={itemOpen}
+              includeAll={false}
+              record={item}
+              setRecord={setItem}
+              categoryField="serviceCategory"
+              itemField="serviceId"
+              nameField="serviceName"
+            />
           )}
           {item.itemType === 'SERVICE' && (
             <CoveragePagedSelect fieldName="serviceId" fieldLabel="Service name" record={item} setRecord={setItem} result={services} page={serviceLookup.page} setPage={serviceLookup.setPage} search={serviceLookup.search} setSearch={serviceLookup.setSearch} required />
