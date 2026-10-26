@@ -2649,10 +2649,22 @@ const PatientPaymentInfo =
           summary
         );
 
+      const displayedPatientDue =
+        Math.round(
+          (Number(
+            previewTotals.patientOutstandingAmount
+          ) +
+            Number.EPSILON) *
+            100
+        ) / 100;
+
       const hasPayableBalance =
         resolvedOutstanding > 0 ||
-        previewTotals.patientOutstandingAmount >
-          0;
+        displayedPatientDue > 0;
+
+      const patientDueIsZero =
+        !amountsLoading &&
+        displayedPatientDue <= 0;
 
       const defaultServicesLoaded =
         skipDefaultServicesForReview ||
@@ -2677,7 +2689,7 @@ const PatientPaymentInfo =
 
       const paymentFieldsDisabled =
         isLocked ||
-        !hasPayableBalance ||
+        patientDueIsZero ||
         formState.payZeroNow;
 
       useEffect(() => {
@@ -3000,18 +3012,7 @@ const PatientPaymentInfo =
             !hasNothingToBill
           ) {
             if (
-              resolvedOutstanding <=
-                0 &&
-              previewTotals.patientOutstandingAmount <=
-                0
-            ) {
-              reject(
-                'services',
-                'All services are already paid for this encounter'
-              );
-            }
-
-            if (
+              !patientDueIsZero &&
               !formState.payZeroNow
             ) {
               if (
@@ -3045,6 +3046,7 @@ const PatientPaymentInfo =
             }
 
             if (
+              !patientDueIsZero &&
               !formState.payZeroNow &&
               formState.paymentAmount < 0
             ) {
@@ -3086,9 +3088,28 @@ const PatientPaymentInfo =
             Object.keys(details)
               .length > 0
           ) {
+            const messages =
+              Object.values(
+                details
+              )
+                .flat()
+                .map(
+                  item =>
+                    String(
+                      item?.message ??
+                        ''
+                    )
+                )
+                .filter(
+                  Boolean
+                );
+
             dispatch(
               notify({
                 msg:
+                  messages.join(
+                    '\n'
+                  ) ||
                   'Please review the billing fields.',
 
                 sev:
@@ -3206,9 +3227,123 @@ const PatientPaymentInfo =
               );
             }
 
-            throw new Error(
-              'All services are already paid for this encounter.'
+            const zeroDueBody:
+            PrepareDefaultServicesRequest = {
+              patientId,
+
+              facilityId,
+
+              currency:
+                summary.currency ??
+                facilityCurrency,
+
+              coverageType:
+                formState.coverageType,
+
+              patientInsuranceId:
+                isInsurance
+                  ? formState.patientInsuranceId
+                  : null,
+
+              items:
+                selectedRows.map(
+                  (
+                    row,
+                    index
+                  ) => ({
+                    serviceId:
+                      row.serviceId,
+
+                    quantity:
+                      row.quantity,
+
+                    sequence:
+                      index + 1,
+
+                    isExempted:
+                      row.isExempted
+                  })
+                ),
+
+              requestId:
+                makeRequestId(
+                  'PREPARE-DEFAULT-SERVICES'
+                ),
+
+              payZeroNow:
+                null,
+
+              acceptUncoveredAsCash:
+                isInsurance
+                  ? true
+                  : null
+            };
+
+            const zeroDueResult =
+              await prepareDefaultServices(
+                {
+                  encounterId,
+                  body:
+                    zeroDueBody
+                }
+              ).unwrap();
+
+            const zeroDueFailed =
+              (zeroDueResult.items ??
+                [])
+                .filter(
+                  item =>
+                    !item.billingResult
+                      ?.processed
+                );
+
+            if (
+              zeroDueBody.items
+                .length >
+                0 &&
+              zeroDueFailed.length >
+                0
+            ) {
+              throw new Error(
+                zeroDueFailed
+                  .map(
+                    item =>
+                      `Service ${item.serviceId}: ${
+                        item.billingResult
+                          ?.message ??
+                        'Not processed'
+                      }`
+                  )
+                  .join('\n') ||
+                  'Some services were not processed'
+              );
+            }
+
+            setPrepareResultMessage(
+              zeroDueResult.message ??
+                'No patient amount is due. Coverage was saved and the visit is open.'
             );
+
+            await refetchSummary();
+
+            return {
+              ids:
+                zeroDueResult.items
+                  ?.map(
+                    item =>
+                      item.patientServiceProductId
+                  )
+                  .filter(
+                    (
+                      id
+                    ): id is number =>
+                      id != null
+                  ) ??
+                [],
+              message:
+                zeroDueResult.message ??
+                'No patient amount is due. Coverage was saved and the visit is open.'
+            };
           }
 
           const body:
@@ -3635,21 +3770,6 @@ const PatientPaymentInfo =
               }
             }
 
-            if (
-              !hasPayableBalance
-            ) {
-              dispatch(
-                notify({
-                  msg:
-                    'All services for this encounter are already paid.',
-                  sev:
-                    'info'
-                })
-              );
-
-              return false;
-            }
-
             try {
             const {
               ids,
@@ -3686,9 +3806,34 @@ const PatientPaymentInfo =
                 ? payableIds
                 : ids;
 
+            const refreshedOutstanding =
+              resolvePatientOutstandingAmount(
+                billingSummary
+              );
+
+            const confirmedPatientDueIsZero =
+              Math.round(
+                (Number(
+                  previewTotals.patientOutstandingAmount
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0 &&
+              Math.round(
+                (Number(
+                  refreshedOutstanding
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0;
+
             if (
               paymentTargetIds.length ===
-              0
+                0 &&
+              !confirmedPatientDueIsZero &&
+              !formState.payZeroNow
             ) {
               dispatch(
                 notify({
@@ -3701,40 +3846,13 @@ const PatientPaymentInfo =
               return false;
             }
 
-            const refreshedOutstanding =
-              resolvePatientOutstandingAmount(
-                billingSummary
-              );
-
-            const effectiveOutstanding =
-              Math.max(
-                refreshedOutstanding,
-                previewTotals.patientOutstandingAmount,
-                formState.payZeroNow
-                  ? 0
-                  : formState.paymentAmount
-              );
-
-            if (
-              effectiveOutstanding <= 0 &&
-              !formState.payZeroNow &&
-              paymentTargetIds.length === 0
-            ) {
-              dispatch(
-                notify({
-                  msg:
-                    'All services for this encounter are already paid.',
-                  sev: 'info'
-                })
-              );
-
-              return false;
-            }
-
             const payZeroNow =
               formState.payZeroNow;
 
-            if (payZeroNow) {
+            if (
+              payZeroNow ||
+              confirmedPatientDueIsZero
+            ) {
               setSummaryRefreshKey(
                 previous =>
                   previous + 1
@@ -3749,11 +3867,13 @@ const PatientPaymentInfo =
               dispatch(
                 notify({
                   msg:
-                    preparedMessage ??
-                    `Services prepared. ${formatMoney(
-                      remainingAmount,
-                      activeCurrency
-                    )} remains to be collected from the patient.`,
+                    confirmedPatientDueIsZero
+                      ? 'No patient amount is due. Coverage was saved and the visit is open.'
+                      : preparedMessage ??
+                        `Services prepared. ${formatMoney(
+                          remainingAmount,
+                          activeCurrency
+                        )} remains to be collected from the patient.`,
                   sev: 'success'
                 })
               );
@@ -3781,6 +3901,33 @@ const PatientPaymentInfo =
               lastConfirmPayZeroNowRef.current = true;
 
               return true;
+            }
+
+            if (
+              Math.round(
+                (Number(
+                  previewTotals.patientOutstandingAmount
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0 &&
+              refreshedOutstanding >
+                0
+            ) {
+              dispatch(
+                notify({
+                  msg:
+                    `Patient amount due is ${formatMoney(
+                      refreshedOutstanding,
+                      activeCurrency
+                    )}. Select a payment method to continue.`,
+                  sev:
+                    'warning'
+                })
+              );
+
+              return false;
             }
 
             const creditCardCharged =
@@ -5031,6 +5178,13 @@ const PatientPaymentInfo =
                 }
 
                 if (
+                  patientDueIsZero
+                ) {
+                  await handleConfirm();
+                  return;
+                }
+
+                if (
                   formState.payZeroNow
                 ) {
                   if (
@@ -5972,6 +6126,14 @@ const PatientPaymentInfo =
               >
                 No default services are configured for this department. Confirm to complete billing and continue.
               </Message>
+            ) : patientDueIsZero ? (
+              <Message
+                showIcon
+                type="info"
+                className="payment-info__message"
+              >
+                No patient amount is due. Confirm to save the selected coverage and open the visit.
+              </Message>
             ) : null}
 
             <div className="payment-info__field-grid payment-info__field-grid--single">
@@ -5982,7 +6144,7 @@ const PatientPaymentInfo =
               column
               required={
                 !formState.payZeroNow &&
-                hasPayableBalance
+                !patientDueIsZero
               }
               fieldLabel="Payment Method"
               fieldType="select"
@@ -6022,7 +6184,7 @@ const PatientPaymentInfo =
               column
               required={
                 !formState.payZeroNow &&
-                hasPayableBalance
+                !patientDueIsZero
               }
               fieldLabel="Payment Amount"
               fieldType="number"
@@ -6039,7 +6201,7 @@ const PatientPaymentInfo =
             </div>
 
             {!paymentMethodSelected &&
-            hasPayableBalance &&
+            !patientDueIsZero &&
             !formState.payZeroNow ? (
               <div className="payment-info__field-note">
                 Select a payment method first to enter the amount.
