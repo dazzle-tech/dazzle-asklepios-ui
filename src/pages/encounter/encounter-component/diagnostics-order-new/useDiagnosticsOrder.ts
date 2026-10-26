@@ -248,11 +248,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const isSubmitDisabled = !orderId || orders?.status !== 'NEW';
 
-  const { data: ordersListResponse, refetch: ordersRefetch } = useFilterDiagnosticOrdersQuery(
+  const {
+    data: ordersListResponse,
+    refetch: ordersRefetch,
+    isSuccess: ordersSuccess,
+    isError: ordersError
+  } = useFilterDiagnosticOrdersQuery(
     patientId && encounterId ? { patientId, encounterId } : skipToken
   );
 
   const ordersList = ordersListResponse?.data ?? [];
+  const ordersLoaded = ordersSuccess || ordersError || !(patientId && encounterId);
 
   const hasOpenOrder = ordersList.some((o: any) => o.status === 'NEW' || o.saveDraft === true);
 
@@ -1039,6 +1045,38 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
   };
 
+  // open Select Tests on the open draft order if there is one, otherwise create a new order first
+  const handleOpenTestsSelection = async (): Promise<boolean> => {
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return false;
+    }
+
+    if (String(authSlice.user?.jobRole ?? '').toUpperCase() === 'NURSE') {
+      dispatch(notify({ msg: 'Nurses cannot create diagnostic orders', sev: 'warning' }));
+      return false;
+    }
+
+    const draftOrder = orders?.id && isDraftOrder(orders) ? orders : ordersList.find(isDraftOrder);
+
+    try {
+      setLoading?.(true);
+      if (draftOrder) {
+        setOrders(draftOrder);
+      } else {
+        await createNewOrder();
+      }
+      setOpenTestsModal(true);
+      return true;
+    } catch (error) {
+      console.error('Create order failed:', error);
+      dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+      return false;
+    } finally {
+      setLoading?.(false);
+    }
+  };
+
   const handleRecallFavoriteTest = async (t: any, targetOrderId?: number) => {
     const _orderId = targetOrderId ?? orders?.id;
 
@@ -1167,6 +1205,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     loadTests,
     hasOpenOrder,
     isSubmitDisabled,
+    ordersLoaded,
 
     // filters
     filters,
@@ -1239,6 +1278,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
     handleRecallFavoriteTests,
+    handleOpenTestsSelection,
 
     // helpers
     normalizeOrderTest,
