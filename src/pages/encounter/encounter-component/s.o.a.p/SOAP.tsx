@@ -37,9 +37,7 @@ import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
 import FieldAuditHistoryModal from './FieldAuditHistory';
-import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
 import Allergies from '../../encounter-pre-observations-new/AllergiesNurse';
-import AutoPopulationSection from './AutoPopulationSection';
 import AmbientScribe from './AmbientScribe';
 
 const SOAP = props => {
@@ -401,38 +399,6 @@ const SOAP = props => {
                 .filter(Boolean)
                 .join(' · ')}
             />
-             <AutoPopulationSection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              patient={patient}
-              edit={edit}
-             />
             <div style={{ marginBottom: '16px' }}>
               <SectionContainer
                 collapsible
