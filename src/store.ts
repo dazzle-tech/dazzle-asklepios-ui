@@ -216,6 +216,7 @@ import { notificationHeaderService } from './services/notification-management/no
 import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
 import { notificationService } from './services/notification-management/notificationService';
 import { patientSatisfactionSurveyService } from './services/patient-satisfaction/patientSatisfactionSurveyService';
+import { patientSatisfactionSurveyV2Service } from './services/patient-satisfaction-survey-v2/patientSatisfactionSurveyV2Service';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -436,6 +437,7 @@ export const store = configureStore({
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
     [notificationService.reducerPath]: notificationService.reducer,
     [patientSatisfactionSurveyService.reducerPath]: patientSatisfactionSurveyService.reducer,
+    [patientSatisfactionSurveyV2Service.reducerPath]: patientSatisfactionSurveyV2Service.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -902,6 +904,7 @@ export const store = configureStore({
         notificationTemplateService.middleware,
         notificationService.middleware,
         patientSatisfactionSurveyService.middleware,
+        patientSatisfactionSurveyV2Service.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,
