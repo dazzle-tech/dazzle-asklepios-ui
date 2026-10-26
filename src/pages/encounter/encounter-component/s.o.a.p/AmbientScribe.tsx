@@ -742,12 +742,7 @@ const RecordingWorkspace = ({
               {phase === 'paused' ? 'Resume' : 'Pause'}
             </MyButton>
             <MyButton
-              appearance="primary"
-              backgroundColor="#e11d2e"
-              size="small"
-              radius="8px"
               prefixIcon={() => <FontAwesomeIcon icon={faStop} />}
-              style={{ padding: '0 14px' }}
               onClick={onStop}
             >
               Stop & create draft
