@@ -91,7 +91,7 @@ const asSegment = (value: unknown): LiveSegment | null => {
   if (!segment.id || !segment.text) return null;
   return {
     id: String(segment.id),
-    speaker: String(segment.speaker || 'unknown'),
+    speaker: segment.speaker == null ? '' : String(segment.speaker),
     start_ms: Number(segment.start_ms) || 0,
     end_ms: Number(segment.end_ms) || 0,
     text: String(segment.text),

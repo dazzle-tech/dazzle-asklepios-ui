@@ -465,7 +465,7 @@ const LiveTranscriptPanel = ({
             segment.speaker === 'patient' ? ' is-patient' : segment.speaker === 'doctor' ? ' is-clinician' : ''
           }`}
         >
-          {prettyKey(segment.speaker)}
+          {segment.speaker}
           <span className="ambient-live-meta">
             {segment.lang ? ` · ${segment.lang}` : ''} · {clockMs(segment.start_ms)}–{clockMs(segment.end_ms)} ·{' '}
             {segment.final ? 'final' : 'partial'}
