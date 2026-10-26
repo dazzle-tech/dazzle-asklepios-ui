@@ -18,9 +18,13 @@ const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
 
+  // directTestsSelection: skip the order screen, create/reuse the draft order and open Select Tests directly
+  const directTestsSelection = props.directTestsSelection === true;
+  const closeDirect = () => props.onClose?.();
+
   //add new patient edits
-  const patient = location.state?.patient;
-  const encounter = location.state?.encounter;
+  const patient = (directTestsSelection && props.patient) || location.state?.patient;
+  const encounter = (directTestsSelection && props.encounter) || location.state?.encounter;
 
   const viewMode = location.state?.viewMode;
   const isAmendmentOpen = useIsAmendmentOpen();
@@ -48,6 +52,37 @@ const DiagnosticsOrder = (props: any) => {
       `
       ) !== null
     );
+  };
+
+  const directStartedRef = useRef(false);
+  useEffect(() => {
+    if (!directTestsSelection || directStartedRef.current || !vm.ordersLoaded) return;
+    directStartedRef.current = true;
+    vm.handleOpenTestsSelection().then(ok => {
+      if (!ok) closeDirect();
+    });
+  }, [directTestsSelection, vm.ordersLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setOpenTestsModal = (open: boolean) => {
+    vm.setOpenTestsModal(open);
+    if (directTestsSelection && !open) closeDirect();
+  };
+
+  const handleSaveTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (directTestsSelection) closeDirect();
+    return ok;
+  };
+
+  const handleSaveAndSubmitTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (ok) setOpenValidationSummaryModal(true);
+    else if (directTestsSelection) closeDirect();
+  };
+
+  const setValidationSummaryOpen = (open: boolean) => {
+    setOpenValidationSummaryModal(open);
+    if (directTestsSelection && !open) closeDirect();
   };
 
   useEffect(() => {
@@ -92,6 +127,8 @@ const DiagnosticsOrder = (props: any) => {
     dir={dir}
     // className={clsx({ 'disabled-panel': edit })}
   >
+      {!directTestsSelection && (
+      <>
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}
@@ -147,6 +184,8 @@ const DiagnosticsOrder = (props: any) => {
         departments={vm.departments}
         edit={vm.edit}
       />
+      </>
+      )}
 
       <DiagnosticsOrderModals
         encounter={vm.encounter}
@@ -164,7 +203,7 @@ const DiagnosticsOrder = (props: any) => {
         attachmentsModalOpen={vm.attachmentsModalOpen}
         setAttachmentsModalOpen={vm.setAttachmentsModalOpen}
         openTestsModal={vm.openTestsModal}
-        setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenTestsModal={setOpenTestsModal}
         openRequestTestModal={vm.openRequestTestModal}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
         recallFavoriteModal={vm.recallFavoriteModal}
@@ -189,11 +228,8 @@ const DiagnosticsOrder = (props: any) => {
         selectedDepartment={vm.selectedDepartment}
         resolveFromDepartmentId={vm.resolveFromDepartmentId}
         handleSaveTest={vm.handleSaveTest}
-        handleSaveTests={vm.handleSaveTests}
-        handleSaveAndSubmitTests={async () => {
-          const ok = await vm.handleSaveTests();
-          if (ok) setOpenValidationSummaryModal(true);
-        }}
+        handleSaveTests={handleSaveTests}
+        handleSaveAndSubmitTests={handleSaveAndSubmitTests}
         handleCancle={vm.handleCancle}
         orderTestRefetch={vm.orderTestRefetch}
         setSelectedRows={vm.setSelectedRows}
@@ -205,10 +241,10 @@ const DiagnosticsOrder = (props: any) => {
 
       <PatientHistorySummaryModal
         open={openValidationSummaryModal}
-        setOpen={setOpenValidationSummaryModal}
+        setOpen={setValidationSummaryOpen}
         handleSave={async () => {
           const ok = await vm.handleSubmitPres();
-          if (ok) setOpenValidationSummaryModal(false);
+          if (ok) setValidationSummaryOpen(false);
         }}
         payload={{
           patientId: patient?.id ?? patient?.key,

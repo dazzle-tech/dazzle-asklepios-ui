@@ -2,7 +2,6 @@ import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
@@ -1039,6 +1038,7 @@ const createPayload: any = {
             <MyButton
               appearance="ghost"
               onClick={() => setOpenOrderModel(true)}
+              disabled={edit}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -1451,17 +1451,15 @@ const createPayload: any = {
         setSelectedGeneric={setSelectedGeneric}
       />
 
-      <MyModal
-        open={openOrderModel}
-        setOpen={setOpenOrderModel}
-        size="full"
-        title="Add Order"
-        content={
-          <div dir={dir}>
-            <DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />
-          </div>
-        }
-      />
+      {openOrderModel && (
+        <DiagnosticsOrder
+          directTestsSelection
+          edit={edit}
+          patient={patient}
+          encounter={encounter}
+          onClose={() => setOpenOrderModel(false)}
+        />
+      )}
     </div>
   );
 };

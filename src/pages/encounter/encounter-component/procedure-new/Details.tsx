@@ -1,7 +1,6 @@
 import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
 import {
@@ -623,7 +622,7 @@ const Details = ({
             <MyButton
               appearance="ghost"
               onClick={() => setOpenOrderModel(true)}
-              disabled={editing}
+              disabled={editing || edit}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -899,17 +898,15 @@ const Details = ({
         }
       />
 
-      <MyModal
-        open={openOrderModel}
-        setOpen={setOpenOrderModel}
-        size="lg"
-        title="Add Order"
-        content={
-          <div dir={dir}>
-            <PatientOrder edit={edit} patient={patient} encounter={encounter} />
-          </div>
-        }
-      />
+      {openOrderModel && (
+        <PatientOrder
+          directTestsSelection
+          edit={edit}
+          patient={patient}
+          encounter={encounter}
+          onClose={() => setOpenOrderModel(false)}
+        />
+      )}
 
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
