@@ -1356,6 +1356,10 @@ export interface VaccineBrand {
   volume: number;
   unit: string;
   marketingAuthorizationHolder?: string | null;
+  facilityId: number | null;
+  price: number | null;
+  /** Read-only: always taken from the facility's default currency */
+  currency?: string | null;
   isActive?: boolean;
   createdBy?: string | null;
   createdDate?: Date | null;
