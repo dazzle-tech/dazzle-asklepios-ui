@@ -89,6 +89,7 @@ import {
   newPriceListSetupItem
 } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
 
 type Props = {
   open: boolean;
@@ -642,6 +643,26 @@ const PriceListSetupItems: React.FC<Props> = ({
     }
   );
 
+  // All active vaccine brands; the same query lists and searches (by name or code)
+  const {
+    data: vaccineBrandsResponse,
+    isFetching: isFetchingVaccineBrands
+  } = useSearchActiveVaccineBrandsQuery(
+    {
+      name: debouncedSelectSearch || undefined,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'VACCINE'
+    }
+  );
+
   const currentSelectResponse = useMemo(() => {
     switch (selectedItem.itemType) {
       case 'MEDICATION':
@@ -674,6 +695,9 @@ const PriceListSetupItems: React.FC<Props> = ({
           ? proceduresSearchResponse
           : proceduresResponse;
 
+      case 'VACCINE':
+        return vaccineBrandsResponse;
+
       default:
         return null;
     }
@@ -697,7 +721,9 @@ const PriceListSetupItems: React.FC<Props> = ({
     servicesSearchResponse,
 
     proceduresResponse,
-    proceduresSearchResponse
+    proceduresSearchResponse,
+
+    vaccineBrandsResponse
   ]);
 
 
@@ -991,7 +1017,8 @@ const PriceListSetupItems: React.FC<Props> = ({
       isFetchingServices ||
       isFetchingServicesSearch ||
       isFetchingProcedures ||
-      isFetchingProceduresSearch
+      isFetchingProceduresSearch ||
+      isFetchingVaccineBrands
     ) {
       return;
     }
@@ -1074,6 +1101,15 @@ const PriceListSetupItems: React.FC<Props> = ({
           onFetchMore: handleFetchMore
         };
 
+      case 'VACCINE':
+        return {
+          fieldLabel: 'Vaccine Brand',
+          selectData: directSelectData,
+          loading: isFetchingVaccineBrands,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
       default:
         return null;
     }
@@ -1098,7 +1134,9 @@ const PriceListSetupItems: React.FC<Props> = ({
     isFetchingServicesSearch,
 
     isFetchingProcedures,
-    isFetchingProceduresSearch
+    isFetchingProceduresSearch,
+
+    isFetchingVaccineBrands
   ]);
 
 

@@ -1352,6 +1352,8 @@ export interface VaccineBrand {
   id?: number;
   vaccineId: number;
   name: string;
+  /** Item code used in price lists and Waseel SBS mapping */
+  code: string;
   manufacture: string;
   volume: number;
   unit: string;
@@ -4223,7 +4225,8 @@ export type BillingItemType =
   | 'RADIOLOGY'
   | 'PATHOLOGY'
   | 'SERVICE'
-  | 'PROCEDURE';
+  | 'PROCEDURE'
+  | 'VACCINE';
 
 export type PatientServiceAndProduct = {
   id: number;
@@ -4235,6 +4238,7 @@ export type PatientServiceAndProduct = {
   diagnosticTestId?: number | null;
   serviceId?: number | null;
   procedureId?: number | null;
+  vaccineBrandId?: number | null;
 
   quantity: number;
   unitPrice: number;
@@ -4272,6 +4276,7 @@ export enum ServiceSource {
   DENTAL_PROCEDURE = 'DENTAL_PROCEDURE',
   ENCOUNTER_DEFAULT_SERVICE = 'ENCOUNTER_DEFAULT_SERVICE',
   PRESCRIPTION = 'PRESCRIPTION',
+  VACCINATION = 'VACCINATION',
 }
 
 export type PatientServiceProductCreateDTO = {
@@ -4294,6 +4299,7 @@ export type PatientServiceProductCreateDTO = {
   SourceId?: number | null; // ID of the source entity (e.g., diagnostic order test ID, procedure ID, etc.)
   acceptUncoveredAsCash?: boolean | null;
   uomGroupUnitId?: number | null;
+  vaccineBrandId?: number | null;
 };
 
 export type PatientServiceProductUpdateDTO = {
@@ -4316,6 +4322,7 @@ export type PatientServiceProductUpdateDTO = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
   uomGroupUnitId?: number | null;
+  vaccineBrandId?: number | null;
 };
 
 // =============================
@@ -5841,7 +5848,8 @@ export type PriceListItemType =
   | 'RADIOLOGY'
   | 'PATHOLOGY'
   | 'SERVICE'
-  | 'PROCEDURE';
+  | 'PROCEDURE'
+  | 'VACCINE';
 
 export type PricingMethod =
   | 'FIXED_PRICE'
