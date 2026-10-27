@@ -9,6 +9,7 @@ import { usePrepareDefaultServicesMutation } from '@/services/billing/billingTra
 import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
 import { notify } from '@/utils/uiReducerActions';
+import PreAuthorizationAlertModal from './PreAuthorizationAlertModal';
 import type {
   BillingCoverageType,
   EncounterBillingSummary,
@@ -72,6 +73,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   const dispatch = useAppDispatch();
   const [serviceRows, setServiceRows] = useState<PrepareServiceRow[]>([]);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
+  const [preAuthAlert, setPreAuthAlert] = useState<
+    { patientServiceProductId?: number | null; label: string }[] | null
+  >(null);
 
   const resolvedPractitionerId = toNumber(practitionerId, 0) || null;
 
@@ -268,14 +272,18 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       }
 
       const preparedMessage = result.message ?? 'Services prepared and prices calculated successfully.';
-      const needsPreAuthorization = preparedMessage.toLowerCase().includes('pre-authorization');
+      const heldItems = (result.items ?? [])
+        .filter(item => String(item.billingResult?.message ?? '').toLowerCase().includes('pre-authorization'))
+        .map(item => ({
+          patientServiceProductId: item.patientServiceProductId,
+          label: selectedRows.find(row => row.serviceId === item.serviceId)?.serviceName || `Service ${item.serviceId}`
+        }));
       setResultMessage(preparedMessage);
-      dispatch(
-        notify({
-          msg: preparedMessage,
-          sev: needsPreAuthorization ? 'warning' : 'success'
-        })
-      );
+      if (heldItems.length) {
+        setPreAuthAlert(heldItems);
+      } else {
+        dispatch(notify({ msg: preparedMessage, sev: 'success' }));
+      }
       onPrepared?.();
     } catch (error: any) {
       const message = normalizeBillingError(error);
@@ -512,6 +520,12 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
           {resultMessage}
         </Text>
       )}
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounterId}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
+      />
     </div>
   );
 };

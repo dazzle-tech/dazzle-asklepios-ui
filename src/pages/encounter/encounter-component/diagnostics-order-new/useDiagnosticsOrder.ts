@@ -3,7 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { PRE_AUTHORIZATION_HOLD_MESSAGE } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import type { PreAuthorizationAlertItem } from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -100,6 +100,7 @@ const extractErrorMessage = (error: any) => {
 
 export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef, setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const patientId = patient?.id;
@@ -772,7 +773,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       );
 
       let added: string[] = [];
-      let held: string[] = [];
+      let held: PreAuthorizationAlertItem[] = [];
       let duplicates: string[] = [];
       let failed: string[] = [];
 
@@ -808,7 +809,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
             }).unwrap();
 
             if (created?.coveragePreApprovalPending) {
-              held.push(testName);
+              held.push({ label: testName });
             } else {
               added.push(testName);
             }
@@ -833,12 +834,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       }
 
       if (held.length) {
-        dispatch(
-          notify({
-            msg: `${held.join(', ')}. ${PRE_AUTHORIZATION_HOLD_MESSAGE}`,
-            sev: 'warning'
-          })
-        );
+        setPreAuthAlert(held);
       }
 
       if (duplicates.length) {
@@ -1147,6 +1143,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     // route data
     patient,
     encounter,
+    preAuthAlert,
+    clearPreAuthAlert: () => setPreAuthAlert(null),
     edit,
     reson,
     setReson,

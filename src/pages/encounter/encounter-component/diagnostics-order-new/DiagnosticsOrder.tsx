@@ -8,6 +8,7 @@ import DiagnosticsOrderModals from './DiagnosticsOrderModals';
 import PatientHistorySummaryModal from './PatientHistorySummaryModal';
 import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
 import Backdrop from '@mui/material/Backdrop';
@@ -216,6 +217,12 @@ const DiagnosticsOrder = (props: any) => {
         orderTest={vm.selectedOrderTestForReschedule}
         facilityId={vm.selectedDepartment?.facilityId}
         onClose={() => vm.setSelectedOrderTestForReschedule(null)}
+      />
+      <PreAuthorizationAlertModal
+        open={Boolean(vm.preAuthAlert?.length)}
+        encounterId={vm.encounterId}
+        items={vm.preAuthAlert ?? []}
+        onClosed={vm.clearPreAuthAlert}
       />
       <Backdrop
   open={loading}

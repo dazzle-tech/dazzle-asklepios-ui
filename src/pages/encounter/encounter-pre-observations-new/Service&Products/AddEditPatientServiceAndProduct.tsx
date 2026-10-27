@@ -13,10 +13,8 @@ import {
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  isHeldForPreAuthorization,
-  PRE_AUTHORIZATION_HOLD_MESSAGE
-} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import { isHeldForPreAuthorization } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   buildBillingRuleEvaluationRequest,
@@ -68,6 +66,9 @@ const AddEditPatientServiceAndProduct = ({
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<
+    { patientServiceProductId?: number | null; label: string }[] | null
+  >(null);
   const location = useLocation();
 
   const patient = location.state?.patient;
@@ -801,14 +802,16 @@ const AddEditPatientServiceAndProduct = ({
 
         const created = await createPatientServiceAndProduct(createDTO).unwrap();
 
-        dispatch(
-          notify({
-            msg: isHeldForPreAuthorization(created)
-              ? PRE_AUTHORIZATION_HOLD_MESSAGE
-              : 'Billing Item Added Successfully',
-            sev: isHeldForPreAuthorization(created) ? 'warning' : 'success'
-          })
-        );
+        if (isHeldForPreAuthorization(created)) {
+          setPreAuthAlert([
+            {
+              patientServiceProductId: created?.id ?? null,
+              label: (created as any)?.serviceName || (created as any)?.name || 'Service'
+            }
+          ]);
+        } else {
+          dispatch(notify({ msg: 'Billing Item Added Successfully', sev: 'success' }));
+        }
       } else {
         const updateDTO: PatientServiceProductUpdateDTO = {
           ...newPatientServiceProductUpdateDTO,
@@ -970,18 +973,26 @@ const AddEditPatientServiceAndProduct = ({
   );
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
-      actionButtonLabel="Save"
-      actionButtonFunction={handleSave}
-      actionButtonLoading={isCreating || isUpdating}
-      position="right"
-      size="30vw"
-      bodyheight="80vh"
-      content={modalContent}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
+        actionButtonLabel="Save"
+        actionButtonFunction={handleSave}
+        actionButtonLoading={isCreating || isUpdating}
+        position="right"
+        size="30vw"
+        bodyheight="80vh"
+        content={modalContent}
+      />
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
+      />
+    </>
   );
 };
 

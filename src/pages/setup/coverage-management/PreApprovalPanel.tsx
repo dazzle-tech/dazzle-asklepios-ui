@@ -39,7 +39,7 @@ const blankTarget = {
   approvalScope: 'FACILITY',
   encounterType: 'ALL',
   valueType: 'PERCENTAGE',
-  targetLevel: 'DEPARTMENT',
+  targetLevel: 'FACILITY',
   source: null,
   sourceId: null,
   subcategoryKey: null
@@ -65,6 +65,10 @@ const PreApprovalPanel = ({
   const [record, setRecord] = useState<any>({});
   const facilityLookup = useLookupPaging(String(open));
   const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
+  const departmentRequired =
+    record.targetLevel === 'DEPARTMENT' ||
+    (record.approvalScope === 'DEPARTMENT' && record.targetLevel !== 'FACILITY');
+
   const facilities = useSearchCoverageFacilitiesQuery(
     { page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch },
     { skip: !open }
@@ -76,14 +80,12 @@ const PreApprovalPanel = ({
       size: 15,
       search: departmentLookup.appliedSearch
     },
-    { skip: !open || !record.facilityId || (record.approvalScope !== 'DEPARTMENT' && record.targetLevel !== 'DEPARTMENT') }
+    { skip: !open || !record.facilityId || !departmentRequired }
   );
   const owner = tpaId ? { tpaId } : { classId: Number(classId) };
   const { data, isFetching } = useListPreApprovalsQuery({ ...owner, isActive, ...paging });
   const [save] = useSavePreApprovalMutation();
   const [toggleActive] = useTogglePreApprovalActiveMutation();
-
-  const departmentRequired = record.targetLevel === 'DEPARTMENT' || record.approvalScope === 'DEPARTMENT';
 
   const persist = async () => {
     if (!record.targetLevel) {
@@ -102,7 +104,7 @@ const PreApprovalPanel = ({
       notifyWarning(dispatch, 'Percentage limit cannot be greater than 100');
       return;
     }
-    if (record.targetLevel !== 'DEPARTMENT' && !record.source) {
+    if (record.targetLevel !== 'DEPARTMENT' && record.targetLevel !== 'FACILITY' && !record.source) {
       notifyWarning(dispatch, 'Category is required');
       return;
     }
@@ -123,7 +125,7 @@ const PreApprovalPanel = ({
       valueType: record.valueType,
       limitValue: record.limitValue,
       targetLevel: record.targetLevel,
-      source: record.targetLevel === 'DEPARTMENT' ? null : record.source,
+      source: record.targetLevel === 'DEPARTMENT' || record.targetLevel === 'FACILITY' ? null : record.source,
       sourceId: record.targetLevel === 'ITEM' ? record.sourceId : null,
       subcategoryKey: record.targetLevel === 'SUBCATEGORY' ? record.subcategoryKey : null,
       isActive: record.isActive
@@ -154,7 +156,8 @@ const PreApprovalPanel = ({
     }
     setRecord({
       ...next,
-      approvalScope: level === 'DEPARTMENT' ? 'DEPARTMENT' : next.approvalScope,
+      approvalScope: level === 'DEPARTMENT' ? 'DEPARTMENT' : 'FACILITY',
+      departmentId: level === 'DEPARTMENT' ? next.departmentId : null,
       source: null,
       sourceId: null,
       subcategoryKey: null
@@ -296,7 +299,7 @@ const PreApprovalPanel = ({
                 })
               }
               selectData={scopes}
-              disabled={record.targetLevel === 'DEPARTMENT'}
+              disabled={record.targetLevel === 'DEPARTMENT' || record.targetLevel === 'FACILITY'}
             />
             <CoveragePagedSelect
               fieldName="facilityId"
@@ -335,7 +338,7 @@ const PreApprovalPanel = ({
               setRecord={setRecord}
               selectData={encounterTypes}
             />
-            {record.targetLevel && record.targetLevel !== 'DEPARTMENT' && (
+            {record.targetLevel && record.targetLevel !== 'DEPARTMENT' && record.targetLevel !== 'FACILITY' && (
               <PreApprovalSourceFields open={open} record={record} setRecord={setRecord} />
             )}
             <MyInput

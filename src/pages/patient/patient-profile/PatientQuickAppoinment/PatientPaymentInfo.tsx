@@ -120,6 +120,7 @@ import type {
 import {
   notify
 } from '@/utils/uiReducerActions';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 
 import './style.less';
 
@@ -827,6 +828,14 @@ const PatientPaymentInfo =
         useState<string | null>(
           null
         );
+
+      const [
+        preAuthAlert,
+        setPreAuthAlert
+      ] =
+        useState<
+          { patientServiceProductId?: number | null; label: string }[] | null
+        >(null);
 
       const [
         receiptPreview,
@@ -3123,6 +3132,26 @@ const PatientPaymentInfo =
           return true;
         };
 
+      const rememberPreAuthorization = (result: any) => {
+        const message = String(result?.message ?? '');
+        if (!message.toLowerCase().includes('pre-authorization')) {
+          return;
+        }
+        const items = (result?.items ?? [])
+          .filter((item: any) =>
+            String(item?.billingResult?.message ?? message)
+              .toLowerCase()
+              .includes('pre-authorization')
+          )
+          .map((item: any) => ({
+            patientServiceProductId: item.patientServiceProductId ?? null,
+            label:
+              defaultServiceRows.find(row => row.serviceId === item.serviceId)?.serviceName ||
+              `Service ${item.serviceId}`
+          }));
+        setPreAuthAlert(items.length ? items : [{ label: 'Service' }]);
+      };
+
       const prepareServices =
         async () => {
           const unpaidExistingIds =
@@ -3205,6 +3234,7 @@ const PatientPaymentInfo =
                 result.message ??
                   'Encounter billing completed. No default services to bill.'
               );
+              rememberPreAuthorization(result);
 
               await refetchSummary();
 
@@ -3323,6 +3353,7 @@ const PatientPaymentInfo =
               zeroDueResult.message ??
                 'No patient amount is due. Coverage was saved and the visit is open.'
             );
+            rememberPreAuthorization(zeroDueResult);
 
             await refetchSummary();
 
@@ -3467,6 +3498,7 @@ const PatientPaymentInfo =
             result.message ??
               'Default services prepared and priced successfully.'
           );
+          rememberPreAuthorization(result);
 
           await refetchSummary();
 
@@ -3721,19 +3753,20 @@ const PatientPaymentInfo =
                     previous + 1
                 );
 
-                dispatch(
-                  notify({
-                    msg:
-                      preparedMessage ??
-                      'Encounter billing completed. No default services to bill.',
-                    sev:
-                      String(preparedMessage ?? '')
-                        .toLowerCase()
-                        .includes('pre-authorization')
-                        ? 'warning'
-                        : 'success'
-                  })
-                );
+                if (
+                  !String(preparedMessage ?? '')
+                    .toLowerCase()
+                    .includes('pre-authorization')
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        preparedMessage ??
+                        'Encounter billing completed. No default services to bill.',
+                      sev: 'success'
+                    })
+                  );
+                }
 
                 if (
                   onPaymentSaved
@@ -5134,15 +5167,21 @@ const PatientPaymentInfo =
                   } =
                     await prepareServices();
 
-                  dispatch(
-                    notify({
-                      msg:
-                        preparedMessage,
+                  if (
+                    !String(preparedMessage ?? '')
+                      .toLowerCase()
+                      .includes('pre-authorization')
+                  ) {
+                    dispatch(
+                      notify({
+                        msg:
+                          preparedMessage,
 
-                      sev:
-                        'success'
-                    })
-                  );
+                        sev:
+                          'success'
+                      })
+                    );
+                  }
                 } catch (
                   error: any
                 ) {
@@ -6351,6 +6390,12 @@ const PatientPaymentInfo =
               autoPrint
             />
           ) : null}
+          <PreAuthorizationAlertModal
+            open={Boolean(preAuthAlert?.length)}
+            encounterId={encounterId}
+            items={preAuthAlert ?? []}
+            onClosed={() => setPreAuthAlert(null)}
+          />
         </Form>
       );
     }

@@ -468,6 +468,22 @@ export const billingTransactionService =
               method: 'POST',
               body
             })
+          }),
+
+        closePreAuthorizationAlert:
+          builder.mutation<
+            unknown,
+            {
+              encounterId: number;
+              message: string;
+              items: { patientServiceProductId?: number | null; label?: string | null }[];
+            }
+          >({
+            query: body => ({
+              url: '/api/patient/pre-authorization-alerts/close',
+              method: 'POST',
+              body
+            })
           })
       })
   });
@@ -494,6 +510,7 @@ export const {
   useReverseBillingRefundMutation,
 
   useEvaluateBillingRuleMutation,
-  useCheckInsurancePriceListCoverageMutation
+  useCheckInsurancePriceListCoverageMutation,
+  useClosePreAuthorizationAlertMutation
 } =
   billingTransactionService;
