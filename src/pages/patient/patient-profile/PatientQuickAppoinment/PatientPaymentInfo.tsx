@@ -2177,6 +2177,29 @@ const PatientPaymentInfo =
 
       const lastConfirmPayZeroNowRef = useRef(false);
 
+      /*
+       * The pre-authorization alert must be closed by the user (the close is saved).
+       * Closing the walk-in window waits until then, otherwise the alert unmounts unseen.
+       */
+      const preAuthAlertPendingRef = useRef(false);
+      const afterPreAuthAlertRef = useRef<(() => void) | null>(null);
+
+      const finishAfterPreAuthAlert = (finish: () => void) => {
+        if (preAuthAlertPendingRef.current) {
+          afterPreAuthAlertRef.current = finish;
+          return;
+        }
+        finish();
+      };
+
+      const handlePreAuthAlertClosed = () => {
+        setPreAuthAlert(null);
+        preAuthAlertPendingRef.current = false;
+        const finish = afterPreAuthAlertRef.current;
+        afterPreAuthAlertRef.current = null;
+        finish?.();
+      };
+
       useEffect(() => {
         lastPricingPreviewKeyRef.current =
           undefined;
@@ -2951,7 +2974,7 @@ const PatientPaymentInfo =
           if (
             onReceiptClosed
           ) {
-            onReceiptClosed();
+            finishAfterPreAuthAlert(onReceiptClosed);
           }
         };
 
@@ -3149,6 +3172,7 @@ const PatientPaymentInfo =
               defaultServiceRows.find(row => row.serviceId === item.serviceId)?.serviceName ||
               `Service ${item.serviceId}`
           }));
+        preAuthAlertPendingRef.current = true;
         setPreAuthAlert(items.length ? items : [{ label: 'Service' }]);
       };
 
@@ -3774,19 +3798,15 @@ const PatientPaymentInfo =
                   await onPaymentSaved();
                 }
 
-                if (
-                  onPaymentDeferred
-                ) {
-                  onPaymentDeferred();
-                } else if (
-                  onNothingToPay
-                ) {
-                  onNothingToPay();
-                } else if (
-                  onReceiptClosed
-                ) {
-                  onReceiptClosed();
-                }
+                finishAfterPreAuthAlert(() => {
+                  if (onPaymentDeferred) {
+                    onPaymentDeferred();
+                  } else if (onNothingToPay) {
+                    onNothingToPay();
+                  } else if (onReceiptClosed) {
+                    onReceiptClosed();
+                  }
+                });
 
                 return true;
               } catch (
@@ -3921,19 +3941,15 @@ const PatientPaymentInfo =
                 await onPaymentSaved();
               }
 
-              if (
-                onPaymentDeferred
-              ) {
-                onPaymentDeferred();
-              } else if (
-                onNothingToPay
-              ) {
-                onNothingToPay();
-              } else               if (
-                onReceiptClosed
-              ) {
-                onReceiptClosed();
-              }
+              finishAfterPreAuthAlert(() => {
+                if (onPaymentDeferred) {
+                  onPaymentDeferred();
+                } else if (onNothingToPay) {
+                  onNothingToPay();
+                } else if (onReceiptClosed) {
+                  onReceiptClosed();
+                }
+              });
 
               lastConfirmPayZeroNowRef.current = true;
 
@@ -6394,7 +6410,7 @@ const PatientPaymentInfo =
             open={Boolean(preAuthAlert?.length)}
             encounterId={encounterId}
             items={preAuthAlert ?? []}
-            onClosed={() => setPreAuthAlert(null)}
+            onClosed={handlePreAuthAlertClosed}
           />
         </Form>
       );
