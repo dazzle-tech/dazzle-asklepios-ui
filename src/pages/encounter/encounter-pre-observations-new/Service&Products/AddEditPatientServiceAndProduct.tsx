@@ -43,6 +43,7 @@ import {
   useGetBrandMedicationsByNameQuery
 } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllUnitsByGroupIdQuery } from '@/services/setup/uom-group/uomGroupService';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
 
 import {
   useGetActiveDiagnosticTestsByTypeQuery,
@@ -331,6 +332,22 @@ const AddEditPatientServiceAndProduct = ({
     );
 
 
+    // All active vaccine brands; the same query lists and searches (by name or code)
+    const {
+      data: vaccineBrandsResponse,
+      isFetching: isFetchingVaccineBrands
+    } = useSearchActiveVaccineBrandsQuery(
+      {
+        name: debouncedSelectSearch || undefined,
+        page: selectPage,
+        size: 20,
+        sort: 'name,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'VACCINE'
+      }
+    );
+
     const getSearchData = (response: any) => {
   return (response?.data ?? []).filter(
     (item: any) => item?.isActive === true
@@ -369,6 +386,9 @@ const AddEditPatientServiceAndProduct = ({
             ? proceduresSearchResponse
             : proceduresResponse;
 
+        case 'VACCINE':
+          return vaccineBrandsResponse;
+
         default:
           return null;
       }
@@ -392,7 +412,9 @@ const AddEditPatientServiceAndProduct = ({
       servicesSearchResponse,
 
       proceduresResponse,
-      proceduresSearchResponse
+      proceduresSearchResponse,
+
+      vaccineBrandsResponse
     ]);
 
     useEffect(() => {
@@ -486,7 +508,8 @@ const AddEditPatientServiceAndProduct = ({
     patientServiceAndProduct?.brandMedicationId ??
     patientServiceAndProduct?.diagnosticTestId ??
     patientServiceAndProduct?.serviceId ??
-    patientServiceAndProduct?.procedureId;
+    patientServiceAndProduct?.procedureId ??
+    patientServiceAndProduct?.vaccineBrandId;
 
   // Unit price (in the picked UOM unit for medications) and price for the quantity
   useEffect(() => {
@@ -572,7 +595,9 @@ const AddEditPatientServiceAndProduct = ({
         coverageType: 'SELF_PAY',
         patientInsuranceId: null,
         uomGroupUnitId:
-          billingItemType === 'MEDICATION' ? nextRecord.uomGroupUnitId ?? null : null
+          billingItemType === 'MEDICATION' ? nextRecord.uomGroupUnitId ?? null : null,
+        vaccineBrandId:
+          billingItemType === 'VACCINE' ? nextRecord.vaccineBrandId ?? undefined : undefined
       }).unwrap();
 
       if (preview.requiresCashConfirmation) {
@@ -651,6 +676,13 @@ const AddEditPatientServiceAndProduct = ({
       !patientServiceAndProduct?.procedureId
     ) {
       errorMsg += errorMsg ? ', Procedure can`t be empty' : 'Procedure can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'VACCINE' &&
+      !patientServiceAndProduct?.vaccineBrandId
+    ) {
+      errorMsg += errorMsg ? ', Vaccine brand can`t be empty' : 'Vaccine brand can`t be empty';
     }
 
     if (!patientServiceAndProduct?.quantity || Number(patientServiceAndProduct?.quantity) <= 0) {
@@ -779,6 +811,18 @@ const AddEditPatientServiceAndProduct = ({
             currentSelectResponse?.links?.next != null
         };
 
+      case 'VACCINE':
+        return {
+          fieldName: 'vaccineBrandId',
+          fieldLabel: 'Vaccine Brand',
+          selectData,
+          selectDataLabel: 'displayName',
+          selectDataValue: 'id',
+          loading: isFetchingVaccineBrands,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
       default:
         return null;
     }
@@ -803,7 +847,9 @@ const AddEditPatientServiceAndProduct = ({
     isFetchingServicesSearch,
 
     isFetchingProcedures,
-    isFetchingProceduresSearch
+    isFetchingProceduresSearch,
+
+    isFetchingVaccineBrands
   ]);
 
   const handleFetchMore = () => {
@@ -819,7 +865,8 @@ const AddEditPatientServiceAndProduct = ({
       isFetchingServices ||
       isFetchingServicesSearch ||
       isFetchingProcedures ||
-      isFetchingProceduresSearch
+      isFetchingProceduresSearch ||
+      isFetchingVaccineBrands
     ) {
       return;
     }
@@ -830,26 +877,34 @@ const AddEditPatientServiceAndProduct = ({
   };
 
   const handleSelectSearch = (value: string) => {
+    // Closing the list clears the search; when it was already empty the cached page is not
+    // fetched again, so clearing the loaded items here would leave the list empty
+    if (value === selectSearch) {
+      return;
+    }
+
     setSelectSearch(value);
     setSelectPage(0);
     setSelectData([]);
   };
 
   const selectDataWithSelectedItem = useMemo(() => {
-    if (!selectedSelectItem?.id) {
-      return selectData;
+    const withSelected =
+      !selectedSelectItem?.id ||
+      selectData.some(item => String(item?.id) === String(selectedSelectItem.id))
+        ? selectData
+        : [selectedSelectItem, ...selectData];
+
+    if (patientServiceAndProduct?.billingItemType !== 'VACCINE') {
+      return withSelected;
     }
 
-    const exists = selectData.some(
-      item => String(item?.id) === String(selectedSelectItem.id)
-    );
-
-    if (exists) {
-      return selectData;
-    }
-
-    return [selectedSelectItem, ...selectData];
-  }, [selectData, selectedSelectItem]);
+    // Brand names can repeat between vaccines/facilities, so the code is shown with the name
+    return withSelected.map(brand => ({
+      ...brand,
+      displayName: brand?.code ? `${brand.name} - ${brand.code}` : brand?.name ?? ''
+    }));
+  }, [selectData, selectedSelectItem, patientServiceAndProduct?.billingItemType]);
 
   const handleSave = async () => {
     const validationError = getValidationError();
@@ -893,6 +948,11 @@ const AddEditPatientServiceAndProduct = ({
               ? patientServiceAndProduct.procedureId ?? null
               : null,
 
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
+              : null,
+
           quantity: Number(patientServiceAndProduct.quantity),
           unitPrice: pricing?.unitPrice ?? patientServiceAndProduct.unitPrice ?? 0,
           currency: patientServiceAndProduct.currency,
@@ -933,6 +993,11 @@ const AddEditPatientServiceAndProduct = ({
           procedureId:
             patientServiceAndProduct.billingItemType === 'PROCEDURE'
               ? patientServiceAndProduct.procedureId ?? null
+              : null,
+
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
               : null,
 
           quantity: Number(patientServiceAndProduct.quantity),
@@ -995,6 +1060,7 @@ const AddEditPatientServiceAndProduct = ({
             diagnosticTestId: null,
             serviceId: null,
             procedureId: null,
+            vaccineBrandId: null,
             uomGroupUnitId: null,
             unitPrice: 0,
             currency: ''

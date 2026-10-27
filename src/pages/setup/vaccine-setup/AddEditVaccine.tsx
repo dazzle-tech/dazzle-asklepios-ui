@@ -133,7 +133,8 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     'unique.name.unit.volume':
       'A vaccine brand with the same (name, unit, volume) already exists in this facility.',
     'facility.required': 'Facility is required.',
-    'brand.unique.name': 'Brand name already exists for this vaccine.'
+    'brand.unique.name': 'Brand name already exists for this vaccine.',
+    'unique.code': 'A vaccine brand with the same code already exists.'
   };
 
   const humanMsg =
@@ -286,6 +287,7 @@ const vaccineType = useEnumOptions('VaccineType', {
 
   const tableColumns = [
     { key: 'name', title: <Translate>Brand Name</Translate>, flexGrow: 3 },
+    { key: 'code', title: <Translate>Code</Translate>, flexGrow: 2 },
     {
       key: 'manufacture',
       title: <Translate>manufacture</Translate>,
@@ -428,6 +430,7 @@ const vaccineType = useEnumOptions('VaccineType', {
         id: vaccineBrand?.id,
 
         name: toNullIfEmpty(vaccineBrand?.name?.trim?.()),
+        code: toNullIfEmpty(vaccineBrand?.code?.trim?.()),
         manufacture: toNullIfEmpty(getSelectValue(vaccineBrand?.manufacture, 'key')),
         volume: toNumberOrNull(vaccineBrand?.volume),
         unit: toNullIfEmpty(getSelectValue(vaccineBrand?.unit, 'value')),
@@ -459,6 +462,7 @@ const vaccineType = useEnumOptions('VaccineType', {
       const msg = toHumanBackendError(err, {
         id: 'Brand Id',
         name: 'Brand Name',
+        code: 'Code',
         manufacture: 'Manufacture',
         volume: 'Volume',
         unit: 'Unit',
@@ -790,6 +794,16 @@ const vaccineType = useEnumOptions('VaccineType', {
         column
         fieldLabel="Brand Name"
         fieldName="name"
+        record={vaccineBrand}
+        setRecord={setVaccineBrand}
+        disabled={!editBrand && !vaccine?.id}
+      />
+      <MyInput
+        required
+        width={350}
+        column
+        fieldLabel="Code"
+        fieldName="code"
         record={vaccineBrand}
         setRecord={setVaccineBrand}
         disabled={!editBrand && !vaccine?.id}

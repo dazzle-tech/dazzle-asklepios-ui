@@ -758,6 +758,7 @@ export const newVaccineBrand: modelTypes.VaccineBrand = {
   id: undefined,
   vaccineId: undefined,
   name: '',
+  code: '',
   manufacture: '',
   volume: 0,
   unit: '',

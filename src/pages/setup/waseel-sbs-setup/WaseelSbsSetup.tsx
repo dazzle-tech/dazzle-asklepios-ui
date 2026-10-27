@@ -21,6 +21,7 @@ import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceSer
 import { useGetBrandMedicationsByIsActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetActiveDiagnosticTestsByTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetActiveProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
 
 import {
   useImportSbsExcelMutation,
@@ -57,7 +58,8 @@ const itemTypeOptions = [
   { label: 'Laboratory', value: 'LABORATORY' },
   { label: 'Radiology', value: 'RADIOLOGY' },
   { label: 'Service', value: 'SERVICE' },
-  { label: 'Procedure', value: 'PROCEDURE' }
+  { label: 'Procedure', value: 'PROCEDURE' },
+  { label: 'Vaccine', value: 'VACCINE' }
 ];
 
 const normalizePageData = (response: any) => {
@@ -150,6 +152,8 @@ const WaseelSbsSetup = () => {
   const [radiologyCache, setRadiologyCache] = useState<ItemOption[]>([]);
   const [procedurePage, setProcedurePage] = useState(0);
   const [procedureCache, setProcedureCache] = useState<ItemOption[]>([]);
+  const [vaccinePage, setVaccinePage] = useState(0);
+  const [vaccineCache, setVaccineCache] = useState<ItemOption[]>([]);
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -258,6 +262,18 @@ const WaseelSbsSetup = () => {
       }
     );
 
+  const { data: vaccineBrandsResponse, isFetching: isFetchingVaccineBrands } =
+    useSearchActiveVaccineBrandsQuery(
+      {
+        page: vaccinePage,
+        size: 50,
+        sort: 'name,asc'
+      },
+      {
+        skip: !openMappingModal || mappingForm.itemType !== 'VACCINE'
+      }
+    );
+
   const [importSbsExcel, { isLoading: importing }] = useImportSbsExcelMutation();
   const [createItemMapping, { isLoading: creatingMapping }] = useCreateItemMappingMutation();
   const [updateItemMapping, { isLoading: updatingMapping }] = useUpdateItemMappingMutation();
@@ -321,6 +337,17 @@ const WaseelSbsSetup = () => {
           onFetchMore: () => setProcedurePage(prev => prev + 1)
         };
 
+      case 'VACCINE':
+        return {
+          fieldLabel: 'Vaccine Brand',
+          selectData: vaccineCache,
+          loading: isFetchingVaccineBrands,
+          hasMore:
+            Boolean(vaccineBrandsResponse?.links?.next) ||
+            Number(vaccineBrandsResponse?.totalCount ?? 0) > vaccineCache.length,
+          onFetchMore: () => setVaccinePage(prev => prev + 1)
+        };
+
       default:
         return null;
     }
@@ -336,16 +363,20 @@ const WaseelSbsSetup = () => {
     activeServicesResponse?.totalCount,
     proceduresResponse?.links?.next,
     proceduresResponse?.totalCount,
+    vaccineBrandsResponse?.links?.next,
+    vaccineBrandsResponse?.totalCount,
     isFetchingMedications,
     isFetchingLaboratory,
     isFetchingRadiology,
     isFetchingServices,
     isFetchingProcedures,
+    isFetchingVaccineBrands,
     medicationCache.length,
     laboratoryCache.length,
     radiologyCache.length,
     serviceCache.length,
-    procedureCache.length
+    procedureCache.length,
+    vaccineCache.length
   ]);
 
   const sbsDropdownOptions = useMemo(() => {
@@ -403,6 +434,8 @@ const WaseelSbsSetup = () => {
     setRadiologyCache([]);
     setProcedurePage(0);
     setProcedureCache([]);
+    setVaccinePage(0);
+    setVaccineCache([]);
   }, [openMappingModal]);
 
   useEffect(() => {
@@ -474,6 +507,20 @@ const WaseelSbsSetup = () => {
       return merged;
     });
   }, [proceduresResponse, procedurePage]);
+
+  useEffect(() => {
+    const rows = normalizePageData(vaccineBrandsResponse);
+    const options = normalizeItemOptions(rows);
+    setVaccineCache(prev => {
+      if (vaccinePage === 0) return options;
+      const existing = new Set(prev.map(item => Number(item.id)));
+      const merged = [...prev];
+      options.forEach(item => {
+        if (!existing.has(Number(item.id))) merged.push(item);
+      });
+      return merged;
+    });
+  }, [vaccineBrandsResponse, vaccinePage]);
 
   useEffect(() => {
     const rows = sbsDropdownResponse?.content ?? [];
