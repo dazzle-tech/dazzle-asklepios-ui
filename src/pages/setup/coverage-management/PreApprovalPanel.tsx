@@ -374,7 +374,7 @@ const PreApprovalSourceFields = ({
 }: {
   open: boolean;
   record: any;
-  setRecord: (next: any) => void;
+  setRecord: React.Dispatch<React.SetStateAction<any>>;
 }) => {
   const categories = useEnumOptions('BillingItemTypes', {
     exclude: record.targetLevel === 'SUBCATEGORY' ? ['MEDICATION'] : []
@@ -410,12 +410,18 @@ const PreApprovalSourceFields = ({
         includeAll={false}
         record={{ ...record, billingItemType: record.source, itemId: record.sourceId }}
         setRecord={(next: any) =>
-          setRecord({
-            ...record,
-            source: next.billingItemType ?? null,
-            sourceId: next.itemId ?? null,
-            itemName: next.itemName ?? null,
-            subcategoryKey: null
+          setRecord((prev: any) => {
+            const resolved =
+              typeof next === 'function'
+                ? next({ ...prev, billingItemType: prev.source, itemId: prev.sourceId })
+                : next;
+            return {
+              ...prev,
+              source: resolved?.billingItemType ?? null,
+              sourceId: resolved?.itemId ?? null,
+              itemName: resolved?.itemName ?? null,
+              subcategoryKey: null
+            };
           })
         }
         categoryField="billingItemType"
