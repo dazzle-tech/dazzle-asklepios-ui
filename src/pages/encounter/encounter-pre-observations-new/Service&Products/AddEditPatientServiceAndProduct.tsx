@@ -801,12 +801,17 @@ const AddEditPatientServiceAndProduct = ({
         };
 
         const created = await createPatientServiceAndProduct(createDTO).unwrap();
+        const createdRow = ((created as any)?.object ?? created) as PatientServiceAndProduct;
 
-        if (isHeldForPreAuthorization(created)) {
+        if (isHeldForPreAuthorization(createdRow)) {
           setPreAuthAlert([
             {
-              patientServiceProductId: created?.id ?? null,
-              label: (created as any)?.serviceName || (created as any)?.name || 'Service'
+              patientServiceProductId: createdRow?.id ?? null,
+              label:
+                (createdRow as any)?.serviceName ||
+                (createdRow as any)?.name ||
+                (selectedSelectItem as any)?.name ||
+                'Service'
             }
           ]);
         } else {

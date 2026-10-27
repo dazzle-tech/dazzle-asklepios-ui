@@ -70,21 +70,26 @@ export const isHeldForPreAuthorization = (result: unknown): boolean => {
   if (!result || typeof result !== 'object') {
     return false;
   }
-  const row = result as {
+  const raw = result as Record<string, unknown>;
+  const row = (raw.object && typeof raw.object === 'object' ? raw.object : raw) as {
     coveragePreApprovalPending?: boolean | null;
     preAuthorizationRequired?: boolean | null;
     preAuthorizationStatus?: string | null;
     paymentStatus?: string | null;
+    message?: string | null;
   };
   if (row.coveragePreApprovalPending === true) {
     return true;
   }
   const payment = String(row.paymentStatus ?? '').toUpperCase();
   const auth = String(row.preAuthorizationStatus ?? '').toUpperCase();
+  const message = String(row.message ?? '').toLowerCase();
   return (
     payment === 'SKIPPED_PENDING_PRE_AUTH' ||
-    (row.preAuthorizationRequired === true &&
-      (auth === 'PENDING_APPROVAL' || auth === 'PENDING'))
+    auth === 'PENDING_APPROVAL' ||
+    auth === 'PENDING' ||
+    message.includes('pre-authorization') ||
+    (row.preAuthorizationRequired === true && auth !== 'NOT_REQUIRED' && auth !== 'APPROVED')
   );
 };
 
