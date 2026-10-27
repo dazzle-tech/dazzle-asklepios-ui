@@ -2048,6 +2048,17 @@ export const resolveDisplayChargeRows = (
   return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());
 };
 
+const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
+  const rowAny = row as PatientServiceAndProduct & {
+    preAuthorizationStatus?: string | null;
+    paymentStatus?: string | null;
+  };
+  return (
+    isPreAuthPending(rowAny.preAuthorizationStatus) ||
+    String(rowAny.paymentStatus ?? '').toUpperCase() === 'SKIPPED_PENDING_PRE_AUTH'
+  );
+};
+
 export const mergeBillingChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
   pspRows: PatientServiceAndProduct[] = [],
@@ -2056,9 +2067,21 @@ export const mergeBillingChargeRows = (
   const summaryItems = summary?.items ?? [];
 
   if (summaryItems.length > 0) {
-    return summaryItems.map(item =>
-      mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+    const chargedPspIds = new Set(
+      summaryItems
+        .map(item => item.patientServiceProductId)
+        .filter((id): id is number => id != null)
     );
+    // Lines held for pre-approval have no charge line yet; keep them visible as pending.
+    const heldRows = pspRows
+      .filter(row => !chargedPspIds.has(row.id) && !row.isBilled && isAwaitingPreApproval(row))
+      .map(row => ({ ...mapPspItemToRow(row, lookups), outstandingAmount: 0 }));
+    return [
+      ...summaryItems.map(item =>
+        mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+      ),
+      ...heldRows
+    ];
   }
 
   const summaryPspIds = new Set(
@@ -2084,7 +2107,10 @@ export const mergeBillingChargeRows = (
 
       return true;
     })
-    .map(row => mapPspItemToRow(row, lookups));
+    .map(row => {
+      const mapped = mapPspItemToRow(row, lookups);
+      return isAwaitingPreApproval(row) ? { ...mapped, outstandingAmount: 0 } : mapped;
+    });
 
   return unbilledPspRows;
 };
