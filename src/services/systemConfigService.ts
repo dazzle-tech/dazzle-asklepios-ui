@@ -11,7 +11,8 @@ export enum SystemConfigKey {
   LOGIN_BACKGROUND = 'LOGIN_BACKGROUND',
   ENABLE_DARK_MODE = 'ENABLE_DARK_MODE',
   SIDEBAR_LOGO = 'SIDEBAR_LOGO',
-  SIDEBAR_LOGO_DARK='SIDEBAR_LOGO_DARK'
+  SIDEBAR_LOGO_DARK='SIDEBAR_LOGO_DARK',
+  PRESCRIPTION_STAMP = 'PRESCRIPTION_STAMP'
 }
 
 export type SystemConfigMap = Partial<Record<SystemConfigKey, string>>;
@@ -136,6 +137,20 @@ uploadSidebarLogoDark: builder.mutation({
       body: formData
     };
   }
+}),
+uploadPrescriptionStamp: builder.mutation<SystemConfiguration, File>({
+  query: file => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return {
+      url: 'api/setup/system-config/prescription-stamp',
+      method: 'POST',
+      body: formData
+    };
+  },
+  invalidatesTags: ['SystemConfig'],
+  onQueryStarted
 })
   })
 });
@@ -150,5 +165,6 @@ export const {
   useUploadLoginBackgroundMutation,
   useUploadSidebarLogoMutation,
   useUploadSidebarLogoDarkMutation,
+  useUploadPrescriptionStampMutation,
   useLazyGetSystemConfigQuery
 } = systemConfigService;

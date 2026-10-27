@@ -18,7 +18,8 @@ import {
   useUploadSystemLogoMutation,
   useUploadLoginBackgroundMutation,
   useUploadSidebarLogoMutation,
-  useUploadSidebarLogoDarkMutation
+  useUploadSidebarLogoDarkMutation,
+  useUploadPrescriptionStampMutation
 } from '@/services/systemConfigService';
 import './styles.less';
 
@@ -51,6 +52,7 @@ const SystemConfiguration = () => {
   const [uploadLoginBackground] = useUploadLoginBackgroundMutation();
   const [uploadSidebarLogo] = useUploadSidebarLogoMutation();
   const [uploadSidebarLogoDark] = useUploadSidebarLogoDarkMutation();
+  const [uploadPrescriptionStamp] = useUploadPrescriptionStampMutation();
 
   const [searchTerm, setSearchTerm] = useState({ value: '' });
   const [selectedRow, setSelectedRow] = useState<ConfigRow | null>(null);
@@ -130,6 +132,12 @@ const SystemConfiguration = () => {
         label: 'Sidebar Logo Dark',
         type: 'image',
         value: config.SIDEBAR_LOGO_DARK
+      },
+      {
+        key: SystemConfigKey.PRESCRIPTION_STAMP,
+        label: 'Prescription Stamp',
+        type: 'image',
+        value: config.PRESCRIPTION_STAMP
       }
     ];
   }, [data]);
@@ -225,6 +233,20 @@ const SystemConfiguration = () => {
           <img
             src={row.value}
             alt="Sidebar Logo Dark"
+            className="system-config-logo-img"
+          />
+          <span>Configured</span>
+        </div>
+      ) : (
+        '-'
+      );
+    }
+    if (row.key === SystemConfigKey.PRESCRIPTION_STAMP) {
+      return row.value ? (
+        <div className="system-config-image-preview">
+          <img
+            src={row.value}
+            alt="Prescription Stamp"
             className="system-config-logo-img"
           />
           <span>Configured</span>
@@ -331,6 +353,13 @@ const SystemConfiguration = () => {
           return;
         }
         await uploadSidebarLogoDark(selectedFile).unwrap();
+      }
+      else if (selectedRow.key === SystemConfigKey.PRESCRIPTION_STAMP) {
+        if (!selectedFile) {
+          dispatch(notify({ msg: 'Please select prescription stamp file', sev: 'warning' }));
+          return;
+        }
+        await uploadPrescriptionStamp(selectedFile).unwrap();
       }
 
 
