@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { Form, Nav } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdAdd, MdModeEdit, MdToggleOff } from 'react-icons/md';
@@ -13,32 +13,26 @@ import { formatEnumString } from '@/utils';
 import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
+import PreApprovalPanel from './PreApprovalPanel';
 import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, withSelectedDiagnoses } from './coverageHelpers';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import {
   useCreateDiscountMutation,
   useCreateExclusionMutation,
-  useCreatePreApprovalItemMutation,
   useDeactivateDiscountMutation,
   useDeactivateExclusionMutation,
-  useDeactivatePreApprovalItemMutation,
   useListCopaymentsQuery,
   useListDiscountsQuery,
   useListExclusionsQuery,
-  useListPreApprovalItemsQuery,
-  useListPreApprovalsQuery,
   useListTermItemsQuery,
   useListTermsQuery,
   useSaveCopaymentMutation,
-  useSavePreApprovalMutation,
   useSaveTermItemMutation,
   useSaveTermMutation,
   useToggleCopaymentActiveMutation,
-  useTogglePreApprovalActiveMutation,
   useToggleTermActiveMutation,
   useSearchCoverageDepartmentsQuery,
-  useSearchCoverageFacilitiesQuery,
-  useSearchCoverageServicesQuery
+  useSearchCoverageFacilitiesQuery
 } from '@/services/setup/coverageManagement/coverageManagementService';
 
 const CoverageIcd10Field = ({
@@ -61,7 +55,7 @@ const CoverageIcd10Field = ({
     />
     <p className="coverage-icd10-hint">
       <Translate>
-        Add as many specific diagnoses as needed. Selecting a parent code (for example A00) applies this rule to the whole group under it (A00.0, A00.1, …).
+        Add as many specific diagnoses as needed. Selecting a parent code (for example A00) applies this rule to the whole group under it (A00.0, A00.1, â€¦).
       </Translate>
     </p>
   </div>
@@ -72,7 +66,7 @@ const statusOptions = [
   { label: 'Inactive', value: false }
 ];
 
-const RuleActions = ({
+export const RuleActions = ({
   readOnly,
   onEdit,
   isActive,
@@ -148,7 +142,7 @@ const CoverageRulePanels = ({ classId, readOnly }: { classId: number; readOnly?:
   );
 };
 
-const RuleToolbar = ({
+export const RuleToolbar = ({
   isActive,
   setIsActive,
   onAdd,
@@ -390,15 +384,19 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
     }
     const billingItemType = item.billingItemType === 'ALL' ? null : item.billingItemType;
     const itemId = item.itemId == null || item.itemId === '' ? null : Number(item.itemId);
+    const hasItem = Number.isFinite(itemId as number);
+    const subcategoryKey =
+      termType === 'LIMIT' && !hasItem && item.subcategoryKey ? String(item.subcategoryKey) : null;
     try {
       await saveItem({
         termId: Number(selectedTerm.id),
         body: {
           id: item.id,
-          categoryScope: billingItemType ? (itemId ? 'SERVICE' : 'CATEGORY') : 'ALL',
+          categoryScope: billingItemType ? (hasItem ? 'SERVICE' : subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL',
           billingItemType,
-          serviceId: Number.isFinite(itemId as number) ? itemId : null,
-          serviceName: itemId ? item.itemName || null : null,
+          serviceId: hasItem ? itemId : null,
+          subcategoryKey,
+          serviceName: hasItem ? item.itemName || null : null,
           valueType: item.valueType,
           limitValue: item.limitValue,
           isActive: item.isActive !== false && item.isActive !== 'false'
@@ -419,9 +417,11 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
       termId: Number(selectedTerm.id),
       body: {
         id: row.id,
-        categoryScope: row.billingItemType ? (row.serviceId ? 'SERVICE' : 'CATEGORY') : 'ALL',
+        categoryScope: row.categoryScope
+          ?? (row.billingItemType ? (row.serviceId ? 'SERVICE' : row.subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL'),
         billingItemType: row.billingItemType ?? null,
         serviceId: row.serviceId ?? null,
+        subcategoryKey: row.serviceId ? null : row.subcategoryKey ?? null,
         serviceName: row.serviceId ? row.serviceName || null : null,
         valueType: row.valueType,
         limitValue: row.limitValue,
@@ -438,7 +438,8 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
             ...row,
             billingItemType: row.billingItemType ?? 'ALL',
             itemId: row.serviceId ?? null,
-            itemName: row.serviceName ?? null
+            itemName: row.serviceName ?? null,
+            subcategoryKey: row.subcategoryKey ?? null
           }
         : { billingItemType: null, itemId: null, valueType: 'PERCENTAGE', isActive: true }
     );
@@ -545,6 +546,14 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
                 flexGrow: 2,
                 render: (row: any) => discountCategoryLabel({ ...row, targetType: row.categoryScope })
               },
+              ...(termType === 'LIMIT'
+                ? [{
+                    key: 'subcategoryLabel',
+                    title: 'Subcategory',
+                    flexGrow: 2,
+                    render: (row: any) => row.subcategoryLabel || '-'
+                  }]
+                : []),
               {
                 key: 'serviceName',
                 title: termType === 'COVERAGE' ? 'Item' : 'Service name',
@@ -612,7 +621,12 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
 
       <MyModal open={itemOpen} setOpen={setItemOpen} title={readingModalTitle} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
         <Form fluid className="coverage-form-grid">
-          <BillingCategoryItemFields open={itemOpen} record={item} setRecord={setItem} />
+          <BillingCategoryItemFields
+            open={itemOpen}
+            record={item}
+            setRecord={setItem}
+            showSubcategory={termType === 'LIMIT'}
+          />
           <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={item} setRecord={setItem} selectData={valueTypes} />
           <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={item} setRecord={setItem} />
           <MyInput required width="100%" fieldLabel="Status" fieldType="select" fieldName="isActive" record={item} setRecord={setItem} selectData={statusOptions} selectDataLabel="label" selectDataValue="value" searchable={false} />
@@ -966,279 +980,7 @@ const ExclusionPanel = ({
   );
 };
 
-const PreApprovalPanel = ({
-  classId,
-  tpaId,
-  readOnly
-}: {
-  classId?: number;
-  tpaId?: number;
-  readOnly?: boolean;
-}) => {
-  const dispatch = useAppDispatch();
-  const scopes = useEnumOptions('CoverageApprovalScope');
-  const encounterTypes = useEnumOptions('EncounterType');
-  const valueTypes = useEnumOptions('InsuranceCoverageType');
-  const itemTypes = useEnumOptions('CoverageRuleTarget');
-  const [isActive, setIsActive] = useState(true);
-  const [paging, setPaging] = useState(emptyPage);
-  const [open, setOpen] = useState(false);
-  const [itemOpen, setItemOpen] = useState(false);
-  const [record, setRecord] = useState<any>({});
-  const [item, setItem] = useState<any>({});
-  const [selected, setSelected] = useState<any>(null);
-  const facilityLookup = useLookupPaging(String(open));
-  const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
-  const serviceLookup = useLookupPaging(String(itemOpen));
-  const facilities = useSearchCoverageFacilitiesQuery({ page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch }, { skip: !open });
-  const departments = useSearchCoverageDepartmentsQuery(
-    { facilityId: Number(record.facilityId || 0), page: departmentLookup.page, size: 15, search: departmentLookup.appliedSearch },
-    { skip: !open || record.approvalScope !== 'DEPARTMENT' || !record.facilityId }
-  );
-  const services = useSearchCoverageServicesQuery({ page: serviceLookup.page, size: 15, search: serviceLookup.appliedSearch }, { skip: !itemOpen || item.itemType !== 'SERVICE' });
-  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
-  const { data, isFetching } = useListPreApprovalsQuery({ ...owner, isActive, ...paging });
-  const itemsQuery = useListPreApprovalItemsQuery(
-    { preApprovalId: Number(selected?.id), page: 0, size: 10 },
-    { skip: !selected?.id }
-  );
-  const [save] = useSavePreApprovalMutation();
-  const [toggleActive] = useTogglePreApprovalActiveMutation();
-  const [createItem] = useCreatePreApprovalItemMutation();
-  const [deactivateItem] = useDeactivatePreApprovalItemMutation();
-
-  const persist = async () => {
-    if (!record.valueType) {
-      notifyWarning(dispatch, 'Value type is required');
-      return;
-    }
-    if (record.limitValue == null || Number(record.limitValue) <= 0) {
-      notifyWarning(dispatch, 'Limit value must be greater than zero');
-      return;
-    }
-    if (record.valueType === 'PERCENTAGE' && Number(record.limitValue) > 100) {
-      notifyWarning(dispatch, 'Percentage limit cannot be greater than 100');
-      return;
-    }
-    try {
-      await save({ ...owner, body: record }).unwrap();
-      notifySuccess(dispatch, record.id ? 'Pre-approval updated' : 'Pre-approval saved');
-      setOpen(false);
-    } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to save pre-approval');
-    }
-  };
-
-  const changeStatus = async (row: any) => {
-    try {
-      await toggleActive(row.id).unwrap();
-      if (selected?.id === row.id) {
-        setSelected({ ...row, isActive: !row.isActive });
-      }
-      notifySuccess(dispatch, row.isActive ? 'Pre-approval deactivated' : 'Pre-approval activated');
-    } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to update pre-approval status');
-    }
-  };
-
-  const persistItem = async () => {
-    const selectedDiagnoses = diagnosisIdsOf(item);
-    const categoryItemId = item.serviceId == null || item.serviceId === '' ? null : Number(item.serviceId);
-    if (item.itemType === 'CATEGORY' && !item.serviceCategory) {
-      notifyWarning(dispatch, 'Category is required');
-      return;
-    }
-    if (item.itemType === 'DIAGNOSIS' && !item.allDiagnoses && !selectedDiagnoses.length) {
-      notifyWarning(dispatch, 'Select at least one diagnosis');
-      return;
-    }
-    try {
-      await createItem({
-        preApprovalId: Number(selected.id),
-        body: {
-          id: item.id,
-          itemType: item.itemType,
-          serviceCategory: item.itemType === 'CATEGORY' ? item.serviceCategory : null,
-          serviceId: item.itemType === 'CATEGORY'
-            ? (Number.isFinite(categoryItemId) ? categoryItemId : null)
-            : item.itemType === 'SERVICE' ? item.serviceId : null,
-          serviceName: item.itemType === 'CATEGORY'
-            ? (Number.isFinite(categoryItemId) ? item.serviceName || null : null)
-            : item.itemType === 'SERVICE' ? item.serviceName || null : null,
-          allDiagnoses: item.itemType === 'DIAGNOSIS' ? Boolean(item.allDiagnoses) : item.itemType === 'ALL',
-          diagnoses: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses
-            ? selectedDiagnoses.map(diagnosisId => ({ diagnosisId }))
-            : [],
-          diagnosisId: item.itemType === 'DIAGNOSIS' && !item.allDiagnoses ? selectedDiagnoses[0] ?? null : null
-        }
-      }).unwrap();
-      notifySuccess(dispatch, item.id ? 'Pre-approval item updated' : 'Pre-approval item added');
-      setItemOpen(false);
-    } catch (error: any) {
-      notifyError(dispatch, error, item.id ? 'Unable to update item' : 'Unable to add item');
-    }
-  };
-
-  const changeItemStatus = async (row: any) => {
-    try {
-      await deactivateItem(row.id).unwrap();
-      notifySuccess(dispatch, row.isActive ? 'Pre-approval item deactivated' : 'Pre-approval item activated');
-    } catch (error: any) {
-      notifyError(dispatch, error, 'Unable to update pre-approval item status');
-    }
-  };
-
-  return (
-    <>
-      <RuleToolbar readOnly={readOnly} isActive={isActive} setIsActive={setIsActive} onAdd={() => {
-        setRecord({ approvalScope: 'FACILITY', encounterType: 'ALL', valueType: 'PERCENTAGE' });
-        setOpen(true);
-      }} />
-      <MyTable
-        data={data?.data ?? []}
-        totalCount={data?.totalCount ?? 0}
-        loading={isFetching}
-        height={260}
-        page={paging.page}
-        rowsPerPage={paging.size}
-        onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
-        onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
-        onRowClick={(row: any) => setSelected(row)}
-        rowClassName={(row: any) => (selected?.id === row.id ? 'selected-row' : '')}
-        columns={[
-          { key: 'approvalScope', title: 'Approval type', flexGrow: 2, render: (row: any) => formatEnumString(row.approvalScope) },
-          { key: 'facilityName', title: 'Facility', flexGrow: 2 },
-          { key: 'departmentName', title: 'Department', flexGrow: 2 },
-          { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
-          { key: 'valueType', title: 'Value Type', flexGrow: 1, render: (row: any) => formatEnumString(row.valueType) },
-          { key: 'limitValue', title: 'Limit Value', flexGrow: 1 },
-          { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
-          {
-            key: 'actions',
-            title: '',
-            flexGrow: 1,
-            render: (row: any) => (
-              <RuleActions
-                readOnly={readOnly}
-                isActive={row.isActive}
-                onEdit={() => {
-                  setRecord(row);
-                  setOpen(true);
-                }}
-                onToggle={() => changeStatus(row)}
-              />
-            )
-          }
-        ]}
-      />
-      {selected?.id && (
-        <div className="coverage-nested-block">
-          <div className="coverage-nested-title">
-            <Translate>Pre-approval items</Translate>
-            {!readOnly && selected.isActive && (
-              <MyButton prefixIcon={() => <AddOutlineIcon />} color="var(--deep-blue)" width="109px" onClick={() => {
-                setItem({ itemType: 'ALL', allDiagnoses: false });
-                setItemOpen(true);
-              }}>
-                Add
-              </MyButton>
-            )}
-          </div>
-          <MyTable
-            data={itemsQuery.data?.data ?? []}
-            totalCount={itemsQuery.data?.totalCount ?? 0}
-            loading={itemsQuery.isFetching}
-            height={220}
-            columns={[
-              { key: 'itemType', title: 'Pre Approval type', flexGrow: 2, render: (row: any) => formatEnumString(row.itemType) },
-              {
-                key: 'serviceName',
-                title: 'Scope',
-                flexGrow: 3,
-                render: (row: any) => {
-                  if (row.itemType === 'CATEGORY') {
-                    const category = formatEnumString(row.serviceCategory);
-                    if (row.serviceName) {
-                      return category ? `${category} - ${row.serviceName}` : row.serviceName;
-                    }
-                    return category ? `All ${category}` : '-';
-                  }
-                  if (row.itemType === 'DIAGNOSIS') {
-                    return diagnosisLabel(row);
-                  }
-                  return row.serviceName || 'All';
-                }
-              },
-              { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
-              {
-                key: 'actions',
-                title: '',
-                flexGrow: 1,
-                render: (row: any) => (
-                  <RuleActions
-                    readOnly={readOnly}
-                    isActive={row.isActive}
-                    onEdit={() => {
-                      setItem(row);
-                      setItemOpen(true);
-                    }}
-                    onToggle={() => changeItemStatus(row)}
-                  />
-                )
-              }
-            ]}
-          />
-        </div>
-      )}
-      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Pre-Approval' : 'Pre-Approval'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
-        <Form fluid className="coverage-form-grid">
-          <MyInput required width="100%" fieldLabel="Approval type" fieldType="select" fieldName="approvalScope" record={record} setRecord={setRecord} selectData={scopes} />
-          {record.approvalScope === 'FACILITY' && (
-            <>
-              <CoveragePagedSelect fieldName="facilityId" fieldLabel="Facility name" record={record} setRecord={setRecord} result={facilities} page={facilityLookup.page} setPage={facilityLookup.setPage} search={facilityLookup.search} setSearch={facilityLookup.setSearch} required />
-              <MyInput required width="100%" fieldLabel="Encounter type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
-            </>
-          )}
-          {record.approvalScope === 'DEPARTMENT' && (
-            <>
-              <CoveragePagedSelect fieldName="facilityId" fieldLabel="Facility name" record={record} setRecord={next => setRecord({ ...next, departmentId: undefined })} result={facilities} page={facilityLookup.page} setPage={facilityLookup.setPage} search={facilityLookup.search} setSearch={facilityLookup.setSearch} required />
-              <CoveragePagedSelect fieldName="departmentId" fieldLabel="Department name" record={record} setRecord={setRecord} result={departments} page={departmentLookup.page} setPage={departmentLookup.setPage} search={departmentLookup.search} setSearch={departmentLookup.setSearch} required disabled={!record.facilityId} />
-            </>
-          )}
-          <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
-          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={record} setRecord={setRecord} />
-        </Form>
-      } />
-      <MyModal open={itemOpen} setOpen={setItemOpen} title={item.id ? 'Edit Pre-Approval Item' : 'Pre-Approval Item'} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
-        <Form fluid className="coverage-form-grid">
-          <MyInput required width="100%" fieldLabel="Pre Approval type" fieldType="select" fieldName="itemType" record={item} setRecord={setItem} selectData={itemTypes} />
-          {item.itemType === 'CATEGORY' && (
-            <BillingCategoryItemFields
-              open={itemOpen}
-              includeAll={false}
-              record={item}
-              setRecord={setItem}
-              categoryField="serviceCategory"
-              itemField="serviceId"
-              nameField="serviceName"
-            />
-          )}
-          {item.itemType === 'SERVICE' && (
-            <CoveragePagedSelect fieldName="serviceId" fieldLabel="Service name" record={item} setRecord={setItem} result={services} page={serviceLookup.page} setPage={serviceLookup.setPage} search={serviceLookup.search} setSearch={serviceLookup.setSearch} required />
-          )}
-          {item.itemType === 'DIAGNOSIS' && (
-            <>
-              <MyInput width="100%" fieldLabel="All diagnoses" fieldType="check" fieldName="allDiagnoses" record={item} setRecord={setItem} />
-              {!item.allDiagnoses && (
-                <CoverageIcd10Field record={item} setRecord={setItem} required />
-              )}
-            </>
-          )}
-        </Form>
-      } />
-    </>
-  );
-};
 
 export { DiscountPanel, ExclusionPanel, PreApprovalPanel };
 export default CoverageRulePanels;
+

@@ -601,7 +601,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
         if (isPreAuthPending(row.preAuthorizationStatus)) {
           return (
             <Tag color="blue" size="sm">
-              Pending pre-approval
+              Pending pre-authorization
             </Tag>
           );
         }

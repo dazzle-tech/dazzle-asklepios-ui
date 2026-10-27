@@ -124,6 +124,8 @@ export type CoverageTermItem = {
   serviceId?: number | null;
   serviceCode?: string | null;
   serviceName?: string | null;
+  subcategoryKey?: string | null;
+  subcategoryLabel?: string | null;
   valueType?: string;
   limitValue?: number | string;
   isActive?: boolean;
@@ -170,6 +172,11 @@ export type CoveragePreApproval = {
   encounterType?: string | null;
   valueType?: string | null;
   limitValue?: number | string | null;
+  targetLevel?: string | null;
+  source?: string | null;
+  sourceId?: number | null;
+  subcategoryKey?: string | null;
+  scopeLabel?: string | null;
   isActive?: boolean;
 };
 

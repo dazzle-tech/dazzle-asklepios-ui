@@ -226,6 +226,9 @@ export function discountCategoryLabel(row: any) {
 }
 
 export function discountItemLabel(row: any) {
+  if (row?.categoryScope === 'SUBCATEGORY' || row?.targetType === 'SUBCATEGORY') {
+    return '-';
+  }
   if (row?.serviceName) {
     return row.serviceName;
   }

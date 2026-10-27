@@ -267,11 +267,13 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         throw new Error(message);
       }
 
-      setResultMessage(result.message ?? 'Services prepared and prices calculated successfully.');
+      const preparedMessage = result.message ?? 'Services prepared and prices calculated successfully.';
+      const needsPreAuthorization = preparedMessage.toLowerCase().includes('pre-authorization');
+      setResultMessage(preparedMessage);
       dispatch(
         notify({
-          msg: result.message ?? 'Services prepared and prices calculated successfully.',
-          sev: 'success'
+          msg: preparedMessage,
+          sev: needsPreAuthorization ? 'warning' : 'success'
         })
       );
       onPrepared?.();

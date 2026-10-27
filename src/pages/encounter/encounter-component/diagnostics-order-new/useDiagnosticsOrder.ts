@@ -3,6 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import { PRE_AUTHORIZATION_HOLD_MESSAGE } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -771,6 +772,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       );
 
       let added: string[] = [];
+      let held: string[] = [];
       let duplicates: string[] = [];
       let failed: string[] = [];
 
@@ -795,7 +797,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               return;
             }
 
-            await createOrderTest({
+            const created = await createOrderTest({
               orderId: _orderId,
               testId,
               orderType: item.type || 'LABORATORY',
@@ -805,7 +807,11 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               )
             }).unwrap();
 
-            added.push(testName);
+            if (created?.coveragePreApprovalPending) {
+              held.push(testName);
+            } else {
+              added.push(testName);
+            }
           } catch (e: any) {
             if (isUncoveredCashCancelled(e)) {
               return;
@@ -822,6 +828,15 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           notify({
             msg: ` ${added.join(', ')} added successfully`,
             sev: 'success'
+          })
+        );
+      }
+
+      if (held.length) {
+        dispatch(
+          notify({
+            msg: `${held.join(', ')}. ${PRE_AUTHORIZATION_HOLD_MESSAGE}`,
+            sev: 'warning'
           })
         );
       }

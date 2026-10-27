@@ -3727,7 +3727,11 @@ const PatientPaymentInfo =
                       preparedMessage ??
                       'Encounter billing completed. No default services to bill.',
                     sev:
-                      'success'
+                      String(preparedMessage ?? '')
+                        .toLowerCase()
+                        .includes('pre-authorization')
+                        ? 'warning'
+                        : 'success'
                   })
                 );
 

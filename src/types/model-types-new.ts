@@ -3886,6 +3886,7 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   /* ===== Status & lifecycle ===== */
 
   status?: DiagnosticOrderTestStatus;
+  coveragePreApprovalPending?: boolean | null;
 
   acceptedDate?: string;
   rejectedDate?: string;

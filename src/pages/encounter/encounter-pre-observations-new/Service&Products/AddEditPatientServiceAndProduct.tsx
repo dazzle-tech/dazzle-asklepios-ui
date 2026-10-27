@@ -13,6 +13,10 @@ import {
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
+import {
+  isHeldForPreAuthorization,
+  PRE_AUTHORIZATION_HOLD_MESSAGE
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   buildBillingRuleEvaluationRequest,
@@ -795,12 +799,14 @@ const AddEditPatientServiceAndProduct = ({
           acceptUncoveredAsCash: Boolean(coverageWarning)
         };
 
-        await createPatientServiceAndProduct(createDTO).unwrap();
+        const created = await createPatientServiceAndProduct(createDTO).unwrap();
 
         dispatch(
           notify({
-            msg: 'Billing Item Added Successfully',
-            sev: 'success'
+            msg: isHeldForPreAuthorization(created)
+              ? PRE_AUTHORIZATION_HOLD_MESSAGE
+              : 'Billing Item Added Successfully',
+            sev: isHeldForPreAuthorization(created) ? 'warning' : 'success'
           })
         );
       } else {

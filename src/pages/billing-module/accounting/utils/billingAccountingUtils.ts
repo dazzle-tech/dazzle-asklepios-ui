@@ -61,23 +61,50 @@ export type UnifiedBillingChargeRow = {
   clinicalStatus?: string | null;
 };
 
-export type RowPaymentStatus = 'SETTLED' | 'RESERVED' | 'PARTIAL' | 'UNPAID';
+export type RowPaymentStatus = 'SETTLED' | 'RESERVED' | 'PARTIAL' | 'UNPAID' | 'PENDING_PRE_AUTH';
+
+export const PRE_AUTHORIZATION_HOLD_MESSAGE =
+  'This service needs pre-authorization. It was sent to the pre-authorization page and shows as pending pre-authorization on the ledger account.';
+
+export const isHeldForPreAuthorization = (result: unknown): boolean => {
+  if (!result || typeof result !== 'object') {
+    return false;
+  }
+  const row = result as {
+    coveragePreApprovalPending?: boolean | null;
+    preAuthorizationRequired?: boolean | null;
+    preAuthorizationStatus?: string | null;
+    paymentStatus?: string | null;
+  };
+  if (row.coveragePreApprovalPending === true) {
+    return true;
+  }
+  const payment = String(row.paymentStatus ?? '').toUpperCase();
+  const auth = String(row.preAuthorizationStatus ?? '').toUpperCase();
+  return (
+    payment === 'SKIPPED_PENDING_PRE_AUTH' ||
+    (row.preAuthorizationRequired === true &&
+      (auth === 'PENDING_APPROVAL' || auth === 'PENDING'))
+  );
+};
 
 export const ROW_PAYMENT_STATUS_LABELS: Record<RowPaymentStatus, string> = {
   SETTLED: 'Settled',
   RESERVED: 'Reserved',
   PARTIAL: 'Partial',
-  UNPAID: 'Unpaid'
+  UNPAID: 'Unpaid',
+  PENDING_PRE_AUTH: 'Pending pre-authorization'
 };
 
 export const ROW_PAYMENT_STATUS_COLORS: Record<
   RowPaymentStatus,
-  'green' | 'blue' | 'orange' | 'red'
+  'green' | 'blue' | 'orange' | 'red' | 'cyan'
 > = {
   SETTLED: 'green',
   RESERVED: 'blue',
   PARTIAL: 'orange',
-  UNPAID: 'red'
+  UNPAID: 'red',
+  PENDING_PRE_AUTH: 'cyan'
 };
 
 export const toNumericId = (val: unknown): number | null => {
@@ -855,6 +882,15 @@ export const resolveRowPaymentStatus = (
   row: UnifiedBillingChargeRow,
   summary?: EncounterBillingSummary | null
 ): RowPaymentStatus => {
+  if (
+    isPreAuthRequiredRow(row) &&
+    (!row.preAuthorizationStatus ||
+      isPreAuthPending(row.preAuthorizationStatus) ||
+      String(row.preAuthorizationStatus).toUpperCase() === 'PENDING_APPROVAL')
+  ) {
+    return 'PENDING_PRE_AUTH';
+  }
+
   const paidOnInvoice = Number(row.allocatedAmount ?? 0);
   const remainingOnInvoice = Number(row.outstandingAmount ?? NaN);
 

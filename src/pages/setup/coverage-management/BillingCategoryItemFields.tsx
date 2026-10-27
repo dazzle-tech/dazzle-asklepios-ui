@@ -18,6 +18,18 @@ import {
   useGetActiveProceduresByFacilityQuery,
   useGetProceduresByNameQuery
 } from '@/services/setup/procedure/procedureService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+const LOV_BY_SOURCE: Record<string, string> = {
+  LABORATORY: 'LAB_CATEGORIES',
+  RADIOLOGY: 'RAD_CATEGORIES',
+  PATHOLOGY: 'PATH_CATEGORY'
+};
+
+const ENUM_BY_SOURCE: Record<string, string> = {
+  PROCEDURE: 'ProcedureCategory',
+  SERVICE: 'ServiceCategory'
+};
 
 const ITEM_LABELS: Record<string, string> = {
   MEDICATION: 'Medication',
@@ -35,6 +47,8 @@ type Props = {
   categoryField?: string;
   itemField?: string;
   nameField?: string;
+  showSubcategory?: boolean;
+  subcategoryField?: string;
 };
 
 const itemNameOf = (item: any) =>
@@ -47,7 +61,9 @@ const BillingCategoryItemFields = ({
   includeAll = true,
   categoryField = 'billingItemType',
   itemField = 'itemId',
-  nameField = 'itemName'
+  nameField = 'itemName',
+  showSubcategory = false,
+  subcategoryField = 'subcategoryKey'
 }: Props) => {
   const auth = useAppSelector(state => state.auth);
   const selectedFacilityId =
@@ -69,6 +85,25 @@ const BillingCategoryItemFields = ({
   const selectedItemId = record?.[itemField];
   const selectedItemName = record?.[nameField];
   const showItems = Boolean(category && category !== 'ALL');
+  const lovCode = showSubcategory ? LOV_BY_SOURCE[category] : undefined;
+  const enumName = showSubcategory ? ENUM_BY_SOURCE[category] : undefined;
+  const { data: lovResponse } = useGetLovValuesByCodeQuery(lovCode, { skip: !lovCode });
+  const enumOptions = useEnumOptions(enumName || 'ServiceCategory');
+  const subcategorySupported = Boolean(showSubcategory && (lovCode || enumName));
+  const subcategoryOptions = useMemo(() => {
+    if (!subcategorySupported) {
+      return [];
+    }
+    if (lovCode) {
+      return (lovResponse?.object ?? [])
+        .filter((row: any) => row?.isValid !== false)
+        .map((row: any) => ({ value: row.key, label: row.lovDisplayVale }));
+    }
+    if (enumName) {
+      return enumOptions;
+    }
+    return [];
+  }, [subcategorySupported, lovCode, lovResponse, enumName, enumOptions]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSelectSearch(selectSearch.trim()), 300);
@@ -236,7 +271,8 @@ const BillingCategoryItemFields = ({
             setRecord({
               ...next,
               [itemField]: null,
-              [nameField]: null
+              [nameField]: null,
+              [subcategoryField]: null
             });
             return;
           }
@@ -248,6 +284,33 @@ const BillingCategoryItemFields = ({
         searchable={false}
         placeholder="Select"
       />
+      {subcategorySupported && (
+        <MyInput
+          width="100%"
+          fieldLabel="Subcategory"
+          fieldType="select"
+          fieldName={subcategoryField}
+          record={record}
+          setRecord={(next: any) => {
+            const nextKey = next?.[subcategoryField];
+            if (nextKey !== record?.[subcategoryField]) {
+              setRecord({
+                ...next,
+                [itemField]: null,
+                [nameField]: null
+              });
+              return;
+            }
+            setRecord(next);
+          }}
+          selectData={subcategoryOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          searchable
+          cleanable
+          placeholder="Leave empty to apply to the whole category"
+        />
+      )}
       {showItems && (
         <MyInput
           width="100%"
@@ -255,12 +318,18 @@ const BillingCategoryItemFields = ({
           fieldType="selectPagination"
           fieldName={itemField}
           record={record}
-          setRecord={setRecord}
           selectData={selectDataWithSelectedItem}
           selectDataLabel="name"
           selectDataValue="id"
           searchable
           cleanable
+          setRecord={(next: any) => {
+            if (next?.[itemField]) {
+              setRecord({ ...next, [subcategoryField]: null });
+              return;
+            }
+            setRecord(next);
+          }}
           searchKeyWard={selectSearch}
           setSearchKeyWard={(value: string) => {
             setSelectSearch(value);
@@ -274,13 +343,18 @@ const BillingCategoryItemFields = ({
               setSelectPage(prev => prev + 1);
             }
           }}
-          placeholder="Leave empty to apply to the whole category"
+          placeholder={
+            record?.[subcategoryField]
+              ? 'Leave empty to apply to this subcategory'
+              : 'Leave empty to apply to the whole category'
+          }
           onSelectItem={(item: any) => {
             setSelectedSelectItem(item);
             setRecord((prev: any) => ({
               ...prev,
               [itemField]: item?.id ?? null,
-              [nameField]: itemNameOf(item)
+              [nameField]: itemNameOf(item),
+              [subcategoryField]: null
             }));
           }}
         />
