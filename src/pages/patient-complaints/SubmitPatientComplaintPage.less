@@ -1,0 +1,537 @@
+/* =========================================================
+   Public Patient Complaint Page
+   ========================================================= */
+
+.patient-complaint-public-page {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--extra-light-blue, #eef5fb);
+  color: var(--black);
+  font-family: var(--font-family, 'Inter'), sans-serif;
+}
+
+.patient-complaint-public-page * {
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.patient-complaint-public-page .patient-complaint-public-header {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid var(--rs-border-primary, #e5e7eb);
+}
+
+.patient-complaint-public-page .patient-complaint-public-header::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--primary-blue);
+}
+
+.patient-complaint-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  max-width: 940px;
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+
+.patient-complaint-logo {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.patient-complaint-logo img {
+  display: block;
+  width: auto;
+  height: 44px;
+  max-width: min(220px, 42vw);
+  object-fit: contain;
+}
+
+.patient-complaint-language {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--rs-border-primary, #e5e7eb);
+  border-radius: 8px;
+  background: var(--extra-light-blue, #eef5fb);
+}
+
+/* =========================================================
+   Main Heading
+   ========================================================= */
+
+.patient-complaint-public-main {
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.patient-complaint-page-heading {
+  margin-bottom: 24px;
+  text-align: start;
+}
+
+.patient-complaint-page-label {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--one-health-theme-header, #e8f1fb);
+  color: var(--primary-blue);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.patient-complaint-page-heading h1 {
+  margin: 0;
+  color: var(--primary-blue);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.patient-complaint-page-heading p {
+  max-width: 640px;
+  margin: 9px 0 0;
+  color: var(--primary-gray, #6b7280);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* =========================================================
+   Form Container
+   ========================================================= */
+
+.patient-complaint-form-card {
+  width: 100%;
+  overflow: visible;
+  border: 1px solid var(--rs-border-primary, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+}
+
+.patient-complaint-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rs-border-primary, #e5e7eb);
+  border-radius: 10px 10px 0 0;
+  background: var(--one-health-theme-header, #e8f1fb);
+}
+
+.patient-complaint-card-heading h2 {
+  margin: 0;
+  color: var(--primary-blue);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.patient-complaint-card-heading p {
+  margin: 5px 0 0;
+  color: var(--primary-gray, #6b7280);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.patient-complaint-public-form {
+  width: 100%;
+  padding: 4px 24px 0;
+}
+
+/* =========================================================
+   Form Sections
+   ========================================================= */
+
+.patient-complaint-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.patient-complaint-form-section + .patient-complaint-form-section {
+  border-top: 1px solid var(--rs-border-primary, #e5e7eb);
+}
+
+.patient-complaint-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.patient-complaint-section-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--one-health-theme-header, #e8f1fb);
+  color: var(--primary-blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.patient-complaint-section-heading h3 {
+  margin: 0;
+  color: var(--black);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.patient-complaint-section-heading p {
+  margin: 4px 0 0;
+  color: var(--primary-gray, #6b7280);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Fields
+   ========================================================= */
+
+.patient-complaint-fields-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.patient-complaint-document-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.patient-complaint-document-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black, #1e293b);
+}
+
+.patient-complaint-optional {
+  font-weight: 400;
+  color: #64748b;
+}
+
+.patient-complaint-field {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.patient-complaint-field .phone-number-input-wrapper {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.patient-complaint-field .rs-form-group {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.patient-complaint-field .rs-input,
+.patient-complaint-field .rs-picker {
+  max-width: 100%;
+}
+
+/* Time menu portals into this field so it stays glued while body scrolls. */
+.patient-complaint-time-field {
+  position: relative;
+  overflow: visible;
+  z-index: 2;
+}
+
+.patient-complaint-time-field .rs-picker,
+.patient-complaint-time-field .rs-picker-toggle,
+.patient-complaint-time-field .rs-form-control-wrapper {
+  max-width: 100%;
+  overflow: visible;
+}
+
+.patient-complaint-time-field .rs-picker-popup,
+.patient-complaint-time-field .rs-picker-date-menu,
+.patient-complaint-time-field .rs-picker-menu {
+  z-index: 10;
+}
+
+.patient-complaint-field-hint {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.patient-complaint-field-hint.is-error {
+  color: var(--primary-red, #e23670);
+}
+
+.patient-complaint-identity-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 24px 8px;
+}
+
+.patient-complaint-native-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.patient-complaint-file-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.patient-complaint-form-error {
+  margin: 0 24px 16px;
+  color: var(--primary-red, #e23670);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Footer Buttons
+   ========================================================= */
+
+.patient-complaint-form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--rs-border-primary, #e5e7eb);
+}
+
+/* =========================================================
+   Confirmation
+   ========================================================= */
+
+.patient-complaint-confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 42px 24px;
+  text-align: center;
+}
+
+.patient-complaint-confirmation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--one-health-theme-header, #e8f1fb);
+  color: var(--primary-blue);
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.patient-complaint-confirmation h2 {
+  margin: 0;
+  color: var(--primary-blue);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.patient-complaint-confirmation p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--primary-gray, #6b7280);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.patient-complaint-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+  max-width: 100%;
+  margin: 4px 0 8px;
+  padding: 14px 24px;
+  border: 1px solid var(--rs-border-primary, #e5e7eb);
+  border-radius: 8px;
+  background: var(--extra-light-blue, #eef5fb);
+}
+
+.patient-complaint-reference span {
+  color: var(--primary-gray, #6b7280);
+  font-size: 12px;
+}
+
+.patient-complaint-reference strong {
+  color: var(--primary-blue);
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .patient-complaint-header-content {
+    min-height: 68px;
+    padding: 10px 18px;
+  }
+
+  .patient-complaint-logo img {
+    height: 40px;
+  }
+
+  .patient-complaint-public-main {
+    padding: 30px 16px 48px;
+  }
+
+  .patient-complaint-page-heading h1 {
+    font-size: 26px;
+  }
+
+  .patient-complaint-card-heading {
+    padding: 18px 20px;
+  }
+
+  .patient-complaint-public-form {
+    padding-inline: 20px;
+  }
+
+  .patient-complaint-form-footer {
+    padding-inline: 20px;
+  }
+
+  .patient-complaint-form-error {
+    margin-inline: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .patient-complaint-header-content {
+    min-height: 64px;
+    padding: 10px 14px;
+    gap: 12px;
+  }
+
+  .patient-complaint-logo img {
+    height: 36px;
+    max-width: 40vw;
+  }
+
+  .patient-complaint-language {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .patient-complaint-public-main {
+    padding: 24px 12px 36px;
+  }
+
+  .patient-complaint-page-heading {
+    margin-bottom: 18px;
+  }
+
+  .patient-complaint-page-heading h1 {
+    font-size: 23px;
+  }
+
+  .patient-complaint-card-heading {
+    padding: 16px;
+  }
+
+  .patient-complaint-public-form {
+    padding-inline: 16px;
+  }
+
+  .patient-complaint-form-section {
+    gap: 14px;
+    padding: 20px 0;
+  }
+
+  .patient-complaint-fields-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .patient-complaint-form-footer {
+    padding: 16px;
+  }
+
+  .patient-complaint-form-error {
+    margin-inline: 16px;
+  }
+
+  .patient-complaint-confirmation {
+    padding: 32px 18px;
+  }
+}
+.patient-complaint-consent {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--rs-border-primary, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.patient-complaint-consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--black);
+}
+
+.patient-complaint-consent-label input[type='checkbox'] {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+.patient-complaint-consent-label em {
+  color: var(--primary-red, #d64545);
+  font-style: normal;
+}

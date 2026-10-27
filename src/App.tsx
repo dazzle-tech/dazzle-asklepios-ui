@@ -250,6 +250,10 @@ const UrgentCareListMain = lazy (() => import ( './pages/encounter/urgent-care/U
 const FormTemplates = lazy (() => import ( './pages/form-template/FormTemplate'));
 const FormTemplateBuilderPage = lazy (() => import ( './pages/form-template/FormTemplateBuilderPage'));
 const PatientSatisfactionSurveyPage = lazy(() => import('./pages/patient-satisfaction-survey/PatientSatisfactionSurveyPage'));
+const SubmitPatientComplaintPage = lazy(
+  () => import('./pages/patient-complaints/SubmitPatientComplaintPage')
+);
+const PatientComplaintsPage = lazy(() => import('./pages/patient-complaints/PatientComplaintsPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -815,6 +819,7 @@ const App = () => {
               <Route path="facility-patients" element={<FacilityPatients />} />
               <Route path="encounter-status-management" element={<EncounterStatusManagement />} />
               <Route path="patients-encounters-list" element={<PatientsEncounters />} />
+              <Route path="patient-complaints" element={<PatientComplaintsPage />} />
               <Route path="price-list" element={<PriceLists />} />
               <Route path="patients-list" element={<PatientsLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -1057,6 +1062,7 @@ const App = () => {
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyPage />} />
+          <Route path="submit-patient-complaint" element={<SubmitPatientComplaintPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
