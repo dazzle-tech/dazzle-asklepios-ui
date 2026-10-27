@@ -93,6 +93,14 @@ export const filterPreAuthorizationRows = (
     return true;
   });
 
+/**
+ * Local requests (NPHIES contract) have no Waseel request id; the user records the payer decision.
+ */
+export const canDecideLocally = (row: PreAuthorizationTrackingResponse) =>
+  !row.approvalRequestId &&
+  !row.isCancelled &&
+  String(row.status ?? '').toUpperCase() === 'PENDING APPROVAL';
+
 export const canCancelPreAuthorization = (row: PreAuthorizationTrackingResponse) =>
   !!row.approvalRequestId &&
   !row.isCancelled &&

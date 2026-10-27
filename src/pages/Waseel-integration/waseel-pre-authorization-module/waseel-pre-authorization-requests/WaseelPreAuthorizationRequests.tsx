@@ -6,13 +6,15 @@ import {
   useCancelPreAuthorizationMutation,
   useCommunicatePreAuthorizationMutation,
   useUploadPreAuthorizationAttachmentMutation,
-  useResubmitPreAuthorizationMutation
+  useResubmitPreAuthorizationMutation,
+  useDecideLocalPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 
 import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
 import type {
+  LocalPreAuthorizationDecision,
   PreAuthorizationCancelRequest,
   PreAuthorizationCommunicationRequest,
   PreAuthorizationTrackingResponse
@@ -23,6 +25,7 @@ import PreAuthorizationFilters from './PreAuthorizationFilters';
 import PreAuthorizationRequestsTable from './PreAuthorizationRequestsTable';
 import PreAuthorizationCancelModal from './PreAuthorizationCancelModal';
 import PreAuthorizationResubmitModal from './PreAuthorizationResubmitModal';
+import PreAuthorizationDecisionModal from './PreAuthorizationDecisionModal';
 import PreAuthorizationCommunicationModal, {
   type CommunicationAttachmentFile,
   type CommunicationContentType
@@ -48,6 +51,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [openResubmitModal, setOpenResubmitModal] = useState(false);
+  const [decision, setDecision] = useState<LocalPreAuthorizationDecision | null>(null);
+  const [decisionNote, setDecisionNote] = useState('');
 
   const [openCommunicationModal, setOpenCommunicationModal] = useState(false);
   const [openCommunicationsDrawer, setOpenCommunicationsDrawer] = useState(false);
@@ -80,6 +85,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [cancelPreAuthorization, { isLoading: isCancelling }] = useCancelPreAuthorizationMutation();
   const [resubmitPreAuthorization, { isLoading: isResubmitting }] =
     useResubmitPreAuthorizationMutation();
+  const [decideLocalPreAuthorization, { isLoading: isDeciding }] =
+    useDecideLocalPreAuthorizationMutation();
   const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
@@ -308,6 +315,55 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     }
   };
 
+  const openDecision = useCallback(
+    (row: PreAuthorizationTrackingResponse, nextDecision: LocalPreAuthorizationDecision) => {
+      setSelectedRow(row);
+      setDecision(nextDecision);
+      setDecisionNote('');
+    },
+    []
+  );
+
+  const closeDecision = () => {
+    setDecision(null);
+    setDecisionNote('');
+  };
+
+  const submitDecision = async () => {
+    if (!selectedRow?.id || !decision) {
+      dispatch(notify({ msg: 'No pre-authorization selected', sev: 'error' }));
+      return;
+    }
+
+    try {
+      const result = await decideLocalPreAuthorization({
+        preAuthorizationId: Number(selectedRow.id),
+        body: {
+          decision,
+          note: decisionNote.trim() || null
+        }
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg:
+            result?.message ??
+            (decision === 'APPROVED' ? 'Pre-authorization approved' : 'Pre-authorization rejected'),
+          sev: 'success'
+        })
+      );
+      closeDecision();
+      await refetch();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Failed to save the pre-authorization decision',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const submitResubmit = async () => {
     if (!selectedRow?.id) {
       dispatch(notify({ msg: 'No pre-authorization selected', sev: 'error' }));
@@ -436,7 +492,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
           onResubmit: openResubmit,
           onCommunication: openCommunication,
           onViewCommunications: openCommunicationsHistory,
-          onCancel: openCancel
+          onCancel: openCancel,
+          onDecide: openDecision
         },
         encounterMap,
         patientMap
@@ -448,6 +505,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       openCommunication,
       openCommunicationsHistory,
       openCancel,
+      openDecision,
       encounterMap,
       patientMap
     ]
@@ -500,6 +558,17 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         isSubmitting={isResubmitting}
         onClose={() => setOpenResubmitModal(false)}
         onSubmit={submitResubmit}
+      />
+
+      <PreAuthorizationDecisionModal
+        open={decision != null}
+        row={selectedRow}
+        decision={decision}
+        note={decisionNote}
+        isSubmitting={isDeciding}
+        onNoteChange={setDecisionNote}
+        onClose={closeDecision}
+        onSubmit={submitDecision}
       />
 
       <PreviewWaseelPreAuthorizationRequests

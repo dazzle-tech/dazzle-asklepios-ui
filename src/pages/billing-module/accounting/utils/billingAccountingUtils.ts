@@ -2059,6 +2059,17 @@ const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
   );
 };
 
+/**
+ * Nothing is due on a line waiting for pre-approval. The patient / insurance split
+ * is calculated after the payer decision.
+ */
+const toAwaitingPreApprovalRow = (row: UnifiedBillingChargeRow): UnifiedBillingChargeRow => ({
+  ...row,
+  patientAmount: 0,
+  insuranceAmount: 0,
+  outstandingAmount: 0
+});
+
 export const mergeBillingChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
   pspRows: PatientServiceAndProduct[] = [],
@@ -2075,7 +2086,7 @@ export const mergeBillingChargeRows = (
     // Lines held for pre-approval have no charge line yet; keep them visible as pending.
     const heldRows = pspRows
       .filter(row => !chargedPspIds.has(row.id) && !row.isBilled && isAwaitingPreApproval(row))
-      .map(row => ({ ...mapPspItemToRow(row, lookups), outstandingAmount: 0 }));
+      .map(row => toAwaitingPreApprovalRow(mapPspItemToRow(row, lookups)));
     return [
       ...summaryItems.map(item =>
         mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
@@ -2109,7 +2120,7 @@ export const mergeBillingChargeRows = (
     })
     .map(row => {
       const mapped = mapPspItemToRow(row, lookups);
-      return isAwaitingPreApproval(row) ? { ...mapped, outstandingAmount: 0 } : mapped;
+      return isAwaitingPreApproval(row) ? toAwaitingPreApprovalRow(mapped) : mapped;
     });
 
   return unbilledPspRows;

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-import { FaPaperPlane, FaRotate } from 'react-icons/fa6';
+import { FaCircleCheck, FaCircleXmark, FaPaperPlane, FaRotate } from 'react-icons/fa6';
 import { MdCancel, MdOutlineMessage, MdOutlineForum } from 'react-icons/md';
 
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
 
-import { canCancelPreAuthorization } from './utils';
+import { canCancelPreAuthorization, canDecideLocally } from './utils';
 import type { PreAuthorizationRowHandlers } from './types';
 
 type PreAuthorizationRowActionsProps = PreAuthorizationRowHandlers & {
@@ -18,7 +18,8 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
   onResubmit,
   onCommunication,
   onViewCommunications,
-  onCancel
+  onCancel,
+  onDecide
 }) => {
   const canCancel = row.canCancel ?? canCancelPreAuthorization(row);
   const canResubmit = row.canResubmit === true;
@@ -29,9 +30,48 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
     (!!row.approvalResponseId && !row.isCancelled);
   const communicationCount = Number(row.communicationCount ?? 0);
   const hasCommunications = communicationCount > 0;
+  const canDecide = canDecideLocally(row);
 
   return (
     <div className="container-of-icons" onClick={event => event.stopPropagation()}>
+      {canDecide && (
+        <>
+          <Whisper
+            placement="top"
+            trigger="hover"
+            container={() => document.body}
+            speaker={<Tooltip>Approve</Tooltip>}
+          >
+            <span>
+              <FaCircleCheck
+                className="icons-style"
+                size={20}
+                fill="var(--primary-gray)"
+                onClick={() => onDecide(row, 'APPROVED')}
+                style={{ cursor: 'pointer' }}
+              />
+            </span>
+          </Whisper>
+
+          <Whisper
+            placement="top"
+            trigger="hover"
+            container={() => document.body}
+            speaker={<Tooltip>Reject</Tooltip>}
+          >
+            <span>
+              <FaCircleXmark
+                className="icons-style"
+                size={20}
+                fill="var(--primary-gray)"
+                onClick={() => onDecide(row, 'REJECTED')}
+                style={{ cursor: 'pointer' }}
+              />
+            </span>
+          </Whisper>
+        </>
+      )}
+
       <Whisper
         placement="top"
         trigger="hover"

@@ -1,4 +1,7 @@
-import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
+import type {
+  LocalPreAuthorizationDecision,
+  PreAuthorizationTrackingResponse
+} from '@/types/model-types-new';
 
 export type Filters = {
   preAuthId: string;
@@ -64,4 +67,5 @@ export type PreAuthorizationRowHandlers = {
   onCommunication: (row: PreAuthorizationTrackingResponse) => void;
   onViewCommunications: (row: PreAuthorizationTrackingResponse) => void;
   onCancel: (row: PreAuthorizationTrackingResponse) => void;
+  onDecide: (row: PreAuthorizationTrackingResponse, decision: LocalPreAuthorizationDecision) => void;
 };

@@ -5626,6 +5626,13 @@ export type CancelReason =
   | 'WRONG_INFORMATION'
   | 'TRANSACTION_ALREADY_SUBMITTED';
 
+export type LocalPreAuthorizationDecision = 'APPROVED' | 'REJECTED';
+
+export type LocalPreAuthorizationDecisionRequest = {
+  decision: LocalPreAuthorizationDecision;
+  note?: string | null;
+};
+
 export type PreAuthorizationCancelRequest = {
   preAuthorizationId?: number;
   approvalRequestId?: number;

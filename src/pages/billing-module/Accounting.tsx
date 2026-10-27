@@ -395,7 +395,7 @@ const Accounting: React.FC = () => {
         notify({
           msg:
             result.message ??
-            'Pre-authorization statuses refreshed from Waseel.',
+            'Pre-authorization statuses refreshed.',
           sev: result.canCloseCalculation === false ? 'warning' : 'success'
         })
       );
@@ -405,7 +405,7 @@ const Accounting: React.FC = () => {
           msg:
             error?.data?.message ??
             error?.message ??
-            'Unable to refresh pre-authorization status from Waseel.',
+            'Unable to refresh pre-authorization status.',
           sev: 'error'
         })
       );
@@ -468,7 +468,7 @@ const Accounting: React.FC = () => {
 
       dispatch(
         notify({
-          msg: 'A new pre-authorization request was submitted to Waseel.',
+          msg: 'A new pre-authorization request was created.',
           sev: 'success'
         })
       );
