@@ -1,0 +1,421 @@
+/* Shared modal/staff form layout helpers */
+.patient-complaint-form-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.patient-complaint-form-row > * {
+  flex: 1 1 0;
+  width: 50%;
+  min-width: 0;
+}
+
+.patient-complaint-form-full {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+
+.patient-complaint-form-full:last-child {
+  margin-bottom: 0;
+}
+
+.patient-complaint-form-error {
+  margin-top: 14px;
+  color: var(--primary-red, #e23670);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: start;
+}
+
+/* =========================================================
+   Patient Complaints Management
+   ========================================================= */
+
+.patient-complaints-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.patient-complaint-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.patient-complaint-summary-card {
+  flex: 1 1 150px;
+  min-width: 150px;
+  padding: 16px 18px;
+  border: 1px solid var(--extra-light-blue, #dbe7f3);
+  border-radius: 12px;
+  background: #fff;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.patient-complaint-summary-card.is-active {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 1px var(--primary-blue);
+}
+
+.patient-complaint-summary-card.is-overdue-card
+  .patient-complaint-summary-value {
+  color: var(--primary-red, #e23670);
+}
+
+.patient-complaint-summary-label {
+  margin-bottom: 8px;
+  color: var(--primary-gray, #6b7280);
+  font-size: 13px;
+}
+
+.patient-complaint-summary-value {
+  color: var(--primary-blue);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.patient-complaint-filters-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.patient-complaints-filter-container {
+  display: flex;
+  flex-direction: row;
+  gap: 1vw;
+}
+
+.patient-complaint-patient-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.patient-complaint-patient-name {
+  color: var(--black);
+  font-weight: 600;
+}
+
+.patient-complaint-subject-line {
+  color: var(--primary-gray, #6b7280);
+  font-size: 12px;
+}
+
+.patient-complaint-status-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  padding-top: 2px;
+  overflow: visible;
+}
+
+.patient-complaint-status-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* Same rsuite Badge pattern as encounter-list "Private", scoped here only */
+.patient-complaint-overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding-top: 12px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.patient-complaint-overdue-badge .rs-badge-content {
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 2px 6px;
+  background-color: var(--primary-red, #e23670) !important;
+  color: #fff !important;
+  pointer-events: none;
+}
+
+html[dir='rtl'] .patient-complaint-overdue-badge .rs-badge-content,
+[dir='rtl'] .patient-complaint-overdue-badge .rs-badge-content {
+  right: auto;
+  left: 0;
+}
+
+.patient-complaint-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.is-overdue {
+  color: var(--primary-red, #e23670);
+  font-weight: 600;
+}
+
+.patient-complaint-overdue-row {
+  background: rgba(226, 54, 112, 0.04);
+}
+
+.patient-complaint-table-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+/* Keep Overdue corner badge visible (Private pattern) without clipping neighbors */
+.patient-complaints-page .my-table-wrapper .MuiTableBody-root .MuiTableCell-root {
+  overflow: visible;
+}
+
+.patient-complaints-page .my-table-wrapper .MuiTableRow-root {
+  overflow: visible;
+}
+
+.patient-complaints-page.is-empty .patient-complaint-table-wrap {
+  min-height: 260px;
+}
+
+.patient-complaints-page.is-empty .no-data-label,
+.patient-complaints-page.is-error .no-data-label {
+  display: none;
+}
+
+.patient-complaint-empty-state {
+  position: absolute;
+  z-index: 2;
+  top: 52px;
+  right: 16px;
+  bottom: 56px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  text-align: center;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.patient-complaint-empty-title {
+  color: var(--black);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.patient-complaint-empty-subtitle {
+  max-width: 360px;
+  color: var(--primary-gray, #6b7280);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.patient-complaint-empty-actions {
+  margin-top: 6px;
+  pointer-events: auto;
+}
+
+/* =========================================================
+   Complaint Details Modal
+   ========================================================= */
+
+.patient-complaint-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patient-complaint-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.patient-complaint-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--extra-light-blue, #eef5fb);
+}
+
+.patient-complaint-detail-label {
+  margin-bottom: 4px;
+  color: var(--primary-gray, #6b7280);
+  font-size: 12px;
+}
+
+.patient-complaint-detail-value {
+  color: var(--black);
+  font-size: 14px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.patient-complaint-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patient-complaint-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.patient-complaint-detail-block {
+  padding: 12px 14px;
+  border: 1px solid var(--extra-light-blue, #dbe7f3);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.patient-complaint-action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--extra-light-blue, #dbe7f3);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.patient-complaint-panel-title {
+  color: var(--primary-blue);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.patient-complaint-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.patient-complaint-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.patient-complaint-action-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--extra-light-blue, #dbe7f3);
+  border-radius: 10px;
+  background: var(--background-light, #f8fafc);
+}
+
+.patient-complaint-action-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.patient-complaint-action-description {
+  margin-bottom: 4px;
+  color: var(--black);
+  font-weight: 600;
+}
+
+.patient-complaint-action-meta {
+  color: var(--primary-gray, #6b7280);
+  font-size: 12px;
+}
+
+.patient-complaint-action-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--dark-blue-gray, #334155);
+  font-size: 13px;
+}
+
+.patient-complaint-complete-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patient-complaint-empty-actions,
+.patient-complaint-locked-note {
+  color: var(--primary-gray, #6b7280);
+  font-size: 13px;
+}
+
+.patient-complaint-locked-note {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--dark-blue-gray, #334155);
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .patient-complaints-filter-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1vw;
+  }
+
+  .patient-complaint-summary-card {
+    min-width: 120px;
+  }
+
+  .patient-complaint-action-item-top {
+    flex-direction: column;
+  }
+
+  .patient-complaint-empty-state {
+    top: 48px;
+    right: 12px;
+    left: 12px;
+    bottom: 64px;
+    padding: 20px 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .patient-complaint-form-row {
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .patient-complaint-form-row > * {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
