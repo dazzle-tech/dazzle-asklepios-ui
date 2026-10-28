@@ -218,9 +218,6 @@ const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
 );
-const PatientSatisfactionSurveyV2Responses = lazy(
-  () => import('./pages/setup/patient-satisfaction-survey-v2-responses')
-);
 const WarehouseItemsSetup = lazy (() => import ( './pages/setup/warehouse-Items-setup'));
 const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/WarehouseSetup'));
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
@@ -253,7 +250,6 @@ const UrgentCareListMain = lazy (() => import ( './pages/encounter/urgent-care/U
 const FormTemplates = lazy (() => import ( './pages/form-template/FormTemplate'));
 const FormTemplateBuilderPage = lazy (() => import ( './pages/form-template/FormTemplateBuilderPage'));
 const PatientSatisfactionSurveyPage = lazy(() => import('./pages/patient-satisfaction-survey/PatientSatisfactionSurveyPage'));
-const PatientSatisfactionSurveyV2Page = lazy(() => import('./pages/patient-satisfaction-survey-v2/PatientSatisfactionSurveyV2Page'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -914,7 +910,7 @@ const App = () => {
               <Route path="ai-services" element={<AiServices />} />
               <Route
                 path="patient-satisfaction-survey-responses"
-                element={<PatientSatisfactionSurveyV2Responses />}
+                element={<PatientSatisfactionSurveyResponses />}
               />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="shift-setup" element={<Shifts />} />
@@ -1060,7 +1056,7 @@ const App = () => {
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
-          <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyV2Page />} />
+          <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

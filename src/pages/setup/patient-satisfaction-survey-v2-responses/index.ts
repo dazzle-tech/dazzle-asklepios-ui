@@ -1,3 +1,0 @@
-import PatientSatisfactionSurveyV2Responses from './PatientSatisfactionSurveyV2Responses';
-
-export default PatientSatisfactionSurveyV2Responses;
