@@ -170,6 +170,8 @@ const AddEncounterVaccine = ({
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [isEncounterVaccineStatusClose, setIsEncounterVacineStatusClose] = useState(false);
   const [isDisabledField, setIsDisabledField] = useState(false);
+  // The vaccine and the brand that was given (and charged) cannot change once saved
+  const isVaccineLocked = isDisabledField || Boolean(encounterVaccination?.id);
 
   const [inputValue, setInputValue] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -564,7 +566,7 @@ const AddEncounterVaccine = ({
             <MyLabel label="Vaccine Name" />
             <InputGroup inside>
               <Input
-                disabled={isDisabledField}
+                disabled={isVaccineLocked}
                 placeholder="Search"
                 value={inputValue}
                 onChange={value => {
@@ -580,7 +582,7 @@ const AddEncounterVaccine = ({
                   if (e.key === 'Enter') executeSearch();
                 }}
               />
-              <InputGroup.Button disabled={isDisabledField} onClick={executeSearch}>
+              <InputGroup.Button disabled={isVaccineLocked} onClick={executeSearch}>
                 <SearchIcon />
               </InputGroup.Button>
             </InputGroup>
@@ -727,7 +729,7 @@ const AddEncounterVaccine = ({
                 setBrandPicker({ vaccineBrandId: item.id as number });
               }}
               placeholder={vaccineBrand?.name ? vaccineBrand.name : 'Select'}
-              disabled={isDisabledField}
+              disabled={isVaccineLocked}
             />
             <MyInput
               column

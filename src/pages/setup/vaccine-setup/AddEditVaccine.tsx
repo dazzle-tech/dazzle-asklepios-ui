@@ -130,8 +130,11 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     'vaccine.notfound': 'Vaccine not found.',
     'vaccine.required': 'Vaccine id is required.',
     'vaccineBrand.notfound': 'Vaccine brand not found.',
-    'unique.name.unit.volume': 'A vaccine brand with the same (name, unit, volume) already exists.',
-    'brand.unique.name': 'Brand name already exists for this vaccine.'
+    'unique.name.unit.volume':
+      'A vaccine brand with the same (name, unit, volume) already exists in this facility.',
+    'facility.required': 'Facility is required.',
+    'brand.unique.name': 'Brand name already exists for this vaccine.',
+    'unique.code': 'A vaccine brand with the same code already exists.'
   };
 
   const humanMsg =
@@ -153,10 +156,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [editBrand, setEditBrand] = useState(false);
   const [openConfirmDeleteBrandModal, setOpenConfirmDeleteBrandModal] = useState<boolean>(false);
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
-
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(
-    vaccine?.facilityId?.id ?? vaccine?.facilityId ?? null
-  );
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
@@ -211,8 +210,9 @@ const vaccineType = useEnumOptions('VaccineType', {
     currency: f.defaultCurrency
   }));
 
-  const selectedFacilityCurrency =
-    facilitiesOptions.find((f: any) => f.value === selectedFacilityId)?.currency ?? '';
+  // Currency is read-only: always the selected facility's default currency
+  const facilityCurrencyOf = (facilityId: number | null | undefined) =>
+    facilitiesOptions.find((f: any) => f.value === facilityId)?.currency ?? '';
 
   const [addVaccineBrand] = useAddVaccineBrandMutation();
   const [updateVaccineBrand] = useUpdateVaccineBrandMutation();
@@ -243,12 +243,6 @@ const vaccineType = useEnumOptions('VaccineType', {
       refetch?.();
     }
   }, [updateVaccineResult?.status]);
-
-  useEffect(() => {
-    if (vaccine?.facilityId) {
-      setSelectedFacilityId(vaccine.facilityId?.id ?? vaccine.facilityId);
-    }
-  }, [vaccine?.facilityId]);
 
   const iconsForActions = (rowData: VaccineBrand) => (
     <div className="container-of-icons">
@@ -293,6 +287,7 @@ const vaccineType = useEnumOptions('VaccineType', {
 
   const tableColumns = [
     { key: 'name', title: <Translate>Brand Name</Translate>, flexGrow: 3 },
+    { key: 'code', title: <Translate>Code</Translate>, flexGrow: 2 },
     {
       key: 'manufacture',
       title: <Translate>manufacture</Translate>,
@@ -326,6 +321,24 @@ const vaccineType = useEnumOptions('VaccineType', {
       key: 'marketingAuthorizationHolder',
       title: <Translate>Marketing Authorization Holder</Translate>,
       flexGrow: 3
+    },
+    {
+      key: 'facilityId',
+      title: <Translate>Facility</Translate>,
+      flexGrow: 3,
+      render: (rowData: VaccineBrand) => (
+        <span>{facilitiesOptions.find((f: any) => f.value === rowData.facilityId)?.label ?? ''}</span>
+      )
+    },
+    {
+      key: 'price',
+      title: <Translate>Price</Translate>,
+      flexGrow: 2,
+      render: (rowData: VaccineBrand) => (
+        <span>
+          {rowData.price ?? ''} {rowData.currency ?? ''}
+        </span>
+      )
     },
     {
       key: 'isActive',
@@ -370,9 +383,6 @@ const vaccineType = useEnumOptions('VaccineType', {
         contraindicationsAndPrecautions: toNullIfEmpty(vaccine?.contraindicationsAndPrecautions),
         storageAndHandling: toNullIfEmpty(vaccine?.storageAndHandling),
 
-        facilityId: selectedFacilityId ? { id: Number(selectedFacilityId) } : null,
-        price: toNumberOrNull(vaccine?.price),
-
         isActive: vaccine?.isActive ?? true
       });
 
@@ -406,8 +416,6 @@ const vaccineType = useEnumOptions('VaccineType', {
         possibleReactions: 'Possible Reactions',
         contraindicationsAndPrecautions: 'Contraindications & Precautions',
         storageAndHandling: 'Storage & Handling',
-        facilityId: 'Facility',
-        price: 'Price',
         isActive: 'Active'
       });
 
@@ -422,10 +430,13 @@ const vaccineType = useEnumOptions('VaccineType', {
         id: vaccineBrand?.id,
 
         name: toNullIfEmpty(vaccineBrand?.name?.trim?.()),
+        code: toNullIfEmpty(vaccineBrand?.code?.trim?.()),
         manufacture: toNullIfEmpty(getSelectValue(vaccineBrand?.manufacture, 'key')),
         volume: toNumberOrNull(vaccineBrand?.volume),
         unit: toNullIfEmpty(getSelectValue(vaccineBrand?.unit, 'value')),
         marketingAuthorizationHolder: toNullIfEmpty(vaccineBrand?.marketingAuthorizationHolder),
+        facilityId: toNumberOrNull(vaccineBrand?.facilityId),
+        price: toNumberOrNull(vaccineBrand?.price),
         isActive: vaccineBrand?.isActive ?? true
       });
 
@@ -451,10 +462,13 @@ const vaccineType = useEnumOptions('VaccineType', {
       const msg = toHumanBackendError(err, {
         id: 'Brand Id',
         name: 'Brand Name',
+        code: 'Code',
         manufacture: 'Manufacture',
         volume: 'Volume',
         unit: 'Unit',
         marketingAuthorizationHolder: 'Marketing Authorization Holder',
+        facilityId: 'Facility',
+        price: 'Price',
         isActive: 'Active'
       });
 
@@ -682,60 +696,6 @@ const vaccineType = useEnumOptions('VaccineType', {
 
             <br />
 
-            <div className="container-of-two-fields-vaccine">
-              <div className="container-of-field-vaccine">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Facility"
-                  fieldType="select"
-                  fieldName="facilityId"
-                  selectData={facilitiesOptions}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={{ facilityId: selectedFacilityId }}
-                  setRecord={(updated: any) => setSelectedFacilityId(updated.facilityId)}
-                  disabled={!edit_new}
-                  menuMaxHeight={200}
-                  required
-                />
-              </div>
-              <div className="container-of-field-vaccine" />
-            </div>
-
-            <br />
-
-            <div className="container-of-two-fields-vaccine">
-              <div className="container-of-field-vaccine">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Price"
-                  fieldName="price"
-                  fieldType="number"
-                  record={vaccine}
-                  setRecord={setVaccine}
-                  disabled={!edit_new}
-                  required
-                />
-              </div>
-              <div className="container-of-field-vaccine">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Currency"
-                  fieldType="select"
-                  fieldName="currency"
-                  selectData={currencyOptions ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={{ currency: selectedFacilityCurrency }}
-                  setRecord={() => {}}
-                  searchable={false}
-                  disabled
-                />
-              </div>
-            </div>
-
-            <br />
-
             <Icd10Search
               object={vaccine}
               setOpject={setVaccine}
@@ -842,6 +802,16 @@ const vaccineType = useEnumOptions('VaccineType', {
         required
         width={350}
         column
+        fieldLabel="Code"
+        fieldName="code"
+        record={vaccineBrand}
+        setRecord={setVaccineBrand}
+        disabled={!editBrand && !vaccine?.id}
+      />
+      <MyInput
+        required
+        width={350}
+        column
         fieldLabel="manufacture"
         fieldType="select"
         fieldName="manufacture"
@@ -890,6 +860,47 @@ const vaccineType = useEnumOptions('VaccineType', {
         record={vaccineBrand}
         setRecord={setVaccineBrand}
         disabled={!editBrand && !vaccine?.id}
+      />
+      <MyInput
+        required
+        width={350}
+        column
+        fieldLabel="Facility"
+        fieldType="select"
+        fieldName="facilityId"
+        selectData={facilitiesOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={vaccineBrand}
+        setRecord={setVaccineBrand}
+        disabled={!editBrand && !vaccine?.id}
+        menuMaxHeight={200}
+      />
+      <MyInput
+        required
+        width={350}
+        column
+        fieldLabel="Price"
+        fieldName="price"
+        fieldType="number"
+        allowDecimal
+        record={vaccineBrand}
+        setRecord={setVaccineBrand}
+        disabled={!editBrand && !vaccine?.id}
+      />
+      <MyInput
+        width={350}
+        column
+        fieldLabel="Currency"
+        fieldType="select"
+        fieldName="currency"
+        selectData={currencyOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={{ currency: facilityCurrencyOf(vaccineBrand?.facilityId) }}
+        setRecord={() => {}}
+        searchable={false}
+        disabled
       />
     </Form>
   );

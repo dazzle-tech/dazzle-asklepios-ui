@@ -22,6 +22,7 @@ import { useLazyGetServicesBulkByIdsQuery } from '@/services/setup/serviceServic
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
 import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetVaccineBrandsByIdsQuery } from '@/services/vaccine/vaccineBrandsService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
@@ -169,15 +170,29 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     [rows]
   );
 
+  const vaccineBrandIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(row => row.billingItemType === 'VACCINE' && row.vaccineBrandId != null)
+            .map(row => row.vaccineBrandId)
+        )
+      ),
+    [rows]
+  );
+
   const [fetchServicesBulk] = useLazyGetServicesBulkByIdsQuery();
   const [fetchDiagnosticTestsBulk] = useLazyGetDiagnosticTestsByIdsQuery();
   const [fetchBrandMedicationsBulk] = useLazyGetBrandMedicationsByIdsQuery();
   const [fetchProcedureById] = useLazyGetProcedureByIdQuery();
+  const [fetchVaccineBrandsBulk] = useLazyGetVaccineBrandsByIdsQuery();
 
   const [servicesMap, setServicesMap] = useState<Record<number | string, any>>({});
   const [medicationsMap, setMedicationsMap] = useState<Record<number | string, any>>({});
   const [diagnosticTestsMap, setDiagnosticTestsMap] = useState<Record<number | string, any>>({});
   const [proceduresMap, setProceduresMap] = useState<Record<number | string, any>>({});
+  const [vaccineBrandsMap, setVaccineBrandsMap] = useState<Record<number | string, any>>({});
 
   const lookupKey = useMemo(
     () =>
@@ -185,9 +200,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         serviceIds,
         medicationIds,
         diagnosticTestIds,
-        procedureIds
+        procedureIds,
+        vaccineBrandIds
       }),
-    [serviceIds, medicationIds, diagnosticTestIds, procedureIds]
+    [serviceIds, medicationIds, diagnosticTestIds, procedureIds, vaccineBrandIds]
   );
 
   useEffect(() => {
@@ -199,6 +215,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
+        setVaccineBrandsMap({});
         return;
       }
 
@@ -206,7 +223,8 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         serviceIds.length > 0 ||
         medicationIds.length > 0 ||
         diagnosticTestIds.length > 0 ||
-        procedureIds.length > 0;
+        procedureIds.length > 0 ||
+        vaccineBrandIds.length > 0;
 
       if (!hasLookupTargets) {
         return;
@@ -234,12 +252,17 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
           )
           : Promise.resolve([]);
 
-        const [servicesData, medicationsData, diagnosticTestsData, proceduresData] =
+        const vaccineBrandsPromise = vaccineBrandIds.length
+          ? fetchVaccineBrandsBulk({ ids: vaccineBrandIds }, true).unwrap()
+          : Promise.resolve([]);
+
+        const [servicesData, medicationsData, diagnosticTestsData, proceduresData, vaccineBrandsData] =
           await Promise.all([
             servicesPromise,
             medicationsPromise,
             diagnosticTestsPromise,
             proceduresPromise,
+            vaccineBrandsPromise,
           ]);
 
         if (cancelled) {
@@ -265,6 +288,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setProceduresMap(
           Object.fromEntries((proceduresData ?? []).map((item: any) => [item.id, item]))
         );
+
+        setVaccineBrandsMap(
+          Object.fromEntries((vaccineBrandsData ?? []).map((item: any) => [item.id, item]))
+        );
       } catch (error) {
         if (cancelled) {
           return;
@@ -274,6 +301,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
+        setVaccineBrandsMap({});
       }
     };
 
@@ -335,6 +363,9 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
 
       case 'PROCEDURE':
         return proceduresMap[rowData.procedureId!]?.name ?? '-';
+
+      case 'VACCINE':
+        return vaccineBrandsMap[rowData.vaccineBrandId!]?.name ?? '-';
 
       default:
         return '-';

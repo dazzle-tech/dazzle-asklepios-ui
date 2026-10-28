@@ -46,6 +46,13 @@ import {
 import { useGetPractitionerByUserIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { preferredRecorderMimeType, toSupportedAudioFile } from '@/services/ai-services/supportedAudio';
+import {
+  LiveVisitConnection,
+  livePatientContext,
+  type LiveEvidence,
+  type LivePickedUp,
+  type LiveSegment
+} from '@/services/ai-services/liveVisitScribe';
 import { extractErrorMessage } from '@/utils/extractErrorMessage';
 import { notify } from '@/utils/uiReducerActions';
 import './ambient-scribe.less';
@@ -369,23 +376,193 @@ const formatElapsed = (totalSeconds: number) => {
 type RecordingWorkspaceProps = {
   phase: SessionPhase;
   elapsed: number;
-  turns: TranscriptTurn[];
-  interim: string;
-  findings: Finding[];
-  confirmedDoses: string[];
-  liveTranscript: boolean;
   languageLabel: string;
   mode: string;
   audioUrl?: string | null;
   hasDraft?: boolean;
   canRecreateDraft?: boolean;
   recreatingDraft?: boolean;
+  liveSegments: LiveSegment[];
+  pickedUp: LivePickedUp | null;
+  liveNotice: string;
+  liveLink: 'idle' | 'connecting' | 'live';
+  liveHearing: boolean;
   onViewDraft?: () => void;
   onRecreateDraft?: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
-  onConfirmDose: (value: string) => void;
+  onPlaybackStart?: (audio: HTMLAudioElement, fromStart: boolean) => void;
+  onPlaybackPause?: () => void;
+  onPlaybackEnded?: () => void;
+};
+
+const clockMs = (ms: number) => {
+  const total = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+const prettyKey = (value: string) =>
+  value
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+
+const fieldText = (value: unknown) => {
+  if (value == null || value === '') return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
+const RECORD_GROUP_ORDER = [
+  'vital_sign',
+  'body_measurements',
+  'pain_assessment',
+  'nursing_assessment',
+  'clinical_visit',
+  'assessment',
+  'plan_of_care'
+];
+
+const LiveTranscriptPanel = ({
+  segments,
+  notice,
+  link,
+  hearing,
+  phase
+}: {
+  segments: LiveSegment[];
+  notice: string;
+  link: 'idle' | 'connecting' | 'live';
+  hearing: boolean;
+  phase: SessionPhase;
+}) => {
+  const waiting =
+    link === 'connecting'
+      ? 'Connecting to the live transcript…'
+      : link === 'live' && hearing
+        ? phase === 'recording' || phase === 'paused'
+          ? 'Hearing the microphone. Lines appear when speech is recognized.'
+          : 'Hearing the recording. Lines appear when speech is recognized.'
+        : link === 'live'
+          ? 'Connected. Waiting for audio…'
+          : phase === 'recording' || phase === 'paused'
+            ? notice || 'The live transcript has not connected.'
+            : 'Play the recording to send it to the live transcript.';
+
+  return (
+    <div className="ambient-transcript">
+      {notice && <p className="ambient-empty">{notice}</p>}
+      {!segments.length && !notice && <p className="ambient-empty">{waiting}</p>}
+      {segments.map(segment => (
+      <div
+        key={segment.id}
+        className={`ambient-turn${segment.final ? '' : ' is-live'}`}
+        dir={/[\u0600-\u06FF]/.test(segment.text) ? 'rtl' : undefined}
+      >
+        <div
+          className={`ambient-turn-speaker${
+            segment.speaker === 'patient' ? ' is-patient' : segment.speaker === 'doctor' ? ' is-clinician' : ''
+          }`}
+        >
+          {segment.speaker}
+          <span className="ambient-live-meta">
+            {segment.lang ? ` · ${segment.lang}` : ''} · {clockMs(segment.start_ms)}–{clockMs(segment.end_ms)} ·{' '}
+            {segment.final ? 'final' : 'partial'}
+          </span>
+        </div>
+        <p>{segment.text}</p>
+      </div>
+    ))}
+    </div>
+  );
+};
+
+const EvidenceBlock = ({ title, items }: { title: string; items?: LiveEvidence[] }) => {
+  if (!items?.length) return null;
+  return (
+    <>
+      <div className="ambient-live-heading">{title}</div>
+      {items.map((item, index) => (
+        <div key={`${title}-${index}`} className="ambient-finding">
+          <p>{item.text}</p>
+        </div>
+      ))}
+    </>
+  );
+};
+
+const PickedUpPanel = ({ picked, notice }: { picked: LivePickedUp | null; notice: string }) => {
+  const record = picked?.record ?? {};
+  const names = [
+    ...RECORD_GROUP_ORDER.filter(name => record[name]),
+    ...Object.keys(record).filter(name => record[name] && !RECORD_GROUP_ORDER.includes(name))
+  ];
+  const hasItems = Boolean(
+    picked?.complaint?.text ||
+      picked?.symptoms?.length ||
+      picked?.medications?.length ||
+      picked?.exam?.length ||
+      names.length
+  );
+
+  return (
+    <div className="ambient-findings">
+      {notice && <p className="ambient-empty">{notice}</p>}
+      {!hasItems && (
+        <p className="ambient-empty">
+          Updated after a final line, at most every 8 seconds. Medicines always say confirm dose.
+        </p>
+      )}
+      {picked?.complaint?.text && (
+        <>
+          <div className="ambient-live-heading">Complaint</div>
+          <div className="ambient-finding">
+            <p>{picked.complaint.text}</p>
+          </div>
+        </>
+      )}
+      <EvidenceBlock title="Symptoms" items={picked?.symptoms} />
+      {!!picked?.medications?.length && (
+        <>
+          <div className="ambient-live-heading">Medications</div>
+          {picked.medications.map((item, index) => (
+            <div key={`med-${index}`} className="ambient-finding is-flagged">
+              <div className="ambient-finding-label">Confirm dose</div>
+              <p>
+                {item.name}
+                {item.detail ? ` — ${item.detail}` : ''}
+              </p>
+            </div>
+          ))}
+        </>
+      )}
+      <EvidenceBlock title="Exam" items={picked?.exam} />
+      {names.map(name => {
+        const value = record[name] ?? {};
+        const fields = Object.entries(value).filter(([, field]) => field !== null && field !== undefined && field !== '');
+        const missing = picked?.missing_required?.[name] ?? [];
+        const status = picked?.record_status?.[name] ?? '';
+        return (
+          <section key={name} className="ambient-live-record">
+            <header>
+              <b>{prettyKey(name)}</b>
+              {status && <span className="ambient-live-meta">{prettyKey(status)}</span>}
+            </header>
+            {fields.map(([key, field]) => (
+              <div key={key} className="ambient-finding">
+                <div className="ambient-finding-label">{prettyKey(key)}</div>
+                <p>{fieldText(field)}</p>
+              </div>
+            ))}
+            {!!missing.length && (
+              <p className="ambient-live-meta">Still needed: {missing.map(prettyKey).join(', ')}</p>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
 };
 
 const StoppedIconButton = ({
@@ -437,11 +614,19 @@ const RecordingWorkspace = ({
   hasDraft,
   canRecreateDraft = true,
   recreatingDraft,
+  liveSegments,
+  pickedUp,
+  liveNotice,
+  liveLink,
+  liveHearing,
   onViewDraft,
   onRecreateDraft,
   onPause,
   onResume,
-  onStop
+  onStop,
+  onPlaybackStart,
+  onPlaybackPause,
+  onPlaybackEnded
 }: RecordingWorkspaceProps) => {
   const playbackRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -469,11 +654,15 @@ const RecordingWorkspace = ({
     }
 
     if (audio.paused) {
+      const fromStart = audio.ended || audio.currentTime < 0.3;
+      if (audio.ended) audio.currentTime = 0;
+      onPlaybackStart?.(audio, fromStart);
       void audio.play();
       return;
     }
 
     audio.pause();
+    onPlaybackPause?.();
   };
 
   return (
@@ -506,6 +695,7 @@ const RecordingWorkspace = ({
               onEnded={() => {
                 setPlaying(false);
                 setPlaySeconds(0);
+                onPlaybackEnded?.();
               }}
               onTimeUpdate={event => setPlaySeconds(Math.floor(event.currentTarget.currentTime))}
             />
@@ -552,12 +742,7 @@ const RecordingWorkspace = ({
               {phase === 'paused' ? 'Resume' : 'Pause'}
             </MyButton>
             <MyButton
-              appearance="primary"
-              backgroundColor="#e11d2e"
-              size="small"
-              radius="8px"
               prefixIcon={() => <FontAwesomeIcon icon={faStop} />}
-              style={{ padding: '0 14px' }}
               onClick={onStop}
             >
               Stop & create draft
@@ -574,12 +759,25 @@ const RecordingWorkspace = ({
         )}
         <SectionContainer
           title="Live transcript"
-          content={<div className="ambient-empty">Live transcript will be enabled soon.</div>}
+          content={
+            <LiveTranscriptPanel
+              segments={liveSegments}
+              notice={/picked up/i.test(liveNotice) ? '' : liveNotice}
+              link={liveLink}
+              hearing={liveHearing}
+              phase={phase}
+            />
+          }
         />
 
         <SectionContainer
           title="Picked up so far"
-          content={<div className="ambient-empty">Picked up so far will be enabled soon.</div>}
+          content={
+            <PickedUpPanel
+              picked={pickedUp}
+              notice={/picked up/i.test(liveNotice) ? liveNotice : ''}
+            />
+          }
         />
       </div>
     </div>
@@ -811,6 +1009,12 @@ const AmbientScribe = ({
   const draftOptionsRef = useRef<Omit<AmbientDraftRequest, 'audio'>>({});
   const populateSeqRef = useRef(0);
   const [storedDurationMs, setStoredDurationMs] = useState(0);
+  const [liveSegments, setLiveSegments] = useState<LiveSegment[]>([]);
+  const [pickedUp, setPickedUp] = useState<LivePickedUp | null>(null);
+  const [liveNotice, setLiveNotice] = useState('');
+  const [liveLink, setLiveLink] = useState<'idle' | 'connecting' | 'live'>('idle');
+  const [liveHearing, setLiveHearing] = useState(false);
+  const liveRef = useRef<LiveVisitConnection | null>(null);
 
   const [createAmbientDraft] = useCreateAmbientDraftMutation();
   const [saveEncounterAmbient] = useCreateEncounterAmbientMutation();
@@ -961,6 +1165,8 @@ const AmbientScribe = ({
   };
 
   const releaseStream = () => {
+    liveRef.current?.dispose();
+    liveRef.current = null;
     streamRef.current?.getTracks().forEach(track => track.stop());
     streamRef.current = null;
     recorderRef.current = null;
@@ -1090,11 +1296,30 @@ const AmbientScribe = ({
     audioUrlRef.current = nextAudioUrl;
     setAudioUrl(nextAudioUrl);
 
-    let createdDraft: AmbientDraft | null = null;
+    let sessionId = ambientIdRef.current;
+    try {
+      const saved = await saveAmbientSession({
+        consentStatus: givenConsent,
+        audio: audioFile,
+        recordingStoppedAt: details.recordingStoppedAt,
+        recordingDurationMs: details.recordingDurationMs
+      });
+      sessionId = saved?.id ?? sessionId;
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'The ambient session could not be saved.',
+          sev: 'error'
+        })
+      );
+    }
 
     try {
-      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
-      createdDraft = result;
+      const result = await createAmbientDraft({
+        audio: audioFile,
+        ambientId: sessionId,
+        ...draftOptionsRef.current
+      }).unwrap();
 
       const serverText = (result.transcript ?? [])
         .map(segment => segment.text)
@@ -1104,6 +1329,33 @@ const AmbientScribe = ({
       if (serverText) {
         publishTranscript(serverText, '', '');
       }
+
+      if (sessionId) {
+        try {
+          const stored = await updateEncounterAmbientDraft({ id: sessionId, draft: result }).unwrap();
+          setDraft(stored.draft ?? result);
+        } catch {
+          setDraft(result);
+        }
+      } else {
+        const saved = await saveAmbientSession({
+          consentStatus: givenConsent,
+          audio: audioFile,
+          draft: result,
+          recordingStoppedAt: details.recordingStoppedAt,
+          recordingDurationMs: details.recordingDurationMs
+        });
+        setDraft(saved?.draft ?? result);
+      }
+
+      setStoredDurationMs(details.recordingDurationMs);
+      setDraftOpen(true);
+      dispatch(
+        notify({
+          msg: 'Ambient draft is ready for review.',
+          sev: 'success'
+        })
+      );
     } catch (error) {
       const message = extractErrorMessage(error);
       if (details.liveText) {
@@ -1111,46 +1363,14 @@ const AmbientScribe = ({
       }
       dispatch(
         notify({
-          msg: message || 'The recording was captured, but the draft could not be created.',
-          sev: 'error'
+          msg: sessionId
+            ? 'The recording is saved. The draft is still processing and will be stored on this visit when it finishes.'
+            : message || 'The recording was captured, but the draft could not be created.',
+          sev: sessionId ? 'warning' : 'error'
         })
       );
     } finally {
       setPhase('stopped');
-    }
-
-    try {
-      await saveAmbientSession({
-        consentStatus: givenConsent,
-        audio: audioFile,
-        draft: createdDraft,
-        recordingStoppedAt: details.recordingStoppedAt,
-        recordingDurationMs: details.recordingDurationMs
-      });
-
-      if (createdDraft) {
-        setDraft(createdDraft);
-        setStoredDurationMs(details.recordingDurationMs);
-        setDraftOpen(true);
-        dispatch(
-          notify({
-            msg: 'Ambient draft is ready for review.',
-            sev: 'success'
-          })
-        );
-      }
-    } catch (error) {
-      if (createdDraft) {
-        setDraft(createdDraft);
-        setStoredDurationMs(details.recordingDurationMs);
-        setDraftOpen(true);
-      }
-      dispatch(
-        notify({
-          msg: extractErrorMessage(error) || 'The ambient session could not be saved.',
-          sev: 'error'
-        })
-      );
     }
   };
 
@@ -1232,15 +1452,53 @@ const AmbientScribe = ({
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+      });
       streamRef.current = stream;
       chunksRef.current = [];
       publishTranscript('', '', '');
       setFindings([]);
       setConfirmedDoses([]);
+      setLiveSegments([]);
+      setPickedUp(null);
+      setLiveNotice('');
+      setLiveLink('connecting');
+      setLiveHearing(false);
+
+      const live = new LiveVisitConnection();
+      liveRef.current?.dispose();
+      liveRef.current = live;
+      let recordStream = stream;
+      try {
+        recordStream = live.start(stream, livePatientContext(draftOptionsRef.current.patientContext), {
+          onSegment: segment => {
+            setLiveSegments(current => {
+              const index = current.findIndex(item => item.id === segment.id);
+              if (index < 0) return [...current, segment];
+              const next = current.slice();
+              next[index] = segment;
+              return next;
+            });
+          },
+          onFinal: segments => {
+            if (segments.length) setLiveSegments(segments);
+          },
+          onPickedUp: setPickedUp,
+          onError: detail => setLiveNotice(detail),
+          onReady: () => {
+            setLiveLink('live');
+            setLiveNotice('');
+          },
+          onAudio: hearing => setLiveHearing(current => (current === hearing ? current : hearing))
+        });
+      } catch (error) {
+        setLiveLink('idle');
+        setLiveNotice(error instanceof Error ? error.message : 'Live transcript could not start.');
+      }
 
       const mimeType = preferredRecorderMimeType();
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const recorder = mimeType ? new MediaRecorder(recordStream, { mimeType }) : new MediaRecorder(recordStream);
       recorderRef.current = recorder;
 
       recorder.ondataavailable = event => {
@@ -1254,8 +1512,6 @@ const AmbientScribe = ({
       };
 
       recorder.start(1000);
-      shouldListenRef.current = true;
-      startRecognition();
 
       if (microphoneRef.current === 'PHONE') {
         dispatch(
@@ -1285,7 +1541,7 @@ const AmbientScribe = ({
       return;
     }
 
-    stopRecognition(true);
+    liveRef.current?.pause();
     recorder.pause();
     setPhase('paused');
   };
@@ -1297,14 +1553,13 @@ const AmbientScribe = ({
     }
 
     recorder.resume();
-    shouldListenRef.current = true;
-    startRecognition();
+    liveRef.current?.resume();
     setPhase('recording');
   };
 
   const stopRecording = () => {
     const recorder = recorderRef.current;
-    stopRecognition(true);
+    liveRef.current?.stop();
 
     if (recorder && recorder.state !== 'inactive') {
       setPhase('processing');
@@ -1347,6 +1602,8 @@ const AmbientScribe = ({
 
   useEffect(() => {
     return () => {
+      liveRef.current?.dispose();
+      liveRef.current = null;
       shouldListenRef.current = false;
       try {
         recognitionRef.current?.stop();
@@ -1562,7 +1819,11 @@ const AmbientScribe = ({
 
       const audioFile = await toSupportedAudioFile(recordingBlob);
 
-      const result = await createAmbientDraft({ audio: audioFile, ...draftOptionsRef.current }).unwrap();
+      const result = await createAmbientDraft({
+        audio: audioFile,
+        ambientId: ambientIdRef.current,
+        ...draftOptionsRef.current
+      }).unwrap();
       if (ambientIdRef.current) {
         const saved = await updateEncounterAmbientDraft({
           id: ambientIdRef.current,
@@ -1602,6 +1863,16 @@ const AmbientScribe = ({
     }
   };
 
+  const liveLanguageLabel = () => {
+    const langs = new Set(liveSegments.map(segment => segment.lang).filter(Boolean));
+    const arabic = langs.has('ar') || langs.has('mixed');
+    const english = langs.has('en') || langs.has('mixed');
+    if (arabic && english) return 'Arabic + English detected';
+    if (arabic) return 'Arabic detected';
+    if (english) return 'English detected';
+    return 'Listening';
+  };
+
   const statusLabel =
     status === 'given'
       ? 'Consent given'
@@ -1627,17 +1898,17 @@ const AmbientScribe = ({
         <RecordingWorkspace
           phase={phase}
           elapsed={elapsed}
-          turns={toTurns(transcriptText)}
-          interim={interim}
-          findings={findings}
-          confirmedDoses={confirmedDoses}
-          liveTranscript={liveTranscript}
-          languageLabel="Arabic + English detected"
+          languageLabel={liveLanguageLabel()}
           mode={ui.mode}
           audioUrl={audioUrl}
           hasDraft={Boolean(draft)}
           canRecreateDraft={setupAdded}
           recreatingDraft={recreatingDraft}
+          liveSegments={liveSegments}
+          pickedUp={pickedUp}
+          liveNotice={liveNotice}
+          liveLink={liveLink}
+          liveHearing={liveHearing}
           onViewDraft={() => {
             void openStoredDraft();
           }}
@@ -1647,9 +1918,50 @@ const AmbientScribe = ({
           onPause={pauseRecording}
           onResume={resumeRecording}
           onStop={stopRecording}
-          onConfirmDose={value =>
-            setConfirmedDoses(current => (current.includes(value) ? current : [...current, value]))
-          }
+          onPlaybackStart={(audio, fromStart) => {
+            if (fromStart) {
+              setLiveSegments([]);
+              setPickedUp(null);
+              setLiveNotice('');
+              setLiveLink('connecting');
+              setLiveHearing(false);
+            }
+            const live = liveRef.current ?? new LiveVisitConnection();
+            liveRef.current = live;
+            try {
+              live.playRecording(
+                audio,
+                livePatientContext(draftOptionsRef.current.patientContext),
+                {
+                  onSegment: segment => {
+                    setLiveSegments(current => {
+                      const index = current.findIndex(item => item.id === segment.id);
+                      if (index < 0) return [...current, segment];
+                      const next = current.slice();
+                      next[index] = segment;
+                      return next;
+                    });
+                  },
+                  onFinal: segments => {
+                    if (segments.length) setLiveSegments(segments);
+                  },
+                  onPickedUp: setPickedUp,
+                  onError: detail => setLiveNotice(detail),
+                  onReady: () => {
+                    setLiveLink('live');
+                    setLiveNotice('');
+                  },
+                  onAudio: hearing => setLiveHearing(current => (current === hearing ? current : hearing))
+                },
+                fromStart
+              );
+            } catch (error) {
+              setLiveLink('idle');
+              setLiveNotice(error instanceof Error ? error.message : 'The recording could not be sent to the live transcript.');
+            }
+          }}
+          onPlaybackPause={() => liveRef.current?.pause()}
+          onPlaybackEnded={() => liveRef.current?.stop()}
         />
       ) : (
       <div className={`ambient-scribe-launch ${ui.mode === 'dark' ? 'dark' : 'light'}`}>

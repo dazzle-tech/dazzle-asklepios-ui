@@ -214,6 +214,8 @@ export type PreviewCatalogItemPricingRequest = {
   invoiceId?: number | null;
   // MEDICATION: UOM unit to price in (null = the brand's price base unit)
   uomGroupUnitId?: number | null;
+  // VACCINE: the vaccine brand to price
+  vaccineBrandId?: number;
 };
 
 export type PreviewCatalogItemPricingResult = {

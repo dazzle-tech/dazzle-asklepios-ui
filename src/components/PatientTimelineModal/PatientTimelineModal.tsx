@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Loader, Timeline } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
@@ -25,6 +25,19 @@ const PatientTimelineModal: React.FC<PatientTimelineModalProps> = ({ open, setOp
       getPatientTimeline(patientId);
     }
   }, [open, patientId, getPatientTimeline]);
+
+  // Newest first. The service lists events oldest first, so events on the same day are reversed too
+  const timelineEvents = useMemo(() => {
+    const events = data?.timeline ?? [];
+    const time = (date: string) => {
+      const parsed = Date.parse(date);
+      return Number.isNaN(parsed) ? -Infinity : parsed;
+    };
+    return events
+      .map((event, index) => ({ event, index }))
+      .sort((a, b) => time(b.event.date) - time(a.event.date) || b.index - a.index)
+      .map(({ event }) => event);
+  }, [data]);
 
   const missingPatientId = open && !patientId;
   const showLoading = !missingPatientId && (isFetching || (open && isUninitialized));
@@ -68,7 +81,7 @@ const PatientTimelineModal: React.FC<PatientTimelineModalProps> = ({ open, setOp
 
           {!showLoading && !isError && data && data.timeline.length > 0 && (
             <Timeline>
-              {data.timeline.map((event, index) => (
+              {timelineEvents.map((event, index) => (
                 <Timeline.Item
                   key={index}
                   dot={
