@@ -403,7 +403,14 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
             title: 'Pre-auth status',
             width: 140,
             render: (row: UnifiedBillingChargeRow) => (
-              <PreAuthorizationStatusBadge status={row.preAuthorizationStatus} />
+              <>
+                <PreAuthorizationStatusBadge status={row.preAuthorizationStatus} />
+                {row.preAuthorizationReason && (
+                  <div className="billing-accounting__preauth-reason">
+                    {row.preAuthorizationReason}
+                  </div>
+                )}
+              </>
             )
           },
           {

@@ -57,6 +57,8 @@ export type UnifiedBillingChargeRow = {
   chargedAt: string | null;
   preAuthorizationStatus?: string | null;
   preAuthorizationRequired?: boolean | null;
+  /** Why a local pre-approval holds the line, e.g. "Coverage limit exceeded". */
+  preAuthorizationReason?: string | null;
   isBilled: boolean;
   clinicalStatus?: string | null;
 };
@@ -1952,6 +1954,7 @@ export const mapSummaryItemToRow = (
         preAuthorizationRequired?: boolean | null;
       }
     )?.preAuthorizationRequired ?? null,
+  preAuthorizationReason: linkedPsp?.preAuthorizationReason ?? null,
   isBilled: item.chargeLineId != null,
   clinicalStatus: item.clinicalStatus ?? linkedPsp?.clinicalStatus ?? null
 };
@@ -2003,6 +2006,7 @@ export const mapPspItemToRow = (
     chargedAt: rowAny.createdDate ?? null,
     preAuthorizationStatus: rowAny.preAuthorizationStatus ?? null,
     preAuthorizationRequired: rowAny.preAuthorizationRequired ?? null,
+    preAuthorizationReason: row.preAuthorizationReason ?? null,
     isBilled: row.isBilled,
     clinicalStatus: rowAny.clinicalStatus ?? null
   };

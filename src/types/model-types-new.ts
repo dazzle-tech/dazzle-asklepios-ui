@@ -4326,6 +4326,8 @@ export type PatientServiceAndProduct = {
   preAuthorizationStatus?: string | null;
   preAuthorizationReferenceNo?: string | null;
   preAuthorizationRequired?: boolean | null;
+  /** Local (NPHIES) pre-approval reason, e.g. "Coverage limit exceeded". List responses only. */
+  preAuthorizationReason?: string | null;
   itemName?: string | null;
   itemCode?: string | null;
   priceSource?: string | null;
