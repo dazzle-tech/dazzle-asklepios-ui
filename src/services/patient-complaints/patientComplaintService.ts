@@ -56,6 +56,7 @@ export type PatientComplaintSubmitPayload = {
   involvedStaffNames?: string | null;
   desiredResolution?: string | null;
   files?: File[];
+  accessToken?: string;
 };
 
 export type PatientComplaintSubmitResponse = {
@@ -66,12 +67,30 @@ export type PatientComplaintSubmitResponse = {
 export type PatientComplaintPublicLookupRequest = {
   documentType: string;
   documentNumber: string;
+  accessToken?: string;
 };
 
 export type PatientComplaintPublicLookupResult = {
   patientName?: string | null;
   contactPhone?: string | null;
   contactEmail?: string | null;
+};
+
+export type PatientPortalOtpRequest = {
+  primaryDocumentNumber: string;
+};
+
+export type PatientPortalOtpVerifyRequest = {
+  primaryDocumentNumber: string;
+  otp: string;
+};
+
+export type PatientPortalLoginResult = {
+  patientId: number;
+  medicalRecordNumber: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  token: string;
 };
 
 /** Matches backend download ticket shape (url + expiresInSeconds). */
@@ -128,7 +147,11 @@ export const patientComplaintPublicService = createApi({
       PatientComplaintSubmitResponse,
       PatientComplaintSubmitPayload
     >({
-      query: ({ files = [], ...complaint }) => {
+      query: ({ files = [], accessToken, ...complaint }) => {
+        const authHeaders = accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined;
+
         if (files.length > 0) {
           const formData = new FormData();
           formData.append(
@@ -139,27 +162,54 @@ export const patientComplaintPublicService = createApi({
           return {
             url: '/api/patient/patient-complaints/submit',
             method: 'POST',
-            body: formData
+            body: formData,
+            ...(authHeaders ? { headers: authHeaders } : {})
           };
         }
 
         return {
           url: '/api/patient/patient-complaints/submit',
           method: 'POST',
-          body: complaint
+          body: complaint,
+          ...(authHeaders ? { headers: authHeaders } : {})
         };
       }
     }),
 
-    /** Public autofill: exact document type + number; returns name/phone/email only. */
+    requestPatientPortalOtp: builder.mutation<string, PatientPortalOtpRequest>({
+      query: body => ({
+        url: '/api/patient/patient-portal/request-otp',
+        method: 'POST',
+        body,
+        responseHandler: 'text',
+        headers: { 'X-Portal-Secret': 'dev-patient-portal-secret' }
+      })
+    }),
+
+    verifyPatientPortalLoginOtp: builder.mutation<
+      PatientPortalLoginResult,
+      PatientPortalOtpVerifyRequest
+    >({
+      query: body => ({
+        url: '/api/patient/patient-portal/verify-login-otp',
+        method: 'POST',
+        body,
+        headers: { 'X-Portal-Secret': 'dev-patient-portal-secret' }
+      })
+    }),
+
+
     lookupPatientComplaintByDocument: builder.mutation<
       PatientComplaintPublicLookupResult,
       PatientComplaintPublicLookupRequest
     >({
-      query: body => ({
+      query: ({ documentType, documentNumber, accessToken }) => ({
         url: '/api/patient/patient-complaints/lookup-by-document',
         method: 'POST',
-        body
+        body: { documentType, documentNumber },
+        ...(accessToken
+          ? { headers: { Authorization: `Bearer ${accessToken}` } }
+          : {})
       })
     })
   })
@@ -389,6 +439,8 @@ export const {
   useGetPublicActiveFacilitiesQuery,
   useGetPublicActiveDepartmentsByFacilityQuery,
   useSubmitPatientComplaintMutation,
+  useRequestPatientPortalOtpMutation,
+  useVerifyPatientPortalLoginOtpMutation,
   useLookupPatientComplaintByDocumentMutation
 } = patientComplaintPublicService;
 

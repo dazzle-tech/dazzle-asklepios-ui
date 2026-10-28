@@ -1,9 +1,10 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
 
 import Logo from '@/images/Logo_BLUE_New1.svg';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import { PhoneNumberInput } from '@/components';
 import { useBranding } from '@/hooks/useBranding';
 import { useAppDispatch } from '@/hooks';
@@ -11,7 +12,9 @@ import {
   useGetPublicActiveDepartmentsByFacilityQuery,
   useGetPublicActiveFacilitiesQuery,
   useLookupPatientComplaintByDocumentMutation,
+  useRequestPatientPortalOtpMutation,
   useSubmitPatientComplaintMutation,
+  useVerifyPatientPortalLoginOtpMutation,
   type PatientComplaintPublicLookupResult
 } from '@/services/patient-complaints/patientComplaintService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -34,6 +37,8 @@ import {
 import './SubmitPatientComplaintPage.less';
 
 type FormLanguage = 'en' | 'ar';
+
+const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
 type FormRecord = {
   identityMode: ComplaintIdentityMode;
@@ -113,6 +118,18 @@ const COPY = {
       'Multiple patients match this document. Please enter your details manually.',
     documentFieldsRequired: 'Please select a document type and enter a document number.',
     patientAutofilled: 'Patient details were filled from the matched record. You can edit them if needed.',
+    loadPatient: 'Load',
+    otpTitle: 'Verify Document',
+    otpDescription: 'Enter the verification code sent to the patient’s registered mobile number.',
+    otpLabel: 'Verification Code',
+    otpRequired: 'Please enter the verification code.',
+    otpSent: 'A verification code was sent to the patient’s registered mobile number.',
+    otpVerify: 'Verify',
+    otpVerifying: 'Verifying…',
+    otpResend: 'Resend code',
+    otpResending: 'Sending…',
+    otpRequestFailed: 'Unable to send a verification code. Please try again.',
+    otpVerifyFailed: 'Invalid or expired verification code. Please try again.',
     onBehalf: 'On Behalf of Someone Else?',
     relationship: 'Relationship',
     consentLabel:
@@ -178,6 +195,18 @@ const COPY = {
       'يوجد أكثر من مريض مطابق لهذه الوثيقة. يرجى إدخال بياناتك يدوياً.',
     documentFieldsRequired: 'يرجى اختيار نوع الوثيقة وإدخال رقم الوثيقة.',
     patientAutofilled: 'تم تعبئة بيانات المريض من السجل المطابق. يمكنك تعديلها عند الحاجة.',
+    loadPatient: 'تحميل',
+    otpTitle: 'تحقق من الوثيقة',
+    otpDescription: 'أدخل رمز التحقق المرسل إلى رقم جوال المريض المسجل.',
+    otpLabel: 'رمز التحقق',
+    otpRequired: 'يرجى إدخال رمز التحقق.',
+    otpSent: 'تم إرسال رمز التحقق إلى رقم جوال المريض المسجل.',
+    otpVerify: 'تحقق',
+    otpVerifying: 'جاري التحقق…',
+    otpResend: 'إعادة إرسال الرمز',
+    otpResending: 'جاري الإرسال…',
+    otpRequestFailed: 'تعذر إرسال رمز التحقق. يرجى المحاولة مرة أخرى.',
+    otpVerifyFailed: 'رمز التحقق غير صالح أو منتهٍ. يرجى المحاولة مرة أخرى.',
     onBehalf: 'هل التقديم نيابة عن شخص آخر؟',
     relationship: 'العلاقة',
     consentLabel: 'الموافقة على التواصل ومراجعة السجل الطبي بخصوص هذه الملاحظة.',
@@ -235,6 +264,14 @@ const SubmitPatientComplaintPage: React.FC = () => {
   const autofillSnapshotRef = useRef<Partial<FormRecord> | null>(null);
   const documentLookupRequestIdRef = useRef(0);
   const [phoneResetKey, setPhoneResetKey] = useState(0);
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otpRecord, setOtpRecord] = useState<{ otp: string }>({ otp: '' });
+  const [otpDocumentType, setOtpDocumentType] = useState<string | null>(null);
+  const [otpDocumentNumber, setOtpDocumentNumber] = useState('');
+  const [patientLookupJwt, setPatientLookupJwt] = useState<string | null>(null);
+  const [otpResendCooldownSeconds, setOtpResendCooldownSeconds] = useState(0);
+  const otpCooldownDocumentKeyRef = useRef<string | null>(null);
+  const otpCooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {
     data: facilities = [],
@@ -257,8 +294,56 @@ const SubmitPatientComplaintPage: React.FC = () => {
   });
 
   const [submitComplaint, { isLoading: isSubmitting }] = useSubmitPatientComplaintMutation();
+  const [requestPortalOtp, { isLoading: isRequestingOtp }] = useRequestPatientPortalOtpMutation();
+  const [verifyPortalOtp, { isLoading: isVerifyingOtp }] = useVerifyPatientPortalLoginOtpMutation();
   const [lookupByDocument, { isLoading: isLookingUpPatient }] =
     useLookupPatientComplaintByDocumentMutation();
+  const isOtpBusy = isRequestingOtp || isVerifyingOtp || isLookingUpPatient;
+  const currentDocumentKey = formRecord.documentNumber.trim();
+  const isSameDocumentOtpCooldown =
+    otpResendCooldownSeconds > 0 &&
+    otpCooldownDocumentKeyRef.current != null &&
+    otpCooldownDocumentKeyRef.current === currentDocumentKey;
+
+  const clearOtpResendCooldown = () => {
+    if (otpCooldownTimerRef.current != null) {
+      clearInterval(otpCooldownTimerRef.current);
+      otpCooldownTimerRef.current = null;
+    }
+    otpCooldownDocumentKeyRef.current = null;
+    setOtpResendCooldownSeconds(0);
+  };
+
+  const startOtpResendCooldown = (documentNumber: string) => {
+    if (otpCooldownTimerRef.current != null) {
+      clearInterval(otpCooldownTimerRef.current);
+      otpCooldownTimerRef.current = null;
+    }
+    otpCooldownDocumentKeyRef.current = documentNumber.trim();
+    setOtpResendCooldownSeconds(OTP_RESEND_COOLDOWN_SECONDS);
+    otpCooldownTimerRef.current = setInterval(() => {
+      setOtpResendCooldownSeconds(prev => {
+        if (prev <= 1) {
+          if (otpCooldownTimerRef.current != null) {
+            clearInterval(otpCooldownTimerRef.current);
+            otpCooldownTimerRef.current = null;
+          }
+          otpCooldownDocumentKeyRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(
+    () => () => {
+      if (otpCooldownTimerRef.current != null) {
+        clearInterval(otpCooldownTimerRef.current);
+      }
+    },
+    []
+  );
 
   const feedbackTypeOptions = useEnumOptions(PATIENT_COMPLAINT_FEEDBACK_TYPE_ENUM, {
     allowAnonymous: true,
@@ -322,7 +407,15 @@ const SubmitPatientComplaintPage: React.FC = () => {
     relationshipToPatient: ''
   });
 
-  /** Clear only autofilled values that the user has not manually changed since. */
+  const resetOtpVerificationState = () => {
+    setOtpModalOpen(false);
+    setOtpRecord({ otp: '' });
+    setOtpDocumentType(null);
+    setOtpDocumentNumber('');
+    setPatientLookupJwt(null);
+    clearOtpResendCooldown();
+  };
+
   const clearAutofilledPatientFields = (next: FormRecord): FormRecord => {
     const snapshot = autofillSnapshotRef.current;
     if (!snapshot) return next;
@@ -375,6 +468,7 @@ const SubmitPatientComplaintPage: React.FC = () => {
       if (next.identityMode === 'anonymous') {
         documentLookupRequestIdRef.current += 1;
         autofillSnapshotRef.current = null;
+        resetOtpVerificationState();
         updated = clearIdentityFields(next);
         setPhoneResetKey(key => key + 1);
       }
@@ -385,8 +479,8 @@ const SubmitPatientComplaintPage: React.FC = () => {
       updated.documentNumber !== formRecord.documentNumber;
 
     if (documentIdentityChanged) {
-      // Invalidate in-flight lookup; clear prior autofill only. Do not trigger lookup.
       documentLookupRequestIdRef.current += 1;
+      resetOtpVerificationState();
       updated = clearAutofilledPatientFields(updated);
     }
 
@@ -404,12 +498,8 @@ const SubmitPatientComplaintPage: React.FC = () => {
     setFormRecord(updated);
   };
 
-  /**
-   * Public autofill: Enter in Document Number only.
-   * POST /api/patient/patient-complaints/lookup-by-document (permitAll, no JWT).
-   */
-  const handleDocumentNumberEnter = async (): Promise<boolean> => {
-    if (isAnonymous || isSubmitting || isLookingUpPatient) {
+  const handleDocumentLoad = async (): Promise<boolean> => {
+    if (isAnonymous || isSubmitting || isOtpBusy) {
       return false;
     }
 
@@ -421,37 +511,159 @@ const SubmitPatientComplaintPage: React.FC = () => {
       return false;
     }
 
+    if (
+      otpResendCooldownSeconds > 0 &&
+      otpCooldownDocumentKeyRef.current === documentNumber
+    ) {
+      return false;
+    }
+
     const requestId = ++documentLookupRequestIdRef.current;
+    setPatientLookupJwt(null);
 
     try {
-      const result = await lookupByDocument({
-        documentType,
-        documentNumber
+      await requestPortalOtp({
+        primaryDocumentNumber: documentNumber
       }).unwrap();
 
       if (requestId !== documentLookupRequestIdRef.current) {
         return false;
       }
 
-      setFormRecord(prev => applyLookupAutofill(result, prev));
-      dispatch(notify({ msg: copy.patientAutofilled, sev: 'success' }));
+      setOtpDocumentType(documentType);
+      setOtpDocumentNumber(documentNumber);
+      setOtpRecord({ otp: '' });
+      setOtpModalOpen(true);
+      startOtpResendCooldown(documentNumber);
+      dispatch(notify({ msg: copy.otpSent, sev: 'success' }));
       return true;
     } catch (err) {
       if (requestId !== documentLookupRequestIdRef.current) {
         return false;
       }
 
-      const message = extractErrorMessage(err) || copy.patientNotFound;
+      const message = extractErrorMessage(err) || copy.otpRequestFailed;
+      const lower = message.toLowerCase();
+      const toast =
+        lower.includes('invalid') || lower.includes('credential') || lower.includes('document')
+          ? copy.patientNotFound
+          : message;
+
+      dispatch(notify({ msg: toast, sev: 'warning' }));
+      return false;
+    }
+  };
+
+  const handleOtpResend = async () => {
+    if (isAnonymous || isSubmitting || isOtpBusy || otpResendCooldownSeconds > 0) return;
+
+    const documentType = otpDocumentType ?? formRecord.documentType;
+    const documentNumber = (otpDocumentNumber || formRecord.documentNumber).trim();
+
+    if (!documentType || !documentNumber) {
+      dispatch(notify({ msg: copy.documentFieldsRequired, sev: 'warning' }));
+      return;
+    }
+
+    const requestId = ++documentLookupRequestIdRef.current;
+    setPatientLookupJwt(null);
+
+    try {
+      await requestPortalOtp({
+        primaryDocumentNumber: documentNumber
+      }).unwrap();
+
+      if (requestId !== documentLookupRequestIdRef.current) {
+        return;
+      }
+
+      setOtpDocumentType(documentType);
+      setOtpDocumentNumber(documentNumber);
+      setOtpRecord({ otp: '' });
+      startOtpResendCooldown(documentNumber);
+      dispatch(notify({ msg: copy.otpSent, sev: 'success' }));
+    } catch (err) {
+      if (requestId !== documentLookupRequestIdRef.current) {
+        return;
+      }
+      dispatch(notify({ msg: extractErrorMessage(err) || copy.otpRequestFailed, sev: 'warning' }));
+    }
+  };
+
+  const handleOtpVerify = async () => {
+    if (isAnonymous || isSubmitting || isOtpBusy) return;
+
+    const documentType = otpDocumentType ?? formRecord.documentType;
+    const documentNumber = (otpDocumentNumber || formRecord.documentNumber).trim();
+    const otp = otpRecord.otp.trim();
+
+    if (!documentType || !documentNumber) {
+      dispatch(notify({ msg: copy.documentFieldsRequired, sev: 'warning' }));
+      return;
+    }
+
+    if (!otp) {
+      dispatch(notify({ msg: copy.otpRequired, sev: 'warning' }));
+      return;
+    }
+
+    const requestId = ++documentLookupRequestIdRef.current;
+
+    try {
+      const login = await verifyPortalOtp({
+        primaryDocumentNumber: documentNumber,
+        otp
+      }).unwrap();
+
+      if (requestId !== documentLookupRequestIdRef.current) {
+        return;
+      }
+
+      const accessToken = String(login?.token ?? '').trim();
+      if (!accessToken) {
+        dispatch(notify({ msg: copy.otpVerifyFailed, sev: 'warning' }));
+        return;
+      }
+
+      setPatientLookupJwt(accessToken);
+
+      const result = await lookupByDocument({
+        documentType,
+        documentNumber,
+        accessToken
+      }).unwrap();
+
+      if (requestId !== documentLookupRequestIdRef.current) {
+        return;
+      }
+
+      setFormRecord(prev => applyLookupAutofill(result, prev));
+      // Keep patientLookupJwt for submit linking; only close the OTP UI.
+      setOtpModalOpen(false);
+      setOtpRecord({ otp: '' });
+      dispatch(notify({ msg: copy.patientAutofilled, sev: 'success' }));
+    } catch (err) {
+      if (requestId !== documentLookupRequestIdRef.current) {
+        return;
+      }
+
+      setPatientLookupJwt(null);
+
+      const message = extractErrorMessage(err) || copy.otpVerifyFailed;
       const lower = message.toLowerCase();
       const toast =
         lower.includes('multiple') || lower.includes('ambiguous')
           ? copy.patientAmbiguous
           : lower.includes('not found') || lower.includes('matching')
             ? copy.patientNotFound
-            : message;
+            : lower.includes('otp') ||
+                lower.includes('verification') ||
+                lower.includes('expired') ||
+                lower.includes('unauthorized')
+              ? copy.otpVerifyFailed
+              : message;
 
       dispatch(notify({ msg: toast, sev: 'warning' }));
-      return false;
     }
   };
 
@@ -459,6 +671,7 @@ const SubmitPatientComplaintPage: React.FC = () => {
     if (isSubmitting) return;
     autofillSnapshotRef.current = null;
     documentLookupRequestIdRef.current += 1;
+    resetOtpVerificationState();
     setFormRecord({ ...EMPTY_FORM });
     setSelectedFiles([]);
     setError(false);
@@ -555,6 +768,12 @@ const SubmitPatientComplaintPage: React.FC = () => {
       const facilityId = Number(formRecord.facilityId);
       const departmentId = Number(formRecord.departmentId);
 
+      // Link patient only when OTP-verified JWT is for this person (not anonymous / on-behalf).
+      const verifiedPatientToken =
+        !isAnonymous && formRecord.onBehalf !== 'true' && patientLookupJwt
+          ? patientLookupJwt
+          : undefined;
+
       const response = await submitComplaint({
         anonymous: isAnonymous,
         consentToContact: true,
@@ -592,11 +811,13 @@ const SubmitPatientComplaintPage: React.FC = () => {
         ...(formRecord.desiredResolution.trim()
           ? { desiredResolution: formRecord.desiredResolution.trim() }
           : {}),
-        files: selectedFiles
+        files: selectedFiles,
+        ...(verifiedPatientToken ? { accessToken: verifiedPatientToken } : {})
       }).unwrap();
 
       autofillSnapshotRef.current = null;
       documentLookupRequestIdRef.current += 1;
+      resetOtpVerificationState();
       setSubmittedReference(response.reference);
       setSelectedFiles([]);
       setFormRecord({ ...EMPTY_FORM });
@@ -609,6 +830,7 @@ const SubmitPatientComplaintPage: React.FC = () => {
   const handleSubmitAnother = () => {
     autofillSnapshotRef.current = null;
     documentLookupRequestIdRef.current += 1;
+    resetOtpVerificationState();
     setSubmittedReference(null);
     setFormRecord({ ...EMPTY_FORM });
     setSelectedFiles([]);
@@ -747,6 +969,7 @@ const SubmitPatientComplaintPage: React.FC = () => {
                             selectDataLabel="label"
                             selectDataValue="value"
                             searchable={false}
+                            disabled={isSubmitting || isOtpBusy}
                             width="100%"
                           />
                         </div>
@@ -757,10 +980,25 @@ const SubmitPatientComplaintPage: React.FC = () => {
                             fieldLabel={copy.documentNumber}
                             record={formRecord}
                             setRecord={handleRecordChange}
-                            enterClick={handleDocumentNumberEnter}
-                            disabled={isSubmitting || isLookingUpPatient}
+                            enterClick={handleDocumentLoad}
+                            disabled={isSubmitting || isOtpBusy}
                             width="100%"
                           />
+                        </div>
+                        <div className="patient-complaint-field patient-complaint-load-field">
+                          <MyButton
+                            appearance="ghost"
+                            disabled={isSubmitting || isOtpBusy || isSameDocumentOtpCooldown}
+                            onClick={() => {
+                              void handleDocumentLoad();
+                            }}
+                          >
+                            {isRequestingOtp && !otpModalOpen
+                              ? copy.otpResending
+                              : isSameDocumentOtpCooldown
+                                ? `${copy.loadPatient} (${otpResendCooldownSeconds}s)`
+                                : copy.loadPatient}
+                          </MyButton>
                         </div>
                       </div>
 
@@ -1096,6 +1334,64 @@ const SubmitPatientComplaintPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      <MyModal
+        open={otpModalOpen}
+        setOpen={open => {
+          if (!open) {
+            if (isOtpBusy) return;
+            resetOtpVerificationState();
+            return;
+          }
+          setOtpModalOpen(true);
+        }}
+        title={copy.otpTitle}
+        size="xs"
+        bodyheight="auto"
+        hideBack
+        actionButtonLabel={
+          isVerifyingOtp || isLookingUpPatient ? copy.otpVerifying : copy.otpVerify
+        }
+        isDisabledActionBtn={isOtpBusy || !otpRecord.otp.trim()}
+        actionButtonLoading={isVerifyingOtp || isLookingUpPatient}
+        actionButtonFunction={handleOtpVerify}
+        handleCancelFunction={() => {
+          if (isOtpBusy) return;
+          resetOtpVerificationState();
+        }}
+        footerButtons={
+          <MyButton
+            appearance="ghost"
+            disabled={isOtpBusy || otpResendCooldownSeconds > 0}
+            onClick={() => {
+              void handleOtpResend();
+            }}
+          >
+            {isRequestingOtp
+              ? copy.otpResending
+              : otpResendCooldownSeconds > 0
+                ? `${copy.otpResend} (${otpResendCooldownSeconds}s)`
+                : copy.otpResend}
+          </MyButton>
+        }
+        content={
+          <div className="patient-complaint-otp-modal">
+            <p className="patient-complaint-field-hint">{copy.otpDescription}</p>
+            <Form fluid>
+              <MyInput
+                fieldType="text"
+                fieldName="otp"
+                fieldLabel={copy.otpLabel}
+                record={otpRecord}
+                setRecord={setOtpRecord}
+                required
+                disabled={isOtpBusy}
+                width="100%"
+              />
+            </Form>
+          </div>
+        }
+      />
     </div>
   );
 };
