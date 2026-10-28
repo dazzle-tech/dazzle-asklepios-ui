@@ -1474,14 +1474,13 @@ export const isRowFullyReserved = (
 ): boolean => resolveRowPaymentStatus(row, summary) === 'RESERVED';
 
 /**
- * Rejected, or partially approved on a local (NPHIES) request, and not billed yet:
- * the patient pays the service as cash or it is cancelled.
- * A Waseel partial approval stays held (required) until communication ends.
+ * Rejected by the payer and not billed yet: the patient pays the service as cash or it is
+ * cancelled. (A local partial approval is billed with the approved insurance amount.)
  */
 export const isAwaitingPatientChoice = (row: UnifiedBillingChargeRow): boolean =>
   row.chargeLineId == null &&
   row.preAuthorizationRequired !== true &&
-  (isPreAuthRejected(row.preAuthorizationStatus) || isPreAuthPartial(row.preAuthorizationStatus));
+  isPreAuthRejected(row.preAuthorizationStatus);
 
 export const shouldShowPreAuthRowActions = (
   row: UnifiedBillingChargeRow,
@@ -2060,8 +2059,8 @@ export const resolveDisplayChargeRows = (
 };
 
 /**
- * Unbilled line still waiting on pre-authorization: the payer decision, or the
- * patient's choice (pay cash / cancel) after a rejection or partial approval.
+ * Unbilled line still waiting on pre-authorization: the payer decision, the patient's
+ * choice (pay cash / cancel) after a rejection, or billing right after a partial approval.
  */
 const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
   const rowAny = row as PatientServiceAndProduct & {

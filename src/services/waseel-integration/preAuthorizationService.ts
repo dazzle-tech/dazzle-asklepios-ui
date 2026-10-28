@@ -4,6 +4,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   EligibilityCheckResponse,
   EncounterPreAuthorizationRefreshResponse,
+  LocalPreAuthorizationCoverageResponse,
   LocalPreAuthorizationDecisionRequest,
   PreAuthorizationCancelRequest,
   PreAuthorizationCommunicationHistoryResponse,
@@ -275,6 +276,14 @@ export const preAuthorizationApi = createApi({
       }
     }),
 
+    getLocalPreAuthorizationCoverage: builder.query<LocalPreAuthorizationCoverageResponse, number>({
+      query: preAuthorizationId => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/local-coverage`,
+        method: 'GET'
+      }),
+      keepUnusedDataFor: 0
+    }),
+
     decideLocalPreAuthorization: builder.mutation<
       EncounterPreAuthorizationRefreshResponse,
       { preAuthorizationId: number; body: LocalPreAuthorizationDecisionRequest }
@@ -308,5 +317,6 @@ export const {
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useCloneRejectedPreAuthorizationItemMutation,
   useResubmitPreAuthorizationMutation,
+  useGetLocalPreAuthorizationCoverageQuery,
   useDecideLocalPreAuthorizationMutation
 } = preAuthorizationApi;

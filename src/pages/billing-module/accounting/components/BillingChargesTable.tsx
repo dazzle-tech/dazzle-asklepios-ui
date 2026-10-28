@@ -576,11 +576,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       render: (row: UnifiedBillingChargeRow) => {
         if (isAwaitingPatientChoice(row)) {
-          return isPreAuthPartial(row.preAuthorizationStatus) ? (
-            <Tag color="yellow" size="sm">
-              Partially approved
-            </Tag>
-          ) : (
+          return (
             <Tag color="orange" size="sm">
               Pre-auth rejected
             </Tag>

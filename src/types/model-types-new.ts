@@ -5636,6 +5636,15 @@ export type LocalPreAuthorizationDecision = 'APPROVED' | 'PARTIAL' | 'REJECTED';
 export type LocalPreAuthorizationDecisionRequest = {
   decision: LocalPreAuthorizationDecision;
   note?: string | null;
+  /** Insurance amount approved on a PARTIAL decision. */
+  approvedAmount?: number | null;
+};
+
+/** Contract split of a local pre-approval request line. */
+export type LocalPreAuthorizationCoverageResponse = {
+  netAmount: number;
+  patientShare: number;
+  insuranceShare: number;
 };
 
 export type PreAuthorizationCancelRequest = {
@@ -7023,6 +7032,8 @@ export type PreviewDefaultServicePricingResult = {
   requiresCashConfirmation?: boolean;
   notCoveredReason?: string | null;
   cashUnitPrice?: number | null;
+  /** The coverage contract holds this service for pre-approval; shares are zero until the decision. */
+  preAuthorizationRequired?: boolean;
 };
 
 export type PreviewDefaultServicesPricingResult = {

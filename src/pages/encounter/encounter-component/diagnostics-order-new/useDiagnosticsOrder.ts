@@ -808,7 +808,9 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               )
             }).unwrap();
 
-            if (created?.coveragePreApprovalPending) {
+            // Radiology does not stop the order screen: it is notified on submit instead.
+            const isRadiology = String(item.type ?? '').toUpperCase() === 'RADIOLOGY';
+            if (created?.coveragePreApprovalPending && !isRadiology) {
               held.push({ label: testName });
             } else {
               added.push(testName);
@@ -958,19 +960,21 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
 
-      // Radiology tests waiting for pre-authorization are listed in the alert on submit.
-      const radiologyAwaitingApproval: PreAuthorizationAlertItem[] = orderTestList
+      // Radiology tests waiting for pre-authorization: a notification, the screen is not stopped.
+      const radiologyAwaitingApproval: string[] = orderTestList
         .filter(
           (t: any) =>
             String(t.orderType ?? '').toUpperCase() === 'RADIOLOGY' &&
             String(t.preAuthorizationStatus ?? '').toUpperCase() === 'PENDING_APPROVAL'
         )
-        .map((t: any) => ({
-          patientServiceProductId: null,
-          label: t.test?.testName ?? t.test?.name ?? t.testName ?? 'Radiology test'
-        }));
+        .map((t: any) => t.test?.testName ?? t.test?.name ?? t.testName ?? 'Radiology test');
       if (radiologyAwaitingApproval.length) {
-        setPreAuthAlert(radiologyAwaitingApproval);
+        dispatch(
+          notify({
+            msg: `Radiology requires pre-authorization: ${radiologyAwaitingApproval.join(', ')}. The request was sent to the pre-authorization page.`,
+            sev: 'warning'
+          })
+        );
       }
 
 

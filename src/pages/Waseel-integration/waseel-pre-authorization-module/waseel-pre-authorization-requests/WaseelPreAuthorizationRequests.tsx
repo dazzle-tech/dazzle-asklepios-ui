@@ -7,6 +7,7 @@ import {
   useCommunicatePreAuthorizationMutation,
   useUploadPreAuthorizationAttachmentMutation,
   useResubmitPreAuthorizationMutation,
+  useGetLocalPreAuthorizationCoverageQuery,
   useDecideLocalPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 
@@ -53,6 +54,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const [openResubmitModal, setOpenResubmitModal] = useState(false);
   const [decision, setDecision] = useState<LocalPreAuthorizationDecision | null>(null);
   const [decisionNote, setDecisionNote] = useState('');
+  const [approvedAmount, setApprovedAmount] = useState<number | null>(null);
 
   const [openCommunicationModal, setOpenCommunicationModal] = useState(false);
   const [openCommunicationsDrawer, setOpenCommunicationsDrawer] = useState(false);
@@ -87,6 +89,10 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
     useResubmitPreAuthorizationMutation();
   const [decideLocalPreAuthorization, { isLoading: isDeciding }] =
     useDecideLocalPreAuthorizationMutation();
+  const { data: decisionCoverage, isFetching: isDecisionCoverageLoading } =
+    useGetLocalPreAuthorizationCoverageQuery(Number(selectedRow?.id), {
+      skip: decision !== 'PARTIAL' || selectedRow?.id == null
+    });
   const [uploadPreAuthorizationAttachment] = useUploadPreAuthorizationAttachmentMutation();
   const [communicatePreAuthorization, { isLoading: isCommunicating }] =
     useCommunicatePreAuthorizationMutation();
@@ -320,6 +326,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       setSelectedRow(row);
       setDecision(nextDecision);
       setDecisionNote('');
+      setApprovedAmount(null);
     },
     []
   );
@@ -327,6 +334,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
   const closeDecision = () => {
     setDecision(null);
     setDecisionNote('');
+    setApprovedAmount(null);
   };
 
   const submitDecision = async () => {
@@ -340,7 +348,8 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         preAuthorizationId: Number(selectedRow.id),
         body: {
           decision,
-          note: decisionNote.trim() || null
+          note: decisionNote.trim() || null,
+          approvedAmount: decision === 'PARTIAL' ? approvedAmount : null
         }
       }).unwrap();
 
@@ -564,8 +573,12 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
         row={selectedRow}
         decision={decision}
         note={decisionNote}
+        approvedAmount={approvedAmount}
+        coverage={decisionCoverage}
+        coverageLoading={isDecisionCoverageLoading}
         isSubmitting={isDeciding}
         onNoteChange={setDecisionNote}
+        onApprovedAmountChange={setApprovedAmount}
         onClose={closeDecision}
         onSubmit={submitDecision}
       />

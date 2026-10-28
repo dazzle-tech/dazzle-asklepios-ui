@@ -39,6 +39,7 @@ import {
 
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  isHeldForPreAuthorization,
   mergeBillingPaymentMethodOptions
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
@@ -163,6 +164,7 @@ type DefaultServiceRow = {
   requiresCashConfirmation?: boolean;
   cashUnitPrice?: number | null;
   notCoveredReason?: string | null;
+  preAuthorizationRequired?: boolean;
 };
 
 type BillingFormState = {
@@ -1457,7 +1459,8 @@ const PatientPaymentInfo =
                 insuranceShare: null,
                 requiresCashConfirmation: false,
                 cashUnitPrice: null,
-                notCoveredReason: null
+                notCoveredReason: null,
+                preAuthorizationRequired: false
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -2075,6 +2078,27 @@ const PatientPaymentInfo =
       const hasUncoveredDefaultServices =
         uncoveredDefaultServices.length > 0;
 
+      // Services the coverage contract holds for pre-authorization: nothing is collected now.
+      const preAuthorizationServiceNames =
+        useMemo(() => {
+          if (!isInsurance) {
+            return [];
+          }
+
+          const rowsToCheck =
+            payableSelectedRows.length > 0
+              ? payableSelectedRows
+              : selectedRows;
+
+          return rowsToCheck
+            .filter(row => row.preAuthorizationRequired)
+            .map(row => row.serviceName);
+        }, [
+          isInsurance,
+          payableSelectedRows,
+          selectedRows
+        ]);
+
       const summaryIsCalculated =
         useMemo(
           () =>
@@ -2537,7 +2561,9 @@ const PatientPaymentInfo =
                             cashUnitPrice:
                               null,
                             notCoveredReason:
-                              null
+                              null,
+                            preAuthorizationRequired:
+                              false
                           };
                         }
 
@@ -2575,7 +2601,11 @@ const PatientPaymentInfo =
                             null,
                           notCoveredReason:
                             priced.notCoveredReason ??
-                            null
+                            null,
+                          preAuthorizationRequired:
+                            Boolean(
+                              priced.preAuthorizationRequired
+                            )
                         };
                       }
                     )
@@ -3508,11 +3538,19 @@ const PatientPaymentInfo =
             );
           }
 
+          // Services held for pre-authorization are not paid now.
           const ids =
-            successful.map(
-              item =>
-                item.patientServiceProductId
-            );
+            successful
+              .filter(
+                item =>
+                  !isHeldForPreAuthorization(
+                    item.billingResult
+                  )
+              )
+              .map(
+                item =>
+                  item.patientServiceProductId
+              );
 
           setPreparedPspIds(
             ids
@@ -6037,6 +6075,13 @@ const PatientPaymentInfo =
           >
           {hasUncoveredDefaultServices ? (
             <UncoveredInsuranceWarning items={uncoveredDefaultServices} />
+          ) : null}
+          {preAuthorizationServiceNames.length > 0 ? (
+            <Message showIcon type="warning">
+              Pre-authorization required: {preAuthorizationServiceNames.join(', ')}.
+              Nothing is collected for these services now. They are billed after the
+              payer decision.
+            </Message>
           ) : null}
           {lastPaymentResult ? (
             <div className="payment-info__payment-success">
