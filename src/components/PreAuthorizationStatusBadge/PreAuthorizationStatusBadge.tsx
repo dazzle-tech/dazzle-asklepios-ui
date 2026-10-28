@@ -11,7 +11,7 @@ type PreAuthorizationStatusBadgeProps = {
 
 /** Pre-authorization status of a billed item; a dash when no pre-authorization applies. */
 const PreAuthorizationStatusBadge = ({ status }: PreAuthorizationStatusBadgeProps) => {
-  if (!status) {
+  if (!status || status.toUpperCase() === 'NOT_REQUIRED') {
     return <>—</>;
   }
 

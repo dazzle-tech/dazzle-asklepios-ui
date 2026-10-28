@@ -1,12 +1,16 @@
 import React, { useMemo } from 'react';
 
-import { Checkbox, Loader, Tag } from 'rsuite';
+import { Checkbox, Loader, Tag, Tooltip, Whisper } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBan, faClone, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 
 
 
 import MyButton from '@/components/MyButton/MyButton';
 
 import MyTable from '@/components/MyTable';
+
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
 
 import type { EncounterBillingSummary } from '@/types/model-types-new';
 import type { UnifiedBillingChargeRow } from '../utils/billingAccountingUtils';
@@ -250,6 +254,68 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
 
 
+  /**
+   * Pre-auth actions as icons (tooltip = action name): pay cash / cancel service after a
+   * rejection, clone the request. A Waseel partial approval shows "Communication required".
+   */
+  const renderPreAuthActions = (row: UnifiedBillingChargeRow) => {
+    if (!shouldShowPreAuthRowActions(row, billingSummary)) {
+      return null;
+    }
+
+    const awaitingPatientChoice = isAwaitingPatientChoice(row);
+
+    if (!awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus)) {
+      return (
+        <Tag color="yellow" size="sm">
+          Communication required
+        </Tag>
+      );
+    }
+
+    const pspId = row.patientServiceProductId;
+
+    if (pspId == null || (!awaitingPatientChoice && !isPreAuthRejected(row.preAuthorizationStatus))) {
+      return null;
+    }
+
+    const actionsDisabled = disabled || preAuthActionLoadingId === pspId;
+
+    const actions = [
+      { key: 'pay-cash', label: 'Pay cash', icon: faMoneyBillWave, onClick: onPayRejectedAsCash },
+      ...(awaitingPatientChoice && onCancelService
+        ? [{ key: 'cancel-service', label: 'Cancel service', icon: faBan, onClick: onCancelService }]
+        : []),
+      { key: 'clone', label: 'Clone pre-auth', icon: faClone, onClick: onClonePreAuthorization }
+    ];
+
+    return (
+      <div className="billing-accounting__preauth-row-actions">
+        {actions.map(action => (
+          <Whisper
+            key={action.key}
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>{action.label}</Tooltip>}
+          >
+            <span
+              role="button"
+              aria-label={action.label}
+              className={`billing-accounting__preauth-action${
+                actionsDisabled ? ' billing-accounting__preauth-action--disabled' : ''
+              }`}
+              onClick={() => {
+                if (!actionsDisabled) action.onClick?.(pspId);
+              }}
+            >
+              <FontAwesomeIcon icon={action.icon} />
+            </span>
+          </Whisper>
+        ))}
+      </div>
+    );
+  };
+
   const columns = [
 
     ...(selectable
@@ -329,6 +395,25 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       }
 
     },
+
+    ...(showPreAuthActions
+      ? [
+          {
+            key: 'preAuthorizationStatus',
+            title: 'Pre-auth status',
+            width: 140,
+            render: (row: UnifiedBillingChargeRow) => (
+              <PreAuthorizationStatusBadge status={row.preAuthorizationStatus} />
+            )
+          },
+          {
+            key: 'preAuthActions',
+            title: 'Pre-auth actions',
+            width: 120,
+            render: renderPreAuthActions
+          }
+        ]
+      : []),
 
     {
 
@@ -622,89 +707,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
         return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
       }
 
-    },
-
-    ...(showPreAuthActions
-
-      ? [
-
-          {
-
-            key: 'preAuthActions',
-
-            title: 'Pre-auth',
-
-            width: 220,
-
-            render: (row: UnifiedBillingChargeRow) => {
-              if (!shouldShowPreAuthRowActions(row, billingSummary)) {
-                return null;
-              }
-
-              const awaitingPatientChoice = isAwaitingPatientChoice(row);
-
-              if (!awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus)) {
-                return (
-                  <Tag color="yellow" size="sm">
-                    Communication required
-                  </Tag>
-                );
-              }
-
-              if (!awaitingPatientChoice && !isPreAuthRejected(row.preAuthorizationStatus)) {
-                return null;
-              }
-
-              const pspId = row.patientServiceProductId;
-
-              if (pspId == null) {
-                return null;
-              }
-
-              const loading = preAuthActionLoadingId === pspId;
-
-              return (
-                <div className="billing-accounting__preauth-row-actions">
-                  <MyButton
-                    size="xs"
-                    appearance="primary"
-                    loading={loading}
-                    disabled={disabled || loading}
-                    onClick={() => onPayRejectedAsCash?.(pspId)}
-                  >
-                    Pay cash
-                  </MyButton>
-
-                  {awaitingPatientChoice && onCancelService && (
-                    <MyButton
-                      size="xs"
-                      appearance="ghost"
-                      loading={loading}
-                      disabled={disabled || loading}
-                      onClick={() => onCancelService(pspId)}
-                    >
-                      Cancel service
-                    </MyButton>
-                  )}
-
-                  <MyButton
-                    size="xs"
-                    appearance="default"
-                    loading={loading}
-                    disabled={disabled || loading}
-                    onClick={() => onClonePreAuthorization?.(pspId)}
-                  >
-                    Clone pre-auth
-                  </MyButton>
-                </div>
-              );
-            }
-
-          }
-
-        ]
-
-      : [])
+    }
 
   ];
 

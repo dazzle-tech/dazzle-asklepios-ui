@@ -548,6 +548,27 @@
   gap: 6px;
 }
 
+.billing-accounting__preauth-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--primary-blue, #0b5c55);
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+
+  &:hover {
+    background-color: color-mix(in srgb, currentColor 20%, transparent);
+  }
+
+  &--disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
 .billing-wallet-refund-dialog {
   .rs-modal-content {
     border-radius: 18px;

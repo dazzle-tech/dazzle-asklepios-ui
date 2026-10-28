@@ -560,6 +560,18 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
+    /** Whether the visit is locked until pre-authorization (nurse station has no start endpoint). */
+    getEncounterPreAuthorizationLock: builder.query<
+      { locked: boolean; message: string | null },
+      Id
+    >({
+      query: id => ({
+        url: `/api/patient/encounter/${id}/pre-authorization-lock`,
+        method: 'GET'
+      }),
+      keepUnusedDataFor: 0
+    }),
+
     startEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/start`,
@@ -822,6 +834,7 @@ export const {
   useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useStartEncounterMutation,
+  useLazyGetEncounterPreAuthorizationLockQuery,
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
