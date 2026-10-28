@@ -1,52 +1,41 @@
 import React from 'react';
 
 import type { EncounterBillingSummary } from '@/types/model-types-new';
-import type { InvoiceAdjustmentSummary } from '@/services/billing/financialDocumentAdjustmentService';
 import {
-  computeEncounterCoveredAmount,
+  computeEncounterCollectAmount,
+  computeEncounterDiscountAmount,
+  computeEncounterGrossAmount,
+  computeEncounterNetAmount,
   computeEncounterPatientShare,
-  computeEncounterRemainingToPay,
-  computeUnbilledEncounterNetAmount,
-  encounterHasInvoice,
+  computeEncounterWalletAmount,
   formatMoney,
-  shouldShowInsuranceSummary,
-  sumEncounterReservedAmount,
-  type BillingCoverageType,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 
 type BillingSummaryCardsProps = {
   summary: EncounterBillingSummary;
-  walletBalance: number;
-  reservedBalance: number;
-  totalDebt?: number;
   loading?: boolean;
   currency?: string;
-  coverageType?: BillingCoverageType;
   chargeRows?: UnifiedBillingChargeRow[];
-  invoiceAdjustments?: InvoiceAdjustmentSummary | null;
 };
 
 const PLACEHOLDER = '—';
+const ENCOUNTER_HINT = 'This encounter';
 
 const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
   summary,
-  walletBalance,
-  reservedBalance,
-  totalDebt = 0,
   loading = false,
   currency,
-  coverageType = 'SELF_PAY',
-  chargeRows = [],
-  invoiceAdjustments = null
+  chargeRows = []
 }) => {
   if (loading) {
     const skeletonCards = [
-      'Invoice total',
-      'Remaining to pay',
-      'Wallet available',
-      'Wallet reserved',
-      'Ledger debt'
+      'Gross Amount',
+      'Net Amount',
+      'Discount',
+      'CoPayment',
+      'Wallet',
+      'Collect'
     ];
 
     return (
@@ -63,130 +52,48 @@ const BillingSummaryCards: React.FC<BillingSummaryCardsProps> = ({
     );
   }
 
-  const resolvedCurrency =
-    currency ??
-    invoiceAdjustments?.currency ??
-    summary.currency ??
-    'SAR';
-  const reservedOnEncounter = sumEncounterReservedAmount(summary);
-  const patientShare = computeEncounterPatientShare(summary, chargeRows);
-  const coveredAmount = computeEncounterCoveredAmount(summary);
-  const remainingToPay = computeEncounterRemainingToPay(summary, chargeRows);
-  const showInsurance = shouldShowInsuranceSummary(summary, coverageType);
+  const resolvedCurrency = currency ?? summary.currency ?? 'SAR';
+  const grossAmount = computeEncounterGrossAmount(summary, chargeRows);
+  const netAmount = computeEncounterNetAmount(summary, chargeRows);
+  const discountAmount = computeEncounterDiscountAmount(summary);
+  const copaymentAmount = computeEncounterPatientShare(summary, chargeRows);
+  const walletAmount = computeEncounterWalletAmount(summary);
+  const collectAmount = computeEncounterCollectAmount(summary, chargeRows);
 
-  const chargeNet = Number(summary.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows);
-  const hasInvoice =
-    encounterHasInvoice(summary) ||
-    invoiceAdjustments != null ||
-    Boolean(summary.invoiceNumber);
-
-  const invoiceTotal = Number(
-    invoiceAdjustments?.invoiceTotal ?? summary.invoiceTotalAmount ?? 0
-  );
-  const invoicePaid = Number(
-    invoiceAdjustments?.totalPaid ?? summary.invoicePaidAmount ?? 0
-  );
-  const invoiceOutstanding = Number(
-    invoiceAdjustments?.outstandingBalance ?? summary.invoiceOutstandingAmount ?? 0
-  );
-  const totalCreditNotes = Number(invoiceAdjustments?.totalCreditNotes ?? 0);
-  const totalDebitNotes = Number(invoiceAdjustments?.totalDebitNotes ?? 0);
-  const invoiceNumber =
-    invoiceAdjustments?.documentNumber ?? summary.invoiceNumber ?? null;
-
-  const remainingHint = (() => {
-    if (hasInvoice) {
-      if (invoiceOutstanding <= 0 && invoiceNumber) {
-        return `Invoice ${invoiceNumber} settled · paid ${formatMoney(invoicePaid, resolvedCurrency)}`;
-      }
-
-      if (invoiceNumber) {
-        return `Invoice ${invoiceNumber} · outstanding ${formatMoney(invoiceOutstanding, resolvedCurrency)}`;
-      }
+  const cards = [
+    {
+      label: 'Gross Amount',
+      value: formatMoney(grossAmount, resolvedCurrency),
+      hint: ENCOUNTER_HINT
+    },
+    {
+      label: 'Net Amount',
+      value: formatMoney(netAmount, resolvedCurrency),
+      hint: ENCOUNTER_HINT
+    },
+    {
+      label: 'Discount',
+      value: formatMoney(discountAmount, resolvedCurrency),
+      hint: ENCOUNTER_HINT
+    },
+    {
+      label: 'CoPayment',
+      value: formatMoney(copaymentAmount, resolvedCurrency),
+      hint: ENCOUNTER_HINT
+    },
+    {
+      label: 'Wallet',
+      value: formatMoney(walletAmount, resolvedCurrency),
+      tone: walletAmount > 0 ? 'success' : undefined,
+      hint: ENCOUNTER_HINT
+    },
+    {
+      label: 'Collect',
+      value: formatMoney(collectAmount, resolvedCurrency),
+      tone: collectAmount > 0 ? 'danger' : copaymentAmount > 0 ? 'success' : undefined,
+      hint: ENCOUNTER_HINT
     }
-
-    if (patientShare <= 0) return undefined;
-
-    if (remainingToPay > 0) {
-      const parts = [
-        `Patient share ${formatMoney(patientShare, resolvedCurrency)}`,
-        coveredAmount > 0
-          ? `${formatMoney(coveredAmount, resolvedCurrency)} covered`
-          : null,
-        reservedOnEncounter > 0
-          ? `${formatMoney(reservedOnEncounter, resolvedCurrency)} reserved`
-          : null
-      ].filter(Boolean);
-      return `${parts.join(' · ')} · per encounter`;
-    }
-
-    return `Patient share ${formatMoney(patientShare, resolvedCurrency)} settled for this encounter`;
-  })();
-
-  const cards = hasInvoice
-    ? ([
-        {
-          label: 'Invoice total',
-          value: formatMoney(invoiceTotal, resolvedCurrency),
-          hint: invoiceNumber
-            ? `Invoice ${invoiceNumber} · charge net ${formatMoney(chargeNet, resolvedCurrency)}`
-            : undefined
-        },
-        {
-          label: 'Paid',
-          value: formatMoney(invoicePaid, resolvedCurrency),
-          tone: invoicePaid > 0 ? 'success' : undefined
-        },
-        {
-          label: 'Outstanding',
-          value: formatMoney(invoiceOutstanding, resolvedCurrency),
-          tone: invoiceOutstanding > 0 ? 'danger' : 'success',
-          hint: remainingHint
-        },
-        {
-          label: 'Credit notes',
-          value: formatMoney(totalCreditNotes, resolvedCurrency)
-        },
-        {
-          label: 'Debit notes',
-          value: formatMoney(totalDebitNotes, resolvedCurrency)
-        }
-      ] as const)
-    : ([
-        {
-          label: 'Net charges',
-          value: formatMoney(chargeNet, resolvedCurrency),
-          hint: 'This encounter'
-        },
-        {
-          label: 'Remaining to pay',
-          value: formatMoney(remainingToPay, resolvedCurrency),
-          tone: remainingToPay > 0 ? 'danger' : patientShare > 0 ? 'success' : undefined,
-          hint: remainingHint
-        },
-        ...(showInsurance
-          ? [
-              {
-                label: 'Insurance due',
-                value: formatMoney(summary.insuranceOutstandingAmount, resolvedCurrency)
-              }
-            ]
-          : []),
-        {
-          label: 'Wallet available',
-          value: formatMoney(walletBalance, resolvedCurrency),
-          tone: 'success'
-        },
-        {
-          label: 'Wallet reserved',
-          value: formatMoney(reservedBalance, resolvedCurrency)
-        },
-        {
-          label: 'Patient ledger debt',
-          value: formatMoney(totalDebt, resolvedCurrency),
-          tone: totalDebt > 0 ? 'danger' : undefined
-        }
-      ] as const);
+  ] as const;
 
   return (
     <div className="billing-accounting__cards">

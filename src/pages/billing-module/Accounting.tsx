@@ -104,7 +104,6 @@ const Accounting: React.FC = () => {
     waseelCoverageError,
     walletBalance,
     reservedBalance,
-    patientLedgerSummary,
     patientInsurances,
     loadingInsurances,
     encounterInvoiceDetails,
@@ -717,18 +716,13 @@ const Accounting: React.FC = () => {
 
         <BillingSummaryCards
           summary={summary}
-          walletBalance={walletBalance}
-          reservedBalance={reservedBalance}
-          totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
           loading={
             selectedEncounterId == null ||
             billingWorkspaceLoading ||
             loadingInvoiceContext
           }
           currency={summary.currency ?? facilityCurrency}
-          coverageType={coverageType}
           chargeRows={chargeRows}
-          invoiceAdjustments={invoiceAdjustments}
         />
 
         <EncounterSettlementBanner
@@ -907,7 +901,6 @@ const Accounting: React.FC = () => {
       patientId,
       patientInsurances,
       displayedPatientInsurances,
-      patientLedgerSummary?.totalDebt,
       pendingPreAuthItems.length,
       preAuthActionLoadingId,
       preAuthBlocksCheckout,

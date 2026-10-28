@@ -791,6 +791,60 @@ export const computeUnbilledEncounterNetAmount = (
     .filter(isRowAwaitingBilling)
     .reduce((total, row) => total + Number(row.netAmount ?? 0), 0);
 
+export const computeUnbilledEncounterGrossAmount = (
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number =>
+  chargeRows
+    .filter(isRowAwaitingBilling)
+    .reduce((total, row) => {
+      const quantity = Number(row.quantity ?? 1);
+      const unitPrice = Number(row.unitPrice ?? 0);
+      const gross = unitPrice > 0 ? unitPrice * Math.max(quantity, 1) : Number(row.netAmount ?? 0);
+      return total + gross;
+    }, 0);
+
+/** Encounter charge gross, including unbilled lines on this visit. */
+export const computeEncounterGrossAmount = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number => Number(summary?.grossAmount ?? 0) + computeUnbilledEncounterGrossAmount(chargeRows);
+
+/** Encounter charge net, including unbilled lines on this visit. */
+export const computeEncounterNetAmount = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number => Number(summary?.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows);
+
+export const computeEncounterDiscountAmount = (
+  summary: EncounterBillingSummary | null | undefined
+): number => {
+  const headerDiscount = Number(summary?.discountAmount ?? 0);
+  const itemDiscount = (summary?.items ?? []).reduce(
+    (total, item) => total + Number(item.discountAmount ?? 0),
+    0
+  );
+  return Math.max(headerDiscount, itemDiscount);
+};
+
+/** Wallet already reserved/applied on this encounter only — not patient-level balance. */
+export const computeEncounterWalletAmount = (
+  summary: EncounterBillingSummary | null | undefined
+): number => {
+  const reserved = sumEncounterReservedAmount(summary);
+  const walletSettled = Number(summary?.patientWalletSettledAmount ?? 0);
+  const invoicePaid = Number(summary?.invoicePaidAmount ?? 0);
+  const settledCopiedFromInvoice =
+    invoicePaid > 0 && Math.abs(walletSettled - invoicePaid) < 0.005;
+  const appliedWallet = settledCopiedFromInvoice ? 0 : walletSettled;
+  return Math.max(reserved, appliedWallet);
+};
+
+/** Remaining amount still to collect for this encounter only. */
+export const computeEncounterCollectAmount = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+): number => computeEncounterRemainingToPay(summary, chargeRows);
+
 /** Wallet reservation + allocation already applied on this encounter. */
 export const computeEncounterCoveredAmount = (
   summary: EncounterBillingSummary | null | undefined

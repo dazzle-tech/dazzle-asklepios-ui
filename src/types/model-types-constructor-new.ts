@@ -3680,6 +3680,12 @@ modelTypes.Tax = {
   citizenCategory:
     'ALL',
 
+  patientCopayment:
+    true,
+
+  claimShare:
+    true,
+
   validFrom:
     '',
 

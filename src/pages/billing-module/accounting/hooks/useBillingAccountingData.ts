@@ -118,7 +118,6 @@ export const useBillingAccountingData = ({
 
   const {
     currentData: patientLedgerSummary,
-    isLoading: loadingLedgerInitial,
     refetch: refetchLedgerSummary
   } = useGetPatientLedgerSummaryQuery(
     { patientId: patientId as number },
@@ -172,10 +171,6 @@ export const useBillingAccountingData = ({
     selectedEncounterId == null ||
     !(loadingSummaryInitial && billingSummary == null);
 
-  const ledgerReady =
-    patientId == null ||
-    !(loadingLedgerInitial && patientLedgerSummary == null);
-
   const summary = summaryMatchesEncounter ? billingSummary : fallbackSummary;
 
   const resolvedInvoiceId = useMemo(
@@ -219,7 +214,6 @@ export const useBillingAccountingData = ({
   const loadingBillingMetrics =
     selectedEncounterId != null &&
     (!summaryReady ||
-      !ledgerReady ||
       (resolvedInvoiceId != null &&
         (fetchingInvoiceAdjustments || fetchingInvoiceLineItems) &&
         invoiceAdjustments == null));

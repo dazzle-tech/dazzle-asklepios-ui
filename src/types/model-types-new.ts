@@ -6263,6 +6263,14 @@ export type Tax = {
   citizenCategory?:
     TaxCitizenCategory;
 
+  /*
+   * Insurance visits: apply the tax on the
+   * patient share / insurance (claim) share.
+   */
+  patientCopayment?: boolean;
+
+  claimShare?: boolean;
+
   validFrom?: string;
 
   validTo?: string | null;
@@ -6297,6 +6305,10 @@ export type SaveTaxRequest = {
 
   citizenCategory?:
     TaxCitizenCategory;
+
+  patientCopayment?: boolean;
+
+  claimShare?: boolean;
 
   validFrom: string;
 

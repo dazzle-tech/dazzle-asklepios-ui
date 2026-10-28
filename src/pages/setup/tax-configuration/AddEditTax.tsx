@@ -124,6 +124,11 @@ Record<string, string> = {
   citizenCategory:
     'Citizen Category',
 
+    'Patient Copayment',
+
+  claimShare:
+    'Claim Share',
+
   validFrom:
     'Valid From',
 
@@ -594,6 +599,14 @@ React.FC<Props> = ({
           previous.citizenCategory ??
           'ALL',
 
+        patientCopayment:
+          previous.patientCopayment ??
+          true,
+
+        claimShare:
+          previous.claimShare ??
+          true,
+
         validFrom:
           previous.validFrom ||
           new Date()
@@ -875,6 +888,14 @@ React.FC<Props> = ({
         citizenCategory:
           tax.citizenCategory as
             TaxCitizenCategory,
+
+        patientCopayment:
+          tax.patientCopayment ??
+          true,
+
+        claimShare:
+          tax.claimShare ??
+          true,
 
         validFrom:
           String(
@@ -1176,6 +1197,41 @@ React.FC<Props> = ({
           placeholder="Select Citizen Category"
           searchable={false}
         />
+
+        <br />
+
+        {/*
+          Insurance visits: where the tax is applied.
+          Patient Copayment -> patient share,
+          Claim Share -> insurance share.
+        */}
+        <div className="tax-two-columns">
+          <MyInput
+            width="100%"
+            fieldLabel="Patient Copayment"
+            fieldType="checkbox"
+            fieldName="patientCopayment"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
+          />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Claim Share"
+            fieldType="checkbox"
+            fieldName="claimShare"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
+          />
+        </div>
 
         <br />
 
