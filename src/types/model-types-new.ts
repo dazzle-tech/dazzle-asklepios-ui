@@ -3911,6 +3911,11 @@ export interface DiagnosticOrderTest extends AuditingEntity {
 
   confirmedBy?: string;
   confirmedAt?: string;
+
+  /** Status of the test's billing line; null when no pre-authorization applies. */
+  preAuthorizationStatus?: string | null;
+  /** True when sample collection waits on pre-authorization (NPHIES contracts). */
+  preAuthorizationBlocked?: boolean | null;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -5626,7 +5631,7 @@ export type CancelReason =
   | 'WRONG_INFORMATION'
   | 'TRANSACTION_ALREADY_SUBMITTED';
 
-export type LocalPreAuthorizationDecision = 'APPROVED' | 'REJECTED';
+export type LocalPreAuthorizationDecision = 'APPROVED' | 'PARTIAL' | 'REJECTED';
 
 export type LocalPreAuthorizationDecisionRequest = {
   decision: LocalPreAuthorizationDecision;

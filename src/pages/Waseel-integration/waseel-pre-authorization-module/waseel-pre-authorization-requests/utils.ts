@@ -1,19 +1,11 @@
 import type { Filters } from './types';
+import { getPreAuthorizationStatusColor } from '@/utils/preAuthorizationStatusDisplay';
 import type {
   PreAuthorizationTrackingItemResponse,
   PreAuthorizationTrackingResponse
 } from '@/types/model-types-new';
 
-export const getStatusColor = (status?: string | null) => {
-  const normalized = String(status ?? '').toUpperCase();
-
-  if (normalized.includes('APPROVED') || normalized.includes('SUBMITTED')) return '#28a745';
-  if (normalized.includes('REJECTED') || normalized.includes('FAILED')) return '#dc3545';
-  if (normalized.includes('CANCEL')) return '#6c757d';
-  if (normalized.includes('SUBMITTING') || normalized.includes('PENDING')) return '#ffc107';
-
-  return '#007bff';
-};
+export const getStatusColor = getPreAuthorizationStatusColor;
 
 const contains = (value: unknown, search: unknown) =>
   String(value ?? '').toLowerCase().includes(String(search ?? '').toLowerCase());

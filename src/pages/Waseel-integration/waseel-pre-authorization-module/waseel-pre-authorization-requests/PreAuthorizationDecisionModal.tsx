@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleHalfStroke, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { Input, Message, Text } from 'rsuite';
 
 import MyModal from '@/components/MyModal/MyModal';
@@ -20,6 +20,35 @@ type PreAuthorizationDecisionModalProps = {
   onSubmit: () => void | Promise<void>;
 };
 
+const DECISION_COPY: Record<
+  LocalPreAuthorizationDecision,
+  { label: string; step: string; icon: typeof faCircleCheck; type: 'info' | 'warning'; message: string }
+> = {
+  APPROVED: {
+    label: 'Approve',
+    step: 'Record payer approval',
+    icon: faCircleCheck,
+    type: 'info',
+    message: 'The service will be billed with the insurance share of the coverage contract.'
+  },
+  PARTIAL: {
+    label: 'Partially Approve',
+    step: 'Record partial approval',
+    icon: faCircleHalfStroke,
+    type: 'warning',
+    message:
+      'The service will not be billed to insurance. In the patient account the patient can pay it in full as cash, or the service can be cancelled.'
+  },
+  REJECTED: {
+    label: 'Reject',
+    step: 'Record payer rejection',
+    icon: faCircleXmark,
+    type: 'warning',
+    message:
+      'The service will not be covered. In the patient account the patient can pay it in full as cash, or the service can be cancelled.'
+  }
+};
+
 const PreAuthorizationDecisionModal: React.FC<PreAuthorizationDecisionModalProps> = ({
   open,
   row,
@@ -30,8 +59,8 @@ const PreAuthorizationDecisionModal: React.FC<PreAuthorizationDecisionModalProps
   onClose,
   onSubmit
 }) => {
-  const approving = decision === 'APPROVED';
-  const label = approving ? 'Approve' : 'Reject';
+  const copy = DECISION_COPY[decision ?? 'APPROVED'];
+  const label = copy.label;
 
   return (
     <MyModal
@@ -49,16 +78,14 @@ const PreAuthorizationDecisionModal: React.FC<PreAuthorizationDecisionModalProps
       cancelButtonLabel="Close"
       steps={[
         {
-          title: approving ? 'Record payer approval' : 'Record payer rejection',
-          icon: <FontAwesomeIcon icon={approving ? faCircleCheck : faCircleXmark} />
+          title: copy.step,
+          icon: <FontAwesomeIcon icon={copy.icon} />
         }
       ]}
       content={() => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Message showIcon type={approving ? 'info' : 'warning'}>
-            {approving
-              ? 'The service will be billed with the insurance share of the coverage contract.'
-              : 'The service will not be covered. It can then be paid as cash from the patient account.'}
+          <Message showIcon type={copy.type}>
+            {copy.message}
           </Message>
           <Text>Note (optional)</Text>
           <Input

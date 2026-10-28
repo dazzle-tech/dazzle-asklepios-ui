@@ -23,6 +23,7 @@ import {
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useRefreshEncounterPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
+import { useDeletePatientServiceOrProductMutation } from '@/services/encounters/patientServicesAndProductsService';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
@@ -127,6 +128,7 @@ const Accounting: React.FC = () => {
     usePayRejectedPreAuthorizationItemAsCashMutation();
   const [cloneRejectedPreAuthorizationItem] =
     useCloneRejectedPreAuthorizationItemMutation();
+  const [cancelPatientService] = useDeletePatientServiceOrProductMutation();
 
   const facilityPrintInfo = useMemo(
     () => ({
@@ -487,6 +489,43 @@ const Accounting: React.FC = () => {
     }
   };
 
+  /**
+   * The patient declines a rejected / partially approved service: the line is cancelled
+   * (soft cancel, nothing is charged).
+   */
+  const handleCancelPreAuthService = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await cancelPatientService({
+        id: patientServiceProductId,
+        encounterId: selectedEncounterId
+      }).unwrap();
+
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Service cancelled. Nothing was charged to the patient.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message ?? error?.message ?? 'Unable to cancel this service.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
   const selectedChargeRows = useMemo(
     () => chargeRows.filter(row => selectedChargeRowIds.includes(row.id)),
     [chargeRows, selectedChargeRowIds]
@@ -767,6 +806,7 @@ const Accounting: React.FC = () => {
                 preAuthActionLoadingId={preAuthActionLoadingId}
                 onPayRejectedAsCash={handlePayRejectedAsCash}
                 onClonePreAuthorization={handleClonePreAuthorization}
+                onCancelService={handleCancelPreAuthService}
               />
             </div>
 

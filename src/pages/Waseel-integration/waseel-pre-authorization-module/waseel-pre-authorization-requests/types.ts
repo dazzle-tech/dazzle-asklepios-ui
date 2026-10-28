@@ -33,6 +33,7 @@ export const statusOptions = [
   { label: 'Submitting', value: 'SUBMITTING' },
   { label: 'Submitted', value: 'SUBMITTED' },
   { label: 'Approved', value: 'APPROVED' },
+  { label: 'Partial', value: 'Partial' },
   { label: 'Rejected', value: 'REJECTED' },
   { label: 'Failed', value: 'FAILED' },
   { label: 'Cancelled', value: 'CANCELLED' }

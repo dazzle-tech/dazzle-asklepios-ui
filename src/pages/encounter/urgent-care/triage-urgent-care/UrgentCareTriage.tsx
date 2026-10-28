@@ -10,6 +10,10 @@ import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
+import {
+  PRE_AUTHORIZATION_VISIT_LOCK_MESSAGE,
+  isPreAuthorizationVisitLockError
+} from '@/utils/preAuthorizationVisitLock';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -1048,7 +1052,9 @@ const handleCancelEncounter = async () => {
       const errorKey = error?.message || error?.data?.message || '';
       let readableMessage = 'Failed to start triage';
 
-      if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
+      if (isPreAuthorizationVisitLockError(error)) {
+        readableMessage = PRE_AUTHORIZATION_VISIT_LOCK_MESSAGE;
+      } else if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
         readableMessage =
           'Cannot start a new triage because the patient already has an ongoing encounter.';
       } else if (errorKey) {

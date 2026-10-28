@@ -1473,14 +1473,25 @@ export const isRowFullyReserved = (
   summary?: EncounterBillingSummary | null
 ): boolean => resolveRowPaymentStatus(row, summary) === 'RESERVED';
 
+/**
+ * Rejected, or partially approved on a local (NPHIES) request, and not billed yet:
+ * the patient pays the service as cash or it is cancelled.
+ * A Waseel partial approval stays held (required) until communication ends.
+ */
+export const isAwaitingPatientChoice = (row: UnifiedBillingChargeRow): boolean =>
+  row.chargeLineId == null &&
+  row.preAuthorizationRequired !== true &&
+  (isPreAuthRejected(row.preAuthorizationStatus) || isPreAuthPartial(row.preAuthorizationStatus));
+
 export const shouldShowPreAuthRowActions = (
   row: UnifiedBillingChargeRow,
   summary?: EncounterBillingSummary | null
 ): boolean =>
-  isPreAuthRequiredRow(row) &&
-  !isRowFullyReserved(row, summary) &&
-  (isPreAuthRejected(row.preAuthorizationStatus) ||
-    isPreAuthPartial(row.preAuthorizationStatus));
+  isAwaitingPatientChoice(row) ||
+  (isPreAuthRequiredRow(row) &&
+    !isRowFullyReserved(row, summary) &&
+    (isPreAuthRejected(row.preAuthorizationStatus) ||
+      isPreAuthPartial(row.preAuthorizationStatus)));
 
 export const findPendingPreAuthItems = (
   pspRows: PatientServiceAndProduct[]
@@ -2048,6 +2059,10 @@ export const resolveDisplayChargeRows = (
   return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());
 };
 
+/**
+ * Unbilled line still waiting on pre-authorization: the payer decision, or the
+ * patient's choice (pay cash / cancel) after a rejection or partial approval.
+ */
 const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
   const rowAny = row as PatientServiceAndProduct & {
     preAuthorizationStatus?: string | null;
@@ -2055,6 +2070,8 @@ const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
   };
   return (
     isPreAuthPending(rowAny.preAuthorizationStatus) ||
+    isPreAuthPartial(rowAny.preAuthorizationStatus) ||
+    isPreAuthRejected(rowAny.preAuthorizationStatus) ||
     String(rowAny.paymentStatus ?? '').toUpperCase() === 'SKIPPED_PENDING_PRE_AUTH'
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-import { FaCircleCheck, FaCircleXmark, FaPaperPlane, FaRotate } from 'react-icons/fa6';
+import { FaCircleCheck, FaCircleHalfStroke, FaCircleXmark, FaPaperPlane, FaRotate } from 'react-icons/fa6';
 import { MdCancel, MdOutlineMessage, MdOutlineForum } from 'react-icons/md';
 
 import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
@@ -48,6 +48,23 @@ const PreAuthorizationRowActions: React.FC<PreAuthorizationRowActionsProps> = ({
                 size={20}
                 fill="var(--primary-gray)"
                 onClick={() => onDecide(row, 'APPROVED')}
+                style={{ cursor: 'pointer' }}
+              />
+            </span>
+          </Whisper>
+
+          <Whisper
+            placement="top"
+            trigger="hover"
+            container={() => document.body}
+            speaker={<Tooltip>Partially approve</Tooltip>}
+          >
+            <span>
+              <FaCircleHalfStroke
+                className="icons-style"
+                size={20}
+                fill="var(--primary-gray)"
+                onClick={() => onDecide(row, 'PARTIAL')}
                 style={{ cursor: 'pointer' }}
               />
             </span>

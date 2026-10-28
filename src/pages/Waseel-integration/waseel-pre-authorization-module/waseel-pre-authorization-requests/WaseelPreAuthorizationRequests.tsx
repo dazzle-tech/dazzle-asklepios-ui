@@ -347,8 +347,7 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       dispatch(
         notify({
           msg:
-            result?.message ??
-            (decision === 'APPROVED' ? 'Pre-authorization approved' : 'Pre-authorization rejected'),
+            result?.message ?? 'Pre-authorization decision saved',
           sev: 'success'
         })
       );

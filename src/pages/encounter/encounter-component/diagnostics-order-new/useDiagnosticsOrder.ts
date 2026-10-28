@@ -958,6 +958,21 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
 
+      // Radiology tests waiting for pre-authorization are listed in the alert on submit.
+      const radiologyAwaitingApproval: PreAuthorizationAlertItem[] = orderTestList
+        .filter(
+          (t: any) =>
+            String(t.orderType ?? '').toUpperCase() === 'RADIOLOGY' &&
+            String(t.preAuthorizationStatus ?? '').toUpperCase() === 'PENDING_APPROVAL'
+        )
+        .map((t: any) => ({
+          patientServiceProductId: null,
+          label: t.test?.testName ?? t.test?.name ?? t.testName ?? 'Radiology test'
+        }));
+      if (radiologyAwaitingApproval.length) {
+        setPreAuthAlert(radiologyAwaitingApproval);
+      }
+
 
       await ordersRefetch();
       await orderTestRefetch();

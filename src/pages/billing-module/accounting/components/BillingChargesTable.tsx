@@ -35,6 +35,8 @@ import {
 
   isPreAuthRequiredRow,
 
+  isAwaitingPatientChoice,
+
   shouldShowPreAuthRowActions,
 
   isRowAwaitingBilling,
@@ -127,6 +129,7 @@ type BillingChargesTableProps = {
   preAuthActionLoadingId?: number | null;
   onPayRejectedAsCash?: (patientServiceProductId: number) => void;
   onClonePreAuthorization?: (patientServiceProductId: number) => void;
+  onCancelService?: (patientServiceProductId: number) => void;
 };
 
 
@@ -157,7 +160,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   onPayRejectedAsCash,
 
-  onClonePreAuthorization
+  onClonePreAuthorization,
+
+  onCancelService
 
 }) => {
 
@@ -570,6 +575,18 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 120,
 
       render: (row: UnifiedBillingChargeRow) => {
+        if (isAwaitingPatientChoice(row)) {
+          return isPreAuthPartial(row.preAuthorizationStatus) ? (
+            <Tag color="yellow" size="sm">
+              Partially approved
+            </Tag>
+          ) : (
+            <Tag color="orange" size="sm">
+              Pre-auth rejected
+            </Tag>
+          );
+        }
+
         if (!isPreAuthRequiredRow(row)) {
           return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
         }
@@ -628,7 +645,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
                 return null;
               }
 
-              if (isPreAuthPartial(row.preAuthorizationStatus)) {
+              const awaitingPatientChoice = isAwaitingPatientChoice(row);
+
+              if (!awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus)) {
                 return (
                   <Tag color="yellow" size="sm">
                     Communication required
@@ -636,7 +655,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
                 );
               }
 
-              if (!isPreAuthRejected(row.preAuthorizationStatus)) {
+              if (!awaitingPatientChoice && !isPreAuthRejected(row.preAuthorizationStatus)) {
                 return null;
               }
 
@@ -659,6 +678,18 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
                   >
                     Pay cash
                   </MyButton>
+
+                  {awaitingPatientChoice && onCancelService && (
+                    <MyButton
+                      size="xs"
+                      appearance="ghost"
+                      loading={loading}
+                      disabled={disabled || loading}
+                      onClick={() => onCancelService(pspId)}
+                    >
+                      Cancel service
+                    </MyButton>
+                  )}
 
                   <MyButton
                     size="xs"
