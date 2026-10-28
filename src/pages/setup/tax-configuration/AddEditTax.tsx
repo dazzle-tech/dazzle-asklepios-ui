@@ -124,6 +124,7 @@ Record<string, string> = {
   citizenCategory:
     'Citizen Category',
 
+  patientCopayment:
     'Patient Copayment',
 
   claimShare:
