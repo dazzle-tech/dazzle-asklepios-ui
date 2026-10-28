@@ -17,6 +17,9 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
+import PreAuthorizationAlertModal, {
+  type PreAuthorizationAlertItem
+} from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import Details from './Details';
 import Perform from './Perform';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
@@ -84,6 +87,7 @@ const Referrals = (props: any) => {
   } | null>(null);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
@@ -223,7 +227,11 @@ const Referrals = (props: any) => {
       if (procedure?.id) {
         await updateProcedure({ id: procedure.id, ...procedureData }).unwrap();
       } else {
-        await createProcedure(procedureData).unwrap();
+        const created = await createProcedure(procedureData).unwrap();
+        const createdRow = ((created as any)?.object ?? created) as { status?: string } | null;
+        if (createdRow?.status === 'WAITING_PRE_AUTHORIZATION') {
+          setPreAuthAlert([{ patientServiceProductId: null, label: 'Procedure' }]);
+        }
       }
 
       proRefetch();
@@ -765,6 +773,13 @@ const Referrals = (props: any) => {
         procedureRequestId={selectedProcedureForDocuments?.procedureRequestId}
         encounterId={encounter?.id ? Number(encounter.id) : null}
         dir={dir}
+      />
+
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
       />
     </div>
   );

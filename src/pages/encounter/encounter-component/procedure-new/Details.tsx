@@ -21,6 +21,9 @@ import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
+import PreAuthorizationAlertModal, {
+  type PreAuthorizationAlertItem
+} from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
@@ -181,6 +184,7 @@ const Details = ({
   const { uncoveredItems, checkItem, clearUncoveredItems, requiresCashConfirmation } =
     useInsurancePriceListCoverage(encounter?.id);
 
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const [createProcedure] = useCreateProcdureMutation();
   const [updateProcedure] = useUpdateProcdureMutation();
 
@@ -554,10 +558,14 @@ const Details = ({
           result: procedure.result
         }).unwrap();
       } else {
-        await createProcedure({
+        const created = await createProcedure({
           ...procedureData,
           acceptUncoveredAsCash: requiresCashConfirmation
         }).unwrap();
+        const createdRow = ((created as any)?.object ?? created) as { status?: string } | null;
+        if (createdRow?.status === 'WAITING_PRE_AUTHORIZATION') {
+          setPreAuthAlert([{ patientServiceProductId: null, label: 'Procedure' }]);
+        }
       }
 
       setOpenDetailsModal(false);
@@ -918,6 +926,13 @@ const Details = ({
         refetchData={() => { }}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.id ? Number(procedure.id) : 0}
+      />
+
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
       />
     </>
   );

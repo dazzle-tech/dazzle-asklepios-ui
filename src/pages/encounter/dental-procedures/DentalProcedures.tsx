@@ -13,6 +13,9 @@ import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 import CancellationModal from '@/components/CancellationModal';
+import PreAuthorizationAlertModal, {
+  type PreAuthorizationAlertItem
+} from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import CdtCodeSearch from '@/components/CdtCodeSearch/CdtCodeSearch';
 
@@ -197,6 +200,7 @@ const DentalProcedures = props => {
   const [modalKey, setModalKey] = useState(0);
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
 
@@ -257,6 +261,12 @@ const DentalProcedures = props => {
   const [saveProcedure, saveMutation] = useSaveDentalProcedureMutation();
   const [updateProcedure, updateMutation] = useUpdateDentalProcedureMutation();
   const [cancelProcedure, cancelMutation] = useCancelDentalProcedureMutation();
+
+  const showPreAuthAlertWhenPending = (result: { preAuthorizationPending?: boolean } | null) => {
+    if (result?.preAuthorizationPending) {
+      setPreAuthAlert([{ patientServiceProductId: null, label: 'Dental procedure' }]);
+    }
+  };
 
   const rows: DentalProcedureResponseVM[] = Array.isArray(proceduresData) ? proceduresData : [];
   const totalCount = rows.length;
@@ -391,7 +401,8 @@ const DentalProcedures = props => {
           acceptUncoveredAsCash: requiresCashConfirmation
         };
 
-        await saveProcedure(createPayload).unwrap();
+        const saved = await saveProcedure(createPayload).unwrap();
+        showPreAuthAlertWhenPending(saved);
       } catch (error) {
         handleCrudError(error, dispatch);
       }
@@ -413,7 +424,8 @@ const DentalProcedures = props => {
           notes: form.notes?.trim() || null
         };
 
-        await updateProcedure({ id: form.id, body }).unwrap();
+        const updated = await updateProcedure({ id: form.id, body }).unwrap();
+        showPreAuthAlertWhenPending(updated);
       } catch (error) {
         handleCrudError(error, dispatch);
       }
@@ -858,6 +870,13 @@ const DentalProcedures = props => {
             setRefetchAttachmentList={() => { }}
           />
         }
+      />
+
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
       />
     </div>
   );
