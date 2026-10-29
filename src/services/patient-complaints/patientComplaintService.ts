@@ -182,7 +182,7 @@ export const patientComplaintPublicService = createApi({
         method: 'POST',
         body,
         responseHandler: 'text',
-        headers: { 'X-Portal-Secret': 'dev-patient-portal-secret' }
+        headers: { 'X-Portal-Secret': 'k7Qm2pL9xR4vN8sT1wY6cH3bF5dJ0aZ' }
       })
     }),
 
@@ -194,7 +194,7 @@ export const patientComplaintPublicService = createApi({
         url: '/api/patient/patient-portal/verify-login-otp',
         method: 'POST',
         body,
-        headers: { 'X-Portal-Secret': 'dev-patient-portal-secret' }
+        headers: { 'X-Portal-Secret': 'k7Qm2pL9xR4vN8sT1wY6cH3bF5dJ0aZ' }
       })
     }),
 
