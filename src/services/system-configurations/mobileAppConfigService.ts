@@ -20,7 +20,12 @@ export const mobileAppConfigService = createApi({
     }),
 
     getMobileAppConfigValues: builder.query<
-      { configKey: string; configType: string | null; configValue: string | null }[],
+      {
+        configKey: string;
+        configType: string | null;
+        configValue: string | null;
+        description: string | null;
+      }[],
       string[]
     >({
       query: keys => ({
@@ -41,10 +46,10 @@ export const mobileAppConfigService = createApi({
     }),
 
     updateMobileAppConfig: builder.mutation<MobileAppConfigResponseVM, MobileAppConfigUpdateDTO>({
-      query: ({ id, configType, configValue }) => ({
+      query: ({ id, configType, configValue, description }) => ({
         url: `/api/setup/mobile-app-config/${id}`,
         method: 'PUT',
-        body: { configType, configValue },
+        body: { configType, configValue, description },
       }),
       invalidatesTags: ['MobileAppConfig'],
     }),
@@ -59,12 +64,15 @@ export const mobileAppConfigService = createApi({
 
     createMobileAppConfigImage: builder.mutation<
       MobileAppConfigResponseVM,
-      { configKey: string; file: File }
+      { configKey: string; file: File; description?: string | null }
     >({
-      query: ({ configKey, file }) => {
+      query: ({ configKey, file, description }) => {
         const body = new FormData();
         body.append('configKey', configKey);
         body.append('file', file);
+        if (description != null && description !== '') {
+          body.append('description', description);
+        }
         return {
           url: '/api/setup/mobile-app-config/image',
           method: 'POST',
@@ -74,10 +82,18 @@ export const mobileAppConfigService = createApi({
       invalidatesTags: ['MobileAppConfig'],
     }),
 
-    updateMobileAppConfigImage: builder.mutation<MobileAppConfigResponseVM, { id: number; file: File }>({
-      query: ({ id, file }) => {
+    updateMobileAppConfigImage: builder.mutation<
+      MobileAppConfigResponseVM,
+      { id: number; file?: File | null; description?: string | null }
+    >({
+      query: ({ id, file, description }) => {
         const body = new FormData();
-        body.append('file', file);
+        if (file) {
+          body.append('file', file);
+        }
+        if (description != null) {
+          body.append('description', description);
+        }
         return {
           url: `/api/setup/mobile-app-config/${id}/image`,
           method: 'PUT',

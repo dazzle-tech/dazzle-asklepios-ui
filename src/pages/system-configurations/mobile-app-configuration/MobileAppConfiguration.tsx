@@ -95,6 +95,20 @@ const MobileAppConfiguration = () => {
         ),
     },
     {
+      key: 'description',
+      title: 'Description',
+      flexGrow: 2,
+      render: (row: MobileAppConfigResponseVM) => (
+        <Whisper placement="top" speaker={<Tooltip>{row.description}</Tooltip>}>
+          <span>
+            {row.description && row.description.length > 60
+              ? `${row.description.substring(0, 60)}...`
+              : row.description || '-'}
+          </span>
+        </Whisper>
+      ),
+    },
+    {
       key: 'icons',
       title: '',
       width: 90,

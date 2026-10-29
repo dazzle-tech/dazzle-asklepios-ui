@@ -9252,6 +9252,7 @@ export interface MobileAppConfigResponseVM {
   configKey: string;
   configType: string;
   configValue: string;
+  description?: string | null;
   createdBy?: string | null;
   createdDate?: string | null;
   lastModifiedBy?: string | null;
@@ -9262,11 +9263,13 @@ export interface MobileAppConfigCreateDTO {
   configKey: string;
   configType: string;
   configValue: string;
+  description?: string | null;
 }
 
 export interface MobileAppConfigUpdateDTO {
   id: number;
   configType: string;
   configValue: string;
+  description?: string | null;
 }
 
