@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Panel, Whisper, Tooltip } from 'rsuite';
+import { Form, Loader, Modal, Panel, Whisper, Tooltip } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdNotificationsActive } from 'react-icons/md';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
@@ -14,8 +14,12 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import {
   useDeleteMobileAppConfigMutation,
   useGetAllMobileAppConfigsQuery,
+  useNotifyPortalPatientsToUpdateAppMutation,
 } from '@/services/system-configurations/mobileAppConfigService';
-import { MobileAppConfigResponseVM } from '@/types/model-types-new';
+import {
+  MobileAppConfigResponseVM,
+  PortalAppUpdateNotificationVM,
+} from '@/types/model-types-new';
 import { newMobileAppConfigResponseVM } from '@/types/model-types-constructor-new';
 import AddEditMobileAppConfig from './AddEditMobileAppConfig';
 import './styles.less';
@@ -24,6 +28,9 @@ const MobileAppConfiguration = () => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmNotifyOpen, setConfirmNotifyOpen] = useState(false);
+  const [notifyResultOpen, setNotifyResultOpen] = useState(false);
+  const [notifyResult, setNotifyResult] = useState<PortalAppUpdateNotificationVM | null>(null);
   const [selected, setSelected] = useState<MobileAppConfigResponseVM>({
     ...newMobileAppConfigResponseVM,
   });
@@ -31,6 +38,8 @@ const MobileAppConfiguration = () => {
 
   const { data, isFetching, refetch } = useGetAllMobileAppConfigsQuery();
   const [deleteConfig] = useDeleteMobileAppConfigMutation();
+  const [notifyPortalPatientsToUpdateApp, { isLoading: isNotifying }] =
+    useNotifyPortalPatientsToUpdateAppMutation();
   const enumOptions = useEnumOptions('MobileAppConfigKey');
 
   useEffect(() => {
@@ -68,6 +77,25 @@ const MobileAppConfiguration = () => {
       dispatch(
         notify({
           msg: extractErrorMessage(error) || 'Failed to delete this configuration',
+          sev: 'warning',
+        })
+      );
+    }
+  };
+
+  const handleNotifyAppUpdate = async () => {
+    setConfirmNotifyOpen(false);
+    setNotifyResult(null);
+    setNotifyResultOpen(true);
+    try {
+      const result = await notifyPortalPatientsToUpdateApp().unwrap();
+      setNotifyResult(result);
+      dispatch(notify({ msg: 'Portal patients were notified successfully', sev: 'success' }));
+    } catch (error) {
+      setNotifyResultOpen(false);
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to notify portal patients',
           sev: 'warning',
         })
       );
@@ -171,9 +199,19 @@ const MobileAppConfiguration = () => {
           </Form>
         }
         tableButtons={
-          <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={handleNew}>
-            Add New
-          </MyButton>
+          <div className="container-of-mobile-app-config-buttons">
+            <MyButton
+              prefixIcon={() => <MdNotificationsActive />}
+              onClick={() => setConfirmNotifyOpen(true)}
+              disabled={isNotifying}
+              loading={isNotifying}
+            >
+              Notify App Update
+            </MyButton>
+            <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={handleNew} disabled={isNotifying}>
+              Add New
+            </MyButton>
+          </div>
         }
       />
 
@@ -191,6 +229,55 @@ const MobileAppConfiguration = () => {
         actionButtonFunction={handleDelete}
         actionType="delete"
       />
+
+      <DeletionConfirmationModal
+        open={confirmNotifyOpen}
+        setOpen={setConfirmNotifyOpen}
+        actionType="confirm"
+        actionButtonLabel="Notify"
+        confirmationQuestion="Do you want to notify portal patients to update the mobile app?"
+        actionButtonFunction={handleNotifyAppUpdate}
+      />
+
+      <Modal
+        open={notifyResultOpen}
+        onClose={() => !isNotifying && setNotifyResultOpen(false)}
+        size="xs"
+        backdrop="static"
+      >
+        <Modal.Header>
+          <Modal.Title>
+            {isNotifying ? 'Notifying Portal Patients' : 'App Update Notification Result'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {isNotifying || !notifyResult ? (
+            <div className="mobile-app-config-notify-loading">
+              <Loader size="md" content="Sending notifications..." />
+            </div>
+          ) : (
+            <div className="mobile-app-config-notify-result">
+              <div>
+                <span>Portal patients:</span>
+                <strong>{notifyResult.portalPatientCount}</strong>
+              </div>
+              <div>
+                <span>Notified:</span>
+                <strong>{notifyResult.notifiedCount}</strong>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <MyButton
+            appearance="subtle"
+            disabled={isNotifying}
+            onClick={() => setNotifyResultOpen(false)}
+          >
+            Close
+          </MyButton>
+        </Modal.Footer>
+      </Modal>
     </Panel>
   );
 };
