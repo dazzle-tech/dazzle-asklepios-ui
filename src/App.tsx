@@ -222,6 +222,8 @@ const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
 );
+const SurveyQuestionsSetup = lazy(() => import('./pages/setup/survey-questions-setup'));
+const SurveyResponses = lazy(() => import('./pages/setup/survey-responses'));
 const WarehouseItemsSetup = lazy (() => import ( './pages/setup/warehouse-Items-setup'));
 const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/WarehouseSetup'));
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
@@ -258,6 +260,7 @@ const SubmitPatientComplaintPage = lazy(
   () => import('./pages/patient-complaints/SubmitPatientComplaintPage')
 );
 const PatientComplaintsPage = lazy(() => import('./pages/patient-complaints/PatientComplaintsPage'));
+const SurveyPage = lazy(() => import('./pages/survey/SurveyPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -923,8 +926,9 @@ const App = () => {
               <Route path="ai-services" element={<AiServices />} />
               <Route
                 path="patient-satisfaction-survey-responses"
-                element={<PatientSatisfactionSurveyResponses />}
+                element={<SurveyResponses />}
               />
+              <Route path="survey-questions-setup" element={<SurveyQuestionsSetup />} />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="shift-setup" element={<Shifts />} />
               <Route
@@ -1069,7 +1073,7 @@ const App = () => {
           <Route path="reset-password" element={<ResetPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
-          <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyPage />} />
+          <Route path="patient-satisfaction-survey" element={<SurveyPage />} />
           <Route path="submit-patient-complaint" element={<SubmitPatientComplaintPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
