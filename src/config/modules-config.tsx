@@ -250,6 +250,7 @@ export const MODULES: Module[] =
         { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+        { name: "Tasks & Activities Setup", code: "ACTIVITY_SETUP", description: "Activity types, categories, due rules and teams", icon: "FaListCheck", viewOrder: 9, navPath: "activity-setup" },
         { name: "AI Services", code: "AI_SERVICES", description: "Setup for AI services", icon: "FaRobot", viewOrder: 9.5, navPath: "ai-services" },
         {
           name: "Patient Satisfaction Survey Responses",
@@ -403,6 +404,17 @@ export const MODULES: Module[] =
         { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
         { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
         { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
+      ],
+    },
+    {
+      name: "Tasks",
+      description: "Follow-up tasks across patients: yours, your team's and everyone's",
+      icon: "FaListCheck",
+      viewOrder: 2,
+      screens: [
+        { name: "My Tasks", code: "MY_TASKS", description: "Tasks assigned to you", icon: "FaUserCheck", viewOrder: 1, navPath: "my-tasks" },
+        { name: "Team Tasks", code: "TEAM_TASKS", description: "Tasks for your job role", icon: "FaUsers", viewOrder: 2, navPath: "team-tasks" },
+        { name: "All Tasks", code: "ALL_TASKS", description: "Every task, for supervisors", icon: "FaListCheck", viewOrder: 3, navPath: "all-tasks" },
       ],
     },
     {

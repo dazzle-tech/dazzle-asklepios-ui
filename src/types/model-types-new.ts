@@ -1685,6 +1685,391 @@ export interface InventoryProduct {
 }
 
 /* =========================
+ *  Inventory - warehouses (inventory-service /api/inventory)
+ * ========================= */
+
+/** Working hours are minutes since midnight (e.g. 08:30 -> 510). */
+export interface Warehouse {
+  id?: number;
+  facilityId: number;
+  departmentId?: number | null;
+  name: string;
+  code: string;
+  isDefault?: boolean | null;
+  closeWarehouse?: boolean | null;
+  locationKey?: string | null;
+  capacity?: string | null;
+  workingHoursFromTime?: number | null;
+  workingHoursToTime?: number | null;
+  isActive?: boolean | null;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+}
+
+export interface WarehouseSearchCriteria {
+  facilityId?: number | null;
+  departmentId?: number | null;
+  name?: string | null;
+  code?: string | null;
+  isDefault?: boolean | null;
+  closeWarehouse?: boolean | null;
+  isActive?: boolean | null;
+}
+
+export interface WarehouseUser {
+  id: number;
+  warehouseId: number;
+  userId: number;
+  createdBy?: string;
+  createdDate?: string;
+}
+
+/** A product stocked in a warehouse. Quantities are in the product's base UOM. */
+export interface WarehouseProduct {
+  id: number;
+  warehouseId: number;
+  productId: number;
+  productName?: string | null;
+  productCode?: string | null;
+  productType?: string | null;
+  baseUom?: number | null;
+  uomGroupId?: number | null;
+  /** LOT / SERIAL; with batchManaged it makes the lot/serial number mandatory on stock moves */
+  inventoryType?: 'LOT' | 'SERIAL' | null;
+  batchManaged?: boolean | null;
+  expiryDateMandatory?: boolean | null;
+  quantity: number;
+  reOrderQuantity?: number | null;
+  miniOrder?: number | null;
+  maxOrder?: number | null;
+  workingHoursFromTime?: number | null;
+  workingHoursToTime?: number | null;
+  avgCost?: number | null;
+  isActive: boolean;
+  belowReorder: boolean;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+}
+
+/** Create (with productId) / update (with id) payload; quantity and avgCost are owned by stock transactions. */
+export interface WarehouseProductPayload {
+  id?: number;
+  productId?: number | null;
+  reOrderQuantity?: number | null;
+  miniOrder?: number | null;
+  maxOrder?: number | null;
+  workingHoursFromTime?: number | null;
+  workingHoursToTime?: number | null;
+  isActive?: boolean | null;
+}
+
+export interface WarehouseProductSearchCriteria {
+  warehouseId?: number | null;
+  productId?: number | null;
+  productName?: string | null;
+  productType?: string | null;
+  isActive?: boolean | null;
+  belowReorder?: boolean | null;
+  inStock?: boolean | null;
+}
+
+export interface WarehouseProductLot {
+  id: number;
+  warehouseProductId: number;
+  lotSerialNum?: string | null;
+  quantity: number;
+  expiryDate?: string | null;
+  expired: boolean;
+  isActive: boolean;
+}
+
+/* =========================
+ *  Inventory - Stock In / Stock Out
+ * ========================= */
+
+export type StockTransactionType = 'STOCK_IN' | 'STOCK_OUT';
+export type StockTransactionStatus = 'DRAFT' | 'CONFIRMED' | 'CANCELLED';
+
+export interface InventoryTransaction {
+  id?: number;
+  transNo?: string;
+  transType: StockTransactionType | null;
+  /** StockInReasons / StockOutReasons name, depending on transType */
+  reason: string | null;
+  warehouseId: number | null;
+  docNum?: string | null;
+  vendor?: string | null;
+  invoiceNum?: string | null;
+  remarks?: string | null;
+  status?: StockTransactionStatus;
+  approvedBy?: string | null;
+  approvedDate?: string | null;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+}
+
+export interface InventoryTransactionSearchCriteria {
+  warehouseId?: number | null;
+  transType?: StockTransactionType | null;
+  reason?: string | null;
+  status?: StockTransactionStatus | null;
+  transNo?: string | null;
+  vendor?: string | null;
+  invoiceNum?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+}
+
+/** Add / replace a draft line. quantity is in transUomId; unitCost (stock in) is per transUomId. */
+export interface TransactionProductPayload {
+  productId: number;
+  transUomId: number;
+  quantity: number;
+  lotSerialNumber?: string | null;
+  expiryDate?: string | null;
+  unitCost?: number | null;
+  notes?: string | null;
+}
+
+export interface TransactionProduct {
+  id: number;
+  transactionId: number;
+  productId: number;
+  productName?: string | null;
+  productCode?: string | null;
+  baseUom?: number | null;
+  uomGroupId?: number | null;
+  transUomId: number;
+  quantity: number;
+  quantityBaseUom?: number | null;
+  lotSerialNumber?: string | null;
+  expiryDate?: string | null;
+  unitCost?: number | null;
+  totalCost?: number | null;
+  oldAvgCost?: number | null;
+  newAvgCost?: number | null;
+  isEffectedWarehouse: boolean;
+  status?: 'PENDING' | 'APPLIED' | null;
+  notes?: string | null;
+}
+
+/* =========================
+ *  Inventory - transfers between warehouses
+ * ========================= */
+
+export type TransferStatus = 'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED' | 'CANCELLED';
+export type TransferLineStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface InventoryTransfer {
+  id?: number;
+  transNo?: string;
+  reason?: string | null;
+  fromWarehouseId: number | null;
+  toWarehouseId: number | null;
+  note?: string | null;
+  status?: TransferStatus;
+  approvedBy?: string | null;
+  approvedDate?: string | null;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+}
+
+export interface InventoryTransferSearchCriteria {
+  fromWarehouseId?: number | null;
+  toWarehouseId?: number | null;
+  /** either side */
+  warehouseId?: number | null;
+  statuses?: TransferStatus[] | null;
+  transNo?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+}
+
+/** quantityRequested is in transUomId; lotSerialNumber is the source lot */
+export interface TransferProductPayload {
+  productId: number;
+  transUomId: number;
+  quantityRequested: number;
+  lotSerialNumber?: string | null;
+  notes?: string | null;
+}
+
+export interface TransferProduct {
+  id: number;
+  transferId: number;
+  productId: number;
+  productName?: string | null;
+  productCode?: string | null;
+  baseUom?: number | null;
+  uomGroupId?: number | null;
+  transUomId: number;
+  quantityRequested: number;
+  quantityRequestedBaseUom?: number | null;
+  quantityApproved?: number | null;
+  quantityApprovedBaseUom?: number | null;
+  lotSerialNumber?: string | null;
+  isEffectedWarehouse?: boolean | null;
+  status: TransferLineStatus;
+  rejectedReason?: string | null;
+  notes?: string | null;
+}
+
+/** One approval batch; quantityApproved (transaction UOM) defaults to the requested quantity. */
+export interface TransferDecision {
+  approve?: { lineId: number; quantityApproved?: number | null }[];
+  reject?: { lineId: number; reason: string }[];
+}
+
+/* =========================
+ *  Inventory - read-only stock views (/api/inventory/stock). Quantities in base UOM.
+ * ========================= */
+
+export type StockStatus = 'AVAILABLE' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+
+export interface StockItem {
+  warehouseProductId: number;
+  warehouseId: number;
+  productId: number;
+  name?: string | null;
+  code?: string | null;
+  type?: string | null;
+  inventoryType?: 'LOT' | 'SERIAL' | null;
+  baseUom?: number | null;
+  uomGroupId?: number | null;
+  availableQuantity: number;
+  /** requested by pending outgoing transfers */
+  reservedQuantity: number;
+  reorderPoint?: number | null;
+  consumedToday: number;
+  avgCost?: number | null;
+  lastReplenished?: string | null;
+  status: StockStatus;
+}
+
+export interface StockSummary {
+  warehouseId: number;
+  itemCount: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  stockValue: number;
+  expiredLots: number;
+  nearExpiryLots: number;
+  nearExpiryDays: number;
+}
+
+export interface LotStock {
+  warehouseProductDetailsId: number;
+  warehouseProductId: number;
+  productId: number;
+  productName?: string | null;
+  productCode?: string | null;
+  lotSerialNumber?: string | null;
+  quantity: number;
+  expiryDate?: string | null;
+}
+
+export interface ProductUsage {
+  productId: number;
+  productName?: string | null;
+  productCode?: string | null;
+  baseUom?: number | null;
+  totalQuantity: number;
+  quantityPerDay: number;
+  days: number;
+}
+
+export interface IncomingTransfer {
+  transferId: number;
+  transNo: string;
+  transferStatus: TransferStatus;
+  fromWarehouseId: number;
+  fromWarehouseName?: string | null;
+  lineId: number;
+  productId: number;
+  productName?: string | null;
+  transUomId?: number | null;
+  quantityRequested: number;
+  quantityRequestedBaseUom?: number | null;
+  lotSerialNumber?: string | null;
+  requestedDate?: string | null;
+}
+
+export interface WarehouseDistribution {
+  warehouseProductId: number;
+  warehouseId: number;
+  warehouseName?: string | null;
+  warehouseCode?: string | null;
+  departmentId?: number | null;
+  quantity: number;
+  avgCost?: number | null;
+  reorderPoint?: number | null;
+  isActive?: boolean | null;
+  lastModifiedDate?: string | null;
+  status: StockStatus;
+}
+
+export interface ProductStockOverview {
+  productId: number;
+  totalQuantity: number;
+  totalValue: number;
+  warehouseCount: number;
+  warehouses: WarehouseDistribution[];
+}
+
+export interface TransactionLogEntry {
+  transactionId: number;
+  transNo: string;
+  transType: StockTransactionType;
+  reason?: string | null;
+  warehouseId: number;
+  warehouseName?: string | null;
+  lineId: number;
+  transUomId?: number | null;
+  quantity: number;
+  quantityBaseUom?: number | null;
+  lotSerialNumber?: string | null;
+  expiryDate?: string | null;
+  unitCost?: number | null;
+  totalCost?: number | null;
+  oldAvgCost?: number | null;
+  newAvgCost?: number | null;
+  performedBy?: string | null;
+  performedDate?: string | null;
+}
+
+export interface TransferLogEntry {
+  transferId: number;
+  transNo: string;
+  reason?: string | null;
+  transferStatus: TransferStatus;
+  fromWarehouseId: number;
+  fromWarehouseName?: string | null;
+  toWarehouseId: number;
+  toWarehouseName?: string | null;
+  note?: string | null;
+  lineId: number;
+  transUomId?: number | null;
+  quantityRequested: number;
+  quantityApproved?: number | null;
+  quantityApprovedBaseUom?: number | null;
+  lotSerialNumber?: string | null;
+  lineStatus: TransferLineStatus;
+  rejectedReason?: string | null;
+  initiatedBy?: string | null;
+  initiatedDate?: string | null;
+  approvedBy?: string | null;
+  approvedDate?: string | null;
+}
+
+/* =========================
  *  Geography
  * ========================= */
 
@@ -7055,7 +7440,8 @@ export type RecipientRule =
   | 'CURRENT_USER'
   | 'CURRENT_USER_PHONE'
   | 'CREATED_BY_USER'
-  | 'CREATED_BY_USER_PHONE';
+  | 'CREATED_BY_USER_PHONE'
+  | 'TASK_USER';
 
 export interface NotificationHeaderResponseVM {
   id?: number;
@@ -8692,11 +9078,17 @@ export interface DentalTreatmentPlanResponseDTO {
   currentTreatments: PlannedTreatmentDTO[];
 }
 
+export interface PatientActivityChecklistItem {
+  label: string;
+  done: boolean;
+}
+
 export interface PatientActivity {
   id: number;
   patientId: number;
   encounterId?: number | null;
   appointmentId?: number | null;
+  facilityId?: number | null;
   category: string;
   activityType: string;
   status: string;
@@ -8708,10 +9100,16 @@ export interface PatientActivity {
   dueAt?: string | null;
   completedAt?: string | null;
   completedBy?: string | null;
+  outcome?: string | null;
   outcomeNote?: string | null;
   cancellationReason?: string | null;
   cancelledAt?: string | null;
   cancelledBy?: string | null;
+  assignedRoles?: string[];
+  assignedTo?: string | null;
+  checklist?: PatientActivityChecklistItem[];
+  planCode?: string | null;
+  planRunId?: string | null;
   createdBy?: string | null;
   createdDate?: string | null;
   lastModifiedBy?: string | null;
@@ -8722,30 +9120,131 @@ export interface PatientActivityCreateDTO {
   patientId: number;
   encounterId?: number | null;
   appointmentId?: number | null;
-  category: string;
   activityType: string;
-  status: string;
+  status?: string | null;
   priority?: string | null;
-  note: string;
+  note?: string | null;
   dueAt?: string | null;
+  assignedRoles?: string[] | null;
+  assignedTo?: string | null;
+  outcome?: string | null;
 }
 
 export interface PatientActivityUpdateDTO {
   encounterId?: number | null;
   appointmentId?: number | null;
-  category: string;
   activityType: string;
   priority?: string | null;
-  note: string;
+  note?: string | null;
   dueAt?: string | null;
+  assignedRoles?: string[] | null;
+  assignedTo?: string | null;
 }
 
 export interface PatientActivityCompleteDTO {
-  outcomeNote: string;
+  outcome?: string | null;
+  outcomeNote?: string | null;
 }
 
 export interface PatientActivityCancelDTO {
   cancellationReason: string;
+}
+
+export interface PatientActivityAssignDTO {
+  assignedRoles?: string[] | null;
+  assignedTo?: string | null;
+}
+
+export interface PatientActivityLog {
+  id: number;
+  activityId: number;
+  action:
+    | 'CREATED'
+    | 'UPDATED'
+    | 'ASSIGNED'
+    | 'DUE_CHANGED'
+    | 'PRIORITY_CHANGED'
+    | 'CHECKLIST_CHECKED'
+    | 'CHECKLIST_UNCHECKED'
+    | 'COMMENTED'
+    | 'COMPLETED'
+    | 'CANCELLED';
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+}
+
+export interface PatientActivityComment {
+  id: number;
+  activityId: number;
+  body: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+}
+
+export interface ActivityPlanItem {
+  templateCode: string;
+  dueOffset?: number | null;
+  dueUnit?: 'HOURS' | 'DAYS' | null;
+  note?: string | null;
+}
+
+export interface ActivityPlan {
+  id?: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  items: ActivityPlanItem[];
+  viewOrder?: number;
+  isActive?: boolean;
+}
+
+export interface PatientActivityApplyPlanItemDTO {
+  activityType: string;
+  dueAt: string;
+  priority?: string | null;
+  assignedRoles?: string[] | null;
+  assignedTo?: string | null;
+  note?: string | null;
+}
+
+export interface PatientActivityApplyPlanDTO {
+  patientId: number;
+  planCode: string;
+  encounterId?: number | null;
+  appointmentId?: number | null;
+  items: PatientActivityApplyPlanItemDTO[];
+}
+
+export interface ActivityCategory {
+  id?: number;
+  code: string;
+  name: string;
+  icon?: string | null;
+  color?: string | null;
+  viewOrder?: number;
+  isActive?: boolean;
+}
+
+export interface ActivityTemplate {
+  id?: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  categoryCode: string;
+  kind: 'TASK' | 'ACTIVITY';
+  defaultPriority?: string;
+  dueOffset?: number | null;
+  dueUnit?: 'HOURS' | 'DAYS' | null;
+  assigneeRoles?: string[];
+  creatorRoles?: string[];
+  outcomeOptions?: string[];
+  checklist?: string[];
+  requireOutcome?: boolean;
+  isSystem?: boolean;
+  viewOrder?: number;
+  isActive?: boolean;
 }
 
 export interface MobileAppConfigResponseVM {
