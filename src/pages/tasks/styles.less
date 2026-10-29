@@ -215,3 +215,45 @@
     }
   }
 }
+
+/* Rows open the task drawer; a selection shows the bulk bar */
+.task-board .task-board-row {
+  cursor: pointer;
+}
+
+.task-board .task-board-row-checked td {
+  background: #eef4ff !important;
+}
+
+.task-board-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid #93b4f5;
+  border-radius: 10px;
+  background: #eef4ff;
+  color: #1d4ed8;
+
+  .task-board-bulk-form {
+    display: flex;
+    gap: 10px;
+
+    .rs-form-group,
+    .my-input-container {
+      margin: 0 !important;
+    }
+  }
+}
+
+.task-board-bulk-clear {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1d4ed8;
+  font-size: 13px;
+  cursor: pointer;
+}

@@ -19,6 +19,7 @@ import AddEditPatientActivity, { emptyTaskForm, taskFormOf } from './AddEditPati
 import ActivityActionModal from './ActivityActionModal';
 import QuickLogModal from './QuickLogModal';
 import ApplyPlanModal from './ApplyPlanModal';
+import TaskDrawer from './TaskDrawer';
 import TaskItem, { dueState } from './TaskItem';
 import TimelineItem, { closedAt } from './TimelineItem';
 import { ActivityIcon, DEFAULT_CATEGORY_COLOR, useActivityCatalog } from './activityCatalog';
@@ -64,6 +65,7 @@ const PatientActivities: React.FC<Props> = ({ patient }) => {
   const [quickLogType, setQuickLogType] = useState('');
   const [openQuickLog, setOpenQuickLog] = useState(false);
   const [openPlan, setOpenPlan] = useState(false);
+  const [drawerTaskId, setDrawerTaskId] = useState<number | null>(null);
 
   const [claimActivity] = useClaimPatientActivityMutation();
   const [markChecklist] = useMarkPatientActivityChecklistMutation();
@@ -306,6 +308,7 @@ const PatientActivities: React.FC<Props> = ({ patient }) => {
               onCancel={r => openCompleteOrCancel(r, 'cancel')}
               onEdit={openEdit}
               onClaim={r => runAction(() => claimActivity({ id: r.id, patientId }).unwrap(), 'Task assigned to you')}
+              onOpen={r => setDrawerTaskId(r.id)}
               onChecklist={(r, index, done) =>
                 runAction(() => markChecklist({ id: r.id, patientId, index, done }).unwrap())
               }
@@ -332,7 +335,7 @@ const PatientActivities: React.FC<Props> = ({ patient }) => {
             <div key={group.label} className="patient-timeline-group">
               <div className="patient-timeline-day">{group.label}</div>
               {group.rows.map(row => (
-                <TimelineItem key={row.id} row={row} />
+                <TimelineItem key={row.id} row={row} onOpen={r => setDrawerTaskId(r.id)} />
               ))}
             </div>
           ))}
@@ -364,6 +367,7 @@ const PatientActivities: React.FC<Props> = ({ patient }) => {
         activity={selected}
         patientId={patientId}
       />
+      <TaskDrawer taskId={drawerTaskId} onClose={() => setDrawerTaskId(null)} />
       <QuickLogModal
         open={openQuickLog}
         setOpen={setOpenQuickLog}

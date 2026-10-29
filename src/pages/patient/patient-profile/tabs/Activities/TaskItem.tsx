@@ -26,6 +26,7 @@ type Props = {
   onEdit: (row: PatientActivity) => void;
   onClaim: (row: PatientActivity) => void;
   onChecklist: (row: PatientActivity, index: number, done: boolean) => void;
+  onOpen: (row: PatientActivity) => void;
 };
 
 /** Overdue, due today, or the due date — with the tone the chip should take. */
@@ -51,7 +52,8 @@ const TaskItem: React.FC<Props> = ({
   onCancel,
   onEdit,
   onClaim,
-  onChecklist
+  onChecklist,
+  onOpen
 }) => {
   const { templateName, templateByCode, categoryByCode, planName } = useActivityCatalog();
   const [expanded, setExpanded] = useState(false);
@@ -80,7 +82,9 @@ const TaskItem: React.FC<Props> = ({
             <span className="patient-task-icon" style={{ color }}>
               <ActivityIcon icon={category?.icon} />
             </span>
-            {templateName(row.activityType)}
+            <button type="button" className="patient-task-title-button" onClick={() => onOpen(row)}>
+              {templateName(row.activityType)}
+            </button>
             {row.source === 'SYSTEM' && (
               <span className="patient-activity-tag auto" title="Created by the system">
                 <MdOutlineSmartToy /> Auto

@@ -7,7 +7,7 @@ import { ActivityIcon, DEFAULT_CATEGORY_COLOR, useActivityCatalog } from './acti
 /** When the entry closed, which is what the timeline orders and groups by. */
 export const closedAt = (row: PatientActivity) => row.completedAt || row.cancelledAt || row.createdDate || '';
 
-const TimelineItem: React.FC<{ row: PatientActivity }> = ({ row }) => {
+const TimelineItem: React.FC<{ row: PatientActivity; onOpen: (row: PatientActivity) => void }> = ({ row, onOpen }) => {
   const { templateName, categoryByCode, planName } = useActivityCatalog();
   const category = categoryByCode.get(row.category);
   const color = category?.color || DEFAULT_CATEGORY_COLOR;
@@ -26,7 +26,9 @@ const TimelineItem: React.FC<{ row: PatientActivity }> = ({ row }) => {
       </span>
       <div className="patient-timeline-body">
         <div className="patient-timeline-title">
-          <span>{templateName(row.activityType)}</span>
+          <button type="button" className="patient-task-title-button" onClick={() => onOpen(row)}>
+            {templateName(row.activityType)}
+          </button>
           {row.outcome && <span className="patient-activity-tag outcome">{row.outcome}</span>}
           {isCancelled && <span className="patient-activity-tag cancelled">Cancelled</span>}
           {row.planCode && <span className="patient-activity-tag plan">{planName(row.planCode)}</span>}

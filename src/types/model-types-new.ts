@@ -7440,7 +7440,8 @@ export type RecipientRule =
   | 'CURRENT_USER'
   | 'CURRENT_USER_PHONE'
   | 'CREATED_BY_USER'
-  | 'CREATED_BY_USER_PHONE';
+  | 'CREATED_BY_USER_PHONE'
+  | 'TASK_USER';
 
 export interface NotificationHeaderResponseVM {
   id?: number;
@@ -9151,6 +9152,34 @@ export interface PatientActivityCancelDTO {
 export interface PatientActivityAssignDTO {
   assignedRoles?: string[] | null;
   assignedTo?: string | null;
+}
+
+export interface PatientActivityLog {
+  id: number;
+  activityId: number;
+  action:
+    | 'CREATED'
+    | 'UPDATED'
+    | 'ASSIGNED'
+    | 'DUE_CHANGED'
+    | 'PRIORITY_CHANGED'
+    | 'CHECKLIST_CHECKED'
+    | 'CHECKLIST_UNCHECKED'
+    | 'COMMENTED'
+    | 'COMPLETED'
+    | 'CANCELLED';
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+}
+
+export interface PatientActivityComment {
+  id: number;
+  activityId: number;
+  body: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface ActivityPlanItem {

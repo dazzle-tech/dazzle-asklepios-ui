@@ -27,6 +27,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import {
+  useBulkUpdatePatientActivitiesMutation,
   useClaimPatientActivityMutation,
   useGetActivityPlansQuery,
   useGetPatientTaskSummaryQuery,
@@ -37,6 +38,8 @@ import {
 } from '@/services/patients/patientActivityService';
 import type { PatientActivity } from '@/types/model-types-new';
 import ActivityActionModal from '@/pages/patient/patient-profile/tabs/Activities/ActivityActionModal';
+import TaskDrawer from '@/pages/patient/patient-profile/tabs/Activities/TaskDrawer';
+import { useStaffOptions } from '@/pages/patient/patient-profile/tabs/Activities/useStaffOptions';
 import { dueState } from '@/pages/patient/patient-profile/tabs/Activities/TaskItem';
 import RowActionsMenu from '@/pages/patient/patient-profile/tabs/Activities/RowActionsMenu';
 import {
@@ -93,6 +96,10 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
   const [selected, setSelected] = useState<PatientActivity | null>(null);
   const [actionMode, setActionMode] = useState<'complete' | 'cancel'>('complete');
   const [openAction, setOpenAction] = useState(false);
+  const [drawerRow, setDrawerRow] = useState<PatientTaskRow | null>(null);
+  const [checked, setChecked] = useState<number[]>([]);
+  const [bulkUpdate, { isLoading: bulkSaving }] = useBulkUpdatePatientActivitiesMutation();
+  const staffOptions = useStaffOptions();
 
   const [claim] = useClaimPatientActivityMutation();
   const [loadPatient] = useLazyGetPatientByIdQuery();
@@ -107,6 +114,8 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
   }, [dispatch, pageCode, title]);
 
   useEffect(() => setPage(0), [statusView, quick, filters, search, day]);
+  // A selection only makes sense for the rows on screen
+  useEffect(() => setChecked([]), [statusView, quick, filters, search, day, page, rowsPerPage, scope]);
 
   const { data: summary } = useGetPatientTaskSummaryQuery(scope);
 
@@ -188,7 +197,50 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
     { key: 'completedToday', label: 'Done today', value: summary?.completedToday ?? 0, tone: 'success' }
   ];
 
+  const pageRows = data?.data ?? [];
+  const selectable = pageRows.filter(row => row.task.status === 'OPEN').map(row => row.task.id);
+  const allChecked = selectable.length > 0 && selectable.every(id => checked.includes(id));
+
+  const toggleRow = (id: number) =>
+    setChecked(current => (current.includes(id) ? current.filter(item => item !== id) : [...current, id]));
+
+  const runBulk = async (change: { assignedTo?: string | null; unassign?: boolean; priority?: string | null }) => {
+    try {
+      const count = await bulkUpdate({ ids: checked, ...change }).unwrap();
+      dispatch(notify({ msg: `${count} task${count === 1 ? '' : 's'} updated`, sev: 'success' }));
+      setChecked([]);
+    } catch (error) {
+      dispatch(notify({ msg: extractApiErrorMessage(error) || 'Failed to update tasks', sev: 'warning' }));
+    }
+  };
+
+  // Clicks on controls inside a row must not also open the row
+  const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+
   const columns = [
+    {
+      key: 'select',
+      title: (
+        <Checkbox
+          checked={allChecked}
+          indeterminate={!allChecked && checked.length > 0}
+          disabled={!selectable.length}
+          onChange={(_, value) => setChecked(value ? selectable : [])}
+          aria-label="Select all open tasks on this page"
+        />
+      ),
+      width: 44,
+      render: ({ task }: PatientTaskRow) => (
+        <span onClick={stop}>
+          <Checkbox
+            checked={checked.includes(task.id)}
+            disabled={task.status !== 'OPEN'}
+            onChange={() => toggleRow(task.id)}
+            aria-label="Select task"
+          />
+        </span>
+      )
+    },
     {
       key: 'dueAt',
       title: <Translate>Due</Translate>,
@@ -242,7 +294,14 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
       title: <Translate>Patient</Translate>,
       width: 200,
       render: ({ task, patientName, medicalRecordNumber }: PatientTaskRow) => (
-        <button type="button" className="task-board-patient" onClick={() => openPatient(task.patientId)}>
+        <button
+          type="button"
+          className="task-board-patient"
+          onClick={event => {
+            stop(event);
+            openPatient(task.patientId);
+          }}
+        >
           <span>{patientName || `Patient ${task.patientId}`}</span>
           {medicalRecordNumber && <small>{medicalRecordNumber}</small>}
         </button>
@@ -278,6 +337,7 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
       title: <Translate></Translate>,
       width: 60,
       render: ({ task }: PatientTaskRow) => (
+        <span onClick={stop}>
         <RowActionsMenu
           actions={[
             {
@@ -303,6 +363,7 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
             }
           ]}
         />
+        </span>
       )
     }
   ];
@@ -422,13 +483,66 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
         </div>
       )}
 
+      {view === 'list' && checked.length > 0 && (
+        <div className="task-board-bulk">
+          <strong>
+            <Translate>{`${checked.length} selected`}</Translate>
+          </strong>
+          <Form fluid layout="inline" className="task-board-bulk-form">
+            <MyInput
+              width={240}
+              fieldType="select"
+              fieldName="assignedTo"
+              showLabel={false}
+              placeholder="Assign to…"
+              selectData={staffOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ assignedTo: '' }}
+              setRecord={(next: { assignedTo?: string }) => next.assignedTo && runBulk({ assignedTo: next.assignedTo })}
+              disabled={bulkSaving}
+            />
+            <MyInput
+              width={170}
+              fieldType="select"
+              fieldName="priority"
+              showLabel={false}
+              placeholder="Set priority…"
+              selectData={priorityOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ priority: '' }}
+              setRecord={(next: { priority?: string }) => next.priority && runBulk({ priority: next.priority })}
+              searchable={false}
+              disabled={bulkSaving}
+            />
+          </Form>
+          <MyButton appearance="ghost" onClick={() => runBulk({ assignedTo: currentUser })} disabled={bulkSaving}>
+            Assign to me
+          </MyButton>
+          <MyButton appearance="ghost" onClick={() => runBulk({ unassign: true })} disabled={bulkSaving}>
+            Back to Team
+          </MyButton>
+          <button type="button" className="task-board-bulk-clear" onClick={() => setChecked([])}>
+            <Translate>Clear selection</Translate>
+          </button>
+        </div>
+      )}
+
       {view === 'list' ? (
         <MyTable
           height={560}
           data={data?.data ?? []}
           loading={isFetching}
           columns={columns}
-          rowClassName={(row: PatientTaskRow) => (row.task.status === 'OPEN' ? '' : 'task-board-row-closed')}
+          rowClassName={(row: PatientTaskRow) =>
+            [
+              'task-board-row',
+              row.task.status === 'OPEN' ? '' : 'task-board-row-closed',
+              checked.includes(row.task.id) ? 'task-board-row-checked' : ''
+            ].join(' ')
+          }
+          onRowClick={(row: PatientTaskRow) => setDrawerRow(row)}
           page={page}
           rowsPerPage={rowsPerPage}
           totalCount={data?.totalCount ?? 0}
@@ -452,6 +566,13 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
         />
       )}
 
+      <TaskDrawer
+        taskId={drawerRow?.task.id ?? null}
+        onClose={() => setDrawerRow(null)}
+        patientName={drawerRow?.patientName}
+        medicalRecordNumber={drawerRow?.medicalRecordNumber}
+        onOpenPatient={openPatient}
+      />
       <ActivityActionModal
         open={openAction}
         setOpen={setOpenAction}

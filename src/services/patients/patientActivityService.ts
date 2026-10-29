@@ -9,7 +9,9 @@ import type {
   PatientActivityAssignDTO,
   PatientActivityCancelDTO,
   PatientActivityCompleteDTO,
+  PatientActivityComment,
   PatientActivityCreateDTO,
+  PatientActivityLog,
   PatientActivityUpdateDTO
 } from '@/types/model-types-new';
 
@@ -40,8 +42,15 @@ export type PatientActivityQuery = {
 
 const listTag = (patientId: Id) => ({ type: 'PatientActivity' as const, id: `LIST-${patientId}` });
 
-/** A change to one patient's activity also changes the cross-patient task lists. */
-const changedTags = (patientId: Id) => [listTag(patientId), { type: 'PatientTask' as const, id: 'LIST' }];
+/**
+ * A change to one patient's activity also changes the cross-patient task lists,
+ * and the history of that activity when its id is known.
+ */
+const changedTags = (patientId: Id, activityId?: Id) => [
+  listTag(patientId),
+  { type: 'PatientTask' as const, id: 'LIST' },
+  ...(activityId != null ? [{ type: 'ActivityDetail' as const, id: String(activityId) }] : [])
+];
 
 export type TaskScope = 'MINE' | 'TEAM' | 'ALL';
 
@@ -78,7 +87,7 @@ export type PatientTaskSummary = {
 export const patientActivityService = createApi({
   reducerPath: 'patientActivityApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PatientActivity', 'ActivitySetup', 'PatientTask'],
+  tagTypes: ['PatientActivity', 'ActivitySetup', 'PatientTask', 'ActivityDetail'],
   endpoints: builder => ({
     getPatientActivitySummary: builder.query<PatientActivitySummary, Id>({
       query: patientId => ({
@@ -125,7 +134,7 @@ export const patientActivityService = createApi({
         method: 'PUT',
         body
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     completePatientActivity: builder.mutation<
@@ -137,7 +146,7 @@ export const patientActivityService = createApi({
         method: 'PATCH',
         body
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     cancelPatientActivity: builder.mutation<
@@ -149,7 +158,7 @@ export const patientActivityService = createApi({
         method: 'PATCH',
         body
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     applyActivityPlan: builder.mutation<PatientActivity[], PatientActivityApplyPlanDTO>({
@@ -170,7 +179,7 @@ export const patientActivityService = createApi({
         method: 'PATCH',
         body
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     claimPatientActivity: builder.mutation<PatientActivity, { id: Id; patientId: Id }>({
@@ -178,7 +187,7 @@ export const patientActivityService = createApi({
         url: `/api/patient/activities/${id}/claim`,
         method: 'PATCH'
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     markPatientActivityChecklist: builder.mutation<
@@ -190,7 +199,7 @@ export const patientActivityService = createApi({
         method: 'PATCH',
         body: { index, done }
       }),
-      invalidatesTags: (_result, _error, { patientId }) => changedTags(patientId)
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
     }),
 
     getActivityCategories: builder.query<ActivityCategory[], void>({
@@ -252,6 +261,55 @@ export const patientActivityService = createApi({
         method: 'PUT'
       }),
       invalidatesTags: [{ type: 'ActivitySetup', id: 'TEMPLATES' }]
+    }),
+
+    getPatientActivity: builder.query<PatientActivity, Id>({
+      query: id => ({ url: `/api/patient/activities/${id}` }),
+      providesTags: (_result, _error, id) => [{ type: 'ActivityDetail', id: String(id) }]
+    }),
+
+    getActivityHistory: builder.query<PatientActivityLog[], Id>({
+      query: id => ({ url: `/api/patient/activities/${id}/history` }),
+      providesTags: (_result, _error, id) => [{ type: 'ActivityDetail', id: String(id) }]
+    }),
+
+    getActivityComments: builder.query<PatientActivityComment[], Id>({
+      query: id => ({ url: `/api/patient/activities/${id}/comments` }),
+      providesTags: (_result, _error, id) => [{ type: 'ActivityDetail', id: String(id) }]
+    }),
+
+    addActivityComment: builder.mutation<PatientActivityComment, { id: Id; patientId: Id; body: string }>({
+      query: ({ id, body }) => ({
+        url: `/api/patient/activities/${id}/comments`,
+        method: 'POST',
+        body: { body }
+      }),
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
+    }),
+
+    reschedulePatientActivity: builder.mutation<
+      PatientActivity,
+      { id: Id; patientId: Id; dueAt?: string | null; priority?: string | null }
+    >({
+      query: ({ id, dueAt, priority }) => ({
+        url: `/api/patient/activities/${id}/schedule`,
+        method: 'PATCH',
+        body: { dueAt: dueAt || null, priority: priority || null }
+      }),
+      invalidatesTags: (_result, _error, { id, patientId }) => changedTags(patientId, id)
+    }),
+
+    bulkUpdatePatientActivities: builder.mutation<
+      number,
+      { ids: number[]; assignedTo?: string | null; unassign?: boolean; priority?: string | null }
+    >({
+      query: body => ({
+        url: '/api/patient/activities/bulk',
+        method: 'POST',
+        body
+      }),
+      // The tasks may belong to many patients, so every activity list refreshes
+      invalidatesTags: ['PatientActivity', 'PatientTask', 'ActivityDetail']
     }),
 
     getPatientTasks: builder.query<{ data: PatientTaskRow[]; totalCount: number }, PatientTaskQuery>({
@@ -335,5 +393,11 @@ export const {
   useSaveActivityPlanMutation,
   useToggleActivityPlanMutation,
   useGetPatientTasksQuery,
-  useGetPatientTaskSummaryQuery
+  useGetPatientTaskSummaryQuery,
+  useGetPatientActivityQuery,
+  useGetActivityHistoryQuery,
+  useGetActivityCommentsQuery,
+  useAddActivityCommentMutation,
+  useReschedulePatientActivityMutation,
+  useBulkUpdatePatientActivitiesMutation
 } = patientActivityService;
