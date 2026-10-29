@@ -4106,11 +4106,13 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
   id: undefined,
   configKey: '',
   configType: '',
-  configValue: ''
+  configValue: '',
+  description: ''
 };
 
 export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
   configKey: '',
   configType: '',
-  configValue: ''
+  configValue: '',
+  description: ''
 };

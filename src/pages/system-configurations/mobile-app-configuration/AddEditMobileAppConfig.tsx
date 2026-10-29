@@ -18,6 +18,7 @@ import { newMobileAppConfigCreateDTO } from '@/types/model-types-constructor-new
 import './styles.less';
 
 const VALUE_MAX_LENGTH = 4000;
+const DESCRIPTION_MAX_LENGTH = 1000;
 
 type AddEditMobileAppConfigProps = {
   open: boolean;
@@ -56,6 +57,7 @@ const AddEditMobileAppConfig = ({
         configKey: config.configKey,
         configType: config.configType ?? '',
         configValue: config.configValue ?? '',
+        description: config.description ?? '',
       });
     } else {
       setRecord({ ...newMobileAppConfigCreateDTO });
@@ -76,6 +78,7 @@ const AddEditMobileAppConfig = ({
     const configKey = String(record.configKey ?? '').trim();
     const configType = String(record.configType ?? '').trim();
     const configValue = String(record.configValue ?? '').trim();
+    const description = String(record.description ?? '').trim();
 
     if (!configKey) {
       dispatch(notify({ msg: 'Key is required', sev: 'warning' }));
@@ -83,6 +86,15 @@ const AddEditMobileAppConfig = ({
     }
     if (!configType) {
       dispatch(notify({ msg: 'Type is required', sev: 'warning' }));
+      return;
+    }
+    if (description.length > DESCRIPTION_MAX_LENGTH) {
+      dispatch(
+        notify({
+          msg: `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`,
+          sev: 'warning',
+        })
+      );
       return;
     }
     if (isImageType) {
@@ -109,17 +121,33 @@ const AddEditMobileAppConfig = ({
 
     try {
       if (isImageType) {
-        if (imageFile) {
-          if (isEdit && config.id) {
-            await updateImage({ id: config.id, file: imageFile }).unwrap();
-          } else {
-            await createImage({ configKey, file: imageFile }).unwrap();
-          }
+        if (isEdit && config.id) {
+          await updateImage({
+            id: config.id,
+            file: imageFile,
+            description: description || '',
+          }).unwrap();
+        } else {
+          await createImage({
+            configKey,
+            file: imageFile as File,
+            description: description || '',
+          }).unwrap();
         }
       } else if (isEdit && config.id) {
-        await updateConfig({ id: config.id, configType, configValue }).unwrap();
+        await updateConfig({
+          id: config.id,
+          configType,
+          configValue,
+          description: description || null,
+        }).unwrap();
       } else {
-        await createConfig({ configKey, configType, configValue }).unwrap();
+        await createConfig({
+          configKey,
+          configType,
+          configValue,
+          description: description || null,
+        }).unwrap();
       }
       dispatch(
         notify({
@@ -211,6 +239,15 @@ const AddEditMobileAppConfig = ({
                   disabled={isSaving}
                 />
               )}
+              <MyInput
+                fieldName="description"
+                fieldLabel="Description"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                width="100%"
+                disabled={isSaving}
+              />
             </div>
           </Form>
         </div>
