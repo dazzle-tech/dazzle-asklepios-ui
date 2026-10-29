@@ -124,6 +124,9 @@ import { BrandMedicationActiveIngredientService } from '@/services/setup/brandme
 
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import { medFrequencySetupService } from './services/setup/med-frequency-setup/medFrequencySetupService';
+import { surveyQuestionService } from './services/setup/survey-question/surveyQuestionService';
+import { surveySectionService } from './services/setup/survey-question/surveySectionService';
+import { surveyTextService } from './services/setup/survey-question/surveyTextService';
 
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 
@@ -220,6 +223,7 @@ import {
   patientComplaintPublicService,
   patientComplaintService
 } from './services/patient-complaints/patientComplaintService';
+import { surveyResponseService, surveyService } from './services/survey/surveyService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -417,6 +421,9 @@ export const store = configureStore({
     // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
     [medFrequencySetupService.reducerPath]: medFrequencySetupService.reducer,
+    [surveyQuestionService.reducerPath]: surveyQuestionService.reducer,
+    [surveySectionService.reducerPath]: surveySectionService.reducer,
+    [surveyTextService.reducerPath]: surveyTextService.reducer,
 
     // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
@@ -442,6 +449,8 @@ export const store = configureStore({
     [patientSatisfactionSurveyService.reducerPath]: patientSatisfactionSurveyService.reducer,
     [patientComplaintPublicService.reducerPath]: patientComplaintPublicService.reducer,
     [patientComplaintService.reducerPath]: patientComplaintService.reducer,
+    [surveyService.reducerPath]: surveyService.reducer,
+    [surveyResponseService.reducerPath]: surveyResponseService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -819,6 +828,9 @@ export const store = configureStore({
         BrandMedicationActiveIngredientService.middleware,
         prescriptionInstructionService.middleware,
         medFrequencySetupService.middleware,
+        surveyQuestionService.middleware,
+        surveySectionService.middleware,
+        surveyTextService.middleware,
         uomGroupService.middleware,
         countryService.middleware,
         countryDistrictService.middleware,
@@ -910,6 +922,8 @@ export const store = configureStore({
         patientSatisfactionSurveyService.middleware,
         patientComplaintPublicService.middleware,
         patientComplaintService.middleware,
+        surveyService.middleware,
+        surveyResponseService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,

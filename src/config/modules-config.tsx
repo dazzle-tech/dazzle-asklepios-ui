@@ -251,14 +251,6 @@ export const MODULES: Module[] =
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
         { name: "AI Services", code: "AI_SERVICES", description: "Setup for AI services", icon: "FaRobot", viewOrder: 9.5, navPath: "ai-services" },
-        {
-          name: "Patient Satisfaction Survey Responses",
-          code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",
-          description: "View submitted patient satisfaction survey responses",
-          icon: "FaClipboardQuestion",
-          viewOrder: 6,
-          navPath: "patient-satisfaction-survey-responses"
-        },
         { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },
         { name: "Clinical Protocols Setup", code: "CLINICAL_PROTOCOLS_SETUP", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "" },
         { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
@@ -393,6 +385,31 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Patient Survey and Complaints",
+      description: "Patient satisfaction survey and patient complaints",
+      icon: "FaClipboardQuestion",
+      viewOrder: 0.7,
+      screens: [
+        { name: "Survey Questions Setup", code: "SURVEY_QUESTIONS_SETUP", description: "Survey sections, questions and page texts", icon: "FaListCheck", viewOrder: 0, navPath: "survey-questions-setup" },
+        {
+          name: "Patient Satisfaction Survey Responses",
+          code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",
+          description: "View submitted patient satisfaction survey responses",
+          icon: "FaClipboardQuestion",
+          viewOrder: 1,
+          navPath: "patient-satisfaction-survey-responses"
+        },
+        {
+          name: "Patient Complaints",
+          code: "PATIENT_COMPLAINTS",
+          description: "Register, assign, and resolve patient complaints",
+          icon: "FaComments",
+          viewOrder: 2,
+          navPath: "patient-complaints",
+        },
+      ],
+    },
+    {
       name: "Coding Module",
       description: "Coding Module",
       icon: "FaCodepen",
@@ -418,14 +435,6 @@ export const MODULES: Module[] =
         { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
         { name: "Facility Patients", code: "FACILITY_PATIENTS", description: "", icon: "FaFilePen", viewOrder: 4, navPath: "facility-patients" },
         { name: "Encounters List", code: "ENCOUNTERS_LIST", description: "", icon: "FaList", viewOrder: 4, navPath: "patients-encounters-list" },
-        {
-          name: "Patient Complaints",
-          code: "PATIENT_COMPLAINTS",
-          description: "Register, assign, and resolve patient complaints",
-          icon: "FaComments",
-          viewOrder: 6,
-          navPath: "patient-complaints",
-        },
         moduleReportsScreen("PATIENT"),
       ],
     },
