@@ -1,0 +1,217 @@
+.task-board {
+  .task-board-widgets {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .patient-activity-widget.tone-accent {
+    border-left-color: #3b82f6;
+
+    .patient-activity-widget-value {
+      color: #1d4ed8;
+    }
+  }
+
+  .patient-activity-segment button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .task-board-row-closed {
+    opacity: 0.7;
+  }
+}
+
+/* Row 1: view on the left, status on the right */
+.task-board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .patient-activity-segment button {
+    height: 34px;
+    padding: 0 14px;
+  }
+}
+
+/* Row 2: every filter the same height, on one baseline */
+.task-board-filters.form-of-filters-set-up {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #e6e8ee;
+  border-radius: 10px;
+  background: #fafbfd;
+
+  > .rs-form-group,
+  > .my-input-container,
+  > div {
+    margin: 0 !important;
+  }
+
+  .rs-form-control-label {
+    display: none;
+  }
+
+  .rs-input,
+  .rs-picker-toggle,
+  .rs-picker-toggle-wrapper,
+  .rs-picker-input-group {
+    height: 36px;
+  }
+
+  .rs-picker-toggle {
+    display: flex;
+    align-items: center;
+  }
+
+  .bt,
+  .rs-btn {
+    height: 36px;
+  }
+}
+
+.task-board-day {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.task-board-task {
+  min-width: 0;
+}
+
+.task-board-task-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #1f2937;
+
+  svg {
+    font-size: 16px;
+  }
+}
+
+.task-board-task-note {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-board-checklist {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 3px;
+  color: #9aa3b5;
+}
+
+.task-board-patient {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1d4ed8;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover span {
+    text-decoration: underline;
+  }
+
+  small {
+    color: #9aa3b5;
+    font-weight: 400;
+  }
+}
+
+.task-board-team,
+.patient-task-mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.task-board-team {
+  color: #6b7280;
+}
+
+.task-board-closed {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Calendar view */
+.task-calendar {
+  position: relative;
+
+  .rs-calendar-table-cell-content {
+    min-height: 96px;
+  }
+}
+
+.task-calendar-loader {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 1;
+}
+
+.task-calendar-items {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+
+  li {
+    margin-bottom: 2px;
+    padding: 1px 6px;
+    border-left: 3px solid #3b82f6;
+    border-radius: 0;
+    background: #f6f7fb;
+    color: #1f2937;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.overdue {
+      background: #ffe4e9;
+      color: #9f1239;
+    }
+
+    &.done,
+    &.cancelled {
+      color: #9aa3b5;
+      text-decoration: line-through;
+    }
+
+    &.more {
+      border-left-color: transparent;
+      background: none;
+      color: #1d4ed8;
+    }
+  }
+}

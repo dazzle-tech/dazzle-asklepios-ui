@@ -214,6 +214,10 @@ const SurgicalKitsSetup = lazy (() => import ( './pages/setup/surgical-kits-setu
 const UOMGroup = lazy (() => import ( './pages/setup/uom-group-new'));
 const Vaccine = lazy (() => import ( './pages/setup/vaccine-setup'));
 const VisitDurationSetup = lazy (() => import ( './pages/setup/visit-duration-setup'));
+const ActivitySetup = lazy(() => import('./pages/setup/activity-setup'));
+const MyTasks = lazy(() => import('./pages/tasks/MyTasks'));
+const TeamTasks = lazy(() => import('./pages/tasks/TeamTasks'));
+const AllTasks = lazy(() => import('./pages/tasks/AllTasks'));
 const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
@@ -911,6 +915,10 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
+              <Route path="activity-setup" element={<ActivitySetup />} />
+              <Route path="my-tasks" element={<MyTasks />} />
+              <Route path="team-tasks" element={<TeamTasks />} />
+              <Route path="all-tasks" element={<AllTasks />} />
               <Route path="ai-services" element={<AiServices />} />
               <Route
                 path="patient-satisfaction-survey-responses"
