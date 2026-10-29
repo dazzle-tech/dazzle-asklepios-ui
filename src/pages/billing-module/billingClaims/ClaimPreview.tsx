@@ -124,7 +124,7 @@ const ClaimPreview: React.FC<ClaimPreviewProps> = ({ claim, patient, encounter, 
         priceSource: charge?.priceSource ?? null,
         readPrice: charge?.unitPrice ?? item.unitPrice ?? null,
         patientShare: charge?.patientResponsibilityAmount ?? item.patientShare ?? null,
-        payerShare: charge?.insuranceResponsibilityAmount ?? item.payerShare ?? null,
+        payerShare: item.payerShare ?? charge?.insuranceResponsibilityAmount ?? null,
         currency
       };
     });
