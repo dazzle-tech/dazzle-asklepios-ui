@@ -9273,3 +9273,8 @@ export interface MobileAppConfigUpdateDTO {
   description?: string | null;
 }
 
+export interface PortalAppUpdateNotificationVM {
+  portalPatientCount: number;
+  notifiedCount: number;
+}
+

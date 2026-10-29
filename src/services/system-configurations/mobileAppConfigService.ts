@@ -4,6 +4,7 @@ import {
   MobileAppConfigCreateDTO,
   MobileAppConfigResponseVM,
   MobileAppConfigUpdateDTO,
+  PortalAppUpdateNotificationVM,
 } from '@/types/model-types-new';
 
 export const mobileAppConfigService = createApi({
@@ -102,6 +103,13 @@ export const mobileAppConfigService = createApi({
       },
       invalidatesTags: ['MobileAppConfig'],
     }),
+
+    notifyPortalPatientsToUpdateApp: builder.mutation<PortalAppUpdateNotificationVM, void>({
+      query: () => ({
+        url: '/api/patient/patient-portal/notify-app-update',
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -113,4 +121,5 @@ export const {
   useDeleteMobileAppConfigMutation,
   useCreateMobileAppConfigImageMutation,
   useUpdateMobileAppConfigImageMutation,
+  useNotifyPortalPatientsToUpdateAppMutation,
 } = mobileAppConfigService;
