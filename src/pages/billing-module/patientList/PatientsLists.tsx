@@ -73,7 +73,16 @@ const toISODate = (value: Date | string | null | undefined): string | undefined 
   return value.toISOString().slice(0, 10);
 };
 
-const uniqueNonEmpty = (arr?: any[]): string[] | undefined => {
+const MAX_DATE_RANGE_MONTHS = 2;
+
+const addMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  result.setMonth(result.getMonth() + months);
+  return result;
+};
+
+const uniqueNonEmpty =(arr?: any[]): string[] | undefined => {
   if (!arr) return undefined;
   const cleaned = arr
     .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
@@ -761,6 +770,23 @@ const PatientsLists = () => {
   };
 
   const handleSearch = () => {
+    if (dateFilter.fromDate && dateFilter.toDate) {
+      const from = new Date(dateFilter.fromDate);
+      const to = new Date(dateFilter.toDate);
+
+      if (to < from) {
+        dispatch(notify({ msg: 'Encounter Date To cannot be before Encounter Date From', sev: 'warning' }));
+        return;
+      }
+
+      if (to > addMonths(from, MAX_DATE_RANGE_MONTHS)) {
+        dispatch(
+          notify({ msg: `Date range cannot exceed ${MAX_DATE_RANGE_MONTHS} months`, sev: 'warning' })
+        );
+        return;
+      }
+    }
+
     setPage(0);
 
     setAppliedFilters({
@@ -864,12 +890,31 @@ const PatientsLists = () => {
     [practitionersResponse]
   );
 
-  const minEncounterDate = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() - 31);
-    return date;
-  }, []);
+  const maxEncounterToDate = useMemo(
+    () => (dateFilter.fromDate ? addMonths(new Date(dateFilter.fromDate), MAX_DATE_RANGE_MONTHS) : undefined),
+    [dateFilter.fromDate]
+  );
+
+  const handleDateFilterChange = (value: any) => {
+    const next = typeof value === 'function' ? value(dateFilter) : value;
+    const fromChanged = String(next?.fromDate) !== String(dateFilter.fromDate);
+
+    if (fromChanged && next?.fromDate) {
+      const from = new Date(next.fromDate);
+      const maxTo = addMonths(from, MAX_DATE_RANGE_MONTHS);
+      const to = next?.toDate ? new Date(next.toDate) : null;
+
+      if (!to || to < from || to > maxTo) {
+        const today = new Date();
+        const clampedTo = today < from ? from : today > maxTo ? maxTo : today;
+        setDateFilter({ ...next, toDate: clampedTo });
+        setDateFilterKey(prev => prev + 1);
+        return;
+      }
+    }
+
+    setDateFilter(next);
+  };
 
   const mainSearchFilters = (
     <div style={{ marginTop: 15 }}>
@@ -882,8 +927,7 @@ const PatientsLists = () => {
           fieldLabel="Encounter Date From"
           fieldName="fromDate"
           record={dateFilter}
-          setRecord={setDateFilter}
-          minDate={minEncounterDate}
+          setRecord={handleDateFilterChange}
         />
 
         <MyInput
@@ -894,7 +938,9 @@ const PatientsLists = () => {
           fieldLabel="Encounter Date To"
           fieldName="toDate"
           record={dateFilter}
-          setRecord={setDateFilter}
+          setRecord={handleDateFilterChange}
+          minDate={dateFilter.fromDate}
+          maxDate={maxEncounterToDate}
         />
 
         <div style={{ marginTop: 8 }}>
