@@ -9088,6 +9088,7 @@ export interface PatientActivity {
   patientId: number;
   encounterId?: number | null;
   appointmentId?: number | null;
+  facilityId?: number | null;
   category: string;
   activityType: string;
   status: string;
