@@ -6599,6 +6599,12 @@ export type EncounterBillingItemSummary = {
   status: BillingChargeLineStatus;
   chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
+  /*
+   * Tax of each share when the tax setup flags (Patient Copayment /
+   * Claim Share) split the tax by share; null = original proportional split.
+   */
+  patientTaxAmount?: number | null;
+  insuranceTaxAmount?: number | null;
 };
 
 export type WaseelBenefitDetail = {

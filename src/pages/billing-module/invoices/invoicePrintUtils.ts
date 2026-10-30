@@ -374,6 +374,27 @@ const resolveServiceCode = (
   return '-';
 };
 
+/**
+ * Tax of the printed share. When the tax setup flags (Patient Copayment /
+ * Claim Share) split the tax by share, the backend sends the tax of each
+ * share; otherwise the line tax is shown as before.
+ */
+const resolvePrintedShareTax = (
+  billingItem: EncounterBillingItemSummary | undefined,
+  isInsuranceInvoice: boolean,
+  printsPatientShare: boolean
+): number | null => {
+  if (billingItem?.patientTaxAmount == null || billingItem?.insuranceTaxAmount == null) {
+    return null;
+  }
+
+  if (isInsuranceInvoice) {
+    return formatMoneyValue(billingItem.insuranceTaxAmount);
+  }
+
+  return printsPatientShare ? formatMoneyValue(billingItem.patientTaxAmount) : null;
+};
+
 const mapChargeRowToPrintItem = (
   chargeRow: UnifiedBillingChargeRow,
   billingItem: EncounterBillingItemSummary | undefined,
@@ -397,6 +418,12 @@ const mapChargeRowToPrintItem = (
       ? patientShare
       : formatMoneyValue(chargeRow.netAmount);
 
+  const shareTax = resolvePrintedShareTax(
+    billingItem,
+    isInsuranceInvoice,
+    !isInsuranceInvoice && patientShare > 0
+  );
+
   return {
     serviceCode: resolveServiceCode(chargeRow, billingItem),
     serviceName: chargeRow.itemName || '-',
@@ -406,11 +433,11 @@ const mapChargeRowToPrintItem = (
     grossAmount:
       formatMoneyValue(chargeRow.unitPrice) * Number(chargeRow.quantity ?? 1),
     discountAmount: 0,
-    amountBeforeTax: amount,
+    amountBeforeTax: shareTax != null ? Math.max(0, amount - shareTax) : amount,
     amount,
     patientShare,
     insuranceShare,
-    taxAmount: formatMoneyValue(billingItem?.taxAmount)
+    taxAmount: shareTax != null ? shareTax : formatMoneyValue(billingItem?.taxAmount)
   };
 };
 

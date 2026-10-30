@@ -738,7 +738,16 @@ const creditLinesFromInvoiceItems = (
       money(billingItem?.grossAmount) ||
       money(item.unitPrice) * quantity;
     const discount = money(item.discountAmount) || money(billingItem?.discountAmount);
-    const vatAmount = money(item.taxAmount) || money(billingItem?.taxAmount);
+    /*
+     * Tax split by share (tax setup flags): the document line already holds
+     * the tax of its own share, which may be 0 - never fall back to the
+     * whole charge-line tax then.
+     */
+    const taxSplitByShare =
+      billingItem?.patientTaxAmount != null && billingItem?.insuranceTaxAmount != null;
+    const vatAmount = taxSplitByShare
+      ? money(item.taxAmount)
+      : money(item.taxAmount) || money(billingItem?.taxAmount);
     const patientAmount =
       money(item.patientShareAmount) || money(billingItem?.patientResponsibilityAmount);
     const sponsorAmount =
