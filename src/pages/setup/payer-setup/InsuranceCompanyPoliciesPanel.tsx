@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { MdLayers } from 'react-icons/md';
+import { MdLayers, MdModeEdit, MdToggleOff } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { InsuranceCompanyPolicy, NphiesPayer } from '@/types/model-types-new';
-import { useGetInsuranceCompanyPoliciesQuery } from '@/services/setup/payer/InsuranceCompanyPolicyService';
+import {
+  useGetInsuranceCompanyPoliciesQuery,
+  useToggleInsuranceCompanyPolicyActiveMutation
+} from '@/services/setup/payer/InsuranceCompanyPolicyService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import PolicyClassesModal from './PolicyClassesModal';
+import InsuranceCompanyPolicyModal from './InsuranceCompanyPolicyModal';
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -21,17 +28,38 @@ type InsuranceCompanyPoliciesPanelProps = {
 const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps> = ({
   insuranceCompany
 }) => {
+  const dispatch = useAppDispatch();
   const companyId = insuranceCompany?.id;
   const [classesOpen, setClassesOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<InsuranceCompanyPolicy | null>(null);
   const { data, isFetching } = useGetInsuranceCompanyPoliciesQuery(companyId as number, {
     skip: !companyId
   });
+  const [toggleActive] = useToggleInsuranceCompanyPolicyActiveMutation();
 
   useEffect(() => {
     setClassesOpen(false);
+    setEditOpen(false);
     setSelectedPolicy(null);
   }, [companyId]);
+
+  const changeStatus = async (policy: InsuranceCompanyPolicy) => {
+    if (!companyId) {
+      return;
+    }
+    try {
+      await toggleActive({ insuranceCompanyId: companyId, policyId: policy.id }).unwrap();
+      dispatch(
+        notify({
+          msg: policy.isActive === false ? 'Policy activated' : 'Policy deactivated',
+          sev: 'success'
+        })
+      );
+    } catch {
+      dispatch(notify({ msg: 'Unable to update policy status', sev: 'warning' }));
+    }
+  };
 
   if (!companyId) {
     return null;
@@ -63,14 +91,54 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
       key: 'validTo',
       title: <Translate>Valid To</Translate>,
       flexGrow: 2,
-      render: (row: { validTo?: string }) => <span>{formatDate(row.validTo)}</span>
+      render: (row: { validTo?: string | null }) => <span>{formatDate(row.validTo)}</span>
+    },
+    {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      flexGrow: 1,
+      render: (row: InsuranceCompanyPolicy) => <span>{row.isActive === false ? 'Inactive' : 'Active'}</span>
     },
     {
       key: 'actions',
       title: '',
-      width: 70,
+      width: 130,
       render: (row: InsuranceCompanyPolicy) => (
         <div className="container-of-icons">
+          <MdModeEdit
+            className="icons-style"
+            title="Edit"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              setSelectedPolicy(row);
+              setEditOpen(true);
+            }}
+          />
+          {row.isActive === false ? (
+            <FaUndo
+              className="icons-style"
+              title="Activate"
+              size={18}
+              fill="var(--primary-gray)"
+              onClick={event => {
+                event.stopPropagation();
+                changeStatus(row);
+              }}
+            />
+          ) : (
+            <MdToggleOff
+              className="icons-style"
+              title="Deactivate"
+              size={24}
+              fill="var(--primary-gray)"
+              onClick={event => {
+                event.stopPropagation();
+                changeStatus(row);
+              }}
+            />
+          )}
           <MdLayers
             className="icons-style"
             title="Classes"
@@ -98,6 +166,12 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
         setOpen={setClassesOpen}
         insuranceCompanyId={companyId}
         policy={selectedPolicy}
+      />
+      <InsuranceCompanyPolicyModal
+        open={editOpen}
+        setOpen={setEditOpen}
+        insuranceCompany={insuranceCompany}
+        policy={editOpen ? selectedPolicy : null}
       />
     </div>
   );

@@ -4,10 +4,11 @@ import type { InsuranceCompanyPolicy } from '@/types/model-types-new';
 
 export type InsuranceCompanyPolicySave = {
   policyName: string;
-  policyNumber: string;
+  policyNumber?: string | null;
   policyCode: string;
   validFrom: string;
-  validTo: string;
+  validTo?: string | null;
+  isActive?: boolean;
 };
 
 export type PolicyCoverageClass = {
@@ -52,6 +53,33 @@ export const InsuranceCompanyPolicyService = createApi({
       ]
     }),
 
+    updateInsuranceCompanyPolicy: builder.mutation<
+      InsuranceCompanyPolicy,
+      { insuranceCompanyId: number; policyId: number; body: InsuranceCompanyPolicySave }
+    >({
+      query: ({ insuranceCompanyId, policyId, body }) => ({
+        url: `/api/setup/nphies-payers/${insuranceCompanyId}/policies/${policyId}`,
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: (_result, _error, { insuranceCompanyId }) => [
+        { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
+      ]
+    }),
+
+    toggleInsuranceCompanyPolicyActive: builder.mutation<
+      InsuranceCompanyPolicy,
+      { insuranceCompanyId: number; policyId: number }
+    >({
+      query: ({ insuranceCompanyId, policyId }) => ({
+        url: `/api/setup/nphies-payers/${insuranceCompanyId}/policies/${policyId}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: (_result, _error, { insuranceCompanyId }) => [
+        { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
+      ]
+    }),
+
     getPolicyCoverageClasses: builder.query<
       PolicyCoverageClass[],
       { insuranceCompanyId: number; policyId: number }
@@ -68,5 +96,7 @@ export const InsuranceCompanyPolicyService = createApi({
 export const {
   useGetInsuranceCompanyPoliciesQuery,
   useCreateInsuranceCompanyPolicyMutation,
+  useUpdateInsuranceCompanyPolicyMutation,
+  useToggleInsuranceCompanyPolicyActiveMutation,
   useGetPolicyCoverageClassesQuery
 } = InsuranceCompanyPolicyService;

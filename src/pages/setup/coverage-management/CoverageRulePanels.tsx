@@ -1,7 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react';
 import { Form, Nav } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdAdd, MdModeEdit, MdToggleOff } from 'react-icons/md';
+import { MdAdd, MdBlock, MdModeEdit, MdToggleOff } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -14,6 +14,8 @@ import { useAppDispatch } from '@/hooks';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
 import PreApprovalPanel from './PreApprovalPanel';
+import CoverageLimitExclusionModal from './CoverageLimitExclusionModal';
+import { RuleModalTitleProvider, useRuleModalTitle } from './RuleModalTitleContext';
 import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, withSelectedDiagnoses } from './coverageHelpers';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import {
@@ -116,19 +118,35 @@ export const RuleActions = ({
 
 const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
 
-const CoverageRulePanels = ({ classId, readOnly }: { classId: number; readOnly?: boolean }) => {
+const RULE_TABS = [
+  { key: 'copayment', label: 'Patient Co-Payment' },
+  { key: 'COVERAGE', label: 'Coverages' },
+  { key: 'LIMIT', label: 'Coverage Limit' },
+  { key: 'CASH_LIMIT', label: 'Cash Limit' },
+  { key: 'discount', label: 'Discount' },
+  { key: 'exclusion', label: 'Exclusions' },
+  { key: 'preApproval', label: 'Pre-Approval' }
+];
+
+const CoverageRulePanels = ({
+  classId,
+  coverageClassName,
+  readOnly
+}: {
+  classId: number;
+  coverageClassName?: string | null;
+  readOnly?: boolean;
+}) => {
   const [tab, setTab] = useState('copayment');
+  const tabLabel = RULE_TABS.find(item => item.key === tab)?.label;
 
   return (
+    <RuleModalTitleProvider value={{ className: coverageClassName, tabLabel }}>
     <div className="coverage-rules">
       <Nav appearance="tabs" activeKey={tab} onSelect={setTab} className="coverage-rules-nav">
-        <Nav.Item eventKey="copayment">Patient Co-Payment</Nav.Item>
-        <Nav.Item eventKey="COVERAGE">Coverages</Nav.Item>
-        <Nav.Item eventKey="LIMIT">Coverage Limit</Nav.Item>
-        <Nav.Item eventKey="CASH_LIMIT">Cash Limit</Nav.Item>
-        <Nav.Item eventKey="discount">Discount</Nav.Item>
-        <Nav.Item eventKey="exclusion">Exclusions</Nav.Item>
-        <Nav.Item eventKey="preApproval">Pre-Approval</Nav.Item>
+        {RULE_TABS.map(item => (
+          <Nav.Item key={item.key} eventKey={item.key}>{item.label}</Nav.Item>
+        ))}
       </Nav>
 
       {tab === 'copayment' && <CopaymentPanel classId={classId} readOnly={readOnly} />}
@@ -139,6 +157,7 @@ const CoverageRulePanels = ({ classId, readOnly }: { classId: number; readOnly?:
       {tab === 'exclusion' && <ExclusionPanel classId={classId} readOnly={readOnly} />}
       {tab === 'preApproval' && <PreApprovalPanel classId={classId} readOnly={readOnly} />}
     </div>
+    </RuleModalTitleProvider>
   );
 };
 
@@ -194,6 +213,7 @@ export const RuleToolbar = ({
 
 const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boolean }) => {
   const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
   const encounterTypes = useEnumOptions('EncounterType');
   const valueTypes = useEnumOptions('InsuranceCoverageType');
   const [isActive, setIsActive] = useState(true);
@@ -272,7 +292,7 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Patient Co-Payment' : 'Patient Co-Payment'} size="56vw" bodyheight="40vh" actionButtonFunction={saveRow} content={
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Patient Co-Payment' : 'Patient Co-Payment')} size="56vw" bodyheight="40vh" actionButtonFunction={saveRow} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
           <MyInput required width="100%" fieldLabel="Value Type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
@@ -285,6 +305,7 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
 
 const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType: string; readOnly?: boolean }) => {
   const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
   const diagnosisScopes = useEnumOptions('CoverageDiagnosisScope');
   const periodTypes = useEnumOptions('CoveragePeriodBasis');
   const coverageBasis = useEnumOptions('CoverageBasis');
@@ -310,6 +331,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
   const [record, setRecord] = useState<any>({});
   const [item, setItem] = useState<any>({});
   const [selectedTerm, setSelectedTerm] = useState<any>(null);
+  const [exclusionTerm, setExclusionTerm] = useState<any>(null);
   const facilityLookup = useLookupPaging(String(open));
   const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
   const facilities = useSearchCoverageFacilitiesQuery({ page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch }, { skip: !open });
@@ -501,17 +523,30 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
                 }}
                 onToggle={() => changeTermStatus(row)}
                 extra={
-                  hasReadings ? (
-                    <MdAdd
-                      className="icons-style"
-                      size={22}
-                      title={`Add ${readingModalTitle.toLowerCase()}`}
-                      onClick={event => {
-                        event.stopPropagation();
-                        openCoverageReading(row);
-                      }}
-                    />
-                  ) : null
+                  <>
+                    {hasReadings && (
+                      <MdAdd
+                        className="icons-style"
+                        size={22}
+                        title={`Add ${readingModalTitle.toLowerCase()}`}
+                        onClick={event => {
+                          event.stopPropagation();
+                          openCoverageReading(row);
+                        }}
+                      />
+                    )}
+                    {termType === 'LIMIT' && (
+                      <MdBlock
+                        className="icons-style"
+                        size={20}
+                        title="Exclusions from this limit"
+                        onClick={event => {
+                          event.stopPropagation();
+                          setExclusionTerm(row);
+                        }}
+                      />
+                    )}
+                  </>
                 }
               />
             )
@@ -599,7 +634,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
         </div>
       )}
 
-      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Coverage Rule' : 'Coverage Rule'} size="72vw" bodyheight="72vh" actionButtonFunction={persistTerm} content={
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Coverage Rule' : 'Coverage Rule')} size="72vw" bodyheight="72vh" actionButtonFunction={persistTerm} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Coverage Type" fieldType="select" fieldName="diagnosisScope" record={record} setRecord={setRecord} selectData={diagnosisScopes} />
           {record.diagnosisScope === 'SPECIFIC_DIAGNOSIS' && (
@@ -619,7 +654,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
         </Form>
       } />
 
-      <MyModal open={itemOpen} setOpen={setItemOpen} title={readingModalTitle} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
+      <MyModal open={itemOpen} setOpen={setItemOpen} title={modalTitle(readingModalTitle)} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
         <Form fluid className="coverage-form-grid">
           <BillingCategoryItemFields
             open={itemOpen}
@@ -632,6 +667,19 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
           <MyInput required width="100%" fieldLabel="Status" fieldType="select" fieldName="isActive" record={item} setRecord={setItem} selectData={statusOptions} selectDataLabel="label" selectDataValue="value" searchable={false} />
         </Form>
       } />
+
+      {termType === 'LIMIT' && (
+        <CoverageLimitExclusionModal
+          open={Boolean(exclusionTerm)}
+          setOpen={value => {
+            if (!value) {
+              setExclusionTerm(null);
+            }
+          }}
+          term={exclusionTerm}
+          readOnly={readOnly}
+        />
+      )}
     </>
   );
 };
@@ -646,6 +694,7 @@ const DiscountPanel = ({
   readOnly?: boolean;
 }) => {
   const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
   const encounterTypes = useEnumOptions('EncounterType');
   const discountTypes = useEnumOptions('DiscountType');
   const [isActive, setIsActive] = useState<boolean | ''>('');
@@ -676,15 +725,17 @@ const DiscountPanel = ({
     }
     const billingItemType = record.billingItemType === 'ALL' ? null : record.billingItemType;
     const itemId = record.itemId == null || record.itemId === '' ? null : Number(record.itemId);
+    const subcategoryKey = billingItemType && !itemId && record.subcategoryKey ? String(record.subcategoryKey) : null;
     try {
       await create({
         ...owner,
         body: {
           id: record.id,
-          targetType: billingItemType ? (itemId ? 'SERVICE' : 'CATEGORY') : 'ALL',
+          targetType: billingItemType ? (itemId ? 'SERVICE' : subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL',
           billingItemType,
           serviceId: Number.isFinite(itemId as number) ? itemId : null,
           serviceName: itemId ? record.itemName || null : null,
+          subcategoryKey,
           encounterType: record.encounterType,
           discountType: record.discountType,
           discountValue: record.discountValue
@@ -713,9 +764,10 @@ const DiscountPanel = ({
             ...row,
             billingItemType: row.billingItemType ?? 'ALL',
             itemId: row.serviceId ?? null,
-            itemName: row.serviceId ? row.serviceName ?? null : null
+            itemName: row.serviceId ? row.serviceName ?? null : null,
+            subcategoryKey: row.serviceId ? null : row.subcategoryKey ?? null
           }
-        : { encounterType: 'ALL', discountType: 'PERCENTAGE', billingItemType: null, itemId: null }
+        : { encounterType: 'ALL', discountType: 'PERCENTAGE', billingItemType: null, itemId: null, subcategoryKey: null }
     );
     setOpen(true);
   };
@@ -739,6 +791,7 @@ const DiscountPanel = ({
         onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
         columns={[
           { key: 'billingItemType', title: 'Category', flexGrow: 2, render: (row: any) => discountCategoryLabel(row) },
+          { key: 'subcategoryLabel', title: 'Subcategory', flexGrow: 2, render: (row: any) => row.subcategoryLabel || '-' },
           { key: 'serviceName', title: 'Item', flexGrow: 2, render: (row: any) => discountItemLabel(row) },
           { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
           { key: 'discountType', title: 'Discount type', flexGrow: 2, render: (row: any) => formatEnumString(row.discountType) },
@@ -759,11 +812,11 @@ const DiscountPanel = ({
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Discount' : 'Discount'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Discount' : 'Discount')} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Discount type" fieldType="select" fieldName="discountType" record={record} setRecord={setRecord} selectData={discountTypes} />
           <MyInput required width="100%" fieldLabel="Value" fieldType="number" fieldName="discountValue" record={record} setRecord={setRecord} />
-          <BillingCategoryItemFields open={open} record={record} setRecord={setRecord} />
+          <BillingCategoryItemFields open={open} record={record} setRecord={setRecord} showSubcategory />
           <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
         </Form>
       } />
@@ -786,6 +839,7 @@ const ExclusionPanel = ({
   readOnly?: boolean;
 }) => {
   const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
   const encounterTypes = useEnumOptions('EncounterType');
   const yesNo = useEnumOptions('YesNoQuestion', { exclude: ['NOT_YET_DETERMINED'] });
   const [isActive, setIsActive] = useState<boolean | ''>('');
@@ -931,7 +985,7 @@ const ExclusionPanel = ({
           }
         ]}
       />
-      <MyModal open={open} setOpen={setOpen} title={record.id ? 'Edit Exclusion' : 'Exclusion'} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Exclusion' : 'Exclusion')} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput
             required

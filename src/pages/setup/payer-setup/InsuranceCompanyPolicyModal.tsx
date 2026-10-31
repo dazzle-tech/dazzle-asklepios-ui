@@ -5,10 +5,11 @@ import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { NphiesPayer } from '@/types/model-types-new';
+import { InsuranceCompanyPolicy, NphiesPayer } from '@/types/model-types-new';
 import {
   InsuranceCompanyPolicySave,
-  useCreateInsuranceCompanyPolicyMutation
+  useCreateInsuranceCompanyPolicyMutation,
+  useUpdateInsuranceCompanyPolicyMutation
 } from '@/services/setup/payer/InsuranceCompanyPolicyService';
 import './styles.less';
 
@@ -19,13 +20,29 @@ const emptyPolicy = (): PolicyForm => ({
   policyNumber: '',
   policyCode: '',
   validFrom: '',
-  validTo: ''
+  validTo: '',
+  isActive: true
 });
+
+const toPolicyForm = (policy: InsuranceCompanyPolicy): PolicyForm => ({
+  policyName: policy.policyName ?? '',
+  policyNumber: policy.policyNumber ?? '',
+  policyCode: policy.policyCode ?? '',
+  validFrom: policy.validFrom ?? '',
+  validTo: policy.validTo ?? '',
+  isActive: policy.isActive !== false
+});
+
+const statusOptions = [
+  { label: 'Active', value: true },
+  { label: 'Inactive', value: false }
+];
 
 type InsuranceCompanyPolicyModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   insuranceCompany: NphiesPayer | null;
+  policy?: InsuranceCompanyPolicy | null;
 };
 
 const serverMessage = (err: any) => {
@@ -41,17 +58,20 @@ const serverMessage = (err: any) => {
 const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = ({
   open,
   setOpen,
-  insuranceCompany
+  insuranceCompany,
+  policy: editedPolicy
 }) => {
   const dispatch = useAppDispatch();
   const [policy, setPolicy] = useState<PolicyForm>(emptyPolicy());
   const [createPolicy] = useCreateInsuranceCompanyPolicyMutation();
+  const [updatePolicy] = useUpdateInsuranceCompanyPolicyMutation();
+  const isEdit = Boolean(editedPolicy?.id);
 
   useEffect(() => {
     if (open) {
-      setPolicy(emptyPolicy());
+      setPolicy(editedPolicy ? toPolicyForm(editedPolicy) : emptyPolicy());
     }
-  }, [open, insuranceCompany?.id]);
+  }, [open, insuranceCompany?.id, editedPolicy]);
 
   const handleSave = async () => {
     if (!insuranceCompany?.id) {
@@ -60,10 +80,8 @@ const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = 
 
     const errors: string[] = [];
     if (!policy.policyName.trim()) errors.push('Policy Name is required');
-    if (!policy.policyNumber.trim()) errors.push('Policy Number is required');
     if (!policy.policyCode.trim()) errors.push('Policy Code is required');
     if (!policy.validFrom) errors.push('Valid From is required');
-    if (!policy.validTo) errors.push('Valid To is required');
     if (policy.validFrom && policy.validTo && policy.validTo < policy.validFrom) {
       errors.push('Valid To must be on or after Valid From');
     }
@@ -86,16 +104,23 @@ const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = 
 
     try {
       dispatch(showSystemLoader());
-      await createPolicy({
-        insuranceCompanyId: insuranceCompany.id,
-        body: {
-          policyName: policy.policyName.trim(),
-          policyNumber: policy.policyNumber.trim(),
-          policyCode: policy.policyCode.trim(),
-          validFrom: policy.validFrom,
-          validTo: policy.validTo
-        }
-      }).unwrap();
+      const body: InsuranceCompanyPolicySave = {
+        policyName: policy.policyName.trim(),
+        policyNumber: String(policy.policyNumber ?? '').trim() || null,
+        policyCode: policy.policyCode.trim(),
+        validFrom: policy.validFrom,
+        validTo: policy.validTo || null,
+        isActive: policy.isActive !== false && String(policy.isActive) !== 'false'
+      };
+      if (isEdit && editedPolicy) {
+        await updatePolicy({
+          insuranceCompanyId: insuranceCompany.id,
+          policyId: editedPolicy.id,
+          body
+        }).unwrap();
+      } else {
+        await createPolicy({ insuranceCompanyId: insuranceCompany.id, body }).unwrap();
+      }
       dispatch(notify({ msg: 'Policy saved successfully', sev: 'success' }));
       setOpen(false);
     } catch (err) {
@@ -118,8 +143,8 @@ const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = 
       setOpen={setOpen}
       title={
         insuranceCompany?.nameEn
-          ? `Add Policy - ${insuranceCompany.nameEn}`
-          : 'Add Policy'
+          ? `${isEdit ? 'Edit' : 'Add'} Policy - ${insuranceCompany.nameEn}`
+          : `${isEdit ? 'Edit' : 'Add'} Policy`
       }
       size="58vw"
       bodyheight="42vh"
@@ -145,7 +170,6 @@ const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = 
                   fieldName="policyNumber"
                   fieldType="text"
                   fieldLabel="Policy Number"
-                  required
                 />
                 <MyInput
                   {...fieldProps}
@@ -166,8 +190,19 @@ const InsuranceCompanyPolicyModal: React.FC<InsuranceCompanyPolicyModalProps> = 
                   fieldName="validTo"
                   fieldType="date"
                   fieldLabel="Valid To"
-                  required
                 />
+                {isEdit && (
+                  <MyInput
+                    {...fieldProps}
+                    fieldName="isActive"
+                    fieldType="select"
+                    fieldLabel="Status"
+                    selectData={statusOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    searchable={false}
+                  />
+                )}
               </div>
             }
           />

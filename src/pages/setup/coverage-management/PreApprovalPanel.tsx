@@ -21,6 +21,7 @@ import {
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
 import { notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
+import { useRuleModalTitle } from './RuleModalTitleContext';
 
 const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
 
@@ -55,6 +56,7 @@ const PreApprovalPanel = ({
   readOnly?: boolean;
 }) => {
   const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
   const scopes = useEnumOptions('CoverageApprovalScope');
   const encounterTypes = useEnumOptions('EncounterType');
   const valueTypes = useEnumOptions('InsuranceCoverageType');
@@ -267,7 +269,7 @@ const PreApprovalPanel = ({
       <MyModal
         open={open}
         setOpen={setOpen}
-        title={record.id ? 'Edit Pre-Approval' : 'Pre-Approval'}
+        title={modalTitle(record.id ? 'Edit Pre-Approval' : 'Pre-Approval')}
         size="56vw"
         bodyheight="72vh"
         actionButtonFunction={persist}

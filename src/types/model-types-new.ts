@@ -2056,10 +2056,11 @@ export interface InsuranceCompanyPolicy {
   id: number;
   insuranceCompanyId: number;
   policyName: string;
-  policyNumber: string;
+  policyNumber?: string | null;
   policyCode: string;
   validFrom: string;
-  validTo: string;
+  validTo?: string | null;
+  isActive?: boolean;
 }
 
 export interface TpaDefinition {

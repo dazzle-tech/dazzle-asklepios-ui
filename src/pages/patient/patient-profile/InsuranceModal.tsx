@@ -515,7 +515,7 @@ const InsuranceModal = ({
 
   const selectedPolicyId = Number(patientInsurance.insuranceCompanyPolicyId);
   const {
-    data: companyPolicies = [],
+    data: allCompanyPolicies = [],
     isFetching: companyPoliciesFetching
   } = useGetInsuranceCompanyPoliciesQuery(selectedInsurancePayerId, {
     skip:
@@ -524,6 +524,13 @@ const InsuranceModal = ({
       !Number.isFinite(selectedInsurancePayerId) ||
       selectedInsurancePayerId <= 0
   });
+  const companyPolicies = useMemo(
+    () =>
+      allCompanyPolicies.filter(
+        policy => policy.isActive !== false || Number(policy.id) === selectedPolicyId
+      ),
+    [allCompanyPolicies, selectedPolicyId]
+  );
   const {
     data: policyClasses = [],
     isFetching: policyClassesFetching

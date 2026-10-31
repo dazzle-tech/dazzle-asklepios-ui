@@ -131,6 +131,19 @@ export type CoverageTermItem = {
   isActive?: boolean;
 };
 
+export type CoverageTermExclusion = {
+  id?: number;
+  termId?: number;
+  categoryScope?: string;
+  billingItemType?: string | null;
+  subcategoryKey?: string | null;
+  subcategoryLabel?: string | null;
+  serviceId?: number | null;
+  serviceCode?: string | null;
+  serviceName?: string | null;
+  isActive?: boolean;
+};
+
 export type CoverageDiscount = {
   id?: number;
   targetType?: string;
@@ -138,6 +151,8 @@ export type CoverageDiscount = {
   serviceId?: number | null;
   serviceCode?: string | null;
   serviceName?: string | null;
+  subcategoryKey?: string | null;
+  subcategoryLabel?: string | null;
   encounterType?: string;
   discountType?: string;
   discountValue?: number | string;
@@ -367,6 +382,7 @@ export const coverageManagementService = createApi({
     'CoverageCopayment',
     'CoverageTerm',
     'CoverageTermItem',
+    'CoverageTermExclusion',
     'CoverageDiscount',
     'CoverageExclusion',
     'CoveragePreApproval',
@@ -645,6 +661,37 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoverageTermItem']
     }),
+    listTermExclusions: builder.query<
+      PagedResult<CoverageTermExclusion>,
+      PagedParams & { termId: number; isActive?: boolean }
+    >({
+      query: ({ termId, page, size, sort = 'id,desc', isActive }) => ({
+        url: `/api/setup/coverage-classes/terms/${termId}/exclusions`,
+        params: {
+          page,
+          size,
+          sort,
+          ...(typeof isActive === 'boolean' ? { isActive } : {})
+        }
+      }),
+      transformResponse: (res: CoverageTermExclusion[], meta) => toPagedResult(res, meta),
+      providesTags: ['CoverageTermExclusion']
+    }),
+    saveTermExclusion: builder.mutation<CoverageTermExclusion, { termId: number; body: CoverageTermExclusion }>({
+      query: ({ termId, body }) => ({
+        url: `/api/setup/coverage-classes/terms/${termId}/exclusions`,
+        method: body.id ? 'PUT' : 'POST',
+        body
+      }),
+      invalidatesTags: ['CoverageTermExclusion']
+    }),
+    toggleTermExclusionActive: builder.mutation<CoverageTermExclusion, number>({
+      query: id => ({
+        url: `/api/setup/coverage-classes/terms/exclusions/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: ['CoverageTermExclusion']
+    }),
     listDiscounts: builder.query<
       PagedResult<CoverageDiscount>,
       PagedParams & { classId?: number; tpaId?: number; isActive?: boolean }
@@ -829,6 +876,9 @@ export const {
   useToggleTermActiveMutation,
   useListTermItemsQuery,
   useSaveTermItemMutation,
+  useListTermExclusionsQuery,
+  useSaveTermExclusionMutation,
+  useToggleTermExclusionActiveMutation,
   useListDiscountsQuery,
   useCreateDiscountMutation,
   useDeactivateDiscountMutation,

@@ -265,6 +265,7 @@ const CoverageManagement = ({ embedded = false }: { embedded?: boolean }) => {
           <CoverageRulePanels
             key={`${selectedClass.id}-${Boolean(selectedClass.isActive)}`}
             classId={Number(selectedClass.id)}
+            coverageClassName={selectedClass.name}
             readOnly={!selected.isActive || !selectedClass.isActive}
           />
         </div>
