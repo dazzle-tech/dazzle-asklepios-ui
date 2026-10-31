@@ -239,6 +239,12 @@ const UrgentCareList = () => {
   });
   const [openAllNursesModal, setOpenAllNursesModal] = useState<boolean>(false);
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
   const [triggerGetDepartmentById, { data: departmentData, isFetching: isDepartmentFetching }] =
@@ -912,6 +918,38 @@ const handleRowsPerPageChange = useCallback(
     return `${minutes} min`;
   };
 
+  const ENDED_ENCOUNTER_STATUSES = useMemo(
+    () => new Set(['COMPLETED', 'DISCHARGED', 'CANCELLED', 'CANCELED', 'CLOSED']),
+    []
+  );
+
+  const calculateLengthOfStay = (row: any) => {
+    const createdAt = row?.createdAt;
+    if (!createdAt) return '-';
+
+    const start = dayjs(createdAt);
+    if (!start.isValid()) return '-';
+
+    const statusUpper = String(row?.status ?? '').toUpperCase();
+    const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+    const endRaw = row?.dischargeAt ?? row?.completedAt;
+
+    if (isEnded) {
+      if (!endRaw) return '-';
+      const end = dayjs(endRaw);
+      if (!end.isValid()) return '-';
+      const dur = dayjs.duration(end.diff(start));
+      const hours = Math.floor(dur.asHours());
+      const minutes = dur.minutes();
+      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    }
+
+    const dur = dayjs.duration(dayjs(nowMs).diff(start));
+    const hours = Math.floor(dur.asHours());
+    const minutes = dur.minutes();
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
+
   const handleClearFilters = () => {
     const now = new Date();
     const lastWeek = new Date(now);
@@ -1105,6 +1143,21 @@ const handleRowsPerPageChange = useCallback(
         )
     },
     {
+      key: 'latestDiagnosticOrderStatus',
+      title: 'Diagnostic Order Status',
+      expandable: true,
+      render: (row: any) => {
+        const status = row?.latestDiagnosticOrderStatus;
+        if (!status) return '-';
+        return (
+          <MyBadgeStatus
+            color="#969fb0"
+            contant={formatEnumString(status) ?? status}
+          />
+        );
+      }
+    },
+    {
       key: 'approvedResults',
       title: 'APPROVED RESULTS',
       render: (row: any) => (
@@ -1166,6 +1219,12 @@ const handleRowsPerPageChange = useCallback(
       expandable: true,
       render: (row: any) =>
         calculateDoorToPhysician(row?.createdAt, row?.startedDate)
+    },
+    {
+      key: 'lengthOfStay',
+      title: 'Length of Stay',
+      expandable: true,
+      render: (row: any) => calculateLengthOfStay(row)
     },
     {
       key: 'status',

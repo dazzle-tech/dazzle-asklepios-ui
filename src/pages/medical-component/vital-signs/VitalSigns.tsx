@@ -21,6 +21,7 @@ import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { Tooltip, Whisper } from 'rsuite';
 import AllGraphsModal from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/AllGraphsModal';
 import Translate from '@/components/Translate';
+import VitalSignsHistoryModal from '@/pages/medical-component/vital-signs/VitalSignsHistoryModal';
 
 type VitalSignsProps = {
   patientId: number;
@@ -33,6 +34,7 @@ type VitalSignsProps = {
 
   showExtendedFields?: boolean;
   showFluidAssessment?: boolean;
+  showHistoryButton?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   prefill?: Partial<VitalSignsModelObject> | null;
@@ -49,6 +51,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   title = 'Vital Signs',
   showExtendedFields = true,
   showFluidAssessment = false,
+  showHistoryButton = false,
   collapsible = false,
   defaultCollapsed = false,
   prefill = null,
@@ -64,21 +67,28 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   const [createVitalSigns] = useCreateVitalSignsMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
 
-  // Non-triage latest
+  // Latest active for encounter (nursing or triage)
   const { data: latestVitalSignsByEncounterId } = useGetLatestVitalSignsByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId || isTriage }
   );
 
-  // Triage latest
+  // Triage latest — triage mode always; nursing mode only as fallback when no nursing reading
   const { data: latestTriageVitalSignsByEncounterId } =
     useGetLatestTriageVitalSignsByEncounterIdQuery(
       { encounterId },
-      { skip: !encounterId || !isTriage }
+      {
+        skip:
+          !encounterId ||
+          (!isTriage &&
+            latestVitalSignsByEncounterId != null &&
+            (latestVitalSignsByEncounterId as any)?.isTriage === false)
+      }
     );
 
   // === Local state ===
   const [meanArterialPressureValue, setMeanArterialPressureValue] = useState<string | null>(null);
+  const [openHistoryModal, setOpenHistoryModal] = useState(false);
 
   const [vitalSigns, setVitalSigns] = useState<VitalSignsModelObject>({
     ...newVitalSigns,
@@ -90,7 +100,18 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
   useEffect(() => {
     if (prefill) return;
-    const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
+
+    let source: VitalSignsModelObject | null | undefined = null;
+
+    if (isTriage) {
+      source = latestTriageVitalSignsByEncounterId;
+    } else if (latestVitalSignsByEncounterId) {
+      // Prefer latest active for this encounter (nursing saves stay; triage fills until nursing saves)
+      source = latestVitalSignsByEncounterId;
+    } else {
+      source = latestTriageVitalSignsByEncounterId;
+    }
+
     if (!source) return;
 
     setVitalSigns(previousVitalSigns => ({
@@ -135,7 +156,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       temperature: vitalSigns.temperature ?? null,
       oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
       respiratoryRate: vitalSigns.respiratoryRate ?? null,
-      fastingBloodGlucose: vitalSigns.fastingBloodGlucose ?? null,
 
       fluidStatus: vitalSigns.fluidStatus ?? null,
       edema: vitalSigns.edema ?? null,
@@ -181,7 +201,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
         temperature: 'Temperature',
         oxygenSaturation: 'Oxygen Saturation',
         respiratoryRate: 'Respiratory Rate',
-        fastingBloodGlucose: 'Fasting Blood Glucose',
         isTriage: 'Triage',
         isActive: 'Active',
         notes: 'Notes',
@@ -325,12 +344,16 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
 
   return (
+    <>
     <SectionContainer
     collapsible={collapsible}
     defaultCollapsed={defaultCollapsed}
       title={titleContent}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
+          {showHistoryButton && (
+            <MyButton onClick={() => setOpenHistoryModal(true)}>History</MyButton>
+          )}
           <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
             Save
           </MyButton>
@@ -490,23 +513,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
 
             {showExtendedFields && (
-              <div className="margin-bot-10">
-                <MyInput
-                  width="100%"
-                  fieldType="number"
-                  allowDecimal
-                  fieldLabel="Random Blood Glucose"
-                  rightAddon="mg/dL"
-                  fieldName="fastingBloodGlucose"
-                  rightAddonwidth={60}
-                  record={vitalSigns}
-                  setRecord={setVitalSigns}
-                  disabled={disabled}
-                />
-              </div>
-            )}
-
-            {showExtendedFields && (
               <MyInput
                 fieldLabel="Note"
                 width="100%"
@@ -528,6 +534,14 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
         </Form>
       }
     />
+    {showHistoryButton && (
+      <VitalSignsHistoryModal
+        open={openHistoryModal}
+        setOpen={setOpenHistoryModal}
+        encounterId={encounterId}
+      />
+    )}
+    </>
   );
 };
 

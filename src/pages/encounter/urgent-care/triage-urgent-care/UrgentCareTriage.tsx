@@ -37,7 +37,8 @@ import {
   POST_PAYMENT_TREATMENT_STATUS
 } from '@/utils/encounterStatusHelpers';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faShareFromSquare, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import AssignNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -95,6 +96,28 @@ const formatDuration = (ms: number | null): string => {
   const minutes = totalMinutes % 60;
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
+};
+
+const ENDED_ENCOUNTER_STATUSES = new Set([
+  'COMPLETED',
+  'DISCHARGED',
+  'CANCELLED',
+  'CANCELED',
+  'CLOSED'
+]);
+
+const formatLengthOfStay = (row: any, nowMs: number): string => {
+  const start = toDateSafe(row?.createdAt);
+  if (!start) return '';
+
+  const statusUpper = String(row?.status ?? row?.treatmentStatus ?? '').toUpperCase();
+  const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+  const end = isEnded
+    ? toDateSafe(row?.dischargeAt ?? row?.completedAt)
+    : new Date(nowMs);
+
+  if (!end) return '';
+  return formatDuration(end.getTime() - start.getTime());
 };
 
 const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
@@ -479,6 +502,13 @@ const UrgentCareTriage = () => {
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
   const [encounterStatusOverrides, setEncounterStatusOverrides] = useState<Record<number, string>>({});
+  const [openAllNursesModal, setOpenAllNursesModal] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
@@ -1306,6 +1336,17 @@ const handleCancelEncounter = async () => {
         );
       }
     },
+    {
+      key: 'assignedNurseName',
+      title: <Translate>Assigned Nurse</Translate>,
+      expandable: true
+    },
+    {
+      key: 'lengthOfStay',
+      title: <Translate>Length of Stay</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatLengthOfStay(rowData, nowMs)
+    },
        
     {
       key: 'actions',
@@ -1314,6 +1355,7 @@ const handleCancelEncounter = async () => {
         const isPendingPayment = isPendingPaymentStatus(rowData);
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
+        const tooltipAssignedNurse = <Tooltip>Assign Nurse</Tooltip>;
 
         const statusUpper = getEncounterTreatmentStatus(rowData);
 
@@ -1478,6 +1520,26 @@ const handleCancelEncounter = async () => {
               setOpenBedAssignmentModal={setOpenBedAssignmentModal}
               isReceptionist={isReceptionist}
             />
+
+            {!isPendingPayment &&
+              (statusUpper === 'WAITING_TRIAGE' ||
+                statusUpper === 'TRIAGE_STARTED' ||
+                statusUpper === 'ASSIGNED_TO_BED') && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(rowData);
+                      setOpenAllNursesModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faShareFromSquare} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
             {['WAITING_TRIAGE', 'NEW', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1689,6 +1751,12 @@ const handleCancelEncounter = async () => {
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
+      />
+
+      <AssignNurseModal
+        open={openAllNursesModal}
+        setOpen={setOpenAllNursesModal}
+        encounterId={encounter?.id}
       />
     </div>
   );

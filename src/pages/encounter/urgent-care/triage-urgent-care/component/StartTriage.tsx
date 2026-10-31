@@ -17,6 +17,7 @@ import PainAssessment from "@/pages/encounter/encounter-pre-observations-new/obs
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 
 import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
+import RandomBloodSugar from "@/pages/encounter/encounter-pre-observations-new/observations/RandomBloodSugar";
 import BodyMeasurements from "@/pages/encounter/encounter-pre-observations-new/observations/BodyMeasurements";
 import Allergies from "@/pages/encounter/encounter-pre-observations-new/AllergiesNurse/Allergies";
 
@@ -484,6 +485,15 @@ const handleGoBackToTriageList = () => {
                 />
               </Form>
             }
+          />
+        )}
+      </Row>
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
+          <RandomBloodSugar
+            patientId={patientId}
+            encounterId={safeEncounterId}
+            disabled={isAssignedToBed}
           />
         )}
       </Row>
