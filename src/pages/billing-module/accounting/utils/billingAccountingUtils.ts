@@ -11,7 +11,8 @@ import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   isTechnicalBillingLabel,
   formatBillingItemType,
-  resolveBillingItemName
+  resolveBillingItemName,
+  resolvePatientTaxAmount
 } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import {
   getEncounterLifecycleStatus,
@@ -1163,13 +1164,22 @@ export const buildBillingPaymentReceipt = ({
           reservation.billingItemType ?? summaryItem?.billingItemType
         ) || 'Service';
 
+      // Patient's tax on the line, for the part of the patient share paid here
+      const patientShare = Number(summaryItem?.patientResponsibilityAmount ?? 0);
+      const taxAmount =
+        summaryItem && patientShare > 0
+          ? (resolvePatientTaxAmount(summaryItem) * Math.min(lineAmount, patientShare)) /
+            patientShare
+          : 0;
+
       return {
         name: serviceName,
         type: serviceType,
         quantity: 1,
         unitPrice: lineAmount,
         netAmount: lineAmount,
-        patientShare: lineAmount
+        patientShare: lineAmount,
+        taxAmount
       };
     })
     .filter(item => item.netAmount > 0);
@@ -1189,6 +1199,10 @@ export const buildBillingPaymentReceipt = ({
         ];
 
   const netAmount = items.reduce((sum, item) => sum + Number(item.netAmount ?? 0), 0);
+  const taxAmount = items.reduce(
+    (sum, item) => sum + Number((item as { taxAmount?: number }).taxAmount ?? 0),
+    0
+  );
 
   return {
     receiptNumber: resolvePaymentReceiptNumber(paymentResult),
@@ -1205,10 +1219,10 @@ export const buildBillingPaymentReceipt = ({
     chargeNumber: billingSummary?.chargeNumber ?? '-',
     items,
     totals: {
-      grossAmount: netAmount,
+      grossAmount: netAmount - taxAmount,
       discountAmount: 0,
       exemptionAmount: 0,
-      taxAmount: 0,
+      taxAmount,
       netAmount,
       patientResponsibilityAmount: netAmount,
       insuranceResponsibilityAmount: 0,

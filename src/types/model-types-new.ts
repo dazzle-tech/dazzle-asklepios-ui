@@ -6660,6 +6660,10 @@ export type Tax = {
   citizenCategory?:
     TaxCitizenCategory;
 
+  applyOnPatientCopayment?: boolean;
+
+  applyOnClaimShare?: boolean;
+
   validFrom?: string;
 
   validTo?: string | null;
@@ -6694,6 +6698,10 @@ export type SaveTaxRequest = {
 
   citizenCategory?:
     TaxCitizenCategory;
+
+  applyOnPatientCopayment?: boolean;
+
+  applyOnClaimShare?: boolean;
 
   validFrom: string;
 
@@ -6988,6 +6996,8 @@ export type EncounterBillingItemSummary = {
   status: BillingChargeLineStatus;
   chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
+  patientTaxAmount?: number | null;
+  insuranceTaxAmount?: number | null;
 };
 
 export type WaseelBenefitDetail = {
