@@ -20,7 +20,8 @@ import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
-import { extractErrorMessage, normalizeAllowedServices } from './utils';
+import { useBranding } from '@/hooks/useBranding';
+import { extractErrorMessage, normalizeAllowedServices, toTemplateColor } from './utils';
 import { useTemplateFormOptions } from './useTemplateFormOptions';
 import './styles.less';
 
@@ -39,7 +40,9 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
 
   // ─── State ───────────────────────────────────────────────────────────────────
   const [record, setRecord] = useState<any>({});
-  const [currentColor, setCurrentColor] = useState('#6982F0');
+  const { primaryColor } = useBranding();
+  const defaultColor = toTemplateColor(primaryColor);
+  const [currentColor, setCurrentColor] = useState(defaultColor);
 
   // ─── Refs ────────────────────────────────────────────────────────────────────
   // These refs act as "user intent flags" — they don't trigger re-renders,
@@ -269,7 +272,7 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
         facilityId: selectedFacility?.id,
         allowedServices: normalizeAllowedServices(template?.allowedServices),
       });
-      setCurrentColor(template?.templateColor ?? '#6982F0');
+      setCurrentColor(template?.templateColor ?? defaultColor);
     } else {
       setRecord({
         ...newAvailabilityTemplateCreateDTO,
@@ -277,8 +280,9 @@ const AddEditAvailabilityTemplate: React.FC<Props> = ({ open, setOpen, template,
         departmentId: null,
         allowedServices: [],
         workingDays: [],
+        templateColor: defaultColor,
       });
-      setCurrentColor('#6982F0');
+      setCurrentColor(defaultColor);
     }
   }, [open, template]);
 
