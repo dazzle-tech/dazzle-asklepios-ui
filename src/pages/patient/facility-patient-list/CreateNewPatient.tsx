@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { isPhoneValid } from '@/utils/phoneNumber';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -947,14 +948,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
         })
       );
     }
-  };
-
-  const isPhoneValid = (phone: any) => {
-    if (!phone) return false;
-
-    const digits = String(phone).replace(/\D/g, '');
-
-    return digits.length > 3;
   };
 
   const validateMandatoryPatientFields = (): boolean => {

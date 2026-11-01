@@ -30,6 +30,7 @@ import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
+import { isPhoneValid } from '@/utils/phoneNumber';
 import { Patient, Address } from '@/types/model-types-new';
 import RegistrationPendingPaymentModal, {
   RegistrationPendingPaymentFab
@@ -197,7 +198,6 @@ const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
 ];
 
 const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
-
 const validatePatientNameFields = (patient: Patient): string | null => {
   const errors: string[] = [];
 
@@ -221,7 +221,7 @@ const validatePatientNameFields = (patient: Patient): string | null => {
     errors.push('Date of Birth must not be null');
   }
 
-  if (!patient?.primaryMobileNumber?.trim()) {
+  if (!isPhoneValid(patient?.primaryMobileNumber)) {
     errors.push('Primary Mobile Number must not be empty');
   }
 
