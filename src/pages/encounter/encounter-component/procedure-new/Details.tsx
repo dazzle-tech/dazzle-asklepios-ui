@@ -163,6 +163,8 @@ const Details = ({
   proRefetch
 }) => {
   const authSlice = useAppSelector(state => state.auth);
+  const sourceFacilityId = encounter?.facilityId || authSlice?.selectedDepartment?.facilityId;
+  const sourceDepartmentId = encounter?.departmentId || authSlice?.selectedDepartment?.departmentId;
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
   const [procedurePage, setProcedurePage] = useState(0);
@@ -351,10 +353,10 @@ const Details = ({
       setProcedure(prev => ({
         ...prev,
         toDepartmentId: null,
-        toFacilityId: authSlice?.selectedDepartment?.facilityId
+        toFacilityId: sourceFacilityId
       }));
     }
-  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
+  }, [procedure.currentDepartment, sourceFacilityId]);
 
   // Reset & reload departments whenever facility changes
   useEffect(() => {
@@ -511,11 +513,11 @@ const Details = ({
         procedureId: procedure.procedureId,
         patientId: patient?.id,
         encounterId: encounter?.id,
-        fromFacilityId: authSlice?.selectedDepartment?.facilityId,
+        fromFacilityId: sourceFacilityId,
         toFacilityId: procedure.currentDepartment
-          ? authSlice?.selectedDepartment?.facilityId
+          ? sourceFacilityId
           : procedure.toFacilityId,
-        fromDepartmentId: authSlice?.selectedDepartment?.departmentId,
+        fromDepartmentId: sourceDepartmentId,
         toDepartmentId: procedure.toDepartmentId,
         indicationId: procedure.indicationId,
         procedureLevel: procedure.procedureLevel,
@@ -542,7 +544,7 @@ const Details = ({
           bodyPart: procedure.bodyPart || '',
           side: procedure.side,
           toFacilityId: procedure.currentDepartment
-            ? authSlice?.selectedDepartment?.facilityId
+            ? sourceFacilityId
             : procedure.toFacilityId,
           toDepartmentId: procedure.toDepartmentId,
           scheduledDateTime: procedure.scheduledDateTime

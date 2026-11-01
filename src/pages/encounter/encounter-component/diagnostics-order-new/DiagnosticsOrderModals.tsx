@@ -277,7 +277,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         open={openRequestTestModal}
         setOpen={setOpenRequestTestModal}
         fromDepartmentId={resolveFromDepartmentId()}
-        fromFacilityId={selectedDepartment?.facilityId}
+        fromFacilityId={encounter?.facilityId || selectedDepartment?.facilityId}
         onSuccess={() => {}}
       />
 

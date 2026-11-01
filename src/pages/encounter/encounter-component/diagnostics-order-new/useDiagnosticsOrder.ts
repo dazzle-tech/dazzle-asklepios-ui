@@ -169,6 +169,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const departments = departmentsResponse?.data ?? [];
 
   const resolveFromDepartmentId = () => {
+    if (encounter?.departmentId) return encounter.departmentId;
+
     const selectedDeptId = selectedDepartment?.departmentId;
     const selectedDeptName = selectedDepartment?.departmentName ?? selectedDepartment?.name;
     const selectedFacilityId = selectedDepartment?.facilityId;
@@ -882,8 +884,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       encounterId,
       labStatus: DiagnosticStatus.NEW,
       radStatus: DiagnosticStatus.NEW,
-      fromDepartmentId: selectedDepartment?.departmentId,
-      fromFacilityId: selectedDepartment?.facilityId
+      fromDepartmentId: encounter?.departmentId || selectedDepartment?.departmentId,
+      fromFacilityId: encounter?.facilityId || selectedDepartment?.facilityId
     };
 
     const response = await createOrder(createPayload).unwrap();
