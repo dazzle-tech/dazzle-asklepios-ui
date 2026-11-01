@@ -6660,6 +6660,10 @@ export type Tax = {
   citizenCategory?:
     TaxCitizenCategory;
 
+  applyOnPatientCopayment?: boolean;
+
+  applyOnClaimShare?: boolean;
+
   validFrom?: string;
 
   validTo?: string | null;
@@ -6694,6 +6698,10 @@ export type SaveTaxRequest = {
 
   citizenCategory?:
     TaxCitizenCategory;
+
+  applyOnPatientCopayment?: boolean;
+
+  applyOnClaimShare?: boolean;
 
   validFrom: string;
 

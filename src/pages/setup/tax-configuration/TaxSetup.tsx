@@ -199,6 +199,12 @@ const taxFieldLabels:
     citizenCategory:
         'Citizen Category',
 
+    applyOnPatientCopayment:
+        'Patient Copayment',
+
+    applyOnClaimShare:
+        'Claim Share',
+
     validFrom:
         'Valid From',
 
@@ -1160,6 +1166,12 @@ const TaxSetup:
                     citizenCategory:
                         'ALL',
 
+                    applyOnPatientCopayment:
+                        true,
+
+                    applyOnClaimShare:
+                        true,
+
                     validFrom:
                         new Date()
                             .toISOString()
@@ -1630,6 +1642,76 @@ const TaxSetup:
                           'NON_CITIZEN'
                             ? 'Non-Citizens'
                             : 'All'
+            },
+            {
+                key:
+                    'applyOnPatientCopayment',
+
+                title:
+                    <Translate>
+                        Patient Copayment
+                    </Translate>,
+
+                width:
+                    140,
+
+                align:
+                    'center' as const,
+
+                render: (
+                    row:
+                        Tax
+                ) => (
+                    <MyBadgeStatus
+                        contant={
+                            row.applyOnPatientCopayment !==
+                            false
+                                ? 'Taxed'
+                                : 'Not Taxed'
+                        }
+                        color={
+                            row.applyOnPatientCopayment !==
+                            false
+                                ? '#415be7'
+                                : '#b1acac'
+                        }
+                    />
+                )
+            },
+            {
+                key:
+                    'applyOnClaimShare',
+
+                title:
+                    <Translate>
+                        Claim Share
+                    </Translate>,
+
+                width:
+                    120,
+
+                align:
+                    'center' as const,
+
+                render: (
+                    row:
+                        Tax
+                ) => (
+                    <MyBadgeStatus
+                        contant={
+                            row.applyOnClaimShare !==
+                            false
+                                ? 'Taxed'
+                                : 'Not Taxed'
+                        }
+                        color={
+                            row.applyOnClaimShare !==
+                            false
+                                ? '#415be7'
+                                : '#b1acac'
+                        }
+                    />
+                )
             },
             {
                 key:
