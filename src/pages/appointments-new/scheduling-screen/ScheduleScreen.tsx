@@ -91,6 +91,12 @@ const getAvailabilityTemplateName = (appointment: any): string => {
   ).trim();
 };
 
+// Color picked for the resource on its availability template; drawn as a side stripe so the status keeps the card colors
+const getResourceColor = (appointment: any): string | null => {
+  const color = String(appointment?.availabilityGenerationBatch?.template?.templateColor ?? '').trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : null;
+};
+
 const APPOINTMENT_REQUEST_APPROVE_STATUS = 'APPROVED';
 
 const SCHEDULE_LEGEND_ITEMS: {
@@ -1440,6 +1446,10 @@ const ScheduleScreen = () => {
     ).toUpperCase();
     const statusKey = normalizeAppointmentStatusKey(status);
     const appointment = event?.appointmentData ?? {};
+    // Same resource stripe on every card, whatever the status.
+    // It sits on the inner card because .rbc-event forces border: none !important
+    const resourceColor = getResourceColor(appointment);
+    const resourceStripe = resourceColor ? { borderLeft: `6px solid ${resourceColor}` } : {};
     const patient = appointment?.patient ?? {};
     const pid = getAppointmentPatientId(appointment);
     const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
@@ -1501,9 +1511,10 @@ const ScheduleScreen = () => {
                 justifyContent: 'center',
                 gap: 3,
                 padding: '4px 8px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                ...resourceStripe
               }
-              : undefined
+              : resourceStripe
           }
         >
           <div className="available-slot-title">{startLabel} - {endLabel}</div>
@@ -1530,7 +1541,10 @@ const ScheduleScreen = () => {
         style={{
           padding: '7px',
           display: 'flex',
-          gap: '9px'
+          gap: '9px',
+          height: '100%',
+          boxSizing: 'border-box',
+          ...resourceStripe
         }}
       >
         <div style={{ marginRight: '5px' }}>
