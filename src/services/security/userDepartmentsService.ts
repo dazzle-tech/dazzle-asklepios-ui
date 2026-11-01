@@ -26,6 +26,7 @@ const mapUserDepartment = (item: any): UserDepartment => ({
   isDefault: item?.isDefault,
   departmentName:
     item?.departmentName ?? item?.department?.name ?? item?.name ?? null,
+  departmentType: item?.departmentType ?? item?.department?.type ?? null,
   facilityName:
     item?.facilityName ??
     item?.department?.facility?.name ??
