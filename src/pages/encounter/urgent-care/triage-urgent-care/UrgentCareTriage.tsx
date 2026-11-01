@@ -1522,9 +1522,9 @@ const handleCancelEncounter = async () => {
             />
 
             {!isPendingPayment &&
-              (statusUpper === 'WAITING_TRIAGE' ||
-                statusUpper === 'TRIAGE_STARTED' ||
-                statusUpper === 'ASSIGNED_TO_BED') && (
+              (statusUpper === 'ONGOING' ||
+                statusUpper === 'ASSIGNED_TO_BED' ||
+                statusUpper === 'TRIAGE_STARTED') && (
               <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
                 <div>
                   <MyButton

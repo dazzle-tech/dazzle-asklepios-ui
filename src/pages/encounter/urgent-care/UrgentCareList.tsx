@@ -75,6 +75,7 @@ import Translate from '@/components/Translate';
 import AllNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import AssignNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import ApprovedResultsCell from '@/pages/encounter/encounter-list/ApprovedResultsCell';
+import DiagnosticOrderStatusCell from '@/pages/encounter/encounter-list/DiagnosticOrderStatusCell';
 
 dayjs.extend(duration);
 
@@ -1145,17 +1146,12 @@ const handleRowsPerPageChange = useCallback(
     {
       key: 'latestDiagnosticOrderStatus',
       title: 'Diagnostic Order Status',
-      expandable: true,
-      render: (row: any) => {
-        const status = row?.latestDiagnosticOrderStatus;
-        if (!status) return '-';
-        return (
-          <MyBadgeStatus
-            color="#969fb0"
-            contant={formatEnumString(status) ?? status}
-          />
-        );
-      }
+      render: (row: any) => (
+        <DiagnosticOrderStatusCell
+          status={row?.latestDiagnosticOrderStatus}
+          encounterId={row?.id}
+        />
+      )
     },
     {
       key: 'approvedResults',
@@ -1362,7 +1358,8 @@ const handleRowsPerPageChange = useCallback(
               )}
 
                {(statusUpper === 'ONGOING' ||
-              statusUpper === 'ASSIGNED_TO_BED') && (
+              statusUpper === 'ASSIGNED_TO_BED' ||
+              statusUpper === 'TRIAGE_STARTED') && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
                   <div>
                     <MyButton

@@ -128,16 +128,16 @@ const RandomBloodSugar: React.FC<RandomBloodSugarProps> = ({
           </div>
         }
         content={
-          <Form fluid>
+          <Form fluid style={{width:'20vw'}}>
             <div>
               <MyInput
-                width="15vw"
+                width="100%"
                 fieldType="number"
                 allowDecimal
                 fieldLabel="Random Blood Glucose"
                 rightAddon="mg/dL"
+                rightAddonwidth={'auto'}
                 fieldName="randomBloodGlucose"
-                rightAddonwidth={60}
                 record={record}
                 setRecord={setRecord}
                 disabled={disabled}

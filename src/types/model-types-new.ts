@@ -4173,6 +4173,7 @@ export interface DiagnosticOrder extends AuditingEntity {
   id?: number;
   patientId?: number;
   encounterId?: number;
+  orderNumber?: string;
   saveDraft?: boolean;
   status?: DiagnosticStatus;
   submittedBy?: string;
