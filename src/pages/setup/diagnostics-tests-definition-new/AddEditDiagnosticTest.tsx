@@ -540,6 +540,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                     width="100%"
                     fieldName="price"
                     fieldType='number'
+                    allowDecimal
                     record={diagnosticsTest}
                     setRecord={setDiagnosticsTest}
                   />
