@@ -6996,6 +6996,8 @@ export type EncounterBillingItemSummary = {
   status: BillingChargeLineStatus;
   chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
+  patientTaxAmount?: number | null;
+  insuranceTaxAmount?: number | null;
 };
 
 export type WaseelBenefitDetail = {

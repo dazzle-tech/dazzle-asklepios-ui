@@ -61,6 +61,31 @@ const isGenericItemLabel = (
 };
 
 /** Technical codes such as SERVICE-1500 or MEDICATION - 172 are not display names. */
+/**
+ * Tax carried by the patient share of a charge line. Lines billed before the
+ * Patient Copayment / Claim Share toggles have no party split, so their tax is
+ * shared in proportion to the patient share.
+ */
+export const resolvePatientTaxAmount = (
+  item: Pick<
+    EncounterBillingItemSummary,
+    'taxAmount' | 'netAmount' | 'patientResponsibilityAmount' | 'patientTaxAmount'
+  >
+): number => {
+  if (item.patientTaxAmount != null) {
+    return toAmount(item.patientTaxAmount);
+  }
+
+  const netAmount = toAmount(item.netAmount);
+  const taxAmount = toAmount(item.taxAmount);
+
+  if (netAmount <= 0 || taxAmount <= 0) {
+    return 0;
+  }
+
+  return (taxAmount * toAmount(item.patientResponsibilityAmount)) / netAmount;
+};
+
 export const isTechnicalBillingLabel = (
   value: string | null | undefined,
   billingItemType?: string | null | undefined
@@ -450,6 +475,7 @@ export type PaymentReceiptData = {
     unitPrice: number;
     netAmount: number;
     patientShare: number;
+    taxAmount?: number;
   }>;
   totals: PreviewBillingTotals;
   notes?: string;

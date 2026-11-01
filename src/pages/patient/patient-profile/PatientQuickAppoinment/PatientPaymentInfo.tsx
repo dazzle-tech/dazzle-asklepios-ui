@@ -136,6 +136,7 @@ import {
   isDefaultServicePayable,
   isEncounterFullyPaid,
   resolveBillingItemName,
+  resolvePatientTaxAmount,
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
@@ -3034,7 +3035,12 @@ const PatientPaymentInfo =
 
                 patientShare: toNumber(
                   item.patientResponsibilityAmount
-                )
+                ),
+
+                taxAmount:
+                  resolvePatientTaxAmount(
+                    item
+                  )
               })
             ),
 
