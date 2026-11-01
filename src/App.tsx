@@ -137,6 +137,7 @@ const ERDashboardsNew = lazy (() => import ( './pages/encounter/ER-triage-new/Er
 const ERTabsDepartmentAndWaitingListNew = lazy (() => import ( './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList'));
 const ERStartTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERStartTriage'));
 const ERTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERTriage'));
+const ERBedBoard = lazy (() => import ( './pages/encounter/ER-triage-new/ER-bed-board'));
 const QuickVisitNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/QuickVisit'));
 const ViewTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ViewTriage'));
 const NeonatesPainAssessment = lazy (() => import ( './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment'));
@@ -722,6 +723,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="ER-bed-board" element={<ERBedBoard />} />
               <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
               <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
