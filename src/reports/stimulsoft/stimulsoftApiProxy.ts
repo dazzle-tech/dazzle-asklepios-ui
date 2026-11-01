@@ -139,6 +139,18 @@ const readSelectedDepartment = (): {
   }
 };
 
+/** Account id saved at login (`localStorage.user`). */
+const readLoggedInUserId = (): number | undefined => {
+  try {
+    const raw = localStorage.getItem('user');
+    if (!raw) return undefined;
+    const userId = Number(JSON.parse(raw)?.id);
+    return Number.isFinite(userId) && userId > 0 ? userId : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const defaultForVariable = (name: string): string | null => {
   const { startDate, endDate } = defaultDateRange();
   if (name === 'startDate' || name === 'fromDate') return startDate;
@@ -150,6 +162,10 @@ const defaultForVariable = (name: string): string | null => {
   }
   if (/^facilityid$/i.test(name) && session.facilityId) {
     return String(session.facilityId);
+  }
+  if (/^userid$/i.test(name)) {
+    const userId = readLoggedInUserId();
+    if (userId) return String(userId);
   }
   return null;
 };
@@ -1136,6 +1152,20 @@ const applySqlVariableParameters = (report: any, args: any) => {
 
   names.forEach(name => {
     const found = next.find(item => parameterMatches(item, name));
+    if (/^userid$/i.test(name)) {
+      const fromVariable = getVariableValue(report, name);
+      const userId =
+        fromVariable && /^\d+$/.test(String(fromVariable))
+          ? String(fromVariable)
+          : defaultForVariable(name);
+      if (!userId || !/^\d+$/.test(String(userId))) return;
+      // Inline the account id. A text parameter makes PostgreSQL reject
+      // bigint comparisons and the data source comes back empty.
+      sql = sql.replace(new RegExp(`@${name}\\b`, 'gi'), String(userId));
+      const index = next.indexOf(found);
+      if (index >= 0) next.splice(index, 1);
+      return;
+    }
     if (isDateParam(name)) {
       const already = asIsoDate(found?.value);
       const resolved =
