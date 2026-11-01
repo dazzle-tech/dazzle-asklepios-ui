@@ -64,10 +64,26 @@ const buildDiagMapFromTests = (tests, orderIdToEncounterId, optionalSingleEncoun
   }
 
   const next = new Map();
-  for (const key of new Set([...labByEncounter.keys(), ...radByEncounter.keys()])) {
+  // Must use Array.from — `[].concat(map.keys())` (Babel) keeps MapIterators.
+  for (const key of new Set([
+    ...Array.from(labByEncounter.keys()),
+    ...Array.from(radByEncounter.keys())
+  ])) {
     next.set(key, {
       lab: aggregateGroupStatus(labByEncounter.get(key) ?? []),
       rad: aggregateGroupStatus(radByEncounter.get(key) ?? [])
+    });
+  }
+  return next;
+};
+
+const mergeDiagMaps = (base, overlay) => {
+  const next = new Map(base);
+  for (const [key, value] of overlay.entries()) {
+    const prior = next.get(key);
+    next.set(key, {
+      lab: value.lab != null ? value.lab : (prior?.lab ?? null),
+      rad: value.rad != null ? value.rad : (prior?.rad ?? null)
     });
   }
   return next;
@@ -157,6 +173,55 @@ const emptyFromTests = buildDiagMapFromTests(
   new Map()
 );
 assert(emptyFromTests.size === 0, 'unmapped tests → empty map (caller must not overwrite)');
+
+// Transpilation regression: MapIterator must become real keys (P176 Lab —)
+const p176 = buildDiagMapFromTests(
+  [
+    {
+      orderId: 1517,
+      encounterId: 72,
+      orderType: 'LABORATORY',
+      processingStatus: 'ACCEPTED',
+      status: 'SUBMITTED'
+    },
+    {
+      orderId: 1518,
+      encounterId: 78,
+      orderType: 'LABORATORY',
+      processingStatus: 'NEW',
+      status: 'SUBMITTED'
+    }
+  ],
+  new Map()
+);
+assert(p176.size === 2, 'Map keys are encounter ids (not MapIterators)');
+assert(p176.get('72')?.lab === 'ACCEPTED', 'P176/DOR-1017 Lab ACCEPTED via encounter key');
+assert(p176.has('72') && p176.has('78'), 'lookup by encounter string works');
+
+const merged = mergeDiagMaps(
+  new Map([['72', { lab: 'ACCEPTED', rad: 'NEW' }]]),
+  new Map([['72', { lab: 'ACCEPTED', rad: null }]])
+);
+assert(merged.get('72')?.rad === 'NEW', 'merge keeps order-level rad when tests omit rad');
+
+// Visit status helpers (ER list colors)
+const ER_VISIT_STATUS_COLOR = {
+  NEW: '#0d6efd',
+  ONGOING: '#198754',
+  ASSIGNED_TO_BED: '#198754',
+  CANCELLED: '#ffc107',
+  COMPLETED: '#6c757d',
+  DISCHARGED: '#adb5bd',
+  PENDING_PAYMENT: '#fd7e14'
+};
+const visitStatusColor = status => {
+  const key = String(status ?? '').trim().toUpperCase();
+  if (!key) return '#969fb0';
+  return ER_VISIT_STATUS_COLOR[key] ?? '#969fb0';
+};
+assert(visitStatusColor('ONGOING') === '#198754', 'ONGOING uses ER list green');
+assert(visitStatusColor('') === '#969fb0', 'empty status → muted (no invented color)');
+assert(visitStatusColor(null) === '#969fb0', 'null status → muted');
 
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);

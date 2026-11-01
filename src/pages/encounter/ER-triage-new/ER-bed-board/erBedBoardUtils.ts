@@ -180,6 +180,38 @@ export const buildPatientFullName = (patient: any): string => {
     .trim();
 };
 
+/**
+ * ER encounter-list status colors (ERList.tsx). Unknown codes fall back to muted grey.
+ */
+export const ER_VISIT_STATUS_COLOR: Record<string, string> = {
+  NEW: '#0d6efd',
+  ONGOING: '#198754',
+  ASSIGNED_TO_BED: '#198754',
+  CANCELED: '#ffc107',
+  CANCELLED: '#ffc107',
+  COMPLETED: '#6c757d',
+  DISCHARGED: '#adb5bd',
+  PENDING_PAYMENT: '#fd7e14',
+  WAITING_TRIAGE: '#0d6efd',
+  TRIAGE_STARTED: '#0d6efd',
+  WAITING_LIST: '#0d6efd'
+};
+
+export const visitStatusColor = (status: unknown): string => {
+  const key = String(status ?? '')
+    .trim()
+    .toUpperCase();
+  if (!key) return '#969fb0';
+  return ER_VISIT_STATUS_COLOR[key] ?? '#969fb0';
+};
+
+/** Readable visit/treatment status label matching ER list (`formatEnumString`). */
+export const visitStatusLabel = (status: unknown): string => {
+  const raw = String(status ?? '').trim();
+  if (!raw) return '';
+  return formatEnumString(raw) || raw;
+};
+
 export const pickDiagnosticStatus = (statuses: Array<string | null | undefined>): string | null => {
   let best: string | null = null;
   let bestRank = -2;
@@ -325,13 +357,36 @@ export const buildDiagMapFromTests = (
     }
   });
 
+  // Array.from — do not spread MapIterator; Babel `[].concat(map.keys())` keeps
+  // the iterator object and produces a useless 2-entry map (Lab/Rad always "—").
   const next = new Map<string, { lab: string | null; rad: string | null }>();
-  const keys = new Set([...labByEncounter.keys(), ...radByEncounter.keys()]);
+  const keys = new Set<string>([
+    ...Array.from(labByEncounter.keys()),
+    ...Array.from(radByEncounter.keys())
+  ]);
 
   keys.forEach(key => {
     next.set(key, {
       lab: aggregateGroupStatus(labByEncounter.get(key) ?? []),
       rad: aggregateGroupStatus(radByEncounter.get(key) ?? [])
+    });
+  });
+
+  return next;
+};
+
+/** Merge test-derived statuses onto an order-level map without dropping encounters. */
+export const mergeDiagMaps = (
+  base: Map<string, { lab: string | null; rad: string | null }>,
+  overlay: Map<string, { lab: string | null; rad: string | null }>
+): Map<string, { lab: string | null; rad: string | null }> => {
+  const next = new Map(base);
+
+  overlay.forEach((value, key) => {
+    const prior = next.get(key);
+    next.set(key, {
+      lab: value.lab != null ? value.lab : (prior?.lab ?? null),
+      rad: value.rad != null ? value.rad : (prior?.rad ?? null)
     });
   });
 
@@ -371,7 +426,10 @@ export const buildDiagMapFromOrders = (
   });
 
   const next = new Map<string, { lab: string | null; rad: string | null }>();
-  const keys = new Set([...labByEncounter.keys(), ...radByEncounter.keys()]);
+  const keys = new Set<string>([
+    ...Array.from(labByEncounter.keys()),
+    ...Array.from(radByEncounter.keys())
+  ]);
 
   keys.forEach(key => {
     next.set(key, {
