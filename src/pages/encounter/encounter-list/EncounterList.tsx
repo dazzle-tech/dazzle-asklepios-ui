@@ -40,6 +40,7 @@ import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { setSelectedDepartment } from '@/reducers/authSlice';
 
 import {
   useFilterEncountersQuery,
@@ -63,6 +64,8 @@ import {
   useGetAppointmentLogsQuery
 } from '@/services/appointment/appointmentService';
 import { useLazyGetVisitReportPdfQuery } from '@/services/observationServiceNew';
+import { useGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 // NEW: same practitioner-by-department hook used in AddResourceModal
 import { useGetPractitionerByUserIdQuery, useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import VisitReportPrintButton from './VisitReportPrintButton';
@@ -72,6 +75,10 @@ import Translate from '@/components/Translate';
 import CollectSambleModal from '@/pages/appointments-new/scheduling-screen/components/CollectSambleModal/CollectSambleModal';
 
 // import '@/pages/patient/patient-emr/emr-tables/modal-view-only.less';
+const PENDING_ENCOUNTER_ACTION_KEY = 'encounter-list.pending-encounter-action';
+
+type EncounterAction = 'goToVisit' | 'viewVisit' | 'diagnosticsResults' | 'preVisitObservations';
+
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -310,6 +317,47 @@ const EncounterList = () => {
   const [hasOrder, setHasOrder] = useState<boolean | undefined>(undefined);
   const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
 
+  // Outpatient clinics the user can switch to (department switcher) — default selection for the department filter
+  const facilityKey = selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id ?? 'no-facility';
+  const {
+    data: activeUserDepartments,
+    isSuccess: isUserDepartmentsSuccess,
+    isError: isUserDepartmentsError
+  } = useGetActiveUserDepartmentsByUserQuery(
+    { userId: authSlice.user?.id as number, facilityId: facilityKey },
+    { skip: !authSlice.user?.id }
+  );
+  const userDepartmentsResolved = !authSlice.user?.id || isUserDepartmentsSuccess || isUserDepartmentsError;
+
+  const outpatientDepartmentOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return (activeUserDepartments ?? [])
+      .filter((d: any) => d?.departmentId != null && d?.departmentType === 'OUTPATIENT_CLINIC')
+      .filter((d: any) => {
+        const key = String(d.departmentId);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((d: any) => ({ label: d.departmentName ?? String(d.departmentId), value: String(d.departmentId) }));
+  }, [activeUserDepartments]);
+
+  const defaultDepartmentIds = useMemo(() => {
+    const ids = outpatientDepartmentOptions.map(o => o.value);
+    return ids.length ? ids : departmentId != null ? [String(departmentId)] : [];
+  }, [outpatientDepartmentOptions, departmentId]);
+
+  const [departmentIds, setDepartmentIds] = useState<string[]>([]);
+  const didInitDepartmentIdsRef = useRef(false);
+  useEffect(() => {
+    if (didInitDepartmentIdsRef.current || !userDepartmentsResolved || defaultDepartmentIds.length === 0) return;
+    didInitDepartmentIdsRef.current = true;
+    setDepartmentIds(defaultDepartmentIds);
+  }, [userDepartmentsResolved, defaultDepartmentIds]);
+
+  const resolveDepartmentIds = (ids: string[]) =>
+    uniqueNonEmpty(ids) ?? (departmentId != null ? [String(departmentId)] : []);
+
   const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
     searchByField: 'fullName',
     patientName: ''
@@ -397,16 +445,31 @@ const EncounterList = () => {
     useLazyGetPractitionerByDepartmentQuery();
   const [departmentPractitioners, setDepartmentPractitioners] = useState<any[]>([]);
 
+  const practitionerDepartmentIds: string[] = useMemo(
+    () => appliedFilters?.departmentIds ?? (departmentId != null ? [String(departmentId)] : []),
+    [appliedFilters?.departmentIds, departmentId]
+  );
+
   useEffect(() => {
-    if (!departmentId) {
+    if (practitionerDepartmentIds.length === 0) {
       setDepartmentPractitioners([]);
       return;
     }
-    triggerGetPractitionersByDepartment({ departmentId, page: 0, size: 200, sort: 'id,asc' })
-      .unwrap()
-      .then((res: any) => setDepartmentPractitioners(res?.data ?? []))
-      .catch(() => setDepartmentPractitioners([]));
-  }, [departmentId, triggerGetPractitionersByDepartment]);
+    let cancelled = false;
+    Promise.all(
+      practitionerDepartmentIds.map(id =>
+        triggerGetPractitionersByDepartment({ departmentId: id, page: 0, size: 200, sort: 'id,asc' }, true)
+          .unwrap()
+          .then((res: any) => res?.data ?? [])
+          .catch(() => [])
+      )
+    ).then(results => {
+      if (!cancelled) setDepartmentPractitioners(results.flat());
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [practitionerDepartmentIds, triggerGetPractitionersByDepartment]);
   useEffect(() => {
     console.log('Department practitioners updated:', departmentPractitioners);
   }, [departmentPractitioners]);
@@ -449,6 +512,31 @@ const EncounterList = () => {
       .unwrap()
       .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const departmentIdsForBulk = useMemo(() => {
+    const ids = (tableData as any[])
+      .map(row => row?.departmentId)
+      .filter(v => v !== null && v !== undefined)
+      .map(v => Number(v));
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  const [getDepartmentsBulk, { data: departmentsBulk }] = useGetDepartmentsBulkMutation();
+
+  useEffect(() => {
+    if (departmentIdsForBulk.length === 0) return;
+    getDepartmentsBulk(departmentIdsForBulk)
+      .unwrap()
+      .catch(() => { });
+  }, [departmentIdsForBulk, getDepartmentsBulk]);
+
+  const departmentNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (departmentsBulk ?? []).forEach((d: any) => {
+      if (d?.id != null) map.set(String(d.id), d?.name ?? '');
+    });
+    return map;
+  }, [departmentsBulk]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -584,7 +672,42 @@ const EncounterList = () => {
     }
   };
 
+  // Encounter screens require the selected department to match the encounter department,
+  // so switch to it first (page reload) and resume the action after the reload.
+  const switchToEncounterDepartment = (encounterData: any, action: EncounterAction) => {
+    const targetDepartmentId = encounterData?.departmentId;
+    if (targetDepartmentId == null || String(targetDepartmentId) === String(departmentId ?? '')) {
+      return false;
+    }
+
+    const assignment = (activeUserDepartments ?? []).find(
+      (d: any) => String(d?.departmentId ?? '') === String(targetDepartmentId)
+    );
+    if (!assignment) {
+      dispatch(notify({ msg: 'You do not have permission to access this department.', sev: 'warning' }));
+      return true;
+    }
+
+    const nextDepartment = {
+      departmentId: assignment.departmentId,
+      facilityId: assignment.facilityId ?? selectedDepartment?.facilityId ?? null,
+      departmentName: assignment.departmentName ?? null,
+      facilityName: assignment.facilityName ?? null
+    };
+
+    sessionStorage.setItem(
+      PENDING_ENCOUNTER_ACTION_KEY,
+      JSON.stringify({ departmentId: nextDepartment.departmentId, action, encounter: encounterData })
+    );
+    dispatch(setSelectedDepartment(nextDepartment));
+    setTimeout(() => {
+      window.location.reload();
+    }, 50);
+    return true;
+  };
+
   const handleGoToVisit = async (encounterData: any) => {
+    if (switchToEncounterDepartment(encounterData, 'goToVisit')) return;
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
@@ -611,6 +734,7 @@ const EncounterList = () => {
   };
 
   const handleViewVisit = async (encounterData: any) => {
+    if (switchToEncounterDepartment(encounterData, 'viewVisit')) return;
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -635,6 +759,7 @@ const EncounterList = () => {
     });
   };
   const handleGoToDiagnosticsResults = async (encounterData: any) => {
+    if (switchToEncounterDepartment(encounterData, 'diagnosticsResults')) return;
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -662,6 +787,7 @@ const EncounterList = () => {
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
+    if (switchToEncounterDepartment(encounterData, 'preVisitObservations')) return;
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -684,6 +810,36 @@ const EncounterList = () => {
       }
     });
   };
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(PENDING_ENCOUNTER_ACTION_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(PENDING_ENCOUNTER_ACTION_KEY);
+
+    let pending: { departmentId?: string | number | null; action?: EncounterAction; encounter?: any };
+    try {
+      pending = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (!pending.encounter || String(pending.departmentId ?? '') !== String(departmentId ?? '')) {
+      dispatch(notify({ msg: 'The department could not be switched. The visit was not opened.', sev: 'warning' }));
+      return;
+    }
+
+    const actions: Record<EncounterAction, (enc: any) => Promise<void>> = {
+      goToVisit: handleGoToVisit,
+      viewVisit: handleViewVisit,
+      diagnosticsResults: handleGoToDiagnosticsResults,
+      preVisitObservations: handleGoToPreVisitObservations
+    };
+    if (pending.action && actions[pending.action]) {
+      setLocalEncounter(pending.encounter);
+      actions[pending.action](pending.encounter);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCancelEncounter = async () => {
     if (!encounter) return;
@@ -743,6 +899,7 @@ const EncounterList = () => {
     setHasOrder(undefined);
     setIsObserved(undefined);
     setPractitionerId(undefined);
+    setDepartmentIds([...defaultDepartmentIds]);
 
     const clearedSearch = {
       searchByField: 'fullName',
@@ -756,6 +913,7 @@ const EncounterList = () => {
 
     setAppliedFilters({
       departmentId,
+      departmentIds: defaultDepartmentIds.length ? [...defaultDepartmentIds] : undefined,
       fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
       toDate: toISODate(clearedDateFilter.toDate) ?? todayStr,
       statusIn: [...DEFAULT_STATUS],
@@ -838,6 +996,12 @@ const EncounterList = () => {
           </Whisper>
         );
       }
+    },
+    {
+      key: 'departmentName',
+      title: 'DEPARTMENT',
+      render: (row: any) =>
+        row?.departmentId != null ? departmentNameMap.get(String(row.departmentId)) || '-' : '-'
     },
     {
       key: 'practitionerFullName',
@@ -1201,6 +1365,23 @@ const EncounterList = () => {
             setRecord={setDateFilter}
           />
 
+          <MyInput
+            column
+            width={260}
+            fieldType="checkPicker"
+            fieldLabel="Department"
+            fieldName="departmentIds"
+            selectData={outpatientDepartmentOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ departmentIds }}
+            setRecord={(v: any) => {
+              setDepartmentIds(Array.isArray(v?.departmentIds) ? v.departmentIds.map(String) : []);
+              setPage(0);
+            }}
+            searchable
+          />
+
           <SearchPatientCriteria
             record={patientSearchDraft}
             setRecord={setPatientSearchDraft}
@@ -1258,8 +1439,12 @@ const EncounterList = () => {
 
           setPage(0);
 
+          const normalizedDepartmentIds = resolveDepartmentIds(departmentIds);
+          if (!uniqueNonEmpty(departmentIds)) setDepartmentIds(normalizedDepartmentIds);
+
           setAppliedFilters({
             departmentId,
+            departmentIds: normalizedDepartmentIds.length ? normalizedDepartmentIds : undefined,
             fromDate,
             toDate,
             statusIn: normalizedStatusIn,
@@ -1343,12 +1528,14 @@ const EncounterList = () => {
   useEffect(() => {
     if (!departmentId || appliedFilters) return;
     if (showOnlyMyPatients.showOnlyMyPatients && currentUserId && !practitionerByUserResponse) return;
+    if (!userDepartmentsResolved) return;
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
     setAppliedFilters({
       departmentId,
+      departmentIds: defaultDepartmentIds.length ? [...defaultDepartmentIds] : undefined,
       fromDate,
       toDate,
       statusIn: DEFAULT_STATUS,
@@ -1375,7 +1562,9 @@ const EncounterList = () => {
     pageSize,
     showOnlyMyPatients,
     practitionerByUserResponse,
-    currentUserId
+    currentUserId,
+    userDepartmentsResolved,
+    defaultDepartmentIds
   ]);
   useEffect(() => {
     if (appliedFilters) {

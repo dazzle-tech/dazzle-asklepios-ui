@@ -259,6 +259,7 @@ export const patientEncounterService = createApi({
       PagedResult<PatientEncounter>,
       {
         departmentId: Id;
+        departmentIds?: Id[];
         fromDate?: string;
         toDate?: string;
         statuses?: string | string[];
@@ -277,6 +278,7 @@ export const patientEncounterService = createApi({
     >({
       query: ({
         departmentId,
+        departmentIds,
         fromDate,
         toDate,
         statuses,
@@ -303,6 +305,7 @@ export const patientEncounterService = createApi({
           method: 'GET',
           params: {
             departmentId,
+            departmentIds,
             fromDate,
             toDate,
             statuses: statusesCsv,

@@ -180,6 +180,7 @@ export interface UserDepartment {
   isActive?: boolean;
   isDefault?: boolean;
   departmentName?: string | null;
+  departmentType?: string | null;
   facilityName?: string | null;
 }
 

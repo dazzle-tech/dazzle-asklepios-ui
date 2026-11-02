@@ -185,8 +185,8 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
         ...consultationData,
         patientId: patient.key,
         encounterId: encounter.key,
-        fromDepartmentId: authSlice.selectedDepartment?.departmentId,
-        fromFacilityId: authSlice.selectedDepartment?.facilityId,
+        fromDepartmentId: encounter?.departmentId || authSlice.selectedDepartment?.departmentId,
+        fromFacilityId: encounter?.facilityId || authSlice.selectedDepartment?.facilityId,
         createdBy: authSlice.user?.login,
 
         // ToDo status key for ORD_STAT_REQST
