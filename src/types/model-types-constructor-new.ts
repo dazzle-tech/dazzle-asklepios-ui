@@ -736,6 +736,7 @@ export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
   atcCode: '',
+  code: '',
   type: '',
   roa: '',
   siteOfAdministration: '',
