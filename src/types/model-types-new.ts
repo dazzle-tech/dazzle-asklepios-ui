@@ -8864,7 +8864,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
   id: number;
   claimEncounterCopyId: number;
   diagnosticOrderTestResultId?: number | null;
-  orderTestId: number;
+  orderTestId?: number | null;
+  /** Set when the test was ordered from Service & Products (no diagnostic order test). */
+  patientServiceProductId?: number | null;
   profileTestId?: number | null;
 
   resultValueNumber?: number | null;
@@ -8887,7 +8889,8 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
-  orderTestId: number;
+  orderTestId?: number | null;
+  patientServiceProductId?: number | null;
   profileTestId?: number | null;
   resultValueNumber?: number | null;
   resultValueText?: string | null;
@@ -8903,7 +8906,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
   id: number;
   claimEncounterCopyId: number;
   diagnosticOrderTestReportId?: number | null;
-  orderTestId: number;
+  orderTestId?: number | null;
+  /** Set when the test was ordered from Service & Products (no diagnostic order test). */
+  patientServiceProductId?: number | null;
 
   report?: string | null;
   radiologistInformation?: string | null;
@@ -8924,7 +8929,8 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO {
-  orderTestId: number;
+  orderTestId?: number | null;
+  patientServiceProductId?: number | null;
   report?: string | null;
   radiologistInformation?: string | null;
   criticalFindings?: string | null;

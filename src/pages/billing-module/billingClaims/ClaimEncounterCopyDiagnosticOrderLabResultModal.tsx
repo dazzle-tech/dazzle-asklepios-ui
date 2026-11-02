@@ -5,7 +5,6 @@ import { faFlask } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import MyButton from '@/components/MyButton/MyButton';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -30,6 +29,8 @@ interface ClaimEncounterCopyDiagnosticOrderLabResultModalProps {
   orderTest: any;
   testName?: string;
   existingCopies: any[];
+  /** Set for tests ordered from Service & Products; results link to it instead of an order test. */
+  patientServiceProductId?: number;
 }
 
 const getResultType = (profile?: any) =>
@@ -44,7 +45,8 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
   claimEncounterCopyId,
   orderTest,
   testName,
-  existingCopies
+  existingCopies,
+  patientServiceProductId
 }: ClaimEncounterCopyDiagnosticOrderLabResultModalProps) => {
   const dispatch = useAppDispatch();
 
@@ -149,48 +151,59 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
     );
   };
 
-  const handleSaveProfile = async (profile: any) => {
-    const existing = copyByProfileId.get(profile.id);
+  const toResultValue = (profile: any) => {
     const value = form[profile.id] ?? {};
+    const isTextual = isLovProfile(profile) || isTextProfile(profile);
 
-    const isLov = isLovProfile(profile);
-    const isText = isTextProfile(profile);
+    return {
+      resultValueNumber: isTextual ? null : value.resultValueNumber ?? null,
+      resultValueText: isTextual ? value.resultValueText || null : null
+    };
+  };
 
-    const resultValueNumber =
-      isLov || isText ? null : value.resultValueNumber;
+  const hasValue = ({ resultValueNumber, resultValueText }: ReturnType<typeof toResultValue>) =>
+    resultValueNumber != null || !!resultValueText;
 
-    const resultValueText =
-      isLov || isText ? value.resultValueText : null;
+  const isChanged = (existing: any, value: ReturnType<typeof toResultValue>) =>
+    (existing.resultValueNumber ?? null) !== value.resultValueNumber ||
+    (existing.resultValueText ?? null) !== value.resultValueText;
 
-    if (resultValueNumber == null && !resultValueText) {
-      dispatch(
-        notify({ msg: 'Result value is required', sev: 'warning' })
-      );
+  const saveProfileResult = (profile: any) => {
+    const existing = copyByProfileId.get(profile.id);
+    const value = toResultValue(profile);
+
+    if (existing) {
+      return isChanged(existing, value)
+        ? updateResult({ id: existing.id, data: value }).unwrap()
+        : Promise.resolve();
+    }
+
+    return createResult({
+      claimEncounterCopyId,
+      data: {
+        ...(patientServiceProductId != null
+          ? { patientServiceProductId }
+          : { orderTestId: orderTest.id }),
+        profileTestId: profile.id,
+        ...value,
+        resultTypeAtEntry: getResultType(profile)
+      }
+    }).unwrap();
+  };
+
+  const handleSaveAll = async () => {
+    const filledProfiles = profiles.filter(profile => hasValue(toResultValue(profile)));
+
+    if (filledProfiles.length === 0) {
+      dispatch(notify({ msg: 'Result value is required', sev: 'warning' }));
       return;
     }
 
     try {
-      if (existing) {
-        await updateResult({
-          id: existing.id,
-          data: { resultValueNumber, resultValueText }
-        }).unwrap();
-      } else {
-        await createResult({
-          claimEncounterCopyId,
-          data: {
-            orderTestId: orderTest.id,
-            profileTestId: profile.id,
-            resultValueNumber,
-            resultValueText,
-            resultTypeAtEntry: getResultType(profile)
-          }
-        }).unwrap();
-      }
+      await Promise.all(filledProfiles.map(saveProfileResult));
 
-      dispatch(
-        notify({ msg: 'Result saved successfully', sev: 'success' })
-      );
+      dispatch(notify({ msg: 'Results saved successfully', sev: 'success' }));
+      setOpen(false);
     } catch (error: any) {
       const data = error?.data ?? {};
 
@@ -200,12 +213,13 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
             data?.detail ||
             data?.message ||
             data?.title ||
-            'Failed to save result',
+            'Failed to save results',
           sev: 'error'
         })
       );
     }
   };
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
@@ -216,7 +230,8 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
         setOpen={setOpen}
         title="Laboratory Results"
         size="50vw"
-        hideActionBtn
+        actionButtonFunction={handleSaveAll}
+        isDisabledActionBtn={isCreating || isUpdating || profiles.length === 0}
         steps={[
           { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
         ]}
@@ -228,8 +243,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
             >
               <Form fluid>
                 {profiles.map(profile => {
-                  const existing = copyByProfileId.get(profile.id);
-
                   const isLov = isLovProfile(profile);
                   const isText = isTextProfile(profile);
 
@@ -276,14 +289,6 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                           {resolveUnitLabel(profile)}
                         </span>
                       )}
-
-                      <MyButton
-                        size="sm"
-                        disabled={isCreating || isUpdating}
-                        onClick={() => handleSaveProfile(profile)}
-                      >
-                        Save
-                      </MyButton>
                     </div>
                   );
                 })}

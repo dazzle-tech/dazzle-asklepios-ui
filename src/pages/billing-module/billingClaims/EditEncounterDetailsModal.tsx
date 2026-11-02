@@ -19,6 +19,7 @@ import ClaimEncounterProgressNotes from './ClaimEncounterProgressNotes';
 import MyButton from '@/components/MyButton/MyButton';
 import PatientHistory from './PatientHistory';
 import ClaimEncounterCopyDiagnosticOrders from './ClaimEncounterCopyDiagnosticOrders';
+import ClaimEncounterCopyServiceProductTests from './ClaimEncounterCopyServiceProductTests';
 
 const EditEncounterDetailsModal = ({
     open,
@@ -296,6 +297,15 @@ const EditEncounterDetailsModal = ({
                         title: 'Diagnostic Orders',
                         content: (
                             <ClaimEncounterCopyDiagnosticOrders
+                                claimEncounterCopyId={encounterCopy?.id}
+                                encounterId={encounter?.id}
+                            />
+                        )
+                    },
+                    {
+                        title: 'Service & Product Tests',
+                        content: (
+                            <ClaimEncounterCopyServiceProductTests
                                 claimEncounterCopyId={encounterCopy?.id}
                                 encounterId={encounter?.id}
                             />

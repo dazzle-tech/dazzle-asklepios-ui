@@ -30,7 +30,9 @@ interface AddClaimEncounterCopyDiagnosticOrderTestReportProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   claimEncounterCopyId: number;
-  orderTestId: number;
+  orderTestId?: number;
+  /** Set for tests ordered from Service & Products; the report links to it instead of an order test. */
+  patientServiceProductId?: number;
   testId?: number;
   testName?: string;
   initialData?: ClaimEncounterCopyDiagnosticOrderTestReport | null;
@@ -50,6 +52,7 @@ const AddClaimEncounterCopyDiagnosticOrderTestReport = ({
   setOpen,
   claimEncounterCopyId,
   orderTestId,
+  patientServiceProductId,
   testId,
   testName,
   initialData
@@ -208,7 +211,7 @@ const AddClaimEncounterCopyDiagnosticOrderTestReport = ({
         );
       } else {
         const payload: ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO = {
-          orderTestId,
+          ...(patientServiceProductId != null ? { patientServiceProductId } : { orderTestId }),
           report: htmlContent,
           radiologistInformation: report.radiologistInformation,
           criticalFindings: report.criticalFindings,
