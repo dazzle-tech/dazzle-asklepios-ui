@@ -236,6 +236,15 @@ export const newService: modelTypes.Service = {
 };
 
 // ------------------- Service Item -------------------
+export const newProcedureItem: modelTypes.ProcedureItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  specialty: undefined,
+  procedureId: undefined,
+  isActive: true
+};
+
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',

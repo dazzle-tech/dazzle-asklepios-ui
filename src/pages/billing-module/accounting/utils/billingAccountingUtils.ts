@@ -7,6 +7,7 @@ import type {
 } from '@/types/model-types-new';
 import type { InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
+import type { DefaultBillingItemType } from '@/pages/patient/patient-profile/PatientQuickAppoinment/defaultBillingRows';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   isTechnicalBillingLabel,
@@ -118,8 +119,9 @@ export const normalizeBillingError = (error: any): string => {
 };
 
 export type PrepareServiceRow = {
-  id: number;
-  serviceId: number;
+  id: string;
+  billingItemType: DefaultBillingItemType;
+  itemId: number;
   serviceType: string;
   serviceName: string;
   selected: boolean;
