@@ -241,6 +241,10 @@ const PriceListSetupItems: React.FC<Props> = ({
   const isInsurancePriceList =
     priceListType === 'INSURANCE';
 
+  const showSetupItemName =
+    isInsurancePriceList ||
+    priceListType === 'SELF_PAY';
+
   const [
     childModalOpen,
     setChildModalOpen
@@ -1769,6 +1773,21 @@ const PriceListSetupItems: React.FC<Props> = ({
           </Translate>
       },
 
+      ...(showSetupItemName
+        ? [{
+          key: 'setupItemName',
+          title:
+            <Translate>
+              Setup Item Name
+            </Translate>,
+          render: (
+            row:
+              PriceListSetupItem
+          ) =>
+            row.setupItemName || '-'
+        }]
+        : []),
+
       {
         key: 'itemType',
         title:
@@ -2314,7 +2333,7 @@ const PriceListSetupItems: React.FC<Props> = ({
             {childForm()}
           </div>
         }
-        mainSize="md"
+        mainSize="lg"
         childSize="xs"
         actionButtonLabel={
           selectedItem.id

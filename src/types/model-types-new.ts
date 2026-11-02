@@ -998,6 +998,7 @@ export interface UploadPatientAttachmentParams {
 
 export interface UploadEncounterAttachmentParams {
   encounterId: number;
+  patientId?: number;
   file: File;
   type?: string;
   details?: string;
@@ -6329,6 +6330,8 @@ export type PriceListSetupItem = {
   nonStandardCode?: string | null;
   itemName?: string;
 
+  // Read-only: the item's name in its setup definition
+  setupItemName?: string | null;
 
   unitPrice?: number;
   discountPercentage?: number;
