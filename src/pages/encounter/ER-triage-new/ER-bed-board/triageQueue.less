@@ -1,0 +1,387 @@
+.er-bed-board {
+  /* Map and queue share the same row height */
+  .ebb-main {
+    align-items: stretch;
+  }
+
+  .tq-panel {
+    position: relative;
+    top: auto;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid #dce7ed;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(30, 66, 85, 0.035);
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    /* Header */
+
+    .tq-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 10px;
+      min-height: 76px;
+      padding: 16px 14px;
+      border-bottom: 1px solid #e4ecef;
+      background: linear-gradient(115deg, #f2f9fc, #fff);
+
+      > div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      h2 {
+        margin: 0;
+        color: #234652;
+        font-size: 16px;
+        font-weight: 750;
+        line-height: 1.4;
+      }
+
+      > span {
+        flex-shrink: 0;
+        color: #87999e;
+        font-size: 10px;
+      }
+    }
+
+    .tq-count {
+      display: grid;
+      place-items: center;
+      min-width: 25px;
+      height: 24px;
+      padding-inline: 6px;
+      border: 1px solid #d6eae5;
+      border-radius: 7px;
+      background: #eaf5f1;
+      color: #298477;
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Scrollable list */
+
+    .tq-list {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      min-height: 0;
+      margin: 0;
+      padding: 12px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      list-style: none;
+      scrollbar-width: thin;
+      scrollbar-color: #bfd0d5 transparent;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Patient row */
+
+    .tq-row {
+      --tq-level: #91a2b6;
+
+      position: relative;
+      display: grid;
+      grid-template-columns: 35px minmax(0, 1fr) auto;
+      align-items: start;
+      flex-shrink: 0;
+      gap: 8px;
+      min-width: 0;
+      padding: 10px 8px;
+      padding-inline-start: 11px;
+      overflow: hidden;
+      border: 1px solid #e7eef0;
+      border-radius: 9px;
+      background: #f3f7f8;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background: var(--tq-level);
+      }
+
+      &.is-over {
+        border-color: #dc667b;
+        background: #fff8fa;
+        box-shadow: inset 0 0 0 1px rgba(213, 79, 103, 0.12);
+      }
+    }
+
+    /* Compact CTAS square */
+
+    .tq-level {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      align-self: start;
+      width: 35px;
+      min-height: 41px;
+      padding: 6px 2px;
+      border-radius: 7px;
+      background: var(--tq-level);
+      color: #fff;
+
+      strong {
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      span {
+        margin-top: 4px;
+        font-size: 7px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.4px;
+      }
+    }
+
+    /* Patient details */
+
+    .tq-person {
+      min-width: 0;
+      padding-top: 1px;
+
+      .tq-mrn {
+        display: block;
+        width: fit-content;
+        max-width: 100%;
+        overflow: hidden;
+        color: #264b59;
+        font-size: 14px;
+        font-weight: 750;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      p {
+        margin: 4px 0 0;
+        overflow: hidden;
+        font-size: 10px;
+        line-height: 1.5;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .tq-demographics {
+      color: #7d929b;
+    }
+
+    .tq-complaint {
+      color: #627e8b;
+    }
+
+    .tq-visit {
+      display: block;
+      margin-top: 5px;
+      color: #8b9da8;
+      font-size: 9px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+
+      b {
+        display: inline-block;
+        color: #628398;
+        font-weight: 600;
+      }
+    }
+
+    /* Waiting duration */
+
+    .tq-wait {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      max-width: 82px;
+      padding-top: 1px;
+      text-align: end;
+
+      > strong {
+        color: #264b59;
+        font-size: 18px;
+        font-weight: 750;
+        line-height: 1.2;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      > span {
+        max-width: 82px;
+        color: #8b9ba2;
+        font-size: 9px;
+        line-height: 1.4;
+      }
+    }
+
+    .tq-row.is-over .tq-wait {
+      > strong,
+      > span {
+        color: #c9435b;
+      }
+
+      > span {
+        font-weight: 650;
+      }
+    }
+
+    /* Empty / loading / error */
+
+    .tq-empty {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 160px;
+      padding: 25px 12px;
+      text-align: center;
+
+      > .ebb-icon {
+        width: 28px;
+        height: 28px;
+        color: #a7bec9;
+      }
+
+      strong {
+        color: #6e8998;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      span {
+        max-width: 230px;
+        color: #91a4af;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+    }
+
+    /* Footer stays at the bottom */
+
+    .tq-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding: 11px 13px;
+      border-top: 1px solid #e6edef;
+      background: #fafcfd;
+      color: #91a3ae;
+      font-size: 10px;
+
+      > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .ebb-icon {
+        width: 12px;
+        height: 12px;
+      }
+
+      strong {
+        font-weight: 600;
+
+        &.is-over {
+          color: #c9435b;
+        }
+      }
+    }
+  }
+
+  /* Map determines desktop height; queue scrolls internally */
+
+  @media (min-width: 1001px) {
+    .tq-panel {
+      contain: size;
+      min-height: 0;
+
+      .tq-list {
+        flex-basis: 0;
+      }
+
+      .tq-empty {
+        min-height: 0;
+      }
+    }
+  }
+
+  /* Stacked layout */
+
+  @media (max-width: 1000px) {
+    .tq-panel .tq-list {
+      flex: auto;
+      min-height: 180px;
+      max-height: 420px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .tq-panel {
+      .tq-header {
+        padding: 14px 12px;
+      }
+
+      .tq-list {
+        padding: 10px;
+      }
+
+      .tq-row {
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        gap: 7px;
+      }
+
+      .tq-level {
+        width: 32px;
+        min-height: 39px;
+
+        strong {
+          font-size: 18px;
+        }
+      }
+
+      .tq-wait {
+        max-width: 75px;
+
+        > strong {
+          font-size: 16px;
+        }
+
+        > span {
+          max-width: 75px;
+        }
+      }
+    }
+  }
+}

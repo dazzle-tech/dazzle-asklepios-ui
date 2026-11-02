@@ -584,6 +584,23 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Clinical Dashboard",
+      description: "",
+      icon: "FaChartBar",
+      viewOrder: 5.5,
+      departmentTypes: ["EMERGENCY_ROOM"],
+      screens: [
+        {
+          name: "ER Bed Board",
+          code: "ER_BED_BOARD",
+          description: "",
+          icon: "FaBed",
+          viewOrder: 0,
+          navPath: "ER-bed-board",
+        },
+      ],
+    },
+    {
       name: "Emergency",
       description: "",
       icon: "FaExplosion",
