@@ -804,6 +804,21 @@ const PatientsLists = () => {
           ? patientSearchApplied?.patientName?.trim() || undefined
           : filters.mrnFilter.trim() || undefined,
 
+      primaryMobileNumber:
+        patientSearchApplied?.searchByField === 'phoneNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      documentNumber:
+        patientSearchApplied?.searchByField === 'documentNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      dateOfBirth:
+        patientSearchApplied?.searchByField === 'dob'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
       encounterType: filters.encounterType,
 
       encounterNumber: filters.encounterNumber.trim() || undefined,

@@ -266,6 +266,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
         priorities?: string[];
@@ -285,6 +288,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterReasons,
         chiefComplaint,
         priorities,
@@ -311,6 +317,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterReasons,
             chiefComplaint,
             priorities,
@@ -346,6 +355,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -364,6 +376,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -392,6 +407,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
@@ -437,6 +455,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -452,6 +473,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -477,6 +501,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
@@ -524,6 +551,7 @@ export const patientEncounterService = createApi({
         documentType?: string;
         documentNumber?: string;
         primaryMobileNumber?: string;
+        dateOfBirth?: string;
         encounterType?: string;
         encounterNumber?: string;
         departmentId?: Id;
@@ -555,6 +583,7 @@ export const patientEncounterService = createApi({
         documentType,
         documentNumber,
         primaryMobileNumber,
+        dateOfBirth,
         encounterType,
         encounterNumber,
         departmentId,
@@ -590,6 +619,7 @@ export const patientEncounterService = createApi({
           documentType,
           documentNumber,
           primaryMobileNumber,
+          dateOfBirth,
           encounterType,
           encounterNumber,
           departmentId,
@@ -664,6 +694,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -680,6 +713,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -706,6 +742,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
