@@ -1,12 +1,13 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
-import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
@@ -27,11 +28,9 @@ import {
   faCheckDouble,
   faClockRotateLeft,
   faFileLines,
-  faIdCard,
+  faPaperclip,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import { newPatient } from '@/types/model-types-constructor-new';
-import { Patient } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
@@ -150,8 +149,7 @@ const Encounter = ({
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [openScanDocumentModal, setOpenScanDocumentModal] = useState(false);
-  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+  const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -289,12 +287,6 @@ const Encounter = ({
   // useEffect(() => {
   //   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
   // }, [propsData?.viewMode, propsData?.readOnly]);
-  useEffect(() => {
-    if (patientToSend) {
-      setLocalPatient({ ...newPatient, ...patientToSend });
-    }
-  }, [patientToSend]);
-
   useEffect(() => {
 
     const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
@@ -1030,13 +1022,12 @@ const handleGoBack = () => {
                     </MyButton>
 
                     <MyButton
-                      disabled={edit}
-                      prefixIcon={() => <FontAwesomeIcon icon={faIdCard} />}
+                      prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
                       onClick={() => {
-                        setOpenScanDocumentModal(true);
+                        setOpenAttachmentsModal(true);
                       }}
                     >
-                      Scan Document
+                      <Translate>Attachments</Translate>
                     </MyButton>
 
                     <MyButton
@@ -1269,17 +1260,28 @@ const handleGoBack = () => {
         selectedSlot={undefined}
       />
 
-      <ScanDocumentModal
-        open={openScanDocumentModal}
-        setOpen={setOpenScanDocumentModal}
-        patientId={
-          localPatient?.id ??
-          (patientToSend as any)?.id ??
-          (patientToSend as any)?.key ??
-          patientIdToFetch
+      <MyModal
+        open={openAttachmentsModal}
+        setOpen={setOpenAttachmentsModal}
+        title={<Translate>Attachments</Translate>}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={localEncounter ?? propsData?.encounter}
+            patientId={
+              (patientToSend as any)?.id ??
+              (patientToSend as any)?.key ??
+              (localEncounter as any)?.patientId ??
+              patientIdToFetch
+            }
+            allSources={true}
+            source="NURSE_STATION_ATTACHMENT"
+            edit={edit}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
         }
-        localPatient={localPatient}
-        setLocalPatient={setLocalPatient}
       />
 
       <PatientHistorySummaryModal

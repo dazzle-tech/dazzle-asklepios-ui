@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { faTrash, faFileArrowDown, faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetEncounterAttachmentsBySourceQuery, useGetDownloadUrlMutation, useDeleteAttachmentMutation } from '@/services/encounters/attachmentsService';
+import { useGetEncounterAttachmentsBySourceQuery, useGetEncounterAttachmentsByEncounterIdsQuery, useGetDownloadUrlMutation, useDeleteAttachmentMutation } from '@/services/encounters/attachmentsService';
 import MyButton from '@/components/MyButton/MyButton';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
@@ -59,7 +59,7 @@ const DocumentVersionCell = ({ row }: { row: EncounterAttachmentType }) => {
     return <>{matched?.version != null ? `v${matched.version}` : '-'}</>;
 };
 
-const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId, ...props }) => {
+const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId, patientId, allSources = false, ...props }) => {
     const authSlice = useAppSelector(state => state.auth);
     const location = useLocation();
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -85,22 +85,52 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
     const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
-    // Fetch encounter attachments
+    const encounterIdNum = Number(localEncounter?.id ?? localEncounter?.key);
+    const hasEncounterId = Number.isFinite(encounterIdNum) && encounterIdNum > 0;
+    const resolvedPatientId = Number(
+        patientId ??
+        localEncounter?.patientId ??
+        localEncounter?.patient?.id ??
+        localEncounter?.patient?.key
+    );
+    const hasPatientId = Number.isFinite(resolvedPatientId) && resolvedPatientId > 0;
+
+    // Fetch encounter attachments filtered by encounter (and optionally source) before client pagination
     const {
-        data: attachmentsResponse,
-        refetch: attachmentRefetch,
-        isLoading: loadAttachment,
-        isUninitialized: isEncounterAttachmentsUninitialized
+        data: attachmentsBySourceResponse,
+        refetch: attachmentBySourceRefetch,
+        isLoading: loadAttachmentBySource,
+        isUninitialized: isAttachmentBySourceUninitialized
     } = useGetEncounterAttachmentsBySourceQuery(
         {
-            encounterId: localEncounter?.id || localEncounter?.key,
+            encounterId: encounterIdNum,
             source: source,
             sourceId: sourceId
         },
-        { skip: !localEncounter?.id && !localEncounter?.key }
+        { skip: !hasEncounterId || allSources }
     );
 
-    const encounterAttachments = attachmentsResponse?.data || [];
+    const {
+        data: attachmentsByEncounterResponse,
+        refetch: attachmentByEncounterRefetch,
+        isLoading: loadAttachmentByEncounter,
+        isUninitialized: isAttachmentByEncounterUninitialized
+    } = useGetEncounterAttachmentsByEncounterIdsQuery(
+        {
+            encounterIds: [encounterIdNum]
+        },
+        { skip: !hasEncounterId || !allSources }
+    );
+
+    const attachmentRefetch = allSources ? attachmentByEncounterRefetch : attachmentBySourceRefetch;
+    const loadAttachment = allSources ? loadAttachmentByEncounter : loadAttachmentBySource;
+    const isEncounterAttachmentsUninitialized = allSources
+        ? isAttachmentByEncounterUninitialized
+        : isAttachmentBySourceUninitialized;
+
+    const encounterAttachments = allSources
+        ? (attachmentsByEncounterResponse || [])
+        : (attachmentsBySourceResponse?.data || []);
     const totalCount = encounterAttachments.length;
 
     // Function to check if the current row is the selected one
@@ -117,7 +147,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
         try {
             await deleteAttachment({
                 id: selectedAttachment.id,
-                encounterId: localEncounter?.id || localEncounter?.key
+                encounterId: encounterIdNum
             }).unwrap();
 
             if (!isEncounterAttachmentsUninitialized) attachmentRefetch();
@@ -401,18 +431,18 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={(!localEncounter?.id && !localEncounter?.key) || edit}
+                    disabled={!hasEncounterId || edit}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id}
+                    disabled={!selectedAttachment?.id || edit}
                     onClick={handleOpenEditModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}>
                     Edit
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id}
+                    disabled={!selectedAttachment?.id || edit}
                     onClick={() => setDeleteModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
                     Delete
@@ -421,7 +451,8 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             <AttachmentUploadModal
                 isOpen={attachmentsModalOpen}
                 setIsOpen={setAttachmentsModalOpen}
-                encounterId={localEncounter?.id || localEncounter?.key}
+                encounterId={encounterIdNum}
+                patientId={hasPatientId ? resolvedPatientId : undefined}
                 refetchData={attachmentRefetch}
                 source={source}
                 sourceId={sourceId}
@@ -452,7 +483,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 open={editModalOpen}
                 onClose={handleCloseEditModal}
                 selectedAttachment={selectedAttachment}
-                encounterId={localEncounter?.id || localEncounter?.key}
+                encounterId={encounterIdNum}
                 attachmentTypesLov={attachmentTypesLov}
                 onUpdateSuccess={attachmentRefetch}
             />
