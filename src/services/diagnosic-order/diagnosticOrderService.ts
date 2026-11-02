@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
+import { patientEncounterService } from '@/services/encounters/patientEncounterService';
 import {
   DiagnosticOrder,
   DiagnosticOrderCreateDTO,
@@ -221,7 +222,16 @@ getOrdersByEncounter: builder.query<
       }),
       invalidatesTags: (_r, _e, id) => [
         { type: 'DiagnosticOrder', id },
+        'DiagnosticOrder',
       ],
+      async onQueryStarted(_id, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(patientEncounterService.util.invalidateTags(['PatientEncounter']));
+        } catch {
+          // submit failed; keep existing encounter list cache
+        }
+      },
     }),
 
   }),
