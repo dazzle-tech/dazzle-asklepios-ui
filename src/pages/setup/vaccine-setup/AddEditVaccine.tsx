@@ -367,6 +367,7 @@ const vaccineType = useEnumOptions('VaccineType', {
 
         name: toNullIfEmpty(vaccine?.name),
         atcCode: toNullIfEmpty(vaccine?.atcCode),
+        code: toNullIfEmpty(vaccine?.code),
 
         type: toNullIfEmpty(getSelectValue(vaccine?.type, 'value')),
         roa: toNullIfEmpty(getSelectValue(vaccine?.roa, 'value')),
@@ -408,6 +409,7 @@ const vaccineType = useEnumOptions('VaccineType', {
         type: 'Type',
         roa: 'ROA',
         atcCode: 'ATC CODE',
+        code: 'Code',
         siteOfAdministration: 'Site of Administration',
         postOpeningDuration: 'Post Opening Duration',
         durationUnit: 'Duration Unit',
@@ -591,6 +593,22 @@ const vaccineType = useEnumOptions('VaccineType', {
                   record={vaccine}
                   setRecord={setVaccine}
                   disabled={!edit_new}
+                />
+              </div>
+            </div>
+
+            <br />
+
+            <div className="container-of-two-fields-vaccine">
+              <div className="container-of-field-vaccine">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Code"
+                  fieldName="code"
+                  record={vaccine}
+                  setRecord={setVaccine}
+                  disabled={!edit_new}
+                  required
                 />
               </div>
             </div>
