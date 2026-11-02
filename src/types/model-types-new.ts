@@ -281,6 +281,38 @@ export interface ServiceItemUpdate {
   lastModifiedDate?: Date | null;
 }
 
+export interface ProcedureItem {
+  id?: number;
+  type: string; // @Enumerated(EnumType.STRING) -> ProcedureItemsType
+  sourceId: number; // FK to the source entity (e.g., Department id)
+  specialty?: string | null; // sub-specialty LOV key (required for DEPARTMENTS)
+  procedureId?: number | null;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/procedure-items) */
+export interface ProcedureItemCreate {
+  type: string;
+  sourceId: number;
+  specialty?: string | null;
+  procedureId: number;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/procedure-items/{id}) */
+export interface ProcedureItemUpdate {
+  id: number;
+  type: string;
+  sourceId: number;
+  specialty?: string | null;
+  procedureId: number;
+  isActive: boolean;
+}
+
 export type CatalogResponseVM = {
   id: number;
   name: string;
@@ -7307,6 +7339,12 @@ export type PrepareDefaultServiceItem = {
   isExempted: boolean;
 };
 
+export type PrepareDefaultProcedureItem = {
+  procedureId: number;
+  sequence: number;
+  isExempted: boolean;
+};
+
 export type PrepareDefaultServicesRequest = {
   patientId: number;
   facilityId: number;
@@ -7314,6 +7352,7 @@ export type PrepareDefaultServicesRequest = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
+  procedures?: PrepareDefaultProcedureItem[];
   requestId: string;
   payZeroNow?: boolean | null;
   acceptUncoveredAsCash?: boolean | null;
@@ -7326,6 +7365,14 @@ export type PreparedDefaultServiceResult = {
   billingResult: BillingOperationResult;
 };
 
+export type PreparedDefaultProcedureResult = {
+  patientServiceProductId: number;
+  patientProcedureId: number;
+  procedureId: number;
+  sequence: number;
+  billingResult: BillingOperationResult;
+};
+
 export type PrepareDefaultServicesResult = {
   patientId: number;
   encounterId: number;
@@ -7333,6 +7380,7 @@ export type PrepareDefaultServicesResult = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PreparedDefaultServiceResult[];
+  procedures?: PreparedDefaultProcedureResult[];
   processed: boolean;
   message: string;
 };
@@ -7344,10 +7392,12 @@ export type PreviewDefaultServicesPricingRequest = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
+  procedures?: PrepareDefaultProcedureItem[];
 };
 
 export type PreviewDefaultServicePricingResult = {
-  serviceId: number;
+  serviceId: number | null;
+  procedureId?: number | null;
   sequence: number;
   setupUnitPrice: number | null;
   unitPrice: number | null;
@@ -7378,6 +7428,7 @@ export type PreviewDefaultServicesPricingResult = {
   taxAmount: number;
   netAmount: number;
   items: PreviewDefaultServicePricingResult[];
+  procedures?: PreviewDefaultServicePricingResult[];
 };
 
 export type BillingOperationResult = {

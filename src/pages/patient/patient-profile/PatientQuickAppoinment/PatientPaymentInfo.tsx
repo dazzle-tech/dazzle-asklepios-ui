@@ -60,6 +60,10 @@ import {
 } from '@/services/setup/serviceService';
 
 import {
+  useGetProceduresByDepartmentQuery
+} from '@/services/setup/procedure/procedureService';
+
+import {
   useGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
 
@@ -140,12 +144,21 @@ import {
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
+import {
+  defaultRowKey,
+  isBilledItemOfRow,
+  pricedResultKey,
+  summaryItemKey,
+  toDefaultBillingRequestItems,
+  type DefaultBillingItemType
+} from './defaultBillingRows';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
-  id: number;
-  serviceId: number;
+  id: string;
+  billingItemType: DefaultBillingItemType;
+  itemId: number;
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -1260,6 +1273,34 @@ const PatientPaymentInfo =
           }
         );
 
+      const proceduresResponse =
+        useGetProceduresByDepartmentQuery(
+          {
+            sourceId:
+              departmentId as number,
+            specialty:
+              encounterSpecialty,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,asc'
+          },
+          {
+            skip:
+              suppressDefaultServices ||
+              !departmentId ||
+              !encounterSpecialty,
+            refetchOnMountOrArgChange:
+              true
+          }
+        );
+
+      const isLoadingDefaultItems =
+        servicesResponse.isFetching ||
+        proceduresResponse.isFetching;
+
       const insuranceResponse =
         useGetInsurancesByPatientQuery(
           {
@@ -1485,20 +1526,19 @@ const PatientPaymentInfo =
             servicesArePrepared
         );
 
-      const billedSourceIds =
+      const billedRowKeys =
         useMemo(
           () =>
             new Set(
               (summary.items ?? [])
                 .map(
-                  item =>
-                    item.sourceId
+                  summaryItemKey
                 )
                 .filter(
                   (
-                    id
-                  ): id is number =>
-                    id != null
+                    key
+                  ): key is string =>
+                    key != null
                 )
             ),
           [
@@ -1891,88 +1931,115 @@ const PatientPaymentInfo =
       useEffect(() => {
         if (
           suppressDefaultServices ||
-          !servicesResponse.data
+          !servicesResponse.data ||
+          proceduresResponse.isFetching
         ) {
           return;
         }
 
-        const list =
-          extractResponseList(
+        const defaultItems: Array<{
+          billingItemType: DefaultBillingItemType;
+          source: any;
+        }> = [
+          ...extractResponseList(
             servicesResponse.data
-          );
+          ).map(service => ({
+            billingItemType:
+              'SERVICE' as const,
+            source: service
+          })),
+          ...extractResponseList(
+            proceduresResponse.data
+          ).map(procedure => ({
+            billingItemType:
+              'PROCEDURE' as const,
+            source: procedure
+          }))
+        ];
 
         const mapped:
         DefaultServiceRow[] =
-          list.map(
+          defaultItems.map(
             (
-              service: any,
+              {
+                billingItemType,
+                source: service
+              },
               index: number
-            ) => ({
-              id:
+            ) => {
+              const itemId =
                 toNumber(
                   service?.id ??
                     service?.serviceId
-                ),
+                );
 
-              serviceId:
-                toNumber(
-                  service?.id ??
-                    service?.serviceId
-                ),
+              return {
+                id:
+                  defaultRowKey({
+                    billingItemType,
+                    itemId
+                  }),
 
-              serviceType:
-                String(
-                  service?.serviceType ??
-                    service?.type ??
-                    service?.category ??
-                    'SERVICE'
-                ),
+                billingItemType,
 
-              serviceName:
-                String(
-                  service?.name ??
-                    service?.serviceName ??
-                    ''
-                ),
+                itemId,
 
-              selected:
-                service?.selected == null
-                  ? true
-                  : Boolean(
-                      service.selected
-                    ),
+                serviceType:
+                  billingItemType === 'PROCEDURE'
+                    ? 'PROCEDURE'
+                    : String(
+                        service?.serviceType ??
+                          service?.type ??
+                          service?.category ??
+                          'SERVICE'
+                      ),
 
-              isExempted:
-                Boolean(
-                  service?.isExempted
-                ),
+                serviceName:
+                  String(
+                    service?.name ??
+                      service?.serviceName ??
+                      ''
+                  ),
 
-              quantity:
-                1,
+                selected:
+                  service?.selected == null
+                    ? true
+                    : Boolean(
+                        service.selected
+                      ),
 
-              sequence:
-                index + 1,
+                isExempted:
+                  Boolean(
+                    service?.isExempted
+                  ),
 
-              setupPrice:
-                toNumber(
-                  service?.price
-                ) ?? null,
+                quantity:
+                  1,
 
-              calculatedPrice:
-                null,
+                sequence:
+                  index + 1,
 
-              priceSource:
-                null,
+                setupPrice:
+                  toNumber(
+                    service?.price
+                  ) ?? null,
 
-              priceListItemCode:
-                null,
+                calculatedPrice:
+                  null,
 
-              patientShare:
-                null,
+                priceSource:
+                  null,
 
-              insuranceShare:
-                null
-            })
+                priceListItemCode:
+                  null,
+
+                patientShare:
+                  null,
+
+                insuranceShare:
+                  null
+              };
+            }
           );
 
         setDefaultServiceRows(
@@ -1981,7 +2048,7 @@ const PatientPaymentInfo =
               new Map(
                 previous.map(
                   row => [
-                    row.serviceId,
+                    row.id,
                     row
                   ]
                 )
@@ -1991,7 +2058,7 @@ const PatientPaymentInfo =
               row => {
                 const old =
                   oldMap.get(
-                    row.serviceId
+                    row.id
                   );
 
                 return old
@@ -2013,7 +2080,9 @@ const PatientPaymentInfo =
         );
       }, [
         suppressDefaultServices,
-        servicesResponse.data
+        servicesResponse.data,
+        proceduresResponse.data,
+        proceduresResponse.isFetching
       ]);
 
       useEffect(() => {
@@ -2049,7 +2118,7 @@ const PatientPaymentInfo =
           return;
         }
 
-        const billedBySourceId =
+        const billedByRowKey =
           new Map(
             summary.items
               .filter(
@@ -2059,7 +2128,7 @@ const PatientPaymentInfo =
               )
               .map(
                 item => [
-                  item.sourceId as number,
+                  summaryItemKey(item),
                   item
                 ]
               )
@@ -2070,8 +2139,8 @@ const PatientPaymentInfo =
             previous.map(
               row => {
                 const billed =
-                  billedBySourceId.get(
-                    row.serviceId
+                  billedByRowKey.get(
+                    row.id
                   );
 
                 if (
@@ -2121,7 +2190,7 @@ const PatientPaymentInfo =
               row => {
                 if (
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 ) {
@@ -2257,8 +2326,8 @@ const PatientPaymentInfo =
               items:
                 rowsToPrice.map(
                   row => ({
-                    serviceId:
-                      row.serviceId,
+                    rowKey:
+                      row.id,
                     quantity:
                       row.quantity,
                     isExempted:
@@ -2560,23 +2629,9 @@ const PatientPaymentInfo =
                                 previewContext.patientInsuranceId
                               )
                             : null,
-                        items:
-                          previewContext.rowsToPrice.map(
-                            (
-                              row,
-                              index
-                            ) => ({
-                              serviceId:
-                                row.serviceId,
-                              quantity:
-                                row.quantity,
-                              sequence:
-                                index +
-                                1,
-                              isExempted:
-                                row.isExempted
-                            })
-                          )
+                        ...toDefaultBillingRequestItems(
+                          previewContext.rowsToPrice
+                        )
                       }
                     }
                   ).unwrap();
@@ -2619,11 +2674,14 @@ const PatientPaymentInfo =
                   });
                 }
 
-                const pricedByServiceId =
+                const pricedByRowKey =
                   new Map(
-                    result.items.map(
+                    [
+                      ...result.items,
+                      ...(result.procedures ?? [])
+                    ].map(
                       item => [
-                        item.serviceId,
+                        pricedResultKey(item),
                         item
                       ]
                     )
@@ -2634,8 +2692,8 @@ const PatientPaymentInfo =
                     previous.map(
                       row => {
                         const priced =
-                          pricedByServiceId.get(
-                            row.serviceId
+                          pricedByRowKey.get(
+                            row.id
                           );
 
                         if (
@@ -2818,7 +2876,7 @@ const PatientPaymentInfo =
       const defaultServicesLoaded =
         skipDefaultServicesForReview ||
         (!followUpReviewDecisionPending &&
-          !servicesResponse.isFetching &&
+          !isLoadingDefaultItems &&
           departmentId != null);
 
       const hasNoDefaultServices =
@@ -3386,25 +3444,9 @@ const PatientPaymentInfo =
                 ? formState.patientInsuranceId
                 : null,
 
-            items:
-              payableSelectedRows.map(
-                (
-                  row,
-                  index
-                ) => ({
-                  serviceId:
-                    row.serviceId,
-
-                  quantity:
-                    row.quantity,
-
-                  sequence:
-                    index + 1,
-
-                  isExempted:
-                    row.isExempted
-                })
-              ),
+            ...toDefaultBillingRequestItems(
+              payableSelectedRows
+            ),
 
             requestId:
               makeRequestId(
@@ -3430,8 +3472,25 @@ const PatientPaymentInfo =
               }
             ).unwrap();
 
+          const preparedItems = [
+            ...result.items.map(
+              item => ({
+                ...item,
+                label:
+                  `Service ${item.serviceId}`
+              })
+            ),
+            ...(result.procedures ?? []).map(
+              procedure => ({
+                ...procedure,
+                label:
+                  `Procedure ${procedure.procedureId}`
+              })
+            )
+          ];
+
           const successful =
-            result.items
+            preparedItems
               .filter(
                 item =>
                   item.billingResult
@@ -3448,10 +3507,10 @@ const PatientPaymentInfo =
 
           if (
             successful.length !==
-            result.items.length
+            preparedItems.length
           ) {
             const failed =
-              result.items.filter(
+              preparedItems.filter(
                 item =>
                   !item.billingResult
                     ?.processed
@@ -3461,7 +3520,7 @@ const PatientPaymentInfo =
               failed
                 .map(
                   item =>
-                    `Service ${item.serviceId}: ${
+                    `${item.label}: ${
                       item.billingResult
                         ?.message ??
                       'Not processed'
@@ -4301,7 +4360,7 @@ const PatientPaymentInfo =
 
       const updateServiceRow =
         (
-          serviceId: number,
+          rowKey: string,
           partial:
             Partial<DefaultServiceRow>
         ) => {
@@ -4330,8 +4389,8 @@ const PatientPaymentInfo =
               previous.map(
                 row => {
                   if (
-                    row.serviceId !==
-                    serviceId
+                    row.id !==
+                    rowKey
                   ) {
                     return shouldRefreshPricing
                       ? {
@@ -4438,7 +4497,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       selected:
                         checked
@@ -4448,7 +4507,7 @@ const PatientPaymentInfo =
                 disabled={
                   areServicesLocked ||
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 }
@@ -4700,7 +4759,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       isExempted:
                         checked
@@ -4736,14 +4795,16 @@ const PatientPaymentInfo =
                 DefaultServiceRow
             ) => {
               const isPrepared =
-                billedSourceIds.has(
-                  row.serviceId
+                billedRowKeys.has(
+                  row.id
                 );
               const billedItem =
                 (summary.items ?? []).find(
                   item =>
-                    item.sourceId ===
-                    row.serviceId
+                    isBilledItemOfRow(
+                      item,
+                      row
+                    )
                 );
               const lineDue =
                 billedItem
@@ -5903,7 +5964,7 @@ const PatientPaymentInfo =
                 defaultServiceColumns
               }
               loading={
-                servicesResponse.isFetching ||
+                isLoadingDefaultItems ||
                 followUpReviewDecisionPending
               }
               height={

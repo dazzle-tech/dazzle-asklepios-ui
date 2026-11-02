@@ -1,8 +1,11 @@
 import type { EncounterBillingItemSummary, EncounterBillingSummary } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
+import {
+  isBilledItemOfRow,
+  type DefaultBillingRowIdentity
+} from './defaultBillingRows';
 
-export type PreviewServiceRow = {
-  serviceId: number;
+export type PreviewServiceRow = DefaultBillingRowIdentity & {
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -115,7 +118,7 @@ export const resolveBillingItemName = (
   serviceRows: PreviewServiceRow[] = []
 ): string => {
   const matchedService = serviceRows.find(
-    row => row.serviceId === item.sourceId
+    row => isBilledItemOfRow(item, row)
   );
 
   if (
@@ -252,11 +255,11 @@ export const isEncounterFullyPaid = (
 };
 
 export const isDefaultServicePayable = (
-  serviceId: number,
+  row: DefaultBillingRowIdentity,
   summary: EncounterBillingSummary
 ): boolean => {
   const billed = (summary.items ?? []).find(
-    item => item.sourceId === serviceId
+    item => isBilledItemOfRow(item, row)
   );
 
   if (!billed) {
@@ -270,7 +273,7 @@ export const filterPayableServiceRows = <T extends PreviewServiceRow>(
   rows: T[],
   summary: EncounterBillingSummary
 ): T[] =>
-  rows.filter(row => isDefaultServicePayable(row.serviceId, summary));
+  rows.filter(row => isDefaultServicePayable(row, summary));
 
 export const computePreviewBillingTotals = (
   summary: EncounterBillingSummary,
@@ -427,7 +430,7 @@ export const buildPreviewChargeLines = (
       patientServiceProductId: null,
       chargeLineId: -(index + 1),
       billingItemType: row.serviceType,
-      sourceId: row.serviceId,
+      sourceId: row.itemId,
       itemCode: null,
       itemName: row.serviceName,
       quantity,

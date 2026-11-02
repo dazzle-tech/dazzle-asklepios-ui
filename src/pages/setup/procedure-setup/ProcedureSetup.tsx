@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdLink, MdMedicalServices } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
@@ -31,6 +31,7 @@ import AddEditProcedure from './AddEditProcedure';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
 import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
+import LinkProcedureItems from './LinkProcedureItems';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -54,6 +55,9 @@ const ProcedureSetup: React.FC = () => {
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
 
   const [linkDocumentOpen, setLinkDocumentOpen] = useState(false);
+
+  const [linkItemsOpen, setLinkItemsOpen] = useState(false);
+  const [linkItemsProcedure, setLinkItemsProcedure] = useState<Procedure | null>(null);
   const [linkDocumentProcedureId, setLinkDocumentProcedureId] = useState<number | null>(null);
 
   // Filter state
@@ -459,6 +463,16 @@ const ProcedureSetup: React.FC = () => {
       flexGrow: 3,
       render: (row: any) => (
         <div className="container-of-icons">
+          <MdMedicalServices
+            className="icons-style"
+            title="Linked Items"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setLinkItemsProcedure(row);
+              setLinkItemsOpen(true);
+            }}
+          />
           <MdModeEdit
             className="icons-style"
             title="Edit"
@@ -653,6 +667,13 @@ const ProcedureSetup: React.FC = () => {
         open={linkDocumentOpen}
         setOpen={setLinkDocumentOpen}
         defaultProcedureId={linkDocumentProcedureId}
+      />
+
+      <LinkProcedureItems
+        open={linkItemsOpen}
+        setOpen={setLinkItemsOpen}
+        procedureId={linkItemsProcedure?.id ?? 0}
+        facilityId={linkItemsProcedure?.facilityId ?? 0}
       />
     </Panel>
   );
