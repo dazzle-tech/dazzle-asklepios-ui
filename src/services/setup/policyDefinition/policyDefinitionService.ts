@@ -158,6 +158,26 @@ export const PolicyDefinitionService = createApi({
       providesTags: ["PolicyDefinition"],
     }),
 
+    getPolicyDefinitionsByStatus: builder.query<
+      PagedResult<PolicyDefinition>,
+      { isActive: boolean | string } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/by-status",
+        method: "GET",
+        params: { isActive, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+
     // Get by id
     getPolicyDefinitionById: builder.query<PolicyDefinition, number>({
       query: (id) => ({
@@ -213,6 +233,7 @@ export const {
   useLazyGetPolicyDefinitionsByCodeQuery,
   useGetPolicyDefinitionsByNameQuery,
   useLazyGetPolicyDefinitionsByNameQuery,
+  useLazyGetPolicyDefinitionsByStatusQuery,
   useGetPolicyDefinitionByIdQuery,
   useLazyGetPolicyDefinitionByIdQuery,
   useCreatePolicyDefinitionMutation,
