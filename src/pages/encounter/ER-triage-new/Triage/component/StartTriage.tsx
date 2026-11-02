@@ -21,6 +21,7 @@ import { useAppDispatch } from "@/hooks";
 import MyLabel from "@/components/MyLabel";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
+import RandomBloodSugar from "@/pages/encounter/encounter-pre-observations-new/observations/RandomBloodSugar";
 import { notify } from "@/utils/uiReducerActions";
 import SendToModal from "./SendToModal";
 
@@ -226,6 +227,15 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
             encounterId={encounterId}
             isTriage
             title="Vital Signs"
+          />
+        )}
+      </Row>
+
+      <Row gutter={30}>
+        {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+          <RandomBloodSugar
+            patientId={patientId}
+            encounterId={encounterId}
           />
         )}
       </Row>

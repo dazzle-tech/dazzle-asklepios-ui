@@ -1364,6 +1364,7 @@ export interface Vaccine {
   id?: number;
   name: string;
   atcCode?: string | null;
+  code?: string | null;
   type: string;
   roa: string;
   siteOfAdministration?: string | null;
@@ -4206,6 +4207,7 @@ export interface DiagnosticOrder extends AuditingEntity {
   id?: number;
   patientId?: number;
   encounterId?: number;
+  orderNumber?: string;
   saveDraft?: boolean;
   status?: DiagnosticStatus;
   submittedBy?: string;
@@ -5053,7 +5055,6 @@ export interface VitalSigns {
     temperature?: number | null;
     oxygenSaturation?: number | null;
     respiratoryRate?: number | null;
-    fastingBloodGlucose?: string | null;
 
     fluidStatus?: string | null;
     edema?: string | null;
@@ -5066,6 +5067,16 @@ export interface VitalSigns {
 
     createdDate?: Date | string | null;
     lastModifiedDate?: Date | string | null;
+}
+
+export interface RandomBloodSugar {
+  id?: number;
+  patientId: number;
+  encounterId: number;
+  randomBloodGlucose?: string | null;
+  isActive: boolean;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
 }
 
 export interface BodyMeasurements {
