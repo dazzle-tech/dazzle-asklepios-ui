@@ -81,20 +81,59 @@ const derivePatientFilters = (appliedSearch: any) => {
     if (!raw) {
         return {
             patientName: undefined as string | undefined,
-            mrn: undefined as string | undefined
+            mrn: undefined as string | undefined,
+            primaryMobileNumber: undefined as string | undefined,
+            documentNumber: undefined as string | undefined,
+            dateOfBirth: undefined as string | undefined
         };
     }
 
     if (searchByField === 'patientMrn') {
         return {
             patientName: undefined,
-            mrn: raw
+            mrn: raw,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: undefined
+        };
+    }
+
+    if (searchByField === 'phoneNumber') {
+        return {
+            patientName: undefined,
+            mrn: undefined,
+            primaryMobileNumber: raw,
+            documentNumber: undefined,
+            dateOfBirth: undefined
+        };
+    }
+
+    if (searchByField === 'documentNumber') {
+        return {
+            patientName: undefined,
+            mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: raw,
+            dateOfBirth: undefined
+        };
+    }
+
+    if (searchByField === 'dob') {
+        return {
+            patientName: undefined,
+            mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: raw
         };
     }
 
     return {
         patientName: raw,
-        mrn: undefined
+        mrn: undefined,
+        primaryMobileNumber: undefined,
+        documentNumber: undefined,
+        dateOfBirth: undefined
     };
 };
 
@@ -171,11 +210,6 @@ const OpdVisitList = () => {
     const [record, setRecord] = useState<any>({});
 
     const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
-        searchByField: 'fullName',
-        patientName: ''
-    });
-
-    const [patientSearchApplied, setPatientSearchApplied] = useState<any>({
         searchByField: 'fullName',
         patientName: ''
     });
@@ -660,15 +694,6 @@ const OpdVisitList = () => {
 
     const canSeeNurseStation = isAdmin || jobRole === 'NURSE';
 
-    const handlePatientSearchClick = useCallback(() => {
-        setPatientSearchApplied(prev => ({
-            ...prev,
-            ...(patientSearchDraft ?? {})
-        }));
-
-        setPage(0);
-    }, [patientSearchDraft]);
-
     const handleSearch = () => {
         if (!facilityId) return;
 
@@ -684,7 +709,8 @@ const OpdVisitList = () => {
 
         const chiefComplaint = record?.chiefComplain?.trim() ? record.chiefComplain.trim() : undefined;
 
-        const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+        const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+            derivePatientFilters(patientSearchDraft);
 
         setPage(0);
 
@@ -695,6 +721,9 @@ const OpdVisitList = () => {
             statusIn: normalizedStatusIn,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterReasons: normalizedEncounterReasons,
             chiefComplaint,
             priorities: normalizedPriorities,
@@ -734,10 +763,6 @@ const OpdVisitList = () => {
             ...clearedSearch
         });
 
-        setPatientSearchApplied({
-            ...clearedSearch
-        });
-
         setPage(0);
 
         setAppliedFilters({
@@ -747,6 +772,9 @@ const OpdVisitList = () => {
             statusIn: [...DEFAULT_STATUS],
             patientName: undefined,
             mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: undefined,
             encounterReasons: undefined,
             chiefComplaint: undefined,
             priorities: undefined,
@@ -804,6 +832,9 @@ const OpdVisitList = () => {
             statusIn: DEFAULT_STATUS,
             patientName: undefined,
             mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: undefined,
             encounterReasons: undefined,
             chiefComplaint: undefined,
             priorities: undefined,
@@ -1058,8 +1089,7 @@ const OpdVisitList = () => {
                     <SearchPatientCriteria
                         record={patientSearchDraft}
                         setRecord={setPatientSearchDraft}
-                        onSearchClick={handlePatientSearchClick}
-                        liveSearchMinLength={3}
+                        liveSearchMinLength={0}
                     />
 
                     <MyInput

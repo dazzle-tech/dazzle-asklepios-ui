@@ -69,6 +69,10 @@ const ProcedureModule: React.FC = () => {
     filter: '',
     value: ''
   });
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
   const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, {
     skip: !procedure?.patientKey
@@ -669,7 +673,19 @@ const ProcedureModule: React.FC = () => {
         />
 
 
-        <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
+        <SearchPatientCriteria
+          record={record}
+          setRecord={setRecord}
+          searchMarginTop={0}
+          liveSearchMinLength={0}
+          onSearchClick={() => {
+            setAppliedPatientSearch({
+              searchByField: (record as any)?.searchByField ?? 'fullName',
+              patientName: (record as any)?.patientName ?? ''
+            });
+            setListRequest(prev => ({ ...prev, pageNumber: 1 }));
+          }}
+        />
 
         <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           <Translate>Show Cancelled</Translate>
@@ -692,7 +708,30 @@ const ProcedureModule: React.FC = () => {
       <MyTable
         filters={filters()}
         columns={tableColumns}
-        data={procedures?.object ?? []}
+        data={(procedures?.object ?? []).filter((row: any) => {
+          const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+          const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+          if (!raw) return true;
+          const patient = patients[row?.patientKey] ?? {};
+          if (field === 'patientMrn') {
+            return String(patient?.patientMrn ?? '').toLowerCase().includes(raw);
+          }
+          if (field === 'phoneNumber') {
+            return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'documentNumber') {
+            return String(patient?.documentNo ?? patient?.documentNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'dob') {
+            return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
+              String(appliedPatientSearch?.patientName ?? '').trim();
+          }
+          return String(patient?.fullName ?? '').toLowerCase().includes(raw);
+        })}
         onRowClick={(rowData: any) => {
           setProcedure(rowData);
         }}

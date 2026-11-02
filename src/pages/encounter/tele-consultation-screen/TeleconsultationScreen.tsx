@@ -98,6 +98,10 @@ const TeleconsultationRequests = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
   const {
     data: orders,
@@ -224,7 +228,18 @@ const TeleconsultationRequests = () => {
   const contents = (
     <div className="advanced-filters">
       <Form fluid layout="inline" className="dissss">
-        <SearchPatientCriteria record={record} setRecord={setRecord} />
+        <SearchPatientCriteria
+          record={record}
+          setRecord={setRecord}
+          liveSearchMinLength={0}
+          onSearchClick={() => {
+            setAppliedPatientSearch({
+              searchByField: (record as any)?.searchByField ?? 'fullName',
+              patientName: (record as any)?.patientName ?? ''
+            });
+            setPage(0);
+          }}
+        />
 
         <MyInput
           width="100%"
@@ -462,7 +477,38 @@ const TeleconsultationRequests = () => {
     }
   ];
 
-  const sortedData = [...(orders?.object ?? [])].sort((a, b) => {
+  const matchesPatientSearch = (row: any) => {
+    const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+    const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+    if (!raw) return true;
+    const patient = row?.patient ?? {};
+    if (field === 'patientMrn') {
+      return String(patient?.patientMrn ?? patient?.medicalRecordNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'phoneNumber') {
+      return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'documentNumber') {
+      return String(patient?.documentNo ?? patient?.documentNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'dob') {
+      return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
+        String(appliedPatientSearch?.patientName ?? '').trim();
+    }
+    return String(patient?.fullName ?? row?.patientName ?? '')
+      .toLowerCase()
+      .includes(raw);
+  };
+
+  const filteredOrders = (orders?.object ?? []).filter(matchesPatientSearch);
+
+  const sortedData = [...filteredOrders].sort((a, b) => {
     const aValue = a[sortColumn as keyof ApTeleConsultation];
     const bValue = b[sortColumn as keyof ApTeleConsultation];
 
@@ -495,7 +541,7 @@ const TeleconsultationRequests = () => {
         filters={filterstable}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={orders?.object?.length}
+        totalCount={filteredOrders.length}
         sortColumn={sortColumn}
         sortType={sortType}
         rowClassName={row => (row?.id === requests?.id ? 'selected-row' : '')}
