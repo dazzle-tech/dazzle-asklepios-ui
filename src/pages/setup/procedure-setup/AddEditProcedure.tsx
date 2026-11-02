@@ -301,6 +301,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   width="100%"
                   fieldLabel="Price"
                   fieldType="number"
+                  allowDecimal
                   fieldName="price"
                   record={procedure}
                   setRecord={setProcedure}

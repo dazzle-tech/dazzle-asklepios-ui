@@ -131,6 +131,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   width="100%"
                   fieldName="price"
                   fieldType="number"
+                  allowDecimal
                   record={service}
                   setRecord={setService}
                   required

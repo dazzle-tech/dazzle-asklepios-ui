@@ -1082,6 +1082,7 @@ React.FC<Props> = ({
               width="100%"
               fieldLabel="Fixed Amount"
               fieldType="number"
+              allowDecimal
               fieldName="fixedAmount"
               record={
                 tax
@@ -1119,6 +1120,7 @@ React.FC<Props> = ({
             width="100%"
             fieldLabel="Percentage"
             fieldType="number"
+            allowDecimal
             fieldName="percentage"
             record={
               tax

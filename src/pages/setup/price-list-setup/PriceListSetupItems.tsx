@@ -1477,6 +1477,9 @@ const PriceListSetupItems: React.FC<Props> = ({
       undefined ||
       selectedItem.unitPrice ===
       null ||
+      // allowDecimal keeps an emptied field as '' instead of null
+      String(selectedItem.unitPrice) ===
+      '' ||
       Number(
         selectedItem.unitPrice
       ) < 0
@@ -2094,6 +2097,7 @@ const PriceListSetupItems: React.FC<Props> = ({
           width="100%"
           fieldLabel="Unit Price"
           fieldType="number"
+          allowDecimal
           fieldName="unitPrice"
           record={selectedItem}
           setRecord={setSelectedItem}
@@ -2104,6 +2108,7 @@ const PriceListSetupItems: React.FC<Props> = ({
           width="100%"
           fieldLabel="Discount Percentage"
           fieldType="number"
+          allowDecimal
           fieldName="discountPercentage"
           record={selectedItem}
           setRecord={setSelectedItem}
