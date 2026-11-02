@@ -2924,7 +2924,6 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
-  fastingBloodGlucose: null,
 
   fluidStatus: null,
   edema: null,
@@ -2938,6 +2937,16 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   createdDate: null,
   lastModifiedDate: null
 };
+export const newRandomBloodSugar: modelTypes.RandomBloodSugar = {
+  id: undefined,
+  patientId: 0,
+  encounterId: 0,
+  randomBloodGlucose: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 export const newBodyMeasurements: modelTypes.BodyMeasurements = {
   id: undefined,
 

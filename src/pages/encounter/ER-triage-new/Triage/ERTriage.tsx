@@ -136,6 +136,28 @@ const ERTriage = () => {
     return `${minutes}m`;
   };
 
+  const ENDED_ENCOUNTER_STATUSES = new Set([
+    'COMPLETED',
+    'DISCHARGED',
+    'CANCELLED',
+    'CANCELED',
+    'CLOSED'
+  ]);
+
+  const formatLengthOfStay = (row: any, nowMs: number): string => {
+    const start = toDateSafe(row?.createdAt);
+    if (!start) return '';
+
+    const statusUpper = String(row?.status ?? row?.treatmentStatus ?? '').toUpperCase();
+    const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+    const end = isEnded
+      ? toDateSafe(row?.dischargeAt ?? row?.completedAt)
+      : new Date(nowMs);
+
+    if (!end) return '';
+    return formatDuration(end.getTime() - start.getTime());
+  };
+
   const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
     const id = toNumberOrNaN(encounterId);
     const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
@@ -257,6 +279,13 @@ const ERTriage = () => {
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
   const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
+
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentRow, setPaymentRow] = useState<any>(null);
@@ -1080,6 +1109,12 @@ const ERTriage = () => {
           }
         />
       )
+    },
+    {
+      key: 'lengthOfStay',
+      title: <Translate>Length of Stay</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatLengthOfStay(rowData, nowMs)
     },
     {
       key: 'actions',

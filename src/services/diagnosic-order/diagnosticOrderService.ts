@@ -228,6 +228,7 @@ export const {
   useDeleteDiagnosticOrderMutation,
   useGetOrdersByPatientQuery,
   useGetOrdersByEncounterQuery,
+  useLazyGetOrdersByEncounterQuery,
   useGetOrdersByPatientAndEncounterQuery,
   useFilterDiagnosticOrdersQuery,
   useLazyFilterDiagnosticOrdersQuery,

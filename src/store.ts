@@ -198,6 +198,7 @@ import { encounterAssessmentService } from './services/medicalsheetsEncounter/cl
 import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { randomBloodSugarService } from './services/medicalsheetsEncounter/observations/randomBloodSugarService';
 import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
@@ -660,6 +661,7 @@ export const store = configureStore({
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
 
     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [randomBloodSugarService.reducerPath]: randomBloodSugarService.reducer,
 
     [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
     [patientObservationsComplaintsService.reducerPath]:
@@ -794,6 +796,7 @@ export const store = configureStore({
         userBookableDepartmentService.middleware,
         MedicalsheetsService.middleware,
         vitalSignsService.middleware,
+        randomBloodSugarService.middleware,
         serviceService.middleware,
         MedicationCategoriesService.middleware,
         MedicationCategoriesClassService.middleware,

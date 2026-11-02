@@ -1,0 +1,99 @@
+.diagnostic-order-status-cell {
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+  cursor: default;
+}
+
+.diagnostic-order-status-cell:focus-visible {
+  box-shadow: 0 0 0 2px rgba(34, 100, 229, 0.35);
+  border-radius: 4px;
+}
+
+.diagnostic-order-status-tooltip-speaker.rs-tooltip {
+  max-width: 320px;
+  padding: 0;
+}
+
+.diagnostic-order-status-tooltip {
+  min-width: 220px;
+  max-width: 300px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: start;
+}
+
+.diagnostic-order-status-tooltip__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.diagnostic-order-status-tooltip__label {
+  color: rgba(255, 255, 255, 0.72);
+  flex-shrink: 0;
+}
+
+.diagnostic-order-status-tooltip__tests-title {
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.diagnostic-order-status-tooltip__tests {
+  max-height: 180px;
+  overflow-y: auto;
+  padding-inline-end: 2px;
+}
+
+.diagnostic-order-status-tooltip__test {
+  padding: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.diagnostic-order-status-tooltip__test:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.diagnostic-order-status-tooltip__test-name {
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.diagnostic-order-status-tooltip__test-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.diagnostic-order-status-tooltip__empty,
+.diagnostic-order-status-tooltip__state {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.diagnostic-order-status-tooltip__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.diagnostic-order-status-tooltip__retry {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.diagnostic-order-status-tooltip__retry:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
