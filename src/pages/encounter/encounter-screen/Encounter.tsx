@@ -28,13 +28,12 @@ import {
   faClockRotateLeft,
   faFileLines,
   faIdCard,
-  faRobot,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
@@ -48,7 +47,7 @@ import ConsultationPopup from '../encounter-component/patient-summary/Consultati
 import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
-import AiAssistantPopup from './AiAssistantPopup';
+import AiRecommendations from './ai-recommendations/AiRecommendations';
 import AllergiesModal from './AllergiesModal';
 import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
@@ -189,19 +188,6 @@ const Encounter = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
   // const buttonRef = useRef<HTMLDivElement>(null);
-
-  const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
-
-  const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 95 : 95,
-    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
-  });
-
-  const [isAiDragging, setIsAiDragging] = useState(false);
-  const [aiDragOffset, setAiDragOffset] = useState({ x: 0, y: 0 });
-  const [aiHasMoved, setAiHasMoved] = useState(false);
-
-  const aiButtonRef = useRef<HTMLDivElement>(null);
 
   // const handleMouseDown = (e: any) => {
   //   setIsDragging(true);
@@ -868,47 +854,6 @@ const handleGoBack = () => {
   };
 
 
-  const handleAiMouseDown = (e: any) => {
-    setIsAiDragging(true);
-    setAiHasMoved(false);
-    setAiDragOffset({
-      x: e.clientX - aiButtonPosition.x,
-      y: e.clientY - aiButtonPosition.y
-    });
-    e.preventDefault();
-  };
-
-  const handleAiMouseMove = (e: any) => {
-    if (!isAiDragging) return;
-
-    if (!aiHasMoved) {
-      const movedDistance = Math.sqrt(
-        Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
-      );
-
-      if (movedDistance > 5) setAiHasMoved(true);
-    }
-
-    setAiButtonPosition({
-      x: e.clientX - aiDragOffset.x,
-      y: e.clientY - aiDragOffset.y
-    });
-  };
-
-  const handleAiMouseUp = () => {
-    if (!aiHasMoved && !isAiDragging) {
-      setOpenAiPopup(true);
-    }
-    setIsAiDragging(false);
-  };
-
-  const handleAiClick = () => {
-    if (!aiHasMoved && !isAiDragging) {
-      setOpenAiPopup(true);
-    }
-  };
-
   const allowedSheetCodes = React.useMemo(
     () => new Set((departmentSheets ?? []).map((s: any) => s.medicalSheet)),
     [departmentSheets]
@@ -964,18 +909,6 @@ const handleGoBack = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    if (isAiDragging) {
-      document.addEventListener('mousemove', handleAiMouseMove);
-      document.addEventListener('mouseup', handleAiMouseUp);
-
-      return () => {
-        document.removeEventListener('mousemove', handleAiMouseMove);
-        document.removeEventListener('mouseup', handleAiMouseUp);
-      };
-    }
-  }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
   const allowCrossDepartmentFromPatientsLists =
@@ -1044,24 +977,7 @@ const handleGoBack = () => {
         </div> */}
 
         {!inModal && (
-          <div
-            ref={aiButtonRef}
-            className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
-            style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
-            onMouseDown={handleAiMouseDown}
-            onClick={handleAiClick}
-          >
-            <button
-              type="button"
-              className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
-              title="AI Assistant"
-            >
-              <FontAwesomeIcon icon={faRobot} />
-              <span className="ai-badge-2">AI</span>
-            </button>
-
-            {!isAiDragging && <div className="draggable-pulse" />}
-          </div>
+          <AiRecommendations patient={propsData?.patient} encounter={propsData?.encounter} />
         )}
 
         <div className="left-box">
@@ -1428,13 +1344,6 @@ const handleGoBack = () => {
       <ConsultationPopup
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
-        patient={propsData?.patient}
-        encounter={propsData?.encounter}
-      />
-
-      <AiAssistantPopup
-        open={openAiPopup}
-        setOpen={setOpenAiPopup}
         patient={propsData?.patient}
         encounter={propsData?.encounter}
       />
