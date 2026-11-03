@@ -429,6 +429,7 @@ export const MODULES: Module[] =
       icon: "FaListCheck",
       viewOrder: 2,
       screens: [
+        { name: "Task Calendar", code: "TASK_CALENDAR", description: "Month, week and agenda of follow-up tasks. Drag a task to reschedule it.", icon: "FaCalendarDays", viewOrder: 0, navPath: "task-calendar" },
         { name: "My Tasks", code: "MY_TASKS", description: "Tasks assigned to you", icon: "FaUserCheck", viewOrder: 1, navPath: "my-tasks" },
         { name: "Team Tasks", code: "TEAM_TASKS", description: "Tasks for your job role", icon: "FaUsers", viewOrder: 2, navPath: "team-tasks" },
         { name: "All Tasks", code: "ALL_TASKS", description: "Every task, for supervisors", icon: "FaListCheck", viewOrder: 3, navPath: "all-tasks" },

@@ -404,6 +404,9 @@ const TaskBoard: React.FC<Props> = ({ scope, title, pageCode }) => {
             <MdOutlineCalendarMonth /> <Translate>Calendar</Translate>
           </button>
         </div>
+        <button type="button" className="task-board-full-calendar" onClick={() => navigate('/task-calendar')}>
+          <MdOutlineCalendarMonth /> <Translate>Full calendar</Translate>
+        </button>
         <div className="patient-activity-segment" role="group" aria-label="Status">
           {(['OPEN', 'DONE', 'ALL'] as StatusView[]).map(value => (
             <button
