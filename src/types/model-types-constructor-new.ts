@@ -3309,7 +3309,7 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
 export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  toothNumber: undefined,
+  toothNumbers: [],
   surface: '',
   anesthesiaUsed: null,
   dose: null,

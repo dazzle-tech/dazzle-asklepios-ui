@@ -5837,7 +5837,7 @@ export interface DentalProcedureResponseVM {
   id?: number;
   patientId?: number;
   encounterId?: number;
-  toothNumber?: ToothNumber;
+  toothNumbers?: ToothNumber[];
   surface?: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
@@ -5860,7 +5860,7 @@ export interface DentalProcedureResponseVM {
 export interface DentalProcedureCreateDTO {
   patientId: number;
   encounterId: number;
-  toothNumber: ToothNumber;
+  toothNumbers: ToothNumber[];
   surface: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
@@ -5875,7 +5875,7 @@ export interface DentalProcedureCreateDTO {
 
 export interface DentalProcedureUpdateDTO {
   id: number;
-  toothNumber: ToothNumber;
+  toothNumbers: ToothNumber[];
   surface: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
