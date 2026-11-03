@@ -4,6 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Form, Row } from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
@@ -230,12 +231,11 @@ const Lab = () => {
     const raw = patientSearch?.patientName;
     const hasValue =
       raw instanceof Date || String(raw ?? '').trim().length > 0;
-    if (!hasValue) {
-      setResolvedPatientIds(null);
-    } else {
-      const ids = await resolvePatientIds(patientSearch);
+    const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+    // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+    flushSync(() => {
       setResolvedPatientIds(ids);
-    }
+    });
     await refetchAllLabData();
   };
 

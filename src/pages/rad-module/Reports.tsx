@@ -35,6 +35,7 @@ import { faComment, faFileLines, faStar } from '@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
 import '@/pages/lab-module-new/ReviewResultsIcon.less';
@@ -618,13 +619,14 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const handleSearchFilters = async () => {
         const raw = patientSearch?.patientName;
         const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
-        if (!hasValue) {
-            setResolvedPatientIds(null);
-        } else {
-            const ids = await resolvePatientIds(patientSearch);
+        const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+        // Commit IDs and clear stale orderIdIn before refetch so reports do not
+        // briefly query with the previous patient's order IDs.
+        flushSync(() => {
             setResolvedPatientIds(ids);
-        }
-        setPage(0);
+            setOrderIdIn([]);
+            setPage(0);
+        });
         refetch();
     };
     const tablebuttons = (

@@ -21,6 +21,7 @@ import {
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Col, Form, Row, Tabs } from 'rsuite';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import Orders from './Orders';
@@ -297,12 +298,11 @@ const handleClearFilters = () => {
 const handleSearchFilters = async () => {
   const raw = patientSearch?.patientName;
   const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
-  if (!hasValue) {
-    setResolvedPatientIds(null);
-  } else {
-    const ids = await resolvePatientIds(patientSearch);
+  const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+  // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+  flushSync(() => {
     setResolvedPatientIds(ids);
-  }
+  });
   await refetchAllRadData();
 };
 

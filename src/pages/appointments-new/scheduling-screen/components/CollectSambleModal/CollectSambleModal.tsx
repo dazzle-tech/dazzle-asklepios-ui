@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import MyTab from '@/components/MyTab';
 import DetailsCard from '@/components/DetailsCard';
@@ -425,12 +426,11 @@ const CollectSambleModal = ({
         try {
             const raw = patientSearch?.patientName;
             const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
-            if (!hasValue) {
-                setResolvedPatientIds(null);
-            } else {
-                const ids = await resolvePatientIds(patientSearch);
+            const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+            // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+            flushSync(() => {
                 setResolvedPatientIds(ids);
-            }
+            });
 
             await OrdersRef.current?.refetchOrders?.();
 

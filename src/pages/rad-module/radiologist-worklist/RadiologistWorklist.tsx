@@ -48,6 +48,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { MdAttachFile } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
 import { Form, Tooltip, Whisper } from 'rsuite';
@@ -433,13 +434,12 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
     if (attachmentsLocked) return;
     const raw = patientSearch?.patientName;
     const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
-    if (!hasValue) {
-      setResolvedPatientIds(null);
-    } else {
-      const ids = await resolvePatientIds(patientSearch);
+    const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+    // Commit IDs before refetch so queries do not reuse the previous patientIdIn.
+    flushSync(() => {
       setResolvedPatientIds(ids);
-    }
-    setPage(0);
+      setPage(0);
+    });
     refetch();
   };
 

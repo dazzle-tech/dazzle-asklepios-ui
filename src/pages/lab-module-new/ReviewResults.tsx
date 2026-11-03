@@ -51,6 +51,7 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useDispatch } from 'react-redux';
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import './ReviewResultsIcon.less';
@@ -523,13 +524,14 @@ const ReviewResults = forwardRef<any, any>(
     const handleSearchFilters = async () => {
       const raw = patientSearch?.patientName;
       const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
-      if (!hasValue) {
-        setResolvedPatientIds(null);
-      } else {
-        const ids = await resolvePatientIds(patientSearch);
+      const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+      // Commit IDs and clear stale orderIdIn before refetch so results do not
+      // briefly query with the previous patient's order IDs.
+      flushSync(() => {
         setResolvedPatientIds(ids);
-      }
-      setPage(0);
+        setOrderIdIn([]);
+        setPage(0);
+      });
       refetch();
     };
     // const handleSelectAll = (checked: boolean) => {
