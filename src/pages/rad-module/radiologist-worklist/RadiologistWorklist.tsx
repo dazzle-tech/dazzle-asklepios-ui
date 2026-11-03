@@ -3,7 +3,8 @@ import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
@@ -139,8 +140,10 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
 
-  const [selectedPatient, setSelectedPatient] =
-    useState<any>(null);
+  const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+  const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+  const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+  const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
 
   const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
@@ -261,9 +264,9 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             }
             : {}),
 
-          ...(selectedPatient?.id
+          ...(resolvedPatientIds != null
             ? {
-              patientIdIn: [selectedPatient.id]
+              patientIdIn: resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1]
             }
             : {}),
 
@@ -426,15 +429,25 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
       });
   }, [patientIds, getBulkPatientBasicInfo]);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (attachmentsLocked) return;
+    const raw = patientSearch?.patientName;
+    const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+    if (!hasValue) {
+      setResolvedPatientIds(null);
+    } else {
+      const ids = await resolvePatientIds(patientSearch);
+      setResolvedPatientIds(ids);
+    }
+    setPage(0);
     refetch();
   };
 
   const handleClearFilters = () => {
     const now = new Date();
     setPage(0);
-    setSelectedPatient(null);
+    setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+    setResolvedPatientIds(null);
     setDateFilter({ fromDate: now, toDate: now });
     setDepartmentFilter({ departmentIds: [] });
     setEncounterNumberFilter('');
@@ -448,15 +461,11 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
     <Form fluid className="table-header-content">
       <div className="filter-radiologist-worklist-main-container">
         <div className="patient-search-container">
-          <PatientSearch
-            value={selectedPatient}
-            onChange={patient => {
-              setPage(0);
-              setSelectedPatient(patient);
-            }}
-            showLabel={false}
-            width="22vw"
-            containerMinWidth={250}
+          <SearchPatientCriteria
+            record={patientSearch}
+            setRecord={setPatientSearch}
+            liveSearchMinLength={0}
+            searchMarginTop={0}
           />
         </div>
         <MyInput

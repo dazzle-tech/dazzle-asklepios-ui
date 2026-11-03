@@ -31,7 +31,8 @@ type OrdersProps = {
   };
   loading?: boolean;
   orderNumberFilter?: string;
-  selectedPatient?: any;
+  /** null = no patient filter; [] or ids = filter (empty forces no rows via sentinel) */
+  patientIdIn?: number[] | null;
   departmentFilter?: any;
   filters?: React.ReactNode;
 };
@@ -43,7 +44,7 @@ const Orders = forwardRef<any, OrdersProps>(
     dateFilter,
     loading,
     orderNumberFilter,
-    selectedPatient,
+    patientIdIn,
     departmentFilter,
     filters
   }, ref) => {
@@ -57,7 +58,7 @@ const Orders = forwardRef<any, OrdersProps>(
       setPaginationParams(prev => ({ ...prev, page: 0 }));
     }, [
       orderNumberFilter,
-      selectedPatient?.id,
+      patientIdIn,
       departmentFilter?.fromDepartmentIdIn
     ]);
 
@@ -113,8 +114,10 @@ const [getEncounterById] = useLazyGetEncounterByIdQuery();
             submittedDateFrom: fromDateParam,
             submittedDateTo: toDateParam,
 
-            ...(selectedPatient?.id
-              ? { patientIdIn: [selectedPatient.id] }
+            ...(patientIdIn != null
+              ? {
+                  patientIdIn: patientIdIn.length > 0 ? patientIdIn : [-1]
+                }
               : {}),
 
             ...(departmentFilter?.fromDepartmentIdIn

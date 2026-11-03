@@ -38,7 +38,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './radiologist-worklist/AddReportModal';
 import '@/pages/lab-module-new/ReviewResultsIcon.less';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import UserDateCell from '@/components/UserDateCell';
 import './styles.less'
@@ -124,7 +125,10 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [filtersKey, setFiltersKey] = useState(0);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
 
     const [departmentFilter, setDepartmentFilter] = useState<any>({
         fromDepartmentIdIn: null
@@ -152,7 +156,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     };
 
     if (
-        selectedPatient?.id ||
+        resolvedPatientIds != null ||
         departmentFilter?.fromDepartmentIdIn ||
         orderDate.fromDate ||
         orderDate.toDate
@@ -599,7 +603,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         setShowReviewed(false);
         setOrderIdIn(null);
         setPage(0);
-        setSelectedPatient(null);
+        setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+        setResolvedPatientIds(null);
 
         setDepartmentFilter({
             fromDepartmentIdIn: null
@@ -608,6 +613,19 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         setOrderIdFilter('');
         setEncounterNumberFilter('');
         setFiltersKey(prev => prev + 1);
+    };
+
+    const handleSearchFilters = async () => {
+        const raw = patientSearch?.patientName;
+        const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+        if (!hasValue) {
+            setResolvedPatientIds(null);
+        } else {
+            const ids = await resolvePatientIds(patientSearch);
+            setResolvedPatientIds(ids);
+        }
+        setPage(0);
+        refetch();
     };
     const tablebuttons = (
         <HStack spacing={10} style={{ marginBottom: 10 }}>
@@ -664,12 +682,11 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 />
                 <div className="reviewed-reports-filters" style={{ marginTop: '1.4vw' }}>
 
-                    <PatientSearch
-                        value={selectedPatient}
-                        onChange={setSelectedPatient}
-                        showLabel={false}
-                        width="22vw"
-                        containerMinWidth={250}
+                    <SearchPatientCriteria
+                        record={patientSearch}
+                        setRecord={setPatientSearch}
+                        liveSearchMinLength={0}
+                        searchMarginTop={0}
                     />
 
                     <MyInput
@@ -724,7 +741,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
 
             <AdvancedSearchFilters
                 showAdvancedButton={false}
-                searchOnClick={() => refetch()}
+                searchOnClick={handleSearchFilters}
                 clearOnClick={resetFilters}
             />
         </Form>
@@ -787,7 +804,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         if (
             !fromDate &&
             !toDate &&
-            !selectedPatient?.id &&
+            resolvedPatientIds == null &&
             !departmentFilter?.fromDepartmentIdIn
         ) {
             setOrderIdIn(null);
@@ -803,8 +820,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 ? endOfDay(toDate).toISOString()
                 : undefined,
 
-            ...(selectedPatient?.id
-                ? { patientIdIn: [selectedPatient.id] }
+            ...(resolvedPatientIds != null
+                ? { patientIdIn: resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1] }
                 : {}),
 
             ...(departmentFilter?.fromDepartmentIdIn
@@ -829,7 +846,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             .catch(() => setOrderIdIn([]));
     }, [
         orderDate,
-        selectedPatient?.id,
+        resolvedPatientIds,
         departmentFilter?.fromDepartmentIdIn
     ]);
 
@@ -839,7 +856,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         approvalDate,
         orderDate,
         showReviewed,
-        selectedPatient?.id,
+        resolvedPatientIds,
         departmentFilter?.fromDepartmentIdIn,
         orderIdFilter,
         encounterNumberFilter

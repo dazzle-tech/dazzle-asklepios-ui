@@ -12,7 +12,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -96,6 +96,80 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
       contant={labelMap?.get?.(key) ?? formatEnumString(key)}
     />
   );
+};
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
+const derivePatientFilters = (appliedSearch: any) => {
+  const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
+  const rawValue = appliedSearch?.patientName ?? appliedSearch?.searchText ?? '';
+  const raw =
+    rawValue instanceof Date
+      ? (() => {
+          const y = rawValue.getFullYear();
+          const m = String(rawValue.getMonth() + 1).padStart(2, '0');
+          const d = String(rawValue.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        })()
+      : String(rawValue ?? '').trim();
+
+  if (!raw) {
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
+  }
+
+  if (searchByField === 'patientMrn') {
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const ERTriage = () => {
@@ -272,8 +346,7 @@ const ERTriage = () => {
     toDate: new Date()
   });
 
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [patientSearchResetToken, setPatientSearchResetToken] = useState(0);
+  const [patientSearchDraft, setPatientSearchDraft] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
@@ -295,7 +368,7 @@ const ERTriage = () => {
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
-  const selectedPatientRef = useRef<any>(selectedPatient);
+  const patientSearchRef = useRef<any>(patientSearchDraft);
 
   const setDateFilterSafe = (next: any) => {
     dateFilterRef.current = next;
@@ -305,9 +378,10 @@ const ERTriage = () => {
     encounterStatusRef.current = next;
     setEncounterStatus(next);
   };
-  const setSelectedPatientSafe = (next: any) => {
-    selectedPatientRef.current = next;
-    setSelectedPatient(next);
+  const setPatientSearchSafe = (next: any) => {
+    const value = typeof next === 'function' ? next(patientSearchRef.current) : next;
+    patientSearchRef.current = value;
+    setPatientSearchDraft(value);
   };
 
   const divContent = 'ER Triage';
@@ -334,19 +408,13 @@ const ERTriage = () => {
 
     const df = dateFilterRef.current;
     const es = encounterStatusRef.current;
-    const sp = selectedPatientRef.current;
+    const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+      derivePatientFilters(patientSearchRef.current);
 
     const fromDateObj = toDateSafe(df?.fromDate);
     const toDateObj = toDateSafe(df?.toDate);
     const fromDate = fromDateObj ? formatDate(fromDateObj) : undefined;
     const toDate = toDateObj ? formatDate(toDateObj) : undefined;
-
-    const patientName =
-      sp?.firstName || sp?.lastName
-        ? `${sp.firstName ?? ''} ${sp.lastName ?? ''}`.trim()
-        : undefined;
-
-    const mrn = sp?.medicalRecordNumber || undefined;
 
     const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
       String(v ?? '').toUpperCase()
@@ -360,6 +428,9 @@ const ERTriage = () => {
       statuses: statusesCsv,
       patientName,
       mrn,
+      primaryMobileNumber,
+      documentNumber,
+      dateOfBirth,
       practitionerId: undefined,
       page,
       size: pageSize,
@@ -895,8 +966,7 @@ const ERTriage = () => {
 
     setDateFilterSafe(nextDateFilter);
     setEncounterStatusSafe(nextEncounterStatus);
-    setSelectedPatientSafe(null);
-    setPatientSearchResetToken(v => v + 1);
+    setPatientSearchSafe({ ...EMPTY_PATIENT_SEARCH });
 
     triggerSearch();
   };
@@ -1377,10 +1447,10 @@ const ERTriage = () => {
               record={dateFilter}
               setRecord={setDateFilterSafe}
             />
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatientSafe}
-              resetToken={patientSearchResetToken}
+            <SearchPatientCriteria
+              record={patientSearchDraft}
+              setRecord={setPatientSearchSafe}
+              liveSearchMinLength={0}
             />
 
             <MyInput
@@ -1437,8 +1507,18 @@ const ERTriage = () => {
             setExpand={setPatientSidebarOpen}
             windowHeight={windowHeight}
             setLocalPatient={(p: any) => {
-              setSelectedPatientSafe(p);
+              const mrn = p?.medicalRecordNumber ?? p?.patientMrn ?? '';
+              const fullName = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+              setPatientSearchSafe(
+                mrn
+                  ? { searchByField: 'patientMrn', patientName: String(mrn) }
+                  : { searchByField: 'fullName', patientName: fullName }
+              );
               setPatientSidebarOpen(false);
+              triggerSearch();
             }}
             refetchData={refetchPatientSidebar}
             setRefetchData={setRefetchPatientSidebar}
