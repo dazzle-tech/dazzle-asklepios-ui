@@ -880,7 +880,8 @@ const PatientsLists = () => {
 
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const canSeeNurseStation = jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
-  const canSeeDoctorVisit = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
+  const canSeeDoctorVisit =
+    jobRole === 'PHYSICIAN' || jobRole === 'DENTIST' || Boolean(authSlice.user?.admin);
   const canSeeEMR = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
   const canSeePrint =
     jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
