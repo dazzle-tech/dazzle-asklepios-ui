@@ -19,6 +19,7 @@ export type PointOfSaleWebhookLogDTO = {
   merchantId?: string | null;
   processingStatus?: string | null;
   processed?: boolean | null;
+  alreadyPaid?: boolean | null;
   createdDate?: string | null;
 };
 
