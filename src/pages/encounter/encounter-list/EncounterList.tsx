@@ -979,7 +979,7 @@ const EncounterList = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
 
   const canSeeNurseStation = isAdmin || jobRole === 'NURSE';
-  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'DENTIST';
   const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
   const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
