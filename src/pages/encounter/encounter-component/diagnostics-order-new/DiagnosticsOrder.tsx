@@ -145,7 +145,8 @@ const DiagnosticsOrder = (props: any) => {
         labCategoriesLovResponse={vm.labCategoriesLovResponse}
         radCategoriesLovResponse={vm.radCategoriesLovResponse}
         setOrders={vm.setOrders}
-        handleClearDiagnostics={vm.handleClearDiagnostics}
+        handleClearSelection={vm.handleClearSelection}
+        handleSelectOrder={vm.handleSelectOrder}
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
         setOpenTestsModal={vm.setOpenTestsModal}

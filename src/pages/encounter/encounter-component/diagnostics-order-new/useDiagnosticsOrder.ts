@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -428,15 +428,36 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
   const [previewDiagnosticsOrder, setPreviewDiagnosticsOrder] = useState<any | null>(null);
 
+  const suppressAutoSelectRef = useRef(false);
+
   const handleClearDiagnostics = () => {
     setOrderTest({ ...newDiagnosticOrderTest });
     setTest({ ...newDiagnosticTest });
     setPreviewDiagnosticsOrder(null);
   };
 
+  const handleSelectOrder = useCallback((item: any) => {
+    suppressAutoSelectRef.current = false;
+    setOrders(item ?? {});
+    handleClearDiagnostics();
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    suppressAutoSelectRef.current = true;
+    setOrders({ ...newDiagnosticOrder });
+    handleClearDiagnostics();
+    setSelectedRows([]);
+    setOpenDetailsModel(false);
+    setConfirmDeleteModel(false);
+  }, []);
+
   useEffect(() => {
     if (!ordersList?.length) return;
-    if (orders?.id) return;
+    if (orders?.id) {
+      suppressAutoSelectRef.current = false;
+      return;
+    }
+    if (suppressAutoSelectRef.current) return;
 
     const draftOrder = ordersList.find((o: any) => o.saveDraft === true && o.status === 'NEW');
     if (draftOrder) setOrders(draftOrder);
@@ -1269,6 +1290,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     // actions
     handleClearDiagnostics,
+    handleClearSelection,
+    handleSelectOrder,
     handleSaveOrders,
     handleSaveTests,
     handleSaveTest,
