@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import MyTab from '@/components/MyTab';
 import DetailsCard from '@/components/DetailsCard';
@@ -44,7 +45,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import '@/pages/appointments-new/scheduling-screen/styles.less';
 import MyInput from '@/components/MyInput';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import {
@@ -52,6 +54,9 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 import BulkCollectSampleModal from '@/pages/lab-module-new/BulkCollectSampleModal';
 import MyButton from '@/components/MyButton/MyButton';
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
 type CollectSambleModalProps = {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -138,7 +143,9 @@ const CollectSambleModal = ({
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
 
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
     const [orderNumberFilter, setOrderNumberFilter] = useState('');
     const [selectedDepartmentId, setSelectedDepartmentId] =
         useState<number | null>(null);
@@ -417,6 +424,14 @@ const CollectSambleModal = ({
 
     const handleSearch = async () => {
         try {
+            const raw = patientSearch?.patientName;
+            const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+            const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+            // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+            flushSync(() => {
+                setResolvedPatientIds(ids);
+            });
+
             await OrdersRef.current?.refetchOrders?.();
 
             if (order?.id && selectedDepartmentId && fromDepartmentId) {
@@ -484,12 +499,11 @@ const CollectSambleModal = ({
                     showLabel={false}
                 />
 
-                <PatientSearch
-                    value={selectedPatient}
-                    onChange={setSelectedPatient}
-                    showLabel={false}
-                    width="22vw"
-                    containerMinWidth={250}
+                <SearchPatientCriteria
+                    record={patientSearch}
+                    setRecord={setPatientSearch}
+                    liveSearchMinLength={0}
+                    searchMarginTop={0}
                 />
 
                 <MyInput
@@ -656,7 +670,7 @@ const CollectSambleModal = ({
                                 setOrder={setOrder}
                                 dateFilter={dateFilter}
                                 orderNumberFilter={orderNumberFilter}
-                                selectedPatient={selectedPatient}
+                                patientIdIn={resolvedPatientIds}
                                 filters={tablefilters}
                                 departmentId={selectedDepartmentId}
                                 fromDepartmentId={fromDepartmentId}

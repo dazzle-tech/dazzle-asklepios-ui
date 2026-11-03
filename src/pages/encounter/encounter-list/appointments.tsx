@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import {Form} from 'rsuite';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { useLazySearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 import { useAppSelector } from '@/hooks';
 import { formatEnumString } from '@/utils';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 
 type Props = {
     open: boolean;
@@ -14,11 +15,21 @@ type Props = {
     departmentId: Number;
 };
 
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
 const normalizeLocalDayStart = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 
 const normalizeLocalDayEnd = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+const getAppointmentPatientId = (appointment: any): number | null => {
+    const raw =
+        appointment?.patientId ??
+        (typeof appointment?.patient === 'object' ? appointment.patient?.id : appointment?.patient);
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Props) => {
     const mode = useAppSelector((state: any) => state.ui.mode);
@@ -26,17 +37,17 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
 
     const [dateFrom, setDateFrom] = useState<Date>(new Date());
     const [dateTo, setDateTo] = useState<Date>(new Date());
-    const [schedulePatientFilter, setSchedulePatientFilter] = useState<any | null>(null);
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
 
     const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
 
     const [slots, setSlots] = useState<any[]>([]);
     const [totalCount, setTotalCount] = useState(0);
 
-
     const dateRangeInvalid = dateFrom != null && dateTo != null && dateTo < dateFrom;
 
-    // ──────────────────────────── PAGINATION (BACKEND) ────────────────────────────
     const [paginationParams, setPaginationParams] = useState({
         page: 0,
         size: 5,
@@ -51,11 +62,37 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
         const now = new Date();
         setDateFrom(now);
         setDateTo(now);
+        setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+        setResolvedPatientIds(null);
+        setPaginationParams(prev => ({ ...prev, page: 0 }));
     }, [open]);
 
+    const patientIdForApi = useMemo(() => {
+        if (resolvedPatientIds == null) return null;
+        if (resolvedPatientIds.length === 0) return -1;
+        if (resolvedPatientIds.length === 1) return resolvedPatientIds[0];
+        return null;
+    }, [resolvedPatientIds]);
 
+    const clientFilterIds = useMemo(() => {
+        if (resolvedPatientIds != null && resolvedPatientIds.length > 1) {
+            return new Set(resolvedPatientIds);
+        }
+        return null;
+    }, [resolvedPatientIds]);
 
-    // ──────────────────────────── FETCH FROM BACKEND ────────────────────────────
+    const handlePatientSearchClick = useCallback(async () => {
+        const raw = patientSearch?.patientName;
+        const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+        if (!hasValue) {
+            setResolvedPatientIds(null);
+        } else {
+            const ids = await resolvePatientIds(patientSearch);
+            setResolvedPatientIds(ids);
+        }
+        setPaginationParams(prev => ({ ...prev, page: 0 }));
+    }, [patientSearch, resolvePatientIds]);
+
     useEffect(() => {
         if (!open || !facilityId || !departmentId) return;
 
@@ -77,7 +114,7 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
                         resourceId: null,
                         status: ['NEW', 'BOOKED'],
                         bookingMode: null,
-                        patientId: schedulePatientFilter?.id || null,
+                        patientId: patientIdForApi,
                         startDate: rangeStart,
                         endDate: rangeEnd
                     },
@@ -85,9 +122,17 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
                     size: paginationParams.size,
                     sort: paginationParams.sort
                 }).unwrap();
-                setSlots(res?.data ?? []);
-                setTotalCount(res?.totalCount ?? 0);
 
+                let data = res?.data ?? [];
+                if (clientFilterIds) {
+                    data = data.filter((row: any) => {
+                        const id = getAppointmentPatientId(row);
+                        return id != null && clientFilterIds.has(id);
+                    });
+                }
+
+                setSlots(data);
+                setTotalCount(clientFilterIds ? data.length : (res?.totalCount ?? 0));
             } catch {
                 setSlots([]);
                 setTotalCount(0);
@@ -103,11 +148,11 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
         paginationParams.size,
         paginationParams.sort,
         searchAppointments,
-        schedulePatientFilter
+        patientIdForApi,
+        clientFilterIds
     ]);
 
-    // ──────────────────────────── PAGINATION HANDLERS ────────────────────────────
-    const handlePageChange = (event: any, newPage: number) => {
+    const handlePageChange = (_event: any, newPage: number) => {
         setPaginationParams(prev => ({ ...prev, page: newPage }));
     };
 
@@ -122,7 +167,6 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
         }));
     };
 
-    // ──────────────────────────── COLORS ────────────────────────────
     const colors = {
         eventText: isDark ? '#cbd5e1' : '#334155',
         badgeBg: isDark ? '#14532d' : '#dcfce7',
@@ -192,10 +236,11 @@ const DoctorAppoitmentsView = ({ open, setOpen, facilityId, departmentId }: Prop
 
     const filters = () => (
         <Form fluid>
-            <PatientSearch
-                value={schedulePatientFilter}
-                onChange={setSchedulePatientFilter}
-                fieldLabel="Patient"
+            <SearchPatientCriteria
+                record={patientSearch}
+                setRecord={setPatientSearch}
+                onSearchClick={handlePatientSearchClick}
+                searchMarginTop={0}
             />
         </Form>
     );
