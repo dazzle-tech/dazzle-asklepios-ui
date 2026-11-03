@@ -219,6 +219,7 @@ const ActivitySetup = lazy(() => import('./pages/setup/activity-setup'));
 const MyTasks = lazy(() => import('./pages/tasks/MyTasks'));
 const TeamTasks = lazy(() => import('./pages/tasks/TeamTasks'));
 const AllTasks = lazy(() => import('./pages/tasks/AllTasks'));
+const TaskCalendarDashboard = lazy(() => import('./pages/tasks/TaskCalendarDashboard'));
 const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
@@ -922,6 +923,7 @@ const App = () => {
               <Route path="lov-setup" element={<Lov />} />
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
               <Route path="activity-setup" element={<ActivitySetup />} />
+              <Route path="task-calendar" element={<TaskCalendarDashboard />} />
               <Route path="my-tasks" element={<MyTasks />} />
               <Route path="team-tasks" element={<TeamTasks />} />
               <Route path="all-tasks" element={<AllTasks />} />
