@@ -1,4 +1,5 @@
 import ChildModal from '@/components/ChildModal';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -27,7 +28,7 @@ import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
-import { MdDelete, MdMedication, MdModeEdit, MdVaccines } from 'react-icons/md';
+import { MdDelete, MdMedication, MdModeEdit, MdVaccines, MdLocalOffer } from 'react-icons/md';
 import { Form } from 'rsuite';
 import './styles.less';
 
@@ -215,6 +216,7 @@ const vaccineType = useEnumOptions('VaccineType', {
     facilitiesOptions.find((f: any) => f.value === facilityId)?.currency ?? '';
 
   const [addVaccineBrand] = useAddVaccineBrandMutation();
+  const priceListPrompt = usePriceListPrompt();
   const [updateVaccineBrand] = useUpdateVaccineBrandMutation();
   const [addVaccine, addVaccineResult] = useAddVaccineMutation();
   const [updateVaccine, updateVaccineResult] = useUpdateVaccineMutation();
@@ -256,6 +258,23 @@ const vaccineType = useEnumOptions('VaccineType', {
           setEditBrand(true);
           setOpenChildModal(true);
         }}
+      />
+      <MdLocalOffer
+        className="icons-style"
+        title="Price Lists"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() =>
+          priceListPrompt.view({
+            itemType: 'VACCINE',
+            sourceId: rowData.id,
+            itemCode: rowData.code,
+            itemName: rowData.name,
+            unitPrice: rowData.price,
+            facilityId: rowData.facilityId,
+            currency: facilityCurrencyOf(rowData.facilityId)
+          })
+        }
       />
       {rowData?.isActive ? (
         <MdDelete
@@ -442,8 +461,9 @@ const vaccineType = useEnumOptions('VaccineType', {
         isActive: vaccineBrand?.isActive ?? true
       });
 
+      let saved: any;
       if (vaccineBrand?.id) {
-        await updateVaccineBrand({
+        saved = await updateVaccineBrand({
           id: vaccineBrand.id,
           vaccineId: vaccine?.id,
           data: payload
@@ -451,9 +471,19 @@ const vaccineType = useEnumOptions('VaccineType', {
 
         dispatch(notify({ msg: 'Vaccine Brand Updated Successfully', sev: 'success' }));
       } else {
-        await addVaccineBrand({ vaccineId: vaccine?.id, data: payload }).unwrap();
+        saved = await addVaccineBrand({ vaccineId: vaccine?.id, data: payload }).unwrap();
         dispatch(notify({ msg: 'Vaccine Brand Added Successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'VACCINE',
+        sourceId: saved?.id ?? vaccineBrand?.id,
+        itemCode: payload.code,
+        itemName: payload.name,
+        unitPrice: payload.price,
+        facilityId: payload.facilityId,
+        currency: facilityCurrencyOf(payload.facilityId)
+      });
 
       setVaccineBrand({ ...newVaccineBrand, vaccineId: vaccine?.id });
       refetchVaccineBrand?.();
@@ -929,31 +959,34 @@ const vaccineType = useEnumOptions('VaccineType', {
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <ChildModal
-      actionChildButtonFunction={handleSaveVaccineBrand}
-      actionButtonFunction={() => setOpen(false)}
-      open={open}
-      setOpen={setOpen}
-      showChild={openChildModal}
-      setShowChild={setOpenChildModal}
-      title={vaccine?.id ? 'Edit Vaccine' : 'New Vaccine'}
-      mainContent={stepNumber => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
-      mainStep={[
-        {
-          title: 'Vaccine Details',
-          icon: <MdVaccines />,
-          disabledNext: !vaccine?.id,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>
-        },
-        { title: 'Brand Products', icon: <MdMedication /> }
-      ]}
-      childTitle={
-        vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
-      }
-      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
-      childSize='xs'
-      mainSize="sm"
-    />
+    <>
+      <ChildModal
+        actionChildButtonFunction={handleSaveVaccineBrand}
+        actionButtonFunction={() => setOpen(false)}
+        open={open}
+        setOpen={setOpen}
+        showChild={openChildModal}
+        setShowChild={setOpenChildModal}
+        title={vaccine?.id ? 'Edit Vaccine' : 'New Vaccine'}
+        mainContent={stepNumber => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
+        mainStep={[
+          {
+            title: 'Vaccine Details',
+            icon: <MdVaccines />,
+            disabledNext: !vaccine?.id,
+            footer: <MyButton onClick={handleSave}>Save</MyButton>
+          },
+          { title: 'Brand Products', icon: <MdMedication /> }
+        ]}
+        childTitle={
+          vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
+        }
+        childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
+        childSize='xs'
+        mainSize="sm"
+      />
+      <PriceListPrompt prompt={priceListPrompt} />
+    </>
   );
 };
 
