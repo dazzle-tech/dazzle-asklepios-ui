@@ -4,6 +4,7 @@ import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
 type PagedParams = {
+  isActive?: boolean;
   page: number;
   size: number;
   sort?: string;
@@ -30,10 +31,10 @@ export const diagnosticTestService = createApi({
   tagTypes: ["DiagnosticTest"],
   endpoints: (builder) => ({
     getAllDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+      query: ({ page, size, sort = "id,asc", isActive }) => ({
         url: "/api/setup/diagnostic-test",
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;

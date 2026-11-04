@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Panel, Form, Whisper, Tooltip } from "rsuite";
+import { Checkbox, Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
@@ -250,6 +250,9 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [isFiltered, setIsFiltered] = useState(false);
     const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
     const [filteredTotal, setFilteredTotal] = useState(0);
+    const [showInactive, setShowInactive] = useState(false);
+    // Undefined means no status filter, so inactive records are included
+    const activeFilter = showInactive ? undefined : true;
 
     const isSelected = (rowData: BrandMedication) =>
       rowData?.id === brandMedication?.id ? "selected-row" : "";
@@ -265,7 +268,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
     const { data: allMedications, isFetching, refetch } =
-      useGetAllBrandMedicationsQuery(paginationParams);
+      useGetAllBrandMedicationsQuery({ ...paginationParams, isActive: activeFilter });
 
     const totalCount = allMedications?.totalCount ?? 0;
 
@@ -289,6 +292,18 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [getByExpiresAfterOpening] = useLazyGetBrandMedicationsByExpiresAfterOpeningQuery();
     const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
     const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
+
+    // The list and any applied search must follow the checkbox
+    useEffect(() => {
+      setPaginationParams((prev) => ({ ...prev, page: 0 }));
+      if (!isFiltered) return;
+      if (!showInactive && recordOfFilter.filter === "isActive") {
+        setRecordOfFilter({ filter: "", value: "" });
+        handleFilterChange("", "");
+        return;
+      }
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
+    }, [showInactive]);
 
     useEffect(() => {
       dispatch(setPageCode("Brand_Medications"));
@@ -336,6 +351,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
         dispatch(notify({ msg: "Status toggled", sev: "success" }));
         setOpenConfirmModal(false);
         refetch();
+        if (isFiltered) handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
       } catch (error: any) {
         handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
         setOpenConfirmModal(false);
@@ -373,7 +389,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
       }
 
       try {
-        const params = { page: 0, size: 15, sort: "id,asc" };
+        const params = { page: 0, size: 15, sort: "id,asc", isActive: activeFilter };
         let response;
 
         switch (field) {
@@ -406,8 +422,8 @@ const prettifyInlineBackendMessage = (message: string): string => {
             break;
           case "isActive":
             response = await getByIsActive({
-              isActive: normalizeBool(value),
               ...params,
+              isActive: normalizeBool(value),
             }).unwrap();
             break;
           default:
@@ -525,7 +541,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
             { label: "ROA", value: "roa" },
             { label: "Expires After Opening", value: "expiresAfterOpening" },
             { label: "Single Patient Use", value: "useSinglePatient" },
-            { label: "Active", value: "isActive" },
+            ...(showInactive ? [{ label: "Active", value: "isActive" }] : []),
           ]}
           selectDataLabel="label"
           selectDataValue="value"
@@ -546,6 +562,10 @@ const prettifyInlineBackendMessage = (message: string): string => {
         >
           Search
         </MyButton>
+
+        <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+          <Translate>Show inactive</Translate>
+        </Checkbox>
       </Form>
     );
 

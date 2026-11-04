@@ -31,7 +31,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete, MdModeEdit, MdOutlineDescription, MdLocalOffer } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
-import { Form, Panel } from 'rsuite';
+import { Checkbox, Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import Coding from './Coding';
@@ -55,6 +55,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     ...newDiagnosticTest
   });
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [showInactive, setShowInactive] = useState(false);
+  // Undefined means no status filter, so inactive records are included
+  const activeFilter = showInactive ? undefined : true;
   const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
   const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
@@ -87,7 +90,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     data: diagnodticsTestList,
     refetch: refetchDiagnostics,
     isFetching
-  } = useGetAllDiagnosticTestsQuery(paginationParams);
+  } = useGetAllDiagnosticTestsQuery({ ...paginationParams, isActive: activeFilter });
 
   const testType = useEnumOptions('TestType');
 
@@ -442,7 +445,10 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         isActive: newActiveStatus
       }));
 
-      if (isFiltered) {
+      if (isFiltered && !showInactive) {
+        // The row must leave the search results too
+        await refreshCurrentFilterIfActive();
+      } else if (isFiltered) {
         setFilteredList(prev =>
           prev.map(item =>
             item.id === id
@@ -542,6 +548,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           page,
           size,
           sort,
+          isActive: activeFilter,
           _cb: cacheBuster
         }).unwrap();
       } else if (field === 'name') {
@@ -550,6 +557,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           page,
           size,
           sort,
+          isActive: activeFilter,
           _cb: cacheBuster
         }).unwrap();
       } else if (field === 'internalCode') {
@@ -558,6 +566,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           page,
           size,
           sort,
+          isActive: activeFilter,
           _cb: cacheBuster
         }).unwrap();
       } else if (field === 'shortName') {
@@ -566,6 +575,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           page,
           size,
           sort,
+          isActive: activeFilter,
           _cb: cacheBuster
         }).unwrap();
       } else if (field === 'status') {
@@ -606,6 +616,18 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     }
   };
 
+  // The list and any applied search must follow the checkbox
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+    if (!isFiltered) return;
+    if (!showInactive && recordOfFilter.filter === 'status') {
+      setRecordOfFilter({ filter: '', value: '' });
+      handleFilterChange('', '');
+      return;
+    }
+    refreshCurrentFilterIfActive(0);
+  }, [showInactive]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Pagination values
   const totalCount = diagnodticsTestList?.totalCount ?? 0;
   const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
@@ -617,7 +639,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     { label: 'Name', value: 'name' },
     { label: 'Short Name', value: 'shortName' },
     { label: 'Internal Code', value: 'internalCode' },
-    { label: 'Status', value: 'status' }
+    ...(showInactive ? [{ label: 'Status', value: 'status' }] : [])
   ];
 
   // Header page setUp
@@ -925,6 +947,10 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       >
         Search
       </MyButton>
+
+      <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+        <Translate>Show inactive</Translate>
+      </Checkbox>
     </Form>
   );
 
