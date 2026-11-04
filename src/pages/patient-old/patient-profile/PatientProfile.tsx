@@ -994,13 +994,16 @@ const isSelectedRelation = rowData => {
     setSearchResultVisible(true);
 
     if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
+      const criterion =
+        selectedCriterion === 'documentNumber' ? 'documentNo' : selectedCriterion;
+      const operator = selectedCriterion === 'dob' ? 'equals' : 'containsIgnoreCase';
       setListRequest({
         ...listRequest,
         ignore: false,
         filters: [
           {
-            fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
+            fieldName: fromCamelCaseToDBName(criterion),
+            operator,
             value: searchKeyword
           }
         ]
@@ -1250,7 +1253,9 @@ const isSelectedRelation = rowData => {
                 fieldType="select"
                 fieldName="warningTypeLkey"
                 selectData={administrativeWarningsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={patientAdministrativeWarnings}
                 setRecord={setPatientAdministrativeWarnings}
@@ -1576,7 +1581,6 @@ const isSelectedRelation = rowData => {
                   disabled={!editing}
                 />
                 <MyInput
-                  required
                   width={165}
                   vr={validationResult}
                   column
@@ -1623,7 +1627,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="genderLkey"
                   selectData={genderLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1672,7 +1678,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="patientClassLkey"
                   selectData={patientClassLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1713,7 +1721,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="documentTypeLkey"
                   selectData={docTypeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1727,7 +1737,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="documentCountryLkey"
                   selectData={countryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1853,7 +1865,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="maritalStatusLkey"
                   selectData={maritalStatusLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1866,7 +1880,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="nationalityLkey"
                   selectData={nationalityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1879,7 +1895,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="religionLkey"
                   selectData={religeonLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1892,7 +1910,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="ethnicityLkey"
                   selectData={ethnicityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1905,7 +1925,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="occupationLkey"
                   selectData={occupationLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1918,7 +1940,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="responsiblePartyLkey"
                   selectData={responsiblePartyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1931,7 +1955,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="educationalLevelLkey"
                   selectData={educationalLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -1965,6 +1991,7 @@ const isSelectedRelation = rowData => {
                   vr={validationResult}
                   column
                   required
+                  fieldType='textnumber'
                   fieldName="phoneNumber"
                   fieldLabel="Primary Mobile Number"
                   record={localPatient}
@@ -2031,7 +2058,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="preferredContactLkey"
                   selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2044,7 +2073,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="primaryLanguageLkey"
                   selectData={primaryLangLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2067,7 +2098,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="emergencyContactRelationLkey"
                   selectData={relationsLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2088,7 +2121,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="roleLkey"
                   selectData={roleLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2112,7 +2147,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="countryLkey"
                   selectData={countryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2125,7 +2162,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="stateProvinceRegionLkey"
                   selectData={cityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2138,7 +2177,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="cityLkey"
                   selectData={cityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2381,6 +2422,7 @@ const isSelectedRelation = rowData => {
                   <Form fluid>
                     <MyInput
                       vr={validationResult}
+                      fieldType='textnumber'
                       fieldLabel="Primary Mobile Number"
                       fieldName="phoneNumber"
                       record={localPatient}
@@ -2442,7 +2484,9 @@ const isSelectedRelation = rowData => {
                   fieldType="select"
                   fieldName="securityAccessLevelLkey"
                   selectData={securityAccessLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
@@ -2519,7 +2563,9 @@ const isSelectedRelation = rowData => {
                       fieldType="select"
                       fieldName="relationTypeLkey"
                       selectData={relationsLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={selectedPatientRelation}
                       setRecord={setSelectedPatientRelation}
@@ -2531,7 +2577,9 @@ const isSelectedRelation = rowData => {
                       fieldType="select"
                       fieldName="categoryTypeLkey"
                       selectData={categoryLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={selectedPatientRelation}
                       setRecord={setSelectedPatientRelation}
@@ -2832,7 +2880,9 @@ const isSelectedRelation = rowData => {
                     fieldType="select"
                     fieldName="documentCountryLkey"
                     selectData={countryLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={secondaryDocument}
                     setRecord={newRecord =>
@@ -2851,7 +2901,9 @@ const isSelectedRelation = rowData => {
                     fieldType="select"
                     fieldName="documentTypeLkey"
                     selectData={docTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={secondaryDocument}
                     setRecord={newRecord =>
@@ -3012,7 +3064,9 @@ const isSelectedRelation = rowData => {
                       fieldName="accessTypeLkey"
                       fieldType="select"
                       selectData={attachmentsLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       fieldLabel="Type"
                       selectDataValue="key"
                       record={selectedAttachType}

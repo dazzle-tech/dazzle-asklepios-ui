@@ -8,9 +8,7 @@ import { useFindConsultationByPatientQuery } from "@/services/consultation/consu
 import { useFindByPatientQuery } from "@/services/patients/telephonicConsultationService";
 import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 
-import { initialListRequest } from "@/types/types";
-
-const ClinicalConsultationsTables = ({ patient, encounter }) => {
+const ClinicalConsultationsTables = ({ patient }) => {
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -92,6 +90,37 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
     }
   ], []);
 
+
+  const teleconsultationColumns = useMemo(() => [
+    {
+      key: "practitioner",
+      title: <Translate>PRACTITIONER</Translate>,
+      flexGrow: 2,
+      render: row => {
+        const practitioner = physicians.find(p => p?.id === row?.practitionerId);
+        return practitioner
+          ? practitioner?.firstName + " " + practitioner?.lastName
+          : "-";
+      }
+    },
+    {
+      key: "dateTime",
+      title: <Translate>DATE TIME</Translate>,
+      flexGrow: 2,
+      render: row =>
+        row?.dateTime
+          ? formatDateWithoutSeconds(row?.dateTime)
+          : "-"
+    },
+    {
+      key: "consultantNotes",
+      title: <Translate>CONSULTANT NOTES</Translate>,
+      flexGrow: 4,
+      render: row => row?.consultantNotes ?? "-"
+    }
+  ], [physicians]);
+
+
   // ───────── COLUMNS TELEPHONIC ─────────
 
   const telephonicColumns = useMemo(() => [
@@ -171,6 +200,22 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
     />
   );
 
+  const teleconsultationTable = (
+    <MyTable
+      columns={teleconsultationColumns}
+      data={telephonicRows}
+      loading={telephonicLoading}
+      page={page}
+      rowsPerPage={size}
+      totalCount={telephonicTotal}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={e => {
+        setSize(Number(e.target.value));
+        setPage(0);
+      }}
+    />
+  );
+
   // ───────── TABS ─────────
 
   const tabData = [
@@ -181,10 +226,14 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
     {
       title: "Telephonic",
       content: telephonicTable
+    },
+    {
+      title: "Teleconsultation",
+      content: teleconsultationTable
     }
   ];
 
-  return <MyTab data={tabData} />;
+  return <MyTab data={tabData} lazy/>;
 };
 
 export default ClinicalConsultationsTables;

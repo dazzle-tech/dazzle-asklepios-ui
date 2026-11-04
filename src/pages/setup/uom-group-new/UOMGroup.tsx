@@ -47,8 +47,17 @@ const UOMGroup = () => {
   const totalCount = uomGroupsListResponse?.totalCount ?? 0;
   // Header page setUp
   const divContent = 'UOM Groups';
+
+
+useEffect(() => {
   dispatch(setPageCode('UOM_Groups'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -63,31 +72,39 @@ const UOMGroup = () => {
     setUomGroup({ ...newUOMGroup });
   };
 
-  // handle delete uom group
-  const handleDeleteUomGroup = async () => {
-    setOpenConfirmDeleteUOMGroupModal(false);
-    try {
-      await deleteUomGroup(uomGroup?.id)
-        .unwrap()
-        .then(() => {
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group was deleted successfully ',
-              sev: 'success'
-            })
-          );
-        });
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to delete this UOM group',
-          sev: 'error'
-        })
-      );
-    }
-  };
+const handleDeleteUomGroup = async () => {
+  setOpenConfirmDeleteUOMGroupModal(false);
 
+  try {
+    await deleteUomGroup(uomGroup?.id).unwrap();
+
+    refetchUomGroups();
+
+    dispatch(
+      notify({
+        msg: 'The UOM group was deleted successfully',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    const detail = error?.data?.detail || '';
+    const message = error?.data?.message || '';
+
+    const isForeignKeyError =
+      detail.includes('foreign key constraint') ||
+      detail.includes('still referenced') ||
+      message.includes('db.constraint');
+
+    dispatch(
+      notify({
+        msg: isForeignKeyError
+          ? 'Cannot delete this UOM group because it is linked to other records.'
+          : 'Failed to delete this UOM group',
+        sev: 'error'
+      })
+    );
+  }
+};
   // ──────────────────────────── PAGINATION ────────────────────────────
   const handlePageChange = (event, newPage) => {
     setPaginationParams({ ...paginationParams, page: newPage });
@@ -170,15 +187,16 @@ const UOMGroup = () => {
   );
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         totalCount={totalCount}
@@ -217,6 +235,7 @@ const UOMGroup = () => {
             </MyButton>
           </div>
         }
+        dontTranslateData 
       />
 
       <AddEditUom

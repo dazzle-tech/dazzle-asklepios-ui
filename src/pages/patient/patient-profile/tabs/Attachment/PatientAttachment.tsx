@@ -9,7 +9,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useFetchAttachmentQuery, useGetPatientAttachmentsListQuery, useFetchAttachmentByKeyQuery, useUploadMutation, useDeleteAttachmentMutation, useUpdateAttachmentDetailsMutation } from '@/services/attachmentService';
+import { useFetchAttachmentQuery, useGetPatientAttachmentsListQuery, useFetchAttachmentByKeyQuery, useDeleteAttachmentMutation } from '@/services/attachmentService';
 import MyButton from '@/components/MyButton/MyButton';
 import { faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { PlusRound } from '@rsuite/icons';

@@ -28,6 +28,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         required
         fieldName="phoneNumber"
         fieldLabel="Primary Mobile Number"
+        fieldType='textnumber'
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -85,7 +86,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldType="select"
         fieldName="preferredContactLkey"
         selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -98,7 +101,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldType="select"
         fieldName="primaryLanguageLkey"
         selectData={primaryLangLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -118,7 +123,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldType="select"
         fieldName="emergencyContactRelationLkey"
         selectData={relationsLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -139,7 +146,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldType="select"
         fieldName="roleLkey"
         selectData={roleLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}

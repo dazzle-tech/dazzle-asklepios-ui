@@ -4,6 +4,7 @@ import NormalConsultation from './NormalConsultation';
 import TelephonicConsultation from './TelephonicConsultation';
 import './styles.less';
 import MyTab from '@/components/MyTab';
+import ReferralRequest from '../add-referral-request';
 
 const Consultation = () => {
   const { patient, encounter, edit } = useOutletContext<any>();
@@ -16,10 +17,28 @@ const Consultation = () => {
     {
       title: 'Telephonic Consultation',
       content: <TelephonicConsultation patient={patient} encounter={encounter} edit={edit} />
+    },
+    {
+      title: 'Referral Request',
+      content: <ReferralRequest />
     }
   ];
 
-  return <MyTab data={tabData} appearance="pills" />;
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return <MyTab
+  data={tabData.map(tab => ({
+    ...tab,
+    content: <div dir={dir}>{tab.content}</div>
+  }))}
+  appearance="pills"
+  lazy
+/>;
 };
 
 export default Consultation;

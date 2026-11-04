@@ -142,6 +142,13 @@ const PressureUlcerRiskAssessmentModal = ({ open, setOpen, onSave }) => {
     setRecord(prev => ({ ...prev, totalScore: total }));
   }, [fields, lovMap, record]);
   // Render the modal with title, size, position and action button
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -152,7 +159,7 @@ const PressureUlcerRiskAssessmentModal = ({ open, setOpen, onSave }) => {
       position="right"
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

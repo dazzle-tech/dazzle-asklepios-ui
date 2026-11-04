@@ -13,11 +13,9 @@ const patientSlice = createSlice({
   reducers: {
     setPatient: (state, action) => {
       state.patient = action.payload;
-      localStorage.setItem('patient', JSON.stringify(action.payload));
     },
     setEncounter: (state, action) => {
       state.encounter = action.payload;
-      localStorage.setItem('encounter', JSON.stringify(action.payload));
     }
   },
   extraReducers: builder => {

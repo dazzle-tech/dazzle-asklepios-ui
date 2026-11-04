@@ -20,7 +20,6 @@ const PreObservation = ({ patient }) => {
       : (undefined as any),
     { skip: !patientId }
   );
-  console.log("vitalPage: ", vitalPage);
 
   const formatDateTime = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -62,7 +61,7 @@ const PreObservation = ({ patient }) => {
   return (
     <Section
       isContainOnlyTable
-      title="Patient Observation"
+      title={<Translate>Patient Observation</Translate>}
       content={
         <MyTable data={vitalPage ?? []} columns={columns} height={250} />
       }

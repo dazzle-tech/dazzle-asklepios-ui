@@ -171,7 +171,15 @@ const PreviousRoundsHistory = ({ patient, encounter, isConfirmedRound, setIsConf
             setIsConfirmedRound(false);
         }
     }, [isConfirmedRound]);
-    return (
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+    return (<div dir={dir}>
         <MyTable
             data={nurseNotesResponse?.object ?? []}
             columns={columns}
@@ -187,7 +195,7 @@ const PreviousRoundsHistory = ({ patient, encounter, isConfirmedRound, setIsConf
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
         />
-
+</div>
     );
 };
 export default PreviousRoundsHistory;

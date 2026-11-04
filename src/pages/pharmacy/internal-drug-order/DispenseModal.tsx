@@ -73,7 +73,7 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
   const dispenseColumns = [
     { key: 'wardName', title: <Translate>Ward Name</Translate> },
     { key: 'medicationName', title: <Translate>Medication Name</Translate> },
-    { key: 'tolalRequiredDoses', title: <Translate>Total Required Qty.</Translate> },
+    { key: 'tolalRequiredDoses', title: <Translate>Total Required Quantity</Translate> },
     {
       key: 'warehouse',
       title: <Translate>Warehouse</Translate>,
@@ -138,7 +138,7 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
     },
     {
       key: 'qtyToDispense',
-      title: <Translate>Qty. to Dispense</Translate>,
+      title: <Translate>Quantity to Dispense</Translate>,
       render: rowData => (
         <Form>
           <MyInput
@@ -224,6 +224,11 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
     }
   ];
 
+                  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -239,7 +244,7 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
         <SectionContainer
           title={<div className="title-div"></div>}
           content={
-            <div>
+            <div dir={dir}>
               <MyNestedTable
                 data={dispenseRows}
                 columns={dispenseColumns}

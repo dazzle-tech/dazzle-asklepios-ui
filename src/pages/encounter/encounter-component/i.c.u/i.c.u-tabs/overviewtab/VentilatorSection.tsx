@@ -112,7 +112,9 @@ const VentilatorSection = () => {
             { key: 'AC', lovDisplayVale: 'AC' },
             { key: 'CPAP', lovDisplayVale: 'CPAP' },
           ]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           searchable={false}
         />

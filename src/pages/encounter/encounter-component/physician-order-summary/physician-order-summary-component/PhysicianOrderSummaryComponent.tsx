@@ -10,6 +10,7 @@ import { Form } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
+import Translate from '@/components/Translate';
 
 //declares
 const PhysicianOrderSummaryComponent = () => {
@@ -196,7 +197,7 @@ const PhysicianOrderSummaryComponent = () => {
   const columns_two = [
     { title: 'Note', dataIndex: 'text', key: 'text' },
     {
-      title: 'Created By / At',
+      title: <Translate>Created By / At</Translate>,
       key: 'createdByAt',
       render: (row: any) => (
         <>
@@ -302,7 +303,9 @@ const PhysicianOrderSummaryComponent = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={EncPriorityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Select Priority"
                 fieldLabel="Priority"

@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Result from './Result';
 import Reports from './Reports';
+import ResultsAndReports from './ResultsAndReports';
 import LaboratoryResultComparison from './LaboratoryResultComparison';
 import { useAppSelector } from '@/hooks';
 import MyTab from '@/components/MyTab';
@@ -11,22 +12,52 @@ const DiagnosticsResult = props => {
   //add new patient edits
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
-  const tabData = [
-    { title: 'Results', content: <Result patient={patient} /> },
-    {
-      title: 'Reports',
-      content: <Reports patient={patient}  />
-    },
-    {
-      title: 'Laboratory Result Comparison',
-      content: <LaboratoryResultComparison patient={patient} />
-    }
-  ];
+  const viewMode = location.state?.viewMode;
+  const edit = viewMode === 'readOnly';
+    
+const tabData = [
+  {
+    title: 'Results & Reports',
+    content: (
+      <ResultsAndReports patient={patient} />
+    )
+  },
+  {
+    title: 'Results',
+    content: (
+      <Result patient={patient} />
+    )
+  },
+  {
+    title: 'Reports',
+    content: (
+        <Reports patient={patient} />
+    )
+  },
+  {
+    title: 'Laboratory Result Comparison',
+    content: (
+        <LaboratoryResultComparison patient={patient} />
+    )
+  }
+];
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
-      <MyTab data={tabData} />
-    </>
+    <div dir={dir}>
+      <MyTab
+      lazy
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+      />
+    </div>
   );
 };
 export default DiagnosticsResult;

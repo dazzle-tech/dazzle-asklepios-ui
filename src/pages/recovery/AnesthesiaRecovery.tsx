@@ -186,7 +186,9 @@ const AnesthesiaRecovery = ({ operation }) => {
                 fieldType="select"
                 fieldName="consciousnessLevelLkey"
                 selectData={consciousnessLevelLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={anesthesia}
                 setRecord={setAnethesia}

@@ -105,6 +105,8 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                     fieldName="shiftLkey"
                     selectData={shiftsLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
+
                     selectDataValue="key"
                     record={nurseNotes}
                     setRecord={setNurseNotes}
@@ -119,6 +121,8 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                     fieldName="noteTypeLkey"
                     selectData={nurseNoteTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
+
                     selectDataValue="key"
                     record={nurseNotes}
                     setRecord={setNurseNotes}
@@ -137,6 +141,15 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
             </Form>
         </div>
     )
+
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
         <MyModal
             open={open}
@@ -152,7 +165,7 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                 icon: <FontAwesomeIcon icon={faNotesMedical} />,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
-            content={content}
+            content={<div dir={dir}>{content}</div>}
         ></MyModal>
     );
 };

@@ -59,6 +59,7 @@ const AdvancedModal: React.FC<AdvancedModalProps> = ({
       open={open}
       onClose={() => setOpen(false)}
       size={size}
+      enforceFocus={false}
       className={`custom-advanced-modal ${modalClass} ${mode === 'light' ? 'light' : 'dark'}`}
     >
       <Modal.Body className="modal-body-flex" style={{ height: height, maxHeight: 'none' }}>

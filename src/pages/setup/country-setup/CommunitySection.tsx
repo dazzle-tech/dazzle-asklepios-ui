@@ -25,6 +25,7 @@ import {
   useToggleCommunityActiveMutation,
   useUpdateCommunityMutation
 } from '@/services/setup/country/districtCommunityService';
+import TranslationModal from '@/components/TranslationModal';
 
 type Props = {
   districtId: number;
@@ -71,13 +72,20 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
 };
-
 const COMMUNITY_ERROR_MAP: Record<string, string> = {
   'district.required': 'District is required.',
   'payload.required': 'Community payload is required.',
   'id.required': 'Community id is required.',
-  'unique.community.name': 'Community name already exists for this district.',
-  'db.constraint': 'Database constraint violation.',
+
+  'unique.community.name':
+    'Community name already exists for this district.',
+
+  'db.constraint':
+    'Unable to save the community due to a database constraint.',
+
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
+
   notfound: 'Community not found.'
 };
 
@@ -94,7 +102,10 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [deleteMode, setDeleteMode] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [selectedForToggle, setSelectedForToggle] = useState<DistrictCommunity | null>(null);
-
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+    const [translationFields, setTranslationFields] = useState<
+      { fieldName: string; value: string }[]
+    >([]);
   // Filter state
   const [recordOfCommunityFilter, setRecordOfCommunityFilter] = useState<{
     filter: string;
@@ -330,9 +341,23 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
       if (body.id) {
         await updateCommunity({ districtId: Number(districtId), id: body.id, body }).unwrap();
         dispatch(notify({ msg: 'Community updated successfully', sev: 'success' }));
+         setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: body.name
+                  }
+                ]);
+                setShowTranslationModal(true);
       } else {
         await addCommunity({ districtId: Number(districtId), ...body }).unwrap();
         dispatch(notify({ msg: 'Community added successfully', sev: 'success' }));
+         setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: body.name
+                  }
+                ]);
+                setShowTranslationModal(true);
       }
 
       setCommunityForEdit({
@@ -503,7 +528,7 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
           <>
             <div className="inputs-dis-flex">
               <div className="geo-inline-form">
-                <Form fluid layout="inline">
+                <Form fluid layout="inline" className="form-of-filters-set-up">
                   <MyInput
                     fieldName="name"
                     fieldType="text"
@@ -512,6 +537,7 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
                     record={communityForEdit}
                     setRecord={setCommunityForEdit}
                     width={220}
+                    required
                   />
                   <div className="margin-top-37">
                     <MyButton
@@ -566,10 +592,17 @@ const CommunitySection: React.FC<Props> = ({ districtId, onSelect, selectedCommu
               rowClassName={row =>
                 selectedCommunity && row.id === selectedCommunity.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }
       />
+      
+      <TranslationModal
+              open={showTranslationModal}
+              setOpen={setShowTranslationModal}
+              fields={translationFields}
+            />
 
       <DeletionConfirmationModal
         open={openDeleteConfirm}

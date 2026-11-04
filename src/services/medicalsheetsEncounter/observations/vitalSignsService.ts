@@ -25,6 +25,9 @@ export type VitalSignsResponseVM = {
   bloodPressureSystolic: number | null;
   bloodPressureDiastolic: number | null;
   oxygenSaturation: number | null;
+  encounterId: number | null;
+  encounterNumber: string | null;
+  isActive: boolean |null;
 };
 
 export type TemperatureResponseVM = {
@@ -53,6 +56,14 @@ export type BloodPressureResponseVM = {
   createdAt: string;
 };
 
+export type VitalSignsFieldHistoryVM = {
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: string | null;
+  changedAt: string | null;
+};
+
 // --------- DTOs ---------
 export type VitalSignsCreateDTO = Omit<VitalSigns, 'id' | 'createdDate' | 'lastModifiedDate'>;
 
@@ -77,7 +88,10 @@ export const vitalSignsService = createApi({
       query: ({ id, ...body }) => ({
         url: `/api/patient/vital-signs/${id}`,
         method: 'PUT',
-        body
+        body: {
+          ...body,
+          id
+        }
       }),
       invalidatesTags: ['VitalSigns']
     }),
@@ -94,6 +108,18 @@ export const vitalSignsService = createApi({
         url: `/api/patient/vital-signs/latest/triage/encounter/${encodeURIComponent(
           String(encounterId)
         )}`
+      }),
+      providesTags: ['VitalSigns']
+    }),
+
+    getVitalSignsHistoryByEncounterId: builder.query<
+      VitalSignsFieldHistoryVM[],
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/vital-signs/encounter/${encodeURIComponent(
+          String(encounterId)
+        )}/history`
       }),
       providesTags: ['VitalSigns']
     }),
@@ -187,6 +213,8 @@ export const {
   useLazyGetLatestVitalSignsByEncounterIdQuery,
   useGetLatestTriageVitalSignsByEncounterIdQuery,
   useLazyGetLatestTriageVitalSignsByEncounterIdQuery,
+  useGetVitalSignsHistoryByEncounterIdQuery,
+  useLazyGetVitalSignsHistoryByEncounterIdQuery,
   useGetVitalSignsBetweenDatesByPatientIdQuery,
   useLazyGetVitalSignsBetweenDatesByPatientIdQuery,
   useGetRespiratoryRateListByPatientBetweenDatesQuery,

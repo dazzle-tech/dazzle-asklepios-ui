@@ -107,12 +107,16 @@ const FAMILY_HISTORY_ERROR_MAP: Record<string, string> = {
 
 /*  DEFAULT MODEL  */
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 const emptyFamilyHistory = {
   id: undefined,
   patientId: undefined,
   condition: '',
   relation: null,
-  inheritedDiseases: false
+  inheritedDiseases: false,
+  patientIsFree: false,
+  freeText: null
 };
 
 /*  COMPONENT  */
@@ -123,7 +127,27 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
   /* ENUM OPTIONS */
 
-  const relations = useEnumOptions('Relations');
+const relations = useEnumOptions('Relations', {
+  exclude: [
+    'SPOUSE',
+    'FRIEND',
+    'SON',
+    'DAUGHTER',
+    'MOTHER_IN_LAW',
+    'FATHER_IN_LAW',
+    'SON_IN_LAW',
+    'DAUGHTER_IN_LAW',
+    'STEPFATHER',
+    'STEPMOTHER',
+    'STEPDAUGHTER',
+    'STEPBROTHER',
+    'STEPSON',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'STEPSISTER',
+    'COUSIN',
+  ],
+});
 
   /* MUTATIONS */
 
@@ -135,8 +159,11 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
+        ...emptyFamilyHistory,
         ...initialData,
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null
       });
     } else {
       setFormData({
@@ -146,17 +173,43 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     }
   }, [initialData, open, patient?.id]);
 
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          condition: '',
+          relation: null,
+          inheritedDiseases: false,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
+
   /* SAVE */
 
   const handleSave = async () => {
+    const isFree = formData.patientIsFree === true;
     let errorMsg = '';
 
-    if (!formData.condition) {
-      errorMsg = 'Condition can’t be empty';
-    }
+    if (!isFree) {
+      if (!formData.condition) {
+        errorMsg = 'Condition can’t be empty';
+      }
 
-    if (!formData.relation) {
-      errorMsg = errorMsg ? `${errorMsg}, Relation can’t be empty` : 'Relation can’t be empty';
+      if (!formData.relation) {
+        errorMsg = errorMsg ? `${errorMsg}, Relation can’t be empty` : 'Relation can’t be empty';
+      }
     }
 
     if (errorMsg) {
@@ -165,23 +218,25 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     }
 
     const payload = {
-      id: formData.id,
-      patientId: Number(patient.id),
-      condition: formData.condition,
-      relation: formData.relation,
-      inheritedDiseases: Boolean(formData.inheritedDiseases)
+      ...(formData.id ? { id: formData.id } : {}),
+      patientId: Number(patient?.id),
+      condition: isFree ? '' : formData.condition,
+      relation: isFree ? null : formData.relation,
+      inheritedDiseases: isFree ? false : formData.inheritedDiseases,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
     try {
       if (formData.id) {
         await updateFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addFamilyHistory(payload).unwrap();
         dispatch(notify({ msg: 'Family history added successfully', sev: 'success' }));
+        setFormData({ ...emptyFamilyHistory, patientId: Number(patient?.id) });
       }
-
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, FAMILY_HISTORY_ERROR_MAP);
     }
@@ -192,17 +247,28 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'14vw'}
+        column
+        fieldLabel="Patient Is Free"
+        fieldType="checkbox"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+      <MyInput
+        width={'14vw'}
         column
         fieldLabel="Condition"
         fieldName="condition"
         record={formData}
         setRecord={setFormData}
-        required
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         fieldLabel="Relation"
         fieldType="select"
@@ -213,22 +279,31 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         searchable={false}
-        required
+        required={!formData.patientIsFree}
+        disabled={formData.patientIsFree}
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         fieldLabel="Inherited Diseases"
         fieldType="checkbox"
         fieldName="inheritedDiseases"
         record={formData}
         setRecord={setFormData}
+        disabled={formData.patientIsFree}
       />
     </Form>
   );
 
   /* MODAL */
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
     <MyModal
@@ -244,7 +319,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

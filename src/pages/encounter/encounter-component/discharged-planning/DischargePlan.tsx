@@ -31,7 +31,6 @@ import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
-  useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
 
 import { useGetProceduresQuery } from '@/services/procedureService';
@@ -45,6 +44,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import Prescription from '../prescription';
 import MyModal from '@/components/MyModal/MyModal';
 import PrescriptionNew from '@/pages/encounter/encounter-component/prescription-new';
+import Translate from '@/components/Translate';
 
 // Helper to join values
 const joinValuesFromArray = (values: any[]) => {
@@ -156,10 +156,10 @@ const DischargePlanning = () => {
     ]
   });
 
-  const {
-    data: orderTestList,
-    isLoading: loadTests
-  } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  // const {
+  //   data: orderTestList,
+  //   isLoading: loadTests
+  // } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
 
   const [prescriptionsListRequest] = useState({
     ...initialListRequest,
@@ -187,10 +187,10 @@ const DischargePlanning = () => {
     ]
   });
 
-  const {
-    data: diagnosticTestsResponse,
-    isFetching: isDiagnosticTestsFetching
-  } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
+  // const {
+  //   data: diagnosticTestsResponse,
+  //   isFetching: isDiagnosticTestsFetching
+  // } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
   const readinessStatus = useEnumOptions("ReadinessStatus");
 
@@ -206,7 +206,7 @@ const DischargePlanning = () => {
     loadTests ||
     isPrescriptionsFetching ||
     isGenericMedicationsFetching ||
-    isDiagnosticTestsFetching ||
+    // isDiagnosticTestsFetching ||
     loadingExisting;
 
   // ------------------ UPSERT / UPDATE ------------------
@@ -402,14 +402,14 @@ const DischargePlanning = () => {
         };
       }) || [];
 
-    const diagnosticTestsData =
-      diagnosticTestsResponse?.object?.map((test: any) => ({
-        testName: test?.test?.testName || '',
-        processingStatus:
-          test?.processingStatusLvalue?.lovDisplayVale ||
-          test?.processingStatusLkey ||
-          ''
-      })) || [];
+    // const diagnosticTestsData =
+    //   diagnosticTestsResponse?.object?.map((test: any) => ({
+    //     testName: test?.test?.testName || '',
+    //     processingStatus:
+    //       test?.processingStatusLvalue?.lovDisplayVale ||
+    //       test?.processingStatusLkey ||
+    //       ''
+    //   })) || [];
 
     return {
       patient: patientData,
@@ -420,7 +420,7 @@ const DischargePlanning = () => {
       // reviewSystems: reviewSystemsData,
       procedures: proceduresData,
       prescriptions: prescriptionsData,
-      diagnosticTests: diagnosticTestsData
+      // diagnosticTests: diagnosticTestsData
     };
   };
 
@@ -488,8 +488,15 @@ const DischargePlanning = () => {
   };
 
   // ------------------ RENDER ------------------
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Row gutter={15} className="d">
         <Form fluid>
           <Col md={12}>
@@ -693,7 +700,7 @@ const DischargePlanning = () => {
                   <>
                     <Row>
                       <Col md={12}>
-                        <Text>Medications to Continue</Text>
+                        <Text><Translate>Medications to Continue</Translate></Text>
                       </Col>
                       <Col md={12}>
                         <MyButton
@@ -821,6 +828,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Leaflet</Translate>}
                           fieldName="materialLeaflet"
                           showLabel={false}
                           record={object}
@@ -832,6 +840,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Verbal</Translate>}
                           fieldName="materialVerbal"
                           showLabel={false}
                           record={object}
@@ -843,6 +852,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Video</Translate>}
                           fieldName="materialVideo"
                           showLabel={false}
                           record={object}
@@ -889,8 +899,8 @@ const DischargePlanning = () => {
           loading={isDataLoading}
           disabled={isDataLoading}
         >
-          <FaModx title="Generate Report" size={20} />
-          {isDataLoading ? 'Preparing...' : isGeneratingPdf ? 'Generating...' : 'Generate Report'}
+          <FaModx title='Generate Report' size={20} />
+          {isDataLoading ? <Translate>Preparing...</Translate> : isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Generate Report</Translate>}
         </MyButton>
 
         <MyButton
@@ -899,7 +909,7 @@ const DischargePlanning = () => {
           disabled={isGeneratingPdf}
         >
           <FontAwesomeIcon icon={faPrint} />
-          {isGeneratingPdf ? 'Generating...' : 'Print Report'}
+          {isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Print Report</Translate>}
         </MyButton>
 
         <MyButton
@@ -937,7 +947,7 @@ const DischargePlanning = () => {
 
 
 
-    </>
+    </div>
   );
 };
 

@@ -319,6 +319,13 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     setSelectedRows([]);
   }, [diagnosticsTestCatalogHeader]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       actionChildButtonFunction={handleSaveTest}
@@ -327,11 +334,11 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       showChild={openChild}
       setShowChild={setOpenChild}
       title="Tests"
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       mainStep={[{ title: 'Tests', icon: <FaListAlt /> }]}
       childStep={[{ title: 'Add Tests', icon: <FaListAlt /> }]}
       childTitle="Add Tests"
-      childContent={conjureFormContentOfChildModal}
+      childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
       mainSize="sm"
       childSize="sm"
     />

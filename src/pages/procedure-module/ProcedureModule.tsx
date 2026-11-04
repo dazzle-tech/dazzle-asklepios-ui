@@ -7,6 +7,8 @@ import { useGetEncounterByIdQuery } from '@/services/encounterService';
 import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { useGetProceduresQuery } from '@/services/procedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds, fromCamelCaseToDBName } from '@/utils';
@@ -67,6 +69,10 @@ const ProcedureModule: React.FC = () => {
     filter: '',
     value: ''
   });
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
   const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, {
     skip: !procedure?.patientKey
@@ -76,7 +82,7 @@ const ProcedureModule: React.FC = () => {
     skip: !procedure?.encounterKey
   });
   const [openPerformModal, setOpenPerformModal] = useState(false);
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
 
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.key === procedure.key ? 'selected-row' : '';
@@ -115,7 +121,6 @@ const ProcedureModule: React.FC = () => {
   const [trigger] = useLazyGetPatientByIdQuery();
 
   const { data: procedureStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_STATUS');
-  const { data: procedureCatStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const { data: procedurePrioStatusLovQueryResponse } =
     useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: procedureLevelStatusLovQueryResponse } =
@@ -327,10 +332,7 @@ const ProcedureModule: React.FC = () => {
         title: <Translate>CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData.categoryKey
-          );
-          return category?.lovDisplayVale || ' ';
+          return formatEnumString(rowData.categoryKey) || ' ';
         }
       },
       {
@@ -555,7 +557,7 @@ const ProcedureModule: React.FC = () => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse, patients]
+    [patients]
   );
 
   const pageIndex = (listRequest.pageNumber || 1) - 1;
@@ -580,9 +582,9 @@ const ProcedureModule: React.FC = () => {
         <MyInput
           fieldType="select"
           fieldName="Category"
-          selectData={procedureCatStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={categoryOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={record}
           setRecord={setRecord}
           showLabel={false}
@@ -593,7 +595,9 @@ const ProcedureModule: React.FC = () => {
           fieldType="select"
           fieldName="Priority"
           selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
@@ -605,7 +609,9 @@ const ProcedureModule: React.FC = () => {
           fieldType="select"
           fieldName="Level"
           selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
@@ -617,7 +623,7 @@ const ProcedureModule: React.FC = () => {
             object={record}
             setOpject={setRecord}
             fieldName="indication"
-            fieldLabel="Indication"
+            fieldLabel={<Translate>Indication</Translate>}
           />
         </div>
       </Form>
@@ -626,7 +632,7 @@ const ProcedureModule: React.FC = () => {
 
   const filters = () => (
     <>
-      <Form fluid layout='inline' className='procedure-module-table-filters-handle-position'>
+      <Form fluid className='procedure-module-table-filters-handle-position'>
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -634,7 +640,6 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
-          column
         />
         <MyInput
           fieldType="date"
@@ -643,7 +648,6 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
-          column
         />
         <MyInput
           selectDataValue="value"
@@ -658,7 +662,6 @@ const ProcedureModule: React.FC = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          className="margin-21"
         />
         <MyInput
           fieldName="value"
@@ -667,26 +670,68 @@ const ProcedureModule: React.FC = () => {
           setRecord={setRecord}
           showLabel={false}
           placeholder="Search"
-          className="margin-21"
         />
 
 
-        <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
+        <SearchPatientCriteria
+          record={record}
+          setRecord={setRecord}
+          searchMarginTop={0}
+          liveSearchMinLength={0}
+          onSearchClick={() => {
+            setAppliedPatientSearch({
+              searchByField: (record as any)?.searchByField ?? 'fullName',
+              patientName: (record as any)?.patientName ?? ''
+            });
+            setListRequest(prev => ({ ...prev, pageNumber: 1 }));
+          }}
+        />
 
-        <Checkbox style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-          Show Cancelled
+        <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>
       <AdvancedSearchFilters searchFilter={true} content={contents} />
     </>
   );
 
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         filters={filters()}
         columns={tableColumns}
-        data={procedures?.object ?? []}
+        data={(procedures?.object ?? []).filter((row: any) => {
+          const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+          const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+          if (!raw) return true;
+          const patient = patients[row?.patientKey] ?? {};
+          if (field === 'patientMrn') {
+            return String(patient?.patientMrn ?? '').toLowerCase().includes(raw);
+          }
+          if (field === 'phoneNumber') {
+            return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'documentNumber') {
+            return String(patient?.documentNo ?? patient?.documentNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'dob') {
+            return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
+              String(appliedPatientSearch?.patientName ?? '').trim();
+          }
+          return String(patient?.fullName ?? '').toLowerCase().includes(raw);
+        })}
         onRowClick={(rowData: any) => {
           setProcedure(rowData);
         }}
@@ -710,7 +755,7 @@ const ProcedureModule: React.FC = () => {
         title="Perform Details"
         hideActionBtn
         size="full"
-        content={
+        content={<div dir={dir}>
           <Perform
             proRefetch={proRefetch}
             encounter={encounter}
@@ -719,6 +764,7 @@ const ProcedureModule: React.FC = () => {
             setProcedure={setProcedure}
             edit={false}
           />
+          </div>
         }
       />
 
@@ -729,7 +775,7 @@ const ProcedureModule: React.FC = () => {
         size="90vw"
         content={
           patient && encounter ? (
-            <PatientEMRModal inModal patient={patient} encounter={encounter} />
+            <div dir={dir}><PatientEMRModal inModal patient={patient} encounter={encounter} /></div>
           ) : (
             <div style={{ padding: 16 }}>No patient selected.</div>
           )
@@ -738,7 +784,8 @@ const ProcedureModule: React.FC = () => {
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+
+    </div>
   );
 };
 

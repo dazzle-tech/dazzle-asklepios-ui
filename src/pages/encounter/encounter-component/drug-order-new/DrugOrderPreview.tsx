@@ -46,13 +46,20 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       item => item.key === orderMedication.genericMedicationsKey
     )?.genericName || '-';
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {/* Medication Preview */}
       <SectionContainer
         title={<h5>Medication Preview</h5>}
-        content={<Form fluid>
-<div className="medication-form-flex">
+        content={<Form fluid dir={dir}>
+            <div className="medication-form-flex">
             <MyInput
               width={220}
               disabled
@@ -122,7 +129,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       {/* Medication Details */}
       <SectionContainer
         title={<Text className="font-style">Medication Details</Text>}
-        content={<Form fluid>
+        content={<Form fluid dir={dir}>
 <div className="medication-form-flex">
   <MyInput
     width={100}
@@ -238,7 +245,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       {/* Start/End & Home/Substitute */}
       <SectionContainer
         title={<Text className="font-style">Schedule</Text>}
-        content={<Form fluid>
+        content={<Form fluid dir={dir}>
 <div className="medication-form-flex">
   <MyInput
     fieldType="datetime"
@@ -284,7 +291,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       {/* Indications */}
       <SectionContainer
         title={<Text className="font-style">Indication</Text>}
-        content={<Form fluid>
+        content={<Form fluid dir={dir}>
 <div className="medication-form-flex">
   <MyInput
     width="100%"
@@ -328,7 +335,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       {/* Notes */}
       <SectionContainer
         title={<Text className="font-style">Notes</Text>}
-        content={<Form fluid>
+        content={<Form fluid  dir={dir}>
 
 <div className="medication-form-flex">
   <MyInput
@@ -359,7 +366,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
       {/* Diluent */}
       <SectionContainer
         title={<Text className="font-style">Diluent</Text>}
-        content={<Form fluid>
+        content={<Form fluid dir={dir}>
 <div className="medication-form-flex">
   <MyInput
     width={100}
@@ -412,7 +419,7 @@ const DrugOrderPreview: React.FC<DrugOrderPreviewProps> = ({
 
         </Form>}
       />
-    </>
+    </div>
   );
 };
 

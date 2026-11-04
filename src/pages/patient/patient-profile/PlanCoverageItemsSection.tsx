@@ -53,17 +53,25 @@ const PlanCoverageItemsSection: React.FC<Props> = ({ planId }) => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <SectionContainer
       title={<Translate>Plan Coverage Items</Translate>}
       minHeight="auto"
-      content={
+      content={<div dir={dir}>
         <MyTable
           height={220}
           loading={isFetching}
           data={itemsResp?.data ?? []}
           columns={columns}
         />
+        </div>
       }
     />
   );

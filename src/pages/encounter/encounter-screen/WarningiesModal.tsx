@@ -221,13 +221,13 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
         content={
           <>
             <div>
-              <Checkbox
+              <Checkbox className="show-cancelled"
                 checked={!showCanceled}
                 onChange={() => {
                   setShowCanceled(!showCanceled);
                 }}
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
             </div>
             <MyTable

@@ -379,7 +379,7 @@ const PainAssessment = ({ patient, encounter, edit }) => {
                 <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !painAssessment?.key : true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
-                <Checkbox onChange={(value, checked) => {
+                <Checkbox className="show-cancelled" onChange={(value, checked) => {
                     if (checked) {
                         //TODO convert key to code
                         setPainAssessmentStatus('3196709905099521');
@@ -388,7 +388,7 @@ const PainAssessment = ({ patient, encounter, edit }) => {
                         setPainAssessmentStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => {
                     if (checked) {
@@ -398,7 +398,7 @@ const PainAssessment = ({ patient, encounter, edit }) => {
                         setAllData(false);
                     }
                 }}>
-                    Show All
+                    <Translate>Show All</Translate>
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton

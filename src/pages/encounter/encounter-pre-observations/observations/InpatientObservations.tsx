@@ -200,21 +200,30 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         },
     ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <div>
+        <div dir={dir}>
             <AddEditInpatientObservations open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} observationsObject={patientObservationSummary} refetch={refetchObservations} edit={edit} />
             <div className='bt-div'>
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { }} disabled={edit}>
-                    Cancel
+                    <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => { if (checked) { } }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { } }}>
-                    Show All
+                    <Translate>Show All</Translate>
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewObservationsRecord}>Add </MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewObservationsRecord}>
+                        <Translate>Add</Translate>
+                    </MyButton>
                 </div>
             </div>
             <MyTable

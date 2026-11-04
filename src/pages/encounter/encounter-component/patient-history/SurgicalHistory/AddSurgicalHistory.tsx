@@ -12,7 +12,6 @@ import {
   useUpdateSurgicalHistoryMutation
 } from '@/services/patients/surgicalHistoryService';
 
-import { newSurgicalHistory } from '@/types/model-types-constructor-new';
 import { SurgicalHistory } from '@/types/model-types-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -89,18 +88,29 @@ const SURGICAL_HISTORY_ERROR_MAP: Record<string, string> = {
   notfound: 'Surgical history not found.'
 };
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 type SurgicalHistoryForm = Omit<
   SurgicalHistory,
-  'dateOfSurgery' | 'adverseReactionsToAnesthesia'
+  'dateOfSurgery' | 'adverseReactionsToAnesthesia' | 'complications'
 > & {
   dateOfSurgery: Date | string | number | null;
   adverseReactionsToAnesthesia: string[];
+  complications: string[];
 };
 
 const emptySurgicalHistoryForm: SurgicalHistoryForm = {
-  ...newSurgicalHistory,
+  surgery: '',
+  facility: '',
+  anesthesiaType: null,
+  complications: [],
+  implantsOrDevicesDescription: '',
+  hasImplantsOrDevices: false,
+  patientId: null,
   dateOfSurgery: null,
-  adverseReactionsToAnesthesia: []
+  adverseReactionsToAnesthesia: [],
+  patientIsFree: false,
+  freeText: null
 };
 
 const toDate = (value: Date | string | number | null | undefined) => {
@@ -126,6 +136,10 @@ const toStringArray = (value: string | string[] | null | undefined) => {
     .filter(Boolean);
 };
 
+// Strip undefined fields so they don't override safe defaults when spread
+const stripUndefined = (obj: Record<string, any>) =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+
 const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
@@ -143,12 +157,20 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...emptySurgicalHistoryForm,
-        ...initialData,
+        ...stripUndefined(initialData),
         patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null,
         dateOfSurgery: toDate(initialData.dateOfSurgery),
-        adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
+        adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia),
+        complications: toStringArray(initialData.complications)
       });
-      setOpenImplants({ open: initialData.hasImplantsOrDevices ?? false });
+      setOpenImplants({
+        open:
+          initialData.patientIsFree === true
+            ? false
+            : initialData.hasImplantsOrDevices ?? false
+      });
     } else {
       setFormData({
         ...emptySurgicalHistoryForm,
@@ -158,22 +180,56 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     }
   }, [initialData, open, patient?.id]);
 
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        setOpenImplants({ open: false });
+
+        return {
+          ...prev,
+          surgery: '',
+          facility: '',
+          anesthesiaType: null,
+          complications: [],
+          implantsOrDevicesDescription: '',
+          hasImplantsOrDevices: false,
+          dateOfSurgery: null,
+          adverseReactionsToAnesthesia: [],
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
+
   const validateBeforeSave = () => {
+    if (formData.patientIsFree === true) return [];
+
     const errors: string[] = [];
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Validate required fields
     if (!formData.surgery?.trim()) {
       errors.push('Surgery is required');
     }
 
     const surgeryDateValue = toDate(formData.dateOfSurgery);
+
     if (!surgeryDateValue) {
       errors.push('Date of surgery is required');
     } else {
       const surgeryDate = new Date(surgeryDateValue);
       surgeryDate.setHours(0, 0, 0, 0);
+
       if (surgeryDate > today) {
         errors.push('Date of surgery cannot be in the future');
       }
@@ -193,62 +249,100 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const handleSave = async () => {
     const errors = validateBeforeSave();
     if (errors.length) {
-      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
+      dispatch(notify({ msg: errors.map(e => `• ${e}`).join('\n'), sev: 'warning' }));
       return;
     }
 
-    const payload = {
-      ...formData,
+    const isFree = formData.patientIsFree === true;
+
+    const payload: SurgicalHistory = {
       patientId: Number(patient?.id),
-      dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
-      hasImplantsOrDevices: openImplants.open,
-      implantsOrDevicesDescription: openImplants.open
-        ? formData.implantsOrDevicesDescription
-        : null,
-      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia.length
-        ? formData.adverseReactionsToAnesthesia.join(',')
-        : null
+      surgery: isFree ? '' : formData.surgery?.trim() || '',
+      facility: isFree ? '' : formData.facility?.trim() || '',
+      anesthesiaType: isFree ? null : formData.anesthesiaType || null,
+      dateOfSurgery: isFree ? null : toNoonTimestamp(formData.dateOfSurgery),
+      complications: isFree
+        ? null
+        : formData.complications?.length
+          ? formData.complications.join(',')
+          : null,
+      adverseReactionsToAnesthesia: isFree
+        ? null
+        : formData.adverseReactionsToAnesthesia?.length
+          ? formData.adverseReactionsToAnesthesia.join(',')
+          : null,
+      hasImplantsOrDevices: isFree ? false : openImplants.open,
+      implantsOrDevicesDescription: isFree
+        ? null
+        : openImplants.open
+          ? formData.implantsOrDevicesDescription?.trim() || null
+          : null,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
+
+    if (formData.id) {
+      payload.id = formData.id;
+    }
 
     try {
       if (formData.id) {
         await updateSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history updated successfully', sev: 'success' }));
+        setOpen(false);
       } else {
         await addSurgicalHistory(payload).unwrap();
         dispatch(notify({ msg: 'Surgical history added successfully', sev: 'success' }));
+        setFormData({ ...emptySurgicalHistoryForm, patientId: Number(patient?.id) });
+        setOpenImplants({ open: false });
       }
-      setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, SURGICAL_HISTORY_ERROR_MAP);
     }
   };
 
+
+
+  const isFree = formData.patientIsFree === true;
+
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
-        width={200}
+        width={'14vw'}
         column
-        required
+        fieldLabel="Patient Is Free"
+        fieldType="checkbox"
+        fieldName="patientIsFree"
+        record={formData}
+        setRecord={setFormData}
+      />
+      <MyInput
+        width={'14vw'}
+        column
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Surgery"
         fieldName="surgery"
         record={formData}
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'14vw'}
         column
-        required
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Date of surgery"
         fieldType="date"
         fieldName="dateOfSurgery"
+        disableFutureDates
         record={formData}
         setRecord={setFormData}
       />
       <MyInput
-        width={200}
+        width={'14vw'}
         column
-        required
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Facility"
         fieldName="facility"
         record={formData}
@@ -256,66 +350,133 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
-        required
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Anesthesia Type"
         fieldType="select"
         fieldName="anesthesiaType"
         selectData={anesthesiaLov?.object ?? []}
         selectDataLabel="lovDisplayVale"
+        disableByField='isValid'
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
       />
 
       <MyInput
-        width={200}
+        width={'28vw'}
         column
         fieldLabel="Complications"
-        fieldType="select"
+        fieldType="checkPicker"
         fieldName="complications"
         selectData={complicationsLov?.object ?? []}
         selectDataLabel="lovDisplayVale"
+        disableByField='isValid'
+
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
+        renderValue={() => ''}
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
-        width={200}
+        width={'28vw'}
+        column
+        fieldLabel="Complications Details"
+        fieldType="textarea"
+        fieldName="complicationsDetails"
+        record={{
+          ...formData,
+          complicationsDetails: (formData.complications || [])
+            .map(selectedKey => {
+              const item = (complicationsLov?.object ?? []).find(
+                lov => lov.key === selectedKey
+              );
+              return item?.lovDisplayVale || selectedKey;
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => { }}
+        disabled
+      />
+
+      <MyInput
+        width={'28vw'}
         column
         fieldLabel="Adverse Reactions"
         fieldType="checkPicker"
         fieldName="adverseReactionsToAnesthesia"
         selectData={adverseLov?.object ?? []}
         selectDataLabel="lovDisplayVale"
+        disableByField='isValid'
+
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
+        renderValue={() => ''}
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
-        width={200}
+        width={'28vw'}
+        column
+        fieldLabel="Adverse Reactions Details"
+        fieldType="textarea"
+        fieldName="adverseReactionsDetails"
+        record={{
+          ...formData,
+          adverseReactionsDetails: (formData.adverseReactionsToAnesthesia || [])
+            .map(selectedKey => {
+              const item = (adverseLov?.object ?? []).find(
+                lov => lov.key === selectedKey
+              );
+              return item?.lovDisplayVale || selectedKey;
+            })
+            .filter(Boolean)
+            .join(', ')
+        }}
+        setRecord={() => { }}
+        disabled
+      />
+
+
+      <MyInput
+        width={'14vw'}
         column
         fieldLabel="Implants or Devices"
         fieldType="checkbox"
         fieldName="open"
         record={openImplants}
         setRecord={setOpenImplants}
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
-        width={200}
+        width={'14vw'}
         column
         fieldLabel="Implants/Devices Description"
         fieldName="implantsOrDevicesDescription"
         record={formData}
         setRecord={setFormData}
-        disabled={!openImplants.open}
+        disabled={isFree || !openImplants.open}
+        required={!isFree}
       />
     </Form>
   );
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
     <MyModal
@@ -326,7 +487,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

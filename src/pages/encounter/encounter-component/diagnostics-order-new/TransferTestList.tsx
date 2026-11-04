@@ -1,333 +1,527 @@
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
-import {
-  Checkbox,
-  CircularProgress,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Paper
-} from '@mui/material';
-import { skipToken } from '@reduxjs/toolkit/query';
-import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Col, Form, Row } from 'rsuite';
-import './styles.less';
+  import MyButton from '@/components/MyButton/MyButton';
+  import MyInput from '@/components/MyInput';
+  import Translate from '@/components/Translate';
+  import { useEnumOptions } from '@/services/enumsApi';
+  import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
+  import {
+    CircularProgress,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Paper
+  } from '@mui/material';
+  import { skipToken } from '@reduxjs/toolkit/query';
+  import SearchIcon from '@rsuite/icons/Search';
+  import React, { useEffect, useMemo, useState } from 'react';
+  import { useSelector } from 'react-redux';
+  import { Col, Form, Row } from 'rsuite';
+  import './styles.less';
 
-const TransferTestList = ({
-  open,
-  leftItems = [],
-  rightItems = [],
-  setLeftItems,
-  setRightItems,
-  searchTerm,
-  setSearchTerm,
-  searchType,
-  setSearchType,
-  isFetching
-}) => {
-  const mode = useSelector((state: any) => state.ui.mode);
-  const [checked, setChecked] = useState<any[]>([]);
-  const [searchInput, setSearchInput] = useState('');
-  const selectedDepartmentId = useSelector(
-    (state: any) => state.auth?.selectedDepartment?.departmentId
-  );
+  const TransferTestList = ({
+    open,
+    leftItems = [],
+    rightItems = [],
+    setLeftItems,
+    setRightItems,
+    searchTerm,
+    setSearchTerm,
+    searchType,
+    setSearchType,
+    onLoadMore,
+    isFetching
+  }) => {
+    const mode = useSelector((state: any) => state.ui.mode);
+    const [checked, setChecked] = useState<any[]>([]);
+    const [searchInput, setSearchInput] = useState('');
+    const selectedDepartmentId = useSelector(
+      (state: any) => state.auth?.selectedDepartment?.departmentId
+    );
 
-  const diagTypeResponse = useEnumOptions("TestType");
+    const diagTypeResponse = useEnumOptions("TestType");
 
-  const getItemType = (item: any) =>
-    item?.type;
+    const getItemType = (item: any) =>
+      item?.type;
 
-  /* ================= helpers ================= */
+    /* ================= helpers ================= */
 
-  const getItemKey = (item: any) => item?.id ?? item?.key;
-  const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
+    const normalizeSearchText = (value: any) =>
+      String(value ?? '').trim().toLocaleLowerCase();
 
-  const intersection = (a: any[], b: any[]) =>
-    a.filter(v => b.includes(v));
+    const getItemKey = (item: any) => item?.id ?? item?.key;
+    const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
 
-  /* ================= computed ================= */
+    const intersection = (a: any[], b: any[]) =>
+      a.filter(v => b.includes(v));
 
-  const { data: catalogsResponse } =
-    useGetCatalogsByDepartmentAndNotQuery(
-      selectedDepartmentId
-        ? {
-          departmentId: selectedDepartmentId,
-          page: 0,
-          size: 1000,
-        }
+    /* ================= computed ================= */
+
+    const { data: catalogsResponse } =
+      useGetCatalogsByDepartmentAndNotQuery(
+        selectedDepartmentId
+          ? {
+            departmentId: selectedDepartmentId,
+            page: 0,
+            size: 1000,
+          }
+          : skipToken
+      );
+
+
+    const catalogs = catalogsResponse?.data ?? [];
+
+    const { data: catalogTestsResponse } = useGetCatalogTestsQuery(
+      searchType?.catalogId
+        ? { catalogId: searchType.catalogId, page: 0, size: 1000 }
         : skipToken
     );
 
-
-  const catalogs = catalogsResponse?.data ?? [];
-
-  const { data: catalogTestsResponse } = useGetCatalogTestsQuery(
-    searchType?.catalogId
-      ? { catalogId: searchType.catalogId, page: 0, size: 1000 }
-      : skipToken
-  );
-
-  const catalogTests = catalogTestsResponse?.data?.tests ?? [];
+    const catalogTests = useMemo(() => {
+      const raw = catalogTestsResponse?.data;
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray((raw as any)?.tests)) return (raw as any).tests;
+      return [];
+    }, [catalogTestsResponse]);
 
 
-  const leftChecked = intersection(
-    checked,
-    leftItems.map(getItemKey)
-  );
+    const leftChecked = intersection(
+      checked,
+      leftItems.map(getItemKey)
+    );
 
-  const rightChecked = intersection(
-    checked,
-    rightItems.map(getItemKey)
-  );
+    const rightChecked = intersection(
+      checked,
+      rightItems.map(getItemKey)
+    );
 
 
-  const filteredLeft = useMemo(() => {
-    return leftItems.filter(item => {
-      const testId = getItemKey(item);
+    const filteredLeft = useMemo(() => {
+      const normalizedSearchTerm = normalizeSearchText(searchTerm);
 
-      // 🔹 name search
-      const matchesName = getItemName(item)
-        .toLowerCase()
-        .includes((searchTerm ?? '').toLowerCase());
+      return leftItems.filter(item => {
+        const testId = getItemKey(item);
 
-      // 🔹 type filter
-      const selectedType = searchType?.type;
-      const matchesType =
-        !selectedType || getItemType(item) === selectedType;
+        // 🔹 name search (case-insensitive)
+        const matchesName = normalizeSearchText(getItemName(item)).includes(normalizedSearchTerm);
 
-      // 🔥 catalog filter (REAL SOURCE)
-      const matchesCatalog =
-        !searchType?.catalogId ||
-        catalogTests.some(
-          t => String(t.id) === String(testId)
+        // 🔹 type filter
+        const selectedType = searchType?.type;
+        const matchesType =
+          !selectedType || normalizeSearchText(getItemType(item)) === normalizeSearchText(selectedType);
+
+        // 🔥 catalog filter (REAL SOURCE)
+        const matchesCatalog =
+          !searchType?.catalogId ||
+          catalogTests.some(
+            (t: any) =>
+              String(t.diagnosticTestId ?? t.testId ?? t.id) === String(testId)
+          );
+
+        return matchesName && matchesType && matchesCatalog;
+      });
+    }, [
+      leftItems,
+      searchTerm,
+      searchType?.type,
+      searchType?.catalogId,
+      catalogTests
+    ]);
+
+    /* ================= handlers ================= */
+
+    const handleToggle = (item: any) => () => {
+      const key = getItemKey(item);
+      setChecked(prev =>
+        prev.includes(key)
+          ? prev.filter(k => k !== key)
+          : [...prev, key]
+      );
+    };
+
+    const handleCheckedRight = () => {
+      const selected = leftItems.filter(i =>
+        leftChecked.includes(getItemKey(i))
+      );
+
+      setRightItems([...rightItems, ...selected]);
+      setLeftItems(
+        leftItems.filter(i => !leftChecked.includes(getItemKey(i)))
+      );
+      setChecked([]);
+    };
+
+    const handleCheckedLeft = () => {
+      const selected = rightItems.filter(i =>
+        rightChecked.includes(getItemKey(i))
+      );
+
+      setLeftItems([...leftItems, ...selected]);
+      setRightItems(
+        rightItems.filter(i => !rightChecked.includes(getItemKey(i)))
+      );
+      setChecked([]);
+    };
+
+      const handleAllRight = () => {
+        const existingKeys = new Set(rightItems.map(getItemKey));
+        const newItems = filteredLeft.filter(item => !existingKeys.has(getItemKey(item)));
+        setRightItems([...rightItems, ...newItems]);
+
+        setLeftItems(
+          leftItems.filter(
+            item =>
+              !filteredLeft.some(
+                filtered => getItemKey(filtered) === getItemKey(item)
+              )
+          )
         );
 
-      return matchesName && matchesType && matchesCatalog;
-    });
-  }, [
-    leftItems,
-    searchTerm,
-    searchType?.type,
-    searchType?.catalogId,
-    catalogTests
-  ]);
+        setChecked([]);
+      };
 
-  /* ================= handlers ================= */
+    const handleAllLeft = () => {
+      setLeftItems([...leftItems, ...rightItems]);
+      setRightItems([]);
+      setChecked([]);
+    };
 
-  const handleToggle = (item: any) => () => {
-    const key = getItemKey(item);
-    setChecked(prev =>
-      prev.includes(key)
-        ? prev.filter(k => k !== key)
-        : [...prev, key]
+    /* ================= effects ================= */
+
+    useEffect(() => {
+      if (!open) return;
+      setChecked([]);
+      setSearchTerm('');
+      setSearchType({});
+    }, [open]);
+
+    /* ================= render ================= */
+
+    const renderList = (items: any[], isRight = false) => (
+      <Paper sx={{ height: '60vh', overflow: 'auto' }}>
+        <List dense>
+          {items.map(item => {
+            const key = getItemKey(item);
+            return (
+              <ListItemButton
+                key={key}
+                onClick={handleToggle(item)}
+                onDoubleClick={() => {
+                  if (isRight) {
+                    setLeftItems([...leftItems, item]);
+                    setRightItems(rightItems.filter(i => getItemKey(i) !== key));
+                    setChecked(prev => prev.filter(k => k !== key));
+                  } else {
+                    setRightItems([...rightItems, item]);
+                    setLeftItems(leftItems.filter(i => getItemKey(i) !== key));
+                    setChecked(prev => prev.filter(k => k !== key));
+                  }
+                }}
+                disabled={!!isFetching}
+              >
+                <ListItemIcon
+                  onClick={e => e.stopPropagation()}
+                  sx={{ minWidth: 'auto' }}
+                >
+                  <MyInput
+                    className="transfer-test-list-check"
+                    fieldType="check"
+                    showLabel={false}
+                    fieldLabel={getItemName(item)}
+                    fieldName="selected"
+                    record={{ selected: checked.includes(key) }}
+                    setRecord={r => {
+                      const isChecked = !!r.selected;
+                      setChecked(prev =>
+                        isChecked
+                          ? prev.includes(key)
+                            ? prev
+                            : [...prev, key]
+                          : prev.filter(k => k !== key)
+                      );
+                    }}
+                    disabled={!!isFetching}
+                  />
+                </ListItemIcon>
+              </ListItemButton>
+            );
+          })}
+        </List>
+      </Paper>
     );
-  };
-
-  const handleCheckedRight = () => {
-    const selected = leftItems.filter(i =>
-      leftChecked.includes(getItemKey(i))
-    );
-
-    setRightItems([...rightItems, ...selected]);
-    setLeftItems(
-      leftItems.filter(i => !leftChecked.includes(getItemKey(i)))
-    );
-    setChecked([]);
-  };
-
-  const handleCheckedLeft = () => {
-    const selected = rightItems.filter(i =>
-      rightChecked.includes(getItemKey(i))
-    );
-
-    setLeftItems([...leftItems, ...selected]);
-    setRightItems(
-      rightItems.filter(i => !rightChecked.includes(getItemKey(i)))
-    );
-    setChecked([]);
-  };
-
-  const handleAllRight = () => {
-    setRightItems([...rightItems, ...leftItems]);
-    setLeftItems([]);
-    setChecked([]);
-  };
-
-  const handleAllLeft = () => {
-    setLeftItems([...leftItems, ...rightItems]);
-    setRightItems([]);
-    setChecked([]);
-  };
-
-  /* ================= effects ================= */
-
-  useEffect(() => {
-    if (!open) return;
-    setChecked([]);
-    setSearchTerm('');
-    setSearchType({});
-  }, [open]);
-
-  /* ================= render ================= */
-
-  const renderList = (items: any[]) => (
-    <Paper sx={{ height: '60vh', overflow: 'auto' }}>
-      <List dense>
-        {items.map(item => {
-          const key = getItemKey(item);
-          return (
-            <ListItemButton
-              key={key}
-              onClick={handleToggle(item)}
-              disabled={!!isFetching}
-            >
-              <ListItemIcon>
-                <Checkbox checked={checked.includes(key)} />
-              </ListItemIcon>
-              <ListItemText primary={getItemName(item)} />
-            </ListItemButton>
-          );
-        })}
-      </List>
-    </Paper>
-  );
 
   const filteredCatalogs = useMemo(() => {
     if (!searchType?.type) return catalogs;
 
-    return catalogs.filter(
-      (catalog: any) => catalog.type === searchType.type
-    );
+    return catalogs.filter((catalog: any) => {
+      return normalizeSearchText(catalog.type) === normalizeSearchText(searchType.type);
+    });
   }, [catalogs, searchType?.type]);
 
+    useEffect(() => {
+      setSearchType(prev => ({
+        ...prev,
+        catalogId: undefined
+      }));
+    }, [searchType?.type]);
 
-  useEffect(() => {
-    setSearchType(prev => ({
-      ...prev,
-      catalogId: undefined
-    }));
-  }, [searchType?.type]);
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
-  return (
-    <Row>
-      <Row>
-        <Form fluid>
-          <div className='transfer-test-list-inputs-handle'>
-            <MyInput
-              fieldName="type"
-              fieldType="select"
-              selectData={diagTypeResponse ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              width={"20vw"}
-              record={searchType}
-              setRecord={setSearchType}
-              disabled={!!isFetching}
-            />
+return (
+  <div dir={dir}>
+    {/* Filters */}
+    <div>
+      <Form fluid>
+        <div className="transfer-test-list-inputs-handle">
+          <MyInput
+            fieldName="type"
+            fieldType="select"
+            selectData={diagTypeResponse ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            width="20vw"
+            record={searchType}
+            setRecord={setSearchType}
+            disabled={!!isFetching}
+          />
 
-            <MyInput
-              fieldName="catalogId"
-              fieldType="select"
-              fieldLabel="Catalog"
-              selectData={filteredCatalogs ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              width="20vw"
-              record={searchType}
-              setRecord={setSearchType}
-              disabled={!!isFetching}
-            />
+          <MyInput
+            fieldName="catalogId"
+            fieldType="select"
+            fieldLabel="Catalog"
+            selectData={filteredCatalogs ?? []}
+            selectDataLabel="name"
+            selectDataValue="id"
+            width="20vw"
+            record={searchType}
+            setRecord={setSearchType}
+            disabled={!searchType?.type || !!isFetching}
+          />
+        </div>
+      </Form>
 
-          </div>
-        </Form>
-        <Form>
-          <div className='test-name-field-main-container'>
-            <MyInput
-              fieldName="testName"
-              fieldType="text"
-              placeholder="Search Test"
-              record={{ testName: searchInput }}
-              setRecord={(r: any) => setSearchInput(r.testName)}
-              width="100%"
-              disabled={!!isFetching}
-              showLabel={false}
-              rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)} />}
-              enterClick={() => {
-                setSearchTerm(searchInput);
-              }}
-            />
-          </div>
-        </Form>
-      </Row>
+      <Form>
+        <div className="test-name-field-main-container">
+          <MyInput
+            fieldName="testName"
+            fieldType="text"
+            placeholder="Search Test"
+            record={{ testName: searchInput }}
+            setRecord={(r: any) => {
+              const val = r?.testName ?? '';
+              setSearchInput(val);
+              setSearchTerm(val);
+            }}
+            width="100%"
+            disabled={!!isFetching}
+            showLabel={false}
+            rightAddon={
+              <SearchIcon
+                className="search-icon-test-name-icon"
+                onClick={() => setSearchTerm(searchInput)}
+              />
+            }
+            enterClick={() => setSearchTerm(searchInput)}
+          />
+        </div>
+      </Form>
+    </div>
 
-      <Row
+    {/* Main Content */}
+    <div
+      style={{
+        position: 'relative',
+        padding: 10,
+        borderRadius: 5,
+        background:
+          mode === 'light'
+            ? '#F8FAFE'
+            : 'var(--extra-dark-black)',
+
+        display: 'flex',
+        gap: 20,
+        alignItems: 'stretch'
+      }}
+    >
+      {isFetching && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.25)',
+            zIndex: 10
+          }}
+        >
+          <CircularProgress size={32} />
+        </div>
+      )}
+
+      {/* LEFT LIST */}
+      <div
         style={{
-          position: 'relative',
-          padding: 10,
-          borderRadius: 5,
-          background:
-            mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)'
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '50vh'
         }}
       >
-        {isFetching && (
+        <Paper
+          sx={{
+            flex: 1,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#475569',
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(0,0,0,0.25)',
-              zIndex: 10
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}
           >
-            <CircularProgress size={32} />
+            <span><Translate>Available Tests</Translate></span>
+            <span style={{ fontSize: 11, background: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>
+              {filteredLeft.length}
+            </span>
           </div>
-        )}
 
-        <Col md={10}>{renderList(filteredLeft)}</Col>
-
-        <Col md={4} style={{ textAlign: 'center' }}>
           <div
             style={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'stretch', // 👈 مهم
-              height: '100%'
+              flex: 1,
+              overflow: 'hidden',
+              minHeight: 0
             }}
           >
-            <div style={{ flex: 1 }}>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '12px',
-                minWidth: '50px'
-              }}
+            {renderList(filteredLeft, false)}
+          </div>
+
+          <div
+            style={{
+              padding: 10,
+              textAlign: 'center'
+            }}
+          >
+            <MyButton
+              appearance="ghost"
+              onClick={onLoadMore}
+              disabled={isFetching}
             >
-              <MyButton appearance='ghost' onClick={handleAllRight} disabled={!leftItems.length}>≫</MyButton>
-              <MyButton appearance='ghost' onClick={handleCheckedRight} disabled={!leftChecked.length}>&gt;</MyButton>
-              <MyButton appearance='ghost' onClick={handleCheckedLeft} disabled={!rightChecked.length}>&lt;</MyButton>
-              <MyButton appearance='ghost' onClick={handleAllLeft} disabled={!rightItems.length}>≪</MyButton>
-            </div>
-
-            <div style={{ flex: 1 }}>
-            </div>
+              Load More
+            </MyButton>
           </div>
-        </Col>
-        <Col md={10}>{renderList(rightItems)}</Col>
-      </Row>
-    </Row>
-  );
-};
+        </Paper>
+      </div>
 
-export default TransferTestList;
+      {/* BUTTONS */}
+      <div
+        style={{
+          width: 40,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 12
+        }}
+      >
+        <MyButton
+          appearance="ghost"
+          onClick={handleAllRight}
+          disabled={!leftItems.length}
+        >
+          ≫
+        </MyButton>
+
+        <MyButton
+          appearance="ghost"
+          onClick={handleCheckedRight}
+          disabled={!leftChecked.length}
+        >
+          &gt;
+        </MyButton>
+
+        <MyButton
+          appearance="ghost"
+          onClick={handleCheckedLeft}
+          disabled={!rightChecked.length}
+        >
+          &lt;
+        </MyButton>
+
+        <MyButton
+          appearance="ghost"
+          onClick={handleAllLeft}
+          disabled={!rightItems.length}
+        >
+          ≪
+        </MyButton>
+      </div>
+
+      {/* RIGHT LIST */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '50vh'
+        }}
+      >
+        <Paper
+          sx={{
+            flex: 1,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <div
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#475569',
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span><Translate>Selected Tests</Translate></span>
+            <span style={{ fontSize: 11, background: '#e2e8f0', padding: '1px 6px', borderRadius: 10 }}>
+              {rightItems.length}
+            </span>
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              overflow: 'hidden',
+              minHeight: 0
+            }}
+          >
+            {renderList(rightItems, true)}
+          </div>
+        </Paper>
+      </div>
+    </div>
+  </div>
+);
+  };
+
+  export default TransferTestList;

@@ -35,9 +35,14 @@ const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
     { skip: !product?.uomGroupId }
   );
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <Form fluid>
 <div className="flex-row-product-set-up-page">
         <MyInput
@@ -109,7 +114,7 @@ const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
 
     <UomConversionModal open={openFullModal} setOpen={setOpenFullModal} uom={selectedUom} />
 
-    </>
+    </div>
   );
 };
 

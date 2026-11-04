@@ -1,13 +1,14 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdMedicalServices } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditService from './AddEditService';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import LinkedItems from './LinkedItems';
 import './styles.less';
@@ -29,13 +30,21 @@ import {
   useLazyGetServicesByCategoryQuery,
   useLazyGetServicesByCodeQuery,
   useLazyGetServicesByNameQuery,
+  useLazyGetServicesByStatusQuery,
+  useLazyGetServicesByAbbreviationQuery,
+  useLazyGetServicesByPriceQuery,
+  useLazyGetServicesByCurrencyQuery
 } from '@/services/setup/serviceService';
 import { newService } from '@/types/model-types-constructor-new';
-import { Service } from '@/types/model-types-new';
-import { useEnumOptions } from '@/services/enumsApi';
+import { PolicyAssignment, Service } from '@/types/model-types-new';
+import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PolicyAssignmentManager from '@/components/PolicyAssignment/PolicyAssignmentManager';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 
 const ServiceSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -45,11 +54,13 @@ const ServiceSetup: React.FC = () => {
 
   // UI state
   const [popupOpen, setPopupOpen] = useState(false);
+  const priceListPrompt = usePriceListPrompt();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
-
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedServiceForPolicyAssignment, setSelectedServiceForPolicyAssignment] = useState<PolicyAssignment>(null);
   // Filter state (AgeGroup-style)
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
   const [isFiltered, setIsFiltered] = useState(false);
@@ -79,10 +90,15 @@ const ServiceSetup: React.FC = () => {
   const [fetchByCategory] = useLazyGetServicesByCategoryQuery();
   const [fetchByCode] = useLazyGetServicesByCodeQuery();
   const [fetchByName] = useLazyGetServicesByNameQuery();
+  const [fetchByStatus] = useLazyGetServicesByStatusQuery();
+  const [fetchByAbbreviation] = useLazyGetServicesByAbbreviationQuery();
+  const [fetchByPrice] = useLazyGetServicesByPriceQuery();
+  const [fetchByCurrency] = useLazyGetServicesByCurrencyQuery();
   const [fetchByFacility] = useLazyGetServicesQuery(); // lazy for /by-facility/{facilityId}
 
   // Enums + Facilities
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
+  const currencyOptions = useEnumCapitalized('Currency');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
   // Main list: ALL services (no facility filter)
@@ -108,6 +124,14 @@ const ServiceSetup: React.FC = () => {
         return (svc.code || '').toLowerCase().includes(String(value).toLowerCase());
       case 'name':
         return (svc.name || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'abbreviation':
+        return (svc.abbreviation || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'price':
+        return Number(svc.price) === Number(value);
+      case 'currency':
+        return String(svc.currency || '').toUpperCase() === String(value).toUpperCase();
+      case 'status':
+        return Boolean(svc.isActive) === Boolean(value);
       default:
         return true;
     }
@@ -172,9 +196,13 @@ const ServiceSetup: React.FC = () => {
   // Filters available
   const filterFields = [
     { label: 'Facility', value: 'facilityId' },
-    { label: 'Category', value: 'category' },
     { label: 'Name', value: 'name' },
+    { label: 'Abbreviation', value: 'abbreviation' },
     { label: 'Code', value: 'code' },
+    { label: 'Category', value: 'category' },
+    { label: 'Price', value: 'price' },
+    { label: 'Currency', value: 'currency' },
+    { label: 'Status', value: 'status' },
   ];
 
   // New
@@ -185,7 +213,6 @@ const ServiceSetup: React.FC = () => {
 
   // ===== Save (add/update) — reads facilityId from modal object =====
   const handleSave = async () => {
-    setPopupOpen(false);
     const isUpdate = !!service.id;
 
     const resolvedFacilityIdRaw =
@@ -201,6 +228,65 @@ const ServiceSetup: React.FC = () => {
       return;
     }
 
+
+    const fieldLabels = {
+      name: 'Name',
+      code: 'Code',
+      category: 'Category',
+    };
+
+    const missingFields = Object.keys(fieldLabels).filter((key) => !service[key]);
+    let messages = [];
+    if (missingFields.length > 0) {
+      messages = missingFields.map(
+        (key) => `Field '${fieldLabels[key]}' is required`
+      );
+    }
+
+    const isEmpty = (val) => val === null || val === undefined || val === '';
+    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+    if (
+      service?.parallelCapacityValue === null ||
+      service?.parallelCapacityValue === undefined ||
+      service?.parallelCapacityValue < 1
+    ) {
+      messages.push(
+        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+      );
+    }
+    if (service?.appointable) {
+      if (isEmpty(service?.defaultDurationMinutes) || service?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes is required and should be greater than 0')
+      }
+      if (isEmpty(service?.defaultBufferBeforeMinutes) || service?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+      }
+      if (isEmpty(service?.defaultBufferAfterMinutes) || service?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+      }
+    }
+    else {
+      if (isNotEmpty(service?.defaultDurationMinutes) && service?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes should be greater than 0')
+      }
+      if (isNotEmpty(service?.defaultBufferBeforeMinutes) && service?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+      }
+      if (isNotEmpty(service?.defaultBufferAfterMinutes) && service?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+      }
+    }
+    if (messages.length > 0) {
+      dispatch(
+        notify({
+          msg: messages.join(', '),
+          sev: 'warning',
+        })
+      );
+
+      return;
+    }
+
     const payloadBody: any = {
       ...service,
       facilityId: effectiveFacilityId,
@@ -208,6 +294,10 @@ const ServiceSetup: React.FC = () => {
         typeof (service as any).price === 'string'
           ? Number((service as any).price)
           : (service as any).price,
+      parallelCapacityValue: service.parallelCapacityValue ?? 1,
+      defaultDurationMinutes: service?.defaultDurationMinutes,
+      defaultBufferBeforeMinutes: service.defaultBufferBeforeMinutes ?? 0,
+      defaultBufferAfterMinutes: service.defaultBufferAfterMinutes ?? 0,
     };
 
     try {
@@ -216,18 +306,32 @@ const ServiceSetup: React.FC = () => {
         saved = await updateService({
           id: service.id!,
           facilityId: effectiveFacilityId,
+          parallelCapacityValue: service.parallelCapacityValue ?? 1,
+          defaultDurationMinutes: service?.defaultDurationMinutes,
+          defaultBufferBeforeMinutes: service.defaultBufferBeforeMinutes ?? 0,
+          defaultBufferAfterMinutes: service.defaultBufferAfterMinutes ?? 0,
           ...payloadBody,
         }).unwrap();
-
+        setPopupOpen(false);
         dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
       } else {
         saved = await addService({
           facilityId: effectiveFacilityId,
           ...payloadBody,
         }).unwrap();
-
+        setPopupOpen(false);
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'SERVICE',
+        sourceId: saved?.id ?? service.id!,
+        itemCode: payloadBody.code,
+        itemName: payloadBody.name,
+        unitPrice: payloadBody.price,
+        facilityId: effectiveFacilityId,
+        currency: payloadBody.currency
+      });
 
       if (isFiltered) {
         const { data: nextData, added } = upsertIntoFiltered(
@@ -371,11 +475,12 @@ const ServiceSetup: React.FC = () => {
     size = paginationParams.size,
     sort?: string
   ) => {
-    if (!value && value !== 0) return undefined;
-    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
+    if (value === null || value === undefined || value === '') return undefined;
+
+    const effectiveSort =
+      sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
 
     if (fieldName === 'facilityId') {
-      // by facility (uses getServices endpoint)
       return await fetchByFacility({
         facilityId: Number(value),
         page,
@@ -390,10 +495,49 @@ const ServiceSetup: React.FC = () => {
         sort: effectiveSort,
       }).unwrap();
     } else if (fieldName === 'code') {
-      return await fetchByCode({ code: value, page, size, sort: effectiveSort }).unwrap();
+      return await fetchByCode({
+        code: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
     } else if (fieldName === 'name') {
-      return await fetchByName({ name: value, page, size, sort: effectiveSort }).unwrap();
+      return await fetchByName({
+        name: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'abbreviation') {
+      return await fetchByAbbreviation({
+        abbreviation: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'price') {
+      return await fetchByPrice({
+        price: Number(value),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'currency') {
+      return await fetchByCurrency({
+        currency: String(value).toUpperCase(),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'status') {
+      return await fetchByStatus({
+        isActive: Boolean(value),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
     }
+
     return undefined;
   };
 
@@ -416,10 +560,11 @@ const ServiceSetup: React.FC = () => {
     size = filterPagination.size,
     sort = filterPagination.sort
   ) => {
-    if (!value && value !== 0) {
+    if (value === null || value === undefined || value === '') {
       resetToUnfiltered();
       return;
     }
+
     try {
       const resp = await runFilterQuery(fieldName, value, page, size, sort);
       setFilteredData(resp?.data ?? []);
@@ -496,6 +641,23 @@ const ServiceSetup: React.FC = () => {
           setPopupOpen(true);
         }}
       />
+      <MdLocalOffer
+        className="icons-style"
+        title="Price Lists"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() =>
+          priceListPrompt.view({
+            itemType: 'SERVICE',
+            sourceId: rowData.id,
+            itemCode: rowData.code,
+            itemName: rowData.name,
+            unitPrice: rowData.price,
+            facilityId: rowData.facilityId,
+            currency: rowData.currency
+          })
+        }
+      />
       {rowData?.isActive ? (
         <MdDelete
           className="icons-style"
@@ -521,6 +683,17 @@ const ServiceSetup: React.FC = () => {
           }}
         />
       )}
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedServiceForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
     </div>
   );
 
@@ -605,6 +778,51 @@ const ServiceSetup: React.FC = () => {
           searchable={false}
         />
       );
+    } else if (selectedFilter === 'currency') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={currencyOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          searchable={false}
+        />
+      );
+    } else if (selectedFilter === 'price') {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="number"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Price"
+          width={220}
+        />
+      );
+    } else if (selectedFilter === 'status') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: true },
+            { label: 'Inactive', value: false },
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          searchable={false}
+        />
+      );
     } else {
       dynamicInput = (
         <MyInput
@@ -620,7 +838,7 @@ const ServiceSetup: React.FC = () => {
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -628,17 +846,29 @@ const ServiceSetup: React.FC = () => {
           fieldName="filter"
           fieldType="select"
           record={recordOfFilter}
-          setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
+          setRecord={(updated: any) =>
+            setRecordOfFilter({
+              filter: updated.filter,
+              value: '',
+            })
+          }
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
           width="170px"
         />
+
         {dynamicInput}
+
         <MyButton
           color="var(--deep-blue)"
           onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
+            const isEmptyValue =
+              recordOfFilter.value === null ||
+              recordOfFilter.value === undefined ||
+              recordOfFilter.value === '';
+
+            if (isEmptyValue) {
               resetToUnfiltered();
             } else {
               handleFilterChange(
@@ -682,9 +912,14 @@ const ServiceSetup: React.FC = () => {
     }
   }, [recordOfFilter.value]);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={tableData}
         totalCount={totalCount}
@@ -717,6 +952,26 @@ const ServiceSetup: React.FC = () => {
         service={service}
         setService={setService}
         handleSave={handleSave}
+      />
+      <PriceListPrompt prompt={priceListPrompt} />
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Service Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedServiceForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="SERVICE"
+              resourceId={selectedServiceForPolicyAssignment.id ?? 0}
+              facilityId={selectedServiceForPolicyAssignment.facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteService}

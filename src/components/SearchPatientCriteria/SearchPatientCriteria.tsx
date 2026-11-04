@@ -8,13 +8,17 @@ interface SearchPatientCriteriaProps {
   setRecord: (value: any) => void;
   onSearchClick?: () => void;
   searchMarginTop?: string | number;
+  searchOnIconClickOnly?: boolean;
+  liveSearchMinLength?: number;
 }
 
 const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   record,
   setRecord,
   onSearchClick,
-  searchMarginTop = '0.9vw'
+  searchMarginTop = '0.9vw',
+  searchOnIconClickOnly = false,
+  liveSearchMinLength = 3
 }) => {
   const commit = useCallback(
     (patch: any) => {
@@ -28,7 +32,11 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   );
 
   useEffect(() => {
-    if (record?.searchByField === undefined || record?.searchByField === null || record?.searchByField === '') {
+    if (
+      record?.searchByField === undefined ||
+      record?.searchByField === null ||
+      record?.searchByField === ''
+    ) {
       commit({ searchByField: 'fullName' });
     }
   }, [record?.searchByField, commit]);
@@ -36,7 +44,10 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   const searchOptions = useMemo(
     () => [
       { label: 'Full Name', value: 'fullName' },
-      { label: 'MRN', value: 'patientMrn' }
+      { label: 'MRN', value: 'patientMrn' },
+      { label: 'Phone Number', value: 'phoneNumber' },
+      { label: 'Document / ID Number', value: 'documentNumber' },
+      { label: 'Date of Birth', value: 'dob' }
     ],
     []
   );
@@ -53,19 +64,15 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
         searchByField ??
         'fullName';
 
-      commit({ searchByField: next });
+      // Clear previous value so incompatible criteria are not carried over.
+      commit({ searchByField: next, patientName: '' });
     },
     [commit, searchByField]
   );
 
   const handleTextChange = useCallback(
     (upd: any) => {
-      const next =
-        upd?.patientName ??
-        upd?.value ??
-        upd?.text ??
-        '';
-
+      const next = upd?.patientName ?? upd?.value ?? upd?.text ?? '';
       commit({ patientName: next });
     },
     [commit]
@@ -77,14 +84,30 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
 
   const handleSearchEnter = useCallback(
     (e: React.KeyboardEvent) => {
+      if (searchOnIconClickOnly) return;
+
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
         applySearch();
       }
     },
-    [applySearch]
+    [applySearch, searchOnIconClickOnly]
   );
+
+  useEffect(() => {
+    if (!liveSearchMinLength) return;
+
+    const value = String(patientName ?? '').trim();
+
+    if (value.length >= liveSearchMinLength || value.length === 0) {
+      const timer = setTimeout(() => {
+        onSearchClick?.();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [patientName, liveSearchMinLength, onSearchClick]);
 
   return (
     <div className="search-patient-criteria-handle-position-row">

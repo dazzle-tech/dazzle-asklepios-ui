@@ -1,0 +1,366 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery } from '../../../newApi';
+import * as modelTypes from '@/types/model-types-new';
+import { parseLinkHeader } from '@/utils/paginationHelper';
+
+type Id = number | string;
+
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
+
+
+export const uccMedicationOrderService = createApi({
+  reducerPath: 'uccMedicationOrderApi',
+  baseQuery: BaseQuery,
+  tagTypes: ['UccMedicationOrder'],
+  endpoints: builder => ({
+
+    // ================= CREATE =================
+    createUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      modelTypes.PatientUccMedicationOrder
+    >({
+      query: data => ({
+        url: `/api/patient/urgent-care-medication-orders`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['UccMedicationOrder'],
+    }),
+
+    // ================= UPDATE =================
+    updateUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      { id: Id; data: modelTypes.PatientUccMedicationOrder }
+    >({
+      query: ({ id, data }) => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+
+filterGroupedUccMedicationOrders: builder.query<
+  PagedResult<modelTypes.PatientUccMedicationOrderGroup>,
+  {
+    patientId?: Id;
+    patientIds?: number[];
+    encounterId?: Id;
+    activeIngredientId?: Id;
+    status?: string;
+    statusIn?: string[];
+    statusNotIn?: string[];
+    route?: string;
+    orderDateFrom?: string;
+    orderDateTo?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+  }
+>({
+  query: ({
+    patientId,
+    patientIds,
+    encounterId,
+    activeIngredientId,
+    status,
+    statusIn,
+    statusNotIn,
+    route,
+    orderDateFrom,
+    orderDateTo,
+    page = 0,
+    size = 10,
+    sort = 'createdDate,desc',
+  }) => ({
+    url: `/api/patient/urgent-care-medication-orders/filter-grouped`,
+    params: {
+      patientId,
+      patientIds,
+      encounterId,
+      activeIngredientId,
+      status,
+      statusIn,
+      statusNotIn,
+      route,
+      orderDateFrom,
+      orderDateTo,
+      page,
+      size,
+      sort,
+    },
+  }),
+
+  transformResponse: (
+    response: any,
+  ): PagedResult<modelTypes.PatientUccMedicationOrderGroup> => ({
+    data: response?.content ?? [],
+    totalCount: response?.totalElements ?? 0,
+  }),
+
+  providesTags: ['UccMedicationOrder'],
+}),
+
+submitUccMedicationOrderGroup: builder.mutation<
+  modelTypes.PatientUccMedicationOrder[],
+  { orderGroupId: Id; isHighAlert: boolean }
+>({
+  query: ({ orderGroupId, isHighAlert }) => ({
+    url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}/submit`,
+    method: 'POST',
+    body: { isHighAlert },
+  }),
+
+  invalidatesTags: ['UccMedicationOrder'],
+}),
+
+    // ================= CREATE PLAN =================
+    // Splits a submitted order that was not split on submit, using the frequency setup (from the submit time, over 24h)
+    createUccMedicationOrderPlan: builder.mutation<modelTypes.PatientUccMedicationOrder[], { orderGroupId: Id }>({
+      query: ({ orderGroupId }) => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}/plan`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['UccMedicationOrder']
+    }),
+
+    // ================= GET BY ID =================
+    getUccMedicationOrderById: builder.query<
+      modelTypes.PatientUccMedicationOrder,
+      Id
+    >({
+      query: id => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}`,
+      }),
+      providesTags: (_res, _err, id) => [
+        { type: 'UccMedicationOrder', id },
+      ],
+    }),
+
+    // ================= FILTER (PAGINATION) =================
+
+    filterUccMedicationOrders: builder.query<
+      PagedResult<modelTypes.PatientUccMedicationOrder>,
+      {
+        patientId?: Id;
+        encounterId?: Id;
+        activeIngredientId?: Id;
+        status?: string;
+        statusIn?: string[];
+        statusNotIn?: string[];
+        route?: string;
+        frequency?: string;
+        page?: number;
+        size?: number;
+        // Several sort orders are sent as repeated sort params, e.g. ['orderGroupId,desc', 'doseTime,asc']
+        sort?: string | string[];
+        timestamp?: number;
+        orderDateFrom?: string;
+        orderDateTo?: string;
+        patientIds?: number[];
+      }
+    >({
+      query: ({
+        patientId,
+        patientIds,
+        encounterId,
+        activeIngredientId,
+
+        orderDateFrom,
+        orderDateTo,
+
+        status,
+        statusIn,
+        statusNotIn,
+        route,
+        frequency,
+        page = 0,
+        size = 10,
+        sort = 'createdDate,desc',
+      }) => ({
+        url: `/api/patient/urgent-care-medication-orders/filter?${new URLSearchParams(
+          (Array.isArray(sort) ? sort : [sort]).map(s => ['sort', s])
+        ).toString()}`,
+        params: {
+          patientId,
+          patientIds,
+          encounterId,
+          activeIngredientId,
+
+          orderDateFrom,
+          orderDateTo,
+
+          status,
+          statusIn,
+          statusNotIn,
+          route,
+          frequency,
+          page,
+          size,
+        },
+      }),
+
+      transformResponse: (
+        response: any,
+        meta
+      ): PagedResult<modelTypes.PatientUccMedicationOrder> => {
+        const headers = meta?.response?.headers;
+
+        if (response?.content) {
+          return {
+            data: response.content ?? [],
+            totalCount: response.totalElements ?? 0,
+          };
+        }
+
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+
+      providesTags: ['UccMedicationOrder'],
+    }),
+
+    submitUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      { id: Id; isHighAlert: boolean }
+    >({
+      query: ({ id, isHighAlert }) => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
+        method: 'POST',
+        body: { isHighAlert },
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+
+    // ================= ADMINISTER =================
+  administerUccMedicationOrder: builder.mutation<
+  modelTypes.PatientUccMedicationOrder,
+  {
+    id: Id;
+    actualAdministerTime: Date;
+    brandMedicationId: number;
+    uomGroupUnitId: number;
+    quantity: number;
+  }
+>({
+  query: ({ id, actualAdministerTime, brandMedicationId, uomGroupUnitId, quantity }) => ({
+    url: `/api/patient/urgent-care-medication-orders/${id}/administer`,
+    method: 'POST',
+    body: {
+      actualAdministerTime,
+      brandMedicationId,
+      uomGroupUnitId,
+      quantity,
+    },
+  }),
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'UccMedicationOrder', id },
+    'UccMedicationOrder',
+  ],
+}),
+    // ================= DOUBLE CHECK =================
+    doubleCheckUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      Id
+    >({
+      query: id => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}/double-check`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_res, _err, id) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+
+    // ================= DISCARD =================
+    discardUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      { id: Id; discardReason: string }
+    >({
+      query: ({ id, discardReason }) => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}/discard`,
+        method: 'POST',
+        body: { discardReason },
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+
+    // ================= CANCEL =================
+    cancelUccMedicationOrder: builder.mutation<
+      modelTypes.PatientUccMedicationOrder,
+      { id: Id; cancellationReason: string }
+    >({
+      query: ({ id, cancellationReason }) => ({
+        url: `/api/patient/urgent-care-medication-orders/${id}/cancel`,
+        method: 'POST',
+        body: { cancellationReason },
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'UccMedicationOrder', id },
+        'UccMedicationOrder',
+      ],
+    }),
+   
+    updateUccMedicationOrderGroup: builder.mutation<
+      modelTypes.PatientUccMedicationOrder[],
+      {
+        orderGroupId: Id;
+        data: modelTypes.PatientUccMedicationOrder;
+      }
+    >({
+      query: ({ orderGroupId, data }) => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}`,
+        method: 'PUT',
+        body: data
+      }),
+
+      invalidatesTags: ['UccMedicationOrder']
+    }),
+
+   
+
+  }),
+});
+
+export const {
+  useCreateUccMedicationOrderMutation,
+  useUpdateUccMedicationOrderMutation,
+  useGetUccMedicationOrderByIdQuery,
+  useLazyGetUccMedicationOrderByIdQuery,
+
+  useFilterUccMedicationOrdersQuery,
+  useFilterGroupedUccMedicationOrdersQuery,
+
+  useSubmitUccMedicationOrderMutation,
+  useSubmitUccMedicationOrderGroupMutation,
+  useCreateUccMedicationOrderPlanMutation,
+  useUpdateUccMedicationOrderGroupMutation,
+  useAdministerUccMedicationOrderMutation,
+  useDoubleCheckUccMedicationOrderMutation,
+  useDiscardUccMedicationOrderMutation,
+  useCancelUccMedicationOrderMutation,
+} = uccMedicationOrderService;

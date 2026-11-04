@@ -33,8 +33,17 @@ const Metadata = () => {
   const divContent = (
     "Metadata"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Metadata'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // className for selected row
   const isSelected = rowData => {
@@ -50,12 +59,6 @@ const Metadata = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     handleFilterChange('objectName', recordOFSearch['objectName']);
@@ -122,9 +125,16 @@ const Metadata = () => {
     }
   ];
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Carousel className="carousel-metadata" autoplay={false} activeIndex={carouselActiveIndex}>
-      <Panel>
+      <Panel dir={dir}>
         <MyTable
           height={450}
           data={metadataListResponse?.object ?? []}

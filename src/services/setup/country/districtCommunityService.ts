@@ -58,6 +58,18 @@ export const districtCommunityService = createApi({
       providesTags: ['DistrictCommunity']
     }),
 
+    getCommunitiesByNameSearch: builder.query<
+      PagedResult<any>,
+      WithDistrict & { name: string } & PagedParams
+    >({
+      query: ({ districtId, name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/district/${districtId}/community/names/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['DistrictCommunity']
+    }),
+
     addCommunity: builder.mutation<any, WithDistrict & any>({
       query: ({ districtId, ...body }) => ({
         url: `/api/setup/district/${districtId}/community`,
@@ -107,7 +119,8 @@ export const {
   useLazyGetCommunitiesByDistrictQuery,
   useGetCommunitiesByNameQuery,
   useLazyGetCommunitiesByNameQuery,
-
+  useGetCommunitiesByNameSearchQuery,
+  useLazyGetCommunitiesByNameSearchQuery,
   // Mutations
   useAddCommunityMutation,
   useUpdateCommunityMutation,

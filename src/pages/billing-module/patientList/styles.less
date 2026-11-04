@@ -1,0 +1,224 @@
+.container-of-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icons-style {
+  cursor: pointer;
+}
+
+.container-of-add-new-button {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.nurse-doctor-form-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5vw;
+  width: 100%;
+}
+
+.search-patient-criteria-handle-position-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  gap: 0.5vw;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================================
+   Encounter List - Table Cells
+   ================================ */
+
+.encounter-patient-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.encounter-patient-cell .patient-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.encounter-patient-cell .patient-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8b95a7;
+  white-space: nowrap;
+}
+
+.patient-meta-separator {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.encounter-mrn-cell {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.encounter-text-cell {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encounter-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.encounter-number-cell {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.encounter-date-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.encounter-date {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.encounter-time {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8b95a7;
+}
+
+.practitioner-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.practitioner-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount-cell {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* ================================
+   Actions
+   ================================ */
+
+.nurse-doctor-form-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+}
+
+.nurse-doctor-form-actions > div {
+  display: flex;
+  align-items: center;
+}
+
+
+/* ================================
+   Table Status Alignment
+   ================================ */
+
+.encounter-patient-cell,
+.encounter-mrn-cell,
+.encounter-text-cell,
+.encounter-type-badge,
+.encounter-number-cell,
+.encounter-date-cell,
+.practitioner-cell,
+.amount-cell {
+  box-sizing: border-box;
+}
+
+
+/* ================================
+   Small Screens - Table only
+   ================================ */
+
+@media (max-width: 685px) {
+  .encounter-patient-cell .patient-name {
+    font-size: 13px;
+  }
+
+  .encounter-text-cell {
+    max-width: 140px;
+  }
+
+  .practitioner-name {
+    max-width: 140px;
+  }
+
+  .nurse-doctor-form-actions {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .encounter-patient-cell .patient-name {
+    font-size: 12px;
+  }
+
+  .encounter-patient-cell .patient-meta {
+    font-size: 11px;
+  }
+
+  .encounter-text-cell {
+    max-width: 110px;
+  }
+
+  .practitioner-name {
+    max-width: 110px;
+  }
+}

@@ -124,6 +124,10 @@ const DetailsModal = ({
     return values?.filter(Boolean)?.join(', ');
   };
 
+  useEffect(() => {
+    setShowAllFields(!!allerges?.id);
+  }, [allerges?.id]);
+
   return (
     <>
       <MyModal
@@ -158,7 +162,9 @@ const DetailsModal = ({
                     fieldType="select"
                     fieldLabel="Allergy Type"
                     selectData={allergyTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'allergyTypeLkey'}
                     record={allerges}
@@ -186,7 +192,9 @@ const DetailsModal = ({
                     fieldType="select"
                     fieldLabel="Severity"
                     selectData={severityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'severityLkey'}
                     record={allerges}
@@ -221,7 +229,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Criticality"
                         selectData={criticalityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName={'criticalityLkey'}
                         record={allerges}
@@ -243,7 +253,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Treatment Strategy"
                         selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName={'treatmentStrategyLkey'}
                         record={allerges}
@@ -259,7 +271,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Onset"
                         selectData={onsetLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName={'onsetLkey'}
                         record={allerges}
@@ -295,7 +309,9 @@ const DetailsModal = ({
                         fieldType="select"
                         fieldLabel="Type of Propensity"
                         selectData={allgPropnLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldName={'typeOfPropensityLkey'}
                         record={allerges}
@@ -311,7 +327,9 @@ const DetailsModal = ({
                           fieldType="select"
                           fieldLabel="Source of Information"
                           selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName={'sourceOfInformationLkey'}
                           record={allerges}
@@ -341,7 +359,9 @@ const DetailsModal = ({
                             fieldType="select"
                             fieldLabel="Allergic Reactions"
                             selectData={reactionLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'reaction'}
                             record={slectReaction}

@@ -1,0 +1,90 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery } from '../../../newApi';
+import type {
+  AvailabilityTemplateIntervalCreateDTO,
+  AvailabilityTemplateIntervalResponseVM,
+  AvailabilityTemplateIntervalUpdateDTO
+} from '@/types/model-types-new';
+
+type Id = number | string;
+
+export const availabilityTemplateIntervalService = createApi({
+  reducerPath: 'availabilityTemplateIntervalApi',
+  baseQuery: BaseQuery,
+  tagTypes: ['AvailabilityTemplateInterval'],
+  endpoints: builder => ({
+    createAvailabilityTemplateInterval: builder.mutation<
+      AvailabilityTemplateIntervalResponseVM,
+      AvailabilityTemplateIntervalCreateDTO
+    >({
+      query: body => ({
+        url: '/api/patient/availability-template-intervals',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['AvailabilityTemplateInterval']
+    }),
+
+    updateAvailabilityTemplateInterval: builder.mutation<
+      AvailabilityTemplateIntervalResponseVM,
+      { id: Id; body: AvailabilityTemplateIntervalUpdateDTO }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/patient/availability-template-intervals/${id}`,
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['AvailabilityTemplateInterval']
+    }),
+
+    getAvailabilityTemplateInterval: builder.query<AvailabilityTemplateIntervalResponseVM, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/availability-template-intervals/${id}`,
+        method: 'GET'
+      }),
+      providesTags: ['AvailabilityTemplateInterval']
+    }),
+
+    getAvailabilityTemplateIntervalsByTemplateAndDay: builder.query<
+      AvailabilityTemplateIntervalResponseVM[],
+      { templateId: Id; dayOfWeek: string }
+    >({
+      query: ({ templateId, dayOfWeek }) => ({
+        url: '/api/patient/availability-template-intervals/search',
+        method: 'GET',
+        params: { templateId, dayOfWeek }
+      }),
+      providesTags: ['AvailabilityTemplateInterval']
+    }),
+
+    deleteAvailabilityTemplateInterval: builder.mutation<void, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/availability-template-intervals/${id}`,
+        method: 'DELETE'
+      }),
+      invalidatesTags: ['AvailabilityTemplateInterval']
+    }),
+
+    applyAvailabilityTemplateIntervalToAllWorkingDays: builder.mutation<
+  void,
+  { id: Id }
+>({
+  query: ({ id }) => ({
+    url: `/api/patient/availability-template-intervals/${id}/apply-to-all-working-days`,
+    method: 'POST'
+  }),
+  invalidatesTags: ['AvailabilityTemplateInterval']
+}),
+  })
+});
+
+export const {
+  useCreateAvailabilityTemplateIntervalMutation,
+  useUpdateAvailabilityTemplateIntervalMutation,
+  useGetAvailabilityTemplateIntervalQuery,
+  useLazyGetAvailabilityTemplateIntervalQuery,
+  useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery,
+  useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery,
+  useDeleteAvailabilityTemplateIntervalMutation,
+  useApplyAvailabilityTemplateIntervalToAllWorkingDaysMutation
+} = availabilityTemplateIntervalService;

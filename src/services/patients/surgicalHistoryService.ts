@@ -4,7 +4,13 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { SurgicalHistory } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
@@ -14,6 +20,7 @@ type PagedResult<T> = {
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
+
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
@@ -27,20 +34,34 @@ export const surgicalHistoryService = createApi({
   tagTypes: ['SurgicalHistory'],
 
   endpoints: builder => ({
-
     getSurgicalHistory: builder.query<
       PagedResult<SurgicalHistory>,
       { patientId: Id } & PagedParams
     >({
-      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+      query: ({
+        patientId,
+        page,
+        size,
+        sort = 'id,desc',
+        showCancelled = false
+      }) => ({
         url: '/api/patient/surgical-history',
-        params: { patientId, page, size, sort }
+        params: {
+          patientId,
+          page,
+          size,
+          sort,
+          showCancelled
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['SurgicalHistory']
     }),
 
-    addSurgicalHistory: builder.mutation<SurgicalHistory, SurgicalHistory>({
+    addSurgicalHistory: builder.mutation<
+      SurgicalHistory,
+      SurgicalHistory
+    >({
       query: body => ({
         url: '/api/patient/surgical-history',
         method: 'POST',
@@ -49,7 +70,10 @@ export const surgicalHistoryService = createApi({
       invalidatesTags: ['SurgicalHistory']
     }),
 
-    updateSurgicalHistory: builder.mutation<SurgicalHistory, SurgicalHistory>({
+    updateSurgicalHistory: builder.mutation<
+      SurgicalHistory,
+      SurgicalHistory
+    >({
       query: body => ({
         url: '/api/patient/surgical-history',
         method: 'PUT',
@@ -58,7 +82,22 @@ export const surgicalHistoryService = createApi({
       invalidatesTags: ['SurgicalHistory']
     }),
 
-    deleteSurgicalHistory: builder.mutation<void, { id: Id }>({
+    cancelSurgicalHistory: builder.mutation<
+      SurgicalHistory,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/surgical-history/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['SurgicalHistory']
+    }),
+
+    deleteSurgicalHistory: builder.mutation<
+      void,
+      { id: Id }
+    >({
       query: ({ id }) => ({
         url: `/api/patient/surgical-history/${id}`,
         method: 'DELETE'
@@ -73,5 +112,6 @@ export const {
   useLazyGetSurgicalHistoryQuery,
   useAddSurgicalHistoryMutation,
   useUpdateSurgicalHistoryMutation,
+  useCancelSurgicalHistoryMutation,
   useDeleteSurgicalHistoryMutation
 } = surgicalHistoryService;

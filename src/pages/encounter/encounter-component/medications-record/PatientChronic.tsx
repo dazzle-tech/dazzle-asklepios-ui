@@ -264,8 +264,6 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
     pageIndex * rowsPerPage + rowsPerPage
   );
 
-  console.log('orderMedicationsPatient', paginatedData);
-
   return (
     <>
       <MyTable

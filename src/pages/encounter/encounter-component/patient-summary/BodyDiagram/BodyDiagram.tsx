@@ -8,6 +8,7 @@ import Male from '../../../../../images/Chart_Male.svg';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import FullViewChart from './FullViewChart';
 import Section from '@/components/Section';
+import Translate from '@/components/Translate';
 
 const BodyDiagram = ({ patient }) => {
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
@@ -57,7 +58,7 @@ const BodyDiagram = ({ patient }) => {
     );
     return (
         <Section
-         title="Body Diagram"
+         title={<Translate>Body Diagram</Translate>}
          content={content}
          setOpen={() => {}}
          openedContent={<FullViewChart open={chartModelIsOpen} setOpen={setChartModelIsOpen} content={content} />}

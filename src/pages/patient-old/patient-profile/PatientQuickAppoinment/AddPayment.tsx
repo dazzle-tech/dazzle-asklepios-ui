@@ -71,7 +71,11 @@ const AddPayment = ({ isReadOnly }) => {
                     fieldType="select"
                     fieldName="PaymentMethod"
                     selectData={paymentMethodLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                      selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     disabled={isReadOnly}
@@ -90,7 +94,11 @@ const AddPayment = ({ isReadOnly }) => {
                     fieldType="select"
                     fieldName="Currency"
                     selectData={currencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                      selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={""}

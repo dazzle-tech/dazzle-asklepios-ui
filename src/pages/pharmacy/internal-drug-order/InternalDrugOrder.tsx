@@ -346,7 +346,9 @@ const InternalDrugOrder = () => {
           fieldName=""
           fieldLabel="Order Status"
           selectData={orderstatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={{}}
@@ -422,7 +424,7 @@ const InternalDrugOrder = () => {
     },
     {
       key: 'DayNo',
-      title: <Translate>Day No.</Translate>,
+      title: <Translate>Day Number</Translate>,
       render: rowData => {
         return rowData.DayNo || rowData.dayNo || 'N/A';
       }
@@ -640,8 +642,14 @@ const InternalDrugOrder = () => {
     };
   }, [dispatch]);
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="container-internal-drug-order">
+    <div className="container-internal-drug-order" dir={dir}>
       <div className="container-of-tables-int width-100">
         <MyNestedTable
           data={data}
@@ -686,12 +694,17 @@ const InternalDrugOrder = () => {
         position="center"
         content={
           <div>
-            <MyTab 
-             data={tabData}
-             activeTab={activeKey}
-             setActiveTab={setActiveKey}
-             appearance='tabs'
-            />
+            <MyTab
+            lazy
+                data={tabData.map(tab => ({
+                  ...tab,
+                  content: <div dir={dir}>{tab.content}</div>
+                }))}
+                activeTab={activeKey}
+                setActiveTab={setActiveKey}
+                appearance='tabs'
+                className="tab-container"
+              />
           </div>
         }
         steps={[{ title: 'Clinical Checks', icon: <FontAwesomeIcon icon={faUserCheck} /> }]}
@@ -712,7 +725,7 @@ const InternalDrugOrder = () => {
         hideActionBtn={true}
         steps={[{ title: 'Dispense', icon: <FontAwesomeIcon icon={faRightFromBracket} /> }]}
         content={
-          <div className="flex-20">
+          <div className="flex-20" dir={dir}>
             {/* Form */}
             <Form fluid className="flex-col-20">
               <div className="flex-20-15">

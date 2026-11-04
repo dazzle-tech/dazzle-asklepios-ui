@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 import MyLabel from '@/components/MyLabel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -56,7 +55,9 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                     fieldName="inventoryTypeLkey"
                     fieldType="select"
                     selectData={lotSerialLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={product}
                     setRecord={setProduct}

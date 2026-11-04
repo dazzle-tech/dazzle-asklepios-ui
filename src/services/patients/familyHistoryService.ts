@@ -27,11 +27,25 @@ export const familyHistoryService = createApi({
   tagTypes: ['FamilyHistory'],
 
   endpoints: builder => ({
-    /* LIST */
-    getFamilyHistory: builder.query<PagedResult<FamilyHistory>, { patientId: Id } & PagedParams>({
-      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+    getFamilyHistory: builder.query<
+      PagedResult<FamilyHistory>,
+      { patientId: Id; showCancelled?: boolean } & PagedParams
+    >({
+      query: ({
+        patientId,
+        showCancelled = false,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => ({
         url: '/api/patient/family-history',
-        params: { patientId, page, size, sort }
+        params: {
+          patientId,
+          showCancelled,
+          page,
+          size,
+          sort
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['FamilyHistory']
@@ -57,6 +71,19 @@ export const familyHistoryService = createApi({
       invalidatesTags: ['FamilyHistory']
     }),
 
+    /* CANCEL */
+    cancelFamilyHistory: builder.mutation<
+      FamilyHistory,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/family-history/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['FamilyHistory']
+    }),
+
     /* DELETE */
     deleteFamilyHistory: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
@@ -73,5 +100,6 @@ export const {
   useLazyGetFamilyHistoryQuery,
   useAddFamilyHistoryMutation,
   useUpdateFamilyHistoryMutation,
+  useCancelFamilyHistoryMutation,
   useDeleteFamilyHistoryMutation
 } = familyHistoryService;

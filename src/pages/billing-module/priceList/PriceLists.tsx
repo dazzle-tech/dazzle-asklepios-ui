@@ -6,7 +6,7 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import { useEnumOptions } from "@/services/enumsApi";
-import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import {
   useGetAllPriceListsQuery,
   useLazyGetPriceListsByNameQuery,
@@ -80,8 +80,9 @@ const PriceLists = () => {
   const [getByType] = useLazyGetPriceListsByTypeQuery();
   const [getByTypeAndName] = useLazyGetPriceListsByTypeAndNameQuery();
 
-  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
-  const priceListTypes = useEnumOptions("PriceListTypes");
+const { data: allFacilities = [] } = useGetActiveFacilitiesQuery(null);
+
+const priceListTypes = useEnumOptions("PriceListTypes");
 
   const totalCount = priceListResponse?.totalCount ?? 0;
   const pageIndex = paginationParams.page;
@@ -315,7 +316,7 @@ const PriceLists = () => {
   };
 
   const filters = () => (
-    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldName="filter"
         fieldType="select"
@@ -378,8 +379,15 @@ const PriceLists = () => {
     </Form>
   );
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={isFiltered ? filteredList : priceListResponse?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

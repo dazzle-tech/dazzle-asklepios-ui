@@ -1,21 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef,useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 
 import './styles.less';
 
 import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
+import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
-
+import clsx from 'clsx';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 const DiagnosticsOrder = (props: any) => {
+  const patientPrevTestsRef = useRef<any>(null);
   const location = useLocation();
-  //add new patient edits
-  const patient = location.state?.patient;
-  const encounter = location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const [loading, setLoading] = useState(false);
 
-  const vm = useDiagnosticsOrder({ patient, encounter, edit });
+  // directTestsSelection: skip the order screen, create/reuse the draft order and open Select Tests directly
+  const directTestsSelection = props.directTestsSelection === true;
+  const closeDirect = () => props.onClose?.();
+
+  //add new patient edits
+  const patient = (directTestsSelection && props.patient) || location.state?.patient;
+  const encounter = (directTestsSelection && props.encounter) || location.state?.encounter;
+
+  const viewMode = location.state?.viewMode;
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const edit =
+    viewMode === 'readOnly' ||
+    (props.edit ?? location.state?.edit ?? false) ||
+    isAmendmentOpen;
+
+  const [openValidationSummaryModal, setOpenValidationSummaryModal] = useState(false);
+    const vm = useDiagnosticsOrder({
+        patient,
+        encounter,
+        edit,
+        patientPrevTestsRef,
+        setLoading
+    });
 
   const isInsideModalOrPopup = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
@@ -27,6 +52,37 @@ const DiagnosticsOrder = (props: any) => {
       `
       ) !== null
     );
+  };
+
+  const directStartedRef = useRef(false);
+  useEffect(() => {
+    if (!directTestsSelection || directStartedRef.current || !vm.ordersLoaded) return;
+    directStartedRef.current = true;
+    vm.handleOpenTestsSelection().then(ok => {
+      if (!ok) closeDirect();
+    });
+  }, [directTestsSelection, vm.ordersLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setOpenTestsModal = (open: boolean) => {
+    vm.setOpenTestsModal(open);
+    if (directTestsSelection && !open) closeDirect();
+  };
+
+  const handleSaveTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (directTestsSelection) closeDirect();
+    return ok;
+  };
+
+  const handleSaveAndSubmitTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (ok) setOpenValidationSummaryModal(true);
+    else if (directTestsSelection) closeDirect();
+  };
+
+  const setValidationSummaryOpen = (open: boolean) => {
+    setOpenValidationSummaryModal(open);
+    if (directTestsSelection && !open) closeDirect();
   };
 
   useEffect(() => {
@@ -59,8 +115,20 @@ const DiagnosticsOrder = (props: any) => {
     };
   }, []);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+      <div
+    dir={dir}
+    // className={clsx({ 'disabled-panel': edit })}
+  >
+      {!directTestsSelection && (
+      <>
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}
@@ -81,6 +149,7 @@ const DiagnosticsOrder = (props: any) => {
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
         setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenValidationSummaryModal={setOpenValidationSummaryModal}
         OpenConfirmDeleteModel={vm.OpenConfirmDeleteModel}
         setBulkDepartmentModalOpen={vm.setBulkDepartmentModalOpen}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
@@ -88,6 +157,7 @@ const DiagnosticsOrder = (props: any) => {
       />
 
       <DiagnosticsOrderTable
+        patientPrevTestsRef={patientPrevTestsRef}
         tableContainerRef={vm.tableContainerRef}
         orderId={vm.orderId}
         tableVersion={vm.tableVersion}
@@ -106,11 +176,16 @@ const DiagnosticsOrder = (props: any) => {
         setOrderTest={vm.setOrderTest}
         setTestCardModal={vm.setTestCardModal}
         handleEdit={vm.handleEdit}
+        onRescheduleAppointment={vm.handleOpenRescheduleAppointments}
         resolveReasonLabel={vm.resolveReasonLabel}
         previewDiagnosticsOrder={vm.previewDiagnosticsOrder}
         setPreviewDiagnosticsOrder={vm.setPreviewDiagnosticsOrder}
         patient={vm.patient}
+        departments={vm.departments}
+        edit={vm.edit}
       />
+      </>
+      )}
 
       <DiagnosticsOrderModals
         encounter={vm.encounter}
@@ -128,7 +203,7 @@ const DiagnosticsOrder = (props: any) => {
         attachmentsModalOpen={vm.attachmentsModalOpen}
         setAttachmentsModalOpen={vm.setAttachmentsModalOpen}
         openTestsModal={vm.openTestsModal}
-        setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenTestsModal={setOpenTestsModal}
         openRequestTestModal={vm.openRequestTestModal}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
         recallFavoriteModal={vm.recallFavoriteModal}
@@ -153,15 +228,61 @@ const DiagnosticsOrder = (props: any) => {
         selectedDepartment={vm.selectedDepartment}
         resolveFromDepartmentId={vm.resolveFromDepartmentId}
         handleSaveTest={vm.handleSaveTest}
-        handleSaveTests={vm.handleSaveTests}
+        handleSaveTests={handleSaveTests}
+        handleSaveAndSubmitTests={handleSaveAndSubmitTests}
         handleCancle={vm.handleCancle}
         orderTestRefetch={vm.orderTestRefetch}
         setSelectedRows={vm.setSelectedRows}
-        handleRecallFavoriteTest={vm.handleRecallFavoriteTest}
+        handleRecallFavoriteTests={vm.handleRecallFavoriteTests}
         setOrderTest={vm.setOrderTest}
         edit={vm.edit}
+        handleLoadMore={vm.handleLoadMore}
       />
-    </>
+
+      <PatientHistorySummaryModal
+        open={openValidationSummaryModal}
+        setOpen={setValidationSummaryOpen}
+        handleSave={async () => {
+          const ok = await vm.handleSubmitPres();
+          if (ok) setValidationSummaryOpen(false);
+        }}
+        payload={{
+          patientId: patient?.id ?? patient?.key,
+          encounterId: encounter?.id ?? encounter?.key,
+          orderNumber: vm.orders?.orderNumber
+        }}
+      />
+
+      <RescheduleAppointmentsLookupModal
+        open={vm.rescheduleAppointmentsModalOpen}
+        setOpen={vm.setRescheduleAppointmentsModalOpen}
+        orderTest={vm.selectedOrderTestForReschedule}
+        facilityId={vm.selectedDepartment?.facilityId}
+        onClose={() => vm.setSelectedOrderTestForReschedule(null)}
+      />
+      <Backdrop
+  open={loading}
+  sx={{
+    zIndex: 9999999,
+    backgroundColor: 'rgba(0,0,0,0.4)'
+  }}
+>
+  <div
+    style={{
+      background: 'white',
+      padding: '20px 30px',
+      borderRadius: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '10px'
+    }}
+  >
+    <CircularProgress />
+    <span>Loading...</span>
+  </div>
+</Backdrop>
+    </div>
   );
 };
 

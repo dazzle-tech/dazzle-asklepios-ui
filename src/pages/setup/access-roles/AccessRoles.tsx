@@ -56,9 +56,17 @@ const AccessRoles = () => {
   const divContent = (
     "Access Roles"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Access_Roles'));
   dispatch(setDivContent(divContent));
-
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -73,12 +81,7 @@ const AccessRoles = () => {
   useEffect(() => {
     handleFilterChange('name', recordOfSearch['screen']);
   }, [recordOfSearch]);
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
 
   // Handle click on Add New Button
   const handleNew = () => {
@@ -279,9 +282,28 @@ const AccessRoles = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
     <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
-      <Panel>
+      <Panel dir={dir}>
+        <MyTable
+          height={450}
+          data={accessRoleListResponse?.object ?? []}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          loading={isFetching || load}
+          onRowClick={rowData => {
+            setAccessRole(rowData);
+          }}
+          sortColumn={listRequest.sortBy}
+          filters={
         <div className="container-of-header-actions-access-roles">
           <Form layout="inline">
             <MyInput
@@ -295,7 +317,8 @@ const AccessRoles = () => {
               height={32}
             />
           </Form>
-          <MyButton
+        </div>}
+          tableButtons={<MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
             onClick={handleNew}
@@ -303,17 +326,7 @@ const AccessRoles = () => {
           >
             Add New
           </MyButton>
-        </div>
-        <MyTable
-          height={450}
-          data={accessRoleListResponse?.object ?? []}
-          columns={tableColumns}
-          rowClassName={isSelected}
-          loading={isFetching || load}
-          onRowClick={rowData => {
-            setAccessRole(rowData);
-          }}
-          sortColumn={listRequest.sortBy}
+          }
           sortType={listRequest.sortType}
           onSortChange={(sortBy, sortType) => {
             if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });

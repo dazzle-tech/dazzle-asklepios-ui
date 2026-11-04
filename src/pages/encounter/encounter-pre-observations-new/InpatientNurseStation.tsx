@@ -49,8 +49,6 @@ const InpatientNurseStation = ({}) => {
   const divContent = (
         "Nurse Anamnesis"
   );
-  dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContent));
 
   const handleCompleteEncounter = async () => {
     try {
@@ -65,13 +63,17 @@ const InpatientNurseStation = ({}) => {
     }
   };
 
-  // Effects
   useEffect(() => {
+
+    dispatch(setPageCode('Nurse_Station'));
+    dispatch(setDivContent(divContent));
+
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
+
   useEffect(() => {
     // TODO update status to be a LOV value
     if (localEncounter?.encounterStatusLkey === '91109811181900') {

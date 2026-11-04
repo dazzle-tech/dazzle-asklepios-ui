@@ -5,7 +5,9 @@ import type {
   EmergencyTriageCreate,
   EmergencyTriageDestinationUpdate,
   EmergencyTriageEyeAssessmentUpdate,
-  EmergencyTriageLevelAssessmentUpdate
+  EmergencyTriageLevelAssessmentUpdate,
+  EmergencyTriageCompleteUpdate,
+  CTASEmergencyTriageLevelUpdate
 } from '@/types/model-types-new';
 
 type EmergencyTriageId = number | string;
@@ -67,6 +69,21 @@ export const emergencyTriageService = createApi({
           : ['EmergencyTriageLatest']
     }),
 
+    updateCTASEmergencyTriageLevel: builder.mutation<
+      EmergencyTriage,
+      CTASEmergencyTriageLevelUpdate
+    >({
+      query: ({ id, ...payload }) => ({
+        url: `/api/patient/emergency-triage/${id}/ctas-level`,
+        method: 'PUT',
+        body: { id, ...payload }
+      }),
+      invalidatesTags: (result) =>
+        result?.encounterId != null
+          ? [{ type: 'EmergencyTriageLatest', id: result.encounterId }]
+          : ['EmergencyTriageLatest']
+    }),
+
     updateEmergencyTriageDestination: builder.mutation<
       EmergencyTriage,
       EmergencyTriageDestinationUpdate
@@ -75,6 +92,17 @@ export const emergencyTriageService = createApi({
         url: `/api/patient/emergency-triage/${id}/destination`,
         method: 'PUT',
         body: { id, ...payload }
+      }),
+      invalidatesTags: (result) =>
+        result?.encounterId != null
+          ? [{ type: 'EmergencyTriageLatest', id: result.encounterId }]
+          : ['EmergencyTriageLatest']
+    }),
+
+    completeEmergencyTriage: builder.mutation<EmergencyTriage>({
+      query: ({ id }) => ({
+        url: `/api/patient/emergency-triage/${id}/complete`,
+        method: 'PUT'
       }),
       invalidatesTags: (result) =>
         result?.encounterId != null
@@ -93,7 +121,10 @@ export const emergencyTriageService = createApi({
       query: encounterIds => ({
         url: '/api/patient/emergency-triage/bulk-byEncounter',
         method: 'GET',
-        params: { encounterIds }
+        // Spring List<Long> accepts CSV (same pattern as active-list/by-beds).
+        params: {
+          encounterIds: (encounterIds ?? []).map(String).join(',')
+        }
       })
     }),
   })
@@ -102,11 +133,14 @@ export const emergencyTriageService = createApi({
 export const {
   useCreateOrGetEmergencyTriageMutation,
   useGetLatestEmergencyTriageByEncounterQuery,
+  useLazyGetLatestEmergencyTriageByEncounterQuery,
   useUpdateEmergencyTriageEyeAssessmentMutation,
   useUpdateEmergencyTriageLevelAssessmentMutation,
   useUpdateEmergencyTriageDestinationMutation,
+  useCompleteEmergencyTriageMutation,
   useHardDeleteEmergencyTriageMutation,
   useGetEmergencyTriageBulkByEncounterIdsQuery,
   useLazyGetEmergencyTriageBulkByEncounterIdsQuery,
+  useUpdateCTASEmergencyTriageLevelMutation
 } = emergencyTriageService;
 

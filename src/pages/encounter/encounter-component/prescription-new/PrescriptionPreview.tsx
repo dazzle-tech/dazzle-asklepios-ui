@@ -1,34 +1,39 @@
-import React from "react";
-import SectionContainer from "@/components/SectionsoContainer";
-import MyInput from "@/components/MyInput";
-import MyTagInput from "@/components/MyTagInput/MyTagInput";
-import { Form, Input, Text } from "rsuite";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
-import { useGetCustomeInstructionsQuery } from "@/services/encounterService";
-import { useGetAllPrescriptionInstructionsQuery } from "@/services/setup/prescription-instruction/prescriptionInstructionService";
-import { useEnumOptions } from "@/services/enumsApi";
-import { conjureValueBasedOnKeyFromList } from "@/utils";
-import Icd10DiagnosisSearch from "@/components/Icd10DiagnosisSearch";
+import React from 'react';
+import SectionContainer from '@/components/SectionsoContainer';
+import MyInput from '@/components/MyInput';
+import MyTagInput from '@/components/MyTagInput/MyTagInput';
+import { Form, Input, Text } from 'rsuite';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetBrandMedicationByIdQuery } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetPharmaceuticalByIdQuery } from '@/services/setup/activeIngredients/pharmaceuticalService';
+import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
+import ActiveIngrediantList from './ActiveIngredient';
 
 const PrescriptionPreview = ({ orderMedication }) => {
   const record = orderMedication ?? {};
   const noop = () => {};
 
   // FETCH ALL LOV HERE (same as DetailsModal)
-  const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery("MED_DURATION");
-  const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery("MED_INDICATION_USE");
-  const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery("REFILL_INTERVAL");
+  const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
+  const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
   const { data: administrationInstructionsLovQueryResponse } =
-    useGetLovValuesByCodeQuery("PRESC_INSTRUCTIONS");
-  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery("UOM");
-  const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery("MED_FREQUENCY");
-  const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery("PRESC_INSTR_TYPE");
-  
+    useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
+  const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+
   // Fetch medication data
+  // The pharmaceutical is what is prescribed; brand is only a fallback for older records.
+  const pharmaceuticalId = record?.pharmaceuticalId;
+  const { data: pharmaceuticalData } = useGetPharmaceuticalByIdQuery(pharmaceuticalId, {
+    skip: !pharmaceuticalId
+  });
   const medId = record?.medicationsId ?? record?.genericMedicationsId;
   const { data: medicationData } = useGetBrandMedicationByIdQuery(medId, {
-    skip: !medId,
+    skip: !medId || !!pharmaceuticalId
   });
 
   // Fetch custom instructions
@@ -46,20 +51,25 @@ const PrescriptionPreview = ({ orderMedication }) => {
   const instructionTypeOptions = useEnumOptions('PrescriptionInstructionsType');
 
   const getLov = (lovRes, key) => {
-    const item = lovRes?.object?.find((x) => x.key === key);
-    return item?.lovDisplayVale ?? "";
+    const item = lovRes?.object?.find(x => x.key === key);
+    return item?.lovDisplayVale ?? '';
   };
 
   // Get instruction type display
   const getInstructionTypeDisplay = () => {
-    if (!record?.instructionsType) return "";
+    if (!record?.instructionsType) return '';
     const option = instructionTypeOptions?.find(opt => opt.value === record.instructionsType);
-    return option?.label ?? record.instructionsTypeLvalue?.lovDisplayVale ?? record.instructionsType ?? "";
+    return (
+      option?.label ??
+      record.instructionsTypeLvalue?.lovDisplayVale ??
+      record.instructionsType ??
+      ''
+    );
   };
 
   // Get instructions display based on type
   const getInstructionsDisplay = () => {
-    if (!record?.instructionsType) return "";
+    if (!record?.instructionsType) return '';
 
     const OPTION_CUSTOM = 'CUSTOM_INSTRUCTIONS';
     const OPTION_PREDEFINED = 'PRE_DEFINED_INSTRUCTIONS';
@@ -79,11 +89,11 @@ const PrescriptionPreview = ({ orderMedication }) => {
           .filter(Boolean)
           .join(', ');
       }
-      return record.instructions || "";
+      return record.instructions || '';
     }
 
     if (record.instructionsType === OPTION_MANUAL) {
-      return record.instructions || "";
+      return record.instructions || '';
     }
 
     if (record.instructionsType === OPTION_CUSTOM) {
@@ -93,8 +103,16 @@ const PrescriptionPreview = ({ orderMedication }) => {
       if (custom) {
         return [
           custom.dose,
-          conjureValueBasedOnKeyFromList(unitLovQueryResponse?.object ?? [], custom.unitLkey, 'lovDisplayVale'),
-          conjureValueBasedOnKeyFromList(frequencyLovQueryResponse?.object ?? [], custom.frequencyLkey, 'lovDisplayVale'),
+          conjureValueBasedOnKeyFromList(
+            unitLovQueryResponse?.object ?? [],
+            custom.unitLkey,
+            'lovDisplayVale'
+          ),
+          conjureValueBasedOnKeyFromList(
+            frequencyLovQueryResponse?.object ?? [],
+            custom.frequencyLkey,
+            'lovDisplayVale'
+          ),
           custom.roaLvalue?.lovDisplayVale
         ]
           .filter(Boolean)
@@ -103,21 +121,29 @@ const PrescriptionPreview = ({ orderMedication }) => {
       // Fallback to record fields
       return [
         record.dose,
-        conjureValueBasedOnKeyFromList(unitLovQueryResponse?.object ?? [], record.doesUnit, 'lovDisplayVale'),
-        conjureValueBasedOnKeyFromList(frequencyLovQueryResponse?.object ?? [], record.frequency, 'lovDisplayVale'),
+        conjureValueBasedOnKeyFromList(
+          unitLovQueryResponse?.object ?? [],
+          record.doesUnit,
+          'lovDisplayVale'
+        ),
+        conjureValueBasedOnKeyFromList(
+          frequencyLovQueryResponse?.object ?? [],
+          record.frequency,
+          'lovDisplayVale'
+        ),
         record.rout
       ]
         .filter(Boolean)
         .join(', ');
     }
 
-    return "";
+    return '';
   };
 
   // Get administration instructions display - handle multiple values
   const getAdministrationInstructionsDisplay = () => {
-    if (!record?.administrationInstructions) return "";
-    
+    if (!record?.administrationInstructions) return '';
+
     // Handle array of values
     if (Array.isArray(record.administrationInstructions)) {
       return record.administrationInstructions
@@ -132,10 +158,13 @@ const PrescriptionPreview = ({ orderMedication }) => {
         .filter(Boolean)
         .join('\n');
     }
-    
+
     // Handle comma-separated string
     if (typeof record.administrationInstructions === 'string') {
-      const keys = record.administrationInstructions.split(',').map(s => s.trim()).filter(Boolean);
+      const keys = record.administrationInstructions
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
       return keys
         .map(key => {
           const display = conjureValueBasedOnKeyFromList(
@@ -148,26 +177,36 @@ const PrescriptionPreview = ({ orderMedication }) => {
         .filter(Boolean)
         .join('\n');
     }
-    
+
     // Handle single value
     const display = conjureValueBasedOnKeyFromList(
       administrationInstructionsLovQueryResponse?.object ?? [],
       record.administrationInstructions,
       'lovDisplayVale'
     );
-    
+
     if (display) return display;
-    
+
     // Fallback: try administrationInstructionsLvalue if it exists
     if (record?.administrationInstructionsLvalue?.lovDisplayVale) {
       return record.administrationInstructionsLvalue.lovDisplayVale;
     }
-    
-    return "";
+
+    return '';
   };
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="prescription-preview-container">
+    <div className="prescription-preview-container" dir={dir}>
+      <SectionContainer
+        title={<Text className="font-style">Active Ingredients</Text>}
+        content={<ActiveIngrediantList selectedGeneric={medId ?  medId : null} activeIngredientId={orderMedication.activeIngredientId} />}
+      />
+
       <SectionContainer
         title={<Text className="font-style">Prescription Details</Text>}
         content={
@@ -179,7 +218,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 width="100%"
                 fieldType="text"
                 fieldLabel="Medication"
-                record={{ medicationName: medicationData?.name || "" }}
+                record={{ medicationName: pharmaceuticalData?.pharmaceuticalName || medicationData?.name || '' }}
                 fieldName="medicationName"
                 setRecord={noop}
               />
@@ -231,7 +270,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                     fieldType="text"
                     fieldLabel="Duration Type"
                     record={{
-                      durationTypeText: getLov(DurationTypeLovQueryResponse, record.durationTypeLkey)
+                      durationTypeText: getLov(DurationTypeLovQueryResponse, record.durationType)
                     }}
                     fieldName="durationTypeText"
                     setRecord={noop}
@@ -262,25 +301,17 @@ const PrescriptionPreview = ({ orderMedication }) => {
                     setRecord={noop}
                   />
 
-                  <MyInput
-                    disabled
-                    width={140}
-                    fieldType="date"
-                    fieldLabel="Valid Until"
-                    fieldName="validUtil"
-                    record={record}
-                    setRecord={noop}
-                  />
-
-                  <MyInput
-                    disabled
-                    width={160}
-                    fieldType="checkbox"
-                    fieldLabel="Brand Substitute Allowed"
-                    fieldName="genericSubstitute"
-                    record={record}
-                    setRecord={noop}
-                  />
+                  <div style={{ marginBottom: '1.5vw' }}>
+                    <MyInput
+                      disabled
+                      width={160}
+                      fieldType="checkbox"
+                      fieldLabel="Brand Substitute Allowed"
+                      fieldName="genericSubstitute"
+                      record={record}
+                      setRecord={noop}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -315,15 +346,15 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 <div className="indication-field">
                   <MyInput
                     disabled
-                    width="20vw"
+                    width="16vw"
                     fieldType="text"
                     showLabel={true}
                     fieldLabel="Indication Use"
                     record={{
-                      indicationUseText: getLov(
-                        indicationLovQueryResponse,
-                        record.indicationUseLkey ?? record.indicationUse
-                      ) || record.indicationUseLvalue?.lovDisplayVale || ""
+                      indicationUseText:
+                        getLov(indicationLovQueryResponse, record.indicationUse) ||
+                        record.indicationUseLvalue?.lovDisplayVale ||
+                        ''
                     }}
                     fieldName="indicationUseText"
                     setRecord={noop}
@@ -343,7 +374,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 <div className="indication-field indication-field-admin">
                   <MyInput
                     disabled
-                    width="20vw"
+                    width="16vw"
                     fieldType="text"
                     fieldLabel="Administration Instructions"
                     record={{
@@ -372,44 +403,9 @@ const PrescriptionPreview = ({ orderMedication }) => {
         title={<Text className="font-style">Refills and Parameters to Monitor</Text>}
         content={
           <Form fluid>
-            <MyTagInput tags={record.parametersToMonitor?.split(",") ?? []} setTags={noop} />
+            <MyTagInput tags={record.parametersToMonitor?.split(',') ?? []} setTags={noop} disabled/>
 
-            <div className="prescription-refills-blocks">
-              <MyInput
-                disabled
-                width={140}
-                fieldType="number"
-                fieldLabel="Number of Refills"
-                fieldName="numberOfRefills"
-                record={record}
-                setRecord={noop}
-              />
-
-              <MyInput
-                disabled
-                width={180}
-                fieldType="number"
-                fieldLabel="Refill Interval Value"
-                fieldName="refillValue"
-                record={record}
-                setRecord={noop}
-              />
-
-              <MyInput
-                disabled
-                width={180}
-                fieldType="text"
-                fieldLabel="Refill Interval Unit"
-                record={{
-                  refillIntervalUnitText: getLov(
-                    refillunitQueryResponse,
-                    record.refillUnit ?? record.refillIntervalUnitLkey
-                  )
-                }}
-                fieldName="refillIntervalUnitText"
-                setRecord={noop}
-              />
-            </div>
+          
           </Form>
         }
       />
@@ -426,7 +422,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 fieldType="textarea"
                 height={60}
                 fieldLabel="Notes"
-                record={{ notesPreview: record.notes || "" }}
+                record={{ notesPreview: record.notes || '' }}
                 fieldName="notesPreview"
                 setRecord={noop}
               />
@@ -439,7 +435,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 fieldType="textarea"
                 height={60}
                 fieldLabel="Extra Documentation"
-                record={{ extraDocumentationPreview: record.extraDocumentation || "" }}
+                record={{ extraDocumentationPreview: record.extraDocumentation || '' }}
                 fieldName="extraDocumentationPreview"
                 setRecord={noop}
               />

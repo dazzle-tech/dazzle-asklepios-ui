@@ -105,6 +105,13 @@ const PaduaPredictionScoreModal = ({ open, setOpen, onSave }) => {
     setOpen(false);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -116,7 +123,7 @@ const PaduaPredictionScoreModal = ({ open, setOpen, onSave }) => {
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       content={
-        <Form fluid>
+        <Form fluid dir={dir}>
           <div className="padua-score-modal-content">
             <div className="checkbox-grid">
   {fields.map(field => (

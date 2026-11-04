@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -12,6 +12,7 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
 import {
+  useBulkCancelDiagnosticOrderTestsMutation,
   useCancelDiagnosticOrderTestMutation,
   useCreateDiagnosticOrderTestMutation,
   useFilterDiagnosticOrderTestsQuery,
@@ -22,7 +23,7 @@ import { useGetFavoriteDiagnosticTestsByUserQuery } from '@/services/diagnosic-o
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
-  useGetAllDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
   useGetDiagnosticTestsByIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -39,22 +40,52 @@ import type {
   DiagnosticOrderTestUpdateDTO
 } from '@/types/model-types-new';
 
-import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { DiagnosticOrderTestStatus, DiagnosticStatus, BillingEventType } from '@/types/model-types-new';
+import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
+import { formatEnumString } from '@/utils';
+import { useEvaluateBillingRuleMutation, useCheckInsurancePriceListCoverageMutation } from '@/services/billing/billingTransactionService';
+import {
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage,
+  resolveDiagnosticBillingItemType
+} from '@/utils/billingRuleEvaluationUtils';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
+
 
 type UseDiagnosticsOrderArgs = {
   patient?: any;
   encounter?: any;
   edit?: boolean;
+  setLoading?: (value: boolean) => void;
+  patientPrevTestsRef?: React.RefObject<any>;
 };
-
 const extractErrorMessage = (error: any) => {
+  if (isUncoveredCashCancelled(error)) {
+    return '';
+  }
+
   const data = error?.data;
 
+  if (typeof data === 'string' && data.trim()) {
+    return data;
+  }
+
+  if (
+    data?.params === 'test_already_started' ||
+    data?.detail?.toLowerCase()?.includes('already started') ||
+    data?.message?.toLowerCase()?.includes('already started')
+  ) {
+    return data?.detail || data?.message || 'Cannot cancel because this test has already started';
+  }
+
   let msg =
-    data?.properties?.message ||
-    data?.message ||
     data?.detail ||
+    data?.message ||
+    data?.properties?.message ||
+    (data?.title && data?.title !== 'Bad Request' ? data?.title : undefined) ||
+    data?.properties?.messageKey ||
+    data?.messageKey ||
     data?.title ||
     error?.error ||
     'Operation failed';
@@ -66,7 +97,7 @@ const extractErrorMessage = (error: any) => {
   return msg;
 };
 
-export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnosticsOrderArgs) => {
+export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef, setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -97,18 +128,22 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [collectSampleModal, setCollectSampleModal] = useState(false);
   const [testCardModal, setTestCardModal] = useState(false);
+  const [rescheduleAppointmentsModalOpen, setRescheduleAppointmentsModalOpen] = useState(false);
+  const [selectedOrderTestForReschedule, setSelectedOrderTestForReschedule] = useState<any>(null);
   const [reson, setReson] = useState<{ cancellationReason: string }>({
     cancellationReason: ''
   });
 
   const [bulkDepartmentModalOpen, setBulkDepartmentModalOpen] = useState(false);
 
-  const [paginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: 1000,
     sort: 'id,asc',
-    timestamp: Date.now()
+    // timestamp: Date.now()
+
   });
+
 
   const [filters, setFilters] = useState({
     testName: '',
@@ -126,7 +161,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const normalizeOrderTest = (rowData: any) => ({
     ...rowData,
-    reasonLkey: rowData.reasonLkey ?? rowData.reason
+    reason: rowData.reason
   });
 
   // Lookups
@@ -134,6 +169,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const departments = departmentsResponse?.data ?? [];
 
   const resolveFromDepartmentId = () => {
+    if (encounter?.departmentId) return encounter.departmentId;
+
     const selectedDeptId = selectedDepartment?.departmentId;
     const selectedDeptName = selectedDepartment?.departmentName ?? selectedDepartment?.name;
     const selectedFacilityId = selectedDepartment?.facilityId;
@@ -155,19 +192,51 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-  const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-  const testsList = testsResponse?.data ?? [];
+  const [allTests, setAllTests] = useState<any[]>([]);
+
+
+
+  const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
+
+  const testsList = allTests;
+
+  useEffect(() => {
+    if (!testsResponse?.data) return;
+
+    setAllTests(prev => {
+      const existingIds = new Set(prev.map(x => x.id));
+      const newData = testsResponse.data.filter(x => !existingIds.has(x.id));
+      return [...prev, ...newData];
+    });
+  }, [testsResponse]);
+
+  const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+
+  const handleLoadMore = () => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: prev.page + 1
+    }));
+  };
+
+  const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
   const [leftItems, setLeftItems] = useState<any[]>([]);
+  const prevOpenTestsModalRef = React.useRef(false);
 
   useEffect(() => {
-    if (openTestsModal) {
-      setLeftItems(testsList);
+    if (openTestsModal && !prevOpenTestsModalRef.current) {
       setSelectedTestsList([]);
     }
-  }, [openTestsModal, testsList]);
+    prevOpenTestsModalRef.current = openTestsModal;
+  }, [openTestsModal]);
 
   useEffect(() => {
     const selectedIds = new Set(selectedTestsList.map(t => t.id ?? t.key));
@@ -181,11 +250,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const isSubmitDisabled = !orderId || orders?.status !== 'NEW';
 
-  const { data: ordersListResponse, refetch: ordersRefetch } = useFilterDiagnosticOrdersQuery(
+  const {
+    data: ordersListResponse,
+    refetch: ordersRefetch,
+    isSuccess: ordersSuccess,
+    isError: ordersError
+  } = useFilterDiagnosticOrdersQuery(
     patientId && encounterId ? { patientId, encounterId } : skipToken
   );
 
   const ordersList = ordersListResponse?.data ?? [];
+  const ordersLoaded = ordersSuccess || ordersError || !(patientId && encounterId);
 
   const hasOpenOrder = ordersList.some((o: any) => o.status === 'NEW' || o.saveDraft === true);
 
@@ -224,6 +299,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const orderTestList = orderTestsResponse?.data ?? [];
 
+  useEffect(() => {
+    if (!orderId) return;
+    const refreshTimer = setInterval(() => {
+      void orderTestRefetch();
+    }, 15000);
+    return () => clearInterval(refreshTimer);
+  }, [orderId, orderTestRefetch]);
+
   // Favorites
   const userId = authSlice?.user?.id;
 
@@ -232,6 +315,25 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   );
 
   const favoriteTestIds = useMemo(() => favoriteLinks?.map((f: any) => f.testId) ?? [], [favoriteLinks]);
+
+  const orderTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (orderTestList ?? [])
+            .map((ot: any) => ot.testId)
+            .filter(Boolean)
+        )
+      ),
+    [orderTestList]
+  );
+
+  const { data: diagnosticTestsByIdsResponse } = useGetDiagnosticTestsByIdsQuery(
+    orderTestIds.length ? { ids: orderTestIds } : skipToken
+  );
+
+
+
 
   const { data: favoriteTests, isFetching: loadingFavorites } = useGetDiagnosticTestsByIdsQuery(
     favoriteTestIds.length ? { ids: favoriteTestIds } : skipToken
@@ -254,7 +356,71 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
-  const [updateEncounter] = useUpdateEncounterMutation();
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+  const [checkInsuranceCoverage] = useCheckInsurancePriceListCoverageMutation();
+  const [bulkCancel, { isLoading: isBulkCancelLoading }] =
+    useBulkCancelDiagnosticOrderTestsMutation();
+
+  const shouldAcceptUncoveredAsCash = async (
+    testId: number,
+    orderType?: string | null
+  ) => {
+    if (!encounterId) {
+      return false;
+    }
+
+    try {
+      const result = await checkInsuranceCoverage({
+        encounterId,
+        billingItemType: resolveDiagnosticBillingItemType(orderType) ?? 'LABORATORY',
+        diagnosticTestId: testId
+      }).unwrap();
+      return Boolean(result.requiresCashConfirmation);
+    } catch {
+      return false;
+    }
+  };
+
+  const validateDiagnosticBillingRule = async (
+    testId: number,
+    orderType?: string | null,
+    options?: { notify?: boolean }
+  ) => {
+    const shouldNotify = options?.notify !== false;
+    const billingItemType = resolveDiagnosticBillingItemType(orderType);
+
+    if (!billingItemType) {
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: 'Unable to determine billing item type for this diagnostic test.',
+            sev: 'warning'
+          })
+        );
+      }
+      return false;
+    }
+
+    const evaluation = await evaluateBillingRule(
+      buildBillingRuleEvaluationRequest(billingItemType, BillingEventType.ITEM_ORDERED, {
+        diagnosticTestId: testId
+      })
+    ).unwrap();
+
+    if (!evaluation.ruleFound) {
+      if (shouldNotify) {
+        dispatch(
+          notify({
+            msg: formatBillingRuleEvaluationMessage(evaluation),
+            sev: 'error'
+          })
+        );
+      }
+      return false;
+    }
+
+    return true;
+  };
 
 
   // Modals state
@@ -306,13 +472,26 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       }
 
       if (!orderTestId) {
+        const billingRuleReady = await validateDiagnosticBillingRule(
+          testId,
+          resolveOrderType(test)
+        );
+        if (!billingRuleReady) {
+          return;
+        }
+
         const createPayload: DiagnosticOrderTestCreateDTO = {
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
+          reason: orderTest?.reason,
           notes: orderTest?.notes,
-          orderType: resolveOrderType(test)
+          orderType: resolveOrderType(test),
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
+          acceptUncoveredAsCash: await shouldAcceptUncoveredAsCash(
+            testId,
+            resolveOrderType(test)
+          )
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -322,8 +501,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
-          notes: orderTest?.notes
+          reason: orderTest?.reason,
+          notes: orderTest?.notes,
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
+
         };
 
         await updateOrderTest({ id: orderTestId, body: updatePayload }).unwrap();
@@ -331,141 +512,438 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       if (_orderId) {
         await orderTestRefetch();
+        patientPrevTestsRef?.current?.refetchPrevTests();
         setTableVersion(v => v + 1);
       }
 
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       console.error('Save test failed', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
     }
   };
 
   const handleCheckboxChange = (id: number) => {
     setSelectedRows(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
-
   const handleCancle = async () => {
+    if (!selectedRows.length) {
+      dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+      return;
+    }
     try {
-      await Promise.all(
-        selectedRows.map((itemId: number) =>
-          cancelDiagnosticOrderTest({
-            id: itemId,
-            body: { cancellationReason: reson.cancellationReason }
-          }).unwrap()
-        )
+      await bulkCancel({ ids: selectedRows, cancellationReason: reson.cancellationReason }).unwrap();
+      dispatch(
+        notify({ msg: `Cancel ${selectedRows.length} tests successfully`, sev: 'success' })
       );
-
-      dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
       setSelectedRows([]);
       CloseConfirmDeleteModel();
       await orderTestRefetch();
-    } catch (error) {
-      console.error('Cancel failed:', error);
-      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
-      CloseConfirmDeleteModel();
-      orderTestRefetch()
+      patientPrevTestsRef?.current?.refetchPrevTests();
+    } catch (e: any) {
+      const msg = extractErrorMessage(e) || 'Cancel failed';
+      const isWarning =
+        e?.data?.params === 'test_already_started' ||
+        msg.toLowerCase().includes('already started') ||
+        e?.status === 400 ||
+        e?.data?.status === 400;
+      dispatch(notify({ msg, sev: isWarning ? 'warning' : 'error' }));
+    }
+  };
+  // const handleCancle = async () => {
+  //   console.log("Selected Rows",selectedRows)
+  //   try {
+  //     setLoading(true);
+  //     await Promise.all(
+  //       selectedRows.map((itemId: number) =>
+  //         cancelDiagnosticOrderTest({
+  //           id: itemId,
+  //           body: { cancellationReason: reson.cancellationReason }
+  //         }).unwrap()
+  //       )
+  //     );
 
+  //     dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
+  //     setSelectedRows([]);
+  //     CloseConfirmDeleteModel();
+  //     await orderTestRefetch();
+
+  //     patientPrevTestsRef?.current?.refetchPrevTests();
+  //   } catch (error) {
+  //     console.error('Cancel failed:', error);
+  //     dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+  //     CloseConfirmDeleteModel();
+  //     orderTestRefetch()
+
+  //   }
+  //   finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+  const convertToMonths = (value: number, unit?: string) => {
+    const normalizedUnit = String(unit || '').toUpperCase();
+
+    switch (normalizedUnit) {
+      case 'MINUTE':
+      case 'MINUTES':
+        return value / (60 * 24 * 30);
+
+      case 'HOUR':
+      case 'HOURS':
+        return value / (24 * 30);
+
+      case 'DAY':
+      case 'DAYS':
+        return value / 30;
+
+      case 'WEEK':
+      case 'WEEKS':
+        return value * 7 / 30;
+
+      case 'MONTH':
+      case 'MONTHS':
+        return value;
+
+      case 'YEAR':
+      case 'YEARS':
+        return value * 12;
+
+      default:
+        return value;
     }
   };
 
-  const handleSaveTests = async () => {
+  const getPatientAgeInMonths = (patient: any) => {
+    const rawDob = patient?.dateOfBirth || patient?.dob;
+    if (!rawDob) return null;
+
+    const dob = new Date(rawDob);
+    if (Number.isNaN(dob.getTime())) return null;
+
+    const now = new Date();
+    const diffMs = now.getTime() - dob.getTime();
+
+    return diffMs / (1000 * 60 * 60 * 24 * 30);
+  };
+
+  const getPatientAgeGroup = (patient: any) => {
+    const patientAgeInMonths = getPatientAgeInMonths(patient);
+    if (patientAgeInMonths === null) return '';
+    if (!ageGroupsList.length) return '';
+
+    const patientFacilityId =
+      patient?.facilityId ||
+      encounter?.facilityId ||
+      selectedDepartment?.facilityId;
+
+    const matchingAgeGroup = ageGroupsList.find((group: any) => {
+      if (
+        patientFacilityId &&
+        group?.facilityId &&
+        Number(group.facilityId) !== Number(patientFacilityId)
+      ) {
+        return false;
+      }
+
+      const fromAge = Number(group?.fromAge ?? 0);
+      const toAge = Number(group?.toAge ?? 0);
+
+      const fromAgeInMonths = convertToMonths(fromAge, group?.fromAgeUnit);
+      const toAgeInMonths = convertToMonths(toAge, group?.toAgeUnit);
+
+      return (
+        patientAgeInMonths >= fromAgeInMonths &&
+        patientAgeInMonths <= toAgeInMonths
+      );
+    });
+
+    return matchingAgeGroup?.ageGroup || '';
+  };
+
+  const validateTestForPatient = (test: any, patient: any) => {
+    const warnings: string[] = [];
+    const testName = test.name || 'Test';
+
+    // Gender
+    if (test.genderSpecific && test.gender) {
+      const testGender = String(test.gender).toUpperCase();
+      const patientGender = String(
+        patient?.gender || patient?.genderType || patient?.sexAtBirth || ''
+      ).toUpperCase();
+
+      if (patientGender && testGender !== patientGender) {
+        warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
+      }
+    }
+
+    // Age
+    if (test.ageSpecific && test.ageGroupList?.length) {
+      const patientAgeGroup = String(
+        patient?.ageGroup || getPatientAgeGroup(patient)
+      ).toUpperCase();
+
+      const matches = test.ageGroupList.some(
+        (age: any) => String(age).toUpperCase() === patientAgeGroup
+      );
+
+      if (patientAgeGroup && !matches) {
+        warnings.push(
+          `${testName}: Only for ${test.ageGroupList.map((age: any) => formatEnumString(String(age))).join(', ')} (Patient is ${formatEnumString(patientAgeGroup)})`
+        );
+      }
+    }
+
+    // Special Population
+    if (test.specialPopulation && test.specialPopulationValues?.length) {
+      const patientSpecialPopulation = patient?.specialPopulationValues ?? [];
+
+      const match = test.specialPopulationValues.some((val: any) =>
+        patientSpecialPopulation.includes(val)
+      );
+
+      if (!match) {
+        warnings.push(`${testName}: Special population mismatch`);
+      }
+    }
+
+    return warnings;
+  };
+
+  // Resolves true when every selected test was saved without errors
+  const handleSaveTests = async (): Promise<boolean> => {
     setOpenTestsModal(false);
+
 
     const _orderId = toNumericId(orders?.id ?? orders?.key);
     const fromDepartmentId = resolveFromDepartmentId();
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!fromDepartmentId) {
       dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
-      return;
+      return false;
     }
 
     try {
+      setLoading(true);
+
       const pickTestId = (t: any) =>
-        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id ?? t?.diagnosticTest?.id);
+        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
 
-      await Promise.all(
-        selectedTestsList
-          .map(item => {
-            const testId = pickTestId(item);
-            if (!testId) return null;
+      let warnings: string[] = [];
+      selectedTestsList.forEach(item => {
+        const realTest = testsList.find(
+          t => String(t.id) === String(item.id || item.testId)
+        );
 
-            return createOrderTest({
-              orderId: _orderId,
-              testId,
-              orderType: item.type
-            }).unwrap();
+        if (!realTest) return;
+
+        const w = validateTestForPatient(realTest, patient);
+        warnings.push(...w);
+      });
+
+      if (warnings.length) {
+        const uniqueWarnings = Array.from(new Set(warnings));
+
+        dispatch(
+          notify({
+            msg:
+              '⚠ Validation Warnings:\n\n' +
+              uniqueWarnings.join('\n'),
+            sev: 'warning'
           })
-          .filter(Boolean) as any
+        );
+      }
+
+      const validTests = selectedTestsList.filter(item =>
+        pickTestId(item)
       );
 
-      dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
+      const existingTestIds = new Set(
+        orderTestList
+          .filter(t => t.status !== DiagnosticOrderTestStatus.CANCELLED)
+          .map(t => String(t.testId))
+      );
+
+      let added: string[] = [];
+      let duplicates: string[] = [];
+      let failed: string[] = [];
+
+      await Promise.all(
+        validTests.map(async item => {
+          const testId = pickTestId(item);
+          const testName = item.name || item.testName || 'Test';
+
+          if (existingTestIds.has(String(testId))) {
+            duplicates.push(testName);
+            return;
+          }
+
+          try {
+            const billingRuleReady = await validateDiagnosticBillingRule(
+              testId,
+              item.type || 'LABORATORY',
+              { notify: false }
+            );
+            if (!billingRuleReady) {
+              failed.push(`${testName}: billing rule is not configured`);
+              return;
+            }
+
+            await createOrderTest({
+              orderId: _orderId,
+              testId,
+              orderType: item.type || 'LABORATORY',
+              acceptUncoveredAsCash: await shouldAcceptUncoveredAsCash(
+                testId,
+                item.type || 'LABORATORY'
+              )
+            }).unwrap();
+
+            added.push(testName);
+          } catch (e: any) {
+            if (isUncoveredCashCancelled(e)) {
+              return;
+            }
+            const message =
+              extractBillingRuleErrorMessage(e) || extractErrorMessage(e);
+            failed.push(`${testName}: ${message}`);
+          }
+        })
+      );
+
+      if (added.length) {
+        dispatch(
+          notify({
+            msg: ` ${added.join(', ')} added successfully`,
+            sev: 'success'
+          })
+        );
+      }
+
+      if (duplicates.length) {
+        dispatch(
+          notify({
+            msg: `⚠ ${duplicates.join(', ')} already added`,
+            sev: 'warning'
+          })
+        );
+      }
+
+      if (failed.length) {
+        dispatch(
+          notify({
+            msg:
+              'Could not add the following test(s):\n\n' +
+              failed.join('\n'),
+            sev: 'error'
+          })
+        );
+      }
+
       await orderTestRefetch();
+      patientPrevTestsRef?.current?.refetchPrevTests();
+      return failed.length === 0;
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return false;
+      }
       console.error('Save tests failed:', error);
-      dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
+      dispatch(
+        notify({
+          msg: extractBillingRuleErrorMessage(error) || extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+    finally {
+      console.log("Fainaly ")
+      setLoading(false);
+
     }
   };
 
+  const createNewOrder = async () => {
+    const createPayload: DiagnosticOrderCreateDTO = {
+      patientId,
+      encounterId,
+      labStatus: DiagnosticStatus.NEW,
+      radStatus: DiagnosticStatus.NEW,
+      fromDepartmentId: encounter?.departmentId || selectedDepartment?.departmentId,
+      fromFacilityId: encounter?.facilityId || selectedDepartment?.facilityId
+    };
+
+    const response = await createOrder(createPayload).unwrap();
+    setOrders(response);
+
+    dispatch(
+      notify({
+        msg: `New Order Created (ID: ${response?.orderNumber ?? response?.id})`,
+        sev: 'success'
+      })
+    );
+
+    await ordersRefetch();
+    return response;
+  };
+
   const handleSaveOrders = async () => {
+    setLoading(true);
+
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
     }
 
     try {
-      const createPayload: DiagnosticOrderCreateDTO = {
-        patientId,
-        encounterId,
-        labStatus: DiagnosticStatus.NEW,
-        radStatus: DiagnosticStatus.NEW,
-        fromDepartmentId: selectedDepartment?.departmentId,
-        fromFacilityId: selectedDepartment?.facilityId
-      };
-
-      const response = await createOrder(createPayload).unwrap();
-      setOrders(response);
+      await createNewOrder();
       setOpenTestsModal(true);
-
-      dispatch(
-        notify({
-          msg: `New Order Created (ID: ${response?.orderNumber ?? response?.id})`,
-          sev: 'success'
-        })
-      );
-
-      await ordersRefetch();
     } catch (error) {
       console.error('Create order failed:', error);
       dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
     }
+    finally {
+      setLoading(false);
+
+    }
   };
 
   const handleSubmitPres = async () => {
+
     const _orderId = orders?.id;
     if (!_orderId) {
       dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!orderTestList.length) {
       dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
-      return;
+      return false;
     }
 
     const hasMissingReceivedLab = orderTestList.some((t: any) => !t.receivedDepartmentId);
     if (hasMissingReceivedLab) {
       dispatch(notify({ msg: 'Please select Received Lab for Your Test', sev: 'warning' }));
-      return;
+      return false;
     }
 
     try {
+      setLoading(true);
       await updateOrder({
         id: _orderId,
         body: {
@@ -483,47 +961,27 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       await ordersRefetch();
       await orderTestRefetch();
-      if (encounter && !encounter.hasOrder) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: true,
-            isObserved: encounter?.isObserved ?? false
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
+      patientPrevTestsRef?.current?.refetchPrevTests();
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
+      return true;
     } catch (error) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       console.error('Submit failed', error);
       dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
+      return false;
+    }
+    finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (rowData: any) => {
     setOrderTest({
       ...rowData,
-      reasonLkey: rowData.reasonLkey ?? rowData.reason
+      reason: rowData.reason ?? rowData.reason
     });
 
     if (!ReasonLovQueryResponse?.object?.length) return;
@@ -531,8 +989,98 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     setOpenDetailsModel(true);
   };
 
-  const handleRecallFavoriteTest = async (t: any) => {
-    const _orderId = orders?.id;
+  const handleOpenRescheduleAppointments = (rowData: any) => {
+    const resourceId = Number(
+      rowData?.test?.id ?? rowData?.testId ?? rowData?.diagnosticTestId ?? rowData?.resourceId
+    );
+    if (!resourceId) {
+      dispatch(
+        notify({
+          msg: 'Missing diagnostic test id for this order test.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setSelectedOrderTestForReschedule(rowData);
+    setRescheduleAppointmentsModalOpen(true);
+  };
+
+  const isDraftOrder = (o: any) => o?.status === 'NEW' || o?.saveDraft === true;
+
+  // recall into the open draft order if there is one, otherwise create a new order first
+  const handleRecallFavoriteTests = async (tests: any[]) => {
+    if (!tests?.length) return;
+
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return;
+    }
+
+    let targetOrderId = orders?.id && isDraftOrder(orders) ? orders.id : null;
+
+    if (!targetOrderId) {
+      const draftOrder = ordersList.find(isDraftOrder);
+      if (draftOrder) {
+        setOrders(draftOrder);
+        targetOrderId = draftOrder.id;
+      }
+    }
+
+    if (!targetOrderId) {
+      try {
+        setLoading(true);
+        const newOrder = await createNewOrder();
+        targetOrderId = newOrder?.id;
+      } catch (error) {
+        console.error('Create order failed:', error);
+        dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // sequential: each test may open the uncovered-as-cash confirmation
+    for (const t of tests) {
+      await handleRecallFavoriteTest(t, targetOrderId);
+    }
+  };
+
+  // open Select Tests on the open draft order if there is one, otherwise create a new order first
+  const handleOpenTestsSelection = async (): Promise<boolean> => {
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return false;
+    }
+
+    if (String(authSlice.user?.jobRole ?? '').toUpperCase() === 'NURSE') {
+      dispatch(notify({ msg: 'Nurses cannot create diagnostic orders', sev: 'warning' }));
+      return false;
+    }
+
+    const draftOrder = orders?.id && isDraftOrder(orders) ? orders : ordersList.find(isDraftOrder);
+
+    try {
+      setLoading?.(true);
+      if (draftOrder) {
+        setOrders(draftOrder);
+      } else {
+        await createNewOrder();
+      }
+      setOpenTestsModal(true);
+      return true;
+    } catch (error) {
+      console.error('Create order failed:', error);
+      dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+      return false;
+    } finally {
+      setLoading?.(false);
+    }
+  };
+
+  const handleRecallFavoriteTest = async (t: any, targetOrderId?: number) => {
+    const _orderId = targetOrderId ?? orders?.id;
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
@@ -540,15 +1088,22 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
 
     try {
+      setLoading(true);
+      const acceptUncoveredAsCash = await shouldAcceptUncoveredAsCash(t.id, t.type);
       await createOrderTest({
         orderId: _orderId,
         testId: t.id,
-        orderType: t.type
+        orderType: t.type,
+        acceptUncoveredAsCash
       }).unwrap();
 
       dispatch(notify({ msg: 'Test recalled successfully', sev: 'success' }));
       await orderTestRefetch();
+      patientPrevTestsRef?.current?.refetchPrevTests();
     } catch (error: any) {
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
       const msg = extractErrorMessage(error);
 
       dispatch(
@@ -558,10 +1113,21 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
         })
       );
     }
+    finally {
+      setLoading(false);
+    }
   };
 
+
+
   // Normalization + sorting
-  const testsMap = useMemo(() => new Map((testsList ?? []).map((t: any) => [t.id, t])), [testsList]);
+  const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
+
+  const testsMap = useMemo(
+    () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
+    [diagnosticTestsByIds]
+  );
+
 
   const STATUS_PRIORITY: Record<string, number> = {
     NEW: 1,
@@ -584,9 +1150,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
       });
   }, [orderTestList, testsMap]);
 
+
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
-      .filter((row: any) => row.status === 'NEW')
+      .filter((row: any) => row.status !== 'CANCELLED')
       .map((row: any) => Number(row.id))
       .filter(Boolean);
   }, [normalizedOrderTestList]);
@@ -640,6 +1207,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     loadTests,
     hasOpenOrder,
     isSubmitDisabled,
+    ordersLoaded,
 
     // filters
     filters,
@@ -684,6 +1252,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     setCollectSampleModal,
     testCardModal,
     setTestCardModal,
+    rescheduleAppointmentsModalOpen,
+    setRescheduleAppointmentsModalOpen,
+    selectedOrderTestForReschedule,
+    setSelectedOrderTestForReschedule,
     bulkDepartmentModalOpen,
     setBulkDepartmentModalOpen,
 
@@ -705,7 +1277,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     CloseConfirmDeleteModel,
     handleCancle,
     handleEdit,
+    handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
+    handleRecallFavoriteTests,
+    handleOpenTestsSelection,
 
     // helpers
     normalizeOrderTest,
@@ -722,6 +1297,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
     // refetch
     ordersRefetch,
-    orderTestRefetch
+    orderTestRefetch,
+    handleLoadMore
   };
 };

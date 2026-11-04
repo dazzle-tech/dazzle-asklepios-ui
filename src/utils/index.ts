@@ -1,12 +1,38 @@
+import { store } from '@/store';
 import { ListRequest } from '@/types/types';
 
+export { extractErrorMessage } from './extractErrorMessage';
+export {
+  extractApiErrorMessage,
+  extractEligibilityErrorMessage,
+  WASEEL_ELIGIBILITY_ERROR_MAP
+} from './apiErrorMessage';
 export { default as toThousands } from './toThousands';
 export { default as highlightValue } from './highlightValue';
 export { default as formatValue } from './formatValue';
+import { intervalToDuration } from 'date-fns';
+
+export const conjureValuesFromEnumList = (
+  list: any[],
+  valuesString: string,
+  preferredField: string
+): string => {
+  if (!valuesString) return '';
+
+  const keys = valuesString.split(',').map(k => k.trim());
+  const values = keys.map(key => {
+    const found = list?.find(record => record.value === key);
+    return found ? found[preferredField] : key;
+  });
+
+  return values.join(', ');
+};
 
 export const fromCamelCaseToDBName = word => {
+  if (word == null) return '';
+  const text = String(word);
   let final = '';
-  for (const char of word) {
+  for (const char of text) {
     if (char === char.toUpperCase() && char !== char.toLowerCase()) {
       final += '_' + char.toLowerCase();
     } else {
@@ -141,11 +167,9 @@ export const addFilterToListRequest = (
   return listRequest;
 };
 
-export const camelCaseToLabel = (input: string): string => {
-  // Replace capital letters with space followed by the lowercase letter
-  const result = input.replace(/([A-Z])/g, ' $1');
-
-  // Capitalize the first letter and trim any leading spaces
+export const camelCaseToLabel = (input?: string | null): string => {
+  if (input == null || input === '') return '';
+  const result = String(input).replace(/([A-Z])/g, ' $1');
   return (
     result.charAt(0).toUpperCase() + result.slice(1).replace('Lkey', '').replace(' Key', '')
   ).trim();
@@ -238,44 +262,20 @@ export const calculateAge = birthdate => {
     return yearsDiff;
   }
 };
-export const calculateAgeFormat = dateOfBirth => {
-  const today = new Date();
+export const calculateAgeFormat = (dateOfBirth) => {
   const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return '';
 
-  if (isNaN(dob.getTime())) {
-    return '';
-  }
+  const duration = intervalToDuration({
+    start: dob,
+    end: new Date(),
+  });
 
-  let years = today.getFullYear() - dob.getFullYear();
-  let months = today.getMonth() - dob.getMonth();
-
-  let days = today.getDate() - dob.getDate();
-  if (months < 0 || (months === 0 && days < 0)) {
-    years--;
-    months += 12;
-  }
-  if (days < 0) {
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
-    days += lastMonth.getDate();
-    months--;
-  }
-  const totalDays = years * 365 + months * 30 + days;
-
-  let ageString = '';
-
-  if (years > 0) {
-    ageString += `${years}y `;
-  }
-
-  if (months > 0) {
-    ageString += `${months}m `;
-  }
-
-  if (days > 0) {
-    ageString += `${days}d`;
-  }
-
-  return ageString.trim();
+  return [
+    duration.years ? `${duration.years}y` : '',
+    duration.months ? `${duration.months}m` : '',
+    duration.days ? `${duration.days}d` : '',
+  ].filter(Boolean).join(' ');
 };
 export const convertStyleToObject = styleString => {
   const styleObject = {};
@@ -329,9 +329,25 @@ export function formatDateWithoutSeconds(dateString) {
 export const formatEnumString = (input: string): string => {
   if (!input) return '';
 
+  const state = store.getState();
+
+  const lang = state.ui.lang;
+  const translations = state.ui.translations;
+
+  const translated =
+    lang && translations?.[lang]?.[input];
+
+  if (translated) {
+    return translated;
+  }
+
   return input
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(
+      word =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
     .join(' ');
 };
 
@@ -346,4 +362,37 @@ export const formatControlledEnumLabel = (code?: string | null): string => {
   const schedulePart = afterPrefix.replace(/_/g, ' ').toUpperCase();
 
   return `Schedule ${schedulePart} (${trimmed})`;
+};
+
+
+export const lightenColor = (
+  hex: string,
+  percent: number = 0.9
+): string => {
+  const cleanHex = hex.replace('#', '');
+
+  if (cleanHex.length !== 6) {
+    return hex;
+  }
+
+  const num = parseInt(cleanHex, 16);
+
+  const r = Math.min(
+    255,
+    (num >> 16) + Math.round((255 - (num >> 16)) * percent)
+  );
+
+  const g = Math.min(
+    255,
+    ((num >> 8) & 0x00ff) +
+      Math.round((255 - ((num >> 8) & 0x00ff)) * percent)
+  );
+
+  const b = Math.min(
+    255,
+    (num & 0x0000ff) +
+      Math.round((255 - (num & 0x0000ff)) * percent)
+  );
+
+  return `rgb(${r}, ${g}, ${b})`;
 };

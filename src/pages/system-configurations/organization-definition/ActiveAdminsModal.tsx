@@ -65,6 +65,12 @@ const ActiveAdminsModal: React.FC<ActiveAdminsModalProps> = ({ open, onClose }) 
     }
   };
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <ChildModal
       open={open}
@@ -78,7 +84,7 @@ const ActiveAdminsModal: React.FC<ActiveAdminsModalProps> = ({ open, onClose }) 
       setShowChild={setShowChild}
       hideActionBtn
       title="Active Admin Users"
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
       mainStep={[{ title: 'Active Admins', icon: <FaUserShield /> }]}
       childTitle=""
       childContent={null}

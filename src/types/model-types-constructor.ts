@@ -606,23 +606,18 @@ export const newApDentalAction:modelTypes.ApDentalAction = {
 	favorite:undefined,
 } 
 
-export const newApDentalChart:modelTypes.ApDentalChart = { 
-	key:undefined,
-	encounterKey:undefined,
-	patientKey:undefined,
-	chartDate:null,
-	type:'',
-	chartSequence:0,
-	status:'',
-	treatmentPlan:'',
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
+export const newApDentalChart: Partial<import("./model-types-new").DentalChartResponseDTO> = {
+	id: null,
+	patientId: null,
+	encounterId: null,
+	chartDate: null,
+	chartType: null,
+	status: null,
+	treatmentPlan: '',
+	teeth: [],
+	chartActions: [],
+	historyCharts: [],
+}
 
 export const newApDentalChartProgressNote:modelTypes.ApDentalChartProgressNote = { 
 	key:undefined,
@@ -637,46 +632,29 @@ export const newApDentalChartProgressNote:modelTypes.ApDentalChartProgressNote =
 	isValid:undefined,
 } 
 
-export const newApDentalChartTooth:modelTypes.ApDentalChartTooth = { 
-	key:undefined,
-	chartKey:undefined,
-	toothNumber:'',
-	missing:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-	toothNumberNumeric:0,
-} 
+export const newApDentalChartTooth: Partial<import("./model-types-new").DentalChartToothDTO> = {
+	id: null,
+	chartId: null,
+	toothNumber: null,
+	missing: false,
+	actions: [],
+	history: [],
+	services: [],
+	cdts: [],
+}
 
-export const newApDentalPlannedTreatment:modelTypes.ApDentalPlannedTreatment = { 
-	key:undefined,
-	patientKey:undefined,
-	encounterKey:undefined,
-	type:'',
-	visitNumber:0,
-	cdtKey:undefined,
-	toothKey:undefined,
-	note:'',
-	surfaceLkey:undefined,
-	billingTypeLkey:undefined,
-	fees:0,
-	insurance:0,
-	discount:0,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-	statusLkey:undefined,
-	source:'',
-	sourceKey:undefined,
-} 
+export const newApDentalPlannedTreatment: Partial<import("./model-types-new").PlannedTreatmentDTO> = {
+	id: null,
+	patientId: null,
+	encounterId: null,
+	type: null,
+	visitNumber: 0,
+	cdtCodeId: null,
+	toothId: null,
+	note: '',
+	surface: null,
+	insurance: 0,
+}
 
 export const newApDepartment:modelTypes.ApDepartment = { 
 	key:undefined,
@@ -864,22 +842,24 @@ export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTe
 	isValid:undefined,
 } 
 
-export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
-	key:undefined,
-	orderKey:undefined,
-	testKey:undefined,
-	notes:'',
-	unitLkey:undefined,
-	quantity:0,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	sampleCollectedAt:0,
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
+export const newApDiagnosticOrderTestsSamples: modelTypes.ApDiagnosticOrderTestsSamples = { 
+  key: undefined,
+  orderKey: undefined,
+  testKey: undefined,
+  notes: '',
+  unitLkey: undefined,
+  quantity: 0,
+  createdBy: '',
+  updatedBy: '',
+  deletedBy: '',
+  sampleCollectedAt: 0,
+  expiryDate: undefined,
+  createdAt: undefined,
+  updatedAt: undefined,
+  deletedAt: undefined,
+  isValid: undefined,
+  sourceOfSample: undefined
+};
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
 	key:undefined,
@@ -1442,7 +1422,10 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	discharge:undefined,
 	emergencyLevelLkey:undefined,
 	dischargeAt:0,
-} 
+	hasPrescription:undefined,
+	hasOrder:undefined,
+	isObserved:undefined,
+}
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
 	key:undefined,

@@ -9,7 +9,6 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faBoxOpen, faFile, faListCheck, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetDayCaseEncountersQuery,
@@ -39,16 +38,25 @@ import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/ph
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import './style.less';
 
-const DayCaseList = () => {
+const   DayCaseList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const divContent = 'DayCase List';
 
-  dispatch(setPageCode('P_DayCaseEncounters'));
+  useEffect(() => {
+    dispatch(setPageCode('P_DayCaseEncounters'));
+    dispatch(setDivContent(divContent));
+
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
   const [cancelEncounter] = useCancelEncounterMutation();
-  dispatch(setDivContent(divContent));
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
@@ -85,13 +93,7 @@ const DayCaseList = () => {
     ]
   });
 
-  // Fetch department list response
-  const { data: departmentListResponse } = useGetActiveResourcesByTypeQuery({
-    resourceType: 'DAY_CASE',
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
+  const { data: departmentListResponse } = { data: { data: [] as unknown[] } };
   // Fetch lovs
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
@@ -161,7 +163,6 @@ const DayCaseList = () => {
         }
       });
     }
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   // table columns
@@ -465,6 +466,8 @@ const DayCaseList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
+                    disableByField='isValid'
+
           />
         </div>
       </Form>
@@ -485,6 +488,8 @@ const DayCaseList = () => {
                 setRecord={setRecord}
                 searchable={false}
                 width={150}
+                        disableByField='isValid'
+
               />
               {/* Chief Complain Text */}
               <MyInput
@@ -533,6 +538,8 @@ const DayCaseList = () => {
                 placeholder="Select Priority"
                 fieldLabel="Priority"
                 searchable={false}
+                        disableByField='isValid'
+
               />
             </Form>
           </div>
@@ -547,10 +554,7 @@ const DayCaseList = () => {
   //         refetchEncounter();
   //     }
   // }, [departmentFilter, isFetching]);
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
@@ -572,8 +576,14 @@ const DayCaseList = () => {
     dispatch(setDivContent(divContent));
   }, [dispatch]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
@@ -608,17 +618,23 @@ const DayCaseList = () => {
           <div className="day-case-list-table-buttons-position">
             <MyButton onClick={() => setOpenRefillModal(true)}>
               <FontAwesomeIcon icon={faBoxOpen} />
+            <Translate>
               Refill Stock
+          </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
               <FontAwesomeIcon icon={faListCheck} />
+            <Translate>
               Task Management
+            </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
               <FontAwesomeIcon icon={faFile} />
+            <Translate>
               Encounter Logs
+            </Translate>
             </MyButton>
           </div>
         }
@@ -660,7 +676,9 @@ const DayCaseList = () => {
         size="90vw"
         content={
           <>
-            <RefillModalComponent></RefillModalComponent>
+            <div dir={dir}>
+              <RefillModalComponent></RefillModalComponent>
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -673,9 +691,9 @@ const DayCaseList = () => {
         title="Task Management"
         size="90vw"
         content={
-          <>
+          <div dir={dir}>
             <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
-          </>
+          </div>
         }
         actionButtonLabel="Save"
         cancelButtonLabel="Close"
@@ -686,7 +704,7 @@ const DayCaseList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<EncounterLogsTable />}
+        content={<div dir={dir}><EncounterLogsTable /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"

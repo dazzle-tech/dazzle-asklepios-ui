@@ -128,9 +128,17 @@ const TransferProductList = ({
   const divContent = (
       "Inventory Transfer Products"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('ProductList'));
   dispatch(setDivContent(divContent));
-
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && transferProduct && transferProduct.key === rowData.key) {
@@ -152,12 +160,6 @@ const TransferProductList = ({
     }
   }, [recordOfFilter]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // Handle  selection by checking the checkbox
   const handleCheckboxChange = key => {
@@ -474,7 +476,11 @@ const TransferProductList = ({
     );
 
   }
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       actionButtonLabel={'Save'}
@@ -483,7 +489,7 @@ const TransferProductList = ({
       setOpen={setOpen}
       position="right"
       title={'Approval Workflow'}
-      content={conjureFormContentOfMainModal}
+      content={<div dir={dir}>{conjureFormContentOfMainModal}</div>}
       steps={[
         {
           title: 'Transfer Product',

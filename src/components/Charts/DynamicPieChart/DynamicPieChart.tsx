@@ -4,6 +4,7 @@ import type { ChartOptions, ChartData } from 'chart.js';
 import 'chart.js/auto';
 import { Button } from 'rsuite';
 import { useSelector } from 'react-redux';
+import Translate from '@/components/Translate';
 
 type PieChartDataPoint = {
   label: string;
@@ -95,9 +96,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <span className="font-12">
-        Current patient allocation
-      </span>
+      <span className="font-12"><Translate>Current patient allocation</Translate></span>
 
       {selectable && (
         <div style={{ marginBottom: 10 }}>
@@ -109,7 +108,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
               </b>
             </span>
           ) : (
-            <span>Click on a segment to select</span>
+            <span><Translate>Click on a segment to select</Translate></span>
           )}
         </div>
       )}

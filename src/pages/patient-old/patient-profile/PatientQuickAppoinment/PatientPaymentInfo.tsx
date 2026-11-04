@@ -58,7 +58,9 @@ const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, i
                 fieldType="select"
                 fieldName="paymentTypeLkey"
                 selectData={paymentTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={localEncounter}
                 setRecord={setLocalEncounter}
@@ -109,7 +111,9 @@ const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, i
                         fieldType="select"
                         fieldName="insurancePlanTypeLkey"
                         selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientInsurance}
                         setRecord={setPatientInsurance}

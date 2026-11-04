@@ -58,6 +58,29 @@ export const laboratoryService = createApi({
       providesTags: ["Laboratory"],
     }),
 
+    // 🔹 Get laboratories by ids
+    getLaboratoriesByIds: builder.query<any[], { ids: (number | string)[] }>({
+      query: ({ ids }) => ({
+        url: "/api/setup/diagnostic-test-laboratories/bulk-by-ids",
+        method: "GET",
+        params: {
+          ids: ids.join(","),
+        },
+      }),
+      providesTags: ["Laboratory"],
+    }),
+
+    // 🔹 Get laboratories by test ids
+    getLaboratoriesByTestIds: builder.query<any[], { testIds: (number | string)[] }>({
+      query: ({ testIds }) => ({
+        url: "/api/setup/diagnostic-test-laboratories/bulk-by-test-ids",
+        method: "GET",
+        params: {
+          testIds: testIds.join(","),
+        },
+      }),
+      providesTags: ["Laboratory"],
+    }),
     // 🔹 Create new laboratory
     createLaboratory: builder.mutation<any, any>({
       query: (body) => ({
@@ -92,7 +115,11 @@ export const laboratoryService = createApi({
 export const {
   useGetAllLaboratoriesQuery,
   useGetLaboratoryByIdQuery,
-  useGetLaboratoryByTestIdQuery, 
+  useGetLaboratoryByTestIdQuery,
+  useGetLaboratoriesByIdsQuery,
+  useLazyGetLaboratoriesByIdsQuery,
+  useGetLaboratoriesByTestIdsQuery,
+  useLazyGetLaboratoriesByTestIdsQuery,
   useCreateLaboratoryMutation,
   useUpdateLaboratoryMutation,
   useDeleteLaboratoryMutation,

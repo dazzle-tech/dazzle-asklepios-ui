@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
@@ -43,6 +44,7 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 import { useNavigate } from 'react-router-dom';
 import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+
 const ERList = () => {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -130,37 +132,6 @@ const ERList = () => {
     return '';
   };
 
-  const handleGoToVisit = async (encounterData, patientData) => {
-    await startEncounter(encounterData).unwrap();
-    if (encounterData && encounterData.key) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
-    }
-      const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-    if (patientData.privatePatient) {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    } else {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    }
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-  };
-
   const handleCancelEncounter = async () => {
     try {
       if (encounter) {
@@ -241,7 +212,9 @@ const ERList = () => {
             fieldLabel="Encounter Status"
             fieldName="key"
             selectData={encounterStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
@@ -258,7 +231,9 @@ const ERList = () => {
                 fieldName="accessTypeLkey"
                 fieldType="select"
                 selectData={bookVisitLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 fieldLabel="Visit Type"
                 selectDataValue="key"
                 record={record}
@@ -275,37 +250,15 @@ const ERList = () => {
                 fieldLabel="Chief Complain"
               />
               <MyInput
-                width={110}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Prescription"
-              />
-              <MyInput
-                width={80}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Order"
-              />
-              <MyInput
-                width={80}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Is Observed"
-              />
-              <MyInput
                 width={150}
                 fieldName="priority"
                 fieldType="select"
                 record={record}
                 setRecord={setRecord}
                 selectData={EncPriorityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Select Priority"
                 fieldLabel="Priority"
@@ -318,10 +271,6 @@ const ERList = () => {
     </>
   );
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
     refetchEncounter();
@@ -449,7 +398,17 @@ const ERList = () => {
       title: <Translate>ADMISSION DATE</Translate>,
       dataKey: 'plannedStartDate'
     },
-
+    {
+         key: 'createdBy',
+         title: 'CREATED BY',
+           expandable: true,
+         render: (row: any) => {
+          
+           const login = row?.createdBy ;
+   
+           return <UserDateCell login={login} date={row?.createdAt } />;
+         }
+       },
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,

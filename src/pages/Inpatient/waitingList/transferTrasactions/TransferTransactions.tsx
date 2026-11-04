@@ -4,7 +4,6 @@ import { newApEncounter, newApTransferPatient } from '@/types/model-types-constr
 import React, { useEffect, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetTransferTransactionsQuery } from '@/services/encounterService';
@@ -18,12 +17,7 @@ import '../styles.less';
 const TransferTransactions = () => {
     const dispatch = useDispatch();
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-    const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
-      resourceType: 'INPATIENT_ADMISSION',
-      page: 0,
-      size: 1000,
-      sort: 'id,asc'
-    });
+    const { data: inpatientDepartmentListResponse } = { data: { data: [] as unknown[] } };
     const [transferPatient, setTransferPatient] = useState<ApTransferPatient>({
         ...newApTransferPatient,
         fromInpatientDepartmentKey: '',
@@ -284,8 +278,14 @@ const TransferTransactions = () => {
             dispatch(hideSystemLoader());
         };
     }, [isLoading, isFetching, dispatch]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
-        <Panel>
+        <Panel dir={dir}>
             <MyTable
                 filters={filters()}
                 height={600}

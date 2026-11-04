@@ -25,7 +25,10 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
     });
 
     const [record, setRecord] = useState({});
-
+    const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+        searchByField: 'fullName',
+        patientName: ''
+    });
 
     const [open, setOpen] = useState(false);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
@@ -308,6 +311,14 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                     <SearchPatientCriteria
                         record={record}
                         setRecord={setRecord}
+                        liveSearchMinLength={0}
+                        onSearchClick={() => {
+                            setAppliedPatientSearch({
+                                searchByField: (record as any)?.searchByField ?? 'fullName',
+                                patientName: (record as any)?.patientName ?? ''
+                            });
+                            setListRequest(prev => ({ ...prev, pageNumber: 1 }));
+                        }}
                     />
 
                     <MyInput
@@ -317,7 +328,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                         fieldLabel="Operation Name"
                         fieldName="key"
                         selectData={operationLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -330,7 +343,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                         fieldLabel="Status"
                         fieldName="key"
                         selectData={statusLov?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={record}
                         setRecord={setRecord}
@@ -348,7 +363,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     fieldName="accessTypeLkey"
                                     fieldType="select"
                                     selectData={operationorderLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     fieldLabel="Operation Type"
                                     selectDataValue="key"
                                     record={record}
@@ -363,7 +380,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={proclevelLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Operation Level"
                                     searchable={false}
@@ -384,7 +403,9 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                                     record={record}
                                     setRecord={setRecord}
                                     selectData={priorityLov?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldLabel="Priority"
                                     searchable={false}
@@ -403,7 +424,30 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
     return (<> <MyTable
         filters={filters()}
         columns={columns}
-        data={operationrequestList?.object || []}
+        data={(operationrequestList?.object || []).filter((row: any) => {
+          const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+          const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+          if (!raw) return true;
+          const patient = row?.patient ?? {};
+          if (field === 'patientMrn') {
+            return String(patient?.patientMrn ?? '').toLowerCase().includes(raw);
+          }
+          if (field === 'phoneNumber') {
+            return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'documentNumber') {
+            return String(patient?.documentNo ?? patient?.documentNumber ?? '')
+              .toLowerCase()
+              .includes(raw);
+          }
+          if (field === 'dob') {
+            return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
+              String(appliedPatientSearch?.patientName ?? '').trim();
+          }
+          return String(patient?.fullName ?? '').toLowerCase().includes(raw);
+        })}
         rowClassName={isSelected}
         loading={isLoading}
         onRowClick={rowData => {

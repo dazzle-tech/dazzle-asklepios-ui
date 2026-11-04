@@ -15,16 +15,18 @@ import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import {
   newPatientEncounter,
   newPatientInsurance,
   newPatientPayments
 } from '@/types/model-types-constructor-new';
 import {
-  useCreateEncounterMutation,
-  useUpdateEncounterMutation
-} from '@/services/encounters/patientEncounterService';
+  useCreateQuickAppointmentMutation
+} from '@/services/appointment/appointmentService';
+import { useLazyIsPatientAgeAllowedQuery } from '@/services/security/departmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
+import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -40,17 +42,16 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-  'patient.department.date.duplicate':
-    'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
-
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   patientId: 'Patient',
   facilityId: 'Facility',
@@ -134,31 +135,93 @@ const PatientQuickAppointment = ({
 
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({
     ...newPatientEncounter,
-    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-    facilityId: Number(localReferral?.toFacilityId ?? 0),
-    departmentId: Number(localReferral?.toDepartmentId ?? 0),
+    patientId: Number(localPatient?.id ?? localPatient?.key ?? 0) || null,
+    facilityId: Number(localReferral?.toFacilityId ?? 0) || null,
+    departmentId: Number(localReferral?.toDepartmentId ?? 0) || null,
     encounterDate: new Date()
   });
 
-  const [validationResult, setValidationResult] = useState<any>({});
-  const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
+  const [isReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
+  const [isPatientAgeAllowed, setIsPatientAgeAllowed] = useState(false);
+  const [isCheckingPatientAge, setIsCheckingPatientAge] = useState(false);
+  const [validationResult, setValidationResult] = useState<any>({});
 
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
+  const [paymentConfirmLoading, setPaymentConfirmLoading] = useState(false);
 
   const isViewMode = Boolean(isDisabeld);
   const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
 
-  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
+  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode || isEncounterSaved);
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
-  const [createEncounter] = useCreateEncounterMutation();
-  const [updateEncounter] = useUpdateEncounterMutation();
+  const [createQuickAppointment] = useCreateQuickAppointmentMutation();
+  const [checkPatientAgeAllowed] = useLazyIsPatientAgeAllowedQuery();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
+  const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
 
   const didAcceptReferralRef = useRef(false);
+
+  useEffect(() => {
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    if (localPatient?.isUnknown === true) {
+     setIsPatientAgeAllowed(true);
+     setIsCheckingPatientAge(false);
+     return;
+    }
+    const rawDateOfBirth = localPatient?.dateOfBirth ?? localPatient?.dob;
+    const parsedDateOfBirth = rawDateOfBirth ? new Date(rawDateOfBirth) : null;
+    const dateOfBirth =
+      parsedDateOfBirth && !Number.isNaN(parsedDateOfBirth.getTime())
+        ? parsedDateOfBirth.toISOString().split('T')[0]
+        : '';
+
+    if (!departmentId || !dateOfBirth) {
+      setIsPatientAgeAllowed(false);
+      setIsCheckingPatientAge(false);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsCheckingPatientAge(true);
+    setIsPatientAgeAllowed(false);
+
+    checkPatientAgeAllowed({ departmentId, dateOfBirth })
+      .unwrap()
+      .then((isAllowed: boolean) => {
+        if (!isCurrent) return;
+
+        setIsPatientAgeAllowed(isAllowed);
+
+        if (!isAllowed) {
+          dispatch(
+            notify({
+              msg: 'Patient age is not allowed for the selected department',
+              sev: 'warning'
+            })
+          );
+        }
+      })
+      .catch(() => {
+        if (isCurrent) setIsPatientAgeAllowed(false);
+      })
+      .finally(() => {
+        if (isCurrent) setIsCheckingPatientAge(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [
+    checkPatientAgeAllowed,
+    localEncounter?.departmentId,
+    localPatient?.dateOfBirth,
+    localPatient?.dob,
+    localPatient?.isUnknown
+  ]);
 
   const [paymentDraft, setPaymentDraft] = useState<modelTypes.PatientPayments & any>({
     ...newPatientPayments,
@@ -217,9 +280,21 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
+    if (
+      localEncounter?.encounterType !== 'EMERGENCY' &&
+      !localEncounter?.practitionerId
+    ) {
+      missingFields.push('Practitioner');
+    }
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
     if (!localEncounter?.priorityLevel) missingFields.push('Priority');
     if (!localEncounter?.encounterDate) missingFields.push('Date');
+    if (
+      localEncounter?.encounterReason === 'FOLLOW_UP' &&
+      !localEncounter?.followUpEncounterId
+    ) {
+      missingFields.push('Follow-up Encounter');
+    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
@@ -231,29 +306,87 @@ const PatientQuickAppointment = ({
     return true;
   };
 
-  const handleSave = async () => {
-    if (!validateRequiredFields()) return;
+  const isSameLocalDate = (a: any, b: any) => {
+    const da = a instanceof Date ? a : new Date(a);
+    const db = b instanceof Date ? b : new Date(b);
+    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
+    return (
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate()
+    );
+  };
 
+
+  const extractErrorMessage = (response: any): string => {
     try {
-      const body: PatientEncounter = {
-        ...localEncounter,
-        patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-        encounterDate: localEncounter?.encounterDate ?? new Date()
-      };
+      const msg = response?.data?.message ?? response?.message;
 
-      const saved =
-        body.id && Number(body.id) > 0
-          ? await updateEncounter({ id: body.id, body }).unwrap()
-          : await createEncounter({ body }).unwrap();
-
-      const normalizedSaved: any = { ...saved };
-      const v = normalizedSaved?.encounterDate;
-      if (typeof v === 'string' || typeof v === 'number') {
-        const d = new Date(v);
-        if (!Number.isNaN(d.getTime())) normalizedSaved.encounterDate = d;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
       }
 
-      setLocalEncounter(prev => ({ ...prev, ...normalizedSaved }));
+      return '';
+    } catch {
+      return '';
+    }
+  };
+  const handleSave = async () => {
+    if (!validateRequiredFields()) return;
+    if (!isPatientAgeAllowed) {
+      dispatch(notify({ msg: 'Patient age is not allowed for the selected department', sev: 'warning' }));
+      return;
+    }
+
+    const patientId = Number(localPatient?.id );
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+
+   
+
+    try {
+
+      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        facilityId: Number(localEncounter?.facilityId ?? 0),
+        departmentId,
+        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceId: practitionerId > 0 ? practitionerId : departmentId,
+        patientId,
+        service: String(localEncounter?.encounterReason ?? '') as modelTypes.EncounterReason,
+        priority: String(localEncounter?.priorityLevel ?? ''),
+        defaultServiceId: (localEncounter as any)?.defaultServiceId
+          ? Number((localEncounter as any).defaultServiceId)
+          : null,
+        defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+        reason: (localEncounter as any)?.chiefComplaint as string | null,
+        note: (localEncounter?.notes ?? null) as string | null,
+        followUpEncounterId:
+          localEncounter?.encounterReason === 'FOLLOW_UP' && localEncounter?.followUpEncounterId
+            ? Number(localEncounter.followUpEncounterId)
+            : null,
+        originType: (localEncounter as any)?.originType ?? null,
+        originName: (localEncounter as any)?.originName ?? null,
+        promotionName: (localEncounter as any)?.promotionName || null,
+        promotionCode: (localEncounter as any)?.promotionCode || null
+      };
+
+      const saved = await createQuickAppointment(payload).unwrap();
+      const returnedEncounter = (saved as any)?.encounter ?? null;
+      const returnedAppointment = (saved as any)?.appointmentFromTemplate ?? null;
+      const createdEncounterId = Number(returnedEncounter?.id ?? 0) || localEncounter?.id || 0;
+
+      if (returnedEncounter && typeof returnedEncounter === 'object') {
+        setLocalEncounter(prev => ({ ...prev, ...returnedEncounter }));
+      } else {
+        setLocalEncounter(prev => ({ ...prev, id: createdEncounterId || prev.id }));
+      }
+      setPaymentDraft((prev: any) => ({
+        ...prev,
+        encounterId: createdEncounterId || prev.encounterId
+      }));
+      if (returnedAppointment && typeof returnedAppointment === 'object') {
+        setValidationResult((prev: any) => ({ ...prev, appointmentFromTemplate: returnedAppointment }));
+      }
       setIsEncounterSaved(true);
 
       if (
@@ -265,11 +398,23 @@ const PatientQuickAppointment = ({
         didAcceptReferralRef.current = true;
       }
 
-      dispatch(notify({ msg: 'Encounter Saved Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Quick appointment saved successfully', sev: 'success' }));
 
       if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {
       setValidationResult(err?.data ?? err);
+      const backendMsg = extractErrorMessage(err);
+
+      if (backendMsg) {
+        dispatch(
+          notify({
+            msg: backendMsg,
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
       handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
     }
   };
@@ -284,6 +429,8 @@ const PatientQuickAppointment = ({
     });
     setValidationResult({});
     setIsEncounterSaved(false);
+    setIsPatientAgeAllowed(false);
+    setIsCheckingPatientAge(false);
     setIsPaymentSaved(false);
     paymentRef.current?.clear?.();
     setPaymentDraft({
@@ -314,15 +461,25 @@ const PatientQuickAppointment = ({
       const ok = await paymentRef.current?.confirm();
       if (!ok) return;
 
-      setIsPaymentSaved(true);
-
       if (onEncounterSaved) await onEncounterSaved();
-
-      setQuickAppointmentModel(false);
-      dispatch(notify({ msg: 'Payment Confirmed Successfully', sev: 'success' }));
     } catch (err: any) {
       dispatch(notify({ msg: 'Error confirming payment', sev: 'error' }));
     }
+  };
+
+  const handlePaymentDeferred = () => {
+    setQuickAppointmentModel(false);
+  };
+
+  const handleReceiptClosed = () => {
+    setIsPaymentSaved(true);
+    setQuickAppointmentModel(false);
+    dispatch(
+      notify({
+        msg: 'Payment collected successfully.',
+        sev: 'success'
+      })
+    );
   };
 
   const handlePaymentClear = () => {
@@ -356,7 +513,10 @@ const PatientQuickAppointment = ({
             setPayment={setPaymentDraft}
             patientInsurance={patientInsuranceDraft}
             setPatientInsurance={setPatientInsuranceDraft}
-            onPaymentSaved={onEncounterSaved} 
+            onPaymentSaved={onEncounterSaved}
+            onReceiptClosed={handleReceiptClosed}
+            onPaymentDeferred={handlePaymentDeferred}
+            onConfirmingChange={setPaymentConfirmLoading}
           />
         );
       default:
@@ -364,11 +524,18 @@ const PatientQuickAppointment = ({
     }
   };
 
-  return (
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyModal
       open={quickAppointmentModel}
       setOpen={setQuickAppointmentModel}
-      title="Quick Appointment"
+      title="Walk-in Patient"
       steps={[
         {
           title: 'Encounter',
@@ -379,12 +546,17 @@ const PatientQuickAppointment = ({
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
-                disabled={encounterReadOnly}
+                disabled={encounterReadOnly || localPatient?.patientStatus === 'MERGED'}
               >
                 Clear
               </MyButton>
               <MyButton
-                disabled={encounterReadOnly}
+                disabled={
+                  encounterReadOnly ||
+                  localPatient?.patientStatus === 'MERGED' ||
+                  isCheckingPatientAge ||
+                  !isPatientAgeAllowed
+                }
                 onClick={handleSave}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
@@ -408,7 +580,8 @@ const PatientQuickAppointment = ({
               <MyButton
                 appearance="primary"
                 onClick={handlePaymentConfirm}
-                disabled={paymentReadOnly}
+                disabled={paymentReadOnly || paymentConfirmLoading}
+                loading={paymentConfirmLoading}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
                 Confirm
@@ -417,12 +590,13 @@ const PatientQuickAppointment = ({
           )
         }
       ]}
-      content={(step: number) => conjureFormContent(step)}
-      size="55vw"
-      bodyheight="65vh"
+      content={(step: number) => <div dir={dir}>{conjureFormContent(step)}</div>}
+      size="68vw"
+      bodyheight="72vh"
       hideActionBtn={true}
       initialStep={initialStep}
     />
+  </div>
   );
 };
 

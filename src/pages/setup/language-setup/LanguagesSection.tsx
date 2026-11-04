@@ -8,6 +8,7 @@ import { faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Language } from '@/types/model-types-new';
 
 interface LanguagesSectionProps {
+  filters: React.ReactNode;
   languages: Language[];
   selectedLanguage: Language;
   loading: boolean;
@@ -17,6 +18,7 @@ interface LanguagesSectionProps {
 }
 
 export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
+  filters,
   languages,
   selectedLanguage,
   loading,
@@ -39,6 +41,12 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
     </div>
   );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <SectionContainer
       title={
@@ -47,8 +55,9 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
           {buttons}
         </>
       }
-      content={
+      content={<div dir={dir}>
         <MyTable
+          filters={filters}
           data={languages ?? []}
           columns={[
             {
@@ -76,8 +85,9 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
           rowClassName={(rowData: Language) =>
             selectedLanguage?.id === rowData.id ? 'selected-row' : ''
           }
+          dontTranslateData 
         />
-      }
+      </div>}
     />
   );
 };

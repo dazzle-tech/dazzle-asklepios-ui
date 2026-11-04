@@ -60,9 +60,18 @@ const DentalActions = () => {
   const divContent = (
    "Dental Actions"
   );
+
+  
+useEffect(() => {
   dispatch(setPageCode('Dental_Actions'));
   dispatch(setDivContent(divContent));
-  
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && dentalAction && rowData.key === dentalAction.key) {
@@ -240,12 +249,7 @@ const DentalActions = () => {
     }
   }, [saveDentalActionMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
   // update the list when the filter is changed
   useEffect(() => {
     if (recordOfFilter['filter']) {

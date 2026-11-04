@@ -5,8 +5,15 @@ import PainAssessmentSummary from '../../nursing-reports-summary/PainAssessmentS
 import GeneralAssessmentSummary from '../../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../../nursing-reports-summary/FunctionalAssessmentSummary';
 const NursingReportsSummary = ({ patient, encounter }) => {
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Row gutter={18}>
         <Col xs={12}>
           <ChiefComplainSummary patient={patient} encounter={encounter} />

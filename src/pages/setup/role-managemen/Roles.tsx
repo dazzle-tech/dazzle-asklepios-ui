@@ -14,8 +14,9 @@ import { useAppDispatch } from "@/hooks";
 import MyInput from "@/components/MyInput";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-
+import './styles.less';
 const Roles = ({ selected, setSelected, facilityId }) => {
+
   const dispatch = useAppDispatch();
 
   const { data: rolesData, refetch: refetchRoles } =
@@ -42,7 +43,6 @@ const Roles = ({ selected, setSelected, facilityId }) => {
     }
   };
 
-  // ✅ تعديل Role موجود
   const handleUpdate = async () => {
     if (!editRole) return;
     try {
@@ -105,7 +105,7 @@ const Roles = ({ selected, setSelected, facilityId }) => {
                       icon={faPen}
                       title="Edit"
                       style={{
-                        color: "#1976d2",
+                        color:'var(--primary-blue)',
                         cursor: "pointer",
                         marginLeft: 8,
                       }}

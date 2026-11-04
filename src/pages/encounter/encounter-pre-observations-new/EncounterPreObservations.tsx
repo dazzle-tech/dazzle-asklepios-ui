@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Divider, Form, Panel } from 'rsuite';
 
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
@@ -15,36 +15,105 @@ import { FaSearch } from 'react-icons/fa';
 
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import { MedicalSheets } from '@/config/modules-config';
-import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
 
+import clsx from 'clsx';
+import NurseSummeryReportButton from './NurseSummeryReportButton';
 import './styles.less';
-import { useGenerateNurseSummaryReportMutation } from '@/services/observationService';
-import { ApPatient } from '@/types/model-types';
 
-const NurseStation = () => {
+type NurseStationModalProps = {
+  patient?: any;
+  encounter?: any;
+  onSheetNavigate?: (relativePath: string) => void;
+  outletContent?: React.ReactNode;
+};
+
+const NurseStation = ({
+  patient: modalPatient,
+  encounter: modalEncounter,
+  onSheetNavigate,
+  outletContent
+}: NurseStationModalProps = {}) => {
+  const inModal = !!(modalPatient || modalEncounter);
   const mode = useSelector((state: any) => state.ui.mode);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
+
+  const selectedDeptId = useSelector(
+    (state: any) => state.auth?.selectedDepartment?.departmentId
+  );
+  
+  const propsData = inModal
+    ? { patient: modalPatient, encounter: modalEncounter, fromPage: 'PatientEMR', viewMode: 'readOnly' }
+    : location.state;
+  const fromPage = propsData?.fromPage;
+  const pageSource = fromPage || '';
+
+useEffect(() => {
+  if (inModal) return;
+  if (!location.pathname.includes('/nurse-station')) return;
+
+  const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+  const fromOpdVisitList = location.state?.fromPage === 'OpdVisitList';
+  const encounterDeptId = propsData?.encounter?.departmentId;
+
+  if (
+    !fromPatientsLists &&
+    (
+      !propsData?.encounter ||
+      !encounterDeptId ||
+      encounterDeptId !== selectedDeptId
+    )
+  ) {
+    navigate('/encounter-list', { replace: true });
+  }
+}, [
+  inModal,
+  location.pathname,
+  location.state?.fromPage,
+  propsData?.encounter,
+  selectedDeptId,
+  navigate
+]);
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
 
+  const nurseEncounterId = propsData?.encounter?.id;
+  const isAmendmentOpen = useOpenAmendmentSession(nurseEncounterId);
+  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+
+  const viewMode = propsData?.viewMode;
+  const isFromEMR =
+    location.state?.fromPage === 'PatientEMR' ||
+    location.pathname.includes('emr');
+
+  const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+
+  const edit = fromPatientsLists
+    ? false
+    : isFromEMR ||
+      viewMode === 'readOnly' ||
+      location.state?.edit ||
+      localEncounter?.status === 'COMPLETED';
+
+  const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
+
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [edit, setEdit] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
-  // Nurse sheets
-  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(localEncounter?.departmentId);
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
+    localEncounter?.departmentId
+  );
 
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -58,46 +127,63 @@ const NurseStation = () => {
   }, [allowedSheetCodes, searchTerm.term]);
 
   const headersMap = useMemo(() => {
-    const map: any = {};
+    const map: Record<string, string> = {};
+
     MedicalSheets.forEach(ms => {
-      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
+      const fullPath = ms.path.startsWith('/nurse-station')
+        ? ms.path
+        : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+
       map[fullPath] = ms.name;
     });
+
     return map;
   }, []);
 
   useEffect(() => {
-    const header = headersMap[location.pathname] || 'Nurse Dashboard';
+    setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+  }, [location.pathname, headersMap]);
 
+  const divContent = `Nurse Station > ${currentHeader}`;
+
+  useEffect(() => {
     dispatch(setPageCode('Nurse_Station'));
-    dispatch(setDivContent(`Nurse Station > ${header}`));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent(' '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, headersMap, dispatch]);
+  }, [currentHeader, dispatch, divContent]);
 
+
+  const currentFromPage = propsData?.fromPage || fromPage || '';
+
+  const sharedNavigationState = useMemo(
+    () => ({
+      patient: propsData?.patient,
+      encounter: propsData?.encounter,
+      edit,
+      isAmendmentOpen,
+      fromPage: currentFromPage,
+      viewMode: propsData?.viewMode
+    }),
+    [propsData?.patient, propsData?.encounter, edit, isAmendmentOpen, currentFromPage, propsData?.viewMode]
+  );
   useEffect(() => {
-    if (!propsData?.encounter) {
-      navigate('/encounter-list');
-      return;
-    }
-    setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
-  }, [propsData, localEncounter]);
-  
-  // Complete encounter
-  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
-   useEffect(() => {
-      if (
-        localEncounter?.encounterType == 'INPATIENT' &&
-        completeEncounterMutation.status === 'fulfilled'
-      ) {
-        navigate('/inpatient-encounters-list');
-      } else if (completeEncounterMutation.status === 'fulfilled') {
-        navigate('/encounter-list');
+    if (
+      localEncounter?.encounterType === 'INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
+      if (pageSource === 'Urgent_Care_List') {
+        navigate('/urgent-care-department-list', { state: { shouldRefetch: true } });
+      } else {
+        navigate('/encounter-list', { state: { shouldRefetch: true } });
       }
-    }, [completeEncounterMutation]);
+    }
+  }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -108,66 +194,88 @@ const NurseStation = () => {
 
       dispatch(
         notify({
-          msg: 'Completed Successfully',
+          msg: isAmendmentOpen ? 'Visit amendment finished' : 'Completed Successfully',
           sev: 'success'
         })
       );
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'An error occurred while completing the encounter',
-          sev: 'error'
-        })
-      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.amendment.completeNotAllowed':
+          'This encounter has an open amendment. Finish the amendment before completing the encounter.',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     } finally {
       dispatch(hideSystemLoader());
     }
   };
 
   const handleGoBack = () => {
+    if (pageSource === 'PatientsLists') {
+      navigate('/patients-list');
+      return;
+    }
+
+    if (pageSource === 'OpdVisitList') {
+      navigate('/opd-visit-list');
+      return;
+    }
+
+    if (pageSource === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list', {
+        state: {
+          fromPage: 'NurseStation',
+          patient: propsData?.patient,
+          encounter: propsData?.encounter
+        }
+      });
+      return;
+    }
+
     navigate('/encounter-list');
   };
 
-  const handleGenerateReport = async (): Promise<void> => {
-    try {
-      const blob = await generateNurseReport({
-        patient: localEncounter?.patientObject as ApPatient,
-        encounter: localEncounter
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `nurse-summary-${localEncounter.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Error while generating report',
-          sev: 'error'
-        })
-      );
-      throw error;
-    }
-  };
 
   return (
     <div className="container">
-      {/* LEFT SIDE */}
       <div className="left-box">
         <Panel>
-          {/* TOP BAR */}
-          <div className="container-bt">
-            <div className="left">
-              <BackButton onClick={handleGoBack} text="To Encounters list" />
-              <MyButton
-                backgroundColor={'var(--primary-gray)'}
-                onClick={() => navigate(-1)}
-                prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
-              />
+        <div
+          className="container-bt"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}
+        >    
+        <div className="left">
+              {!inModal && (
+                <BackButton
+                  onClick={handleGoBack}
+                  text={
+                    pageSource === 'PatientsLists'
+                      ? 'To Patients list'
+                      : pageSource === 'OpdVisitList'
+                        ? 'To OPD Visit List'
+                        : pageSource === 'Urgent_Care_List'
+                          ? 'To Urgent Care list'
+                          : 'To Encounters list'
+                  }
+                />
+              )}
+              {!inModal && (
+                <MyButton
+                  backgroundColor={'var(--primary-gray)'}
+                  onClick={() => navigate(-1)}
+                  prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
+                />
+              )}
 
               <Form fluid>
                 <MyInput
@@ -185,133 +293,84 @@ const NurseStation = () => {
               </Form>
             </div>
 
-            <div className="right">
-              <MyButton
-                loading={isGeneratingReport}
-                disabled={isGeneratingReport}
-                onClick={async () => {
-                  try {
-                    setIsGeneratingReport(true);
-                    await handleGenerateReport();
-                  } finally {
-                    setIsGeneratingReport(false);
-                  }
-                }}
-              >
-                Generate Report
-              </MyButton>
-
-              {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
-              {/* )} */}
+          {!inModal && (
+            <div
+              className="right"
+              style={{
+                marginLeft: 'auto',
+                flexShrink: 0
+              }}
+            >
+              <NurseSummeryReportButton encounterId={localEncounter?.id} />
             </div>
+          )}
           </div>
 
           <Divider />
+          <div className="medical-sheets-tabs">
+            <MyButton
+              className={`medical-sheet-tab ${location.pathname === '/nurse-station' ? 'active' : ''}`}
+              onClick={() => {
+                if (onSheetNavigate) {
+                  onSheetNavigate('');
+                } else {
+                  navigate('/nurse-station', { state: sharedNavigationState });
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faClockRotateLeft} />
+              <Translate>Dashboard</Translate>
+            </MyButton>
 
-          {/* DRAWER */}
-          <Drawer
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            placement="left"
-            style={{ zIndex: 999999999999 }}
-            className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
-          >
-            <Drawer.Header className="header-drawer">
-              <Drawer.Title>Nurse Station Sheets</Drawer.Title>
-            </Drawer.Header>
+            {visibleSheets.map(({ code, name, icon, path }) => {
+              const fullPath = `/nurse-station${path.startsWith('/') ? path : `/${path}`}`;
+              const isActive = location.pathname === fullPath;
 
-            <Drawer.Body className="drawer-body">
-              <Form fluid>
-                <Row>
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      placeholder="Search screens..."
-                      fieldName={'term'}
-                      record={searchTerm}
-                      setRecord={setSearchTerm}
-                      showLabel={false}
-                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                    />
-                  </Col>
-                </Row>
-              </Form>
-              <List hover className="drawer-list-style">
-                <List.Item
-                 className="drawer-item return-button"
+              return (
+                <MyButton
+                  key={code}
+                  className={`medical-sheet-tab ${isActive ? 'active' : ''}`}
                   onClick={() => {
-                    navigate('/nurse-station', { state: location.state });
-                    setIsDrawerOpen(false);
+                    if (onSheetNavigate) {
+                      const relativePath = path.startsWith('/') ? path.slice(1) : path;
+                      onSheetNavigate(relativePath);
+                    } else {
+                      navigate(fullPath, { state: sharedNavigationState });
+                    }
                   }}
+
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                  <Translate>Dashboard</Translate>
-                </List.Item>
-
-                {visibleSheets.map(({ code, name, icon, path }) => {
-                  const clean = path.startsWith('/') ? path.slice(1) : path;
-                  const fullPath = `/nurse-station/${clean}`;
-
-                  return (
-                    <List.Item key={code}
-                      className="drawer-item"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        navigate(fullPath, {
-                          state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }
-                        });
-                      }}
-                    >
-                      <Link
-                        to={fullPath}
-                        state={{
-                          patient: propsData.patient,
-                          encounter: propsData.encounter,
-                          edit
-                        }}
-                        className="inherit-link"
-                      >
-                        {icon}
-                        <span className="margin-left-10">
-                          <Translate>{name}</Translate>
-                        </span>
-                      </Link>
-                    </List.Item>
-                  );
-                })}
-              </List>
-            </Drawer.Body>
-          </Drawer>
-
-          {/* CONTENT */}
-          <div className="content-with-sticky">
-            <div className="main-content-area">
-              <Outlet
-                context={{
-                  patient: propsData?.patient,
-                  encounter: propsData?.encounter,
-                  edit,
-                  setLocalEncounter
-                }}
-              />
+                  {icon}
+                  <span>
+                    <Translate>{name}</Translate>
+                  </span>
+                </MyButton>
+              );
+            })}
+          </div>
+          <div
+            className={clsx('column-container', { 'disabled-panel': edit && !inModal })}
+            style={edit && !inModal ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+          >
+            <div className="content-with-sticky">
+              <div className="main-content-area">
+                {outletContent !== undefined ? outletContent : (
+                  <Outlet
+                    context={{
+                      patient: propsData?.patient,
+                      encounter: propsData?.encounter,
+                      edit,
+                      isAmendmentOpen,
+                      setLocalEncounter
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </Panel>
       </div>
 
-      {/* RIGHT SIDE */}
       <div className="right-box">
         <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
       </div>

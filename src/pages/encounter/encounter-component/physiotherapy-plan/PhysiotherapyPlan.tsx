@@ -424,7 +424,9 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                         record={planData}
                         setRecord={setPlanData}
                         selectData={therapyTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         width={200}
                         searchable={false}
@@ -446,7 +448,9 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                             record={planData}
                             setRecord={setPlanData}
                             selectData={frequencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             width={120}
                             searchable={false}
@@ -460,7 +464,9 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                         record={planData}
                         setRecord={setPlanData}
                         selectData={statusTableLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         width={120}
                         searchable={false}
@@ -494,7 +500,9 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                             record={planData}
                             setRecord={setPlanData}
                             selectData={frequencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             width={120}
                             searchable={false}
@@ -605,7 +613,9 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                           record={planData}
                           setRecord={setPlanData}
                           selectData={mobilityImprovementLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width={200}
                           searchable={false}
@@ -688,8 +698,8 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
         </div>
         <div className="section-header">
           {/* Toggle canceled plans */}
-          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-            Show Cancelled
+          <Checkbox className="show-cancelled" checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+            <Translate>Show Cancelled</Translate>
           </Checkbox>
           <div className="section-buttons">
             <MyButton

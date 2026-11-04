@@ -14,39 +14,50 @@ import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { Patient } from '@/types/model-types-new';
 
 type BodyMeasurementsProps = {
+  patient?: Patient;
   patientId: number;
   encounterId: number;
   encounter?: any;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  /** Keep specialty sheets limited to weight, height and BMI. */
+  showExtendedMeasurements?: boolean;
+  prefill?: Partial<BodyMeasurementsModelObject> | null;
+  onSaved?: (saved?: BodyMeasurementsModelObject) => void;
 };
 
 const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
+  patient,
   patientId,
   encounterId,
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Body Measurements'
+  title = 'Body Measurements',
+  showExtendedMeasurements = true,
+  collapsible = false,
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
   // === API ===
   const [createBodyMeasurements] = useCreateBodyMeasurementsMutation();
-    const [updateEncounter] = useUpdateEncounterMutation();
 
-  const { data: latestBodyMeasurementsByEncounterId } = useGetLatestBodyMeasurementsByEncounterIdQuery(
-    { encounterId },
-    { skip: !encounterId }
-  );
+  const { data: latestBodyMeasurementsByEncounterId } =
+    useGetLatestBodyMeasurementsByEncounterIdQuery({ encounterId }, { skip: !encounterId });
 
   // === Local state ===
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurementsModelObject>({
     ...newBodyMeasurements,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
@@ -54,8 +65,30 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   const [bodyMassIndex, setBodyMassIndex] = useState<string>('');
   const [bodySurfaceArea, setBodySurfaceArea] = useState<string>('');
 
+  const ageInMonths = useMemo(() => {
+    const dob =
+      patient?.dateOfBirth ||
+      (patient as any)?.birthDate ||
+      (patient as any)?.dob;
+
+    if (!dob) return null;
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    const months =
+      (today.getFullYear() - birthDate.getFullYear()) * 12 +
+      (today.getMonth() - birthDate.getMonth());
+
+    return months;
+  }, [patient]);
+
+  const showHeadCircumference =
+    ageInMonths !== null && ageInMonths < 24;
+
+
   useEffect(() => {
-    if (!latestBodyMeasurementsByEncounterId) return;
+    if (prefill || !latestBodyMeasurementsByEncounterId) return;
 
     setBodyMeasurements(previousBodyMeasurements => ({
       ...previousBodyMeasurements,
@@ -68,7 +101,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
           ? (latestBodyMeasurementsByEncounterId as any).isActive
           : true
     }));
-  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId]);
+  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId, prefill]);
 
   /**
    * Compute BMI & BSA based on weight/height.
@@ -92,14 +125,20 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     setBodySurfaceArea('');
   }, [bodyMeasurements?.weight, bodyMeasurements?.height]);
 
+  const toMeasurementNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    const numericValue =
+      typeof value === 'number' ? value : Number(String(value).replace(',', '.').trim());
+    return Number.isFinite(numericValue) ? numericValue : null;
+  };
 
   const bodyMeasurementsCreatePayload = useMemo(() => {
     return {
       patientId,
       encounterId,
-      weight: bodyMeasurements.weight ?? null,
-      height: bodyMeasurements.height ?? null,
-      headCircumference: bodyMeasurements.headCircumference ?? null,
+      weight: toMeasurementNumber(bodyMeasurements.weight),
+      height: toMeasurementNumber(bodyMeasurements.height),
+      headCircumference: toMeasurementNumber(bodyMeasurements.headCircumference),
       isActive: typeof bodyMeasurements.isActive === 'boolean' ? bodyMeasurements.isActive : true
     };
   }, [bodyMeasurements, patientId, encounterId]);
@@ -150,7 +189,9 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Body measurements payload is required.',
@@ -182,47 +223,35 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       return;
     }
 
+    const weight = toMeasurementNumber(bodyMeasurements.weight);
+    const height = toMeasurementNumber(bodyMeasurements.height);
+
+    const missing: string[] = [];
+    if (weight == null) missing.push('• Weight: must not be empty');
+    if (height == null) missing.push('• Height: must not be empty');
+
+    if (missing.length > 0) {
+      dispatch(
+        notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
+      );
+      return;
+    }
+
     try {
-      const createResponse = await createBodyMeasurements(bodyMeasurementsCreatePayload as any).unwrap();
+      const createResponse = await createBodyMeasurements(
+        bodyMeasurementsCreatePayload as any
+      ).unwrap();
 
       setBodyMeasurements(previousBodyMeasurements => ({
         ...previousBodyMeasurements,
         ...createResponse,
         patientId,
         encounterId,
-        id: undefined 
+        id: undefined
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
+      onSaved?.(createResponse);
     } catch (error: any) {
       showApiError(error);
     }
@@ -240,88 +269,100 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
   return (
     <SectionContainer
+      collapsible={collapsible}
+      defaultCollapsed={defaultCollapsed}
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSaveBodyMeasurements} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClearBodyMeasurements} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            <div className="rows-gap" style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Weight"
-                  fieldName="weight"
-                  rightAddon="Kg"
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                  required
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="container-Column">
-                  <MyLabel label="Body Mass Index" />
-                  <div>
-                    <FontAwesomeIcon icon={faPerson} className="my-icon" />
-                    <text>{bodyMassIndex}</text>
-                  </div>
+          <div className="rows-gap" style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <MyInput
+                width="100%"
+                fieldLabel="Weight"
+                fieldName="weight"
+                rightAddon="Kg"
+                fieldType="number"
+                allowDecimal
+                record={bodyMeasurements}
+                setRecord={setBodyMeasurements}
+                disabled={disabled}
+                required
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="container-Column">
+                <MyLabel label="Body Mass Index" />
+                <div>
+                  <FontAwesomeIcon icon={faPerson} className="my-icon" />
+                  <span>{bodyMassIndex}</span>
                 </div>
               </div>
             </div>
-            <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Height"
-                  fieldName="height"
-                  rightAddon="Cm"
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                  required
-                />
-              </div>
+          </div>
+          <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+            <div style={{ flex: 1 }}>
+              <MyInput
+                width="100%"
+                fieldLabel="Height"
+                fieldName="height"
+                rightAddon="Cm"
+                fieldType="number"
+                allowDecimal
+                record={bodyMeasurements}
+                setRecord={setBodyMeasurements}
+                disabled={disabled}
+                required
+              />
+            </div>
+            {showExtendedMeasurements && (
               <div style={{ flex: 1 }}>
                 <div className="container-Column">
                   <MyLabel label="Body Surface Area" />
                   <div>
                     <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
-                    <text>{bodySurfaceArea}</text>
+                    <span>{bodySurfaceArea}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+          </div>
 
-            <div className="rows-gap" style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-              <div style={{ flex: 1 }}>
-                <MyInput
-                  width="100%"
-                  fieldLabel="Head circumference"
-                  fieldName="headCircumference"
-                  rightAddon="Cm"
-                  rightAddonwidth={40}
-                  fieldType="number"
-                  record={bodyMeasurements}
-                  setRecord={setBodyMeasurements}
-                  disabled={disabled}
-                />
+            {showExtendedMeasurements && showHeadCircumference && (
+              <div
+                className="rows-gap"
+                style={{ display: 'flex', gap: 12, marginTop: 10 }}
+              >
+                <div style={{ flex: 1 }}>
+                  <MyInput
+                    width="100%"
+                    fieldLabel="Head circumference"
+                    fieldName="headCircumference"
+                    rightAddon="Cm"
+                    rightAddonwidth={40}
+                    fieldType="number"
+                    allowDecimal
+                    record={bodyMeasurements}
+                    setRecord={setBodyMeasurements}
+                    disabled={disabled}
+                  />
+                </div>
+
+                <div style={{ flex: 1 }} />
               </div>
+            )}
 
-              <div style={{ flex: 1 }} />
-            </div>
-          </Form>
-        </div>
+            <div style={{ flex: 1 }} />
+          </div>
       }
     />
   );

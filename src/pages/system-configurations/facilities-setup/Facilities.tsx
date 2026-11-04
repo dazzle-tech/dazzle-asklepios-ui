@@ -11,8 +11,7 @@ import {
   useGetAllFacilitiesQuery,
   useUpdateFacilityMutation
 } from '@/services/security/facilityService';
-import { ApAddresses, ApDepartment } from '@/types/model-types';
-import { newApAddresses } from '@/types/model-types-constructor';
+import { ApDepartment } from '@/types/model-types';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { CreateFacility, Facility } from '@/types/model-types-new';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -20,7 +19,7 @@ import { addFilterToListRequest, fromCamelCaseToDBName, formatEnumString } from 
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
-import { FaUndo } from 'react-icons/fa';
+import { FaUndo } from 'react-icons/fa';  
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { Form, Panel } from 'rsuite';
 import MyTab from '@/components/MyTab';
@@ -30,11 +29,13 @@ import DepartmentsTab from './tabs/DepartmentsTab';
 import RolesTab from './tabs/RolesTab';
 import UsersTab from './tabs/UsersTab';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
+import TranslationModal from '@/components/TranslationModal';
+import ConfigurationTab from './tabs/FacilityConfigration';
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
   const [createFacility, setCreateFacility] = useState<CreateFacility>({ ...newCreateFacility });
-  const [address, setAddress] = useState<ApAddresses>({ ...newApAddresses });
   const [departments, setDepartments] = useState<ApDepartment[]>([]);
   const [popupOpen, setPopupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -43,6 +44,10 @@ const Facilities = () => {
   const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ name: '' });
   // Initialize list request with default filters
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+   const [translationFields, setTranslationFields] = useState<
+        { fieldName: string; value: string }[]
+      >([]);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   // Fetch Facilities list response
   const {
     data: facilityListResponse,
@@ -61,6 +66,7 @@ const Facilities = () => {
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
   const totalCount = facilityListResponse?.extraNumeric ?? 0;
+  const DayOfWeek = useEnumOptions('DayOfWeek');
 
   // Effects
   useEffect(() => {
@@ -79,21 +85,21 @@ const Facilities = () => {
     handleFilterChange('facilityName', recordOfSearchForFacility['facilityName']);
   }, [recordOfSearchForFacility]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
 
   // Page header setup
-  const divContent = 'Facilities';
+useEffect(() => {
   dispatch(setPageCode('Facilities'));
-  dispatch(setDivContent(divContent));
+  dispatch(setDivContent('Facilities'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // Handle click on Add New Button
   const handleNew = () => {
-    setAddress(newApAddresses);
     setCreateFacility({ ...newCreateFacility });
     setDepartments([]);
     setIsEditing(false);
@@ -155,6 +161,36 @@ const Facilities = () => {
     return null;
   };
 
+  const buildWorkingDaysPayload = (workingDays: Facility['workingDays']) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return workingDays ?? [];
+
+    const map: Record<string, boolean> = {};
+    DayOfWeek.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!map[day.value],
+    }));
+  };
+
+  // Extract readable backend message when available.
+  const extractErrorMessage = (response) => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') return msg.replace(/^error\./i, '');
+      return '';
+    } catch {
+      return '';
+    }
+  };
   // Handle click on Save Facility button
 const handleSave = async () => {
   setLoad(true);
@@ -164,6 +200,7 @@ const handleSave = async () => {
   if (!createFacility.name?.trim()) missingFields.push('Facility Name');
   if (!createFacility.type) missingFields.push('Facility Type');
   if (!createFacility.defaultCurrency) missingFields.push('Default Currency');
+  if (!createFacility.code) missingFields.push('Code');
 
   if (missingFields.length) {
     dispatch(
@@ -180,25 +217,26 @@ const handleSave = async () => {
   }
 
   try {
+    const workingDaysPayload = buildWorkingDaysPayload(createFacility.workingDays);
+    await saveFacility({ ...createFacility, workingDays: workingDaysPayload }).unwrap();
     setPopupOpen(false);
-
-    await saveFacility({ ...createFacility }).unwrap();
-
     dispatch(
       notify({
         msg: 'The Facility has been saved successfully',
         sev: 'success'
       })
-    );
-
+    ); 
+      setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: createFacility.name
+                  }
+                ]);
+   setShowTranslationModal(true)
     refetchFacility();
-  } catch {
-    dispatch(
-      notify({
-        msg: 'Failed to save this Facility',
-        sev: 'error'
-      })
-    );
+  } catch(error) {
+    const errorMsg = extractErrorMessage(error) || 'Failed to save this Facility';
+    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
   }
 
   setLoad(false);
@@ -213,6 +251,7 @@ const handleSave = async () => {
     if (!facility.name?.trim()) missingFields.push('Facility Name');
     if (!facility.type) missingFields.push('Facility Type');
     if (!facility.defaultCurrency) missingFields.push('Default Currency');
+    if (!facility.code) missingFields.push('Code');
 
     if (missingFields.length) {
       dispatch(
@@ -228,26 +267,27 @@ const handleSave = async () => {
       return;
     }
 
-    try {
+  try {
+    const workingDaysPayload = buildWorkingDaysPayload(facility.workingDays);
+    await updateFacility({ ...facility, workingDays: workingDaysPayload }).unwrap();
       setPopupOpen(false);
-
-      await updateFacility({ ...facility }).unwrap();
-
-      dispatch(
-        notify({
-          msg: 'Facility has been updated successfully',
-          sev: 'success'
+    dispatch(
+      notify({
+        msg: 'Facility has been updated successfully',
+        sev: 'success'
         })
       );
-
+        setTranslationFields([
+                  {
+                    fieldName: 'name',
+                    value: facility.name
+                  }
+                ]);
+      setShowTranslationModal(true)
       refetchFacility();
-    } catch {
-      dispatch(
-        notify({
-          msg: 'Failed to update Facility',
-          sev: 'error'
-        })
-      );
+    } catch(error) {
+     const errorMsg = extractErrorMessage(error) || 'Failed to updateu this Facility';
+    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
 
     setLoad(false);
@@ -344,6 +384,18 @@ const handleSave = async () => {
       dataKey: 'emailAddress'
     },
     {
+      key: 'defaultLabDepartmentName',
+      title: <Translate>Default Lab Department</Translate>,
+      flexGrow: 3,
+      dataKey: 'defaultLabDepartmentName'
+    },
+    {
+      key: 'defaultRadDepartmentName',
+      title: <Translate>Default Radiology Department</Translate>,
+      flexGrow: 3,
+      dataKey: 'defaultRadDepartmentName'
+    },
+    {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
@@ -359,8 +411,16 @@ const handleSave = async () => {
     }
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div>
         <Panel>
           <MyTable
@@ -371,7 +431,6 @@ const handleSave = async () => {
             rowClassName={isSelected}
             onRowClick={rowData => {
               setFacility(rowData);
-              setAddress(rowData.address || newApAddresses);
               setDepartments(Array.isArray(rowData.department) ? rowData.department : []);
             }}
             sortColumn={listRequest.sortBy}
@@ -412,14 +471,13 @@ const handleSave = async () => {
                 </Form>
               </div>
             }
+            dontTranslateData 
           />
           <AddEditFacility
             open={popupOpen}
             setOpen={setPopupOpen}
             facility={isEditing ? facility : createFacility}
             setFacility={isEditing ? setFacility : setCreateFacility}
-            address={address}
-            setAddress={setAddress}
             handleSave={isEditing ? handleUpdate : handleSave}
             width={width}
           />
@@ -429,6 +487,11 @@ const handleSave = async () => {
             itemToDelete="Facility"
             actionButtonFunction={handleRemove}
           />
+          <TranslationModal
+                  open={showTranslationModal}
+                  setOpen={setShowTranslationModal}
+                  fields={translationFields}
+                />
         </Panel>
       </div>
 
@@ -436,6 +499,7 @@ const handleSave = async () => {
       {facility?.id && (
         <Box mt={3}>
           <MyTab
+          lazy
             data={[
               {
                 title: 'Departments',
@@ -450,6 +514,11 @@ const handleSave = async () => {
               {
                 title: 'Users',
                 content: <UsersTab facility={facility} />,
+                disabled: !facility?.id
+              },
+              {
+                title: 'Configuration',
+                content: <ConfigurationTab facility={facility} setFacility={setFacility} updateFacility={updateFacility} />,
                 disabled: !facility?.id
               }
             ]}

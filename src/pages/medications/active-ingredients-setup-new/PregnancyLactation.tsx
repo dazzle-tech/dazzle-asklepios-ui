@@ -62,8 +62,16 @@ const PregnancyLactation = ({ activeIngredients }) => {
       });
     }
   }, [activeIngredients]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <Row>
         <div className="container-of-buttons-pregnancy-lactation">
           <MyButton
@@ -82,7 +90,9 @@ const PregnancyLactation = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={pregnancyCategoriesLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             fieldName="pregnancyCategoryLkey"
@@ -95,7 +105,9 @@ const PregnancyLactation = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={breastfeedingCategoriesLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             fieldName="lactationRiskLkey"

@@ -192,8 +192,15 @@ const isSelected = (row) => {
     },
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
 
       {/* ------- HEADER ------- */}
       <div className="container-of-header-actions-pre-requested-tests">

@@ -299,7 +299,9 @@ const AddEditTransaction = ({
                   fieldName="transTypeLkey"
                   fieldType="select"
                   selectData={transTypeListResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -331,7 +333,9 @@ const AddEditTransaction = ({
                       ? transReasonInListResponse?.object ?? []
                       : transReasonOutListResponse?.object ?? []
                   }
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -625,7 +629,9 @@ const AddEditTransaction = ({
                   fieldName="transTypeLkey"
                   fieldType="select"
                   selectData={transTypeListResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -661,7 +667,9 @@ const AddEditTransaction = ({
                       ? transReasonInListResponse?.object ?? []
                       : transReasonOutListResponse?.object ?? []
                   }
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={transaction}
                   setRecord={setTransaction}
@@ -952,6 +960,13 @@ const AddEditTransaction = ({
     );
   };
 
+
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+    
   return (
     <AdvancedModal
       open={open}
@@ -962,8 +977,8 @@ const AddEditTransaction = ({
       leftTitle={'Transaction Details'}
       actionButtonFunction={() => setOpen(false)}
       rightTitle="Add/Edit Transaction"
-      rightContent={rightContent()}
-      leftContent={leftContent()}
+      rightContent={<div dir={dir}>{rightContent()}</div>}
+      leftContent={<div dir={dir}>{leftContent()}</div>}
     ></AdvancedModal>
   );
 };

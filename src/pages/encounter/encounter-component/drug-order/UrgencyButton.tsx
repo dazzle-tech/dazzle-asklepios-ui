@@ -3,12 +3,14 @@ import { useState, useRef, useEffect } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaArrowUp, FaArrowDown, FaMinus, FaChevronDown } from 'react-icons/fa';
 import './UrgencyButton.less';
+import { useAppSelector } from '@/hooks';
 
 const UrgencyButton = () => {
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const [urgency, setUrgency] = useState<'high' | 'medium' | 'low' | null>(null);
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLDivElement | null>(null);
-
+  
   const options = [
     { key: 'high', label: 'High', color: 'red', icon: <FaArrowUp /> },
     { key: 'medium', label: 'Medium', color: 'orange', icon: <FaMinus /> },

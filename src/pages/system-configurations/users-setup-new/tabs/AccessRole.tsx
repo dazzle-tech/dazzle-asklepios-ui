@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useMemo } from "react";
 import { Form, Row, Col } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
@@ -36,6 +36,9 @@ const AccessRole = ({ user }) => {
   const [addUserRole] = useAddUserRoleMutation();
   const [deleteUserRole] = useDeleteUserRoleMutation();
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // save role for user
   const handleSave = async () => {
   if (!user?.id || !selectedFacility || !selectedRole) {
@@ -43,16 +46,13 @@ const AccessRole = ({ user }) => {
     return;
   }
 
-  // check if already has role in same facility
-  const hasRoleInFacility = userRoles.some((ur) => {
-    const roleFacilityId = conjureValueBasedOnIDFromList(allRoles ?? [], ur.roleId, "facilityId");
-    return roleFacilityId && roleFacilityId === selectedFacility.id;
-  });
+  // check if user already has this role
+  const alreadyHasRole = userRoles.some((ur) => ur.roleId === selectedRole.id);
 
-  if (hasRoleInFacility) {
+  if (alreadyHasRole) {
     dispatch(
       notify({
-        msg: `User already has a role in facility ${selectedFacility.name}. Delete it first.`,
+        msg: `User already has role ${selectedRole.name}.`,
         sev: "warning",
       })
     );
@@ -132,9 +132,35 @@ const AccessRole = ({ user }) => {
     },
   ];
 
+const handlePageChange = (_: unknown, newPage: number) => {
+  setPageIndex(newPage);
+};
+
+const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  setRowsPerPage(parseInt(event.target.value, 10));
+  setPageIndex(0);
+};
+
+const paginatedData = useMemo(() => {
+  const start = pageIndex * rowsPerPage;
+  const end = start + rowsPerPage;
+  return (userRoles ?? []).slice(start, end);
+}, [userRoles, pageIndex, rowsPerPage]);
+
+const totalCount = userRoles?.length ?? 0;
+
+
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
-      <Form fluid>
+      <Form fluid dir={dir}>
         <Row>
           <Col md={10} xs={10} xl={10}>
             <MyInput
@@ -171,7 +197,15 @@ const AccessRole = ({ user }) => {
         </Row>
       </Form>
 
-      <MyTable data={userRoles} columns={columns} />
+      <MyTable
+        data={paginatedData}
+        columns={columns}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
     </>
   );
 };

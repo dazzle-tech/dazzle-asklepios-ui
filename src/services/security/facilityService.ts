@@ -1,60 +1,74 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {BaseQuery } from '../../newApi';
+import { BaseQuery, onQueryStarted } from '../../newApi';
 
 export const facilityService = createApi({
   reducerPath: 'facilityApi',
+   tagTypes: ['Facilities'],
   baseQuery: BaseQuery,
   endpoints: builder => ({
     addFacility: builder.mutation({
       query: facility => ({
         url: '/api/setup/facility',
         method: 'POST',
-        body: facility,
-      }),
+        body: facility
+      })
     }),
     deleteFacility: builder.mutation({
-      query: (facilityId) => ({
+      query: facilityId => ({
         url: `/api/setup/facility/${facilityId}`,
-        method: 'DELETE',
-      }),
+        method: 'DELETE'
+      })
     }),
     updateFacility: builder.mutation({
-      query: (facility) => ({
+      query: facility => ({
         url: `/api/setup/facility/${facility.id}`,
         method: 'PUT',
-        body: facility,
-      }),
+        body: facility
+      })
     }),
 
     getAllFacilities: builder.query({
       query: () => ({
         url: '/api/setup/facility',
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
 
     getFacilityById: builder.query({
-      query: (facilityId) => ({
+      query: facilityId => ({
         url: `/api/setup/facility/${facilityId}`,
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
     getFacilityTypes: builder.query({
       query: () => ({
         url: '/api/setup/facility/facility-types',
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
-  }),
 
-
+    getActiveFacilities: builder.query<any[], void>({
+      query: () => ({
+        url: '/api/setup/facility/active',
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response?.value ?? response?.data ?? response?.content ?? [];
+      },
+      providesTags: ['Facilities']
+    })
+  })
 });
 export const {
-    useAddFacilityMutation, 
-    useDeleteFacilityMutation,
-    useUpdateFacilityMutation,
-    useGetAllFacilitiesQuery,
-    useGetFacilityByIdQuery,
-    useGetFacilityTypesQuery
-
+  useAddFacilityMutation,
+  useDeleteFacilityMutation,
+  useUpdateFacilityMutation,
+  useGetAllFacilitiesQuery,
+  useGetFacilityByIdQuery,
+  useLazyGetFacilityByIdQuery,
+  useGetFacilityTypesQuery,
+  useGetActiveFacilitiesQuery
 } = facilityService;

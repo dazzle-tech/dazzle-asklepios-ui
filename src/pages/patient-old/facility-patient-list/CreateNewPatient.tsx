@@ -259,7 +259,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="genderLkey"
               selectData={genderLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -269,6 +271,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
+              fieldType='textnumber'
               fieldName="phoneNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
@@ -297,7 +300,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="documentTypeLkey"
               selectData={docTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -310,7 +315,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="documentCountryLkey"
               selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -361,7 +368,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="preferredContactLkey"
               selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -388,7 +397,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="countryLkey"
               selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -400,7 +411,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="stateProvinceRegionLkey"
               selectData={cityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -412,7 +425,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldType="select"
               fieldName="cityLkey"
               selectData={cityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -538,6 +553,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   }, [open]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -578,7 +598,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         handleSave();
         goToPatientProfile();
       }}
-      content={conjureFormContent}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
     />
   );
 };

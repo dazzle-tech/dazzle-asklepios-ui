@@ -61,13 +61,18 @@ const conjureFormContent = () => {
     );
 }
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={'Amount to Promise'}
       hideActionBtn={true}
-      content={conjureFormContent()}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       steps={[{ title: 'AMP Info', icon: <FaSortAmountDownAlt /> }]}
     />
   );

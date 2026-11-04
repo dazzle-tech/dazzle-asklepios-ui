@@ -42,6 +42,7 @@ interface MyTableProps {
   loading?: boolean;
   onRowClick?: (rowData: any) => void;
   rowClassName?: (rowData: any) => string;
+  rowTestId?: (rowData: any) => string;
   sortColumn?: string;
   sortType?: 'asc' | 'desc';
   onSortChange?: (sortColumn: string, sortType: 'asc' | 'desc') => void;
@@ -52,6 +53,7 @@ interface MyTableProps {
   totalCount?: number;
   onPageChange?: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  dontTranslateData?: boolean
 }
 
 const MyTable: React.FC<MyTableProps> = ({
@@ -62,6 +64,7 @@ const MyTable: React.FC<MyTableProps> = ({
   loading,
   onRowClick,
   rowClassName,
+  rowTestId,
   sortColumn,
   sortType,
   onSortChange,
@@ -71,16 +74,30 @@ const MyTable: React.FC<MyTableProps> = ({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  dontTranslateData,
+  ...props
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
   const mode = useSelector((state: any) => state.ui.mode);
-  const visibleColumns = columns.filter(col => !col.expandable);
-  const expandableColumns = columns.filter(col => col.expandable);
+  const processedColumns = columns.map(col => ({
+    ...col,
+    align: col.align ?? (isRTL ? 'right' : 'left')
+  }));
+
+  const visibleColumns = processedColumns.filter(col => !col.expandable);
+  const expandableColumns = processedColumns.filter(col => col.expandable);
 
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
   };
+
+  const renderCellContent = (content: ReactNode) =>
+    dontTranslateData ? content : <Translate>{content}</Translate>;
 
   const emptyTable = () => (
     <TableRow>
@@ -110,7 +127,7 @@ const MyTable: React.FC<MyTableProps> = ({
           }}
           className="my-table-container"
         >
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" sx={{ minWidth: 680 }}>
             <TableHead className="my-table-header">
               <TableRow>
                 {expandableColumns.length > 0 && <TableCell />}
@@ -132,7 +149,7 @@ const MyTable: React.FC<MyTableProps> = ({
                   return (
                     <TableCell
                       key={col.key}
-                      align={col.align || 'left'}
+                      align={col.align}
                       sx={{
                         whiteSpace: 'nowrap',
                         cursor: isSortable ? 'pointer' : 'default',
@@ -148,9 +165,18 @@ const MyTable: React.FC<MyTableProps> = ({
                           col.align === 'center'
                             ? 'center'
                             : col.align === 'right'
-                            ? 'flex-end'
-                            : 'flex-start'
+                              ? 'flex-end'
+                              : 'flex-start'
                         }
+                        sx={{
+                          gap: '4px',
+                          flexDirection:
+                            col.align === 'center'
+                              ? 'row'
+                              : isRTL
+                                ? 'row-reverse'
+                                : 'row'
+                        }}
                       >
                         {typeof col.title === 'string' || typeof col.title === 'number' ? (
                           <Translate>{col.title}</Translate>
@@ -183,6 +209,7 @@ const MyTable: React.FC<MyTableProps> = ({
                   return (
                     <React.Fragment key={index}>
                       <TableRow
+                        data-testid={rowTestId?.(row)}
                         onClick={() => onRowClick?.(row)}
                         className={clsx('main-row', rowClassName?.(row), {
                           'even-row': isEvenRow
@@ -203,7 +230,7 @@ const MyTable: React.FC<MyTableProps> = ({
                         {visibleColumns.map(col => (
                           <TableCell
                             key={col.key}
-                            align={col.align || 'left'}
+                            align={col.align}
                             className="even"
                             sx={{
                               width: col.width ? `${col.width}px` : 'auto',
@@ -211,7 +238,7 @@ const MyTable: React.FC<MyTableProps> = ({
                             }}
                           >
                             {col.render ? (
-                              col.render(row, index)
+                              renderCellContent(col.render(row, index))
                             ) : col.isLink ? (
                               <span
                                 className="table-link"
@@ -220,10 +247,10 @@ const MyTable: React.FC<MyTableProps> = ({
                                   col.onLinkClick?.(row);
                                 }}
                               >
-                                {row[col.dataKey || col.key]}
+                                {renderCellContent(row[col.dataKey || col.key])}
                               </span>
                             ) : (
-                              row[col.dataKey || col.key]
+                              renderCellContent(row[col.dataKey || col.key])
                             )}
                           </TableCell>
                         ))}
@@ -238,10 +265,10 @@ const MyTable: React.FC<MyTableProps> = ({
                                     {expandableColumns.map(col => (
                                       <TableCell
                                         key={col.key}
-                                        align={col.align || 'left'}
+                                        align={col.align}
                                         sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
                                       >
-                                       <Translate>{col.title}</Translate>
+                                        <Translate>{col.title}</Translate>
                                       </TableCell>
                                     ))}
                                   </TableRow>
@@ -249,10 +276,14 @@ const MyTable: React.FC<MyTableProps> = ({
                                 <TableBody>
                                   <TableRow>
                                     {expandableColumns.map(col => (
-                                      <TableCell key={col.key} align={col.align || 'left'}>
+                                      <TableCell
+                                        key={col.key}
+                                        data-testid={col.key}
+                                        align={col.align}
+                                      >
                                         {col.render
-                                          ? col.render(row, index)
-                                          : row[col.dataKey || col.key]}
+                                          ? renderCellContent(col.render(row, index))
+                                          : renderCellContent(row[col.dataKey || col.key])}
                                       </TableCell>
                                     ))}
                                   </TableRow>
@@ -278,7 +309,7 @@ const MyTable: React.FC<MyTableProps> = ({
             onPageChange={onPageChange!}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={onRowsPerPageChange!}
-            rowsPerPageOptions={[5,10, 15,20, 30]}
+            rowsPerPageOptions={[5, 10, 15, 20, 30 ,60 ,100]}
           />
         )}
       </Box>
@@ -287,3 +318,4 @@ const MyTable: React.FC<MyTableProps> = ({
 };
 
 export default MyTable;
+

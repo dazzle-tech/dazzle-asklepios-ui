@@ -12,6 +12,28 @@ export const potintialService = createApi({
           : '/api/setup/duplication-candidates',
     }),
 
+    // GET /api/setup/duplication-candidates/by-rule/{rule}
+    getDuplicationCandidatesByRule: builder.query({
+      query: ({ rule }: { rule: string }) =>
+        `/api/setup/duplication-candidates/by-rule/${encodeURIComponent(rule)}`,
+    }),
+
+    // GET /api/setup/duplication-candidates/by-status?isActive=
+    getDuplicationCandidatesByStatus: builder.query({
+      query: ({ isActive }: { isActive: string }) => ({
+        url: '/api/setup/duplication-candidates/by-status',
+        params: { isActive },
+      }),
+    }),
+
+    // GET /api/setup/duplication-candidates/by-field?field=&value=
+    getDuplicationCandidatesByField: builder.query({
+      query: ({ field, value }: { field: string; value: string }) => ({
+        url: '/api/setup/duplication-candidates/by-field',
+        params: { field, value },
+      }),
+    }),
+
     createDuplicationCandidate: builder.mutation({
       query: (candidate) => ({
         url: '/api/setup/duplication-candidates',
@@ -61,6 +83,9 @@ export const potintialService = createApi({
 
 export const {
   useGetDuplicationCandidatesQuery,
+  useLazyGetDuplicationCandidatesByRuleQuery,
+  useLazyGetDuplicationCandidatesByStatusQuery,
+  useLazyGetDuplicationCandidatesByFieldQuery,
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
   useDeactivateDuplicationCandidateMutation,

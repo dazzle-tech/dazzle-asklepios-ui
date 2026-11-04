@@ -35,8 +35,15 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
 
   }, [radiologiData]);
 
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <div className="container-of-two-fields-diagnostic">
         <div className="container-of-field-diagnostic">
           <MyInput
@@ -47,7 +54,9 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
             fieldName="category"
             fieldType="select"
             selectData={radCategoriesLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestRadiology}
             setRecord={setDiagnosticTestRadiology}
@@ -83,7 +92,9 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
             fieldName="turnaroundTimeUnit"
             selectData={timeUnitLovQueryResponse?.object ?? []}
             fieldType="select"
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestRadiology}
             setRecord={setDiagnosticTestRadiology}

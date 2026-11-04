@@ -220,7 +220,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                           width="100%"
                           fieldType="select"
                           selectData={ProcedureOutcomeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="procedureOutcomeLkey"
                           record={performing}
@@ -256,7 +258,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                           width="100%"
                           fieldType="select"
                           selectData={ComplicationsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="complicationTypeLkey"
                           record={performing}
@@ -268,7 +272,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                           width="100%"
                           fieldType="select"
                           selectData={ComplicationSeverityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           fieldName="complicationSeverityLkey"
                           record={performing}
@@ -337,7 +343,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                             width="100%"
                             fieldType="select"
                             selectData={TypeofAnesthesiaLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName="anesthesiaTypeLkey"
                             record={performing}
@@ -418,7 +426,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                             fieldType="select"
                             fieldLabel="Home Instructions"
                             selectData={HomeinstructionsLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName="inst"
                             record={slectInst}

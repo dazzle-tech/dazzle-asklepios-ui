@@ -49,7 +49,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Approved Category"
                 fieldName="approvedCategory"
                 selectData={approvedCategoryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={{}}
                 setRecord={''}
@@ -174,7 +176,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
               <MyInput
                 width={'13vw'}
                 fieldType="text"
-                fieldLabel="Emargency Contact Name"
+                fieldLabel="Emergency Contact Name"
                 fieldName={'emargencyContactName'}
                 record={record}
                 setRecord={setRecord}
@@ -182,7 +184,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
               <MyInput
                 width={'13vw'}
                 fieldType="text"
-                fieldLabel="Emargency Contact Phone"
+                fieldLabel="Emergency Contact Phone"
                 fieldName={'emargencyContactPhone'}
                 record={record}
                 setRecord={setRecord}
@@ -208,7 +210,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Payment Terms"
                 fieldName={'paymentTerms'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -219,7 +223,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Currency"
                 fieldName={'currency'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -242,7 +248,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                   { label: 'Price List B', key: 'B' },
                   { label: 'Price List C', key: 'C' }
                 ]}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -299,7 +307,9 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 fieldLabel="Invoice Currency"
                 fieldName={'invoiceCurrency'}
                 selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
@@ -340,6 +350,12 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
         );
     }
   };
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -355,7 +371,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
       size="37vw"
       position="right"
       actionButtonLabel="Save"
-      content={ModalContent}
+      content={(stepNumber) => <div dir={dir}>{ModalContent(stepNumber)}</div>}
     />
   );
 };

@@ -43,7 +43,7 @@ const AddEditMedCat = ({ open, setOpen, medCategory, setMedCategory, edit_new, r
         <Form layout="inline" fluid>
           <div className="container-of-two-fields-vaccine">
             <MyInput
-              width={250}
+              width={"100%"}
               column
               fieldLabel="Name"
               fieldName="name"
@@ -56,15 +56,22 @@ const AddEditMedCat = ({ open, setOpen, medCategory, setMedCategory, edit_new, r
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Form>
       <MyModal
         open={open}
         setOpen={setOpen}
         title="New/Edit Therapeutic Category "
-        size="sm"
+        size="33vw"
         bodyheight="65vh"
-        content={conjureFormContentOfModal}
+        content={<div dir={dir}>{conjureFormContentOfModal()}</div>}
         hideCancel={false}
         hideBack={true}
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faPaperclip} /> }]}

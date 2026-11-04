@@ -4,7 +4,14 @@ import FluidAdministrationTable from './FluidAdministrationTable';
 import SectionContainer from '@/components/SectionsoContainer';
 
 const FluidAdministrationSection = ({ fluidOrder, setFluidOrder, addLog }) => {
-  return (
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <SectionContainer
       title={<p className="font-small">Fluid Administration</p>}
       content={
@@ -22,6 +29,7 @@ const FluidAdministrationSection = ({ fluidOrder, setFluidOrder, addLog }) => {
         </>
       }
     />
+    </div>
   );
 };
 

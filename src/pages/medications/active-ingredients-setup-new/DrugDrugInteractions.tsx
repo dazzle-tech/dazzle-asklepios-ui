@@ -249,8 +249,16 @@ const [sortType, setSortType] = useState<"asc" | "desc">("asc");
   // ---------------------------
   // RENDER
   // ---------------------------
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Form fluid>
 
         <div className="container-of-actions-header-active">
@@ -273,7 +281,9 @@ const [sortType, setSortType] = useState<"asc" | "desc">("asc");
             <MyInput
               fieldType="select"
               selectData={severityLovQueryResponseData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="lovDisplayVale"
               fieldName="severity"
               width={180}

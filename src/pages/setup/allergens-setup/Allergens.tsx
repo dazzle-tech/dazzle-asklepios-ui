@@ -26,6 +26,7 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Allergen } from '@/types/model-types-new';
 import { newAllergen } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import TranslationModal from '@/components/TranslationModal';
 
 const Allergens: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -42,7 +43,8 @@ const Allergens: React.FC = () => {
   const [stateOfDeleteAllergens, setStateOfDeleteAllergens] = useState<
     'delete' | 'deactivate' | 'reactivate'
   >('delete');
-
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+    
   // Filters state
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
     filter: '',
@@ -178,7 +180,7 @@ const Allergens: React.FC = () => {
       if (isUpdate) {
         const updated = await updateAllergen({ id: allergens.id!, ...payload }).unwrap();
         dispatch(notify({ msg: 'Allergen updated successfully', sev: 'success' }));
-
+        setShowTranslationModal(true);
         if (isFiltered) {
           // Update the row in filtered list
           setFilteredData(prev => prev.map(row => (row.id === updated.id ? updated : row)));
@@ -191,7 +193,7 @@ const Allergens: React.FC = () => {
         // Create
         const created = await addAllergen(payload).unwrap();
         dispatch(notify({ msg: 'Allergen added successfully', sev: 'success' }));
-
+        setShowTranslationModal(true);
         if (isFiltered) {
           // نتحقق إذا الـ allergen الجديد يطابق شروط الفلتر
           const filterField = recordOfFilter.filter;
@@ -496,7 +498,7 @@ const Allergens: React.FC = () => {
       );
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -561,8 +563,14 @@ const Allergens: React.FC = () => {
     }
   }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+  
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         data={tableData}
@@ -588,6 +596,7 @@ const Allergens: React.FC = () => {
             </MyButton>
           </div>
         }
+        dontTranslateData 
       />
 
       <AddEditAllergens
@@ -607,6 +616,16 @@ const Allergens: React.FC = () => {
           stateOfDeleteAllergens === 'deactivate' ? handleDeactivate : handleReactivate
         }
         actionType={stateOfDeleteAllergens}
+      />
+       <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'name',
+            value: allergens.name
+          }
+        ]}
       />
     </Panel>
   );

@@ -276,7 +276,7 @@ const CDTSetup: React.FC = () => {
   // Filters UI
   // ----------------------------------------
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -363,29 +363,36 @@ const CDTSetup: React.FC = () => {
     : [];
 
   const handleImportFile = async (file: File) => {
-    const res: CdtImportResult = await importCdt({ file }).unwrap();
+    try {
+      const res: CdtImportResult = await importCdt({ file }).unwrap();
 
-    if (res.conflicts?.length) {
-      setLastUploadedFile(file);
-      setConflicts(res.conflicts);
-      setConflictsPage(0);
-      setConflictModalOpen(true);
-      dispatch(
-        notify({
-          msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
-          sev: 'warning'
-        })
-      );
-    } else {
-      dispatch(
-        notify({
-          msg: `Imported successfully. Inserted ${res.inserted}${
-            res.updated ? `, Updated ${res.updated}` : ''
-          }.`,
-          sev: 'success'
-        })
-      );
-      await refreshAfterMutation();
+      if (res.conflicts?.length) {
+        setLastUploadedFile(file);
+        setConflicts(res.conflicts);
+        setConflictsPage(0);
+        setConflictModalOpen(true);
+        dispatch(
+          notify({
+            msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
+            sev: 'warning'
+          })
+        );
+      } else {
+        dispatch(
+          notify({
+            msg: `Imported successfully. Inserted ${res.inserted}${
+              res.updated ? `, Updated ${res.updated}` : ''
+            }.`,
+            sev: 'success'
+          })
+        );
+        await refreshAfterMutation();
+      }
+    } catch (error: any) {
+      const detail: string = error?.data?.detail ?? '';
+      const innerTitle = detail.match(/title='([^']+)'/)?.[1];
+      const msg = innerTitle || error?.data?.title || 'Error importing CDT file';
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -570,8 +577,15 @@ const CDTSetup: React.FC = () => {
   // ----------------------------------------
   // Render
   // ----------------------------------------
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       {/* Main CDT table */}
       <MyTable
         data={tableData}
@@ -620,7 +634,7 @@ const CDTSetup: React.FC = () => {
         pagesCount={1}
         hideActionBtn={true}
         content={
-          <div>
+          <div dir={dir}>
             {conflicts && conflicts.length > 0 ? (
               <MyTable
                 data={pagedConflicts}
@@ -672,7 +686,7 @@ const CDTSetup: React.FC = () => {
           cdtId={selectedCdtRow.id}
         />
       ) : null}
-    </>
+    </div>
   );
 };
 

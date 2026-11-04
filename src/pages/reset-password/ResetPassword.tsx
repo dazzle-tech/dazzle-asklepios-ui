@@ -4,7 +4,7 @@ import { useFinishPasswordResetMutation } from '@/services/userService';
 import { Form, Panel, Message, Button, Loader } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Background from '../../images/auth-bg.png';
-import Logo from '../../images/Logo_BLUE_New.svg';
+import Logo from '../../images/Logo_BLUE_New.png';
 import ErrorPage from '@/components/ErrorPage';
 import './styles.less';
 

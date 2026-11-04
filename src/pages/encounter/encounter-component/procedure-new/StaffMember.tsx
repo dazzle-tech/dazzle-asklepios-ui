@@ -5,7 +5,7 @@ import Translate from '@/components/Translate';
 import { useGetUsersQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Col, Form, Input, Panel, Row, Text } from 'rsuite';
+import { Col, Input, Panel, Row, Text } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
@@ -178,7 +178,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
       >
         <Row className="rows-gap">
           <Col md={10}>
-            <Form fluid>
+            <div>
               <MyInput
                 width="100%"
                 menuMaxHeight={200}
@@ -193,7 +193,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
                 setRecord={setSelectedUserList}
                 disabled={!parentKey || disabled}
               />
-            </Form>
+            </div>
           </Col>
           <Col md={2}>
             <MyButton onClick={handleSave} disabled={!parentKey || disabled}>

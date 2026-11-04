@@ -343,9 +343,13 @@ setWarehouseProductListRequest(prev => ({
         setTotalCost(Number(calculateCost(transProduct?.newQuentity, transProduct?.newCost)) || 0);
     }, [transProduct?.newQuantity, transProduct?.newCost]);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
-        <Form fluid>
+        <Form fluid dir={dir}>
             <div className='container-of-two-fields'>
                 <div className='container-of-field' >
                     <MyInput
@@ -381,7 +385,9 @@ setWarehouseProductListRequest(prev => ({
                         fieldName="typeLkey"
                         fieldType="select"
                         selectData={productTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={selectedProduct}
                         setRecord={setSelectedProduct}
@@ -473,7 +479,9 @@ setWarehouseProductListRequest(prev => ({
                         fieldName="inventoryTypeLkey"
                         fieldType="select"
                         selectData={lotSerialLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={selectedProduct}
                         setRecord={setSelectedProduct}

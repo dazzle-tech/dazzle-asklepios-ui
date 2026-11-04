@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MainScreenBar from '../MainScreenBarIcons/MainScreenBar';
 import MainScreenBarFilters from '../MainScreenBarIcons/MainScreenBarFilters';
 import { Stack } from 'rsuite';
@@ -133,7 +133,22 @@ const Header: React.FC<HeaderProps> = ({
     dispatch(closeEditProfile());
   };
 
+    useEffect(() => {
+      const updateHeaderHeight = () => {
+        const header = document.querySelector('.header');
 
+        document.documentElement.style.setProperty(
+          '--header-height',
+          `${header?.clientHeight || 70}px`
+        );
+      };
+
+      updateHeaderHeight();
+      window.addEventListener('resize', updateHeaderHeight);
+
+      return () =>
+        window.removeEventListener('resize', updateHeaderHeight);
+    }, []);
 
   return (
     <>
@@ -141,11 +156,15 @@ const Header: React.FC<HeaderProps> = ({
         className={`header ${expand ? 'expand' : ''} ${uiMode === 'dark' ? 'dark' : 'light'}`}
         spacing={8}
         style={{
-          flexDirection: direction === 'LTR' ? 'row' : 'row-reverse',
-          left: direction === 'LTR' ? drawerOffset : 0,
-          right: direction === 'RTL' ? drawerOffset : 0,
-          width: `calc(100% - ${drawerOffset}px)`,
-          transition: 'left 0.3s ease, right 0.3s ease, width 0.3s ease'
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+
+          ...(direction === 'LTR'
+            ? { left: drawerOffset }
+            : { right: drawerOffset }),
+
+          width: `calc(100% - ${drawerOffset}px)`
         }}
       >
 

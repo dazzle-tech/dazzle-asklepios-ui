@@ -89,7 +89,9 @@ const PreviewPhysiotherapyPlans = ({
                   record={planData}
                   setRecord={() => {}}
                   selectData={therapyTypeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={200}
                   searchable={false}
@@ -114,7 +116,9 @@ const PreviewPhysiotherapyPlans = ({
                       record={planData}
                       setRecord={() => {}}
                       selectData={frequencyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       width={120}
                       searchable={false}
@@ -130,7 +134,9 @@ const PreviewPhysiotherapyPlans = ({
                   record={planData}
                   setRecord={() => {}}
                   selectData={statusTableLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={120}
                   searchable={false}
@@ -167,7 +173,9 @@ const PreviewPhysiotherapyPlans = ({
                       record={planData}
                       setRecord={() => {}}
                       selectData={frequencyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       width={120}
                       searchable={false}

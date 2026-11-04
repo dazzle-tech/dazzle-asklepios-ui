@@ -6,8 +6,10 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
+import MyModal from '@/components/MyModal/MyModal';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSheetPlastic, faRotateRight, faUserNurse } from '@fortawesome/free-solid-svg-icons';
+import { faSheetPlastic, faRotateRight, faUserNurse, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -16,19 +18,23 @@ import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import {
   useAddDepartmentMutation,
-  useGetDepartmentsQuery,
   useLazyGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByNameQuery,
   useLazyGetDepartmentByTypeQuery,
   useToggleDepartmentIsActiveMutation,
   useUpdateDepartmentMutation,
 } from '@/services/security/departmentService';
+import { MedicalSheets } from '@/config/modules-config';
+import { useBulkSaveMedicalSheetsMutation, useBulkSaveNurseMedicalSheetsMutation } from '@/services/MedicalSheetsService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import ChooseScreen from '@/pages/setup/departments-setup/ChooseScreen';
 import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse';
 import AddEditDepartmentInline from './AddEditDepartmentInline';
+import { MdHomeRepairService } from "react-icons/md";
+import AddServiceToDepartment from './AddServiceToDepartment';
+import TranslationModal from '@/components/TranslationModal';
 
 interface DepartmentsTabProps {
   facility: Facility;
@@ -73,14 +79,22 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [openForm, setOpenForm] = useState(false);
   const [showScreen, setShowScreen] = useState({});
   const [showNurseScreen, setShowNurseScreen] = useState({});
+  const [showService, setShowService] = useState({});
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [openScreensNursePopup, setOpenScreensNursePopup] = useState(false);
+  const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState(false);
+  const [selectedDepartmentForPolicyAssignment, setSelectedDepartmentForPolicyAssignment] =
+    useState<Department | null>(null);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [addDefaultMedicalSheets, setAddDefaultMedicalSheets] = useState(false);
+  const [addDefaultNurseMedicalSheets, setAddDefaultNurseMedicalSheets] = useState(false);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [linksState, setLinksState] = useState<{
     next?: string | null;
     prev?: string | null;
@@ -138,15 +152,37 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
   const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
-
+  const [bulkSaveMedicalSheets] = useBulkSaveMedicalSheetsMutation();
+  const [bulkSaveNurseMedicalSheets] = useBulkSaveNurseMedicalSheetsMutation();
   // Enums
   const depTypeOptions = useEnumOptions('DepartmentType');
   const encTypesEnum = useEnumOptions('EncounterType');
+  const DayOfWeek = useEnumOptions('DayOfWeek');
 
   const filterFields = [
     { label: 'Department Name', value: 'name' },
     { label: 'Department Type', value: 'departmentType' },
   ];
+
+  const buildWorkingDaysPayload = (workingDays: Department['workingDays']) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return workingDays ?? [];
+
+    const workingDaysMap: Record<string, boolean> = {};
+    DayOfWeek.forEach(day => {
+      workingDaysMap[day.value] = false;
+    });
+
+    (workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        workingDaysMap[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!workingDaysMap[day.value],
+    }));
+  };
 
   // Effects
   useEffect(() => {
@@ -172,17 +208,53 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
     if (!department?.name?.trim()) {
-      missingFields.push('Department Name');
+      missingFields.push('Department Name is required');
     }
     if (!department?.departmentType) {
-      missingFields.push('Department Type');
+      missingFields.push('Department Type is required');
     }
-    if (missingFields.length > 0) {
-      const lines = missingFields.map(field => `• ${field}: is required`);
+
+    const isEmpty = (val) => val === null || val === undefined || val === '';
+    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+    if (department?.appointable && department?.parallelCapacityEnabled) {
+      const capacity = Number(department?.parallelCapacityValue);
+      if (!Number.isFinite(capacity) || capacity < 1) {
+        missingFields.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+    }
+    if (department?.appointable) {
+      if (isEmpty(department?.defaultDurationMinutes) || department?.defaultDurationMinutes <= 0) {
+        missingFields.push('Field Default Duration Minutes is required and should be greater than 0')
+      }
+      if (isEmpty(department?.defaultBufferBeforeMinutes) || department?.defaultBufferBeforeMinutes < 0) {
+        missingFields.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+      }
+      if (isEmpty(department?.defaultBufferAfterMinutes) || department?.defaultBufferAfterMinutes < 0) {
+        missingFields.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+      }
+    }
+    else {
+      if (isNotEmpty(department?.defaultDurationMinutes) && department?.defaultDurationMinutes <= 0) {
+        missingFields.push('Field Default Duration Minutes should be greater than 0')
+      }
+      if (isNotEmpty(department?.defaultBufferBeforeMinutes) && department?.defaultBufferBeforeMinutes < 0) {
+        missingFields.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+      }
+      if (isNotEmpty(department?.defaultBufferAfterMinutes) && department?.defaultBufferAfterMinutes < 0) {
+        missingFields.push('Field Default Buffer After Minutes should be greater then or equal 0')
+      }
+    }
+
+    if (department?.appointable && !department.encounterType) {
+      missingFields.push('Encounter Type is required for appointable department');
+    }
+    if (missingFields.length) {
       dispatch(
         notify({
-          msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'warning',
+          msg: missingFields.map(e => `• ${e}`).join('\n'),
+          sev: 'warning'
         })
       );
       return false;
@@ -202,7 +274,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
 
     setOpenForm(false);
     setLoad(true);
-    // Backend expects a CREATE payload (no id / no server-managed audit fields)
+
     const payload = stripUndefined({
       facilityId: Number(facilityId),
       name: (department?.name ?? '').trim(),
@@ -215,16 +287,61 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       isActive: department?.isActive ?? true,
       hasMedicalSheets: Boolean(department?.hasMedicalSheets),
       hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
+      parallelCapacityValue: department.parallelCapacityValue ?? 1,
+      defaultDurationMinutes: department?.defaultDurationMinutes,
+      defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
+      defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
+      parallelCapacityEnabled: department?.parallelCapacityEnabled,
+      requirePractitioner: true,
+      requireBilling: department?.requireBilling,
+      requirePreAssessment: department?.requirePreAssessment,
+      ageSpecific: Boolean(department?.ageSpecific),
+      fromAge: department?.fromAge,
+      fromAgeUnit: department?.fromAgeUnit,
+      toAge: department?.toAge,
+      toAgeUnit: department?.toAgeUnit,
+      workingDays: buildWorkingDaysPayload(department?.workingDays),
     });
 
     addDepartment(payload)
       .unwrap()
-      .then(() => {
+      .then(async (addedDepartment) => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
+
+        const departmentId = addedDepartment?.id ?? addedDepartment?.data?.id;
+
+        if (addDefaultMedicalSheets && departmentId) {
+          const defaultSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultMedicalSheet)
+            .map(sheet => ({
+              departmentId: departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
+
+          if (defaultSheetsPayload.length) {
+            await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          }
+        }
+        if (addDefaultNurseMedicalSheets && departmentId) {
+          const defaultNurseSheetsPayload = MedicalSheets.filter(sheet => sheet.isDefaultNurseMedicalSheet)
+            .map(sheet => ({
+              departmentId: departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
+          if (defaultNurseSheetsPayload.length) {
+            await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+          }
+        }
+
         const newCode = generateFiveDigitCode();
         setNextDepartmentCode(newCode);
+        setAddDefaultMedicalSheets(false);
+        setAddDefaultNurseMedicalSheets(false);
         refetchDepartments();
-      })
+        setShowTranslationModal(true)
+      }
+    
+      )
       .catch((err: any) => {
         const msg = extractApiErrorMessage(err);
         console.error('addDepartment failed:', { payload, err });
@@ -237,20 +354,57 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     if (!validateRequiredFields()) {
       return;
     }
+
     setOpenForm(false);
-    setLoad(true);
-    updateDepartment(department)
+    setLoad(true)
+    updateDepartment({
+      ...department,
+      encounterType: department?.encounterType || undefined,
+      workingDays: buildWorkingDaysPayload(department?.workingDays),
+    })
       .unwrap()
-      .then(() => {
+      .then(async () => {
+        const departmentId = department?.id;
+
+        if (addDefaultMedicalSheets && departmentId) {
+          const defaultSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultMedicalSheet)
+            .map(sheet => ({
+              departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
+
+          if (defaultSheetsPayload.length) {
+            await bulkSaveMedicalSheets(defaultSheetsPayload).unwrap();
+          }
+        }
+
+        if (addDefaultNurseMedicalSheets && departmentId) {
+          const defaultNurseSheetsPayload = MedicalSheets
+            .filter(sheet => sheet.isDefaultNurseMedicalSheet)
+            .map(sheet => ({
+              departmentId,
+              medicalSheet: sheet.code.toUpperCase(),
+            }));
+
+          if (defaultNurseSheetsPayload.length) {
+            await bulkSaveNurseMedicalSheets(defaultNurseSheetsPayload).unwrap();
+          }
+        }
+
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
+
+        setAddDefaultMedicalSheets(false);
+        setAddDefaultNurseMedicalSheets(false);
         refetchDepartments();
+        setShowTranslationModal(true)
       })
-      .catch(() => {
-        dispatch(notify({ msg: 'Failed to update department', sev: 'error' }));
+      .catch((err: any) => {
+        const msg = extractApiErrorMessage(err);
+        dispatch(notify({ msg, sev: 'error' }));
       })
       .finally(() => setLoad(false));
   };
-
   const handleFilterChange = async (fieldName, value, page = 0, size = filterPagination.size) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);
@@ -403,6 +557,27 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           }}
         />
       )}
+      <MdHomeRepairService
+        title="Services"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+          setDepartment(rowData);
+          setOpenAddServicePopup(true);
+        }}
+      />
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedDepartmentForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
     </div>
   );
 
@@ -436,7 +611,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     {
       key: 'appointable',
       title: <Translate key="APPOINTABLE">Appointable</Translate>,
-      render: (rowData: Department) => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>,
+      render: (rowData: Department) => <Translate>{rowData?.appointable ? 'Yes' : 'No'}</Translate>,
     },
     {
       key: 'encounterType',
@@ -448,7 +623,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       key: 'isActive',
       title: <Translate key="STATUS">Status</Translate>,
       flexGrow: 4,
-      render: (rowData: Department) => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>,
+      render: (rowData: Department) => <p>{rowData?.isActive ? <Translate >Active</Translate> : <Translate >Inactive</Translate>}</p>,
     },
     {
       key: 'icons',
@@ -491,8 +666,9 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       );
     }
 
+
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
+      <Form fluid className="form-of-filters-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -525,8 +701,15 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     );
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       {/* Inline Form for Add/Edit */}
       {openForm && (
         <AddEditDepartmentInline
@@ -537,10 +720,16 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           setRecordOfDepartmentCode={setRecordOfDepartmentCode}
           depTypeOptions={depTypeOptions ?? []}
           encTypesEnum={encTypesEnum ?? []}
+          addDefaultMedicalSheets={addDefaultMedicalSheets}
+          setAddDefaultMedicalSheets={setAddDefaultMedicalSheets}
+          addDefaultNurseMedicalSheets={addDefaultNurseMedicalSheets}
+          setAddDefaultNurseMedicalSheets={setAddDefaultNurseMedicalSheets}
           onSave={department?.id ? handleUpdate : handleAdd}
           onCancel={() => {
             setOpenForm(false);
             setDepartment({ ...newDepartment });
+            setAddDefaultMedicalSheets(false);
+            setAddDefaultNurseMedicalSheets(false);
           }}
         />
       )}
@@ -555,7 +744,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
             width="150px"
             disabled={!facilityId}
           >
-           New Department
+            New Department
           </MyButton>
         </div>
       )}
@@ -573,6 +762,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
+        dontTranslateData 
       />
 
       {/* Modals */}
@@ -592,12 +782,49 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         department={department}
         width={width}
       />
+      <AddServiceToDepartment
+        open={openAddServicePopup}
+        setOpen={setOpenAddServicePopup}
+        width={width}
+        department={department}
+        showScreen={showService}
+        setShowScreen={setShowService}
+      />
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Department Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedDepartmentForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="DEPARTMENT"
+              resourceId={selectedDepartmentForPolicyAssignment.id ?? 0}
+              facilityId={facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
+      />
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}
         setOpen={setOpenConfirmDeleteDepartmentModal}
         itemToDelete="Department"
         actionButtonFunction={handleDeactiveReactivateDepartment}
         actionType={stateOfDeleteDepartmentModal}
+      />
+      <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'name',
+            value: department.name
+          }
+        ]}
       />
     </div>
   );

@@ -116,7 +116,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   const patientId = parseInt(patient.id, 10);
 
   useEffect(() => {
-    if (encounter?.encounterStatusLkey === 'CLOSED') setIsEncounterStatusClosed(true);
+    if (encounter?.encounterStatusLkey === 'COMPLETED') setIsEncounterStatusClosed(true);
   }, [encounter?.encounterStatusLkey]);
 
   const encounterScope = !showAllVaccines;
@@ -218,7 +218,8 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         setPagination(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       })
       .catch((err: any) => {
-        dispatch(notify({ msg: toHumanEncounterVaccinationError(err), sev: 'error' }));
+        // e.g. the vaccination is already paid
+        dispatch(notify({ msg: toHumanEncounterVaccinationError(err), sev: 'warning' }));
       });
 
     setPopupCancelOpen(false);
@@ -439,7 +440,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         render: (row: any) =>
           (row as any)?.reviewedAt ? (
             <>
-              {(row as any)?.reviewedBy}
+              {(row as any)?.reviewedById}
               <br />
               <span className="date-table-style">{formatDateWithoutSeconds((row as any).reviewedAt)}</span>{' '}
             </>
@@ -530,6 +531,9 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
             setEncounterVaccination({ ...(row as any) });
             setSelectedRow(row);
           }}
+          rowClassName={(row: any) =>
+            row?.id != null && row.id === (selectedRow as any)?.id ? 'selected-row' : ''
+          }
           tableButtons={
             <div className="bt-div-2">
               <div className="bt-left-2">
@@ -562,14 +566,14 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
                   Review
                 </MyButton>
 
-                <Checkbox
+                <Checkbox className="show-cancelled"
                   checked={showCancelled}
                   onChange={(firstArg, secondArg) => {
                     const isShowCancelledChecked = getCheckboxCheckedValue(firstArg, secondArg);
                     handleShowCancelledToggle(isShowCancelledChecked);
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
 
                 <Checkbox

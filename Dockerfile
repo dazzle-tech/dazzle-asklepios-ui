@@ -24,17 +24,35 @@ COPY . .
 # Build the application
 RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
 
-# Use Nginx to serve the application
+# Use Nginx to serve the application, plus the Stimulsoft SQL adapter.
+# Locally webpack forwards /proxy to this process. Without it, nginx
+# answers Test Connection with 405 Not Allowed.
 FROM nginx:alpine
 
-# Copy built assets from the previous stage
+RUN apk add --no-cache nodejs npm gettext
+
+WORKDIR /opt/sql-adapter
+COPY --from=build /app/scripts/stimulsoft-data-adapter.js ./scripts/stimulsoft-data-adapter.js
+COPY --from=build /app/node_modules/stimulsoft-dashboards-js/node_modules/stimulsoft-data-adapter ./node_modules/stimulsoft-data-adapter
+# Install only the PostgreSQL driver. The adapter package also lists
+# oracledb and mongodb, which are not needed and fail to build here.
+RUN mkdir -p /tmp/pginst \
+    && npm init -y --prefix /tmp/pginst \
+    && npm install --omit=dev --prefix /tmp/pginst pg@8.22.0 \
+    && cp -a /tmp/pginst/node_modules/. /opt/sql-adapter/node_modules/ \
+    && rm -rf /tmp/pginst
+
+WORKDIR /
+
 COPY --from=build /app/assets /usr/share/nginx/html
 
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
+COPY config.template.js /usr/share/nginx/html/config.template.js
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

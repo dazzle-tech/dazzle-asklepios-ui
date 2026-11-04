@@ -415,7 +415,7 @@ else {
   ];
   const tabContant = () => (
     <Box>
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Box>
   );
 
@@ -637,8 +637,16 @@ else {
     setFilter(f => ({ ...f, baseUom: null }));
   }, [filter.uomGroupId]);
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         data={productListResponse?.data ?? []}

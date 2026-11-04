@@ -180,7 +180,9 @@ const SpecialPopulation = ({ activeIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={specialPopulationLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width={200}
             fieldName="additionalPopulationLkey"

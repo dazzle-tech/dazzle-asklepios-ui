@@ -191,3 +191,87 @@
 .margin-bottom-10 {
   margin-bottom: 10px;
 }
+
+
+.footer-buttons {
+  display: flex;
+  gap: 8px;
+  margin: 0 5px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.footer-buttons button {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-flex-procedures {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.section-column-procedures {
+  flex: 1 1 48%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.procedure-details-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.procedure-details-row > * {
+  flex: 1 1 30%;
+  min-width: 220px;
+}
+
+@media (max-width: 992px) {
+  .section-column-procedures {
+    flex: 1 1 100%;
+  }
+
+  .procedure-details-row > * {
+    flex: 1 1 45%;
+  }
+}
+
+@media (max-width: 768px) {
+  .procedure-details-row > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .top-div {
+    flex-direction: column;
+  }
+
+  .div-parent {
+    flex-direction: column !important;
+  }
+
+  .bt-div {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-buttons {
+    gap: 5px;
+  }
+
+  .footer-buttons button {
+    font-size: 12px;
+    padding: 6px;
+  }
+}

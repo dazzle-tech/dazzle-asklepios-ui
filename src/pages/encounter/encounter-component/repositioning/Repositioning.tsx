@@ -210,7 +210,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
         },
         {
             key: 'positionChangeSuccessful',
-            title: 'Position Change Successful?',
+            title: <span><Translate>Position Change Successful</Translate>?</span>,
             render: (rowData: any) =>
                 rowData?.positionChangeSuccessful
                     ? "YES"
@@ -218,7 +218,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
         },
         {
             key: 'expectedNextRepositioning',
-            title: 'Expected Next Repositioning ',
+            title: <Translate>Expected Next Repositioning</Translate>,
             render: (rowData: any) =>
                 <> {rowData?.expectedNextRepositioning}
                     {"  "}
@@ -284,7 +284,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                 <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !position?.key : true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
-                <Checkbox onChange={(value, checked) => {
+                <Checkbox className="show-cancelled" onChange={(value, checked) => {
                     if (checked) {
                         //TODO convert key to code
                         setPositionStatus('3196709905099521');
@@ -293,7 +293,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                         setPositionStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton

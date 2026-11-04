@@ -1,6 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useGetLabResultLogsByResultIdQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useGetLovAllValuesQuery } from '@/services/setupService';
 import { initialListRequestAllValues } from '@/types/types';
@@ -37,7 +38,6 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     return lov?.lovDisplayVale ?? value;
   };
 
-
   const columns = [
     {
       key: 'result',
@@ -59,34 +59,42 @@ const LogResult = ({ open, setOpen, result }: Props) => {
       flexGrow: 2,
       fullText: true,
       render: (row: any) => {
-        if (!row.resultBy) return null;
-
         return (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {row.resultBy}
+            <UserDateCell login={row.resultBy} />
           </div>
         );
       }
     }
   ];
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Result Logs"
-      size="40vw"
-      position='right'
-      content={
-        <MyTable
-          height={400}
-          loading={isFetching}
-          data={logs ?? []}
-          columns={columns}
-        />
-      }
-    />
+
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Result Logs"
+        size="40vw"
+        position='right'
+        content={
+          <div dir={dir}>
+            <MyTable
+              height={400}
+              loading={isFetching}
+              data={logs ?? []}
+              columns={columns}
+            />
+          </div>
+        }
+      />
+    </div>
   );
 };
 

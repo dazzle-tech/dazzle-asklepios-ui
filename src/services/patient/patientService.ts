@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import * as modelTypes from '@/types/model-types-new';
+import { PatientInformationReportVM, PatientWristbandVM } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -25,6 +26,17 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+type FacilityPatientsParams = PagedParams & {
+  patientName?: string;
+  mrn?: string;
+  primaryMobileNumber?: string;
+  documentNumber?: string;
+  dateOfBirth?: string;
+  registrationDateFrom?: string;
+  registrationDateTo?: string;
+  insuranceId?: number;
+};
+
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -36,12 +48,16 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 
 type PatientBasicInformationResponseVM = {
   firstName: string;
+  secondName?: string;
   lastName: string;
   medicalRecordNumber: string;
   dateOfBirth: string;
   sexAtBirth: string;
 };
-
+type UpdatePatientConditionsRequest = {
+  id: number;
+  patientConditions: string;
+};
 export const newPatientService = createApi({
   reducerPath: 'patientsApi',
   baseQuery: BaseQuery,
@@ -53,11 +69,50 @@ export const newPatientService = createApi({
       }),
       providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
     }),
-
+        
     getPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/patients',
         params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: res =>
+        res
+          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+          : ['Patient']
+    }),
+
+    getFacilityPatients: builder.query<
+      PagedResult<modelTypes.Patient>,
+      FacilityPatientsParams
+    >({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        patientName,
+        mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
+        registrationDateFrom,
+        registrationDateTo,
+        insuranceId
+      }) => ({
+        url: '/api/patient/facility-patients',
+        params: {
+          page,
+          size,
+          sort,
+          patientName,
+          mrn,
+          primaryMobileNumber,
+          documentNumber,
+          dateOfBirth,
+          registrationDateFrom,
+          registrationDateTo,
+          insuranceId
+        }
       }),
       transformResponse: mapPaged,
       providesTags: res =>
@@ -174,6 +229,33 @@ export const newPatientService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'Patient', id }, 'Patient']
     }),
 
+    sendPatientPasswordEmail: builder.mutation<void, Id>( {
+      query: id => ({
+        url: `/api/patient/${encodeURIComponent(String(id))}/send-create-password`,
+        method: 'POST'
+      })
+    }),
+
+    finishCreatePatientPassword: builder.mutation({
+      query: (keyAndPassword) => ({
+        url: '/api/patient/create-patient-password/finish',
+        method: 'POST',
+        body: keyAndPassword,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    }),
+
+    validateCreatePatientPasswordKey: builder.query({
+      query: (key: string) => ({
+        url: `/api/patient/create-patient-password/validate?key=${encodeURIComponent(key)}`,
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => response,
+      transformErrorResponse: (response: any) => response
+    }),
+
     getPatientsByAnyDocumentNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { number: string } & PagedParams
@@ -194,7 +276,7 @@ export const newPatientService = createApi({
         url: `/api/patient/by-ids`,
         params: { ids }
       }),
-      providesTags: (result) =>
+      providesTags: result =>
         result
           ? [
             ...result.map(p => ({ type: 'Patient' as const, id: p.id })),
@@ -243,10 +325,90 @@ export const newPatientService = createApi({
       query: body => ({
         url: '/api/patient/bulk/basic-info',
         method: 'POST',
-        body,
-      }),
-
+        body
+      })
     }),
+
+    getPatientLabel: builder.query<modelTypes.PatientLabelVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/label/${patientId}`,
+        method: 'GET'
+      })
+    }),
+
+    getPatientInformationReport: builder.query<PatientInformationReportVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/information-report`,
+        method: 'GET'
+      })
+    }),
+
+    getPatientWristband: builder.query<PatientWristbandVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/wristband`,
+        method: 'GET'
+      })
+    })
+    ,
+    getPatientWristbandPdf: builder.query<Blob, { patientId: number,lang:string,copies:number }>({
+      query: ({ patientId,lang,copies }) => ({
+        url: `/api/analytics/${patientId}/wristband/pdf`,
+        method: 'GET',
+        params:{
+          lang,
+          copies
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
+    getPatientLabelPdf: builder.query<Blob, { patientId: number,lang:string,copies:number }>({
+      query: ({ patientId ,lang,copies}) => ({
+        url: `/api/analytics/${patientId}/label/pdf`,
+        method: 'GET',
+        params:{
+          lang,
+          copies
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
+    getPatientInformationPdf: builder.query<Blob, { patientId: number ,lang:string }>({
+      query: ({ patientId ,lang}) => ({
+        url: `/api/analytics/${patientId}/information/pdf`,
+        method: 'GET',
+        params:{
+          lang
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
+    getPatientVaccinationReportPdf: builder.query<
+      Blob,
+      { patientId: number; timezone?: string; lang?: string }
+    >({
+      query: ({ patientId, timezone, lang = 'en' }) => ({
+        url: `/api/analytics/${patientId}/vaccination-report/pdf`,
+        method: 'GET',
+        params: {
+          ...(timezone ? { timezone } : {}),
+          lang
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
+    updatePatientConditions: builder.mutation<
+  any,
+  UpdatePatientConditionsRequest
+>({
+  query: ({ id, patientConditions }) => ({
+    url: `/api/patient/${id}/conditions`,
+    method: 'PUT',
+    body: {
+      patientConditions
+    }
+  }),
+  invalidatesTags: ['Patient']
+}),
   })
 });
 
@@ -256,8 +418,6 @@ export const {
   // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,
-
-  // filters
   useGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useGetPatientsByArchivingNumberQuery,
@@ -268,28 +428,31 @@ export const {
   useLazyGetPatientsByDateOfBirthQuery,
   useGetPatientsByFullNameQuery,
   useLazyGetPatientsByFullNameQuery,
-
-  // document number
   useGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByDocumentNumberQuery,
-
-  // any document number
   useGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
-
-  // mutations
   useAddPatientMutation,
   useUpdatePatientMutation,
-
-  // unknown patients
+  useSendPatientPasswordEmailMutation,
+  useFinishCreatePatientPasswordMutation,
+  useValidateCreatePatientPasswordKeyQuery,
+  useLazyValidateCreatePatientPasswordKeyQuery,
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
   useLazyGetPatientByIdQuery,
-
-  // duplicaton
   useGetDuplicationCandidatesMutation,
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientLabelQuery,
+  useLazyGetPatientInformationReportQuery,
+  useLazyGetPatientWristbandQuery,
+  useLazyGetPatientWristbandPdfQuery,
+  useLazyGetPatientLabelPdfQuery,
+  useGetFacilityPatientsQuery,
+  useLazyGetFacilityPatientsQuery,
+  useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientVaccinationReportPdfQuery,
+  useUpdatePatientConditionsMutation
 
-  // bulk basic info
-  useGetBulkPatientBasicInfoMutation
 } = newPatientService;

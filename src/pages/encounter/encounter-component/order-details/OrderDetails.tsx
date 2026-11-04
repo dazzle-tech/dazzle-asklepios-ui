@@ -347,7 +347,9 @@ const SlidingScale = () => {
               { key: 'between', lovDisplayVale: 'Between' },
               { key: 'moreThan', lovDisplayVale: 'More than' }
             ]}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             width="100%"
             showLabel={false}
@@ -421,7 +423,9 @@ const SlidingScale = () => {
             record={ruleForm}
             setRecord={setRuleForm}
             selectData={valueUnitsData}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             showLabel={false}
             disabled={isReadonly || !canEdit}
@@ -459,7 +463,9 @@ const SlidingScale = () => {
             record={ruleForm}
             setRecord={setRuleForm}
             selectData={valueUnitsData}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             showLabel={false}
             disabled={isReadonly || !canEdit}
@@ -480,7 +486,9 @@ const SlidingScale = () => {
             record={ruleForm}
             setRecord={setRuleForm}
             selectData={medicationsData}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             showLabel={false}
             disabled={isReadonly || !canEdit}
@@ -608,8 +616,15 @@ const SlidingScale = () => {
     return true;
   });
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className={`order-details-container ${mode === 'light' ? 'light' : 'dark'}`}>
+    <div className={`order-details-container ${mode === 'light' ? 'light' : 'dark'}`} dir={dir}>
       <OrderDetailsSection
         orders={orders}
         orderColumns={orderColumns}

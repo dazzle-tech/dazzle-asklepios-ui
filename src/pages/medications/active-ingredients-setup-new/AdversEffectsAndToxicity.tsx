@@ -3,6 +3,7 @@ import { Col, Row } from 'rsuite';
 import Section from '@/components/Section';
 import AdversEffects from './AdversEffects';
 import Toxicity from './Toxicity';
+import Translate from '@/components/Translate';
 
 type Props = {
   activeIngredient: any;
@@ -24,7 +25,7 @@ const AdversEffectsAndToxicity: React.FC<Props> = ({ activeIngredient }) => {
       <Row>
         <Col md={14}>
           <Section
-            title="Adverse Effects"
+            title={<Translate>Adverse Effects</Translate>}
             content={<AdversEffects activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -33,7 +34,7 @@ const AdversEffectsAndToxicity: React.FC<Props> = ({ activeIngredient }) => {
         </Col>
         <Col md={10}>
           <Section
-            title="Toxicity"
+            title={<Translate>Toxicity</Translate>}
             content={<Toxicity activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -44,18 +45,25 @@ const AdversEffectsAndToxicity: React.FC<Props> = ({ activeIngredient }) => {
     );
   }
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Section
-        title="Adverse Effects"
-        content={<AdversEffects activeIngredients={activeIngredient} />}
+        title={<Translate>Adverse Effects</Translate>}
+        content={<div dir={dir}><AdversEffects activeIngredients={activeIngredient} /></div>}
         setOpen={() => {}}
         rightLink=""
         openedContent={null}
       />
       <br />
       <Section
-        title="Toxicity"
+        title={<Translate>Toxicity</Translate>}
         content={<Toxicity activeIngredients={activeIngredient} />}
         setOpen={() => {}}
         rightLink=""

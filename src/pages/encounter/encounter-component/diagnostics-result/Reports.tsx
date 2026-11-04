@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -8,8 +9,7 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useLazyGetDiagnosticOrderByIdQuery,
-  useFilterDiagnosticOrdersQuery
+  useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
@@ -18,20 +18,48 @@ import {
   useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
-  useFilterRadiologyReportsQuery
+  PacsStudyDTO,
+  useFilterRadiologyReportsQuery,
+  useLazyGetStudyImageLinkByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import {
   useLazyGetDiagnosticTestByIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines, faImage } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
-import { Form, HStack, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
+import RadiologyReportButton from './RadiologyReportButton';
+import UserDateCell from '@/components/UserDateCell';
+import { useDispatch } from 'react-redux';
+import StudyImageViewerModal from '@/pages/rad-module/radiologist-worklist/StudyImageViewrModal';
 
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+  const status = e?.status || e?.originalStatus || e?.data?.status;
+
+  const message = e?.data?.message || e?.data?.detail || e?.error || fallbackMsg;
+
+  if (status === 400 || status === 409 || status === 422) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
+};
 const startOfDay = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -44,9 +72,18 @@ const endOfDay = (d: Date) => {
   return x;
 };
 
+const getDefaultDateRange = (): { fromDate: Date | null; toDate: Date | null } => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 3);
+
+  return {
+    fromDate: weekAgo,
+    toDate: new Date()
+  };
+};
+
 const Reports = ({ patient }) => {
   const dispatch = useAppDispatch();
-  const today = new Date();
   const patientId = patient?.id;
 
   const [page, setPage] = useState(0);
@@ -57,60 +94,36 @@ const Reports = ({ patient }) => {
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [testsMap, setTestsMap] = useState<Record<string, any>>({});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedReportIds, setSelectedReportIds] = useState<number[]>([]);
   const [selectedReportForAttachments, setSelectedReportForAttachments] =
     useState<any>(null);
+const [openStudiesModal, setOpenStudiesModal] = useState(false);
 
-  const [orderDate, setOrderDate] = useState({
-    fromDate: today,
-    toDate: today
-  });
+const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
+  const [orderDate, setOrderDate] = useState(getDefaultDateRange);
+  const [appliedDate, setAppliedDate] = useState(orderDate);
 
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
-  // 1) جيب orders الخاصة بالمريض
-  const ordersQueryParams = useMemo(() => {
-    if (!patientId) return skipToken;
-
-    return {
-      patientId,
-      page: 0,
-      size: 1000,
-      sort: 'id,desc'
-    };
-  }, [patientId]);
-
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-
-  const orders = ordersResponse?.data ?? [];
-
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
-
-  // 2) ابني params التقارير باستخدام orderIdIn بدل patientId
+ const [fetchStudyImageLinkByReportId] =
+    useLazyGetStudyImageLinkByReportIdQuery();
   const queryParams = useMemo(() => {
     if (!patientId) return null;
-    if (isOrdersFetching) return null;
-    if (!orderIds.length) return null;
 
     return {
-      processingStatus: 'RESULT_APPROVED',
+      processingStatusIn: ['RESULT_APPROVED'],
       reviewed: true,
-      orderIdIn: orderIds,
-      ...(orderDate.fromDate
-        ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
+      patientIdIn: [patientId],
+      ...(appliedDate.fromDate
+        ? { approvedDateFrom: startOfDay(appliedDate.fromDate).toISOString() }
         : {}),
-      ...(orderDate.toDate
-        ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
+      ...(appliedDate.toDate
+        ? { approvedDateTo: endOfDay(appliedDate.toDate).toISOString() }
         : {})
     };
-  }, [patientId, isOrdersFetching, orderIds, orderDate]);
+  }, [patientId, appliedDate]);
 
   const {
     data,
@@ -152,16 +165,95 @@ const Reports = ({ patient }) => {
     orderTestIds.every((id) => orderTestsMap[id]) &&
     testIds.every((id) => testsMap[id]);
 
-  const {
-    data: comments,
-    refetch: refetchComments
-  } = useGetReportCommentsByReportIdQuery(
+  const { data: comments } = useGetReportCommentsByReportIdQuery(
     openNoteResultModal && selectedReport?.id
       ? selectedReport.id
-      : undefined
+      : skipToken
   );
 
+
+const allSelected =
+  reports.length > 0 &&
+  reports.every(report => selectedReportIds.includes(report.id));
+
+const handleSelectAll = (checked: boolean) => {
+  if (checked) {
+    setSelectedReportIds(reports.map(report => report.id));
+  } else {
+    setSelectedReportIds([]);
+  }
+};
+
+const handleSelectReport = (
+  reportId: number,
+  checked: boolean
+) => {
+  if (checked) {
+    setSelectedReportIds(prev => [...prev, reportId]);
+  } else {
+    setSelectedReportIds(prev =>
+      prev.filter(id => id !== reportId)
+    );
+  }
+};
+const handleViewImage = async (reportId: number) => {
+  try {
+    const response =
+      await fetchStudyImageLinkByReportId(reportId).unwrap();
+
+    if (!response?.length) {
+      dispatch(
+        notify({
+          msg: 'No study found for this report',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (response.length === 1) {
+      window.open(
+        response[0].link,
+        '_blank',
+        'noopener,noreferrer'
+      );
+      return;
+    }
+
+    setStudies(response);
+    setOpenStudiesModal(true);
+
+  } catch (e) {
+    notifyFromApiError(
+      dispatch,
+      e,
+      'Failed to load radiology image'
+    );
+  }
+};
+
   const reportColumns: ColumnConfig[] = [
+    {
+      key: 'select',
+      width: 60,
+      align: 'center',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          onChange={(_, checked) =>
+            handleSelectAll(checked)
+          }
+        />
+      ),
+      render: (rowData: any) => (
+        <Checkbox
+          checked={selectedReportIds.includes(rowData.id)}
+          onChange={(_, checked) =>
+            handleSelectReport(rowData.id, checked)
+          }
+        />
+      )
+    },
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
@@ -189,22 +281,24 @@ const Reports = ({ patient }) => {
           ? new Date(rowData.createdDate).toLocaleString()
           : ''
     },
-    {
-      key: 'report',
-      title: <Translate>Report</Translate>,
-      render: (rowData: any) => (
-        <HStack spacing={10}>
-          <FontAwesomeIcon
-            icon={faFileLines}
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              setSelectedReport(rowData);
-              setOpenReportModal(true);
-            }}
-          />
-        </HStack>
-      )
-    },
+     {
+          key: 'report',
+          title: <Translate>REPORT</Translate>,
+          render: (rowData: any) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    
+              <FontAwesomeIcon
+                icon={faFileLines}
+                style={{ cursor: 'pointer', color: '#a4a4a4' }}
+                onClick={() => {
+                  setSelectedReport(rowData);
+                  setOpenReportModal(true);
+                }}
+              />
+            </div>
+          )
+        },
+    
     {
       key: 'comment',
       title: 'COMMENTS',
@@ -237,6 +331,25 @@ const Reports = ({ patient }) => {
       render: (rowData: any) => formatEnumString(rowData.processingStatus)
     },
     {
+      key :'image',
+      title:<Translate>Image</Translate>,
+
+     render:(rowData: any) => {
+     return <Whisper speaker={<Tooltip>View X-Ray Image</Tooltip>}>
+                    <span>
+                      <FontAwesomeIcon
+                        icon={faImage}
+                        className="icon-radiologist-worklist-size"
+                        style={{
+                          cursor: 'pointer',
+                          opacity: 1,
+                          color: '#1675e0'
+                        }}
+                        onClick={() => handleViewImage(rowData.id)}
+                      />
+                    </span>
+                  </Whisper>}},
+    {
       key: 'attachment',
       title: <Translate>ATTACHMENT</Translate>,
       render: (rowData: any) => (
@@ -249,8 +362,9 @@ const Reports = ({ patient }) => {
 
             try {
               const order = await fetchOrderById(ot.orderId).unwrap();
+              const orderData = order?.data ?? order;
 
-              if (!order?.encounterId) {
+              if (!orderData?.encounterId) {
                 dispatch(
                   notify({
                     msg: 'Encounter not found',
@@ -262,7 +376,7 @@ const Reports = ({ patient }) => {
 
               setSelectedReportForAttachments({
                 reportId: rowData.id,
-                encounterId: order.encounterId
+                encounterId: orderData.encounterId
               });
 
               setAttachmentsModalOpen(true);
@@ -282,21 +396,35 @@ const Reports = ({ patient }) => {
       key: 'review',
       title: <Translate>Review At/By</Translate>,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.reviewBy}</span>
-          <br />
-          <span className="date-table-style">
-            {rowData.reviewDate
-              ? new Date(rowData.reviewDate).toLocaleString()
-              : ''}
-          </span>
-        </>
+        <UserDateCell
+          login={rowData.reviewBy}
+          date={rowData.reviewDate}
+        />
       )
     }
   ];
 
+  const handleSearch = () => {
+    setPage(0);
+    if (
+      orderDate.fromDate?.valueOf() === appliedDate.fromDate?.valueOf() &&
+      orderDate.toDate?.valueOf() === appliedDate.toDate?.valueOf()
+    ) {
+      refetch();
+      return;
+    }
+    setAppliedDate({ ...orderDate });
+  };
+
+  const handleClearFilters = () => {
+    const defaults = getDefaultDateRange();
+    setOrderDate(defaults);
+    setAppliedDate(defaults);
+    setPage(0);
+  };
+
   const filters = (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className="filter-form-disable-fix">
       <MyInput
         column
         width={180}
@@ -315,7 +443,17 @@ const Reports = ({ patient }) => {
         record={orderDate}
         setRecord={setOrderDate}
       />
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={handleSearch}
+        clearOnClick={handleClearFilters}
+      />
     </Form>
+  );
+
+  const tableButtons = (
+   
+  <RadiologyReportButton  reportId={selectedReport?.id}/>
   );
 
   const closeModal = () => {
@@ -338,7 +476,7 @@ const Reports = ({ patient }) => {
         })
         .catch(() => {});
     });
-  }, [orderTestIds]);
+  }, [orderTestIds, fetchOrderTestById, orderTestsMap]);
 
   useEffect(() => {
     testIds.forEach((id) => {
@@ -347,7 +485,7 @@ const Reports = ({ patient }) => {
       fetchDiagnosticTestById(id)
         .unwrap()
         .then((res) => {
-          const test = res?.data;
+          const test = res?.data ?? res;
           if (!test) return;
 
           setTestsMap((prev) => ({
@@ -357,11 +495,11 @@ const Reports = ({ patient }) => {
         })
         .catch(() => {});
     });
-  }, [testIds]);
+  }, [testIds, fetchDiagnosticTestById, testsMap]);
 
   useEffect(() => {
     setPage(0);
-  }, [patientId, orderDate]);
+  }, [patientId, appliedDate]);
 
   if (!patientId) {
     return null;
@@ -371,9 +509,10 @@ const Reports = ({ patient }) => {
     <>
       <MyTable
         filters={filters}
+        tableButtons={tableButtons}
         columns={reportColumns}
         data={reports}
-        loading={isOrdersFetching || isFetching || (!!reports.length && !isDataLoaded)}
+        loading={isFetching ||(!!reports.length && !isDataLoaded)}
         page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
@@ -382,6 +521,10 @@ const Reports = ({ patient }) => {
           setRowsPerPage(+e.target.value);
           setPage(0);
         }}
+        onRowClick={(rowData) => {
+          setSelectedReport(rowData);
+        }}
+        rowClassName={(rowData) => (selectedReport?.id === rowData.id ? 'selected' : '')}
       />
 
       <ChatModal
@@ -394,18 +537,18 @@ const Reports = ({ patient }) => {
         disabled
       />
 
-      {openReportModal && selectedReport && (
-        <AddReportModal
-          key={selectedReport.id}
-          open={openReportModal}
-          setOpen={closeModal}
-          report={selectedReport}
-          setReport={setSelectedReport}
-          disableEdit
-          disableDefaultTemplate
-        />
-      )}
 
+ {openReportModal && selectedReport && (
+    <AddReportModal
+      key={selectedReport.id}
+      open={openReportModal}
+      setOpen={setOpenReportModal}
+      report={selectedReport}
+      setReport={setSelectedReport}
+      disableEdit
+      disableDefaultTemplate
+    />
+  )}
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
@@ -423,6 +566,11 @@ const Reports = ({ patient }) => {
             />
           )
         }
+      />
+      <StudyImageViewerModal
+        open={openStudiesModal}
+        onClose={() => setOpenStudiesModal(false)}
+        studies={studies}
       />
     </>
   );

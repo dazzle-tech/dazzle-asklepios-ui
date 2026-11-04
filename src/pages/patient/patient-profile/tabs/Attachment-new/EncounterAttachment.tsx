@@ -1,22 +1,67 @@
 
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { faTrash, faFileArrowDown, faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetEncounterAttachmentsBySourceQuery, useGetDownloadUrlMutation, useDeleteAttachmentMutation } from '@/services/encounters/attachmentsService';
+import { useGetEncounterAttachmentsBySourceQuery, useGetEncounterAttachmentsByEncounterIdsQuery, useGetDownloadUrlMutation, useDeleteAttachmentMutation } from '@/services/encounters/attachmentsService';
 import MyButton from '@/components/MyButton/MyButton';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/AttachmentModals';
-import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList, extractErrorMessage } from '@/utils';
 import { EncounterAttachment as EncounterAttachmentType } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import {
+    useGetDocumentQuery,
+    useGetDocumentVersionsQuery
+} from '@/services/patients/documentManagementService';
+import { useLocation } from 'react-router-dom';
 
-const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
+const DocumentDefinitionCell = ({ row }: { row: EncounterAttachmentType }) => {
+    const nested = row.documentDefinition;
+    const definitionId = nested?.id ?? row.documentDefinitionId;
+    const { data: document, isFetching } = useGetDocumentQuery(definitionId ?? 0, {
+        skip: definitionId == null || Boolean(nested?.name || nested?.code)
+    });
+
+    if (nested?.name || nested?.code) {
+        return <>{nested.name || nested.code}</>;
+    }
+
+    if (definitionId == null) return <>-</>;
+    if (isFetching && !document) return <>...</>;
+
+    return <>{document?.name || document?.code || '-'}</>;
+};
+
+const DocumentVersionCell = ({ row }: { row: EncounterAttachmentType }) => {
+    const nested = row.documentVersion;
+    const definitionId = row.documentDefinition?.id ?? row.documentDefinitionId;
+    const versionId = nested?.id ?? row.documentVersionId;
+    const { data: versions = [], isFetching } = useGetDocumentVersionsQuery(definitionId ?? 0, {
+        skip: definitionId == null || nested?.version != null
+    });
+
+    if (nested?.version != null) {
+        return <>{`v${nested.version}`}</>;
+    }
+
+    if (versionId == null) return <>-</>;
+
+    const matched = versions.find(version => Number(version.id) === Number(versionId));
+    if (isFetching && !matched) return <>...</>;
+
+    return <>{matched?.version != null ? `v${matched.version}` : '-'}</>;
+};
+
+const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId, patientId, allSources = false, ...props }) => {
+    const authSlice = useAppSelector(state => state.auth);
+    const location = useLocation();
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<EncounterAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -25,6 +70,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     const [previewFileName, setPreviewFileName] = useState<string>('');
     const [previewFileType, setPreviewFileType] = useState<string>('');
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const edit = props.edit ?? location.state?.edit ?? false;
     const dispatch = useAppDispatch();
 
     // Pagination state
@@ -34,27 +80,57 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     // API hooks
     const [deleteAttachment] = useDeleteAttachmentMutation();
     const [getDownloadUrl] = useGetDownloadUrlMutation();
-    
+
     // Fetch attachment types LOV for mapping
     const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
     const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
-    // Fetch encounter attachments
+    const encounterIdNum = Number(localEncounter?.id ?? localEncounter?.key);
+    const hasEncounterId = Number.isFinite(encounterIdNum) && encounterIdNum > 0;
+    const resolvedPatientId = Number(
+        patientId ??
+        localEncounter?.patientId ??
+        localEncounter?.patient?.id ??
+        localEncounter?.patient?.key
+    );
+    const hasPatientId = Number.isFinite(resolvedPatientId) && resolvedPatientId > 0;
+
+    // Fetch encounter attachments filtered by encounter (and optionally source) before client pagination
     const {
-        data: attachmentsResponse,
-        refetch: attachmentRefetch,
-        isLoading: loadAttachment,
-        isUninitialized: isEncounterAttachmentsUninitialized
+        data: attachmentsBySourceResponse,
+        refetch: attachmentBySourceRefetch,
+        isLoading: loadAttachmentBySource,
+        isUninitialized: isAttachmentBySourceUninitialized
     } = useGetEncounterAttachmentsBySourceQuery(
         {
-            encounterId: localEncounter?.id || localEncounter?.key,
+            encounterId: encounterIdNum,
             source: source,
             sourceId: sourceId
         },
-        { skip: !localEncounter?.id && !localEncounter?.key }
+        { skip: !hasEncounterId || allSources }
     );
 
-    const encounterAttachments = attachmentsResponse?.data || [];
+    const {
+        data: attachmentsByEncounterResponse,
+        refetch: attachmentByEncounterRefetch,
+        isLoading: loadAttachmentByEncounter,
+        isUninitialized: isAttachmentByEncounterUninitialized
+    } = useGetEncounterAttachmentsByEncounterIdsQuery(
+        {
+            encounterIds: [encounterIdNum]
+        },
+        { skip: !hasEncounterId || !allSources }
+    );
+
+    const attachmentRefetch = allSources ? attachmentByEncounterRefetch : attachmentBySourceRefetch;
+    const loadAttachment = allSources ? loadAttachmentByEncounter : loadAttachmentBySource;
+    const isEncounterAttachmentsUninitialized = allSources
+        ? isAttachmentByEncounterUninitialized
+        : isAttachmentBySourceUninitialized;
+
+    const encounterAttachments = allSources
+        ? (attachmentsByEncounterResponse || [])
+        : (attachmentsBySourceResponse?.data || []);
     const totalCount = encounterAttachments.length;
 
     // Function to check if the current row is the selected one
@@ -67,13 +143,13 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     // Handle Delete Attachment Modal
     const handleDeleteAttachment = async () => {
         if (!selectedAttachment?.id) return;
-        
+
         try {
             await deleteAttachment({
                 id: selectedAttachment.id,
-                encounterId: localEncounter?.id || localEncounter?.key
+                encounterId: encounterIdNum
             }).unwrap();
-            
+
             if (!isEncounterAttachmentsUninitialized) attachmentRefetch();
             dispatch(notify({ msg: 'Attachment Deleted Successfully', sev: 'success' }));
             handleClearAttachmentDelete();
@@ -107,16 +183,39 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
 
     // Handle Preview Selected Encounter Attachment
     const handlePreviewSelectedEncounterAttachment = async (attachment: EncounterAttachmentType) => {
+        const jobRole = authSlice?.user?.jobRole || '';
+
+        const attachmentTypeCode =
+            attachmentsLovQueryResponse?.object?.find(
+                (v: any) => v.key === attachment.type
+            )?.valueCode || '';
+
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+
+        if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
+            dispatch(
+                notify({
+                    msg: 'You do not have permission to download this attachment',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
         try {
             const downloadTicket = await getDownloadUrl(attachment.id).unwrap();
-            
+
             // Set preview data and open modal
             setPreviewUrl(downloadTicket.url);
             setPreviewFileName(attachment.filename);
             setPreviewFileType(attachment.mimeType);
             setPreviewModalOpen(true);
         } catch (error) {
-            dispatch(notify({ msg: 'Failed to get preview URL', sev: 'error' }));
+            dispatch(
+                notify({
+                    msg: extractErrorMessage(error) || 'Failed to get preview URL',
+                    sev: 'warning',
+                })
+            );
         }
     };
 
@@ -130,9 +229,27 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
 
     // Handle Download Selected Encounter Attachment
     const handleDownloadSelectedEncounterAttachment = async (attachment: EncounterAttachmentType) => {
+        const jobRole = authSlice?.user?.jobRole || '';
+
+        const attachmentTypeCode =
+            attachmentsLovQueryResponse?.object?.find(
+                (v: any) => v.key === attachment.type
+            )?.valueCode || '';
+
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+
+        if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
+            dispatch(
+                notify({
+                    msg: 'You do not have permission to download this attachment',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
         try {
             const downloadTicket = await getDownloadUrl(attachment.id).unwrap();
-            
+
             // Open the presigned URL in a new tab or trigger download
             const link = document.createElement('a');
             link.href = downloadTicket.url;
@@ -141,10 +258,15 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             dispatch(notify({ msg: 'Download started', sev: 'success' }));
         } catch (error) {
-            dispatch(notify({ msg: 'Failed to get download URL', sev: 'error' }));
+            dispatch(
+                notify({
+                    msg: extractErrorMessage(error) || 'Failed to get download URL',
+                    sev: 'warning',
+                })
+            );
         }
     };
 
@@ -158,6 +280,31 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
         setPageSize(parseInt(event.target.value, 10));
         setPage(0); // Reset to first page
     };
+
+    const UserDateCell = ({
+        login,
+        date
+    }: {
+        login?: string;
+        date?: string;
+    }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+            skip: !login
+        });
+
+        if (!date && !login) return null;
+
+        return (
+            <>
+                {fullName || login || ''}
+                <br />
+                <span className="date-table-style">
+                    {date ? formatDateWithoutSeconds(date) : ''}
+                </span>
+            </>
+        );
+    };
+
     // Table Columns
     const columns = [
         {
@@ -185,10 +332,24 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             key: 'type',
             title: <Translate>Type</Translate>,
             flexGrow: 4,
-            render: (rowData: EncounterAttachmentType) => 
-                rowData.type 
+            render: (rowData: EncounterAttachmentType) =>
+                rowData.type
                     ? conjureValueBasedOnKeyFromList(attachmentTypesLov, rowData.type, 'lovDisplayVale')
-                    : rowData.type ,
+                    : rowData.type,
+            fullText: true,
+        },
+        {
+            key: 'documentDefinition',
+            title: <Translate>Document Definition</Translate>,
+            flexGrow: 3,
+            render: (row: EncounterAttachmentType) => <DocumentDefinitionCell row={row} />,
+            fullText: true,
+        },
+        {
+            key: 'documentVersion',
+            title: <Translate>Document Version</Translate>,
+            flexGrow: 2,
+            render: (row: EncounterAttachmentType) => <DocumentVersionCell row={row} />,
             fullText: true,
         },
         {
@@ -231,14 +392,30 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             title: <Translate>Created By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: EncounterAttachmentType) => row?.createdDate ? <>{row?.createdBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdDate)}</span> </> : ' '
+            render: (row: EncounterAttachmentType) =>
+                row?.createdDate ? (
+                    <UserDateCell
+                        login={row?.createdBy}
+                        date={row?.createdDate}
+                    />
+                ) : (
+                    ' '
+                )
         },
         {
             key: 'lastModifiedDate',
             title: <Translate>Updated By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: EncounterAttachmentType) => row?.lastModifiedDate ? <>{row?.lastModifiedBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.lastModifiedDate)}</span> </> : ' '
+            render: (row: EncounterAttachmentType) =>
+                row?.lastModifiedDate ? (
+                    <UserDateCell
+                        login={row?.lastModifiedBy}
+                        date={row?.lastModifiedDate}
+                    />
+                ) : (
+                    ' '
+                )
         },
     ];
 
@@ -254,28 +431,29 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={!localEncounter?.id && !localEncounter?.key}
+                    disabled={!hasEncounterId || edit}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id}
+                    disabled={!selectedAttachment?.id || edit}
                     onClick={handleOpenEditModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}>
                     Edit
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id}
+                    disabled={!selectedAttachment?.id || edit}
                     onClick={() => setDeleteModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
                     Delete
                 </MyButton>
             </div>
-            <AttachmentUploadModal 
-                isOpen={attachmentsModalOpen} 
-                setIsOpen={setAttachmentsModalOpen} 
-                encounterId={localEncounter?.id || localEncounter?.key}
-                refetchData={attachmentRefetch} 
+            <AttachmentUploadModal
+                isOpen={attachmentsModalOpen}
+                setIsOpen={setAttachmentsModalOpen}
+                encounterId={encounterIdNum}
+                patientId={hasPatientId ? resolvedPatientId : undefined}
+                refetchData={attachmentRefetch}
                 source={source}
                 sourceId={sourceId}
             />
@@ -305,7 +483,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 open={editModalOpen}
                 onClose={handleCloseEditModal}
                 selectedAttachment={selectedAttachment}
-                encounterId={localEncounter?.id || localEncounter?.key}
+                encounterId={encounterIdNum}
                 attachmentTypesLov={attachmentTypesLov}
                 onUpdateSuccess={attachmentRefetch}
             />

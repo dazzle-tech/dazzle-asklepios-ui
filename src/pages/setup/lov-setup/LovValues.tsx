@@ -3,7 +3,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '@/hooks';
 import { Panel } from 'rsuite';
-import { useGetLovValuesQuery, useSaveLovValueMutation } from '@/services/setupService';
+import { useGetLovValuesQuery, useSaveLovValueMutation, useToggleActiveLovValueMutation } from '@/services/setupService';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
@@ -23,6 +23,8 @@ import BackButton from '@/components/BackButton/BackButton';
 import MyTable from '@/components/MyTable';
 import AddEditLovValue from './AddEditLovValue';
 import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import TranslationModal from '@/components/TranslationModal';
 const LovValues = ({ lov, goBack, width }) => {
   const dispatch = useAppDispatch();
   const [lovValue, setLovValue] = useState<ApLovValues>({
@@ -32,6 +34,7 @@ const LovValues = ({ lov, goBack, width }) => {
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
   const [isdefault, setIsDefault] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
@@ -45,6 +48,10 @@ const LovValues = ({ lov, goBack, width }) => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = lovValueListResponse?.extraNumeric ?? 0;
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [stateOfDeleteModal, setStateOfDeleteModal] = useState("deactivate");
+
+  const [openConfirmModal, setOpenConfirmModal] = useState(false)
+  const [toggleActiveLovValue] = useToggleActiveLovValueMutation();
   // Available fields for filtering
   const filterFields = [
     { label: 'Lov Code', value: 'lovCode' },
@@ -126,6 +133,7 @@ const LovValues = ({ lov, goBack, width }) => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'The LOV value has been saved successfully', sev: 'success' }));
+        setShowTranslationModal(true);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to save this LOV value', sev: 'error' }));
@@ -167,9 +175,37 @@ const LovValues = ({ lov, goBack, width }) => {
       pageNumber: 1
     });
   };
+  const handleToggleActive = () => {
+    toggleActiveLovValue(lovValue.key)
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: lovValue.isValid
+              ? 'LOV Value deactivated successfully'
+              : 'LOV Value activated successfully',
+            sev: 'success'
+          })
+        );
+
+        setListRequest(prev => ({
+          ...prev,
+          timestamp: new Date().getTime()
+        }));
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Failed to update LOV Value status',
+            sev: 'error'
+          })
+        );
+      });
+         setOpenConfirmModal(false);
+  };
   // Filter table
-  const filters = () => (
-    <Form layout="inline" fluid>
+  const filters = () => (<>
+    <Form fluid className="lov-setup-forms-filters-handle-position">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -197,7 +233,7 @@ const LovValues = ({ lov, goBack, width }) => {
         placeholder="Search"
       />
     </Form>
-  );
+</> );
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApLovValues) => (
@@ -211,10 +247,30 @@ const LovValues = ({ lov, goBack, width }) => {
         onClick={() => setLovValuePopupOpen(true)}
       />
       {/* deactivate/activate  when click on one of these icon */}
-      {!rowData?.deletedAt ? (
-        <MdDelete className="icons-style" title="Deactivate" size={24} fill="var(--primary-pink)" />
+      {!rowData?.isValid ? (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+
+          onClick={() => {
+            setStateOfDeleteModal("reactivate");
+            setOpenConfirmModal(true)
+          }}
+        />
       ) : (
-        <FaUndo className="icons-style" title="Activate" size={20} fill="var(--primary-gray)" />
+        <MdDelete
+          className="icons-style"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteModal("deactivate");
+
+            setOpenConfirmModal(true)
+          }}
+        />
       )}
     </div>
   );
@@ -273,29 +329,38 @@ const LovValues = ({ lov, goBack, width }) => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       {lov && lov.key && (
         <Panel
-          header={
+          header={<>
             <p className="title-lov-values">
               <Translate> List of Values for </Translate> <i>{lov?.lovName ?? ''}</i>
             </p>
-          }
+          </>}
         >
           <div className="container-of-header-actions-lov-values">
             <BackButton onClick={goBack} appearance="ghost" />
-            <MyButton
+
+          <MyButton
+              
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
               onClick={handleLovValueNew}
               width="109px"
             >
               Add New
-            </MyButton>
+          </MyButton>
           </div>
+
+        <div style={{ width: '93vw', justifyContent: 'center'}}>
           <MyTable
-            height={450}
             data={lovValueListResponse?.object ?? []}
             loading={isFetching}
             columns={tableColumns}
@@ -314,7 +379,9 @@ const LovValues = ({ lov, goBack, width }) => {
             totalCount={totalCount}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
+            dontTranslateData 
           />
+        </div>
           <AddEditLovValue
             open={lovValuePopupOpen}
             setOpen={setLovValuePopupOpen}
@@ -335,7 +402,25 @@ const LovValues = ({ lov, goBack, width }) => {
           onClick={goBack}
         />
       )}
-    </>
+      <DeletionConfirmationModal
+        open={openConfirmModal}
+        setOpen={setOpenConfirmModal}
+        itemToDelete="Price List"
+        actionButtonFunction={handleToggleActive}
+        actionType={stateOfDeleteModal}
+      />
+       <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'Display Value',
+            value: lovValue.lovDisplayVale
+          }
+        ]}
+      />
+    </div>
+
   );
 };
 

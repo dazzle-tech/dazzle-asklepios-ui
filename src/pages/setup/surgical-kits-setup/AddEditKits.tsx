@@ -28,13 +28,20 @@ const AddEditKits = ({ open, setOpen, width, surgicalKits, setSurgicalKits, hand
         );
     }
   };
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={surgicalKits?.key ? 'Edit Surgical Kits' : 'New Surgical Kits'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
       actionButtonLabel={surgicalKits?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Surgical Kits Info', icon: <FontAwesomeIcon icon={faScissors} /> }]} 

@@ -14,8 +14,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-
-import { useAppDispatch } from '@/hooks';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
 
@@ -38,7 +38,7 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 import Details from './Details';
 import './styles.less';
 import PreviewConsultation from './PreviewConsultation';
-
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const toISOStartOfDay = (d: Date) => {
@@ -85,7 +85,11 @@ const NormalConsultation = props => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isNurse = jobRole === 'NURSE';
+  const isConsultationConfirmed = (row?: Consultation | null) =>
+  String(row?.status ?? '').toUpperCase() === 'CONFIRMED';
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -105,7 +109,6 @@ const NormalConsultation = props => {
     encounterId: encounter?.id
   });
 
-  console.log(consultation);
   const [modalKey, setModalKey] = useState(0);
 
   const [dateFilter, setDateFilter] = useState<{
@@ -144,7 +147,7 @@ const NormalConsultation = props => {
     if (Array.isArray(departmentIds) && departmentIds.length > 0) {
       getDepartmentsBulk(departmentIds)
         .unwrap()
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [departmentIds, getDepartmentsBulk]);
 
@@ -152,7 +155,7 @@ const NormalConsultation = props => {
     if (Array.isArray(practitionerIds) && practitionerIds.length > 0) {
       getPractitionersBulk(practitionerIds)
         .unwrap()
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [practitionerIds, getPractitionersBulk]);
 
@@ -195,8 +198,8 @@ const NormalConsultation = props => {
       ? dateRangeQuery.data
       : dateRangeNotCancelledQuery.data
     : showCanceled
-    ? allQuery.data
-    : notCancelledQuery.data;
+      ? allQuery.data
+      : notCancelledQuery.data;
 
   const consultationLoading =
     allQuery.isLoading ||
@@ -204,12 +207,30 @@ const NormalConsultation = props => {
     dateRangeQuery.isLoading ||
     dateRangeNotCancelledQuery.isLoading;
 
-  const refetch = () => {
-    allQuery.refetch();
-    notCancelledQuery.refetch();
-    dateRangeQuery.refetch();
-    dateRangeNotCancelledQuery.refetch();
-  };
+  const refetch = useCallback(() => {
+    const safeRefetch = (query: any) => {
+      if (!query) return;
+
+      const isInitialized =
+        query.status !== 'uninitialized' &&
+        query.isUninitialized !== true &&
+        typeof query.refetch === 'function';
+
+      if (isInitialized) {
+        query.refetch();
+      }
+    };
+
+    safeRefetch(allQuery);
+    safeRefetch(notCancelledQuery);
+    safeRefetch(dateRangeQuery);
+    safeRefetch(dateRangeNotCancelledQuery);
+  }, [
+    allQuery,
+    notCancelledQuery,
+    dateRangeQuery,
+    dateRangeNotCancelledQuery
+  ]);
 
   const rows: Consultation[] = consultationData?.data ?? [];
   const totalCount = consultationData?.totalCount ?? 0;
@@ -336,19 +357,30 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'consultationType',
+        title: <Translate>CONSULTATION TYPE</Translate>,
+        flexGrow: 1,
+        render: (rowData: Consultation) => (
+          <span>{formatEnumString(String(rowData.consultationType ?? ''))}</span>
+        )
+      },
+      {
         key: 'created',
         title: <Translate>Created By / At</Translate>,
         expandable: true,
         flexGrow: 2,
-        render: (rowData: Consultation) => (
-          <>
-            {rowData.createdBy ?? ''}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.createdDate)}
-            </span>
-          </>
-        )
+        render: (rowData: Consultation) =>
+          rowData.createdBy || rowData.createdDate ? (
+            <>
+              <UserDateCell login={rowData.createdBy} />
+              <br />
+              <span className="date-table-style">
+                {formatDateWithoutSeconds(rowData.createdDate)}
+              </span>
+            </>
+          ) : (
+            <span>-</span>
+          )
       },
       {
         key: 'target',
@@ -420,13 +452,13 @@ const NormalConsultation = props => {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        expandable: true,
+        expandable: false,
         render: row => {
           const text = row.responseText || '';
           const MAX = 20;
           const isLong = text.length > MAX;
           const shortText = isLong ? text.substring(0, MAX) + '...' : text;
-
+          console.log("rooooowwwww : ", row);
           return (
             <Whisper
               trigger={isLong ? 'hover' : 'none'}
@@ -457,32 +489,104 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'rejectReason',
+        title: <Translate>Reject Reason</Translate>,
+        flexGrow: 2,
+        expandable: true,
+        render: (rowData: Consultation) => (
+          <span>{rowData.rejectReason || '-'}</span>
+        )
+      },
+      {
+        key: 'rejected',
+        title: <Translate>Rejected By / At</Translate>,
+        flexGrow: 2,
+        expandable: true,
+        render: (rowData: Consultation) =>
+          rowData.rejectedBy || rowData.rejectedDate ? (
+            <>
+              <UserDateCell login={rowData.rejectedBy} />
+              <br />
+              <span className="date-table-style">
+                {rowData.rejectedDate
+                  ? formatDateWithoutSeconds(rowData.rejectedDate)
+                  : ''}
+              </span>
+            </>
+          ) : (
+            <span>-</span>
+          )
+      },
+      {
+        key: 'cancellationReason',
+        title: <Translate>Cancellation Reason</Translate>,
+        flexGrow: 2,
+        expandable: true,
+        render: (rowData: Consultation) => (
+          <span>{rowData.cancellationReason || '-'}</span>
+        )
+      },
+      {
+        key: 'cancelled',
+        title: <Translate>Cancelled By / At</Translate>,
+        flexGrow: 2,
+        expandable: true,
+        render: (rowData: Consultation) =>
+          rowData.cancelledBy || rowData.cancelledDate ? (
+            <>
+              <UserDateCell login={rowData.cancelledBy} />
+              <br />
+              <span className="date-table-style">
+                {rowData.cancelledDate
+                  ? formatDateWithoutSeconds(rowData.cancelledDate)
+                  : ''}
+              </span>
+            </>
+          ) : (
+            <span>-</span>
+          )
+      },
+      {
         key: 'action',
         title: <Translate>ACTIONS</Translate>,
         flexGrow: 1,
         render: (rowData: Consultation) => {
           const status = String(rowData.status ?? '').toUpperCase();
-          const editDisabled = edit || status === 'CONFIRMED';
 
+const editDisabled =
+  edit ||
+  !['REQUESTED', 'NEW'].includes(status);
+  
           return (
             <MdModeEdit
               size={22}
               fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
-              title={editDisabled ? 'Edit not allowed for confirmed consultation' : 'Edit'}
+              title={
+                editDisabled
+                  ? 'Edit not allowed for cancelled or confirmed consultation'
+                  : 'Edit'
+              }
               onClick={() => {
                 if (editDisabled) return;
+
                 if (rowData.toFacilityId) {
-                  getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+                  getDepartmentsByFacility({
+                    facilityId: rowData.toFacilityId
+                  });
                 }
+
                 setConsultation(rowData);
                 setSelectedRow(rowData);
-                setEditing(status !== 'NEW');
+                setEditing(true);
                 setModalKey(prev => prev + 1);
                 setOpenDetailsModal(true);
               }}
               className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
-              style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
-            />
+              style={{
+                opacity: edit ? 0.5 : 1,
+                pointerEvents: edit ? 'none' : 'auto',
+                cursor: edit ? 'not-allowed' : 'pointer',
+              }} />
           );
         }
       }
@@ -499,7 +603,7 @@ const NormalConsultation = props => {
   );
 
   const filters = () => (
-    <Form layout="inline" fluid className="date-filter-form">
+    <Form layout="inline" fluid className="date-filter-form filter-form-disable-fix">
       <MyInput
         column
         width={180}
@@ -526,8 +630,25 @@ const NormalConsultation = props => {
 
   const pageIndex = page;
 
+
+  useEffect(() => {
+    const consultationUpdated = sessionStorage.getItem('consultation_updated');
+
+    if (consultationUpdated) {
+      sessionStorage.removeItem('consultation_updated');
+      handleRefetchData();
+    }
+  }, [handleRefetchData]);
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
@@ -536,7 +657,8 @@ const NormalConsultation = props => {
             setConsultation(rowData);
             setSelectedRow(rowData);
             setSelectedRows([rowData]);
-            setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
+            const status = String(rowData.status ?? '').toUpperCase();
+            setEditing(status !== 'NEW' && status !== 'CONFIRMED');
             setPreviewConsultation(rowData);
           }}
           loading={isLoading}
@@ -555,25 +677,27 @@ const NormalConsultation = props => {
               <div className="bt-left-2">
                 <MyButton
                   disabled={
-                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
+                    isNurse ||
+                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED' || edit
                   }
                   onClick={() => setOpenConfirmCancelModel(true)}
                 >
                   Cancel
                 </MyButton>
 
-                <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
+                {/* <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
                   <FontAwesomeIcon icon={faPrint} />
                   <span className="print-label">Print</span>
-                </MyButton>
+                </MyButton> */}
 
-                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                  Show Cancelled
+                <Checkbox  className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
 
-              <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
+              <div className={clsx('bt-right-2')}>
                 <MyButton
+                  disabled={edit || isNurse}
                   onClick={() => {
                     handleClear();
                     setModalKey(prev => prev + 1);
@@ -632,7 +756,7 @@ const NormalConsultation = props => {
             source="CONSULTATION_ORDER_ATTACHMENT"
             sourceId={consultation?.id ? Number(consultation.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

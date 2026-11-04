@@ -182,7 +182,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     fieldType="select"
                     fieldName="painDegreeLkey"
                     selectData={painDegreeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={painAssessment}
                     setRecord={setPainAssessment}
@@ -196,7 +198,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     fieldType="select"
                     fieldName="painLocationLkey"
                     selectData={bodyPartsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={painAssessment}
                     setRecord={setPainAssessment}
@@ -210,7 +214,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     fieldType="select"
                     fieldName="painPatternLkey"
                     selectData={painPatternLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={painAssessment}
                     setRecord={setPainAssessment}
@@ -225,7 +231,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     fieldType="select"
                     fieldName="onsetLkey"
                     selectData={onsetLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={painAssessment}
                     setRecord={setPainAssessment}
@@ -240,7 +248,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                         fieldType="select"
                         fieldName="painScoreLkey"
                         selectData={painScoreLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={painAssessment}
                         setRecord={setPainAssessment}
@@ -264,7 +274,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                         fieldType="select"
                         fieldName="durationUnitLkey"
                         selectData={unitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={painAssessment}
                         setRecord={setPainAssessment}
@@ -281,7 +293,9 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     fieldType="select"
                     fieldName="associatedSymptomsLkey"
                     selectData={adversLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={associatedSymptoms}
                     setRecord={setAssociatedSymptoms}

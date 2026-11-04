@@ -19,7 +19,7 @@ import {
 } from 'rsuite';
 import MyButton from "@/components/MyButton/MyButton";
 import Background from "../.././images/auth-bg.png"
-import Logo from '../.././images/Logo_BLUE_New.svg';
+import Logo from '../.././images/Logo_BLUE_New.png';
 const { StringType } = Schema.Types;
 
 const model = Schema.Model({

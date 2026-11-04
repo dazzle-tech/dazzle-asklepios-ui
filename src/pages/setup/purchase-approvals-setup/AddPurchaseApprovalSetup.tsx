@@ -22,7 +22,9 @@ const AddPurchaseApprovalSetup = ({
           fieldLabel="Types of Purchase"
           fieldName={'key001'}
           selectData={purchaseLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}
@@ -65,7 +67,9 @@ const AddPurchaseApprovalSetup = ({
           fieldLabel="Hierarchy of approval"
           fieldName={'key004'}
           selectData={purchaseLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}
@@ -73,6 +77,13 @@ const AddPurchaseApprovalSetup = ({
       </div>
     </Form>
   );
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -87,7 +98,7 @@ const AddPurchaseApprovalSetup = ({
       size="28vw"
       position="right"
       actionButtonLabel="Save"
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

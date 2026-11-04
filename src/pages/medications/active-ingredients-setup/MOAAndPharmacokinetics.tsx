@@ -4,6 +4,7 @@ import { Col, Row } from 'rsuite';
 import MOA from './MOA';
 import Pharmacokinetics from './Pharmacokinetics';
 import Section from '@/components/Section';
+import Translate from '@/components/Translate';
 const MOAAndPharmacokinetics = ({ activeIngredient }) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -18,7 +19,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
       <Row>
         <Col md={14}>
           <Section
-            title="Pharmacokinetics"
+            title={<Translate>Pharmacokinetics</Translate>}
             content={<Pharmacokinetics activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -27,7 +28,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
         </Col>
         <Col md={10}>
           <Section
-            title="MOA"
+            title={<Translate>MOA</Translate>}
             content={<MOA activeIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
@@ -40,7 +41,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
     return (
       <div>
         <Section
-          title="Pharmacokinetics"
+          title={<Translate>Pharmacokinetics</Translate>}
           content={<Pharmacokinetics activeIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""
@@ -48,7 +49,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
         />
         <br />
         <Section
-          title="MOA"
+          title={<Translate>MOA</Translate>}
           content={<MOA activeIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""

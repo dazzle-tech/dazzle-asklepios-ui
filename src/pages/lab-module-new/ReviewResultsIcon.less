@@ -1,0 +1,32 @@
+.review-icon-base {
+  font-size: 1.25em;
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 180ms ease, color 180ms ease, text-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.review-icon-reviewed {
+  color: #ffcc33;
+  opacity: 1;
+  transform: perspective(260px) rotateX(10deg) scale(1.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 5px 18px rgba(0, 0, 0, 0.2),
+    0 0 10px rgba(255, 204, 51, 0.45);
+  filter: drop-shadow(0 6px 18px rgba(255, 204, 51, 0.55));
+
+  &:hover {
+    filter: drop-shadow(0 8px 24px rgba(255, 204, 51, 0.65));
+  }
+}
+
+.review-icon-unreviewed {
+  color: #7b7b7b;
+  opacity: 0.85;
+  transform: perspective(260px) rotateX(0deg) scale(1);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 10px rgba(0, 0, 0, 0.12);
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.18));
+
+  &:hover {
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.25));
+  }
+}

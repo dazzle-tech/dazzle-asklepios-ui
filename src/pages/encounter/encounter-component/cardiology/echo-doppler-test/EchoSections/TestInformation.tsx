@@ -39,6 +39,8 @@ const TestInformation: React.FC<Props> = ({
         record={echoTest}
         setRecord={setEchoTest}
         searchable={false}
+                disableByField='isValid'
+
       />
 
       {echoTest?.indication === otherIndicationKey && (
@@ -65,6 +67,8 @@ const TestInformation: React.FC<Props> = ({
         record={echoTest}
         setRecord={setEchoTest}
         searchable={false}
+                disableByField='isValid'
+
       />
 
       <MyInput

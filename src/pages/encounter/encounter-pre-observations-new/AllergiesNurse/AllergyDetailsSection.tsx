@@ -50,14 +50,20 @@ const AllergyDetailsSection = ({
                 .filter(Boolean)
         });
     }, [allerges]);
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
         <SectionContainer
             title="Allergy Details"
             content={
                 <div
-                    className={clsx({
-                        'disabled-panel': edit || allerges.statusLvalue?.valueCode === 'ARS_CANCEL'
-                    })}
+                dir={dir}
                 >
                     <Form fluid >
                         <Form fluid layout='inline'>
@@ -75,48 +81,60 @@ const AllergyDetailsSection = ({
                                 disabled
                             />
                             {allerges?.allergenType === "MEDICATION" ? (
-                                <>
-                                    <MyInput
-                                        fieldType="select"
-                                        fieldLabel="Medication Class"
-                                        selectData={medicationClassesListResponse ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='medicationClassId'
-                                        record={allerges}
-                                        setRecord={setAllerges}
-                                        required
-                                        disabled
-                                    />
-                                    <MyInput
-                                        fieldType="checkPicker"
-                                        fieldLabel="Active Ingredient"
-                                        selectData={activeIngredientsAll?.data ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='activeIngredients'
-                                        record={activeIngredientsObject}
-                                        setRecord={setActiveIngredientsObject}
-                                        // disabled
-                                        disabledItemValues
-                                    />
-                                </>
-                            ) :
-                                (
-                                    <MyInput
-                                        fieldType="select"
-                                        fieldLabel="Allergen"
-                                        selectData={allergensListResponse ?? []}
-                                        selectDataLabel="name"
-                                        selectDataValue="id"
-                                        fieldName='allergenId'
-                                        record={allerges}
-                                        setRecord={setAllerges}
-                                        searchable={false}
-                                        required
-                                        disabled
-                                    />
-                                )}
+                            <>
+                                <MyInput
+                                fieldType="select"
+                                fieldLabel="Medication Class"
+                                selectData={medicationClassesListResponse ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='medicationClassId'
+                                record={allerges}
+                                setRecord={setAllerges}
+                                required
+                                disabled
+                                />
+
+                                <MyInput
+                                fieldType="checkPicker"
+                                fieldLabel="Active Ingredient"
+                                selectData={activeIngredientsAll?.data ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='activeIngredients'
+                                record={activeIngredientsObject}
+                                setRecord={setActiveIngredientsObject}
+                                disabledItemValues
+                                />
+                            </>
+                            ) : allerges?.allergenType === "OTHER" ? (
+
+                            <MyInput
+                                fieldType="text"
+                                fieldLabel="Allergen"
+                                fieldName="allergenName"
+                                record={allerges}
+                                setRecord={setAllerges}
+                                disabled
+                            />
+
+                            ) : (
+
+                            <MyInput
+                                fieldType="select"
+                                fieldLabel="Allergen"
+                                selectData={allergensListResponse ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="id"
+                                fieldName='allergenId'
+                                record={allerges}
+                                setRecord={setAllerges}
+                                searchable={false}
+                                required
+                                disabled
+                            />
+
+                            )}
                             <MyInput
                                 fieldType="select"
                                 fieldLabel="Severity"
@@ -138,7 +156,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Criticality"
                                     selectData={criticalityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='criticality'
                                     record={allerges}
@@ -162,7 +182,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Treatment Strategy"
                                     selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='treatmentStrategy'
                                     record={allerges}
@@ -179,7 +201,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Onset"
                                     selectData={onsetLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='onset'
                                     record={allerges}
@@ -217,7 +241,9 @@ const AllergyDetailsSection = ({
                                     fieldType="select"
                                     fieldLabel="Type of Propensity"
                                     selectData={allgPropnLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName='typeOfPropensity'
                                     record={allerges}
@@ -233,7 +259,9 @@ const AllergyDetailsSection = ({
                                         fieldType="select"
                                         fieldLabel="Source of Information"
                                         selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                         selectDataValue="key"
                                         fieldName='sourceOfInformation'
                                         record={allerges}
@@ -264,7 +292,9 @@ const AllergyDetailsSection = ({
                                         fieldType="checkPicker"
                                         fieldLabel="Allergic Reactions"
                                         selectData={reactionLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+                                        disabled
                                         selectDataValue="key"
                                         fieldName='reactions'
                                         record={reactions}

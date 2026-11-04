@@ -7,30 +7,47 @@ import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import AddSocialHistory from './AddSocialHistory';
 import {
+  useCancelSocialHistoryMutation,
   useDeleteSocialHistoryMutation,
-  useGetSocialHistoryQuery
+  useGetSocialHistoryQuery,
+  useAddSocialHistoryMutation,
+  useUpdateSocialHistoryMutation
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds } from '@/utils';
-import { Form } from 'rsuite';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
+import CancellationModal from '@/components/CancellationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
-const SocialHistory = ({ patient, edit, toShowData = false }) => {
+const SocialHistory = ({ patient, edit, toShowData = false, showFreeText = false, collapsible = false, defaultCollapsed = false }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] = useState<number | null>(null);
   const [previewRow, setPreviewRow] = useState<any>(null);
 
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({
+    id: null,
+    status: '',
+    cancellationReason: ''
+  });
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
-
+  const [showCancelled, setShowCancelled] = useState(false);
   const { data: routeLov } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: freqLov } = useGetLovValuesByCodeQuery('FREQUENT_USE');
   const { data: physicalLov } = useGetLovValuesByCodeQuery('PHYSICAL_LIMITATION');
@@ -41,12 +58,21 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
-  const { data, isFetching } = useGetSocialHistoryQuery(
-    { patientId, page, size, sort: 'id,desc' },
+  const { data, isFetching, refetch } = useGetSocialHistoryQuery(
+    {
+      patientId,
+      page,
+      size,
+      sort: 'id,desc',
+      showCancelled
+    },
     { skip: !isValidPatientId }
   );
 
-  const [deleteSocialHistory] = useDeleteSocialHistoryMutation();
+  const [cancelSocialHistory, { isLoading }] =
+    useCancelSocialHistoryMutation();
+
+  const filteredData = data?.data ?? [];
 
   useEffect(() => {
     if (previewRow && previewRef.current) {
@@ -61,10 +87,96 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     setPreviewRow(prev => (prev?.id === row.id ? null : row));
   };
 
+  const [addSocialHistory, { isLoading: isSavingFreeText }] =
+    useAddSocialHistoryMutation();
+  const [updateSocialHistory, { isLoading: isUpdatingFreeText }] =
+    useUpdateSocialHistoryMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    if (!isValidPatientId) {
+      dispatch(notify({ msg: 'Invalid patient.', sev: 'error' }));
+      return;
+    }
+
+    const payload = {
+      patientId,
+      isCurrentSmoker: null,
+      smokeStartDate: null,
+      cigaretteAmount: null,
+      cigaretteType: null,
+      isPreviousSmoker: null,
+      smokeQuitDate: null,
+      exposureToSecondHandSmoke: null,
+      alcoholConsumption: null,
+      typeOfAlcohol: null,
+      alcoholSinceWhen: null,
+      substanceUse: null,
+      route: null,
+      frequency: null,
+      physicalLimitation: null,
+      diagnosedEatingDisorders: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateSocialHistory({
+          ...payload,
+          id: editingFreeTextId
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await addSocialHistory(payload).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
   const handleEdit = (row: any) => {
+    const freeTextValue = String(row?.freeText ?? '').trim();
+    const isPatientIsFreeCheckboxRecord =
+      row?.patientIsFree === true && freeTextValue === 'Patient is Free';
+
+    if (
+      showFreeText &&
+      row?.patientIsFree === true &&
+      freeTextValue &&
+      !isPatientIsFreeCheckboxRecord
+    ) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({
+        freeText: row.freeText || ''
+      });
+      return;
+    }
+
     const formData = {
       id: row.id,
       patientId: row.patientId,
+      patientIsFree: row.patientIsFree === true,
+      freeText: row.freeText ?? null,
 
       isCurrentSmoker: row.isCurrentSmoker || false,
       smokeStartDate: row.smokeStartDate || null,
@@ -92,29 +204,110 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
+  const handleCancel = async () => {
     try {
-      await deleteSocialHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+      await cancelSocialHistory({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
 
-      if (previewRow?.id === rowToDelete.id) {
+      dispatch(
+        notify({
+          msg: 'Social History cancelled successfully.',
+          sev: 'success'
+        })
+      );
+
+      if (previewRow?.id === cancelObject.id) {
         setPreviewRow(null);
       }
 
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+      setOpenCancelModal(false);
+
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Social History.';
+
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
     }
+  };
+
+  const openCancelDialog = (row: any) => {
+    setCancelObject({
+      id: row.id,
+      status: row.status || 'ACTIVE',
+      cancellationReason: ''
+    });
+
+    setOpenCancelModal(true);
   };
 
   const columns = [
     {
+      key: 'freeText',
+      title: (
+        <div style={{ minWidth: 350, width: '100%' }}>
+          <Translate>FREE TEXT</Translate>
+        </div>
+      ),
+      minWidth: 350,
+      flexGrow: 3,
+      render: (row: any) => {
+        if (row?.patientIsFree !== true) {
+          return '-';
+        }
+
+        const text = row?.freeText?.trim() || '-';
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 500,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {text}
+              </Tooltip>
+            }
+          >
+            <div
+              style={{
+                display: 'block',
+                width: '100%',
+                minWidth: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {text}
+            </div>
+          </Whisper>
+        );
+      }
+    },
+    {
       key: 'isCurrentSmoker',
       title: 'CURRENT SMOKER',
-      render: r => (r.isCurrentSmoker ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.isCurrentSmoker ? 'Yes' : 'No')
     },
     {
       key: 'smokeStartDate',
@@ -126,7 +319,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     {
       key: 'isPreviousSmoker',
       title: 'PREVIOUS SMOKER',
-      render: r => (r.isPreviousSmoker ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.isPreviousSmoker ? 'Yes' : 'No')
     },
     {
       key: 'smokeQuitDate',
@@ -136,386 +329,546 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     {
       key: 'alcoholConsumption',
       title: 'ALCOHOL',
-      render: r => (r.alcoholConsumption ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.alcoholConsumption ? 'Yes' : 'No')
+    },
+    {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      width: 140,
+      render: (row: any) => {
+        const status = row?.status ?? 'ACTIVE';
+
+        return (
+          <MyBadgeStatus
+            contant={formatEnumString(status)}
+            color={
+              status === 'CANCELLED'
+                ? '#dc3545'
+                : status === 'ACTIVE'
+                  ? '#28a745'
+                  : '#6c757d'
+            }
+          />
+        );
+      }
     },
     {
       key: 'ExposureToSecondHandSmoke',
       title: 'SECOND HAND SMOKE',
       expandable: true,
-      render: r => (r.exposureToSecondHandSmoke ? 'Yes' : 'No')
+      render: r => (r.patientIsFree === true ? '-' : r.exposureToSecondHandSmoke ? 'Yes' : 'No')
     },
     {
       key: 'createdDate',
-      title: 'CREATED AT / BY',
+      title: <Translate>CREATED AT / BY</Translate>,
       expandable: true,
-      render: (row: any) =>
-        row?.createdDate ? (
-          <>
-            {row?.createdBy} <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
-          </>
-        ) : (
-          ''
-        )
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
+      )
     },
     {
       key: 'lastModifiedDate',
       title: 'UPDATED AT / BY',
       expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
+    },
+    {
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
       render: (row: any) =>
-        row?.lastModifiedDate ? (
-          <>
-            {row?.lastModifiedBy} <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.lastModifiedDate)}
-            </span>
-          </>
+        row?.status === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
         ) : (
-          ''
+          <span>-</span>
+        )
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>CANCELLATION REASON</Translate>,
+      expandable: true,
+      flexGrow: 4,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' && row?.cancellationReason ? (
+          <ExpandableText
+            text={row.cancellationReason}
+            lines={3}
+            maxChars={30}
+          />
+        ) : (
+          '-'
         )
     },
     ...(!toShowData
       ? [
-          {
-            key: 'actions',
-            title: '',
-            flexGrow: 1,
-            render: row => (
-              <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
-                <MdModeEdit
-                  size={22}
-                  fill="var(--primary-gray)"
-                  className="pointer"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleEdit(row);
-                  }}
-                />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  className="pointer"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
-              </div>
-            )
-          }
-        ]
+        {
+          key: 'actions',
+          title: '',
+          flexGrow: 1,
+          render: row => (
+            <div className="flex-gap-12" onClick={e => e.stopPropagation()}>
+              {row.status !== 'CANCELLED' && (
+                <>
+                  <MdModeEdit
+                    className="view-only-action-edit-delete-encounter"
+                    size={22}
+                    fill="var(--primary-gray)"
+                    className="pointer"
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleEdit(row);
+                    }}
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
+                  />
+
+                  <MdDelete
+                    className="view-only-action-edit-delete-encounter"
+                    size={22}
+                    fill="var(--rs-red-500, #f44336)"
+                    className="pointer"
+                    title="Cancel"
+                    style={{
+                      opacity: edit ? 0.5 : 1,
+                      pointerEvents: edit ? 'none' : 'auto',
+                      cursor: edit ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      openCancelDialog(row);
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          )
+        }
+      ]
       : [])
   ];
 
+  const { data: createdByFullName } = useGetUserFullNameByLoginQuery(
+    previewRow?.createdBy,
+    {
+      skip: !previewRow?.createdBy
+    }
+  );
+
+  const { data: lastModifiedByFullName } = useGetUserFullNameByLoginQuery(
+    previewRow?.lastModifiedBy,
+    {
+      skip: !previewRow?.lastModifiedBy
+    }
+  );
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="medical-container-div">
-      <SectionContainer
-        title="Social History"
-        action={
-          !toShowData && (
-            <MyButton
-              disabled={edit}
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setEditData(null);
-                setOpen(true);
-              }}
-            >
-              Add
-            </MyButton>
-          )
-        }
-        content={
-          <>
-            <MyTable
-              height={450}
-              data={data?.data ?? []}
-              loading={isFetching}
-              columns={columns}
-              page={page}
-              rowsPerPage={size}
-              totalCount={data?.totalCount ?? 0}
-              onRowClick={handleRowClick}
-              rowClassName={row => (row?.id === previewRow?.id ? 'selected-row' : '')}
-              onPageChange={(_, p) => setPage(p)}
-              onRowsPerPageChange={e => {
-                setSize(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-            />
+    <div className="medical-main-container" dir={dir}>
+      <div className="medical-container-div" dir={dir}>
+        <SectionContainer
+          collapsible={collapsible}
+          defaultCollapsed={defaultCollapsed}
+          title="Social History"
+          action={
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              {!toShowData && (
+                <MyButton
+                  disabled={edit}
+                  prefixIcon={() => <PlusIcon />}
+                  onClick={() => {
+                    setEditData(null);
+                    setOpen(true);
+                  }}
+                >
+                  Add
+                </MyButton>
+              )}
 
-            {previewRow && (
-              <div ref={previewRef} className="margin-top-20">
-                <SectionContainer
-                  title="Social History Details"
-                  content={
-                    <Form fluid>
-                      <div className="preview-grid">
-                        <div className="full-row">
-                          <MyInput
-                            width={180}
-                            column
-                            fieldType="checkbox"
-                            fieldLabel="Current Smoker"
-                            fieldName="isCurrentSmoker"
-                            record={previewRow}
-                            disabled
-                          />
-                        </div>
+              {showFreeText && (
+                <MyButton
+                  disabled={
+                    edit ||
+                    isSavingFreeText ||
+                    isUpdatingFreeText ||
+                    !freeTextRecord.freeText?.trim()
+                  }
+                  onClick={handleSaveFreeText}
+                >
+                  {isSavingFreeText || isUpdatingFreeText
+                    ? 'Saving...'
+                    : editingFreeTextId !== null
+                      ? 'Update'
+                      : 'Save'}
+                </MyButton>
+              )}
+            </div>
+          }
+          content={
+            <div dir={dir}>
+              {showFreeText && (
+                <Form
+                  fluid
+                  formValue={freeTextRecord}
+                  onChange={(value: any) => setFreeTextRecord(value)}
+                >
+                  <div style={{ marginBottom: 20, width: '100%' }}>
+                    <MyInput
+                      fieldType="textarea"
+                      fieldLabel="Free Text"
+                      fieldName="freeText"
+                      record={freeTextRecord}
+                      setRecord={setFreeTextRecord}
+                      disabled={edit || isSavingFreeText || isUpdatingFreeText}
+                      width="100%"
+                    />
+                  </div>
+                </Form>
+              )}
 
-                        {previewRow.isCurrentSmoker && (
-                          <>
-                            <MyInput
-                              width={180}
-                              column
-                              fieldType="text"
-                              fieldLabel="Start date"
-                              fieldName="smokeStartDate"
-                              record={{
-                                smokeStartDate: previewRow.smokeStartDate
-                                  ? new Date(previewRow.smokeStartDate).toLocaleDateString()
-                                  : '-'
-                              }}
-                              disabled
-                            />
+              
+                <div className="margin-bottom-10 show-cancelled">
+                  <MyInput
+                    fieldType="check"
+                    fieldLabel="Show Cancelled"
+                    showLabel={false}
+                    fieldName="showCancelled"
+                    record={{ showCancelled }}
+                    setRecord={(record: any) => {
+                      setShowCancelled(record.showCancelled);
+                      setPreviewRow(null);
+                    }}
+                  />
+                </div>
+              
+              <MyTable
+                height={450}
+                data={filteredData}
+                loading={isFetching}
+                columns={columns}
+                page={page}
+                rowsPerPage={size}
+                totalCount={data?.totalCount ?? 0}
+                onRowClick={handleRowClick}
+                rowClassName={row => (row?.id === previewRow?.id ? 'selected-row' : '')}
+                onPageChange={(_, p) => setPage(p)}
+                onRowsPerPageChange={e => {
+                  setSize(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+              />
 
-                            <MyInput
-                              width={110}
-                              column
-                              fieldType="text"
-                              fieldLabel="Amount"
-                              fieldName="cigaretteAmount"
-                              record={{
-                                cigaretteAmount:
-                                  previewRow.cigaretteAmount !== null &&
-                                  previewRow.cigaretteAmount !== undefined
-                                    ? previewRow.cigaretteAmount
-                                    : '-'
-                              }}
-                              disabled
-                              rightAddon="pack/day"
-                              rightAddonwidth={80}
-                            />
-
-                            <MyInput
-                              width={180}
-                              column
-                              fieldType="text"
-                              fieldLabel="Cigarette Type"
-                              fieldName="cigaretteType"
-                              record={{ cigaretteType: previewRow.cigaretteType || '-' }}
-                              disabled
-                            />
-                          </>
-                        )}
-
-                        <div className="full-row">
-                          <MyInput
-                            width={180}
-                            column
-                            fieldType="checkbox"
-                            fieldLabel="Previous Smoker"
-                            fieldName="isPreviousSmoker"
-                            record={previewRow}
-                            disabled
-                          />
-                        </div>
-
-                        {previewRow.isPreviousSmoker && (
+              {previewRow && previewRow.patientIsFree !== true && (
+                <div ref={previewRef} className="margin-top-20">
+                  <SectionContainer
+                    title="Social History Details"
+                    content={
+                      <Form fluid>
+                        <div className="preview-grid">
                           <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Quit date"
-                              fieldName="smokeQuitDate"
-                              record={{
-                                smokeQuitDate: previewRow.smokeQuitDate
-                                  ? new Date(previewRow.smokeQuitDate).toLocaleDateString()
-                                  : '-'
-                              }}
+                              fieldType="checkbox"
+                              fieldLabel="Current Smoker"
+                              fieldName="isCurrentSmoker"
+                              record={previewRow}
                               disabled
                             />
                           </div>
-                        )}
 
-                        <MyInput
-                          width={180}
-                          column
-                          fieldType="checkbox"
-                          fieldLabel="Exposure to second-hand smoke"
-                          fieldName="exposureToSecondHandSmoke"
-                          record={previewRow}
-                          disabled
-                        />
+                          {previewRow.isCurrentSmoker && (
+                            <>
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Start date"
+                                fieldName="smokeStartDate"
+                                record={{
+                                  smokeStartDate: previewRow.smokeStartDate
+                                    ? new Date(previewRow.smokeStartDate).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
 
-                        <div className="full-row">
+                              <MyInput
+                                width={110}
+                                column
+                                fieldType="text"
+                                fieldLabel="Amount"
+                                fieldName="cigaretteAmount"
+                                record={{
+                                  cigaretteAmount:
+                                    previewRow.cigaretteAmount !== null &&
+                                      previewRow.cigaretteAmount !== undefined
+                                      ? previewRow.cigaretteAmount
+                                      : '-'
+                                }}
+                                disabled
+                                rightAddon="pack/day"
+                                rightAddonwidth={80}
+                              />
+
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Cigarette Type"
+                                fieldName="cigaretteType"
+                                record={{ cigaretteType: previewRow.cigaretteType || '-' }}
+                                disabled
+                              />
+                            </>
+                          )}
+
+                          <div className="full-row">
+                            <MyInput
+                              width={180}
+                              column
+                              fieldType="checkbox"
+                              fieldLabel="Previous Smoker"
+                              fieldName="isPreviousSmoker"
+                              record={previewRow}
+                              disabled
+                            />
+                          </div>
+
+                          {previewRow.isPreviousSmoker && (
+                            <div className="full-row">
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Quit date"
+                                fieldName="smokeQuitDate"
+                                record={{
+                                  smokeQuitDate: previewRow.smokeQuitDate
+                                    ? new Date(previewRow.smokeQuitDate).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
+                            </div>
+                          )}
+
                           <MyInput
                             width={180}
                             column
                             fieldType="checkbox"
-                            fieldLabel="Alcohol Consumption"
-                            fieldName="alcoholConsumption"
+                            fieldLabel="Exposure to second-hand smoke"
+                            fieldName="exposureToSecondHandSmoke"
                             record={previewRow}
                             disabled
                           />
-                        </div>
 
-                        {previewRow.alcoholConsumption && (
-                          <>
+                          <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Since when"
-                              fieldName="alcoholSinceWhen"
-                              record={{
-                                alcoholSinceWhen: previewRow.alcoholSinceWhen
-                                  ? new Date(previewRow.alcoholSinceWhen).toLocaleDateString()
-                                  : '-'
-                              }}
+                              fieldType="checkbox"
+                              fieldLabel="Alcohol Consumption"
+                              fieldName="alcoholConsumption"
+                              record={previewRow}
                               disabled
                             />
+                          </div>
 
+                          {previewRow.alcoholConsumption && (
+                            <>
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Since when"
+                                fieldName="alcoholSinceWhen"
+                                record={{
+                                  alcoholSinceWhen: previewRow.alcoholSinceWhen
+                                    ? new Date(previewRow.alcoholSinceWhen).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
+
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Type of alcohol"
+                                fieldName="typeOfAlcohol"
+                                record={{ typeOfAlcohol: previewRow.typeOfAlcohol || '-' }}
+                                disabled
+                              />
+                            </>
+                          )}
+
+                          <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Type of alcohol"
-                              fieldName="typeOfAlcohol"
-                              record={{ typeOfAlcohol: previewRow.typeOfAlcohol || '-' }}
+                              fieldType="checkbox"
+                              fieldLabel="Substance Use"
+                              fieldName="substanceUse"
+                              record={previewRow}
                               disabled
                             />
-                          </>
-                        )}
+                          </div>
 
-                        <div className="full-row">
+                          {previewRow.substanceUse && (
+                            <>
+                              <MyInput
+                                width={"15vw"}
+                                column
+                                fieldLabel="Route"
+                                fieldName="route"
+                                fieldType="select"
+                                selectData={routeLov?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
+                                selectDataValue="key"
+                                record={previewRow}
+                                disabled
+                              />
+
+                              <MyInput
+                                width={"15vw"}
+                                column
+                                fieldLabel="Frequency"
+                                fieldName="frequency"
+                                fieldType="select"
+                                selectData={freqLov?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                disableByField='isValid'
+                                selectDataValue="key"
+                                record={previewRow}
+                                disabled
+                              />
+                            </>
+                          )}
+
                           <MyInput
-                            width={180}
+                            width={"10vw"}
                             column
-                            fieldType="checkbox"
-                            fieldLabel="Substance Use"
-                            fieldName="substanceUse"
+                            fieldLabel="Physical limitations"
+                            fieldName="physicalLimitation"
+                            fieldType="select"
+                            selectData={physicalLov?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
+
+                            selectDataValue="key"
                             record={previewRow}
                             disabled
                           />
-                        </div>
 
-                        {previewRow.substanceUse && (
-                          <>
-                            <MyInput
-                              width={180}
-                              column
-                              fieldLabel="Route"
-                              fieldName="route"
-                              fieldType="select"
-                              selectData={routeLov?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={previewRow}
-                              disabled
-                            />
+                          <MyInput
+                            width={"10vw"}
+                            column
+                            fieldLabel="Diagnosed eating disorders"
+                            fieldName="diagnosedEatingDisorders"
+                            fieldType="select"
+                            selectData={diagnoseLov?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            disableByField='isValid'
 
-                            <MyInput
-                              width={180}
-                              column
-                              fieldLabel="Frequency"
-                              fieldName="frequency"
-                              fieldType="select"
-                              selectData={freqLov?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={previewRow}
-                              disabled
-                            />
-                          </>
-                        )}
+                            selectDataValue="key"
+                            record={previewRow}
+                            disabled
+                          />
 
-                        <MyInput
-                          width={180}
-                          column
-                          fieldLabel="Physical limitations"
-                          fieldName="physicalLimitation"
-                          fieldType="select"
-                          selectData={physicalLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={previewRow}
-                          disabled
-                        />
-
-                        <MyInput
-                          width={180}
-                          column
-                          fieldLabel="Diagnosed eating disorders"
-                          fieldName="diagnosedEatingDisorders"
-                          fieldType="select"
-                          selectData={diagnoseLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={previewRow}
-                          disabled
-                        />
-
-                        <MyInput
-                          width={220}
-                          column
-                          fieldType="text"
-                          fieldLabel="Created By / At"
-                          fieldName="createdBy"
-                          record={{
-                            createdBy: previewRow.createdDate
-                              ? `${previewRow.createdBy} - ${formatDateWithoutSeconds(
-                                  previewRow.createdDate
-                                )}`
-                              : previewRow.createdBy || '-'
-                          }}
-                          disabled
-                        />
-
-                        {previewRow.lastModifiedDate && (
                           <MyInput
                             width={220}
                             column
                             fieldType="text"
-                            fieldLabel="Last Modified By / At"
-                            fieldName="lastModifiedBy"
+                            fieldLabel={<Translate>Created By / At</Translate>}
+                            fieldName="createdBy"
                             record={{
-                              lastModifiedBy: `${
-                                previewRow.lastModifiedBy
-                              } - ${formatDateWithoutSeconds(previewRow.lastModifiedDate)}`
+                              createdBy: previewRow?.createdDate
+                                ? `${createdByFullName || previewRow?.createdBy || '-'} - ${formatDateWithoutSeconds(
+                                  previewRow.createdDate
+                                )}`
+                                : createdByFullName || previewRow?.createdBy || '-'
                             }}
                             disabled
                           />
-                        )}
-                      </div>
-                    </Form>
-                  }
-                />
-              </div>
-            )}
 
-            <AddSocialHistory
-              open={open}
-              setOpen={() => {
-                setOpen(false);
-                setEditData(null);
-              }}
-              initialData={editData}
-              patient={patient}
-            />
+                          {previewRow.lastModifiedDate && (
+                            <MyInput
+                              width={220}
+                              column
+                              fieldType="text"
+                              fieldLabel="Last Modified By / At"
+                              fieldName="lastModifiedBy"
+                              record={{
+                                lastModifiedBy: `${lastModifiedByFullName || previewRow?.lastModifiedBy || '-'} - ${formatDateWithoutSeconds(
+                                  previewRow.lastModifiedDate
+                                )}`
+                              }}
+                              disabled
+                            />
+                          )}
+                        </div>
+                      </Form>
+                    }
+                  />
+                </div>
+              )}
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Social History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
-          </>
-        }
-      />
+              <CancellationModal
+                open={openCancelModal}
+                setOpen={() => {
+                  setOpenCancelModal(false);
+                  setCancelObject({
+                    id: null,
+                    status: '',
+                    cancellationReason: ''
+                  });
+                }}
+                handleCancle={handleCancel}
+                object={cancelObject}
+                setObject={setCancelObject}
+                title="Social History"
+                fieldLabel="Cancellation Reason"
+                fieldName="cancellationReason"
+                statusField="status"
+                statusKey="CANCELLED"
+                withReason
+                required
+                size="33vw"
+              />
+
+              <AddSocialHistory
+                open={open}
+                setOpen={() => {
+                  setOpen(false);
+                  setEditData(null);
+                }}
+                initialData={editData}
+                patient={patient}
+              />
+            </div>
+          }
+        />
+      </div>
     </div>
   );
 };

@@ -57,56 +57,57 @@
 }
 
 .profile-sidebar-container {
-  width: 56px;
+    width: 56px;
   height: 91vh;
+  flex-shrink: 0;
+
+  transition: width 0.10s ease-in-out;
 
   &.expanded {
     width: 300px;
   }
   .sidebar-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: stretch;
     padding: 15px 10px;
     width: 100%;
+    overflow: visible;
 
     .rs-panel-header {
       text-align: left;
       width: 100%;
       margin-bottom: 10px;
+      padding-right: 40px;
       font-weight: 600;
     }
+
     .rs-panel-body {
       width: 100%;
+      overflow: visible;
     }
 
     .expand-sidebar {
       position: absolute;
-      top: 15px;
-      right: 15px;
-    }
-  }
+      top: 12px;
+      right: 12px;
+      z-index: 10;
 
-  .patient-list {
-    display: flex;
-    flex-direction: column;
-    margin-top: 20px;
-    gap: 15px;
-    overflow: auto;
-    height: calc(100vh - 250px);
-    padding: 5px;
-    margin-left: -5px;
-    margin-right: -5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-    .actions-button {
-      background: none;
-      svg {
-        color: var(--icon-gray);
-      }
+      width: 30px;
+      height: 30px;
+      padding: 0;
+
+      cursor: pointer;
     }
   }
 }
+
 .profile-sidebar {
   background: #fff !important;
   border: 1px solid var(--rs-border-primary);
@@ -125,7 +126,26 @@
     flex-direction: column;
     gap: 10px;
     width: 100%;
+    position: relative;
+    overflow: visible;
+    z-index: 2;
+
+    .my-input-container,
+    .rs-form-group,
+    .my-input-portaled-select,
+    .rs-input-group {
+      width: 100% !important;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
   }
+}
+
+.profile-sidebar-search-criteria-menu.rs-picker-popup,
+.profile-sidebar-search-criteria-menu.rs-picker-menu,
+.profile-sidebar-search-criteria-menu,
+.my-input-select-menu.rs-picker-popup {
+  z-index: 100050 !important;
 }
 
 .patient-profile-info {
@@ -278,6 +298,7 @@
 .container-of-instruction-bulk-registration {
   background-color: #e8f3fc;
   padding: 10px;
+  border-radius: 5px;
 }
 .download-color-text {
   color: #353b66 !important;
@@ -530,7 +551,21 @@
     color: @text-3;
   }
 }
+.patient-disabled {
+  opacity: 0.6;
+}
 
+.patient-merged-badge {
+  background: #ff4d4f;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .visit-history {
   &__wrapper {
     position: relative;
@@ -549,6 +584,27 @@
     gap: 8px;
     justify-content: center;
   }
+
+  &__actions-popover {
+    padding: 0;
+  }
+
+  &__dropdown-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 168px;
+    font-size: 13px;
+
+    svg {
+      width: 14px;
+      color: #0f766e;
+    }
+
+    &--danger svg {
+      color: #dc2626;
+    }
+  }
 }
 
 // Insurance Modal
@@ -560,6 +616,20 @@
 
   &__right-content {
     padding: 20px;
+  }
+
+  &__section-title {
+    width: 100%;
+    margin: 16px 0 8px;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-gray);
+    border-bottom: 1px solid var(--rs-border-primary);
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   &__plan-load-more {
@@ -597,7 +667,7 @@
     gap: 8px;
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 2px solid #f3f4f6;
+    border-bottom: 2px solid var(--rs-border-primary);
   }
 
   &__header-icon {
@@ -634,7 +704,7 @@
     padding: 8px 10px;
     background-color: #fafafa;
     border-radius: 8px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--rs-border-primary) !important;
     transition: all 0.2s;
 
     &--has-value:hover {
@@ -694,4 +764,124 @@
 
 .insurance-tooltip-trigger {
   display: inline-flex;
+}
+.width-problem {
+  .rs-form-vertical
+    .rs-form-group
+    .rs-input-group
+    .custom-date-input
+    .rs-picker
+    .rs-picker-date
+    .rs-picker-default
+    .rs-picker-toggle-wrapper
+    .rs-picker-placement-bottom-start {
+    width: 200px !important;
+  }
+}
+.width-problem {
+  .rs-form-vertical.rs-form-group.rs-input-group.custom-date-input.rs-picker.rs-picker-date.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-placement-bottom-start {
+    width: 220px !important;
+  }
+}
+
+.width-problem
+  .custom-date-input.rs-picker.rs-picker-date.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-placement-bottom-start,
+.width-problem .rs-picker-input-group.rs-input-group.rs-input-group-inside {
+  width: 220px !important;
+}
+
+.eligibility-check-modal {
+  &__payor-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--rs-border-primary);
+    border-radius: 8px;
+    background: var(--rs-bg-well);
+  }
+
+  &__payor-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-gray);
+    text-transform: uppercase;
+  }
+
+  &__payor-meta {
+    font-size: 13px;
+    color: var(--primary-gray);
+  }
+
+  &__class-list {
+    margin-top: 16px;
+  }
+
+  &__class-list-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-gray);
+  }
+
+  &__snapshot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--primary-gray);
+  }
+}
+
+.waseel-class-list-modal {
+  &__subtitle {
+    margin: 0 0 12px;
+    color: var(--primary-gray);
+    font-size: 14px;
+  }
+}
+
+
+.dark{
+  .benefits-card{
+    border-color: var(--rs-border-primary) !important;
+    background-color: var(--dark-black) !important;
+    .benefits-card__header-title{
+      color: var(--white) !important;
+    }
+     &__item{
+      background-color: var(--dark-black);
+     }
+  }
+  .patient-name{
+    color: var(--white) !important;
+  }
+  .title{
+    color: var(--white) !important;
+  }
+}
+.rs-theme-dark{
+.container-of-instruction-bulk-registration{
+    background-color: hsl(213 15% 25%) !important;
+  }
+  .download-color-text {
+  color: #2e3c9f !important;
+}
+}
+.merged-status-icon {
+  background: rgba(255, 165, 0, 0.12);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+
+.referal-request-icons-positioning{display: flex;
+flex-direction: row;
+gap: 1vw;
 }

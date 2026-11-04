@@ -13,6 +13,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBed, faCheck, faSave, faUtensils } from '@fortawesome/free-solid-svg-icons';
 import PressureUlcerRiskAssessmentModal from '../pressure-ulce-risk-assessment/PressureUlcerRiskAssessmentModal';
+import Translate from '@/components/Translate/Translate';
 const NutritionStateAsssessment = () => {
   const [object, setObject] = useState({});
   const initialSampleData = [
@@ -57,7 +58,16 @@ const NutritionStateAsssessment = () => {
     setSampleData(prev => [newData, ...prev]);
     setModalOpen(false);
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <Row gutter={15} className="d nutrition-state">
       <Row
         style={{
@@ -75,16 +85,16 @@ const NutritionStateAsssessment = () => {
         <Col md={12}>
           <Row>
             <SectionContainer
-              title={<Text>Anthropometric Data</Text>}
+              title={<Text><Translate>Anthropometric Data</Translate></Text>}
               content={<AnthropometricData object={object} setObject={setObject} />}
             />
           </Row>
           <Row>
-            <SectionContainer title={<Text>Biochemical</Text>} content={<Biochemical />} />
+            <SectionContainer title={<Text><Translate>Biochemical</Translate></Text>} content={<Biochemical />} />
           </Row>
           <Row>
             <SectionContainer
-              title={<Text>Clinical & Functional Assessment</Text>}
+              title={<Text><Translate>Clinical & Functional Assessment</Translate></Text>}
               content={<ClinicalAndFunctionalAssessment object={object} setObject={setObject} />}
               button={
                 <MyButton
@@ -100,30 +110,31 @@ const NutritionStateAsssessment = () => {
         <Col md={12}>
           <Row>
             <SectionContainer
-              title={<Text>Dietary History / Intake</Text>}
+              title={<Text><Translate>Dietary History / Intake</Translate></Text>}
               content={<DietaryHistoryOrIntake object={object} setObject={setObject} />}
             />
           </Row>
           <Row>
             <SectionContainer
-              title={<Text>Nutrition Diagnosis</Text>}
+              title={<Text><Translate>Nutrition Diagnosis</Translate></Text>}
               content={<NutritionDiagnosis object={object} setObject={setObject} />}
             />
           </Row>
           <Row>
             <SectionContainer
-              title={<Text>Nutrition Intervention Plan</Text>}
+              title={<Text><Translate>Nutrition Intervention Plan</Translate></Text>}
               content={<NutritionInterventionPlan object={object} setObject={setObject} />}
               button={
-                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faUtensils} />}>
+                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faUtensils} />}><Translate>
                   Create Diet Order
+                </Translate>
                 </MyButton>
               }
             />
           </Row>
           <Row>
             <SectionContainer
-              title={<Text>Follow-up and Monitoring</Text>}
+              title={<Text><Translate>Follow-up and Monitoring</Translate></Text>}
               content={<FollowUpAndMonitoring object={object} setObject={setObject} />}
             />
           </Row>
@@ -135,6 +146,7 @@ const NutritionStateAsssessment = () => {
         onSave={handleSave}
       />
     </Row>
+    </div>
   );
 };
 export default NutritionStateAsssessment;

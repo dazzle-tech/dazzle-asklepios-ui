@@ -2,7 +2,7 @@ import MyTable from '@/components/MyTable';
 import { useAppSelector } from '@/hooks';
 import { useGetNurseServiceProductListQuery } from '@/services/encounterService';
 import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetServicesQuery } from '@/services/setup/serviceService';
 import { BrandMedication, InventoryProduct } from '@/types/model-types-new';
 import { initialListRequest } from '@/types/types';

@@ -1,25 +1,24 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useDispatch } from "react-redux";
-import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import MyTable from "@/components/MyTable";
-import MyModal from "@/components/MyModal/MyModal";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import {
   useGetAllCptQuery,
   useImportCptMutation,
-  useLazyGetCptByCategoryQuery,
+  useLazyGetCptByMainCategoryQuery,
+  useLazyGetCptByServiceCategoryQuery,
   useLazyGetCptByCodeQuery,
   useLazyGetCptByDescriptionQuery,
   type ImportResult,
-  type Conflict,
-} from "@/services/setup/cptCodeService";
-import MyButton from "@/components/MyButton/MyButton";
-import { notify } from "@/utils/uiReducerActions";
-import { extractPaginationFromLink } from "@/utils/paginationHelper";
-import { Form } from "rsuite";
-import MyInput from "@/components/MyInput";
-import { useEnumOptions } from "@/services/enumsApi";
-import { formatEnumString } from "@/utils";
-import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
+  type Conflict
+} from '@/services/setup/cptCodeService';
+import MyButton from '@/components/MyButton/MyButton';
+import { notify } from '@/utils/uiReducerActions';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 
 const CPTSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,15 +27,15 @@ const CPTSetup: React.FC = () => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: "id,asc",
-    timestamp: Date.now(),
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
 
   // Filtered pagination (client-driven)
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
-    sort: "id,desc",
+    sort: 'id,desc'
   });
 
   // A nonce to bust cache for filtered queries
@@ -44,8 +43,8 @@ const CPTSetup: React.FC = () => {
 
   // Filter state
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: "",
-    value: "",
+    filter: '',
+    value: ''
   });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -53,7 +52,8 @@ const CPTSetup: React.FC = () => {
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
   // Lazy queries
-  const [fetchByCategory] = useLazyGetCptByCategoryQuery();
+  const [fetchByMainCategory] = useLazyGetCptByMainCategoryQuery();
+  const [fetchByServiceCategory] = useLazyGetCptByServiceCategoryQuery();
   const [fetchByCode] = useLazyGetCptByCodeQuery();
   const [fetchByDescription] = useLazyGetCptByDescriptionQuery();
 
@@ -63,9 +63,6 @@ const CPTSetup: React.FC = () => {
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const [conflictsPage, setConflictsPage] = useState(0);
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
-
-  // Enums
-  const cptCategoryOptions = useEnumOptions("CptCategory");
 
   // Main list
   const { data: cptListResponse, isFetching, refetch } = useGetAllCptQuery(paginationParams);
@@ -83,11 +80,11 @@ const CPTSetup: React.FC = () => {
 
   // Header
   useEffect(() => {
-    dispatch(setPageCode("CPT"));
-    dispatch(setDivContent("CPT Diagnosis List"));
+    dispatch(setPageCode('CPT'));
+    dispatch(setDivContent('CPT Procedures List'));
     return () => {
-      dispatch(setPageCode(""));
-      dispatch(setDivContent(""));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
     };
   }, [dispatch]);
 
@@ -97,15 +94,15 @@ const CPTSetup: React.FC = () => {
     setFilteredData([]);
     setFilteredTotal(0);
     setFilteredLinks(undefined);
-    setFilterPagination((prev) => ({ ...prev, page: 0, sort: prev.sort || "id,desc" }));
-    setPaginationParams((prev) => ({ ...prev, page: 0, sort: "id,asc", timestamp: Date.now() }));
+    setFilterPagination(prev => ({ ...prev, page: 0, sort: prev.sort || 'id,desc' }));
+    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
     refetch();
   };
 
   // Sort helper to show newest first
   const nextFilteredSort = (current?: string) => {
-    if (!current) return "id,desc";
-    return current.toLowerCase().startsWith("id,asc") ? "id,desc" : current;
+    if (!current) return 'id,desc';
+    return current.toLowerCase().startsWith('id,asc') ? 'id,desc' : current;
   };
 
   // Check row matches current filter
@@ -113,10 +110,23 @@ const CPTSetup: React.FC = () => {
     (row: any) => {
       const f = recordOfFilter.filter;
       const v = recordOfFilter.value;
-      if (!f || v === undefined || v === null || v === "") return true;
-      if (f === "category") return String(row?.category ?? "").toUpperCase() === String(v).toUpperCase();
-      if (f === "code") return String(row?.code ?? "").toLowerCase().includes(String(v).toLowerCase());
-      if (f === "description") return String(row?.description ?? "").toLowerCase().includes(String(v).toLowerCase());
+      if (!f || v === undefined || v === null || v === '') return true;
+      if (f === 'mainCategory')
+        return String(row?.mainCategory ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
+      if (f === 'serviceCategory')
+        return String(row?.serviceCategory ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
+      if (f === 'code')
+        return String(row?.code ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
+      if (f === 'description')
+        return String(row?.description ?? '')
+          .toLowerCase()
+          .includes(String(v).toLowerCase());
       return true;
     },
     [recordOfFilter]
@@ -129,9 +139,9 @@ const CPTSetup: React.FC = () => {
       const visible = (items || []).filter(matchesCurrentFilter);
       if (visible.length === 0) return false;
       const sort = nextFilteredSort(filterPagination.sort);
-      setFilterPagination((p) => ({ ...p, page: 0, sort }));
-      setFilteredData((prev) => [...visible, ...prev]);
-      setFilteredTotal((prev) => prev + visible.length);
+      setFilterPagination(p => ({ ...p, page: 0, sort }));
+      setFilteredData(prev => [...visible, ...prev]);
+      setFilteredTotal(prev => prev + visible.length);
       return true;
     },
     [isFiltered, matchesCurrentFilter, filterPagination.sort]
@@ -156,12 +166,12 @@ const CPTSetup: React.FC = () => {
           true
         );
       } else {
-        setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+        setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
         refetch();
       }
     };
-    window.addEventListener("cpt:added", onAdded as any);
-    return () => window.removeEventListener("cpt:added", onAdded as any);
+    window.addEventListener('cpt:added', onAdded as any);
+    return () => window.removeEventListener('cpt:added', onAdded as any);
   }, [
     isFiltered,
     filterPagination.size,
@@ -169,7 +179,7 @@ const CPTSetup: React.FC = () => {
     recordOfFilter.filter,
     recordOfFilter.value,
     applyImmediatePrepend,
-    refetch,
+    refetch
   ]);
 
   // Page change
@@ -192,7 +202,7 @@ const CPTSetup: React.FC = () => {
     else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
     if (targetLink) {
       const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams((prev) => ({ ...prev, page, size, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
     }
   };
 
@@ -200,11 +210,17 @@ const CPTSetup: React.FC = () => {
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
     if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, size: newSize, page: 0 }));
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
       setFilterTs(Date.now());
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize, filterPagination.sort);
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        0,
+        newSize,
+        filterPagination.sort
+      );
     } else {
-      setPaginationParams((prev) => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
     }
   };
 
@@ -222,24 +238,26 @@ const CPTSetup: React.FC = () => {
         dispatch(
           notify({
             msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
-            sev: "warning",
+            sev: 'warning'
           })
         );
       } else {
         dispatch(
           notify({
-            msg: `Imported successfully. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-            sev: "success",
+            msg: `Imported successfully. Inserted ${res.inserted}${
+              res.updated ? `, Updated ${res.updated}` : ''
+            }.`,
+            sev: 'success'
           })
         );
 
         const newItems: any[] = (res as any)?.items || (res as any)?.insertedItems || [];
         if (newItems.length) applyImmediatePrepend(newItems);
-        window.dispatchEvent(new CustomEvent("cpt:added", { detail: { items: newItems } }));
+        window.dispatchEvent(new CustomEvent('cpt:added', { detail: { items: newItems } }));
 
         if (isFiltered) {
           const sort = nextFilteredSort(filterPagination.sort);
-          setFilterPagination((prev) => ({ ...prev, page: 0, sort }));
+          setFilterPagination(prev => ({ ...prev, page: 0, sort }));
           setFilterTs(Date.now());
           await handleFilterChange(
             recordOfFilter.filter,
@@ -250,15 +268,15 @@ const CPTSetup: React.FC = () => {
             true
           );
         } else {
-          setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
           refetch();
         }
       }
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || "Error importing CPT file",
-          sev: "error",
+          msg: error?.data?.detail || 'Error importing CPT file',
+          sev: 'error'
         })
       );
     }
@@ -268,25 +286,30 @@ const CPTSetup: React.FC = () => {
   const handleReplaceAll = async () => {
     if (!lastUploadedFile) return;
     try {
-      const res: ImportResult = await importCpt({ file: lastUploadedFile, overwrite: true }).unwrap();
+      const res: ImportResult = await importCpt({
+        file: lastUploadedFile,
+        overwrite: true
+      }).unwrap();
       setConflictModalOpen(false);
       setConflicts(null);
       setLastUploadedFile(null);
       dispatch(
         notify({
-          msg: `Re-imported with overwrite. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-          sev: "success",
+          msg: `Re-imported with overwrite. Inserted ${res.inserted}${
+            res.updated ? `, Updated ${res.updated}` : ''
+          }.`,
+          sev: 'success'
         })
       );
 
       const newItems: any[] =
         (res as any)?.items || (res as any)?.insertedItems || (res as any)?.updatedItems || [];
       if (newItems.length) applyImmediatePrepend(newItems);
-      window.dispatchEvent(new CustomEvent("cpt:added", { detail: { items: newItems } }));
+      window.dispatchEvent(new CustomEvent('cpt:added', { detail: { items: newItems } }));
 
       if (isFiltered) {
         const sort = nextFilteredSort(filterPagination.sort);
-        setFilterPagination((prev) => ({ ...prev, page: 0, sort }));
+        setFilterPagination(prev => ({ ...prev, page: 0, sort }));
         setFilterTs(Date.now());
         await handleFilterChange(
           recordOfFilter.filter,
@@ -297,14 +320,14 @@ const CPTSetup: React.FC = () => {
           true
         );
       } else {
-        setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+        setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
         refetch();
       }
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || "Overwrite failed",
-          sev: "error",
+          msg: error?.data?.detail || 'Overwrite failed',
+          sev: 'error'
         })
       );
     }
@@ -312,9 +335,10 @@ const CPTSetup: React.FC = () => {
 
   // Filter fields
   const filterFields = [
-    { label: "Category", value: "category" },
-    { label: "Code", value: "code" },
-    { label: "Description", value: "description" },
+    { label: 'Main Category', value: 'mainCategory' },
+    { label: 'Service Category', value: 'serviceCategory' },
+    { label: 'Code', value: 'code' },
+    { label: 'Description', value: 'description' }
   ];
 
   // Centralized filtered fetch (adds ts to bust cache)
@@ -328,20 +352,26 @@ const CPTSetup: React.FC = () => {
   ) => {
     if (!value) return undefined;
     const common = { page, size, sort, ts: ts ?? filterTs };
-    if (fieldName === "category") {
-      return await fetchByCategory({
-        category: String(value).toUpperCase(),
-        ...common,
+    if (fieldName === 'mainCategory') {
+      return await fetchByMainCategory({
+        mainCategory: String(value),
+        ...common
       }).unwrap();
-    } else if (fieldName === "code") {
+    }
+    if (fieldName === 'serviceCategory') {
+      return await fetchByServiceCategory({
+        serviceCategory: String(value),
+        ...common
+      }).unwrap();
+    } else if (fieldName === 'code') {
       return await fetchByCode({
         code: value,
-        ...common,
+        ...common
       }).unwrap();
-    } else if (fieldName === "description") {
+    } else if (fieldName === 'description') {
       return await fetchByDescription({
         description: value,
-        ...common,
+        ...common
       }).unwrap();
     }
     return undefined;
@@ -383,7 +413,7 @@ const CPTSetup: React.FC = () => {
 
   // Filters UI
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -392,7 +422,7 @@ const CPTSetup: React.FC = () => {
         fieldType="select"
         record={recordOfFilter}
         setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: "" });
+          setRecordOfFilter({ filter: updated.filter, value: '' });
         }}
         showLabel={false}
         placeholder="Select Filter"
@@ -400,19 +430,7 @@ const CPTSetup: React.FC = () => {
         width="170px"
       />
 
-      {recordOfFilter.filter === "category" ? (
-        <MyInput
-          width={300}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={cptCategoryOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      ) : (
+      {recordOfFilter.filter ? (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -420,15 +438,19 @@ const CPTSetup: React.FC = () => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder={
-            recordOfFilter.filter === "code"
-              ? "Enter Code"
-              : recordOfFilter.filter === "description"
-              ? "Enter description"
-              : "Enter value"
+            recordOfFilter.filter === 'code'
+              ? 'Enter Code'
+              : recordOfFilter.filter === 'description'
+              ? 'Enter description'
+              : recordOfFilter.filter === 'mainCategory'
+              ? 'Enter main category'
+              : recordOfFilter.filter === 'serviceCategory'
+              ? 'Enter service category'
+              : 'Enter value'
           }
           width={300}
         />
-      )}
+      ) : null}
 
       <MyButton
         color="var(--deep-blue)"
@@ -442,7 +464,7 @@ const CPTSetup: React.FC = () => {
               recordOfFilter.value,
               0,
               filterPagination.size,
-              filterPagination.sort || "id,desc"
+              filterPagination.sort || 'id,desc'
             );
           }
         }}
@@ -455,49 +477,77 @@ const CPTSetup: React.FC = () => {
 
   // Table columns
   const columns = [
-    { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
+    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
     {
-      key: "category",
-      title: "Category",
-      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ""),
+      key: 'codeCategory',
+      title: 'Code Category',
+      render: (row: any) => row?.codeCategory ?? ''
     },
-    { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
     {
-      key: "lastUpdated",
-      title: "Last Updated",
+      key: 'serviceCategory',
+      title: 'Service Category',
+      render: (row: any) => row?.serviceCategory ?? ''
+    },
+    {
+      key: 'mainCategory',
+      title: 'Main Category',
+      render: (row: any) => row?.mainCategory ?? ''
+    },
+    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
+    {
+      key: 'lastUpdated',
+      title: 'Last Updated',
       render: (row: any) => {
-        if (!row?.lastUpdated) return "";
+        if (!row?.lastUpdated) return '';
         const d = new Date(row.lastUpdated);
         return d.toLocaleDateString();
-      },
-    },
+      }
+    }
   ];
 
   // Conflict columns
   const conflictColumns = [
-    { key: "code", title: "Code", render: (row: Conflict) => row.code },
+    { key: 'code', title: 'Code', render: (row: Conflict) => row.code },
     {
-      key: "incomingDescription",
-      title: "Incoming Description",
-      render: (row: Conflict) => row.incomingDescription,
+      key: 'incomingDescription',
+      title: 'Incoming Description',
+      render: (row: Conflict) => row.incomingDescription
     },
     {
-      key: "incomingCategory",
-      title: "Incoming Category",
-      render: (row: Conflict) =>
-        row.incomingCategory ? formatEnumString(row.incomingCategory) : "",
+      key: 'incomingCodeCategory',
+      title: 'Incoming Code Category',
+      render: (row: Conflict) => row.incomingCodeCategory
     },
     {
-      key: "existingDescription",
-      title: "Existing Description",
-      render: (row: Conflict) => row.existingDescription,
+      key: 'incomingServiceCategory',
+      title: 'Incoming Service Category',
+      render: (row: Conflict) => row.incomingServiceCategory
     },
     {
-      key: "existingCategory",
-      title: "Existing Category",
-      render: (row: Conflict) =>
-        row.existingCategory ? formatEnumString(row.existingCategory) : "",
+      key: 'incomingMainCategory',
+      title: 'Incoming Main Category',
+      render: (row: Conflict) => row.incomingMainCategory
     },
+    {
+      key: 'existingDescription',
+      title: 'Existing Description',
+      render: (row: Conflict) => row.existingDescription
+    },
+    {
+      key: 'existingCodeCategory',
+      title: 'Existing Code Category',
+      render: (row: Conflict) => row.existingCodeCategory
+    },
+    {
+      key: 'existingServiceCategory',
+      title: 'Existing Service Category',
+      render: (row: Conflict) => row.existingServiceCategory
+    },
+    {
+      key: 'existingMainCategory',
+      title: 'Existing Main Category',
+      render: (row: Conflict) => row.existingMainCategory
+    }
   ];
 
   // Paged conflicts
@@ -509,8 +559,21 @@ const CPTSetup: React.FC = () => {
 
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
+  const downloadPublicFile = (url: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = `${url}?v=${Date.now()}`;
+    link.download = fileName;
+    link.click();
+  };
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={tableData}
         columns={columns}
@@ -518,16 +581,30 @@ const CPTSetup: React.FC = () => {
           <div
             className="mb-3"
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              justifyContent: 'space-between',
+              flexWrap: 'wrap'
             }}
           >
             <div>{filters()}</div>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <MyButton
+                appearance="ghost"
+                onClick={() => downloadPublicFile('/templates/CPT_Code.xlsx', 'CPT_Code.xlsx')}
+              >
+                Download Template
+              </MyButton>
+              <MyButton
+                appearance="ghost"
+                onClick={() =>
+                  downloadPublicFile('/templates/CPT_Code_Sample.xlsx', 'CPT_Code_Sample.xlsx')
+                }
+              >
+                Download Sample
+              </MyButton>
               <MyButton onClick={() => setOpenCodesImportModal(true)}>
                 Import CPT (Excel / CSV)
               </MyButton>
@@ -557,7 +634,7 @@ const CPTSetup: React.FC = () => {
         pagesCount={1}
         hideActionBtn={true}
         content={
-          <div>
+          <div dir={dir}>
             {conflicts && conflicts.length > 0 ? (
               <MyTable
                 data={pagedConflicts}
@@ -583,7 +660,7 @@ const CPTSetup: React.FC = () => {
           </MyButton>
         }
       />
-    </>
+    </div>
   );
 };
 

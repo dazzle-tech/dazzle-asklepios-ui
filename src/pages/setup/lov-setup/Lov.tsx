@@ -27,6 +27,7 @@ import AddEditLov from './AddEditLOV';
 import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
+import TranslationModal from '@/components/TranslationModal';
 const Lov = () => {
   const dispatch = useAppDispatch();
 
@@ -37,6 +38,8 @@ const Lov = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
+   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+   
   // Fetch lov list response
   const { data: lovListResponse, isFetching } = useGetLovsQuery(listRequest);
   // Save lov
@@ -55,8 +58,16 @@ const Lov = () => {
   const divContent = (
     "LOVs"
   );
-  dispatch(setPageCode('Lovs'));
+ 
+  useEffect(() => {
+ dispatch(setPageCode('Lovs'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';
@@ -88,12 +99,7 @@ const Lov = () => {
     }
   }, [saveLovMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // handle click on Add New button 
   const handleLovNew = () => {
@@ -107,6 +113,7 @@ const Lov = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'The LOV has been saved successfully', sev: 'success' }));
+        setShowTranslationModal(true);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to save this LOV', sev: 'error' }));
@@ -141,7 +148,7 @@ const Lov = () => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -190,21 +197,7 @@ const Lov = () => {
         onClick={() => setLovPopupOpen(true)}
       />
       {/* deactivate/activate  when click on one of these icon */}
-      {!rowData?.deletedAt ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-        />
-      ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={20}
-          fill="var(--primary-gray)"
-        />
-      )}
+   
     </div>
   );
   //Table columns
@@ -257,13 +250,20 @@ const Lov = () => {
     }
   ];
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Carousel
     className='container-of-lov'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel>
+      <Panel dir={dir}>
         <MyTable
           height={450}
           data={lovListResponse?.object ?? []}
@@ -294,6 +294,7 @@ const Lov = () => {
             Add New
           </MyButton>
         </div>}
+        dontTranslateData 
         />
         <AddEditLov
           open={lovPopupOpen}
@@ -302,7 +303,7 @@ const Lov = () => {
           setLov={setLov}
           handleSave={handleLovSave}
           width={width}
-          lovListResponse={lovListResponse}
+
         />
       </Panel>
       <LovValues
@@ -312,6 +313,16 @@ const Lov = () => {
           setLov({ ...newApLov });
         }}
         width={width}
+      />
+       <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={[
+          {
+            fieldName: 'name',
+            value: lov.lovName
+          }
+        ]}
       />
     </Carousel>
   );

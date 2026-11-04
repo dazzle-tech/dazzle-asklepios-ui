@@ -29,13 +29,15 @@ const RegistrationWizard = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(null));
-    };
-  }, [location.pathname, dispatch]);
+useEffect(() => {
+  dispatch(setPageCode(''));
+  dispatch(setDivContent('null'));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   return (
     <Panel>
       <div className='patient-facility-btns'>

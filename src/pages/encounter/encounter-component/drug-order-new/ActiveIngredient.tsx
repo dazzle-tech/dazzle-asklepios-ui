@@ -49,8 +49,14 @@ const ActiveIngredient = ({ selectedGeneric }) => {
            }));
        }, [selectedGeneric]);
    
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-    return (<>
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    return (
+    <div dir={dir}>
         <InfoCardList
             list={genericMedicationActiveIngredientListResponseData?.object || []}
             fields={[
@@ -83,6 +89,6 @@ const ActiveIngredient = ({ selectedGeneric }) => {
                     activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
             }}
          
-        /></>)
+        /></div>)
 }
 export default ActiveIngredient;

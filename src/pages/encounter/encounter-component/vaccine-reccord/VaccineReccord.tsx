@@ -216,8 +216,16 @@ const VaccineReccord = () => {
 
   const isLoadingAny = isFetchingVaccineIds || isFetchingVaccinesByIds || isFetchingDetails;
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {isLoadingAny && vaccinesByIds.length === 0 && (
         <div className="loader">
           <Loader content="Loading Vaccines ..." />
@@ -228,7 +236,7 @@ const VaccineReccord = () => {
         {vaccinesByIds.map((v: any, index: number) => (
           <MyButton
             key={v?.id ?? index}
-            className="main-content-btn"
+            className="main-content-btn filter-form-disable-fix"
             onClick={() => {
               setSelectedVaccine(v);
               setPageIndex(0);
@@ -256,7 +264,7 @@ const VaccineReccord = () => {
       )}
 
       <Form layout="inline" fluid className="form-content-vaccine-fields">
-        <Form layout="inline" fluid>
+        <div>
           <MyInput column disabled fieldType="text" fieldLabel="ATC Code" fieldName="atcCode" record={selectedVaccine} />
           <MyInput
             column
@@ -292,10 +300,11 @@ const VaccineReccord = () => {
             disabled
           />
           <MyInput column fieldLabel="Site of Administration" fieldName="siteOfAdministration" record={selectedVaccine} disabled />
-        </Form>
+        </div>
 
         <div className="cancel-checkbox-container">
           <Checkbox
+            className="show-cancelled"
             checked={showCancelled}
             onChange={(_value, checked) => {
               setShowCancelled(Boolean(checked));
@@ -317,7 +326,7 @@ const VaccineReccord = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-    </>
+    </div>
   );
 };
 

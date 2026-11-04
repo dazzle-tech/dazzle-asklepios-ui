@@ -164,7 +164,7 @@ const Reconciliation: React.FC = () => {
   const filterstable = (
     <>
       <Form fluid>
-        <h5 className="requested-procedures-table-header">Requested Operation</h5>
+        <h5 className="requested-procedures-table-header"><Translate>Requested Operation</Translate></h5>
         <div className="from-to-input-position">
           <MyInput
             width="100%"
@@ -215,8 +215,13 @@ const Reconciliation: React.FC = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="Tables-gap-betwen-columns">
+    <div className="Tables-gap-betwen-columns" dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

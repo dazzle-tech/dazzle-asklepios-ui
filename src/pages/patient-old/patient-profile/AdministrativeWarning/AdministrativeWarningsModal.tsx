@@ -300,7 +300,9 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         fieldType="select"
         fieldName="warningTypeLkey"
         selectData={administrativeWarningsLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={patientAdministrativeWarnings}
         setRecord={setPatientAdministrativeWarnings}

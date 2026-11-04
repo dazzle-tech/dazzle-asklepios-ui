@@ -13,6 +13,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from "react-redux";
 import "./style.less";
+import Translate from "@/components/Translate";
 
 const columns: ColumnConfig[] = [
   { key: 'problemName', title: 'Problem', dataKey: 'problemName', width: 150 },
@@ -93,7 +94,9 @@ const ActiveProblemsSection = () => {
             record={record}
             setRecord={(newVal) => setRecord(prev => ({ ...prev, ...newVal }))}
             selectData={problemsLovResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             searchable={false}
           />
@@ -114,7 +117,9 @@ const ActiveProblemsSection = () => {
             fieldName="severity"
             fieldType="select"
             selectData={severityLovResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
@@ -170,7 +175,9 @@ const ActiveProblemsSection = () => {
         title={<>
           <span className="today-goals-section-title">
             <FontAwesomeIcon color="#fde90f" icon={faTriangleExclamation} className="title-icon-main-title" />
+          <Translate>
             Active Problems
+          </Translate>
           </span>
           <div className="add-button-for-cards-over-view">
             <MyButton

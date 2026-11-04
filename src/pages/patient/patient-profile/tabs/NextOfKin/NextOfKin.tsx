@@ -9,12 +9,7 @@ import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditNextOfKin from './AddEditNextOfKin';
-
-// ✅ hooks من RTK Query service
-import {
-  useGetNextOfKinByPatientQuery,
-  useDeleteNextOfKinMutation
-} from '@/services/patients/NextOfKinService'; 
+import {  useGetNextOfKinByPatientQuery,  useDeleteNextOfKinMutation} from '@/services/patients/NextOfKinService'; 
 import { newNextOfKin } from '@/types/model-types-constructor-new';
 
 const NextOfKin = ({ patient, isClick }) => {
@@ -39,7 +34,7 @@ const NextOfKin = ({ patient, isClick }) => {
   );
 
   // ✅ delete mutation
-  const [deleteNextOfKin, { isLoading: isDeleting }] = useDeleteNextOfKinMutation();
+  const [deleteNextOfKin] = useDeleteNextOfKinMutation();
 
   const iconsForActions = rowData => (
     <div className="container-of-icons">
@@ -48,6 +43,7 @@ const NextOfKin = ({ patient, isClick }) => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
+        disabled={!rowData.id || patient?.patientStatus === 'MERGED'}
         onClick={() => {
           setNextOfKin(rowData);
           setOpen(true);
@@ -58,6 +54,7 @@ const NextOfKin = ({ patient, isClick }) => {
         title="Delete"
         size={24}
         fill="var(--primary-pink)"
+        disabled={!rowData.id || patient?.patientStatus === 'MERGED'}
         onClick={() => {
           setNextOfKin(rowData);
           setOpenConfirmationDeleteNextOfKinModal(true);
@@ -95,6 +92,16 @@ const NextOfKin = ({ patient, isClick }) => {
 
   // Add new
   const handleNewNextOfKin = () => {
+    if (patient?.isUnknown) {
+      dispatch(
+        notify({
+          msg: "This Patient in unkown , you can't add next of kin for unkown patient",
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     setNextOfKin({...newNextOfKin}); // reset form
     setOpen(true);
   };
@@ -115,7 +122,15 @@ const NextOfKin = ({ patient, isClick }) => {
     }
   };
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <div className="tab-main-container">
       <div className="tab-content-btns">
         <AddEditNextOfKin
@@ -126,7 +141,7 @@ const NextOfKin = ({ patient, isClick }) => {
           setNextOfKin={setNextOfKin}
         />
 
-        <MyButton onClick={handleNewNextOfKin} disabled={isClick || !patientId} prefixIcon={() => <PlusRound />}>
+        <MyButton onClick={handleNewNextOfKin} disabled={isClick || !patientId || patient?.patientStatus === 'MERGED'} prefixIcon={() => <PlusRound />}>
           Add
         </MyButton>
       </div>
@@ -152,6 +167,7 @@ const NextOfKin = ({ patient, isClick }) => {
         itemToDelete="Next Of Kin"
         actionButtonFunction={handleDeleteNextOfKin}
       />
+    </div>
     </div>
   );
 };

@@ -30,9 +30,14 @@ const ERDashboards: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="main-tables-container-er-dashboard">
+    <div className="main-tables-container-er-dashboard" dir={dir}>
       <ERDashboardTable />
 
       <div className="table-two-container-er-dashboard">

@@ -16,7 +16,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
     const content = (
         <Form fluid layout='inline' className='fields-container'>
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Facility"
                 fieldName=""
@@ -24,7 +24,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 setRecord={""}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Date"
                 fieldType='date'
@@ -33,7 +33,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
                 setRecord={""}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Indication"
                 fieldName=""
@@ -42,25 +42,29 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
             <MyInput
                 column
-                width={200}
+                width={'100%'}
                 fieldLabel="Blood Product Transfused"
                 fieldType="select"
                 fieldName=""
                 selectData={bloodProductsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
                 searchable={false}
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Source of Blood"
                 fieldType="select"
                 fieldName=""
                 selectData={bloodTransSourceLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
@@ -68,7 +72,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
             <MyInput
                 column
-                width={150}
+                width={'100%'}
                 fieldLabel="Volume"
                 fieldType="number"
                 fieldName=""
@@ -79,7 +83,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
 
             />
             <MyInput
-                width={200}
+                width={'100%'}
                 column
                 fieldLabel="Complication"
                 fieldType="textarea"
@@ -89,6 +93,13 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
         </Form>
     )
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
         <MyModal
             open={open}
@@ -98,7 +109,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             actionButtonFunction={""}
             position='right'
             size='33vw'
-            content={content}
+            content={<div dir={dir}>{content}</div>}
         ></MyModal>
     );
 };

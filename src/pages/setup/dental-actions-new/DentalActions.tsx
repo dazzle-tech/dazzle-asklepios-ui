@@ -251,7 +251,7 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
   const actiontype = useEnumOptions('DentalActionType');
 
 const filters = () => (
-  <Form layout="inline" fluid>
+  <Form fluid className="form-of-filters-set-up">
     <MyInput
       selectDataValue="value"
       selectDataLabel="label"
@@ -311,12 +311,6 @@ const filters = () => (
   }, []);
 
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
 
     const {
@@ -386,8 +380,16 @@ const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
 
     <MyTable
       data={

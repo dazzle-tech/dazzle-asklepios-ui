@@ -4,12 +4,33 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { PatientProblem } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
   totalCount: number;
   links?: any;
+};
+
+
+type PatientProblemCreateRequest = {
+  patientId: number;
+  condition?: string | null;
+  dateOfDiagnosis?: string | Date | null;
+  diagnosisDurationType?: 'YEARS' | 'MONTHS' | 'DAYS' | null;
+  diagnosisDuration?: number | null;
+  conditionStatus?: string | null;
+  type?: string | null;
+  dateOfResolution?: string | Date | null;
+  byPatient?: boolean | null;
+  sourceOfInformation?: string | null;
+  patientIsFree: boolean;
+  freeText?: string | null;
 };
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
@@ -28,19 +49,35 @@ export const patientProblemService = createApi({
 
   endpoints: builder => ({
     /* LIST */
-    getPatientProblems: builder.query<PagedResult<PatientProblem>, { patientId: Id } & PagedParams>(
-      {
-        query: ({ patientId, page, size, sort = 'id,desc' }) => ({
-          url: '/api/patient/problems',
-          params: { patientId, page, size, sort }
-        }),
-        transformResponse: mapPaged,
-        providesTags: ['PatientProblem']
-      }
-    ),
+    getPatientProblems: builder.query<
+      PagedResult<PatientProblem>,
+      { patientId: Id } & PagedParams
+    >({
+      query: ({
+        patientId,
+        showCancelled = false,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => ({
+        url: '/api/patient/problems',
+        params: {
+          patientId,
+          showCancelled,
+          page,
+          size,
+          sort
+        }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['PatientProblem']
+    }),
 
     /* CREATE */
-    addPatientProblem: builder.mutation<PatientProblem, PatientProblem>({
+    addPatientProblem: builder.mutation<
+      PatientProblem,
+      PatientProblemCreateRequest
+    >({
       query: body => ({
         url: '/api/patient/problems',
         method: 'POST',
@@ -53,6 +90,18 @@ export const patientProblemService = createApi({
     updatePatientProblem: builder.mutation<PatientProblem, PatientProblem>({
       query: body => ({
         url: '/api/patient/problems',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['PatientProblem']
+    }),
+
+    cancelPatientProblem: builder.mutation<
+      PatientProblem,
+      { id: number; cancellationReason?: string }
+    >({
+      query: body => ({
+        url: '/api/patient/problems/cancel',
         method: 'PUT',
         body
       }),
@@ -74,5 +123,6 @@ export const {
   useLazyGetPatientProblemsQuery,
   useAddPatientProblemMutation,
   useUpdatePatientProblemMutation,
+  useCancelPatientProblemMutation,
   useDeletePatientProblemMutation
 } = patientProblemService;

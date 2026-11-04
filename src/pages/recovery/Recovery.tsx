@@ -397,7 +397,7 @@ const Recovery = () => {
           setRecord={setDateFilter}
           showLabel={false}
         />
-        <Checkbox>Show Moved to bed</Checkbox>
+        <Checkbox><Translate>Show Moved to bed</Translate></Checkbox>
 
         <Form fluid className="container-of-filter-fields-department">
           <MyInput
@@ -407,7 +407,9 @@ const Recovery = () => {
             record={record}
             setRecord={setRecord}
             selectData={definedOperationsLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             placeholder="Operation Name"
             fieldLabel="Operation Name"
@@ -421,7 +423,9 @@ const Recovery = () => {
             record={record}
             setRecord={setRecord}
             selectData={procStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             placeholder="Status"
             fieldLabel="Status"
@@ -461,7 +465,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={opTypeLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Operation Type"
                 fieldLabel="Operation Type"
@@ -476,7 +482,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={opLevelLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Operation Level"
                 fieldLabel="Operation Level"
@@ -501,7 +509,9 @@ const Recovery = () => {
                 record={record}
                 setRecord={setRecord}
                 selectData={orderPriorityLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 placeholder="Order Priority"
                 fieldLabel="Order Priority"
@@ -514,8 +524,13 @@ const Recovery = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container">
+    <div className="container" dir={dir}>
       <div className="left-box">
         <MyTable
           filters={filters()}

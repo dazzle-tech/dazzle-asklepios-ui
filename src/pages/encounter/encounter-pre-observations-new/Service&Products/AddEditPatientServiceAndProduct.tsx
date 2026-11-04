@@ -1,115 +1,625 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useLocation } from 'react-router-dom';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetServicesQuery } from '@/services/setup/serviceService';
-import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
 import {
   useCreatePatientServiceOrProductMutation,
-  useUpdatePatientServiceOrProductMutation,
+  useUpdatePatientServiceOrProductMutation
 } from '@/services/encounters/patientServicesAndProductsService';
+import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
+import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
+import { formatEnumString } from '@/utils';
+import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
-  InventoryProduct,
+  buildBillingRuleEvaluationRequest,
+  extractBillingRuleErrorMessage,
+  formatBillingRuleEvaluationMessage
+} from '@/utils/billingRuleEvaluationUtils';
+import {
   PatientServiceAndProduct,
   PatientServiceProductCreateDTO,
   PatientServiceProductUpdateDTO,
+  BillingEventType
 } from '@/types/model-types-new';
 import {
   newPatientServiceAndProduct,
   newPatientServiceProductCreateDTO,
-  newPatientServiceProductUpdateDTO,
+  newPatientServiceProductUpdateDTO
 } from '@/types/model-types-constructor-new';
+
+import {
+  useGetActiveServicesByFacilityQuery,
+  useGetServicesByNameQuery
+} from '@/services/setup/serviceService';
+
+import {
+  useGetBrandMedicationByIdQuery,
+  useGetBrandMedicationsByIsActiveQuery,
+  useGetBrandMedicationsByNameQuery
+} from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetAllUnitsByGroupIdQuery } from '@/services/setup/uom-group/uomGroupService';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
+
+import {
+  useGetActiveDiagnosticTestsByTypeQuery,
+  useGetAllDiagnosticTestsByNameAndTypeQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestService';
+
+import {
+  useGetActiveProceduresByFacilityQuery,
+  useGetProceduresByNameQuery
+} from '@/services/setup/procedure/procedureService';
 
 const AddEditPatientServiceAndProduct = ({
   open,
   setOpen,
   patientServiceAndProduct,
-  setPatientServiceAndProduct,
+  setPatientServiceAndProduct
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   patientServiceAndProduct: PatientServiceAndProduct;
   setPatientServiceAndProduct: (patientServiceAndProduct: PatientServiceAndProduct) => void;
 }) => {
-  const authSlice = useAppSelector((state) => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const location = useLocation();
+
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
-  const prevCategoryRef = useRef<string | undefined>(patientServiceAndProduct?.category);
 
-  // Filters product list by selected product type in the form.
-  const [selectedProductType, setSelectedProductType] = useState<{ type: string }>({ type: '' });
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const categoryEnumResponse = useEnumOptions('PatientServiceCategory');
-  const productType = useEnumOptions('ProductTypes');
 
-  // Master data for service/product lookups.
-  const { data: inventoryProductsResponse } = useGetInventoryProductsQuery({
-    page: 0,
-    size: 100,
-    sort: 'id,asc',
+    const [selectPage, setSelectPage] = useState(0);
+    const [selectSearch, setSelectSearch] = useState('');
+    const [debouncedSelectSearch, setDebouncedSelectSearch] = useState('');
+
+    const [selectData, setSelectData] = useState<any[]>([]);
+    const [selectedSelectItem, setSelectedSelectItem] = useState<any>(null);
+    const [coverageWarning, setCoverageWarning] = useState<{
+      itemName?: string | null;
+      itemCode?: string | null;
+      cashUnitPrice?: number | null;
+      currency?: string | null;
+      notCoveredReason?: string | null;
+    } | null>(null);
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setDebouncedSelectSearch(selectSearch.trim());
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }, [selectSearch]);
+
+    useEffect(() => {
+      setSelectPage(0);
+      setSelectSearch('');
+      setDebouncedSelectSearch('');
+      setSelectData([]);
+      setSelectedSelectItem(null);
+    }, [patientServiceAndProduct?.billingItemType]);
+
+
+  const billingItemTypeOptions = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
+
+    const {
+      data: activeServicesResponse,
+      isFetching: isFetchingServices
+    } = useGetActiveServicesByFacilityQuery(
+      {
+        facilityId: selectedFacilityId,
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          !selectedFacilityId ||
+          patientServiceAndProduct?.billingItemType !== 'SERVICE' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: servicesSearchResponse,
+      isFetching: isFetchingServicesSearch
+    } = useGetServicesByNameQuery(
+      {
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'SERVICE' ||
+          !debouncedSelectSearch
+      }
+    );
+
+    const {
+      data: medicationsResponse,
+      isFetching: isFetchingMedications
+    } = useGetBrandMedicationsByIsActiveQuery(
+      {
+        isActive: true,
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'MEDICATION' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: medicationsSearchResponse,
+      isFetching: isFetchingMedicationsSearch
+    } = useGetBrandMedicationsByNameQuery(
+      {
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'MEDICATION' ||
+          !debouncedSelectSearch
+      }
+    );
+
+    const {
+      data: laboratoryResponse,
+      isFetching: isFetchingLaboratory
+    } = useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'LABORATORY',
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'LABORATORY' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: laboratorySearchResponse,
+      isFetching: isFetchingLaboratorySearch
+    } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+      {
+        type: 'LABORATORY',
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'LABORATORY' ||
+          !debouncedSelectSearch
+      }
+    );
+
+    const {
+      data: radiologyResponse,
+      isFetching: isFetchingRadiology
+    } = useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'RADIOLOGY',
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'RADIOLOGY' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: radiologySearchResponse,
+      isFetching: isFetchingRadiologySearch
+    } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+      {
+        type: 'RADIOLOGY',
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'RADIOLOGY' ||
+          !debouncedSelectSearch
+      }
+    );
+
+    const {
+      data: pathologyResponse,
+      isFetching: isFetchingPathology
+    } = useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'PATHOLOGY',
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'PATHOLOGY' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: pathologySearchResponse,
+      isFetching: isFetchingPathologySearch
+    } = useGetAllDiagnosticTestsByNameAndTypeQuery(
+      {
+        type: 'PATHOLOGY',
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'PATHOLOGY' ||
+          !debouncedSelectSearch
+      }
+    );
+
+    const {
+      data: proceduresResponse,
+      isFetching: isFetchingProcedures
+    } = useGetActiveProceduresByFacilityQuery(
+      {
+        facilityId: selectedFacilityId,
+        page: selectPage,
+        size: 5,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          !selectedFacilityId ||
+          patientServiceAndProduct?.billingItemType !== 'PROCEDURE' ||
+          Boolean(debouncedSelectSearch)
+      }
+    );
+
+    const {
+      data: proceduresSearchResponse,
+      isFetching: isFetchingProceduresSearch
+    } = useGetProceduresByNameQuery(
+      {
+        name: debouncedSelectSearch,
+        page: selectPage,
+        size: 20,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open ||
+          patientServiceAndProduct?.billingItemType !== 'PROCEDURE' ||
+          !debouncedSelectSearch
+      }
+    );
+
+
+    // All active vaccine brands; the same query lists and searches (by name or code)
+    const {
+      data: vaccineBrandsResponse,
+      isFetching: isFetchingVaccineBrands
+    } = useSearchActiveVaccineBrandsQuery(
+      {
+        name: debouncedSelectSearch || undefined,
+        page: selectPage,
+        size: 20,
+        sort: 'name,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'VACCINE'
+      }
+    );
+
+    const getSearchData = (response: any) => {
+  return (response?.data ?? []).filter(
+    (item: any) => item?.isActive === true
+  );
+};
+
+    const currentSelectResponse = useMemo(() => {
+      switch (patientServiceAndProduct?.billingItemType) {
+        case 'MEDICATION':
+          return debouncedSelectSearch
+            ? medicationsSearchResponse
+            : medicationsResponse;
+
+        case 'LABORATORY':
+          return debouncedSelectSearch
+            ? laboratorySearchResponse
+            : laboratoryResponse;
+
+        case 'RADIOLOGY':
+          return debouncedSelectSearch
+            ? radiologySearchResponse
+            : radiologyResponse;
+
+        case 'PATHOLOGY':
+          return debouncedSelectSearch
+            ? pathologySearchResponse
+            : pathologyResponse;
+
+        case 'SERVICE':
+          return debouncedSelectSearch
+            ? servicesSearchResponse
+            : activeServicesResponse;
+
+        case 'PROCEDURE':
+          return debouncedSelectSearch
+            ? proceduresSearchResponse
+            : proceduresResponse;
+
+        case 'VACCINE':
+          return vaccineBrandsResponse;
+
+        default:
+          return null;
+      }
+    }, [
+      patientServiceAndProduct?.billingItemType,
+      debouncedSelectSearch,
+
+      medicationsResponse,
+      medicationsSearchResponse,
+
+      laboratoryResponse,
+      laboratorySearchResponse,
+
+      radiologyResponse,
+      radiologySearchResponse,
+
+      pathologyResponse,
+      pathologySearchResponse,
+
+      activeServicesResponse,
+      servicesSearchResponse,
+
+      proceduresResponse,
+      proceduresSearchResponse,
+
+      vaccineBrandsResponse
+    ]);
+
+    useEffect(() => {
+      if (!currentSelectResponse?.data) {
+        return;
+      }
+
+      const incomingData = debouncedSelectSearch
+        ? currentSelectResponse.data.filter(
+            (item: any) => item?.isActive === true
+          )
+        : currentSelectResponse.data;
+
+      setSelectData(prev => {
+        const combined =
+          selectPage === 0
+            ? incomingData
+            : [...prev, ...incomingData];
+
+        return Array.from(
+          new Map(
+            combined
+              .filter(item => item?.id != null)
+              .map(item => [String(item.id), item])
+          ).values()
+        );
+      });
+    }, [
+      currentSelectResponse,
+      debouncedSelectSearch,
+      selectPage
+    ]);
+
+
+  const [createPatientServiceAndProduct, { isLoading: isCreating }] =
+    useCreatePatientServiceOrProductMutation();
+
+  const [updatePatientServiceAndProduct, { isLoading: isUpdating }] =
+    useUpdatePatientServiceOrProductMutation();
+
+  const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
+  const [previewCatalogItemPricing] = usePreviewCatalogItemPricingMutation();
+
+  const isMedication = patientServiceAndProduct?.billingItemType === 'MEDICATION';
+
+  // Units of the selected brand's UOM group; its price is per its price base unit
+  const { data: selectedBrand } = useGetBrandMedicationByIdQuery(
+    patientServiceAndProduct?.brandMedicationId,
+    { skip: !open || !isMedication || !patientServiceAndProduct?.brandMedicationId }
+  );
+  const brandUomGroupId =
+    selectedBrand?.id === patientServiceAndProduct?.brandMedicationId
+      ? selectedBrand?.uomGroupId
+      : undefined;
+
+  const { data: uomUnits } = useGetAllUnitsByGroupIdQuery(brandUomGroupId ?? 0, {
+    skip: !brandUomGroupId
   });
-  const { data: serviceListResponse } = useGetServicesQuery({
-    facilityId: authSlice?.tenant?.selectedFacility?.id,
-    page: 0,
-    size: 100,
-    sort: 'id,asc',
-  });
 
-  const products: InventoryProduct[] = inventoryProductsResponse?.data ?? [];
-  const services = serviceListResponse?.data ?? [];
+  const uomUnitOptions = useMemo(
+    () => (uomUnits ?? []).map((unit: any) => ({ label: formatEnumString(unit.uom), value: unit.id })),
+    [uomUnits]
+  );
 
-  const filteredProducts: InventoryProduct[] = useMemo(() => {
-    if (!selectedProductType?.type) return [];
-    return products.filter((p) => p.type === selectedProductType.type);
-  }, [products, selectedProductType]);
-
-  // Keep selected product type in sync while editing existing rows.
+  // A medication line without a unit is charged in the brand's price base unit
   useEffect(() => {
-    if (patientServiceAndProduct?.category !== 'PRODUCT') {
-      setSelectedProductType({ type: '' });
+    if (
+      open &&
+      isMedication &&
+      brandUomGroupId &&
+      patientServiceAndProduct?.uomGroupUnitId == null &&
+      selectedBrand?.priceBaseUomId
+    ) {
+      setPatientServiceAndProduct({
+        ...patientServiceAndProduct,
+        uomGroupUnitId: selectedBrand.priceBaseUomId
+      });
+    }
+  }, [open, isMedication, brandUomGroupId, selectedBrand, patientServiceAndProduct?.uomGroupUnitId]);
+
+  const [pricing, setPricing] = useState<{
+    unitPrice: number;
+    price: number;
+    netAmount: number;
+    currency?: string | null;
+  } | null>(null);
+  const [isPricing, setIsPricing] = useState(false);
+  const pricingRequestRef = useRef(0);
+
+  const selectedItemId =
+    patientServiceAndProduct?.brandMedicationId ??
+    patientServiceAndProduct?.diagnosticTestId ??
+    patientServiceAndProduct?.serviceId ??
+    patientServiceAndProduct?.procedureId ??
+    patientServiceAndProduct?.vaccineBrandId;
+
+  // Unit price (in the picked UOM unit for medications) and price for the quantity
+  useEffect(() => {
+    if (!open || !patientServiceAndProduct?.billingItemType || !selectedItemId) {
+      setPricing(null);
       return;
     }
 
-    if (selectedProductType?.type) return;
-
-    const selectedProduct = products.find((p) => p.Id === patientServiceAndProduct?.productId);
-    if (selectedProduct?.type) {
-      setSelectedProductType({ type: selectedProduct.type });
-    }
-  }, [patientServiceAndProduct, products, selectedProductType?.type]);
-
-  // Clear opposite fields when category changes between SERVICE and PRODUCT.
-  useEffect(() => {
-
-
-    if (patientServiceAndProduct?.category === 'SERVICE') {
-      setPatientServiceAndProduct({
-        ...patientServiceAndProduct,
-        productId: undefined,
-      });
-      setSelectedProductType({ type: '' });
+    const quantity = Number(patientServiceAndProduct?.quantity);
+    if (!quantity || quantity <= 0) {
+      setPricing(null);
+      return;
     }
 
-    if (patientServiceAndProduct?.category === 'PRODUCT') {
-      setPatientServiceAndProduct({
-        ...patientServiceAndProduct,
-        serviceId: undefined,
-      });
+    const requestId = ++pricingRequestRef.current;
+    const timer = setTimeout(async () => {
+      setIsPricing(true);
+      const preview = await previewItemPricing(patientServiceAndProduct);
+
+      // A newer item / unit / quantity was picked meanwhile
+      if (requestId !== pricingRequestRef.current) {
+        return;
+      }
+
+      setIsPricing(false);
+      setPricing(
+        preview
+          ? {
+              unitPrice: Number(preview.unitPrice ?? preview.setupUnitPrice ?? 0),
+              price: Number(preview.grossAmount ?? 0),
+              netAmount: Number(preview.netAmount ?? preview.grossAmount ?? 0),
+              currency: preview.currency ?? patientServiceAndProduct?.currency
+            }
+          : null
+      );
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [
+    open,
+    patientServiceAndProduct?.billingItemType,
+    selectedItemId,
+    patientServiceAndProduct?.uomGroupUnitId,
+    patientServiceAndProduct?.quantity
+  ]);
+
+  const formatMoney = (amount: number | null | undefined) =>
+    amount == null
+      ? ''
+      : `${Number(amount).toFixed(2)} ${pricing?.currency ?? patientServiceAndProduct?.currency ?? ''}`.trim();
+
+  const previewItemPricing = async (nextRecord: PatientServiceAndProduct) => {
+    if (!patient?.id || !encounter?.id || !selectedFacilityId) {
+      return null;
     }
 
-  }, [patientServiceAndProduct?.category, setPatientServiceAndProduct]);
+    const billingItemType = String(nextRecord.billingItemType ?? '');
 
-  const [createPatientServiceAndProduct] = useCreatePatientServiceOrProductMutation();
-  const [updatePatientServiceAndProduct] = useUpdatePatientServiceOrProductMutation();
+    try {
+      const preview = await previewCatalogItemPricing({
+        patientId: patient.id,
+        encounterId: encounter.id,
+        facilityId: Number(selectedFacilityId),
+        currency:
+          nextRecord.currency ||
+          authSlice?.tenant?.selectedFacility?.defaultCurrency ||
+          'SAR',
+        billingItemType,
+        brandMedicationId:
+          billingItemType === 'MEDICATION'
+            ? nextRecord.brandMedicationId ?? undefined
+            : undefined,
+        diagnosticTestId: ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(
+          billingItemType
+        )
+          ? nextRecord.diagnosticTestId ?? undefined
+          : undefined,
+        serviceId:
+          billingItemType === 'SERVICE' ? nextRecord.serviceId ?? undefined : undefined,
+        procedureId:
+          billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
+        quantity: Number(nextRecord.quantity ?? 1),
+        coverageType: 'SELF_PAY',
+        patientInsuranceId: null,
+        uomGroupUnitId:
+          billingItemType === 'MEDICATION' ? nextRecord.uomGroupUnitId ?? null : null,
+        vaccineBrandId:
+          billingItemType === 'VACCINE' ? nextRecord.vaccineBrandId ?? undefined : undefined
+      }).unwrap();
 
-  // Extract readable backend message when available.
-  const extractErrorMessage = (response) => {
+      if (preview.requiresCashConfirmation) {
+        setCoverageWarning({
+          itemName: selectedSelectItem?.name ?? selectedSelectItem?.testName,
+          itemCode: preview.priceListItemCode,
+          cashUnitPrice: preview.cashUnitPrice ?? preview.unitPrice,
+          currency: preview.currency ?? nextRecord.currency,
+          notCoveredReason: preview.notCoveredReason ?? null
+        });
+      } else {
+        setCoverageWarning(null);
+      }
+
+      return preview;
+    } catch {
+      setCoverageWarning(null);
+      return null;
+    }
+  };
+
+  const extractErrorMessage = (response: any) => {
     try {
       const msg = response?.data?.message;
       if (typeof msg === 'string') return msg.replace(/^error\./i, '');
@@ -119,131 +629,286 @@ const AddEditPatientServiceAndProduct = ({
     }
   };
 
-  // Required validation similar to warning modal approach.
   const getValidationError = () => {
     let errorMsg = '';
 
-    if (!patientServiceAndProduct?.category) {
+    if (!patientServiceAndProduct?.billingItemType) {
       errorMsg += errorMsg ? ', Category can`t be empty' : 'Category can`t be empty';
     }
 
-    if (patientServiceAndProduct?.category === 'SERVICE' && !patientServiceAndProduct?.serviceId) {
+    if (
+      patientServiceAndProduct?.billingItemType === 'MEDICATION' &&
+      !patientServiceAndProduct?.brandMedicationId
+    ) {
+      errorMsg += errorMsg ? ', Medication can`t be empty' : 'Medication can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'LABORATORY' &&
+      !patientServiceAndProduct?.diagnosticTestId
+    ) {
+      errorMsg += errorMsg ? ', Laboratory test can`t be empty' : 'Laboratory test can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'RADIOLOGY' &&
+      !patientServiceAndProduct?.diagnosticTestId
+    ) {
+      errorMsg += errorMsg ? ', Radiology test can`t be empty' : 'Radiology test can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'PATHOLOGY' &&
+      !patientServiceAndProduct?.diagnosticTestId
+    ) {
+      errorMsg += errorMsg ? ', Pathology test can`t be empty' : 'Pathology test can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'SERVICE' &&
+      !patientServiceAndProduct?.serviceId
+    ) {
       errorMsg += errorMsg ? ', Service can`t be empty' : 'Service can`t be empty';
     }
 
-    if (patientServiceAndProduct?.category === 'PRODUCT' && !selectedProductType?.type) {
-      errorMsg += errorMsg ? ', Type can`t be empty' : 'Type can`t be empty';
+    if (
+      patientServiceAndProduct?.billingItemType === 'PROCEDURE' &&
+      !patientServiceAndProduct?.procedureId
+    ) {
+      errorMsg += errorMsg ? ', Procedure can`t be empty' : 'Procedure can`t be empty';
     }
 
-    if (patientServiceAndProduct?.category === 'PRODUCT' && !patientServiceAndProduct?.productId) {
-      errorMsg += errorMsg ? ', Product can`t be empty' : 'Product can`t be empty';
+    if (
+      patientServiceAndProduct?.billingItemType === 'VACCINE' &&
+      !patientServiceAndProduct?.vaccineBrandId
+    ) {
+      errorMsg += errorMsg ? ', Vaccine brand can`t be empty' : 'Vaccine brand can`t be empty';
     }
 
     if (!patientServiceAndProduct?.quantity || Number(patientServiceAndProduct?.quantity) <= 0) {
-      errorMsg += errorMsg ? ', Quantity should be greater than 0' : 'Quantity should be greater than 0';
+      errorMsg += errorMsg
+        ? ', Quantity should be greater than 0'
+        : 'Quantity should be greater than 0';
+    }
+
+    if (!errorMsg && !patientServiceAndProduct?.currency) {
+      errorMsg = 'Currency can`t be empty';
     }
 
     return errorMsg;
   };
 
-  // Modal content.
-  const conjureFormContent = (stepNumber = 0) => {
-    switch (stepNumber) {
-      case 0:
-        return (
-          <Form fluid>
-            {/* Category */}
-            <MyInput
-              width="100%"
-              fieldName="category"
-              fieldType="select"
-              selectData={categoryEnumResponse ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={patientServiceAndProduct}
-              setRecord={setPatientServiceAndProduct}
-              searchable={false}
-              required
-            />
+  const validateBillingRuleBeforeSave = async () => {
+    const evaluationRequest = buildBillingRuleEvaluationRequest(
+      patientServiceAndProduct.billingItemType,
+      BillingEventType.ITEM_ORDERED,
+      {
+        serviceId: patientServiceAndProduct.serviceId,
+        procedureId: patientServiceAndProduct.procedureId,
+        diagnosticTestId: patientServiceAndProduct.diagnosticTestId,
+        brandMedicationId: patientServiceAndProduct.brandMedicationId
+      }
+    );
 
-            {/* Service fields */}
-            {patientServiceAndProduct.category === 'SERVICE' && (
-              <>
-                <MyInput
-                  fieldName="serviceId"
-                  fieldLabel="Service"
-                  fieldType="select"
-                  record={patientServiceAndProduct}
-                  setRecord={setPatientServiceAndProduct}
-                  selectData={services}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  searchable={false}
-                  width="100%"
-                  required
-                />
-                <MyInput
-                  fieldName="quantity"
-                  fieldType="number"
-                  record={patientServiceAndProduct}
-                  setRecord={setPatientServiceAndProduct}
-                  width="100%"
-                  required
-                />
-              </>
-            )}
+    const evaluation = await evaluateBillingRule(evaluationRequest).unwrap();
 
-            {/* Product fields */}
-            {patientServiceAndProduct.category === 'PRODUCT' && (
-              <>
-                <MyInput
-                  fieldLabel="Type"
-                  fieldName="type"
-                  fieldType="select"
-                  selectData={productType ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={selectedProductType}
-                  setRecord={setSelectedProductType}
-                  menuMaxHeight={200}
-                  width="100%"
-                  searchable={false}
-                  required
-                />
+    if (!evaluation.ruleFound) {
+      dispatch(
+        notify({
+          msg: formatBillingRuleEvaluationMessage(evaluation),
+          sev: 'error'
+        })
+      );
+      return false;
+    }
 
-                <MyInput
-                  fieldName="productId"
-                  fieldLabel="Product"
-                  fieldType="select"
-                  record={patientServiceAndProduct}
-                  setRecord={setPatientServiceAndProduct}
-                  selectData={filteredProducts}
-                  selectDataLabel="name"
-                  selectDataValue="Id"
-                  searchable={true}
-                  width="100%"
-                  required
-                />
+    return true;
+  };
 
-                <MyInput
-                  fieldName="quantity"
-                  fieldType="number"
-                  record={patientServiceAndProduct}
-                  setRecord={setPatientServiceAndProduct}
-                  width="100%"
-                  required
-                />
-              </>
-            )}
-          </Form>
-        );
+  const itemSelectConfig = useMemo(() => {
+    switch (patientServiceAndProduct?.billingItemType) {
+      case 'MEDICATION':
+        return {
+          fieldName: 'brandMedicationId',
+          fieldLabel: 'Medication',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingMedications ||
+            isFetchingMedicationsSearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'LABORATORY':
+        return {
+          fieldName: 'diagnosticTestId',
+          fieldLabel: 'Laboratory Test',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingLaboratory ||
+            isFetchingLaboratorySearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'RADIOLOGY':
+        return {
+          fieldName: 'diagnosticTestId',
+          fieldLabel: 'Radiology Test',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingRadiology ||
+            isFetchingRadiologySearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'PATHOLOGY':
+        return {
+          fieldName: 'diagnosticTestId',
+          fieldLabel: 'Pathology Test',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingPathology ||
+            isFetchingPathologySearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'SERVICE':
+        return {
+          fieldName: 'serviceId',
+          fieldLabel: 'Service',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingServices ||
+            isFetchingServicesSearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'PROCEDURE':
+        return {
+          fieldName: 'procedureId',
+          fieldLabel: 'Procedure',
+          selectData,
+          selectDataLabel: 'name',
+          selectDataValue: 'id',
+          loading:
+            isFetchingProcedures ||
+            isFetchingProceduresSearch,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
+      case 'VACCINE':
+        return {
+          fieldName: 'vaccineBrandId',
+          fieldLabel: 'Vaccine Brand',
+          selectData,
+          selectDataLabel: 'displayName',
+          selectDataValue: 'id',
+          loading: isFetchingVaccineBrands,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
       default:
         return null;
     }
+  }, [
+    patientServiceAndProduct?.billingItemType,
+    selectData,
+    currentSelectResponse,
+
+    isFetchingMedications,
+    isFetchingMedicationsSearch,
+
+    isFetchingLaboratory,
+    isFetchingLaboratorySearch,
+
+    isFetchingRadiology,
+    isFetchingRadiologySearch,
+
+    isFetchingPathology,
+    isFetchingPathologySearch,
+
+    isFetchingServices,
+    isFetchingServicesSearch,
+
+    isFetchingProcedures,
+    isFetchingProceduresSearch,
+
+    isFetchingVaccineBrands
+  ]);
+
+  const handleFetchMore = () => {
+    if (
+      isFetchingMedications ||
+      isFetchingMedicationsSearch ||
+      isFetchingLaboratory ||
+      isFetchingLaboratorySearch ||
+      isFetchingRadiology ||
+      isFetchingRadiologySearch ||
+      isFetchingPathology ||
+      isFetchingPathologySearch ||
+      isFetchingServices ||
+      isFetchingServicesSearch ||
+      isFetchingProcedures ||
+      isFetchingProceduresSearch ||
+      isFetchingVaccineBrands
+    ) {
+      return;
+    }
+
+    if (currentSelectResponse?.links?.next != null) {
+      setSelectPage(prev => prev + 1);
+    }
   };
+
+  const handleSelectSearch = (value: string) => {
+    // Closing the list clears the search; when it was already empty the cached page is not
+    // fetched again, so clearing the loaded items here would leave the list empty
+    if (value === selectSearch) {
+      return;
+    }
+
+    setSelectSearch(value);
+    setSelectPage(0);
+    setSelectData([]);
+  };
+
+  const selectDataWithSelectedItem = useMemo(() => {
+    const withSelected =
+      !selectedSelectItem?.id ||
+      selectData.some(item => String(item?.id) === String(selectedSelectItem.id))
+        ? selectData
+        : [selectedSelectItem, ...selectData];
+
+    if (patientServiceAndProduct?.billingItemType !== 'VACCINE') {
+      return withSelected;
+    }
+
+    // Brand names can repeat between vaccines/facilities, so the code is shown with the name
+    return withSelected.map(brand => ({
+      ...brand,
+      displayName: brand?.code ? `${brand.name} - ${brand.code}` : brand?.name ?? ''
+    }));
+  }, [selectData, selectedSelectItem, patientServiceAndProduct?.billingItemType]);
 
   const handleSave = async () => {
     const validationError = getValidationError();
+
     if (validationError) {
       dispatch(notify({ msg: validationError, sev: 'warning' }));
       return;
@@ -251,42 +916,112 @@ const AddEditPatientServiceAndProduct = ({
 
     try {
       if (!patientServiceAndProduct?.id) {
+        const billingRuleReady = await validateBillingRuleBeforeSave();
+        if (!billingRuleReady) {
+          return;
+        }
+
         const createDTO: PatientServiceProductCreateDTO = {
           ...newPatientServiceProductCreateDTO,
           patientId: patient?.id,
           encounterId: encounter?.id,
-          category: patientServiceAndProduct.category,
-          serviceId: patientServiceAndProduct.serviceId,
-          productId: patientServiceAndProduct.productId,
-          quantity: patientServiceAndProduct.quantity,
+          billingItemType: patientServiceAndProduct.billingItemType,
+
+          brandMedicationId:
+            patientServiceAndProduct.billingItemType === 'MEDICATION'
+              ? patientServiceAndProduct.brandMedicationId ?? null
+              : null,
+
+          diagnosticTestId: ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(
+            patientServiceAndProduct.billingItemType
+          )
+            ? patientServiceAndProduct.diagnosticTestId ?? null
+            : null,
+
+          serviceId:
+            patientServiceAndProduct.billingItemType === 'SERVICE'
+              ? patientServiceAndProduct.serviceId ?? null
+              : null,
+
+          procedureId:
+            patientServiceAndProduct.billingItemType === 'PROCEDURE'
+              ? patientServiceAndProduct.procedureId ?? null
+              : null,
+
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
+              : null,
+
+          quantity: Number(patientServiceAndProduct.quantity),
+          unitPrice: pricing?.unitPrice ?? patientServiceAndProduct.unitPrice ?? 0,
+          currency: patientServiceAndProduct.currency,
+          acceptUncoveredAsCash: Boolean(coverageWarning),
+          uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null
         };
 
         await createPatientServiceAndProduct(createDTO).unwrap();
+
         dispatch(
           notify({
-            msg: 'Patient Service/Product Added Successfully',
-            sev: 'success',
+            msg: 'Billing Item Added Successfully',
+            sev: 'success'
           })
         );
       } else {
         const updateDTO: PatientServiceProductUpdateDTO = {
           ...newPatientServiceProductUpdateDTO,
           id: patientServiceAndProduct.id,
-          category: patientServiceAndProduct.category,
-          serviceId: patientServiceAndProduct.serviceId,
-          productId: patientServiceAndProduct.productId,
-          quantity: patientServiceAndProduct.quantity,
+          billingItemType: patientServiceAndProduct.billingItemType,
+
+          brandMedicationId:
+            patientServiceAndProduct.billingItemType === 'MEDICATION'
+              ? patientServiceAndProduct.brandMedicationId ?? null
+              : null,
+
+          diagnosticTestId: ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(
+            patientServiceAndProduct.billingItemType
+          )
+            ? patientServiceAndProduct.diagnosticTestId ?? null
+            : null,
+
+          serviceId:
+            patientServiceAndProduct.billingItemType === 'SERVICE'
+              ? patientServiceAndProduct.serviceId ?? null
+              : null,
+
+          procedureId:
+            patientServiceAndProduct.billingItemType === 'PROCEDURE'
+              ? patientServiceAndProduct.procedureId ?? null
+              : null,
+
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
+              : null,
+
+          quantity: Number(patientServiceAndProduct.quantity),
+          unitPrice: pricing?.unitPrice ?? patientServiceAndProduct.unitPrice ?? 0,
+          uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null,
+          discountAmount: patientServiceAndProduct.discountAmount ?? 0,
+          exemptionAmount: patientServiceAndProduct.exemptionAmount ?? 0,
+          taxAmount: patientServiceAndProduct.taxAmount ?? 0,
+          currency: patientServiceAndProduct.currency,
+          isBilled: patientServiceAndProduct.isBilled ?? false,
+          billingInvoiceId: patientServiceAndProduct.billingInvoiceId ?? null,
+          billingInvoiceItemId: patientServiceAndProduct.billingInvoiceItemId ?? null
         };
 
         await updatePatientServiceAndProduct({
           id: patientServiceAndProduct.id,
           body: updateDTO,
-          encounterId: encounter?.id,
+          encounterId: encounter?.id
         }).unwrap();
+
         dispatch(
           notify({
-            msg: 'Patient Service/Product Updated Successfully',
-            sev: 'success',
+            msg: 'Billing Item Updated Successfully',
+            sev: 'success'
           })
         );
       }
@@ -294,22 +1029,160 @@ const AddEditPatientServiceAndProduct = ({
       setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
       setOpen(false);
     } catch (error) {
-      const errorMsg = extractErrorMessage(error) || 'Failed to save Patient Service/Product';
+      if (isUncoveredCashCancelled(error)) {
+        return;
+      }
+      const errorMsg =
+        extractBillingRuleErrorMessage(error) ||
+        extractErrorMessage(error) ||
+        'Failed to save Billing Item';
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
+
+  const modalContent = (
+    <Form fluid>
+      {coverageWarning ? <UncoveredInsuranceWarning items={[coverageWarning]} /> : null}
+      <MyInput
+        required
+        fieldLabel="Category"
+        fieldType="select"
+        fieldName="billingItemType"
+        selectData={billingItemTypeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={patientServiceAndProduct}
+        setRecord={val => {
+          setCoverageWarning(null);
+          setPatientServiceAndProduct({
+            ...val,
+            brandMedicationId: null,
+            diagnosticTestId: null,
+            serviceId: null,
+            procedureId: null,
+            vaccineBrandId: null,
+            uomGroupUnitId: null,
+            unitPrice: 0,
+            currency: ''
+          });
+        }}
+        width="100%"
+        searchable={false}
+      />
+
+      {itemSelectConfig && (
+        <MyInput
+          required
+          fieldLabel={itemSelectConfig.fieldLabel}
+          fieldType="selectPagination"
+          fieldName={itemSelectConfig.fieldName}
+
+          selectData={selectDataWithSelectedItem}
+          selectDataLabel={itemSelectConfig.selectDataLabel}
+          selectDataValue={itemSelectConfig.selectDataValue}
+
+          record={patientServiceAndProduct}
+          setRecord={setPatientServiceAndProduct}
+
+          width="100%"
+          searchable
+
+          searchKeyWard={selectSearch}
+          setSearchKeyWard={handleSelectSearch}
+
+          loading={itemSelectConfig.loading}
+          hasMore={itemSelectConfig.hasMore}
+          onFetchMore={handleFetchMore}
+
+          onSelectItem={selectedItem => {
+            setSelectedSelectItem(selectedItem);
+
+            // Priced by the pricing effect once the item (and unit) is set
+            setPatientServiceAndProduct({
+              ...patientServiceAndProduct,
+              [itemSelectConfig.fieldName]:
+                selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+              uomGroupUnitId: isMedication ? selectedItem?.priceBaseUomId ?? null : null,
+              unitPrice: 0,
+              currency:
+                selectedItem?.currency ??
+                authSlice?.tenant?.selectedFacility?.defaultCurrency ??
+                'SAR'
+            });
+          }}
+        />
+      )}
+
+      {isMedication && patientServiceAndProduct?.brandMedicationId && (
+        <MyInput
+          required
+          fieldName="uomGroupUnitId"
+          fieldLabel="UOM"
+          fieldType="select"
+          selectData={uomUnitOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={patientServiceAndProduct}
+          setRecord={setPatientServiceAndProduct}
+          searchable={false}
+          width="100%"
+        />
+      )}
+
+      <MyInput
+        required
+        fieldName="quantity"
+        fieldLabel="Quantity"
+        fieldType="number"
+        record={patientServiceAndProduct}
+        setRecord={setPatientServiceAndProduct}
+        width="100%"
+      />
+
+      {selectedItemId && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+          <MyInput
+            disabled
+            fieldName="unitPrice"
+            fieldLabel="Unit Price"
+            fieldType="text"
+            record={{ unitPrice: isPricing ? '...' : formatMoney(pricing?.unitPrice) }}
+            setRecord={() => undefined}
+            width="100%"
+          />
+
+          <MyInput
+            disabled
+            fieldName="price"
+            fieldLabel="Price"
+            fieldType="text"
+            record={{ price: isPricing ? '...' : formatMoney(pricing?.price) }}
+            setRecord={() => undefined}
+            width="100%"
+          />
+        </div>
+      )}
+
+      {!isPricing && pricing && pricing.netAmount !== pricing.price && (
+        <div style={{ fontSize: 12, opacity: 0.75 }}>
+          Net after discount / tax: {formatMoney(pricing.netAmount)}
+        </div>
+      )}
+    </Form>
+  );
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add New Service or Product"
+      title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
+      actionButtonLoading={isCreating || isUpdating}
       position="right"
       size="30vw"
       bodyheight="80vh"
-      content={conjureFormContent}
+      content={modalContent}
     />
   );
 };

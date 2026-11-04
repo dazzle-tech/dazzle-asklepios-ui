@@ -10,6 +10,7 @@ import {
   BulkRejectDTO,
   PatientArrivedCreateRequestDTO,
   PatientArrivedResponseVM,
+  BulkCancelDTO,
 } from '@/types/model-types-new';
 
 
@@ -17,6 +18,14 @@ type PageableParams = {
   page?: number;
   size?: number;
   sort?: string;
+};
+
+type DiagnosticOrderTestFilterParams = {
+  encounterIdIn?: number[];
+  patientIdIn?: number[];
+  resultConfirmed?: boolean;
+  isReviewed?: boolean;
+  [key: string]: any;
 };
 
 type PagedResult<T> = {
@@ -107,13 +116,23 @@ export const diagnosticOrderTestService = createApi({
 
     filterDiagnosticOrderTests: builder.query<
       PagedResult<DiagnosticOrderTest>,
-      Record<string, any> & PageableParams
+      DiagnosticOrderTestFilterParams & PageableParams
     >({
-      query: params => ({
-        url: '/api/patient/diagnostic-order-tests',
-        method: 'GET',
-        params,
-      }),
+      query: params => {
+        const serialized: Record<string, any> = {};
+
+        Object.entries(params ?? {}).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+          // Spring List params accept CSV (same pattern as active-list/by-beds).
+          serialized[key] = Array.isArray(value) ? value.join(',') : value;
+        });
+
+        return {
+          url: '/api/patient/diagnostic-order-tests',
+          method: 'GET',
+          params: serialized
+        };
+      },
       transformResponse: (
         response: DiagnosticOrderTest[],
         meta
@@ -165,6 +184,17 @@ export const diagnosticOrderTestService = createApi({
       ],
     }),
 
+    confirmDiagnosticOrderTest: builder.mutation<DiagnosticOrderTest, number>({
+      query: id => ({
+        url: `/api/patient/diagnostic-order-tests/${id}/confirm`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'DiagnosticOrderTest', id },
+        'DiagnosticOrderTest',
+      ],
+    }),
+
     rejectDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
       { id: number; body: { rejectedReason: string } }
@@ -192,6 +222,18 @@ export const diagnosticOrderTestService = createApi({
     }),
 
 
+    bulkConfirmDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkIdsDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-confirm',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
+
     bulkRejectDiagnosticOrderTests: builder.mutation<
       void,
       BulkRejectDTO
@@ -203,16 +245,27 @@ export const diagnosticOrderTestService = createApi({
       }),
       invalidatesTags: ['DiagnosticOrderTest'],
     }),
-
+     bulkCancelDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkCancelDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-cancel',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
     undoAcceptDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
-      number
+      { id: number; undoAcceptReason: string }
     >({
-      query: id => ({
+      query: ({ id, undoAcceptReason }) => ({
         url: `/api/patient/diagnostic-order-tests/${id}/undo-accept`,
         method: 'POST',
+        body: { undoAcceptReason },
       }),
-      invalidatesTags: (_r, _e, id) => [
+      invalidatesTags: (_r, _e, { id }) => [
         { type: 'DiagnosticOrderTest', id },
         'DiagnosticOrderTest',
       ],
@@ -274,10 +327,13 @@ export const {
   useMarkReadyMutation,
   useReviewDiagnosticOrderTestMutation,
   useApproveDiagnosticOrderTestMutation,
+  useConfirmDiagnosticOrderTestMutation,
   useRejectDiagnosticOrderTestMutation,
   useCancelDiagnosticOrderTestMutation,
   useBulkAcceptDiagnosticOrderTestsMutation,
+  useBulkConfirmDiagnosticOrderTestsMutation,
   useBulkRejectDiagnosticOrderTestsMutation,
+  useBulkCancelDiagnosticOrderTestsMutation,
   useUndoAcceptDiagnosticOrderTestMutation,
   useLazyGetDiagnosticOrderTestByIdQuery,
   usePatientArrivedRadiologyMutation,

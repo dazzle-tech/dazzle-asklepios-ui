@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './styles.less';
-import { Panel, Form } from 'rsuite';
+import { Panel, Form, Tooltip, Whisper } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
+import { FaUndo, FaRegListAlt } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -27,8 +26,8 @@ import { formatDateWithoutSeconds } from '@/utils';
 import PayorModal from './PayorModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useEnumOptions } from '@/services/enumsApi';
-import { FaRegListAlt } from 'react-icons/fa';
-import PayorPlanModal from './PayorPlanModal';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { resolveNphiesPayerNameById } from '@/pages/patient/patient-profile/insuranceDisplayUtils';
 
 const PayorSetup = () => {
   const dispatch = useAppDispatch();
@@ -50,26 +49,39 @@ const PayorSetup = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  const [openPayorPlanModal, setOpenPayorPlanModal] = useState(false);
-  const [selectedPayorForPlans, setSelectedPayorForPlans] = useState<any>(null);
-  const [payorPlans, setPayorPlans] = useState([]);
-
   const payorCategories = useEnumOptions('PayorCategory');
+
+  const initialSearchFilters = {
+    category: null,
+    name: '',
+    code: '',
+    startDate: null,
+    expiryDate: null,
+    nphiesId: null,
+    isWaseelEnabled: null,
+    isActive: null
+  };
 
   const [searchFilters, setSearchFilters] = useState<{
     category: string | null;
     name: string;
     code: string;
-  }>({
-    category: null,
-    name: '',
-    code: ''
-  });
+    startDate: string | null;
+    expiryDate: string | null;
+    nphiesId: string | null;
+    isWaseelEnabled: string | null;
+    isActive: string | null;
+  }>(initialSearchFilters);
 
   const [appliedFilters, setAppliedFilters] = useState<{
     category?: string | null;
     name?: string;
     code?: string;
+    startDate?: string;
+    expiryDate?: string;
+    nphiesId?: string;
+    isWaseelEnabled?: string;
+    isActive?: string;
   }>({});
 
   // RTK Query hooks
@@ -79,12 +91,28 @@ const PayorSetup = () => {
     sort: paginationParams.sort,
     ...(appliedFilters.category ? { category: appliedFilters.category } : {}),
     ...(appliedFilters.name ? { name: appliedFilters.name } : {}),
-    ...(appliedFilters.code ? { code: appliedFilters.code } : {})
+    ...(appliedFilters.code ? { code: appliedFilters.code } : {}),
+    ...(appliedFilters.startDate ? { startDate: appliedFilters.startDate } : {}),
+    ...(appliedFilters.expiryDate ? { expiryDate: appliedFilters.expiryDate } : {}),
+    ...(appliedFilters.nphiesId ? { nphiesId: appliedFilters.nphiesId } : {}),
+    ...(appliedFilters.isWaseelEnabled ? { isWaseelEnabled: appliedFilters.isWaseelEnabled } : {}),
+    ...(appliedFilters.isActive ? { isActive: appliedFilters.isActive } : {})
   });
 
   const [createPayor] = useCreatePayorMutation();
   const [updatePayor] = useUpdatePayorMutation();
   const [togglePayorActive] = useTogglePayorActiveMutation();
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery({
+    page: 0,
+    size: 2000,
+    sort: 'nameEn,asc'
+  });
+
+  const nphiesPayersList = useMemo(
+    () => nphiesPayerListResponse?.data ?? [],
+    [nphiesPayerListResponse]
+  );
 
   // Header / Page Code
   useEffect(() => {
@@ -225,22 +253,25 @@ const PayorSetup = () => {
     }
   };
 
+  const payorPlanTooltip = (
+    <Tooltip>
+      <Translate>Payor plans are managed at the patient level</Translate>
+    </Tooltip>
+  );
+
   // Icons column
   const iconsForActions = (rowData: Payor) => (
     <div className="container-of-icons">
-      <FaRegListAlt
-        className="icons-style"
-        title="Payor Plan"
-        size={22}
-        fill="var(--primary-gray)"
-        style={{ cursor: 'pointer', marginLeft: '8px' }}
-        onClick={() => {
-          setSelectedPayorForPlans(rowData);
-          setPayorPlans([]);
-
-          setOpenPayorPlanModal(true);
-        }}
-      />
+      <Whisper trigger="hover" placement="top" speaker={payorPlanTooltip}>
+        <span>
+          <FaRegListAlt
+            className="icons-style"
+            size={22}
+            fill="var(--primary-gray)"
+            style={{ cursor: 'not-allowed', marginLeft: '8px', opacity: 0.4 }}
+          />
+        </span>
+      </Whisper>
 
       <MdModeEdit
         className="icons-style"
@@ -313,6 +344,21 @@ const PayorSetup = () => {
         )
     },
     {
+      key: 'nphiesId',
+      title: <Translate>NPHIES Payer</Translate>,
+      flexGrow: 2,
+      render: (rowData: Payor) => {
+        const nphiesPayerName = resolveNphiesPayerNameById(rowData.nphiesId, nphiesPayersList);
+        return <span>{nphiesPayerName ?? rowData.nphiesId ?? ''}</span>;
+      }
+    },
+    {
+      key: 'isWaseelEnabled',
+      title: <Translate>Waseel</Translate>,
+      flexGrow: 1,
+      render: (rowData: Payor) => <span>{rowData.isWaseelEnabled ? 'Yes' : 'No'}</span>
+    },
+    {
       key: 'expiryDate',
       title: <Translate>Contract Expiry Date</Translate>,
       flexGrow: 2,
@@ -332,7 +378,7 @@ const PayorSetup = () => {
   ];
 
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         width="10vw"
         fieldName="category"
@@ -383,11 +429,109 @@ const PayorSetup = () => {
       />
 
       <AdvancedSearchFilters
+        hideSearchBtn
         clearOnClick={() => {
-          setSearchFilters({ category: null, name: '', code: '' });
+          setSearchFilters(initialSearchFilters);
           setAppliedFilters({});
           setPaginationParams(prev => ({ ...prev, page: 0 }));
         }}
+        content={
+          <div className="advanced-filters">
+            <div className="dissss">
+              <MyInput
+                width="10vw"
+                fieldName="startDate"
+                fieldType="date"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    startDate: updated.startDate
+                  }))
+                }
+                showLabel={false}
+                placeholder="Start Date"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="nphiesId"
+                fieldType="select"
+                selectData={nphiesPayersList}
+                selectDataLabel="nameEn"
+                selectDataValue="nphiesId"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    nphiesId: updated.nphiesId
+                  }))
+                }
+                showLabel={false}
+                placeholder="NPHIES Payer"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="isWaseelEnabled"
+                fieldType="select"
+                selectData={[
+                  { label: 'Yes', value: 'true' },
+                  { label: 'No', value: 'false' }
+                ]}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    isWaseelEnabled: updated.isWaseelEnabled
+                  }))
+                }
+                showLabel={false}
+                placeholder="Waseel"
+                searchable={false}
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="expiryDate"
+                fieldType="date"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    expiryDate: updated.expiryDate
+                  }))
+                }
+                showLabel={false}
+                placeholder="Contract Expiry Date"
+              />
+
+              <MyInput
+                width="10vw"
+                fieldName="isActive"
+                fieldType="select"
+                selectData={[
+                  { label: 'Active', value: 'true' },
+                  { label: 'Inactive', value: 'false' }
+                ]}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={searchFilters}
+                setRecord={updated =>
+                  setSearchFilters(prev => ({
+                    ...prev,
+                    isActive: updated.isActive
+                  }))
+                }
+                showLabel={false}
+                placeholder="Status"
+                searchable={false}
+              />
+            </div>
+          </div>
+        }
       />
     </Form>
   );
@@ -401,7 +545,12 @@ const PayorSetup = () => {
       setAppliedFilters({
         category: searchFilters.category || undefined,
         name: searchFilters.name?.trim() || undefined,
-        code: searchFilters.code?.trim() || undefined
+        code: searchFilters.code?.trim() || undefined,
+        startDate: searchFilters.startDate || undefined,
+        expiryDate: searchFilters.expiryDate || undefined,
+        nphiesId: searchFilters.nphiesId || undefined,
+        isWaseelEnabled: searchFilters.isWaseelEnabled || undefined,
+        isActive: searchFilters.isActive || undefined
       });
 
       setPaginationParams(prev => ({ ...prev, page: 0 }));
@@ -455,12 +604,6 @@ const PayorSetup = () => {
         payor={payor}
         setPayor={setPayor}
         onSave={handleSave}
-      />
-
-      <PayorPlanModal
-        open={openPayorPlanModal}
-        setOpen={setOpenPayorPlanModal}
-        payor={selectedPayorForPlans}
       />
     </Panel>
   );

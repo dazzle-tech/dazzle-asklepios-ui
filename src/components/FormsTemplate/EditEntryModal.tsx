@@ -44,7 +44,6 @@ const EditEntryModal = ({ open, setOpen, template, entry, onSaved }: any) => {
 
             setSurveyModel(s);
         } catch (e) {
-            console.error(e);
             setSurveyModel(null);
         }
     }, [open, template?.formJson, entry?.id]); // entry change rebuilds
@@ -75,7 +74,6 @@ const EditEntryModal = ({ open, setOpen, template, entry, onSaved }: any) => {
             setOpen(false);
             onSaved?.();
         } catch (e) {
-            console.error(e);
             dispatch(notify({ msg: 'Failed to update form', sev: 'error' }));
         }
     };

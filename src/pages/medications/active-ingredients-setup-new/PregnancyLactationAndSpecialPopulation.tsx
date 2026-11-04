@@ -14,13 +14,20 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   if (width > 860) {
     return (
       <Row>
         <Col md={12}>
           <Section
             title="Pregnancy & Lactation"
-            content={<PregnancyLactation activeIngredients={activeIngredient} />}
+            content={<div dir={dir}><PregnancyLactation activeIngredients={activeIngredient} /></div>}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -29,7 +36,7 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
         <Col md={12}>
           <Section
             title="Special Population"
-            content={<SpecialPopulation selectedActiveIngredients={activeIngredient} />}
+            content={<div dir={dir}><SpecialPopulation selectedActiveIngredients={activeIngredient} /></div>}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -42,7 +49,7 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
       <div>
         <Section
           title="Pregnancy & Lactation"
-          content={<PregnancyLactation activeIngredients={activeIngredient} />}
+          content={<div dir={dir}><PregnancyLactation activeIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""
@@ -50,7 +57,7 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
         <br />
         <Section
           title="Special Population"
-          content={<SpecialPopulation selectedActiveIngredients={activeIngredient} />}
+          content={<div dir={dir}><SpecialPopulation selectedActiveIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""

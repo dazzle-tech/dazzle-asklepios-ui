@@ -3,8 +3,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faCircleExclamation, faBell } from '@fortawesome/free-solid-svg-icons';
 
 const ERDashboardNotificationCard = () => {
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="ER-dashboard-notification-card-main-box">
+    <div className="ER-dashboard-notification-card-main-box" dir={dir}>
       <div className="ER-notification-item">
         <FontAwesomeIcon icon={faClock} className="ER-notification-icon" />
         <span>Patient 1021 is waiting for too long</span>

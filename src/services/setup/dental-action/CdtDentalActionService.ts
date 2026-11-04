@@ -1,7 +1,7 @@
 // src/services/setup/CdtDentalActionService.ts
 import { BaseQuery } from "@/newApi";
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { CdtDentalAction } from "@/types/model-types-new";
+import { CdtDentalAction, CdtDentalActionResponseVM } from "@/types/model-types-new";
 
 export const CdtDentalActionService = createApi({
   reducerPath: "cdtDentalActionApi",
@@ -9,8 +9,8 @@ export const CdtDentalActionService = createApi({
   tagTypes: ["CdtDentalAction"],
   endpoints: (builder) => ({
 
-    // Get all
-    getAll: builder.query<CdtDentalAction[], void>({
+    // Get all -- backend returns CdtDentalActionResponseVM (cdtId nested as a full CdtCode object)
+    getAll: builder.query<CdtDentalActionResponseVM[], void>({
       query: () => ({
         url: "/api/setup/cdt-dental-action",
         method: "GET",
@@ -19,25 +19,25 @@ export const CdtDentalActionService = createApi({
     }),
 
     // Get one
-    getOne: builder.query<CdtDentalAction, number>({
+    getOne: builder.query<CdtDentalActionResponseVM, number>({
       query: (id) => `/api/setup/cdt-dental-action/${id}`,
       providesTags: (r, e, id) => [{ type: "CdtDentalAction", id }],
     }),
 
     // Filter by dentalActionId
-    getByDentalAction: builder.query<CdtDentalAction[], number>({
+    getByDentalAction: builder.query<CdtDentalActionResponseVM[], number>({
       query: (dentalActionId) => `/api/setup/cdt-dental-action/by-dental-action/${dentalActionId}`,
       providesTags: ["CdtDentalAction"],
     }),
 
     // Filter by CDT code
-    getByCode: builder.query<CdtDentalAction[], string>({
+    getByCode: builder.query<CdtDentalActionResponseVM[], string>({
       query: (cdtCode) => `/api/setup/cdt-dental-action/by-code/${cdtCode}`,
       providesTags: ["CdtDentalAction"],
     }),
 
-    // Create
-    create: builder.mutation<CdtDentalAction, CdtDentalAction>({
+    // Create -- request body is a plain id, but the backend responds with the nested VM shape
+    create: builder.mutation<CdtDentalActionResponseVM, CdtDentalAction>({
       query: (body) => ({
         url: "/api/setup/cdt-dental-action",
         method: "POST",

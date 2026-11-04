@@ -49,8 +49,13 @@ const DepartmentStockHeader = ({ onExportXLS, onRefillRequest }: any) => {
     { key: '15', name: 'Consumables Stock' }
   ];
 
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="head-of-page">
+    <div className="head-of-page" dir={dir}>
       <Form fluid className="table-buttons-left">
         <MyInput
           fieldType="select"

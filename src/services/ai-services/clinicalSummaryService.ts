@@ -14,28 +14,30 @@ type PatientDataInput = {
   Vitals?: Record<string, string>;
 };
 
-type SummaryRequest = {
-  request_id?: string | null;
-  patient_data: PatientDataInput;
+export type PatientClinicalSummaryRequest = {
+  patientId: number;
+  encounterId: number;
 };
 
-type SummaryResponse = {
+export type SummaryResponse = {
   request_id?: string | null;
   ClinicalSummary: string;
   processing_metadata?: Record<string, any>;
 };
-
 export const clinicalSummaryService = createApi({
   reducerPath: 'clinicalSummaryApi',
   baseQuery: BaseQuery,
   tagTypes: ['ClinicalSummary'],
   endpoints: builder => ({
-    summarize: builder.mutation<SummaryResponse, SummaryRequest>({
-      query: (body) => ({
-        url: '/api/ai/v1/clinical-summary/summarize',
+    summarize:  builder.mutation<
+      SummaryResponse,
+      PatientClinicalSummaryRequest
+    >({
+      query: body => ({
+        url: '/api/analytics/clinical-summary',
         method: 'POST',
-        body,
-      }),
+        body
+      })
     }),
 
     health: builder.query<any, void>({

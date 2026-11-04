@@ -1,44 +1,94 @@
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import { setPatient } from '@/reducers/patientSlice';
+import {
+  useLazyGetPatientLabelPdfQuery,
+  useSendPatientPasswordEmailMutation
+} from '@/services/patient/patientService';
 import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
+import {
+  useLazyGetPatientInformationPdfQuery,
+} from '@/services/patient/patientService';
+import {
+  useGetInsurancesByPatientQuery,
+  patientInsurancesService
+} from '@/services/patients/patientInsurancesService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import type { ApAttachment } from '@/types/model-types';
-import { Patient } from '@/types/model-types-new';
-import { calculateAgeFormat } from '@/utils';
+import { useLazyGetPatientFromCchiQuery, useRefreshPatientFromCchiMutation } from '@/services/waseel-integration/cchiService';
+import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import { Address, Patient, PatientDocument, PatientInsurance } from '@/types/model-types-new';
+import { newPatient } from '@/types/model-types-constructor-new';
+import { calculateAgeFormat, extractEligibilityErrorMessage, extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBars,
   faBolt,
   faBroom,
   faCalendarCheck,
-  faCalendarDay,
   faCheckDouble,
   faEllipsisVertical,
   faHandHoldingDollar,
   faPersonCircleQuestion,
   faPrint,
   faShareNodes,
-  faThumbsUp,
   faTriangleExclamation,
-  faUsersLine
+  faUsersLine,
+  faLayerGroup,
+  faRotate
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
+import {
+  Avatar,
+  AvatarGroup,
+  Dropdown,
+  Form,
+  Input,
+  Message,
+  Popover,
+  SelectPicker,
+  Stack,
+  Tooltip,
+  Whisper
+} from 'rsuite';
+import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
-import QuickPatient from '../facility-patient-list/QuickPatient';
+import './styles.less';
+import {
+  buildWaseelClassListDisplay,
+  extractCchiInsurance,
+  extractPatientInsurancesList,
+  getCchiInsuranceStorageKey,
+  hasReturnedCchiDocument,
+  pickPatientFields,
+  wasCchiPatientFound
+} from './cchiMappers';
+import type { CchiMappedPatientResponse } from '@/services/waseel-integration/cchiService';
+import {
+  formatInsurancePickerLabel,
+  resolveInsurancePayorDisplayName
+} from './insuranceDisplayUtils';
+import { useLocation, useNavigate } from 'react-router-dom';
+import usePatientInformationReportPrint from './PatientInformationReportDropdownItem';
+import usePatientLabelPrint from './PatientLabelPrintDropdownItem';
+import { FaCodeMerge } from 'react-icons/fa6';
+import ViewPriceListModal from './ViewPriceListModal/ViewPriceListModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
   handleSave: () => void;
+  isSaving?: boolean;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
   validationResult: any;
@@ -48,12 +98,17 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
+  setCchiAddress: (address: Address | null) => void;
+  setCchiDocument?: (document: PatientDocument | null) => void;
+  setCchiInsurance?: (insurance: PatientInsurance | null) => void;
+  setProfileActiveTab?: (tabKey: string) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
   handleSave,
+  isSaving = false,
   handleClear,
   setVisitHistoryModel,
   setQuickAppointmentModel,
@@ -63,33 +118,616 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
   setLocalPatient,
+  setCchiAddress,
+  setCchiDocument,
+  setCchiInsurance,
   setOpenReferralRequestModal
 }) => {
+  const {
+    patientInformationMenuItem,
+    patientInformationModal
+  } = usePatientInformationReportPrint(localPatient?.id);
+  const [openPriceListModal, setOpenPriceListModal] = useState(false);
+
+  const {  patientLabelMenuItem,
+    patientLabelModal}=usePatientLabelPrint(localPatient?.id); 
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
+  const whisperRef = useRef<any>(null);
+
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-  const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-
-  const [uploadAttachments] = useUploadAttachmentsMutation();
-  const dispatch = useAppDispatch();
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const [printingType, setPrintingType] = useState<'information' | 'label' | null>(null);
+  const [openCchiModal, setOpenCchiModal] = useState(false);
+  const [openCchiPatientChoiceModal, setOpenCchiPatientChoiceModal] = useState(false);
+  const [cchiDocumentId, setCchiDocumentId] = useState('');
+  const cchiFetchModeRef = useRef<'new' | 'edit'>('edit');
+  const [openEligibilityModal, setOpenEligibilityModal] = useState(false);
+  const [selectedPatientInsuranceId, setSelectedPatientInsuranceId] = useState<number | null>(
+    null
+  );
 
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
+  const dispatch = useAppDispatch();
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+
+  const [uploadAttachments] = useUploadAttachmentsMutation();
+  const [triggerGetPatientInformationPdf] = useLazyGetPatientInformationPdfQuery();
+  const [triggerGetPatientLabelPdf] = useLazyGetPatientLabelPdfQuery();
+  const [sendPatientPasswordEmail, { isLoading: isSendingPasswordEmail }] =
+    useSendPatientPasswordEmailMutation();
+  const [triggerGetPatientFromCchi, { isFetching: isFetchingCchiPatient }] =
+    useLazyGetPatientFromCchiQuery();
+  const [refreshPatientFromCchi, { isLoading: isRefreshingCchiPatient }] =
+    useRefreshPatientFromCchiMutation();
+  const [checkEligibility, { isLoading: isCheckingEligibility }] = useCheckEligibilityMutation();
+
+  const { data: patientInsuranceResponseForHeader } = useGetInsurancesByPatientQuery(
+    {
+      patientId: patientId!,
+      page: 0,
+      size: 100,
+      sort: 'id,desc'
+    },
+    {
+      skip: !patientId,
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  const savedInsurancesForHeader = useMemo(
+    () => extractPatientInsurancesList(patientInsuranceResponseForHeader),
+    [patientInsuranceResponseForHeader]
+  );
+
+  const hasSavedInsurance = savedInsurancesForHeader.length > 0;
+  const showRefreshFromCchiButton =
+    Boolean(localPatient?.id) &&
+    Boolean(localPatient?.isCchiPatient) &&
+    !hasSavedInsurance;
+  const showUpdateFromCchiButton = Boolean(localPatient?.id) && hasSavedInsurance;
+
+  const { data: patientInsuranceResponse, isFetching: isFetchingInsurances, refetch: refetchInsurances } =
+    useGetInsurancesByPatientQuery(
+      {
+        patientId: patientId!,
+        page: 0,
+        size: 100,
+        sort: 'id,desc'
+      },
+      {
+        skip: !patientId || !openEligibilityModal,
+        refetchOnMountOrArgChange: true
+      }
+    );
+
+  const { data: payorListResponse } = useGetAllPayorsQuery(
+    { page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const { data: nphiesPayerListResponse } = useGetAllNphiesPayersQuery(
+    { page: 0, size: 2000, sort: 'nameEn,asc' },
+    { skip: !openEligibilityModal }
+  );
+
+  const payorsList = payorListResponse?.data ?? [];
+  const nphiesPayersList = nphiesPayerListResponse?.data ?? [];
+
+  const patientInsurancesList = useMemo(
+    () => extractPatientInsurancesList(patientInsuranceResponse),
+    [patientInsuranceResponse]
+  );
+
+  const insurancePickerOptions = useMemo(
+    () =>
+      patientInsurancesList
+        .filter((insurance: any) => insurance?.id != null && !Number.isNaN(Number(insurance.id)))
+        .map((insurance: any) => ({
+          label: formatInsurancePickerLabel(insurance, payorsList, nphiesPayersList),
+          value: Number(insurance.id)
+        })),
+    [patientInsurancesList, payorsList, nphiesPayersList]
+  );
+
+  const selectedEligibilityInsurance = useMemo(
+    () =>
+      patientInsurancesList.find(
+        insurance => Number(insurance.id) === Number(selectedPatientInsuranceId)
+      ) ?? null,
+    [patientInsurancesList, selectedPatientInsuranceId]
+  );
+
+  const selectedEligibilityPayorName = useMemo(
+    () => resolveInsurancePayorDisplayName(selectedEligibilityInsurance ?? {}, payorsList, nphiesPayersList),
+    [selectedEligibilityInsurance, payorsList, nphiesPayersList]
+  );
+
+  const eligibilityClassList = useMemo(
+    () => buildWaseelClassListDisplay(selectedEligibilityInsurance),
+    [selectedEligibilityInsurance]
+  );
+
+  const eligibilityClassListColumns = useMemo(
+    () => [
+      {
+        key: 'classType',
+        title: <Translate>Class Type</Translate>,
+        width: 120
+      },
+      {
+        key: 'className',
+        title: <Translate>Class Name</Translate>,
+        width: 180
+      },
+      {
+        key: 'classValue',
+        title: <Translate>Class Value</Translate>,
+        width: 140
+      }
+    ],
+    []
+  );
+
   const {
     data: profilePictureTicket,
-    refetch: refetchProfilePicture,
     isError
   } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+  useEffect(() => {
+    if (!openEligibilityModal || selectedPatientInsuranceId != null) return;
+
+    const primaryInsurance = patientInsurancesList.find((insurance: any) => insurance?.isPrimary);
+    const defaultInsurance = primaryInsurance ?? patientInsurancesList[0];
+    const defaultId = defaultInsurance?.id != null ? Number(defaultInsurance.id) : null;
+
+    if (defaultId != null && !Number.isNaN(defaultId)) {
+      setSelectedPatientInsuranceId(defaultId);
+    }
+  }, [openEligibilityModal, patientInsurancesList, selectedPatientInsuranceId]);
+
+  const handleOpenEligibilityModal = () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setSelectedPatientInsuranceId(null);
+    setOpenEligibilityModal(true);
+  };
+
+  const handleCheckEligibility = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before checking eligibility',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!selectedPatientInsuranceId) {
+      dispatch(
+        notify({
+          msg: 'Please select an insurance',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const result = await checkEligibility({
+        patientId: Number(localPatient.id),
+        patientInsuranceId: selectedPatientInsuranceId,
+        serviceDate: new Date().toISOString().split('T')[0],
+        benefits: true,
+        validation: true,
+        discovery: false,
+        transfer: false,
+        emergency: false
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg:
+            result.message ||
+            `Eligibility check ${result.requestStatus ?? 'completed'} successfully`,
+          sev: result.requestStatus === 'SUCCESS' ? 'success' : 'info'
+        })
+      );
+
+      dispatch(
+        notify({
+          msg: result.message?.trim() || 'Eligibility check completed successfully',
+          sev: 'success'
+        })
+      );
+
+      dispatch(patientInsurancesService.util.invalidateTags(['PatientInsurance']));
+      await refetchInsurances();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractEligibilityErrorMessage(error),
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const applyCchiMappedResponse = (
+    mappedResponse: CchiMappedPatientResponse,
+    mode: 'new' | 'edit' = 'edit'
+  ) => {
+    const rawInsurance = extractCchiInsurance(mappedResponse);
+    const replaceCurrentPatient = mode === 'new';
+    const basePatient = replaceCurrentPatient ? { ...newPatient } : localPatient;
+    const keptPatientId = replaceCurrentPatient
+      ? undefined
+      : localPatient?.id ?? mappedResponse.patient?.id;
+    const mappedDocument = mappedResponse.document;
+    const documentReturned = hasReturnedCchiDocument(mappedDocument);
+
+    if (replaceCurrentPatient) {
+      handleClear();
+    }
+
+    setLocalPatient({
+      ...basePatient,
+      ...pickPatientFields(mappedResponse.patient),
+      id: keptPatientId,
+      isCchiPatient: documentReturned
+        ? true
+        : replaceCurrentPatient
+          ? false
+          : Boolean(basePatient?.isCchiPatient)
+    });
+
+    setCchiAddress(mappedResponse.address ?? null);
+
+    if (mappedDocument && documentReturned) {
+      setCchiDocument?.({
+        ...mappedDocument,
+        id: null,
+        patient: null,
+        countryId: mappedDocument.countryId,
+        number: mappedDocument.number,
+        type: mappedDocument.type,
+        isPrimary: false
+      } as any);
+    } else {
+      setCchiDocument?.(null);
+    }
+
+    if (rawInsurance) {
+      setCchiInsurance?.({
+        ...rawInsurance,
+        id: undefined,
+        patientId:
+          !replaceCurrentPatient && localPatient?.id != null
+            ? Number(localPatient.id)
+            : undefined,
+        isPrimary: rawInsurance.isPrimary ?? true
+      } as PatientInsurance);
+
+      const storageKey = getCchiInsuranceStorageKey(
+        replaceCurrentPatient ? undefined : localPatient?.id,
+        mappedResponse.patient?.documentId ??
+          (replaceCurrentPatient ? undefined : localPatient?.documentId)
+      );
+      if (storageKey) {
+        sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
+      }
+    } else {
+      setCchiInsurance?.(null);
+    }
+  };
+
+  const handleOpenFetchFromCchi = () => {
+    if (localPatient?.id) {
+      setOpenCchiPatientChoiceModal(true);
+      return;
+    }
+
+    cchiFetchModeRef.current = 'edit';
+    setOpenCchiModal(true);
+  };
+
+  const handleChooseClearCurrentPatient = () => {
+    cchiFetchModeRef.current = 'new';
+    setOpenCchiPatientChoiceModal(false);
+    setCchiDocumentId('');
+    setOpenCchiModal(true);
+  };
+
+  const handleChooseEditCurrentPatient = () => {
+    cchiFetchModeRef.current = 'edit';
+    setOpenCchiPatientChoiceModal(false);
+    setCchiDocumentId('');
+    setOpenCchiModal(true);
+  };
+
+  const handleFetchPatientFromCchi = async () => {
+    if (!cchiDocumentId?.trim()) {
+      dispatch(
+        notify({
+          msg: 'Please enter document ID',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await triggerGetPatientFromCchi(cchiDocumentId.trim()).unwrap();
+      const fetchMode = cchiFetchModeRef.current;
+
+      if (
+        !wasCchiPatientFound(mappedResponse.patient, mappedResponse.document) &&
+        !hasReturnedCchiDocument(mappedResponse.document)
+      ) {
+        setOpenCchiModal(false);
+        setCchiDocumentId('');
+        dispatch(
+          notify({
+            msg: 'Patient was not found at Waseel, and no document was returned.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (mappedResponse.alreadyExists && mappedResponse.patient) {
+        const returnedId = mappedResponse.patient.id;
+        const currentId = localPatient?.id;
+        const belongsToAnotherPatient =
+          fetchMode === 'edit' &&
+          currentId != null &&
+          returnedId != null &&
+          String(returnedId) !== String(currentId);
+
+        if (belongsToAnotherPatient) {
+          setOpenCchiModal(false);
+          setCchiDocumentId('');
+          dispatch(
+            notify({
+              msg: 'This document belongs to another patient already in the system. Clear the current patient if you want to load that record.',
+              sev: 'warning'
+            })
+          );
+          return;
+        }
+
+        if (fetchMode === 'new') {
+          handleClear();
+        }
+
+        setLocalPatient(mappedResponse.patient);
+        dispatch(setPatient(mappedResponse.patient));
+        setCchiAddress(null);
+        setCchiDocument?.(null);
+        setCchiInsurance?.(null);
+        setOpenCchiModal(false);
+        setCchiDocumentId('');
+
+        dispatch(
+          notify({
+            msg:
+              fetchMode === 'new'
+                ? `Current patient was cleared. ${
+                    mappedResponse.message ||
+                    'Patient already exists in the system. Loaded from local records.'
+                  }`
+                : mappedResponse.message ||
+                  'Patient already exists in the system. Loaded from local records.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      applyCchiMappedResponse(mappedResponse, fetchMode);
+
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      setOpenCchiModal(false);
+      setCchiDocumentId('');
+
+      const clearedCurrentPatient = fetchMode === 'new';
+      const editingCurrentPatient = fetchMode === 'edit' && localPatient?.id != null;
+
+      dispatch(
+        notify({
+          msg: clearedCurrentPatient
+            ? rawInsurance
+              ? 'Current patient was cleared. Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+              : 'Current patient was cleared. Patient data loaded from CCHI successfully.'
+            : editingCurrentPatient
+              ? rawInsurance
+                ? 'Current patient updated from CCHI, including insurance. Review the data, then click Edit to save.'
+                : 'Current patient updated from CCHI. Review the data, then click Edit to save.'
+              : rawInsurance
+                ? 'Patient and insurance data loaded from CCHI. Open the Insurance tab when ready to save insurance.'
+                : 'Patient data loaded from CCHI successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      setCchiDocument?.(null);
+      setCchiInsurance?.(null);
+
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to fetch patient from CCHI',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleRefreshOrUpdateFromCchi = async () => {
+    if (!localPatient?.id) {
+      dispatch(
+        notify({
+          msg: 'Please save the patient before refreshing from CCHI',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      const mappedResponse = await refreshPatientFromCchi(Number(localPatient.id)).unwrap();
+      applyCchiMappedResponse(mappedResponse);
+
+      const documentReturned = hasReturnedCchiDocument(mappedResponse.document);
+      const refreshedPatient = {
+        ...localPatient,
+        ...pickPatientFields(mappedResponse.patient),
+        id: localPatient.id,
+        isCchiPatient: documentReturned ? true : Boolean(localPatient.isCchiPatient)
+      };
+
+      setLocalPatient(refreshedPatient);
+      dispatch(setPatient(refreshedPatient));
+
+      const rawInsurance = extractCchiInsurance(mappedResponse);
+
+      dispatch(
+        notify({
+          msg: rawInsurance
+            ? 'Patient data refreshed from CCHI. Review insurance changes in the Insurance tab.'
+            : 'Patient data refreshed from CCHI successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to refresh patient data from CCHI',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      setPrintingType('information');
+
+      const blob = await triggerGetPatientInformationPdf({
+        patientId: localPatient.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
+  const handlePrintPatientLabel = async (rowData: any) => {
+    if (!rowData?.id) return;
+
+    try {
+      setPrintingType('label');
+
+      const blob = await triggerGetPatientLabelPdf({
+        patientId: rowData.id
+      }).unwrap();
+
+      const pdfBlob = new Blob([blob], {
+        type: 'application/pdf'
+      });
+
+      const fileURL = window.URL.createObjectURL(pdfBlob);
+      const win = window.open(fileURL, '_blank');
+
+      if (win) {
+        win.focus();
+      } else {
+        dispatch(
+          notify({
+            msg: 'Popup blocked. Please allow popups for this site.',
+            sev: 'warning'
+          })
+        );
+      }
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || 'Failed to open label pdf',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPrintingType(null);
+    }
+  };
+
+  const handleSendPasswordEmail = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      await sendPatientPasswordEmail(localPatient.id).unwrap();
+      dispatch(
+        notify({
+          msg: 'Password email sent successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error) || 'Failed to send password email',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
   const contentOfMoreIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
@@ -132,7 +770,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item> */}
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenPriceListModal(true);
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
             <Translate>View Price List</Translate>
@@ -163,7 +806,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item
+        {/* Don`t remove this commented code please */}
+        {/* <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
             setOpenBulkRegistrationModal(true);
@@ -173,34 +817,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <FontAwesomeIcon icon={faUsersLine} />
             <Translate>Bulk Registration</Translate>
           </div>
-        </Dropdown.Item>
-
-        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon icon={faBars} />
-            <Translate>Encounter Transactions</Translate>
-          </div>
         </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );
 
-  const contentOfPrintIconMenu = (
-    <Popover full>
-      <Dropdown.Menu>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Information</Translate>
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <Translate>Print Patient Label</Translate>
-          </div>
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Popover>
-  );
+
+ const contentOfPrintIconMenu = (
+  <Popover>
+    <Dropdown.Menu>
+      {patientInformationMenuItem}
+      {patientLabelMenuItem}
+  
+    </Dropdown.Menu>
+  </Popover>
+);
 
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current?.click();
@@ -220,23 +851,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
-        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
-        console.error('Failed to upload profile picture:', error);
-        dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+        const errorMsg = extractErrorMessage(error);
+        dispatch(
+          notify({
+            msg: errorMsg || 'Failed to Upload Profile Picture',
+            sev: 'error'
+          })
+        );
       }
     }
   };
 
   const handleNewVisit = () => {
     setQuickAppointmentModel(true);
-  };
-
-  const handleScanDocumentClick = () => {
-    setOpenScanDocumentModal(true);
   };
 
   const handleIdParsed = (parsedData: any) => {
@@ -264,35 +894,69 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  const closeMenus = useCallback(() => {
-    setOpenMoreMenu(false);
-    setOpenPrintMenu(false);
+  useEffect(() => {
+  const patientWithUrl = localPatient as any;
+
+  if (!localPatient?.id) {
+    setPatientImageUrl('');
+    return;
+  }
+
+  if (patientWithUrl?.profilePictureUrl) {
+    setPatientImageUrl(patientWithUrl.profilePictureUrl);
+    return;
+  }
+
+  if (profilePictureTicket?.url && !isError) {
+    setPatientImageUrl(profilePictureTicket.url);
+    return;
+  }
+
+  setPatientImageUrl('');
+}, [localPatient, profilePictureTicket, isError]);
+
+  useEffect(() => {
+    if (
+      quickPatientModalOpen ||
+      openScanDocumentModal ||
+      openCchiModal ||
+      openEligibilityModal
+    ) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal, openCchiModal, openEligibilityModal]);
+
+ 
+
+  useEffect(() => {
+    if (quickPatientModalOpen || openScanDocumentModal) {
+      whisperRef.current?.close?.();
+    }
+  }, [quickPatientModalOpen, openScanDocumentModal]);
+
+  useEffect(() => {
+    const handleClick = (e: any) => {
+      if (e.target.closest('.rs-popover')) return;
+
+      setOpenMoreMenu(false);
+    };
+
+    document.addEventListener('mousedown', handleClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+    };
   }, []);
 
-  React.useEffect(() => {
-    const patientWithUrl = localPatient as any;
-
-    if (patientWithUrl?.profilePictureUrl) {
-      setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
-      return;
-    }
-
-    if (profilePictureTicket && profilePictureTicket.url && !isError) {
-      setPatientImageUrl(profilePictureTicket.url);
-      setPatientImage({ url: profilePictureTicket.url } as any);
-      return;
-    }
-
-    setPatientImageUrl('');
-    setPatientImage(undefined);
-  }, [localPatient, profilePictureTicket, isError]);
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
-          <Form layout="inline" fluid className="profile-header">
+          <Form fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
               <input
                 type="file"
@@ -374,93 +1038,170 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.isCompletedPatient && (
-                        <Icon color="green" as={VscUnverified} />
-                      )}
-                      {!localPatient.isCompletedPatient && (
-                        <Icon color="red" as={VscVerified} />
+                      {localPatient.isCompletedPatient ? (
+                        <Icon color="green" as={VscVerified} />
+                      ) : (
+                        <Icon color="red" as={VscUnverified} />
                       )}
                     </div>
                   </Whisper>
                 )}
+
+                {localPatient.patientStatus === 'MERGED' && (
+                  <Whisper
+                    placement="bottom"
+                    controlId="merged-patient-tooltip"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        Merged Patient
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon merged-status-icon">
+                      <Icon color="orange" as={FaCodeMerge} />
+                    </div>
+                  </Whisper>
+                )}
+
               </div>
             </AvatarGroup>
 
-            <div className="button-group-left-align">
-              <Form fluid layout="inline" className="registration-header-buttons-section">
-                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <AvatarGroup spacing={6}></AvatarGroup>
+            </div>
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleSave}
-                >
-                  {localPatient?.id ? 'Edit' : 'Save'}
-                </MyButton>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                justifyContent: 'flex-end'
+              }}
+            >
+              <MyButton
+                disabled={!localPatient?.id || isCheckingEligibility || localPatient?.patientStatus === 'MERGED'}
+                loading={isCheckingEligibility}
+                onClick={handleOpenEligibilityModal}
+              >
+                <Translate>Eligibility Check</Translate>
+              </MyButton>
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                  onClick={handleClear}
-                >
-                  Clear
-                </MyButton>
+              <MyButton onClick={handleOpenFetchFromCchi}>
+                <Translate>Fetch Patient from CCHI</Translate>
+              </MyButton>
 
+              {showRefreshFromCchiButton ? (
                 <MyButton
                   appearance="ghost"
-                  onClick={() => setQuickPatientModalOpen(true)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+                  loading={isRefreshingCchiPatient}
+                  disabled={isRefreshingCchiPatient || localPatient?.patientStatus === 'MERGED'}
+                  prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
+                  onClick={handleRefreshOrUpdateFromCchi}
                 >
-                  Quick Patient
+                  <Translate>Refresh from CCHI</Translate>
                 </MyButton>
+              ) : null}
 
-                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                  Quick Appointment
+              {showUpdateFromCchiButton ? (
+                <MyButton
+                  appearance="ghost"
+                  loading={isRefreshingCchiPatient}
+                  disabled={isRefreshingCchiPatient || localPatient?.patientStatus === 'MERGED'}
+                  prefixIcon={() => <FontAwesomeIcon icon={faRotate} />}
+                  onClick={handleRefreshOrUpdateFromCchi}
+                >
+                  <Translate>Update Data from CCHI</Translate>
                 </MyButton>
+              ) : null}
 
-                <AdministrativeWarningsModal
-                  localPatient={localPatient}
-                  validationResult={validationResult}
-                />
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleSave}
+                loading={isSaving}
+                disabled={isSaving || (!!localPatient?.id && localPatient?.patientStatus === 'MERGED')}
+              >
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
+              </MyButton>
 
-                <Whisper
-                  open={openMoreMenu}
-                  onClose={() => setOpenMoreMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfMoreIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+               <MyButton onClick={handleScanDocumentClick}>
+                Scan Document
+              </MyButton>
 
-                <Whisper
-                  open={openPrintMenu}
-                  onClose={() => setOpenPrintMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfPrintIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                      <FontAwesomeIcon icon={faPrint} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+                disabled={localPatient?.id === undefined || localPatient?.patientStatus === 'MERGED'}
+              >
+                <Translate>Clear</Translate>
+              </MyButton>
 
-                {(openMoreMenu || openPrintMenu) && (
-                  <div
-                    onClick={closeMenus}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      zIndex: 1
-                    }}
-                  />
-                )}
-              </Form>
+              <MyButton
+                appearance="ghost"
+                disabled={!localPatient?.id || isSendingPasswordEmail}
+                onClick={handleSendPasswordEmail}
+              >
+                <Translate>
+                  {isSendingPasswordEmail ? 'Sending Password Email...' : 'Send Password Email'}
+                </Translate>
+              </MyButton>
+
+              <MyButton
+                appearance="ghost"
+                onClick={() => setQuickPatientModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+              >
+                <Translate>Quick Patient</Translate>
+              </MyButton>
+
+
+              <MyButton appearance="ghost" disabled={!localPatient.id || localPatient?.patientStatus === 'MERGED'} onClick={handleNewVisit}>
+                <Translate>Walk-in Patient</Translate>
+              </MyButton>
+              <AdministrativeWarningsModal
+                localPatient={localPatient}
+                validationResult={validationResult}
+              />
+
+              <Whisper
+                ref={whisperRef}
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                preventOverflow
+                rootClose
+                open={openMoreMenu}
+                onOpen={() => setOpenMoreMenu(true)}
+                onClose={() => setOpenMoreMenu(false)}
+                speaker={contentOfMoreIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small" onClick={() => setOpenMoreMenu(prev => !prev)}>
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
+
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfPrintIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
             </div>
           </Form>
         </Stack.Item>
@@ -472,6 +1213,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         setPatient={setLocalPatient}
       />
 
+      <ViewPriceListModal
+        open={openPriceListModal}
+        setOpen={setOpenPriceListModal}
+        patient={localPatient}
+      />
+      
+
       <ScanDocumentModal
         open={openScanDocumentModal}
         setOpen={setOpenScanDocumentModal}
@@ -480,8 +1228,223 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           setRefetchAttachmentList(true);
         }}
         onIdParsed={handleIdParsed}
+         localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
       />
-    </>
+
+      <MyModal
+        open={openEligibilityModal}
+        setOpen={(open: boolean) => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(open);
+            if (!open) {
+              setSelectedPatientInsuranceId(null);
+            }
+          }
+        }}
+        title={<Translate>Eligibility Check</Translate>}
+        size="42vw"
+        bodyheight="auto"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isCheckingEligibility ? 'Checking...' : 'Check Eligibility'}
+        isDisabledActionBtn={
+          isCheckingEligibility ||
+          isFetchingInsurances ||
+          insurancePickerOptions.length === 0 ||
+          !selectedPatientInsuranceId
+        }
+        actionButtonFunction={handleCheckEligibility}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isCheckingEligibility) {
+            setOpenEligibilityModal(false);
+            setSelectedPatientInsuranceId(null);
+          }
+        }}
+        content={
+          <Form fluid className="eligibility-check-modal">
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Insurance</Translate>
+              </Form.ControlLabel>
+
+              {isFetchingInsurances ? (
+                <Translate>Loading insurances...</Translate>
+              ) : insurancePickerOptions.length === 0 ? (
+                <Translate>
+                  No insurance found for this patient. Please add insurance first.
+                </Translate>
+              ) : (
+                <>
+                  <SelectPicker
+                    block
+                    searchable
+                    cleanable={false}
+                    data={insurancePickerOptions}
+                    value={selectedPatientInsuranceId}
+                    disabled={isCheckingEligibility}
+                    onChange={value =>
+                      setSelectedPatientInsuranceId(value != null ? Number(value) : null)
+                    }
+                    placeholder="Select insurance"
+                  />
+
+                  {selectedEligibilityInsurance ? (
+                    <div className="eligibility-check-modal__payor-line">
+                      <span className="eligibility-check-modal__payor-label">
+                        <Translate>Payor</Translate>
+                      </span>
+                      <strong>{selectedEligibilityPayorName}</strong>
+                      <span className="eligibility-check-modal__payor-meta">
+                        <Translate>Policy</Translate>:{' '}
+                        {selectedEligibilityInsurance.policyNumber ?? '-'}
+                        {selectedEligibilityInsurance.memberCardId
+                          ? ` · ${selectedEligibilityInsurance.memberCardId}`
+                          : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </Form.Group>
+
+            {selectedEligibilityInsurance ? (
+              <div className="eligibility-check-modal__class-list">
+                <div className="eligibility-check-modal__class-list-header">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                  <span>
+                    <Translate>Waseel Plan Class List</Translate>
+                  </span>
+                </div>
+
+                {eligibilityClassList.length ? (
+                  <MyTable
+                    data={eligibilityClassList}
+                    columns={eligibilityClassListColumns}
+                    totalCount={eligibilityClassList.length}
+                    page={0}
+                    rowsPerPage={eligibilityClassList.length || 5}
+                    onPageChange={() => undefined}
+                    onRowsPerPageChange={() => undefined}
+                  />
+                ) : (
+                  <Message showIcon type="info">
+                    <Translate>
+                      Class list will appear here after you run Check Eligibility.
+                    </Translate>
+                  </Message>
+                )}
+
+                <div className="eligibility-check-modal__snapshot">
+                  <span>
+                    <Translate>Network</Translate>:{' '}
+                    {selectedEligibilityInsurance.networkId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Member ID</Translate>:{' '}
+                    {selectedEligibilityInsurance.memberCardId ?? '-'}
+                  </span>
+                  <span>
+                    <Translate>Status</Translate>:{' '}
+                    {selectedEligibilityInsurance.eligibilityStatus ?? '-'}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </Form>
+        }
+      />
+
+      <MyModal
+        open={openCchiPatientChoiceModal}
+        setOpen={setOpenCchiPatientChoiceModal}
+        title={<Translate>Patient Already Loaded</Translate>}
+        size="34vw"
+        bodyheight="auto"
+        pagesCount={1}
+        hideBack
+        hideActionBtn
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => setOpenCchiPatientChoiceModal(false)}
+        footerButtons={
+          <>
+            <MyButton
+              appearance="ghost"
+              prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+              onClick={handleChooseClearCurrentPatient}
+            >
+              Clear
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              disabled={localPatient?.patientStatus === 'MERGED'}
+              onClick={handleChooseEditCurrentPatient}
+            >
+              Edit Current Patient
+            </MyButton>
+          </>
+        }
+        content={
+          <Message showIcon type="warning">
+            <Translate>
+              {'A patient is currently loaded. Do you want to clear the current patient and fetch a new one, or edit the current patient?'}
+            </Translate>
+            {(localPatient?.firstName || localPatient?.medicalRecordNumber) && (
+              <div>
+                {[localPatient?.firstName, localPatient?.lastName].filter(Boolean).join(' ')}
+                {localPatient?.medicalRecordNumber
+                  ? ` (${localPatient.medicalRecordNumber})`
+                  : ''}
+              </div>
+            )}
+          </Message>
+        }
+      />
+
+      <MyModal
+        open={openCchiModal}
+        setOpen={(open: boolean) => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(open);
+          }
+        }}
+        title={<Translate>Fetch Patient from CCHI</Translate>}
+        size="30vw"
+        bodyheight="160px"
+        pagesCount={1}
+        hideBack
+        actionButtonLabel={isFetchingCchiPatient ? 'Loading...' : 'Load Patient'}
+        isDisabledActionBtn={isFetchingCchiPatient}
+        actionButtonFunction={handleFetchPatientFromCchi}
+        cancelButtonLabel="Cancel"
+        handleCancelFunction={() => {
+          if (!isFetchingCchiPatient) {
+            setOpenCchiModal(false);
+            setCchiDocumentId('');
+          }
+        }}
+        content={
+          <Form fluid>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Translate>Document ID</Translate>
+              </Form.ControlLabel>
+
+              <Input
+                value={cchiDocumentId}
+                disabled={isFetchingCchiPatient}
+                onChange={value => setCchiDocumentId(value)}
+                placeholder="Enter document ID"
+                onPressEnter={handleFetchPatientFromCchi}
+              />
+            </Form.Group>
+          </Form>
+        }
+      />
+      {patientInformationModal}
+      {patientLabelModal}
+    </div>
   );
 };
 

@@ -57,6 +57,8 @@ const AddEditPlan = ({
                 record={plan}
                 setRecord={setPlan}
                 width="100%"
+                        disableByField='isValid'
+
               />
               </div>
               <div className='container-of-field-plan'>
@@ -78,6 +80,8 @@ const AddEditPlan = ({
                 record=""
                 setRecord=""
                 width="100%"
+                        disableByField='isValid'
+
               />
               <div className='container-of-fields-plan'>
                 <div className='container-of-field-plan'>
@@ -129,18 +133,27 @@ const AddEditPlan = ({
                 record={plan}
                 setRecord={setPlan}
                 width="100%"
+                        disableByField='isValid'
+
               />
           </Form>
         );
     }
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={"New Plan"}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={'Save'}
       actionButtonFunction=""
       steps={[{ title: 'Plan', icon:<FontAwesomeIcon icon={faNotesMedical} />}]}

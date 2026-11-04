@@ -11,7 +11,6 @@ import {
 } from '@/services/patient/patientService';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatient } from '@/types/model-types-constructor-new';
-import { Patient } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
 import clsx from 'clsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -25,78 +24,242 @@ import PatientDuplicate from './patientsDuplicate';
 import PatientVisitHistory from './PatientVisitHistory';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import ProfileHeader from './ProfileHeader-new';
+import { buildPatientSavePayload } from './cchiMappers';
 import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
+import { isPhoneValid } from '@/utils/phoneNumber';
+import { Patient, Address } from '@/types/model-types-new';
+import RegistrationPendingPaymentModal, {
+  RegistrationPendingPaymentFab
+} from './RegistrationPendingPayment';
 
 const { getHeight } = DOMHelper;
 
-/* ========================================================= */
-/* =============== Helper Functions ======================== */
+const resolveBackendErrorKey = (data: any): string => {
+  const raw = data?.errorKey || data?.message || data?.properties?.message || '';
+  return String(raw).replace(/^error\./, '');
+};
+
+const isTechnicalErrorText = (value: unknown): boolean => {
+  const text = String(value ?? '');
+  return /ProblemDetail|BAD_REQUEST|with-message|instance='null'/i.test(text);
+};
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
-  const errorKey = data?.errorKey;
+  const errorKey = resolveBackendErrorKey(data);
   const title = data?.title || '';
-  const detail = data?.detail || '';
-  const message = data?.message || '';
-  const fieldErrors = data?.fieldErrors;
+  const detail =
+    data?.detail && data.detail !== 'null' && !isTechnicalErrorText(data.detail)
+      ? data.detail
+      : '';
+  const message =
+    data?.message && !isTechnicalErrorText(data.message) ? data.message : '';
+  const rawFieldErrors = data?.fieldErrors;
+
+  const fieldErrors = Array.isArray(rawFieldErrors)
+    ? rawFieldErrors
+    : rawFieldErrors && typeof rawFieldErrors === 'object'
+      ? Object.entries(rawFieldErrors).flatMap(([field, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => ({
+            field,
+            message:
+              typeof v === 'string'
+                ? v
+                : v?.message || v?.defaultMessage || 'Invalid value'
+          }));
+        }
+
+        return [
+          {
+            field,
+            message:
+              typeof value === 'string'
+                ? value
+                : (value as any)?.message || (value as any)?.defaultMessage || 'Invalid value'
+          }
+        ];
+      })
+      : [];
 
   const traceId =
     data?.traceId || data?.correlationId
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
-  /* =============== 1) Bean Validation Errors =============== */
+  if (fieldErrors.length > 0) {
+    const normalizedLines = fieldErrors.map((e: any) => {
+      const rawField = e?.field || e?.path || 'Field';
+      const label = fieldLabels[rawField] || rawField;
+      const rawMessage = e?.message || e?.defaultMessage || 'Invalid value';
 
-  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
-    const lines = fieldErrors.map((e: any) => {
-      const label = fieldLabels[e.field] || e.field;
-      return `• ${label}: ${e.message}`;
+      let finalMessage = rawMessage;
+
+      if (
+        rawMessage === 'must not be null' ||
+        rawMessage === 'must not be blank' ||
+        rawMessage === 'must not be empty'
+      ) {
+        finalMessage = `${label} ${rawMessage}`;
+      } else if (!rawMessage.toLowerCase().includes(String(label).toLowerCase())) {
+        finalMessage = `${label}: ${rawMessage}`;
+      }
+
+      return `• ${finalMessage}`;
     });
 
-    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+    return `Please fix the following fields:\n${normalizedLines.join('\n')}${traceId}`;
   }
 
-  /* ========================================================= */
-  /* =============== 2) Specific Custom Errors ============== */
-  /* ========================================================= */
+  if (errorKey === 'payload.required') {
+    return 'Patient payload is required.' + traceId;
+  }
 
-  if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
+  if (errorKey === 'notfound') {
+    return (detail || 'Patient not found.') + traceId;
+  }
 
-  if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
-
-  if (errorKey === 'unique.medical_record_number')
+  if (errorKey === 'unique.medical_record_number') {
     return 'A patient with the same medical record number already exists.' + traceId;
+  }
 
-  if (errorKey === 'db.constraint')
-    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
+  if (errorKey === 'unique.document_id') {
+    return 'A patient with the same document ID already exists.' + traceId;
+  }
 
-  /* ========================================================= */
-  /* =============== 3) Generic unknown error ================ */
-  /* ========================================================= */
+  if (errorKey === 'cchi.documentId.required') {
+    return 'CCHI patients must have a document ID saved on the patient record. Save the patient document first, then try again.' + traceId;
+  }
 
-  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+  if (errorKey === 'documentId.missing') {
+    return 'Please enter the patient document first before fetching insurance from CCHI.' + traceId;
+  }
+
+  if (errorKey === 'required.fields.when.not.unknown' || errorKey === 'required.fields') {
+    return (
+      detail ||
+      'Required patient fields are missing: first name, last name, gender, date of birth, primary mobile number, and email are required unless the patient is marked as unknown.'
+    ) + traceId;
+  }
+
+  if (errorKey === 'mrn.not.generated') {
+    return 'Medical record number was not generated by the database.' + traceId;
+  }
+
+  if (errorKey === 'created_by.required') {
+    return 'Created by is required while saving patient.' + traceId;
+  }
+
+  if (errorKey === 'is_unknown.required') {
+    return 'Unknown patient flag is required.' + traceId;
+  }
+
+  if (errorKey === 'is_verified.required') {
+    return 'Verified patient flag is required.' + traceId;
+  }
+
+  if (errorKey === 'is_completed_patient.required') {
+    return 'Completed patient flag is required.' + traceId;
+  }
+
+  if (errorKey === 'db.constraint') {
+    return (
+      detail ||
+      message ||
+      'Could not save patient. A value may already exist or a required field is invalid. Check names, mobile number, document ID, and document details, then try again.'
+    ) + traceId;
+  }
+
+  if (message && message.startsWith('error.')) {
+    return message.replace(/^error\./, '') + traceId;
+  }
+
+  return (
+    detail ||
+    (!isTechnicalErrorText(title) ? title : '') ||
+    message ||
+    'Unexpected server error occurred.'
+  ) + traceId;
 };
 
-/* ========================================================= */
-/* ======================= Component ======================== */
-/* ========================================================= */
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
+const validatePatientNameFields = (patient: Patient): string | null => {
+  const errors: string[] = [];
+
+  if (!patient?.firstName?.trim()) {
+    errors.push('First Name must not be empty');
+  }
+
+  if (!patient?.secondName?.trim()) {
+    errors.push('Second Name must not be empty');
+  }
+
+  if (!patient?.lastName?.trim()) {
+    errors.push('Last Name must not be empty');
+  }
+
+  if (!patient?.sexAtBirth) {
+    errors.push('Sex At Birth must not be null');
+  }
+
+  if (!patient?.dateOfBirth) {
+    errors.push('Date of Birth must not be null');
+  }
+
+  if (!isPhoneValid(patient?.primaryMobileNumber)) {
+    errors.push('Primary Mobile Number must not be empty');
+  }
+
+  if (!patient?.maritalStatus) {
+    errors.push('Marital Status must not be empty');
+  }
+
+  if (!patient?.occupation) {
+    errors.push('Occupation must not be empty');
+  }
+
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+
+    if (value && INVALID_TRAILING_CHARS.test(value)) {
+      errors.push(
+        `${label} must not end with a space, hyphen (-), or hash (#).`
+      );
+    }
+  }
+
+  return errors.length > 0
+    ? `Please fix the following fields:\n${errors.map(error => `• ${error}`).join('\n')}`
+    : null;
+};
 
 const PatientProfile = () => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
+
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
-  const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
 
+  const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
-
   const [validationResult, setValidationResult] = useState({});
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [visitHistoryModel, setVisitHistoryModel] = useState(false);
@@ -106,135 +269,187 @@ const PatientProfile = () => {
 
   const [addPatient, addResult] = useAddPatientMutation();
   const [updatePatient, updateResult] = useUpdatePatientMutation();
+  const isSaving = addResult.isLoading || updateResult.isLoading;
 
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
 
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
-
   const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
+
+  const [cchiAddress, setCchiAddress] = useState<Address | null>(null);
+  const [cchiDocument, setCchiDocument] = useState<any>(null);
+  const [cchiInsurance, setCchiInsurance] = useState<any>(null);
+  const [openCchiDocumentPopup, setOpenCchiDocumentPopup] = useState(false);
+  const [profileActiveTab, setProfileActiveTab] = useState<string>('1');
 
   const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
     useState<boolean>(false);
 
+  const [openRegistrationPendingPayment, setOpenRegistrationPendingPayment] =
+    useState<boolean>(false);
+
   const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
-
   const [patientList, setPatientList] = useState([]);
-
-  // ✅ NEW: trigger to force PatientVisitHistoryTable to refetch
   const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
 
   const divContent = 'Patient Registration';
-
   const searchRef = useRef<(() => void) | null>(null);
 
-  const selectedFacilityId =
+  const selectedFacilityIdRaw =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  console.log('SELECTED FACILITY', selectedFacilityId);
+  const selectedFacilityId =
+    typeof selectedFacilityIdRaw === 'object'
+      ? (selectedFacilityIdRaw as any)?.id
+      : selectedFacilityIdRaw;
 
   const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
     skip: !selectedFacilityId
   });
 
-  /* ========================================================= */
-  /* ======================= SAVE / UPDATE ==================== */
-  /* ========================================================= */
+  const shouldOpenCchiDocumentAfterSave = (patientBeforeSave: any, document: any) => {
+    return Boolean(
+      patientBeforeSave?.isCchiPatient &&
+      patientBeforeSave?.documentId &&
+      document &&
+      (document?.number || document?.documentNumber)
+    );
+  };
+
+  const openCchiDocumentModalAfterSave = () => {
+    setProfileActiveTab('2');
+    setOpenCchiDocumentPopup(true);
+  };
+
+  const DEFAULT_MARITAL_STATUS = '4522615684622822';
+  const DEFAULT_OCCUPATION = '4522587492044507';
+
+  const applyPatientDefaults = (patient: Patient): Patient => ({
+    ...patient,
+    maritalStatus: patient.maritalStatus || DEFAULT_MARITAL_STATUS,
+    occupation: patient.occupation || DEFAULT_OCCUPATION
+  });
 
   const handleSave = async () => {
-    try {
-      // UPDATE flow (keep same logic + success messaging)
-      if (localPatient?.id) {
-        const updated = await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
+    const patientToSave = applyPatientDefaults(localPatient);
+
+    setLocalPatient(patientToSave);
+
+    const nameError = validatePatientNameFields(patientToSave);
+
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return;
+    }
+
+      try {
+        if (patientToSave?.id) {
+          const updated = await updatePatient({
+            id: patientToSave.id,
+            data: buildPatientSavePayload(patientToSave)
+          }).unwrap();
+
+          setLocalPatient(updated);
+          dispatch(setPatient(updated));
+          setValidationResult(undefined);
+          setRefetchData(true);
+
+          dispatch(
+            notify({
+              msg: 'Patient Updated Successfully',
+              sev: 'success'
+            })
+          );
+
+          if (searchRef.current) {
+            setTimeout(() => {
+              searchRef.current?.();
+            }, 500);
+          }
+
+          return;
+        }
+
+        const duplicationResponse = await checkDuplication({
+          dto: {
+            ruleId: selectedFacility?.ruleId,
+            dateOfBirth: patientToSave?.dateOfBirth
+              ? new Date(patientToSave.dateOfBirth).toISOString().split('T')[0]
+              : null,
+            gender: patientToSave?.sexAtBirth,
+            firstName: patientToSave?.firstName,
+            lastName: patientToSave?.lastName,
+            documentNo: '',
+            mobileNumber: patientToSave?.primaryMobileNumber
+          },
+          page: 0,
+          size: 20
         }).unwrap();
 
-        setLocalPatient(updated);
-        dispatch(setPatient(updated));
+        if (duplicationResponse?.length > 0) {
+          setPatientList(duplicationResponse);
+          setOpenPatientsDuplicateModal(true);
+          return;
+        }
+
+        const patientBeforeSave = { ...patientToSave };
+
+        const saved = await addPatient(buildPatientSavePayload(patientToSave)).unwrap();
+
+        setLocalPatient(saved);
+        dispatch(setPatient(saved));
         setValidationResult(undefined);
         setRefetchData(true);
 
-        dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: 'Patient Saved Successfully',
+            sev: 'success'
+          })
+        );
+
+        if (shouldOpenCchiDocumentAfterSave(patientBeforeSave, cchiDocument)) {
+          openCchiDocumentModalAfterSave();
+        }
 
         if (searchRef.current) {
           setTimeout(() => {
             searchRef.current?.();
           }, 500);
         }
-        return;
+      } catch (err: any) {
+        const msg = toHumanBackendError(err, {
+          firstName: 'First Name',
+          secondName: 'Second Name',
+          thirdName: 'Third Name',
+          lastName: 'Last Name',
+          firstNameSecondaryLang: 'First Name (Secondary Language)',
+          secondNameSecondaryLang: 'Second Name (Secondary Language)',
+          thirdNameSecondaryLang: 'Third Name (Secondary Language)',
+          lastNameSecondaryLang: 'Last Name (Secondary Language)',
+          dateOfBirth: 'Date of Birth',
+          primaryMobileNumber: 'Primary Mobile Number',
+          sexAtBirth: 'Sex At Birth',
+          nationality: 'Nationality',
+          medicalRecordNumber: 'Medical Record Number'
+        });
+
+        dispatch(notify({ msg, sev: 'warning' }));
       }
-
-      // CREATE flow: duplication check
-      const duplicationResponse = await checkDuplication({
-        dto: {
-          ruleId: selectedFacility?.ruleId,
-          dateOfBirth: localPatient?.dateOfBirth
-            ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
-            : null,
-          gender: localPatient?.sexAtBirth,
-          firstName: localPatient?.firstName,
-          lastName: localPatient?.lastName,
-          documentNo: '',
-          mobileNumber: localPatient?.primaryMobileNumber
-        },
-        page: 0,
-        size: 20
-      }).unwrap();
-
-      if (duplicationResponse?.length > 0) {
-        setPatientList(duplicationResponse);
-        setOpenPatientsDuplicateModal(true);
-        return;
-      }
-
-      // CREATE flow: save
-      const saved = await addPatient({
-        ...localPatient,
-        isCompletedPatient: true,
-        isUnknown: false
-      }).unwrap();
-
-      setLocalPatient(saved);
-      dispatch(setPatient(saved));
-      setValidationResult(undefined);
-      setRefetchData(true);
-
-      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-
-      if (searchRef.current) {
-        setTimeout(() => {
-          searchRef.current?.();
-        }, 500);
-      }
-    } catch (err: any) {
-      const msg = toHumanBackendError(err, {
-        firstName: 'First Name',
-        lastName: 'Last Name',
-        dateOfBirth: 'Date of Birth',
-        primaryMobileNumber: 'Primary Mobile Number',
-        sexAtBirth: 'Sex At Birth',
-        nationality: 'Nationality'
-      });
-
-      dispatch(notify({ msg, sev: 'error' }));
-    }
-  };
-
-  /* ========================================================= */
-  /* ======================= CLEAR ============================ */
-  /* ========================================================= */
+    };
 
   const handleClear = () => {
     setLocalPatient({ ...newPatient });
+    setCchiAddress(null);
+    setCchiDocument(null);
+    setCchiInsurance(null);
+    setOpenCchiDocumentPopup(false);
+    setProfileActiveTab('1');
     setValidationResult(undefined);
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
   };
-
-  /* ========================================================= */
-  /* ======================== EFFECTS ========================= */
-  /* ========================================================= */
 
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
@@ -243,9 +458,9 @@ const PatientProfile = () => {
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (propsData && propsData.patient) {
@@ -287,28 +502,25 @@ const PatientProfile = () => {
       dispatch(setPatient(fullPatient));
       setOpenPatientsDuplicateModal(false);
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to load patient', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to load patient', sev: 'warning' }));
     }
   };
 
-  // ✅ NEW: callback passed to PatientQuickAppointment so the table refetches after save
   const handleEncounterSaved = () => {
     setEncounterRefetchTrigger(prev => prev + 1);
   };
 
-  // ✅ NEW: when the modal closes (from ProfileHeader's quick appointment),
-  //         also bump the trigger so the table always stays fresh
   const handleQuickAppointmentClose = (val: boolean) => {
     setQuickAppointmentModel(val);
     if (!val) setEncounterRefetchTrigger(prev => prev + 1);
   };
 
-  /* ========================================================= */
-  /* ========================= RENDER ========================= */
-  /* ========================================================= */
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <div className="patient-profile-container">
         <Panel
           bordered
@@ -319,7 +531,11 @@ const PatientProfile = () => {
           <ProfileHeader
             localPatient={localPatient}
             setLocalPatient={setLocalPatient}
+            setCchiAddress={setCchiAddress}
+            setCchiDocument={setCchiDocument}
+            setCchiInsurance={setCchiInsurance}
             handleSave={handleSave}
+            isSaving={isSaving}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}
@@ -333,40 +549,50 @@ const PatientProfile = () => {
 
           <div className="container-of-tabs-reg">
             <ProfileTabs
+              key={localPatient?.id || 'new'}
               localPatient={localPatient}
               setLocalPatient={setLocalPatient}
               validationResult={validationResult}
               setRefetchAttachmentList={setRefetchAttachmentList}
               refetchAttachmentList={refetchAttachmentList}
+              cchiAddress={cchiAddress}
+              setCchiAddress={setCchiAddress}
+              cchiDocument={cchiDocument}
+              cchiInsurance={cchiInsurance}
+              setCchiInsurance={setCchiInsurance}
+              openCchiDocumentPopup={openCchiDocumentPopup}
+              setOpenCchiDocumentPopup={setOpenCchiDocumentPopup}
+              activeTab={profileActiveTab}
+              setActiveTab={setProfileActiveTab}
             />
           </div>
 
           <br />
           <br />
 
-          <Row className="btm-sections">
-            <Col md={12}>
-              <SectionContainer
-                title={<Translate>Visit history</Translate>}
-                content={
-                  // ✅ pass encounterRefetchTrigger so the table knows when to refetch
-                  <PatientVisitHistoryTable
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
-                    localPatient={localPatient}
-                    encounterRefetchTrigger={encounterRefetchTrigger}
-                  />
-                }
-              />
-            </Col>
+          {localPatient?.id && (
+            <Row className="btm-sections">
+              <Col md={12}>
+                <SectionContainer
+                  title={<Translate>Visit history</Translate>}
+                  content={
+                    <PatientVisitHistoryTable
+                      key={localPatient?.id || 'empty'}
+                      localPatient={localPatient}
+                      encounterRefetchTrigger={encounterRefetchTrigger}
+                    />
+                  }
+                />
+              </Col>
 
-            <Col md={12}>
-              <SectionContainer
-                title={<Translate>Appointments</Translate>}
-                content={<PatientAppointments patient={localPatient} />}
-              />
-            </Col>
-          </Row>
+              <Col md={12}>
+                <SectionContainer
+                  title="Appointment"
+                  content={<PatientAppointments patient={localPatient} />}
+                />
+              </Col>
+            </Row>
+          )}
         </Panel>
 
         <ProfileSidebar
@@ -376,6 +602,10 @@ const PatientProfile = () => {
           setLocalPatient={setLocalPatient}
           refetchData={refetchData}
           setRefetchData={setRefetchData}
+          searchRef={searchRef}
+          showButton={true}
+          showPhoneNumberSearch={true}
+          showEncounterNumberSearch={true}
         />
       </div>
 
@@ -383,10 +613,8 @@ const PatientProfile = () => {
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          // ✅ use the wrapper so closing also triggers a refetch
           setQuickAppointmentModel={handleQuickAppointmentClose}
           localVisit={localVisit}
-          // ✅ also trigger immediately when encounter is saved (before modal closes)
           onEncounterSaved={handleEncounterSaved}
         />
       )}
@@ -394,10 +622,8 @@ const PatientProfile = () => {
       {visitHistoryModel && (
         <PatientVisitHistory
           visitHistoryModel={visitHistoryModel}
-          quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
 
@@ -412,6 +638,16 @@ const PatientProfile = () => {
         setOpen={setOpenRegistrationWarningsSummary}
       />
 
+      <RegistrationPendingPaymentFab
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
+        onClick={() => setOpenRegistrationPendingPayment(true)}
+      />
+      <RegistrationPendingPaymentModal
+        open={openRegistrationPendingPayment}
+        setOpen={setOpenRegistrationPendingPayment}
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
+      />
+
       <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
 
       <IncomingReferralRequestsByFacility
@@ -424,11 +660,13 @@ const PatientProfile = () => {
         setOpen={setOpenPatientsDuplicateModal}
         list={patientList}
         handleSelect={handleSelectExistingPatient}
-        handleSave={() =>
-          addPatient({
-            ...localPatient,
-            isCompletedPatient: false,
-            isUnknown: false
+        handleSave={() => {
+          const patientToSave = applyPatientDefaults(localPatient);
+          setLocalPatient(patientToSave);
+
+          return addPatient({
+            ...buildPatientSavePayload(patientToSave),
+            isCompletedPatient: false
           })
             .unwrap()
             .then(saved => {
@@ -437,15 +675,32 @@ const PatientProfile = () => {
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
 
+              if (shouldOpenCchiDocumentAfterSave(patientToSave, cchiDocument)) {
+                openCchiDocumentModalAfterSave();
+              }
+
               if (searchRef.current) {
                 setTimeout(() => {
                   searchRef.current?.();
                 }, 500);
               }
             })
-        }
+            .catch((err: any) => {
+              const msg = toHumanBackendError(err, {
+                firstName: 'First Name',
+                lastName: 'Last Name',
+                dateOfBirth: 'Date of Birth',
+                primaryMobileNumber: 'Primary Mobile Number',
+                sexAtBirth: 'Sex At Birth',
+                documentId: 'Document ID',
+                medicalRecordNumber: 'Medical Record Number'
+              });
+
+              dispatch(notify({ msg, sev: 'warning' }));
+            });
+        }}
       />
-    </>
+    </div>
   );
 };
 

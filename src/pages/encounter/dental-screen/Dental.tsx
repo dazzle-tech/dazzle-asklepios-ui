@@ -1,6 +1,6 @@
 import { useAppDispatch } from '@/hooks';
 import React, { useEffect, useState } from 'react';
-import { useGetDentalChartsByEncounterQuery } from '@/services/dentalService';
+import { useGetOrCreateChartForEncounterQuery } from '@/services/dental/dentalChartService';
 import { newApDentalChart, newApDentalChartTooth } from '@/types/model-types-constructor';
 import ChartTab from './tabs/DentalChartTab';
 import ProgressNotesTab from './tabs/ProgressNotesTab';
@@ -17,27 +17,26 @@ const Dental = () => {
   const [originalChart, setOriginalChart] = useState({ ...newApDentalChart });
   const [currentChart, setCurrentChart] = useState({ ...newApDentalChart });
   const [previousCharts, setPreviousCharts] = useState([]);
-  const [selectedPreviousChartKey, setSelectedPreviousChartKey] = useState('');
+  const [selectedPreviousChartId, setSelectedPreviousChartId] = useState(null);
   const [selectedTooth, setSelectedTooth] = useState({ ...newApDentalChartTooth });
-  const [progressNotes, setProgressNotes] = useState([]);
   const [treatmentPlanTrigger, setTreatmentPlanTrigger] = useState(-1);
-  // Fetch dental charts
-  const dentalChartsResponse = useGetDentalChartsByEncounterQuery(encounter?.key ?? '');
+
+  // Fetch (or create) the dental chart for this encounter
+  const dentalChartResponse = useGetOrCreateChartForEncounterQuery(encounter?.id, {
+    skip: !encounter?.id
+  });
 
   useEffect(() => {
-    if (dentalChartsResponse && dentalChartsResponse.isSuccess) {
-      if (dentalChartsResponse.data.object) {
-        setOriginalChart(dentalChartsResponse.data.object.currentChart);
-        setCurrentChart(dentalChartsResponse.data.object.currentChart);
-        setPreviousCharts(dentalChartsResponse.data.object.historyCharts);
-        setProgressNotes(dentalChartsResponse.data.object.currentChart?.progressNotes ?? []);
-      }
+    if (dentalChartResponse && dentalChartResponse.isSuccess && dentalChartResponse.data) {
+      setOriginalChart(dentalChartResponse.data);
+      setCurrentChart(dentalChartResponse.data);
+      setPreviousCharts(dentalChartResponse.data.historyCharts ?? []);
     }
-  }, [dentalChartsResponse]);
+  }, [dentalChartResponse]);
 
   const cancelPreviousChartView = () => {
     setCurrentChart(originalChart);
-    setSelectedPreviousChartKey('');
+    setSelectedPreviousChartId(null);
   };
 
   const tabData = [
@@ -49,27 +48,20 @@ const Dental = () => {
           setCurrentChart={setCurrentChart}
           originalChart={originalChart}
           previousCharts={previousCharts}
-          selectedPreviousChartKey={selectedPreviousChartKey}
-          setSelectedPreviousChartKey={setSelectedPreviousChartKey}
+          selectedPreviousChartId={selectedPreviousChartId}
+          setSelectedPreviousChartId={setSelectedPreviousChartId}
           selectedTooth={selectedTooth}
           setSelectedTooth={setSelectedTooth}
           cancelPreviousChartView={cancelPreviousChartView}
           treatmentPlanTrigger={treatmentPlanTrigger}
           setTreatmentPlanTrigger={setTreatmentPlanTrigger}
-          isLoading={dentalChartsResponse.isLoading}
+          isLoading={dentalChartResponse.isLoading}
         />
       )
     },
     {
       title: 'Progress Note',
-      content: (
-        <ProgressNotesTab
-          progressNotes={progressNotes}
-          setProgressNotes={setProgressNotes}
-          currentChart={currentChart}
-          dispatch={dispatch}
-        />
-      )
+      content: <ProgressNotesTab chartId={currentChart?.id} dispatch={dispatch} />
     },
     {
       title: 'Treatment Plan',
@@ -88,7 +80,7 @@ const Dental = () => {
 
   return (
     <Box>
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Box>
   );
 };

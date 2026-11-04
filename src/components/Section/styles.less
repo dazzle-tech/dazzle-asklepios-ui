@@ -22,13 +22,16 @@
       background-color: white;
       padding: 12px 15px 12px 15px;
       border-radius: 8px 8px 0px 0px;
-      background-color: rgba(34, 100, 229, 0.11) !important;
-
+      // For one health theme (don`t remove commented code)
+      // background-color: rgba(34, 100, 229, 0.11) !important;
+      background-color: var(--one-health-theme-header) !important;
       .medical-dashboard-title-div {
         display: flex;
         font-size: 14px;
         font-family: "Inter Medium" !important;
-        color: #2264E5 !important;
+        // For one health theme (don`t remove commented code)
+        // color: #2264E5 !important;
+        color: var(--primary-blue) !important;
 
       }
 
@@ -49,7 +52,9 @@
     }
 
     .clickable-link {
-      color: var(--deep-blue) !important;
+      // For one health theme (don`t remove commented code)
+      // color: var(--deep-blue) !important;
+      color: var(--primary-blue) !important;
       text-decoration: underline !important;
       cursor: pointer;
       font-size: 12px !important;
@@ -88,4 +93,41 @@
      border-radius: 0px !important; 
      margin-top: 0vw !important; 
 }
+}
+
+
+
+
+
+.medical-dashboard-main-container.dark {
+  .medical-dashboard-container-div {
+    background-color: var(--dark-black) !important;
+    border: 1px solid #292d33;
+  }
+
+  .medical-dashboard-header-div {
+    background: #292d33 !important;
+    border-bottom: 1px solid #292d33;
+
+    .medical-dashboard-title-div {
+      color: #e5e7eb !important;
+    }
+  }
+
+  .divider-line-section-comp {
+    background: #292d33 !important;
+    border-color: #292d33 !important;
+  }
+
+  .medical-dashboard-content-div {
+    background: var(--dark-black) !important;
+  }
+
+  .tab-container {
+    background: #292d33 !important;
+  }
+
+  .clickable-link {
+    color: #60a5fa !important;
+  }
 }

@@ -130,3 +130,6 @@ dist
 .pnp.*
 
 .idea
+
+# Stimulsoft packed scripts are copied from node_modules on webpack start
+public/stimulsoft/*.pack.js

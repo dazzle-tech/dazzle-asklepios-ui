@@ -180,6 +180,23 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 0
     }),
+    getLovValuesByKey: builder.query({
+      query: (lovKey: string) => ({
+        url: `/setup/lov-value-list/by-key?key=${lovKey}`
+      }),
+
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 0
+    }),
+    getLovValuesBulkByKeys: builder.query({
+      query: (lovKeys: string[]) => ({
+        url: `/setup/lov-value-list/bulk-by-keys?${lovKeys
+          .map(key => `lov_keys=${key}`)
+          .join("&")}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 0
+    }),
     saveLovValue: builder.mutation({
       query: (lovValue: ApLovValues) => ({
         url: `/setup/save-lov-value`,
@@ -399,6 +416,12 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 900 // 15 minutes
     }),
+    toggleActiveLovValue: builder.mutation({
+      query: (key: string) => ({
+        url: `/reference-data/lov-values-toggle-active?key=${key}`,
+        method: 'POST',
+      }),
+    }),
     getMetadata: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/dvm/metadata-list?${fromListRequestToQueryParams(listRequest)}`
@@ -406,6 +429,7 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     getMetadataFields: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/dvm/metadata-fields-list?${fromListRequestToQueryParams(listRequest)}`
@@ -413,24 +437,7 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    getPractitioners: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/practitioner-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    savePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/save-practitioner`,
-        method: 'POST',
-        body: practitioner
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+
     getDepartments: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/department-list?${fromListRequestToQueryParams(listRequest)}`
@@ -589,7 +596,7 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 3600
     }),
-        getIcdById: builder.query({
+    getIcdById: builder.query({
       query: (diagnosisId: string) => ({
         url: `/setup/icd-list-by-id`,
         params: {
@@ -850,29 +857,7 @@ export const setupService = createApi({
       },
     }),
 
-    removePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/remove-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
 
-    deactiveActivePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/deactive-avtice-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
     saveAgeGroup: builder.mutation({
       query: (agegroup: ApAgeGroup) => ({
         url: `/setup/save-age-group`,
@@ -1139,7 +1124,7 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-  getCandidatesByDepartmentKey: builder.query({
+    getCandidatesByDepartmentKey: builder.query({
       query: (departmentKey) => `/setup/duplication-candidate-by-department?departmentKey=${departmentKey}`,
     }),
 
@@ -1226,11 +1211,11 @@ export const setupService = createApi({
         },
         url: `/reference-data/get-lov-defult-value`
       }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      // onQueryStarted: onQueryStarted,
+      // keepUnusedDataFor: 5
 
-    }),   
-     saveRoom: builder.mutation({
+    }),
+    saveRoom: builder.mutation({
       query: (records: ApRoom) => ({
         url: `/setup/save-room`,
         method: 'POST',
@@ -1290,7 +1275,7 @@ export const setupService = createApi({
         return response.object;
       },
     }),
-      saveRoomServices: builder.mutation({
+    saveRoomServices: builder.mutation({
       query: (records: ApRoomServices) => ({
         url: `/setup/save-room-service`,
         method: 'POST',
@@ -1321,7 +1306,7 @@ export const setupService = createApi({
       },
     }),
     fetchBedsRelatedToDepartment: builder.query({
-      query: (data: { resourceKey: string}) => ({
+      query: (data: { resourceKey: string }) => ({
         url: `/setup/room-beds-list`,
         headers: {
           "resource-key": data.resourceKey,
@@ -1358,7 +1343,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-        getWarehouse: builder.query({
+    getWarehouse: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1383,7 +1368,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-     getWarehouseUser: builder.query({
+    getWarehouseUser: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-user-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1408,20 +1393,20 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-       fetchBedCountByDepartmentKey: builder.query({
-          query: (data: { department_key: string }) => ({
-            url: `/setup/get-bed-count-by-department`,
-            headers: {
-             "department-key": data.department_key
-            }
-          }),
-          onQueryStarted: onQueryStarted,
-          transformResponse: (response: any) => {
-            return response.object;
-          },
-          keepUnusedDataFor: 0
-        }),
-           getWarehouseProducts: builder.query({
+    fetchBedCountByDepartmentKey: builder.query({
+      query: (data: { department_key: string }) => ({
+        url: `/setup/get-bed-count-by-department`,
+        headers: {
+          "department-key": data.department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
+    getWarehouseProducts: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-products-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1446,7 +1431,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-         getWarehouseProductsDetails: builder.query({
+    getWarehouseProductsDetails: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-products-details-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1471,7 +1456,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-      getWarehouseContainProducts: builder.query({
+    getWarehouseContainProducts: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/warehouses-contain-products-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -1511,10 +1496,6 @@ export const {
   useGetLovValuesByCodeAndParentQuery,
   useGetMetadataQuery,
   useGetMetadataFieldsQuery,
-  useGetPractitionersQuery,
-  useSavePractitionerMutation,
-  useRemovePractitionerMutation,
-  useDeactiveActivePractitionerMutation,
   useGetDepartmentsQuery,
   useSaveDepartmentMutation,
   useGetAllergensQuery,
@@ -1632,5 +1613,9 @@ export const {
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
   useLazyGetCandidatesByDepartmentKeyQuery,
- useGetIcdByIdQuery
+  useGetIcdByIdQuery,
+  useGetLovValuesByKeyQuery,
+  useGetLovValuesBulkByKeysQuery,
+  useLazyGetLovValuesBulkByKeysQuery,
+  useToggleActiveLovValueMutation
 } = setupService;

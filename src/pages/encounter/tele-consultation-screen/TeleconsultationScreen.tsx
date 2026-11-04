@@ -98,6 +98,10 @@ const TeleconsultationRequests = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
   const {
     data: orders,
@@ -224,7 +228,18 @@ const TeleconsultationRequests = () => {
   const contents = (
     <div className="advanced-filters">
       <Form fluid layout="inline" className="dissss">
-        <SearchPatientCriteria record={record} setRecord={setRecord} />
+        <SearchPatientCriteria
+          record={record}
+          setRecord={setRecord}
+          liveSearchMinLength={0}
+          onSearchClick={() => {
+            setAppliedPatientSearch({
+              searchByField: (record as any)?.searchByField ?? 'fullName',
+              patientName: (record as any)?.patientName ?? ''
+            });
+            setPage(0);
+          }}
+        />
 
         <MyInput
           width="100%"
@@ -307,33 +322,33 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'patient',
-      title: 'Patient Name',
+      title: <Translate>Patient Name</Translate>,
       dataKey: 'patientName',
       width: 200,
       render: (row: any) => <div>{row.patient?.fullName}</div>
     },
     {
       key: 'gender',
-      title: 'Gender',
+      title: <Translate>Gender</Translate>,
       dataKey: 'gender',
       width: 80,
       render: (row: any) => <div>{row.patient?.genderLvalue?.lovDisplayVale ?? ''}</div>
     },
     {
       key: 'age',
-      title: 'Age',
+      title: <Translate>Age</Translate>,
       dataKey: 'age',
       width: 60,
       render: (row: any) => <div>{calculateAgeFormat(row.patient?.dob)}</div>
     },
     {
       key: 'questionToConsultant',
-      title: 'Question To Consultant',
+      title: <Translate>Question To Consultant</Translate>,
       width: 180
     },
     {
       key: 'expectedResponseTime',
-      title: <Translate>Expected Repones Date</Translate>,
+      title: <Translate>Expected Response Date</Translate>,
       width: 180,
       render: (row: any) => {
         return formatDateWithoutSeconds(row.expectedResponseTime);
@@ -341,7 +356,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'urgencyLkey',
-      title: 'Urgency',
+      title: <Translate>Urgency</Translate>,
       width: 80,
       render: row => {
         return row.urgencyLvalue?.lovDisplayVale;
@@ -349,7 +364,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'statusLkey',
-      title: 'Status',
+      title: <Translate>Status</Translate>,
       width: 100,
       render: row => {
         return (
@@ -362,7 +377,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'actions',
-      title: 'Actions',
+      title: <Translate>Actions</Translate>,
       width: 120,
       render: (rowData: ApTeleConsultation) => (
         <div className="actions-icons-tele-consultation-screen">
@@ -462,7 +477,38 @@ const TeleconsultationRequests = () => {
     }
   ];
 
-  const sortedData = [...(orders?.object ?? [])].sort((a, b) => {
+  const matchesPatientSearch = (row: any) => {
+    const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+    const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+    if (!raw) return true;
+    const patient = row?.patient ?? {};
+    if (field === 'patientMrn') {
+      return String(patient?.patientMrn ?? patient?.medicalRecordNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'phoneNumber') {
+      return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'documentNumber') {
+      return String(patient?.documentNo ?? patient?.documentNumber ?? '')
+        .toLowerCase()
+        .includes(raw);
+    }
+    if (field === 'dob') {
+      return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
+        String(appliedPatientSearch?.patientName ?? '').trim();
+    }
+    return String(patient?.fullName ?? row?.patientName ?? '')
+      .toLowerCase()
+      .includes(raw);
+  };
+
+  const filteredOrders = (orders?.object ?? []).filter(matchesPatientSearch);
+
+  const sortedData = [...filteredOrders].sort((a, b) => {
     const aValue = a[sortColumn as keyof ApTeleConsultation];
     const bValue = b[sortColumn as keyof ApTeleConsultation];
 
@@ -480,8 +526,14 @@ const TeleconsultationRequests = () => {
   dispatch(setPageCode('tele_consultation_screen'));
   dispatch(setDivContent(divContent));
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <DragDropTable
          data={paginatedData ?? []}
         columns={columns}
@@ -489,7 +541,7 @@ const TeleconsultationRequests = () => {
         filters={filterstable}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={orders?.object?.length}
+        totalCount={filteredOrders.length}
         sortColumn={sortColumn}
         sortType={sortType}
         rowClassName={row => (row?.id === requests?.id ? 'selected-row' : '')}

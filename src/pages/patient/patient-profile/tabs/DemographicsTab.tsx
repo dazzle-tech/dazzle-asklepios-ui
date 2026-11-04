@@ -6,6 +6,7 @@ import { Col, Row, Stack } from 'rsuite';
 import BasicInfo from './BasicInfo';
 import ContactTab from './ContactTab';
 import './styles.less';
+import clsx from 'clsx';
 
 interface DemographicsTabProps {
   localPatient: Patient;
@@ -13,7 +14,6 @@ interface DemographicsTabProps {
   validationResult: any;
   genderEnum: any;
   patientDocumentEnum: any;
-  countryLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
@@ -31,12 +31,14 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
 
 
   return (
-    <Stack>
+    <Stack >
       <Stack.Item grow={1}></Stack.Item>
       <Stack.Item grow={15}>
-        <Row gutter={15} className="d">
+        <Row gutter={15} className="d"
+        >
           <Col md={12}>
-            <Row>
+            <Row
+            >
               <SectionContainer
                 title={<Translate>Basic Information</Translate>}
                 content={
@@ -54,7 +56,8 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
             </Row>
           </Col>
           <Col md={12}>
-            <Row>
+            <Row 
+            >
               <SectionContainer
                 title={<Translate>Contact</Translate>}
                 content={

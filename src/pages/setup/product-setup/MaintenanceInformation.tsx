@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 import Room from '../bed-room-setup';
 import MyLabel from '@/components/MyLabel';
@@ -48,7 +47,9 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                         fieldName="maintenanceScheduleLkey"
                         fieldType="select"
                         selectData={timeUnitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={product}
                         setRecord={setProduct}

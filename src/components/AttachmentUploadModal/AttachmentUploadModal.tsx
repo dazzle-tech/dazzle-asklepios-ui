@@ -117,7 +117,6 @@ const AttachmentModal = ({
       })
       .catch(error => {
         dispatch(notify({ msg: 'Failed to Update attachment', sev: 'error' }));
-        console.error(error);
       });
   };
 

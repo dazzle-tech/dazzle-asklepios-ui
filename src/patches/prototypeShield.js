@@ -5,7 +5,6 @@
     "equal",
     "clone",
     "assign",
-    "__stimulsoft__",
     "__proto__"
   ];
 

@@ -22,29 +22,24 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
   const mode = useSelector((state: any) => state.ui.mode);
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
 
-  // Fetch profile picture for this patient
   const patientId = patient?.id ? Number(patient.id) : undefined;
+
   const { data: profilePictureTicket } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId }
   );
 
-  // Update the profile picture URL when data is available
   useEffect(() => {
-    if (profilePictureTicket?.url) {
-      setProfilePictureUrl(profilePictureTicket.url);
-    } else {
-      setProfilePictureUrl('');
-    }
+    setProfilePictureUrl(profilePictureTicket?.url || '');
   }, [profilePictureTicket]);
 
-  // Handle click with profile picture URL
   const handleClick = () => {
-    if (onClick) {
-      // Create a new object with the patient data and profile picture URL
-      const patientWithUrl = { ...patient, profilePictureUrl };
-      onClick(patientWithUrl);
-    }
+    if (!onClick) return;
+
+    onClick({
+      ...patient,
+      profilePictureUrl
+    });
   };
 
   return (
@@ -53,22 +48,30 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
         <Avatar
           circle
           src={
-            profilePictureUrl
-              ? profilePictureUrl
-              : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+            profilePictureUrl ||
+            'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
           }
           size="md"
         />
+
         <Text className="patient-name">
           {patient.firstName} {patient.secondName} {patient.thirdName} {patient.lastName}
         </Text>
+
         <Text className="created-at">
-          {patient.createdDate ? new Date(patient.createdDate).toLocaleDateString('en-GB') : ''}
+          {patient.createdDate
+            ? new Date(patient.createdDate).toLocaleDateString('en-GB')
+            : ''}
         </Text>
-        <Text className="patient-mrn"># {patient.medicalRecordNumber}</Text>
+
+        <Text className="patient-mrn">
+          # {patient.medicalRecordNumber}
+        </Text>
       </div>
+
       <div className="actions">
-        {/* {actions} */}
+        {actions}
+
         <Button onClick={handleClick} className="arrow-button">
           {arrowDirection === 'left' ? <FaArrowLeft /> : <FaArrowRight />}
         </Button>

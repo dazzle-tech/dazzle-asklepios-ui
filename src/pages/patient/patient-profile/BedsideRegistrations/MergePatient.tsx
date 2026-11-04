@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import './styles.less';
 import { GrScheduleNew } from 'react-icons/gr';
 import PatientInfoCard from '@/components/PatientInfoCard';
-import ProfileSidebar from '../ProfileSidebar';
+import ProfileSidebar from '../ProfileSidebar-new';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeMerge } from '@fortawesome/free-solid-svg-icons';
-const MergePatient = ({ open, setOpen, patient }) => {
+const MergePatient = ({ open, setOpen }) => {
   const [searchedPatient, setSearchedPatient] = useState({});
   const [refetchData, setRefetchData] = useState(false);
+  const handleSidebarExpand = () => null;
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -18,7 +19,7 @@ const MergePatient = ({ open, setOpen, patient }) => {
           <div className="merge" style={{ display: 'flex', gap: '5px', height: '300px' }}>
             <ProfileSidebar
               expand={true}
-              setExpand={() => {}}
+              setExpand={handleSidebarExpand}
               windowHeight={200}
               setLocalPatient={setSearchedPatient}
               refetchData={refetchData}
@@ -32,13 +33,21 @@ const MergePatient = ({ open, setOpen, patient }) => {
         );
     }
   };
-  return (
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Merge Patient"
       position="center"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       steps={[{ title: 'Merge Patient', icon: <GrScheduleNew /> }]}
       size="md"
@@ -47,6 +56,7 @@ const MergePatient = ({ open, setOpen, patient }) => {
         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCodeMerge} />}>Merge</MyButton>
       }
     />
+    </div>
   );
 };
 export default MergePatient;

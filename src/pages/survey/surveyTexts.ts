@@ -1,0 +1,51 @@
+/**
+ * Default texts of the patient satisfaction survey page, by key.
+ * The same keys are seeded in the survey_text table; a text saved there replaces the default here.
+ * Texts hold no variables: the page shows values such as the visit date next to the text.
+ */
+export const DEFAULT_SURVEY_TEXTS = {
+  SURVEY_TITLE: { en: "Patient Satisfaction Survey", ar: "استبيان رضا المرضى" },
+  INSTRUCTIONS_TITLE: { en: "SURVEY INSTRUCTIONS:", ar: "تعليمات الاستبيان:" },
+  INSTRUCTION_BODY: { en: "Please rate the services you received on your most recent visit. Select the response that best describes your experience. If a question does not apply to you, please skip to the next question. When you finish, please click on \"Submit\". Your identity will remain confidential if you want. All answers should relate to this visit only.", ar: "يرجى تقييم الخدمات التي تلقيتها في زيارتك الأخيرة. اختر الإجابة التي تصف تجربتك بأفضل شكل. إذا كان السؤال لا ينطبق عليك، يرجى الانتقال إلى السؤال التالي. عند الانتهاء، يرجى النقر على \"إرسال\". ستبقى هويتك سرية اذا اردت. يجب أن تتعلق جميع الإجابات بهذه الزيارة فقط." },
+  FACILITY: { en: "Facility", ar: "المنشأة" },
+  DEPARTMENT: { en: "Department", ar: "القسم" },
+  VISIT_DATE: { en: "Visit date", ar: "تاريخ الزيارة" },
+  PROCEED: { en: "Proceed to Survey", ar: "ابدأ الاستبيان" },
+  IDENTITY_PROMPT: { en: "How would you like to continue?", ar: "كيف تريد المتابعة؟" },
+  DOCUMENT_NUMBER: { en: "ID Number (as registered in your file)", ar: "رقم الهوية (كما هو مسجل في ملفك)" },
+  SEND_CODE: { en: "Send Code", ar: "إرسال الرمز" },
+  RESEND_CODE: { en: "Resend Code", ar: "إعادة إرسال الرمز" },
+  CODE_SENT: { en: "We sent a verification code to your registered mobile.", ar: "أرسلنا رمز التحقق إلى رقم الموبايل المسجل لديك." },
+  VERIFICATION_CODE: { en: "Verification Code", ar: "رمز التحقق" },
+  VERIFY: { en: "Verify", ar: "تحقق" },
+  VERIFIED: { en: "Verified. You can continue with your details.", ar: "تم التحقق. يمكنك المتابعة ببياناتك." },
+  ENTER_DOCUMENT: { en: "Please enter your ID number, then send the code.", ar: "يرجى إدخال رقم الهوية ثم إرسال الرمز." },
+  ENTER_OTP: { en: "Please enter the 6-digit code we sent you.", ar: "يرجى إدخال الرمز المكوّن من 6 أرقام الذي أرسلناه لك." },
+  OTP_INVALID: { en: "The code is not correct. Please try again.", ar: "الرمز غير صحيح. يرجى المحاولة مرة أخرى." },
+  OTP_EXPIRED: { en: "The code has expired. Please send a new code.", ar: "انتهت صلاحية الرمز. يرجى إرسال رمز جديد." },
+  NO_MOBILE: { en: "We cannot send you a code. Please continue anonymously.", ar: "لا يمكننا إرسال رمز لك. يرجى المتابعة بشكل مجهول." },
+  PATIENT_NOT_FOUND: { en: "No patient matches this ID number. Check the number or continue anonymously.", ar: "لا يوجد مريض بهذا الرقم. تحقق من الرقم أو تابع بشكل مجهول." },
+  REQUEST_FAILED: { en: "Unable to continue right now. Please try again.", ar: "تعذرت المتابعة حالياً. يرجى المحاولة مرة أخرى." },
+  TOO_MANY_ATTEMPTS: { en: "Too many attempts. Please try again later.", ar: "محاولات كثيرة. يرجى المحاولة لاحقاً." },
+  CONTINUE_WITH_DETAILS: { en: "Continue with my details", ar: "المتابعة ببياناتي" },
+  CONTINUE_ANONYMOUSLY: { en: "Continue anonymously", ar: "المتابعة بشكل مجهول" },
+  ANONYMOUS: { en: "Anonymous", ar: "مجهول" },
+  YOUR_DETAILS: { en: "Your details", ar: "بياناتك" },
+  SELECT_IDENTITY: { en: "Please choose how you would like to continue.", ar: "يرجى اختيار طريقة المتابعة." },
+  VERIFY_FIRST: { en: "Please verify your details or continue anonymously.", ar: "يرجى التحقق من بياناتك أو المتابعة بشكل مجهول." },
+  LAYOUT_SINGLE_HINT: { en: "One page: show all the questions together", ar: "صفحة واحدة: عرض جميع الأسئلة معاً" },
+  LAYOUT_STEPS_HINT: { en: "Step by step: show one section at a time", ar: "خطوة بخطوة: عرض قسم واحد في كل مرة" },
+  PREVIOUS: { en: "Previous", ar: "السابق" },
+  NEXT: { en: "Next", ar: "التالي" },
+  SUBMIT: { en: "Submit", ar: "إرسال" },
+  CLEAR_SELECTION: { en: "Clear Selection", ar: "مسح الاختيار" },
+  REQUIRED_ANSWER: { en: "Please answer all required questions to continue.", ar: "يرجى الإجابة على جميع الأسئلة المطلوبة للمتابعة." },
+  MAX_CHARACTERS: { en: "Max number of characters", ar: "الحد الأقصى لعدد الأحرف" },
+  LOAD_FAILED: { en: "Unable to load the survey. Please try again later.", ar: "تعذر تحميل الاستبيان. يرجى المحاولة لاحقاً." },
+  NO_QUESTIONS: { en: "The survey is not available right now.", ar: "الاستبيان غير متاح حالياً." },
+  SUBMIT_FAILED: { en: "Unable to submit the survey. Please try again.", ar: "تعذر إرسال الاستبيان. يرجى المحاولة مرة أخرى." },
+  THANK_YOU_TITLE: { en: "Thank You", ar: "شكراً لك" },
+  THANK_YOU_MESSAGE: { en: "Your feedback has been submitted successfully. Your responses will help us improve the quality of care.", ar: "تم إرسال ملاحظاتك بنجاح. ستساعدنا إجاباتك في تحسين جودة الرعاية." },
+} satisfies Record<string, { en: string; ar: string }>;
+
+export type SurveyTextKey = keyof typeof DEFAULT_SURVEY_TEXTS;

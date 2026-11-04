@@ -22,7 +22,9 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
               fieldName="typeLkey"
               fieldType="select"
               selectData={testTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={diagnosticsTestCatalogHeader}
               setRecord={setDiagnosticsTestCatalogHeader}

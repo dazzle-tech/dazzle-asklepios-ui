@@ -7,6 +7,7 @@ import { Checkbox } from 'rsuite';
 import { Form } from 'rsuite';
 import './styles.less';
 import { filter } from 'lodash';
+import Translate from '@/components/Translate';
 
 //Table Data
 const sampleData = [
@@ -101,18 +102,18 @@ const RequestedProceduresTable = () => {
       <Form fluid>
     <div className="check-boxes-material-table-positions">
             <h5 className="operation-materials-table-header">
-      Operation Materials
+      <Translate>Operation Materials</Translate>
     </h5>
       <Checkbox>
-        Implant
+        <Translate>Implant</Translate>
       </Checkbox>
 
       <Checkbox>
-        Consumable
+        <Translate>Consumable</Translate>
       </Checkbox>
 
       <Checkbox>
-        Surgical Instrument
+        <Translate>Surgical Instrument</Translate>
       </Checkbox>
     </div>
       </Form>
@@ -120,8 +121,13 @@ const RequestedProceduresTable = () => {
     
     </>);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div>
+    <div dir={dir}>
       <div className="tables-row-positioning">
         <div className="material-table-size-position">
           <MyTable

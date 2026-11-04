@@ -1,19 +1,19 @@
-import { faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
-import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
   tableContainerRef: any;
-
+  patientPrevTestsRef:any;
   orderId: any;
   tableVersion: number;
 
@@ -39,6 +39,7 @@ type Props = {
   setTestCardModal: (v: boolean) => void;
 
   handleEdit: (row: any) => void;
+  onRescheduleAppointment?: (row: any) => void;
   resolveReasonLabel: (k?: string) => string;
 
   // preview
@@ -47,6 +48,8 @@ type Props = {
 
   // patient
   patient: any;
+  departments: any[];
+  edit?: boolean;
 };
 
 const DiagnosticsOrderTable: React.FC<Props> = props => {
@@ -56,7 +59,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     tableVersion,
     loadTests,
     normalizedOrderTestList,
-
+    patientPrevTestsRef,
     selectedRows,
     setSelectedRows,
     selectableRowIds,
@@ -70,13 +73,55 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     setOrderTest,
     setTestCardModal,
     handleEdit,
+    onRescheduleAppointment,
     resolveReasonLabel,
 
     previewDiagnosticsOrder,
     setPreviewDiagnosticsOrder,
 
-    patient
+    patient,
+    departments,
+    edit,
   } = props;
+
+  const resolveReceivedDepartmentName = (rowData: any) => {
+    const nestedName =
+      rowData.receivedDepartment?.name ??
+      rowData.receivedDepartment?.translatedObject?.name ??
+      rowData.receivedDepartmentName;
+
+    if (nestedName) return nestedName;
+
+    const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
+    if (deptId == null || deptId === '') return '';
+
+    const department = departments.find((d: any) => String(d.id) === String(deptId));
+    return department?.name ?? department?.departmentName ?? '';
+  };
+
+  const UserDateCell = ({
+        login,
+        date
+        }: {
+        login?: string;
+        date?: string;
+        }) => {
+        const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+            skip: !login
+        });
+
+        if (!date && !login) return null;
+
+        return (
+            <>
+            {fullName || login || ''}
+            <br />
+            <span className="date-table-style">
+                {date ? formatDateWithoutSeconds(date) : ''}
+            </span>
+            </>
+        );
+        };
 
   const isSelected = (rowData: any, currentOrderTest: any) => {
     const rowId = rowData?.id ?? rowData?.key;
@@ -85,29 +130,6 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     return '';
   };
 
-  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
-
-  const departmentIds = React.useMemo(() => {
-  const ids = normalizedOrderTestList
-    .map(r => r.receivedDepartmentId ?? r.receivedLabId)
-    .filter(Boolean);
-
-  return Array.from(new Set(ids));
-}, [normalizedOrderTestList]);
-const [departmentsMap, setDepartmentsMap] = useState<Map<number, any>>(new Map());
-
-useEffect(() => {
-  if (!departmentIds.length) return;
-
-  getDepartmentsBulk(departmentIds)
-    .unwrap()
-    .then(res => {
-      const map = new Map(res.map((d: any) => [d.id, d]));
-      setDepartmentsMap(map);
-    });
-}, [departmentIds]);
-const getDepartmentName = (id?: number) =>
-  departmentsMap.get(id)?.name ?? id;
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -124,13 +146,13 @@ const getDepartmentName = (id?: number) =>
       flexGrow: 1,
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
-        const isDisabled = rowData.status !== 'NEW';
-        console.log(rowData, "Row Data");
+        const isDisabled = rowData.status === 'CANCELLED';
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
             disabled={isDisabled}
             onChange={() => handleCheckboxChange(rowId)}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           />
         );
       }
@@ -147,7 +169,8 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>TEST NAME</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: (rowData: any) => rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
+      render: (rowData: any) =>
+        rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
     },
     {
       key: 'internalCode',
@@ -166,15 +189,20 @@ const getDepartmentName = (id?: number) =>
       render: (rowData: any) => <>{formatEnumString(rowData.status)}</>
     },
     {
+      key: 'processingStatus',
+      dataKey: 'processingStatus',
+      title: <Translate>PROCESSING STATUS</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => <>{formatEnumString(rowData.processingStatus)}</>
+    },
+    {
       key: 'receivedDepartmentId',
       dataKey: 'receivedDepartmentId',
-      title: <Translate>RECEIVED LAB</Translate>,
+      title: <Translate>RECEIVED Department</Translate>,
       fullText: true,
       flexGrow: 1,
-      render: (rowData: any) => {
-        const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
-        return getDepartmentName(deptId);
-      }
+      render: (rowData: any) => resolveReceivedDepartmentName(rowData)
     },
     {
       key: 'reason',
@@ -222,71 +250,93 @@ const getDepartmentName = (id?: number) =>
       flexGrow: 2,
       fullText: true,
       render: (rowData: any) => {
+        const rowStatus = String(rowData?.status ?? '').toUpperCase();
+        const isRescheduled = rowStatus.includes('RESCHEDULE');
+        const actionColor = isRescheduled ? '#b9c0cc' : 'var(--primary-gray)';
+        const actionCursor = isRescheduled ? 'not-allowed' : 'pointer';
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Whisper placement="top" speaker={<Tooltip>Edit</Tooltip>}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
-                <MdModeEdit onClick={() => handleEdit(rowData)} className="icons-styles" color="var(--primary-gray)" />
+              <span style={{ display: 'inline-flex', alignItems: 'center', cursor: actionCursor }}>
+                <MdModeEdit
+                  onClick={() => {
+                    if (isRescheduled || edit) return;
+                    handleEdit(rowData);
+                  }}
+                  className="icons-styles"
+                  color={actionColor}
+                />
               </span>
             </Whisper>
 
-            <Whisper placement="top" speaker={<Tooltip>Pre-test assessment</Tooltip>}>
-              <FontAwesomeIcon color="var(--primary-gray)" className="icons-styles" icon={faListCheck} />
-            </Whisper>
+            {/* <Whisper placement="top" speaker={<Tooltip>Pre-test assessment</Tooltip>}>
+              <FontAwesomeIcon color={actionColor} className="icons-styles" icon={faListCheck} />
+            </Whisper> */}
 
             <Whisper placement="top" speaker={<Tooltip>Test card</Tooltip>}>
               <HStack spacing={10}>
                 <FontAwesomeIcon
                   icon={faCreditCard}
                   className="icons-styles"
-                  color="var(--primary-gray)"
+                  color={actionColor}
                   onClick={() => {
+                    if (isRescheduled || edit) return;
                     setOrderTest(normalizeOrderTest(rowData));
                     setTest(rowData.test);
                     setTestCardModal(true);
                   }}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: actionCursor }}
                 />
               </HStack>
             </Whisper>
+
+            {/* <Whisper placement="top" speaker={<Tooltip>Reschedule appointment</Tooltip>}>
+              <FontAwesomeIcon
+                icon={faCalendarCheck}
+                className="icons-styles"
+                color={actionColor}
+                onClick={() => {
+                  if (isRescheduled) return;
+                  onRescheduleAppointment?.(rowData);
+                }}
+                style={{ cursor: actionCursor }}
+              />
+            </Whisper> */}
           </div>
         );
       }
     },
     {
-      key: '',
+      key: 'createdAtBy',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
-        </>
+        <UserDateCell
+          login={rowData.createdBy}
+          date={rowData.createdAt}
+        />
       )
     },
     {
-      key: '',
+      key: 'updatedAtBy',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.updatedBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.updatedAt)}</span>
-        </>
+        <UserDateCell
+          login={rowData.lastModifiedBy}
+          date={rowData.lastModifiedDate}
+        />
       )
     },
     {
-      key: '',
+      key: 'cancelledAtBy',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
-        <>
-          <span>{rowData.deletedBy}</span>
-          <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
-        </>
+        <UserDateCell
+          login={rowData.cancelledBy}
+          date={rowData.cancelledDate}
+        />
       )
     },
     {
@@ -297,7 +347,15 @@ const getDepartmentName = (id?: number) =>
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="table-row-margins">
       <div ref={tableContainerRef}>
         <MyTable
@@ -306,6 +364,10 @@ const getDepartmentName = (id?: number) =>
           loading={loadTests}
           data={orderId ? normalizedOrderTestList : []}
           onRowClick={(rowData: any) => {
+            const rowId = Number(rowData.id);
+            if (rowData.status !== 'CANCELLED') {
+              handleCheckboxChange(rowId);
+            }
             setOrderTest(normalizeOrderTest(rowData));
             setTest(rowData.test ?? {});
             setPreviewDiagnosticsOrder(rowData);
@@ -317,11 +379,13 @@ const getDepartmentName = (id?: number) =>
       <PreviewDiagnosticsOrder open={!!previewDiagnosticsOrder} orderTest={previewDiagnosticsOrder} />
 
       <Panel header="Patient Orders Test" collapsible expanded className="panel-style">
-        <PatientPrevTests patient={
-          //add new patient edits
-          patient} />
+        <PatientPrevTests
+            ref={patientPrevTestsRef}
+            patient={patient}
+        />
       </Panel>
     </div>
+  </div>
   );
 };
 

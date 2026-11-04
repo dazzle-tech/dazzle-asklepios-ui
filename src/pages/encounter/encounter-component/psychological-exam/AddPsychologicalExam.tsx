@@ -211,7 +211,9 @@ const AddPsychologicalExam = ({
                     fieldType="select"
                     fieldName="testTypeLkey"
                     selectData={testTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
@@ -243,7 +245,9 @@ const AddPsychologicalExam = ({
                     fieldType="select"
                     fieldName="unitLkey"
                     selectData={unitLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
@@ -257,7 +261,9 @@ const AddPsychologicalExam = ({
                     fieldType="select"
                     fieldName="scoreLkey"
                     selectData={scoreLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
@@ -271,7 +277,9 @@ const AddPsychologicalExam = ({
                     fieldType="select"
                     fieldName="resultInterpretationLkey"
                     selectData={severityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}

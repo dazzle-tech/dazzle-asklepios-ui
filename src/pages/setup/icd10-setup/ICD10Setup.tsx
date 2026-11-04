@@ -654,9 +654,16 @@ const ICD10BrowserExpand = () => {
   const showCategoryAsRow = !hasChildren && totalCount === 0;
 
   const rightTitle = hasChildren ? "Subcategories" : showCategoryAsRow ? "Category" : "Diagnoses";
+  
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <div className="icd-root">
+    <div className="icd-root" dir={dir}>
       <Row className="icd-row">
         {/* LEFT */}
         <Col md={8} className="icd-col">
@@ -773,7 +780,7 @@ const ICD10BrowserExpand = () => {
                       totalCount={1}
                       loading={nodeLoading}
                       page={0}
-                      rowsPerPage={25}
+                      rowsPerPage={15}
                       onPageChange={() => {}}
                       onRowsPerPageChange={() => {}}
                     />

@@ -38,7 +38,9 @@ const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
               fieldName="shiftType"
               fieldType="select"
               selectData={shiftsTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={shift}
               setRecord={setShift}
@@ -63,6 +65,13 @@ const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
       
     }
   };
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       actionButtonLabel={shift?.key ? 'Save' : 'Create'} 
@@ -71,7 +80,7 @@ const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
       setOpen={setOpen}
       position="right"
       title={shift?.key ? 'Edit Shift' : 'New Shift'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
       steps={[
         {
           title: 'Shift Info',

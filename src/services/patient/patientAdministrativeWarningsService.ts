@@ -51,6 +51,26 @@ export const patientAdministrativeWarningsService = createApi({
     }),
 
     // ============================
+    // 🔹 GET ALL BY TYPES
+    // ============================
+    getWarningsByTypes: builder.query<
+      modelTypes.PatientAdministrativeWarningsResponseVM[],
+      { types?: string[] }
+    >({
+      query: ({ types }) => ({
+        url: '/api/patient/patient-administrative-warnings',
+        method: 'GET',
+        params: { types }
+      }),
+      providesTags: (_res, _err, { types }) => [
+        {
+          type: 'PatientAdministrativeWarnings',
+          id: types && types.length ? `TYPES_${types.join(',')}` : 'ALL'
+        }
+      ]
+    }),
+
+    // ============================
     // 🔹 CREATE
     // ============================
     createPatientAdministrativeWarning: builder.mutation<
@@ -72,12 +92,11 @@ export const patientAdministrativeWarningsService = createApi({
     // ============================
     resolvePatientAdministrativeWarning: builder.mutation<
       modelTypes.PatientAdministrativeWarningsResponseVM,
-      { id: Id; body: modelTypes.PatientAdministrativeWarningsResolveDTO }
+      { id: Id }
     >({
-      query: ({ id, body }) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-administrative-warnings/${id}/resolve`,
-        method: 'PATCH',
-        body
+        method: 'PATCH'
       }),
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientAdministrativeWarnings', id }
@@ -89,12 +108,11 @@ export const patientAdministrativeWarningsService = createApi({
     // ============================
     undoResolvePatientAdministrativeWarning: builder.mutation<
       modelTypes.PatientAdministrativeWarningsResponseVM,
-      { id: Id; body: modelTypes.PatientAdministrativeWarningsUndoResolveDTO }
+      { id: Id }
     >({
-      query: ({ id, body }) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-administrative-warnings/${id}/undo-resolve`,
-        method: 'PATCH',
-        body
+        method: 'PATCH'
       }),
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientAdministrativeWarnings', id }
@@ -126,6 +144,9 @@ export const {
 
   useSearchWarningsByPatientIdQuery,
   useLazySearchWarningsByPatientIdQuery,
+
+  useGetWarningsByTypesQuery,
+  useLazyGetWarningsByTypesQuery,
 
   useCreatePatientAdministrativeWarningMutation,
   useResolvePatientAdministrativeWarningMutation,

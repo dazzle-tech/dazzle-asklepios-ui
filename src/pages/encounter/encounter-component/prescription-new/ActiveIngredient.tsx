@@ -1,67 +1,111 @@
 import InfoCardList from "@/components/InfoCardList";
-import React from "react";
-import { useGetActiveIngredientsByBrandQuery } from "@/services/setup/brandmedication/BrandMedicationActiveIngredientService";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { conjureValueBasedOnKeyFromList } from "@/utils";
+import { useGetActiveIngredientsByIdsMutation } from "@/services/setup/activeIngredients/activeIngredientsService";
+import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService";
+import React, { useEffect, useState } from "react";
 
-const ActiveIngredient = ({ selectedGeneric }) => {
-  const brandId = selectedGeneric?.id;
- const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
- 
-  const {
-    data: brandActives = [],
-    isFetching,
-    isError,
-  } = useGetActiveIngredientsByBrandQuery(brandId, {
-    skip: !brandId,
-  });
- 
-  
+const ActiveIngredient = ({
+  selectedGeneric,
+  activeIngredientId,
+}) => {
+  const direction = localStorage.getItem("direction") || "LTR";
+  const dir = direction === "RTL" ? "rtl" : "ltr";
 
-  const listForUI = (brandActives ?? []).map((rel) => {
-    const ai = rel.activeIngredient ?? {}; // defensive
-    return {
-      relationId: rel.id,
-      activeIngredientName: ai.name ?? "",
-      activeIngredientATCCode: ai.atcCode ?? "",
-      strengthDisplay:
-        (rel.strength ?? "") + (rel.unit ? ` ${conjureValueBasedOnKeyFromList(unitLov?.object,rel?.unit,"lovDisplayVale")}` : ""),
-      isControlledDisplay: ai.isControlled ? "Yes" : "No",
-      controlledDisplay: ai.controlled ?? "",
-    };
-  });
+  const [selectedActiveIngredient, setSelectedActiveIngredient] =
+    useState(null);
+  const [getActiveIngredientsByIds, { data: activeIngredients }] =
+    useGetActiveIngredientsByIdsMutation();
+  const { data: brandMedication } = useGetBrandMedicationByIdQuery(
+    selectedGeneric,
+    {
+      skip: !selectedGeneric,
+    }
+  );
+  useEffect(() => {
+    if (activeIngredientId) {
+      getActiveIngredientsByIds([activeIngredientId]);
+    }
+  }, [activeIngredientId, getActiveIngredientsByIds]);
 
-  if (!brandId) {
-    return <div style={{ padding: 12 }}>Select a brand to see active ingredients</div>;
-  }
+  useEffect(() => {
+    if (activeIngredients?.length > 0) {
+      setSelectedActiveIngredient(activeIngredients[0]);
+    }
+  }, [activeIngredients]);
 
-  if (isFetching) {
-    return <div style={{ padding: 12 }}>Loading active ingredients...</div>;
-  }
+  const activeIngredientInfo = selectedActiveIngredient
+    ? [
+      {
+        activeIngredientName:
+          selectedActiveIngredient.name ?? "",
+        activeIngredientATCCode:
+          selectedActiveIngredient.atcCode ?? "",
+        isControlledDisplay:
+          selectedActiveIngredient.isControlled
+            ? "Yes"
+            : "No",
+        controlledDisplay:
+          selectedActiveIngredient.controlled ?? "",
+      },
+    ]
+    : [];
 
-  if (isError) {
-    return <div style={{ padding: 12 }}>Failed to load active ingredients</div>;
-  }
-
+  const brandInfo = brandMedication
+    ? [
+      {
+        brandName:
+          brandMedication.name ??
+          brandMedication.brandName ??
+          "",
+        brandCode:
+          brandMedication.code ??
+          brandMedication.brandCode ??
+          "",
+      },
+    ]
+    : [];
+console.log("brandInfo:", brandInfo);
   return (
-    <InfoCardList
-      list={listForUI}
-      fields={[
-        "activeIngredientName",
-        "activeIngredientATCCode",
-        "strengthDisplay",
-        "isControlledDisplay",
-        "controlledDisplay",
-      ]}
-      titleField="activeIngredientName"
-      fieldLabels={{
-        activeIngredientName: "Active Ingredient",
-        activeIngredientATCCode: "ATC Code",
-        strengthDisplay: "Strength",
-        isControlledDisplay: "Is Controlled",
-        controlledDisplay: "Controlled",
-      }}
-    />
+    <div dir={dir}>
+      {selectedActiveIngredient ? (
+        <InfoCardList
+          list={activeIngredientInfo}
+          fields={[
+            "activeIngredientName",
+            "activeIngredientATCCode",
+            "isControlledDisplay",
+            "controlledDisplay",
+          ]}
+          titleField="activeIngredientName"
+          fieldLabels={{
+            activeIngredientName: "Active Ingredient",
+            activeIngredientATCCode: "ATC Code",
+            isControlledDisplay: "Is Controlled",
+            controlledDisplay: "Controlled",
+          }}
+        />
+      ) : (
+        <div style={{ padding: 12 }}>
+          Select an active ingredient
+        </div>
+      )}
+
+      {selectedGeneric && (
+        <div style={{ marginTop: 16 }}>
+          <InfoCardList
+            list={brandInfo}
+            fields={[
+              "brandName",
+              "brandCode",
+            ]}
+            titleField="brandName"
+            fieldLabels={{
+              brandName: "Brand",
+              brandCode: "Code",
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 

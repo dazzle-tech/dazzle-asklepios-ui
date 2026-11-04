@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { isPhoneValid } from '@/utils/phoneNumber';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -16,6 +17,7 @@ import {
 
 import { notify } from '@/utils/uiReducerActions';
 import { formatEnumString } from '@/utils';
+import { isCitizenFromDocumentType } from '@/utils/patientCitizen';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
@@ -28,19 +30,18 @@ import {
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
-import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
+import * as modelTypes from '@/types/model-types-new';
 
 import {
   newAddress,
   newPatient,
   newPatientDocument,
-  newPatientEncounter,
   newPatientInsurance
 } from '@/types/model-types-constructor-new';
 import {
   Address,
   Patient,
-  PatientEncounter,
   PatientInsurance,
   SimpleArea,
   SimpleCommunity,
@@ -55,9 +56,11 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetActiveCommunitiesQuery } from '@/services/setup/country/districtCommunityService';
 import { useGetActiveAreasQuery } from '@/services/setup/country/communityAreaService';
-import { useCreateAddressMutation, useUpdateAddressMutation } from '@/services/patients/AddressService';
+import {
+  useCreateAddressMutation,
+  useUpdateAddressMutation
+} from '@/services/patients/AddressService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 
 import {
   useAddPatientInsuranceMutation,
@@ -66,6 +69,98 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+import { PhoneNumberInput } from '@/components';
+
+const ENCOUNTER_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Encounter data is required.',
+  'patient.invalid': 'Invalid patient id.',
+  'patient.notfound': 'Patient not found.',
+  'followUpEncounter.invalid': 'Invalid follow-up encounter id.',
+  'followUpEncounter.notfound': 'Follow-up encounter not found.',
+  'encounterNumber.duplicate': 'Encounter number already exists.',
+  'id.notfound': 'Encounter record not found.',
+  notfound: 'Encounter record not found.',
+  'followUpEncounter.required.followup':
+    'Follow-up Encounter is required when Reason is Follow up.',
+  'followUpEncounter.required.byReason':
+    'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
+  'department.date.sequence.duplicate':
+    'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
+  duplicate: 'Duplicate record.',
+  'facility.invalid': 'Invalid facility id.',
+  'department.invalid': 'Invalid department id.',
+  'practitioner.invalid': 'Invalid practitioner id.',
+  'db.constraint': 'Database constraint violation while saving encounter.'
+};
+
+const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  facilityId: 'Facility',
+  departmentId: 'Department',
+  practitionerId: 'Practitioner',
+  encounterType: 'Encounter Type',
+  encounterReason: 'Reason',
+  followUpEncounterId: 'Follow-up Encounter',
+  priorityLevel: 'Priority',
+  originType: 'Origin Type',
+  originName: 'Origin Name',
+  notes: 'Notes',
+  status: 'Status',
+  encounterDate: 'Date',
+  departmentDailySequenceNumber: 'Department Daily Sequence'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? err ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size')) return 'length is out of range';
+    if (m.includes('greater')) return 'value is too small';
+    if (m.includes('less')) return 'value is too large';
+    return msg || 'invalid value';
+  };
+
+  const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const errorKey =
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    data?.errorKey;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'error'
+    })
+  );
+};
 
 const toHumanPatientDocumentError = (
   err,
@@ -148,9 +243,12 @@ const toHumanPatientDocumentError = (
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
     'unique.document': 'A document with the same number, type, and country already exists.',
+    'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
-    notfound: 'Patient document not found.'
+    notfound: 'Patient document not found.',
+    'number.invalid.start': 'Document number has an invalid starting digit for the selected type.',
+    'number.invalid.length': 'ID number should not be less than 10 digits.'
   };
 
   if (keyMap[errorKey]) {
@@ -174,14 +272,14 @@ const toHumanPatientDocumentError = (
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
   const title = data?.title || '';
-  const detail = data?.detail || '';
+  const detail = data?.detail && data.detail !== 'null' ? data.detail : '';
   const message = data?.message || '';
   const type = data?.type || '';
   const fieldErrors = data?.fieldErrors;
 
   const traceId =
-    data?.traceId || data?.correlationId
-      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+    data?.traceId || data?.correlationId || data?.requestId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId || data?.requestId}`
       : '';
 
   const payloadText = [title, detail, message].filter(Boolean).join(' | ');
@@ -238,20 +336,35 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   }
 
   let errorKey = data.errorKey || data.message || data.properties?.message || '';
-  errorKey = errorKey.replace(/^error\./, '');
+  errorKey = String(errorKey).replace(/^error\./, '');
 
-  const keyMap = {
+  const keyMap: Record<string, string> = {
     'payload.required': 'Patient payload is required.',
     notfound: 'Patient not found.',
     'unique.medical_record_number': 'A patient with the same medical record number already exists.',
-    'db.constraint': 'Database constraint violated while saving/updating patient.'
+    'unique.document_id': 'A patient with the same document ID already exists.',
+    'required.fields': 'Required patient fields are missing.',
+    'required.fields.when.not.unknown':
+      'Required patient fields are missing: first name, last name, gender, date of birth, primary mobile number, and email are required unless the patient is marked as unknown.',
+    'mrn.not.generated': 'Medical record number was not generated by the database.',
+    'created_by.required': 'Created by is required while saving patient.',
+    'is_unknown.required': 'Unknown patient flag is required.',
+    'is_verified.required': 'Verified patient flag is required.',
+    'is_completed_patient.required': 'Completed patient flag is required.',
+    'db.constraint':
+      'Could not save patient. A value may already exist or a required field is invalid. Check names, mobile number, document ID, and document details, then try again.'
   };
 
   if (keyMap[errorKey]) {
     return keyMap[errorKey] + traceId;
   }
 
-  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+  return (
+    detail ||
+    title ||
+    message ||
+    'Unexpected server error occurred.'
+  ) + traceId;
 };
 
 const INSURANCE_ERROR_MAP: Record<string, string> = {
@@ -283,16 +396,14 @@ const normalizeInsuranceFieldErrorMessage = (message: string): string => {
   return message || 'invalid value';
 };
 
-const getInsuranceFieldLabel = (field: string): string =>
-  INSURANCE_FIELD_LABELS[field] ?? field;
+const getInsuranceFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
 
 const toHumanInsuranceError = (
   error: any,
   keyMap: Record<string, string> = INSURANCE_ERROR_MAP
 ): string => {
   const responseData = error?.data ?? {};
-  const traceId =
-    responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
   const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
   if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
@@ -320,6 +431,39 @@ const toHumanInsuranceError = (
   );
 };
 
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
+
+const PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'dateOfBirth', label: 'DOB' },
+  { key: 'sexAtBirth', label: 'Gender' },
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' }
+];
+
+const validatePatientNameFields = (patient: Patient): string | null => {
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+    if (!value) continue;
+    if (INVALID_TRAILING_CHARS.test(value)) {
+      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+    }
+  }
+  return null;
+};
+
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -337,14 +481,16 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [updatePatient] = useUpdatePatientMutation();
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
-  const [createEncounter] = useCreateEncounterMutation();
+  const [createQuickAppointment] = useCreateQuickAppointmentMutation();
   const [createAddress] = useCreateAddressMutation();
   const [updateAddress] = useUpdateAddressMutation();
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
-  const patientDocumentEnum = useEnumOptions('DocumentType');
+  const patientDocumentEnum = useEnumOptions('DocumentType', {
+    exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE',  'SOCIAL_CARD']
+  });
+
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
   const genderEnum = useEnumOptions('Gender');
 
@@ -355,21 +501,20 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const PAGE_SIZE = 5;
 
-  // Encounter type and department state for ER Triage
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage, setDeptPage] = useState(0);
+  const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
-
   const EncounterTypeEnum = useEnumOptions('EncounterType');
+  const authSlice = useAppSelector(s => s.auth);
 
+  const selectedDepartment = authSlice.selectedDepartment;
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number>(0);
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
 
-  // Insurance state
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
   const [payorPage, setPayorPage] = useState(0);
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
@@ -438,61 +583,61 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  useEffect(() => {
-    try {
-      const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
-      setSelectedFacilityId(Number(selectedDepartment?.facilityId ?? 0));
-    } catch {
-      setSelectedFacilityId(0);
-    }
-  }, [open]);
+    const fetchDepartments = async (page = 0) => {
+      if (!selectedFacilityId || !encounterType) return;
+
+      try {
+        const result = await triggerDepartments({
+          facilityId: selectedFacilityId,
+          encounterType,
+          page,
+          size: deptSize,
+          sort: 'id,asc'
+        }).unwrap();
+
+        const rows = result?.data ?? [];
+
+        setAllDepartments(prev => {
+          if (page === 0) return rows;
+          const seenIds = new Set(prev.map((d: any) => Number(d.id)));
+          return [...prev, ...rows.filter((d: any) => !seenIds.has(Number(d.id)))];
+        });
+
+        if (page === 0) {
+          setSelectedDepartmentId(null);
+        }
+      } catch (error) {
+        console.error('[TRACE] fetchDepartments:error', error);
+        if (page === 0) setAllDepartments([]);
+      }
+    };
 
   useEffect(() => {
-    if (pageCode !== 'ER_Triage') {
-      setAllDepartments([]);
-      return;
-    }
+    const facilityId = Number(selectedDepartment?.facilityId);
 
-    if (!selectedFacilityId || encounterType !== 'EMERGENCY') {
-      setAllDepartments([]);
-      return;
-    }
+    setSelectedFacilityId(
+      Number.isNaN(facilityId) ? null : facilityId
+    );
+  }, [selectedDepartment]);
 
-    if (deptPage === 0) {
-      setAllDepartments([]);
-    }
-
-    triggerDepartments({
-      facilityId: selectedFacilityId,
-      encounterType: 'EMERGENCY',
-      page: deptPage,
-      size: deptSize,
-      sort: 'id,asc'
-    });
-  }, [pageCode, selectedFacilityId, encounterType, deptPage, triggerDepartments]);
 
   useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
+    if (!open) return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') return;
+    if (!selectedFacilityId) return;
 
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
-      });
-      return merged;
-    });
-  }, [deptList]);
+    setDeptPage(0);
+    setSelectedDepartmentId(null);
+    setAllDepartments([]);
+    fetchDepartments(0);
+  }, [open, pageCode, selectedFacilityId, encounterType]);
 
   useEffect(() => {
     setPayorPage(0);
   }, [payorSearchKeyword]);
 
   useEffect(() => {
-    const currentPayorId = patientInsurance?.payorId
-      ? Number(patientInsurance.payorId)
-      : undefined;
+    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
@@ -535,43 +680,69 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
-  const [docCountryCache, setDocCountryCache] = useState<any[]>([]);
-  const [docCountryPage, setDocCountryPage] = useState(0);
-  const [docCountrySearch, setDocCountrySearch] = useState('');
-  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
-  const [, setDocCountryOpen] = useState(false);
-  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+  const enumLabels = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumLabels.map(o => [o.value, o.label])),
+    [enumLabels]
+  );
 
-  const { data: docCountriesData } = useGetActiveCountriesQuery({
-    page: docCountryPage,
-    size: PAGE_SIZE,
-    ...(docCountrySearch && { search: docCountrySearch }),
-    sort: 'id,asc'
-  });
+  const { data: activeCountriesResp } = useGetActiveCountriesQuery({ page: 0, size: 1000 });
+  const countrySelectData = useMemo(
+    () =>
+      (activeCountriesResp?.data ?? []).map(c => ({
+        value: c.id,
+        label: enumLabelMap[c.name] || formatEnumString(c.name)
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeCountriesResp]
+  );
+  const countrySelectDataRef = useRef(countrySelectData);
+  countrySelectDataRef.current = countrySelectData;
+
+  const saudiCountryId = useMemo(
+    () => (activeCountriesResp?.data ?? []).find(c => c.name === 'SAUDI_ARABIA')?.id ?? null,
+    [activeCountriesResp]
+  );
 
   useEffect(() => {
-    if (!docCountriesData?.data) return;
+    if (open && !secondaryDocument.id) {
+      setSecondaryDocument(prev => ({
+        ...prev,
+        type: prev.type || 'NATIONAL_ID',
+        countryId: prev.countryId || saudiCountryId || null
+      }));
+    }
+  }, [open, saudiCountryId]);
 
-    const mapped = docCountriesData.data.map((c: any) => ({
-      ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
-    }));
+  const validateDocument = () => {
+    const { type, number, countryId } = secondaryDocument as any;
+    const numberStr = String(number ?? '').trim();
 
-    if (docCountryPage === 0) {
-      setDocCountryCache(mapped);
-    } else {
-      setDocCountryCache(prev => [...prev, ...mapped]);
+    if (countryId !== saudiCountryId) return true;
+
+    if (type === 'NATIONAL_ID') {
+      if (!numberStr.startsWith('1')) {
+        dispatch(notify({ msg: 'Saudi National ID number must start with 1.', sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
     }
 
-    setDocHasMoreCountries(!!docCountriesData.links?.next);
-    setDocPaginationLoading(false);
-  }, [docCountriesData, docCountryPage, countryLov]);
+    if (type === 'IQAMA' || type === 'BORDER_NUMBER') {
+      if (!numberStr.startsWith('2')) {
+        dispatch(notify({ msg: `Saudi ${type} number must start with 2.`, sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
+    }
 
-  const loadMoreDocCountries = () => {
-    if (!docHasMoreCountries) return;
-    setDocPaginationLoading(true);
-    setDocCountryPage(prev => prev + 1);
+    return true;
   };
 
   type ExtendedAddress = Address & {
@@ -702,12 +873,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
     const mapped = addrCountriesResponse.data.map((c: any) => ({
       ...c,
-      displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+      displayName: c.displayName || c.name
     }));
 
     setAddrCountryCache(prev => (addrCountryPage === 0 ? mapped : [...prev, ...mapped]));
-  }, [addrCountriesResponse, addrCountryPage, countryLov]);
+  }, [addrCountriesResponse, addrCountryPage]);
 
   useEffect(() => {
     if (!addrDistrictsResponse?.data) return;
@@ -780,17 +950,54 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  const validateMandatoryPatientFields = (): boolean => {
+    const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
+
+      if (key === 'primaryMobileNumber') {
+        return !isPhoneValid(value);
+      }
+
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async (): Promise<Patient | null> => {
+    if (!validateMandatoryPatientFields()) {
+      return null;
+    }
+
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return null;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -809,7 +1016,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
         lastName: 'Last Name',
         dateOfBirth: 'Date of Birth',
         primaryMobileNumber: 'Primary Mobile Number',
-        sexAtBirth: 'Gender'
+        sexAtBirth: 'Gender',
+        documentId: 'Document ID',
+        medicalRecordNumber: 'Medical Record Number',
+        email: 'Email'
       });
 
       dispatch(notify({ msg, sev: 'error' }));
@@ -818,58 +1028,90 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const handleSavePatientAndQuick = async () => {
+    if (!validateMandatoryPatientFields()) {
+      return;
+    }
+
+    const facilityId = selectedFacilityId;
+    const departmentId = selectedDepartmentId;
+
+    if (!departmentId || !facilityId) {
+      dispatch(
+        notify({
+          msg: 'Please select a department before saving.',
+          sev: 'error'
+        })
+      );
+      return;
+    }
+
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
-      if (pageCode === 'ER_Triage') {
-        const facilityId = selectedFacilityId;
-        const departmentId = selectedDepartmentId;
+      await saveAddressIfNeeded(Number(saved?.id ?? 0));
 
-        if (!departmentId || !facilityId) {
-          dispatch(
-            notify({
-              msg: 'Please select a department before saving.',
-              sev: 'error'
-            })
-          );
-          return;
-        }
+      const practitionerId = 0;
 
-        const encounterBody: PatientEncounter = {
-          ...newPatientEncounter,
-          id: 0,
-          patientId: Number(saved.id ?? 0),
-          facilityId,
-          departmentId,
-          encounterType: 'EMERGENCY',
-          encounterReason: 'URGENT_VISIT',
-          status: 'WAITING_TRIAGE',
-          encounterDate: new Date(),
-          paymentDate: new Date().toISOString(),
-          amount: 0
-        };
+      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        facilityId: Number(facilityId),
+        departmentId: Number(departmentId),
+        resourceType: (practitionerId > 0
+          ? 'PRACTITIONER'
+          : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
+        patientId: Number(saved?.id ?? 0),
+        service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+        priority: 'NORMAL',
+        defaultServiceId: null,
+        defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+        reason: null,
+        note: null,
+        followUpEncounterId: null,
+        originType: null,
+        originName: null
+      };
 
-        await createEncounter({ body: encounterBody }).unwrap();
+      const quickSaved = await createQuickAppointment(payload).unwrap();
+      const returnedEncounter = (quickSaved as any)?.encounter ?? null;
 
+      if (returnedEncounter && typeof returnedEncounter === 'object') {
+        dispatch(setRefetchEncounter(true));
+      } else {
         dispatch(setRefetchEncounter(true));
       }
 
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
 
-      if (pageCode !== 'ER_Triage') {
+      if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
         navigate('/patient-profile', { state: { patient: saved } });
       }
-    } catch (err) {
+    } catch (err: any) {
+      const encounterLikeError =
+        Array.isArray(err?.data?.fieldErrors) ||
+        !!err?.data?.errorKey ||
+        (typeof err?.data?.message === 'string' && err.data.message.startsWith('error.'));
+
+      if (encounterLikeError) {
+        handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+        return;
+      }
+
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
         lastName: 'Last Name',
@@ -886,12 +1128,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const isNoDocument =
       secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
+    if (!isNoDocument && !validateDocument()) {
+      return;
+    }
+
     if (isNoDocument) {
       try {
         await addNoDocument({
           patientId: localPatient.id,
           type: 'NO_DOCUMENT',
-          isPrimary: secondaryDocument.isPrimary ?? false
+          isPrimary: secondaryDocument.isPrimary ?? false,
+          isCitizen: Boolean(localPatient?.isCitizen)
         }).unwrap();
 
         dispatch(notify({ msg: 'No Document Added Successfully', sev: 'success' }));
@@ -907,8 +1154,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      isPrimary: secondaryDocument.isPrimary ?? false,
-      number: secondaryDocument.number
+      number: String(secondaryDocument.number ?? '').trim(),
+      isCitizen: Boolean(localPatient?.isCitizen)
     };
 
     try {
@@ -969,6 +1216,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   useEffect(() => {
     if (!open) {
+      return;
+    }
+
+    const isCitizen = isCitizenFromDocumentType(secondaryDocument?.type);
+    setLocalPatient(prev =>
+      Boolean(prev?.isCitizen) === isCitizen ? prev : { ...prev, isCitizen }
+    );
+  }, [open, secondaryDocument?.type]);
+
+  useEffect(() => {
+    if (!open) {
       setLocalPatient({ ...newPatient });
       setPatientInsurance({ ...newPatientInsurance });
       setOpenNextDocument(false);
@@ -985,7 +1243,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       setPlanPage(0);
       setRelativePage(0);
       setAllRelatives([]);
-      setDocCountryOpen(false);
     }
   }, [open]);
 
@@ -994,7 +1251,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       case 0:
         return (
           <Form layout="inline">
-            <span className="custom-text">Basic Information</span>
+            <span className="custom-text">Basic Informationm</span>
 
             <MyInput
               width={200}
@@ -1007,6 +1264,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               width={200}
               column
+              required
               fieldName="secondName"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -1037,6 +1295,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldName="dateOfBirth"
               record={localPatient}
               setRecord={setLocalPatient}
+              disableFutureDates
+              showWarningIfBeforeYear1900
             />
 
             <MyInput
@@ -1052,25 +1312,34 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-
             <MyInput
               width={200}
-              column
               required
+              column
+              fieldLabel="Citizen"
+              fieldType="checkbox"
+              fieldName="isCitizen"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
+            <PhoneNumberInput
+              required
+              column
               fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
-              required
               column
               fieldName="email"
               record={localPatient}
               setRecord={setLocalPatient}
               width={200}
             />
-             {pageCode === 'ER_Triage' && (
+
+            {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
               <>
                 <MyInput
                   column
@@ -1109,114 +1378,100 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                   searchable
-                  disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
+                  disabled={!selectedFacilityId}
                   loading={isDepartmentsFetching}
                   hasMore={deptHasMore}
                   onFetchMore={() => {
                     if (deptList?.links?.next) {
                       const { page } = extractPaginationFromLink(deptList.links.next);
                       setDeptPage(page);
+                      fetchDepartments(page);
                     }
                   }}
                 />
+                <MyInput
+                  width={200}
+                  column
+                  fieldType="checkbox"
+                  fieldName="isPrivatePatient"
+                  fieldLabel="Private Patient"
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                />
               </>
             )}
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
-
-           
           </Form>
         );
 
       case 1:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline" fluid className="patient-doc-secondary-container">
             <span className="custom-text">Patient Document</span>
 
             <MyInput
-              width={200}
               required
               column
+              width={300}
               fieldLabel="Document Type"
               fieldType="select"
               fieldName="type"
               selectData={patientDocumentEnum ?? []}
               selectDataLabel="label"
               selectDataValue="value"
+              searchable={false}
               record={secondaryDocument}
-              setRecord={setSecondaryDocument}
+              setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
             />
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
                 required
                 column
-                width={200}
+                width={300}
                 fieldLabel="Document Country"
-                fieldType="selectPagination"
+                fieldType="select"
                 fieldName="countryId"
-                selectData={docCountryCache}
-                selectDataLabel="displayName"
-                selectDataValue="id"
-                searchKeyWard={docCountrySearch}
-                setSearchKeyWard={setDocCountrySearch}
-                hasMore={docHasMoreCountries}
-                onFetchMore={loadMoreDocCountries}
-                loading={docPaginationLoading}
-                onSelectItem={(item: any) => {
-                  setSecondaryDocument(prev => ({
-                    ...prev,
-                    countryId: item.id
-                  }));
-                }}
+                selectData={countrySelectData}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={secondaryDocument}
+                setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
               />
             )}
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
-                width={200}
                 required
                 column
+                width={300}
+                fieldType="number"
                 fieldLabel="Document Number"
                 fieldName="number"
-                disabled={
-                  secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-                }
                 record={secondaryDocument}
-                setRecord={newRecord => {
-                  setSecondaryDocument({
-                    ...secondaryDocument,
-                    ...newRecord,
+                setRecord={r =>
+                  setSecondaryDocument(prev => ({
+                    ...prev,
                     number:
-                      secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                      prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
-                        : newRecord.number
-                  });
-                }}
+                        : String(r.number ?? '')
+                  }))
+                }
               />
             )}
 
             <MyInput
-              width={200}
+              required
               column
-              fieldLabel="Primary Document"
+              width={300}
+              fieldLabel="Citizen"
               fieldType="checkbox"
-              fieldName="isPrimary"
-              disabled={
-                secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-              }
-              record={secondaryDocument}
-              setRecord={setSecondaryDocument}
+              fieldName="isCitizen"
+              record={localPatient}
+              setRecord={setLocalPatient}
             />
+
+            {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
           </Form>
         );
 
@@ -1224,18 +1479,18 @@ const CreateNewPatient = ({ open, setOpen }) => {
         return (
           <Form layout="inline">
             <span className="custom-text">Contact Information</span>
-
-            <MyInput
-              width={200}
+            <PhoneNumberInput
               column
-              fieldLabel="Secondary Mobile Number"
               fieldName="secondMobileNumber"
+              fieldLabel="Secondary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
               width={200}
               column
+              fieldType="textnumber"
               fieldName="homePhone"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -1408,7 +1663,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
                   disabled={!address.districtId}
                   onFetchMore={() => {
                     if (addrCommunitiesResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(addrCommunitiesResponse.links.next);
+                      const { page } = extractPaginationFromLink(
+                        addrCommunitiesResponse.links.next
+                      );
                       setAddrCommunityPage(page);
                     }
                   }}
@@ -1573,7 +1830,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Policy Number"
               fieldName="policyNumber"
               record={patientInsurance}
@@ -1583,7 +1840,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               column
               width={200}
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Group Number"
               fieldName="groupNumber"
               record={patientInsurance}
@@ -1636,6 +1893,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -1645,9 +1906,18 @@ const CreateNewPatient = ({ open, setOpen }) => {
         {
           title: 'Basic Info',
           icon: <FontAwesomeIcon icon={faUser} />,
+          disabledNext: !localPatient?.id,
           footer: (
-            <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
-              {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
+            <MyButton
+              onClick={
+                pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage'
+                  ? handleSavePatientAndQuick
+                  : handleSave
+              }
+            >
+              {pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage'
+                ? 'Save & Create Quick Appointment'
+                : 'Save'}
             </MyButton>
           )
         },
@@ -1670,16 +1940,19 @@ const CreateNewPatient = ({ open, setOpen }) => {
       ]}
       size="33vw"
       position="right"
-      content={conjureFormContent}
+      content={step => <div dir={dir}>{conjureFormContent(step)}</div>}
       actionButtonFunction={async () => {
         const saved = await handleSave();
         if (!saved) return;
 
         if (pageCode === 'ER_Triage') {
           navigate('/ER-triage');
+        } else if (pageCode === 'Urgent_Care_Triage') {
+          navigate('/urgent-care-triage');
         } else {
           navigate('/patient-profile', { state: { patient: saved } });
         }
+
         setOpen(false);
         setLocalPatient({ ...newPatient });
         setPatientInsurance({ ...newPatientInsurance });

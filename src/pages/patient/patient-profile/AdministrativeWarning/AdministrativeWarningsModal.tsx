@@ -24,9 +24,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useState } from 'react';
-import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
+import React, { useMemo, useState } from 'react';
+import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
+import UserDateCell from '@/components/UserDateCell';
 
 interface AdministrativeWarningsModalProps {
   localPatient: Patient;
@@ -48,13 +49,12 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
   const [description, setDescription] = useState('');
 
-  const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
+const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
   const { data: warnings, isLoading } = useGetWarningsByPatientIdQuery(
     { patientId: localPatient.id! },
     { skip: !localPatient.id }
   );
-  console.log("warnings: ", warnings);
 
   const { data: searchedWarnings } = useSearchWarningsByPatientIdQuery(
     { patientId: localPatient.id!, searchText },
@@ -95,24 +95,22 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
   const handleResolve = async (warning: any) => {
     try {
       await resolveWarning({
-        id: warning.id,
-        body: { id: warning.id, resolved: true }
+        id: warning.id
       }).unwrap();
 
-      dispatch(notify({ msg: 'Accepted Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
     } catch {
-      dispatch(notify({ msg: 'Accept Failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Resolve Failed', sev: 'error' }));
     }
   };
 
   const handleUndoResolve = async (warning: any) => {
     try {
       await undoResolveWarning({
-        id: warning.id,
-        body: { id: warning.id, resolved: false }
+        id: warning.id
       }).unwrap();
 
-      dispatch(notify({ msg: 'Undo Accept Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Undo Resolve Successfully', sev: 'success' }));
     } catch {
       dispatch(notify({ msg: 'Undo Failed', sev: 'error' }));
     }
@@ -139,20 +137,13 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     <div>
       <div className="search-in-list-cards">
         <InputGroup inside>
-          <Input
-            placeholder="Search"
-            value={searchText}
-            onChange={(value) => setSearchText(value)}
-          />
+          <Input placeholder="Search" value={searchText} onChange={value => setSearchText(value)} />
           <InputGroup.Button>
             <SearchIcon />
           </InputGroup.Button>
         </InputGroup>
 
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-          onClick={handleAddNew}
-        >
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew} disabled={localPatient?.patientStatus === 'MERGED'}>
           Add
         </MyButton>
       </div>
@@ -172,11 +163,8 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                       <Translate>Type</Translate>
                     </span>
                     <span className="custom-type-card-content">
-                      {
-                        lovData?.object?.find(
-                          (lov: any) => lov.key === warning.warningType
-                        )?.lovDisplayVale || warning.warningType
-                      }
+                      {lovData?.object?.find((lov: any) => lov.key === warning.warningType)
+                        ?.lovDisplayVale || warning.warningType}
                     </span>
                   </div>
                   <div className="status-card-content">
@@ -196,81 +184,71 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                     <span>{warning.description}</span>
                   </div>
                 </div>
-                
-                  <div className="meta-section">
 
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>ADDITION BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.createdBy || 'By User'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.createdDate
-                          ? new Date(warning.createdDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
+                <div className="meta-section">
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>ADDITION BY/DATE</Translate>
+                    </span>
 
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>RESOLVED BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.resolvedBy || '-'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.resolvedDate
-                          ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
-
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>RESOLUTION UNDO BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.undoResolvedBy || '-'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.undoResolvedDate
-                          ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
-
+                    <UserDateCell
+                      login={warning.createdBy}
+                      date={warning.createdDate}
+                    />
                   </div>
+
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>RESOLVED BY/DATE</Translate>
+                    </span>
+
+                    <UserDateCell
+                      login={warning.resolvedBy}
+                      date={warning.resolvedDate}
+                    />
+                  </div>
+
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>RESOLUTION UNDO BY/DATE</Translate>
+                    </span>
+
+                    <UserDateCell
+                      login={warning.undoResolvedBy}
+                      date={warning.undoResolvedDate}
+                    />
+                  </div>
+                </div>
               </div>
 
-                <div className="right-side-card">
-                  <button
-                    className="action-btn accept-btn"
-                    disabled={warning.resolved}
-                    onClick={() => handleResolve(warning)}
-                  >
-                    <FontAwesomeIcon icon={faCircleCheck} />
-                  </button>
+              <div className="right-side-card">
+                <button
+                  className="action-btn accept-btn"
+                  disabled={warning.resolved || localPatient?.patientStatus === 'MERGED'}
+                  onClick={() => handleResolve(warning)}
+                >
+                  <FontAwesomeIcon icon={faCircleCheck} />
+                </button>
 
-                  <button
-                    className="action-btn undo-btn"
-                    disabled={!warning.resolved}
-                    onClick={() => handleUndoResolve(warning)}
-                  >
-                    <FontAwesomeIcon icon={faRotateLeft} />
-                  </button>
+                <button
+                  className="action-btn undo-btn"
+                  disabled={!warning.resolved || localPatient?.patientStatus === 'MERGED'}
+                  onClick={() => handleUndoResolve(warning)}
+                >
+                  <FontAwesomeIcon icon={faRotateLeft} />
+                </button>
 
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => {
-                      setWarningToDelete(warning);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrashCan} />
-                  </button>
-                </div>
+                <button
+                  className="action-btn delete-btn"
+                  disabled={localPatient?.patientStatus === 'MERGED'}
+                  onClick={() => {
+                    setWarningToDelete(warning);
+                    setDeleteModalOpen(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -288,6 +266,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         fieldName="warningType"
         selectData={lovData?.object ?? []}
         selectDataLabel="lovDisplayVale"
+        disableByField='isValid'
         selectDataValue="key"
         record={{ warningType }}
         setRecord={(val: any) => setWarningType(val.warningType)}
@@ -307,8 +286,14 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </Form>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <MyButton
         appearance="ghost"
         disabled={!localPatient.id}
@@ -326,7 +311,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         title="Administrative Warnings"
         mainContent={mainContent}
         childTitle="Add New"
-        childContent={childContent}
+        childContent={<div dir={dir}>{childContent}</div>}
         childStep={[
           {
             title: 'Administrative Warning',
@@ -346,7 +331,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         actionType="delete"
         actionButtonFunction={handleDelete}
       />
-    </>
+    </div>
   );
 };
 

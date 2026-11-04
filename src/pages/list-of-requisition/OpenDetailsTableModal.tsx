@@ -151,6 +151,11 @@ const OpenDetailsTableModal = ({ open, setOpen }) => {
     </div>
   );
 
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -165,7 +170,7 @@ const OpenDetailsTableModal = ({ open, setOpen }) => {
       size="90vw"
       position="center"
       actionButtonLabel="Save"
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

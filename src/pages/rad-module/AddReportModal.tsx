@@ -3,7 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
+import { useGetActiveReportTemplatesQuery, useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService"; 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApDiagnosticOrderTests } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
@@ -35,7 +35,7 @@ const AddReportModal = ({
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
-  const { data: readyTemplatesResponse } = useGetAllReportTemplatesQuery({
+  const { data: readyTemplatesResponse } = useGetActiveReportTemplatesQuery({
     page: 0,
     size: 9999,
     sort: "name,asc"
@@ -120,7 +120,14 @@ const AddReportModal = ({
 
   const isDisabled = report?.statusLkey === '265089168359400';
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+  <div dir={dir}>
     <MyModal
       title="Add Report"
       open={open}
@@ -141,7 +148,9 @@ const AddReportModal = ({
                   fieldName="severityLkey"
                   fieldType="select"
                   selectData={severityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={report}
                   setRecord={setReport}
@@ -225,6 +234,7 @@ const AddReportModal = ({
       }
 
     />
+  </div>
   );
 };
 

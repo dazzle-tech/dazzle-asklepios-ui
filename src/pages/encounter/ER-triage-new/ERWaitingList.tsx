@@ -65,14 +65,62 @@ const derivePatientFilters = (appliedSearch: any) => {
   ).trim();
 
   if (!raw) {
-    return { patientName: undefined as string | undefined, mrn: undefined as string | undefined };
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
   }
 
   if (searchByField === 'patientMrn') {
-    return { patientName: undefined, mrn: raw };
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
   }
 
-  return { patientName: raw, mrn: undefined };
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const ERWaitingList = () => {
@@ -115,7 +163,7 @@ const ERWaitingList = () => {
 
     triggerGetDepartmentById(Number(departmentId))
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -179,7 +227,7 @@ const ERWaitingList = () => {
       uniqueNonEmpty(priorities) ??
       uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
 
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+    const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } = derivePatientFilters(patientSearchApplied);
 
     return {
       departmentId,
@@ -188,6 +236,9 @@ const ERWaitingList = () => {
       statusIn: normalizedStatusIn,
       patientName,
       mrn,
+      primaryMobileNumber,
+      documentNumber,
+      dateOfBirth,
       encounterReasons: normalizedEncounterReasons,
       chiefComplaint,
       priorities: normalizedPriorities,
@@ -195,6 +246,7 @@ const ERWaitingList = () => {
       hasOrder,
       isObserved,
       page,
+      practitionerId: undefined,
       size: pageSize,
       sort: DEFAULT_SORT,
       timestamp: searchTick
@@ -257,7 +309,7 @@ const ERWaitingList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
@@ -296,9 +348,9 @@ const ERWaitingList = () => {
       ).trim();
       const secondName = String(
         patientFromMap?.secondName ??
-          row?.patient?.secondName ??
-          row?.patientObject?.secondName ??
-          ''
+        row?.patient?.secondName ??
+        row?.patientObject?.secondName ??
+        ''
       ).trim();
       const thirdName = String(
         patientFromMap?.thirdName ?? row?.patient?.thirdName ?? row?.patientObject?.thirdName ?? ''
@@ -358,8 +410,16 @@ const ERWaitingList = () => {
       refetchEncounters();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpen(false);
-    } catch {
-      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -380,7 +440,8 @@ const ERWaitingList = () => {
         from: 'ER_Waiting_List',
         info: 'toViewTriage',
         patient: patientData,
-        encounter: encounterData
+        encounter: encounterData,
+        viewMode: 'readOnly'
       }
     });
   };
@@ -652,8 +713,9 @@ const ERWaitingList = () => {
         <MyInput
           column
           width={150}
+           className="show-cancelled"
           fieldType="check"
-          fieldLabel="Show Cancelled"
+          fieldLabel={<Translate>Show Cancelled</Translate>}
           fieldName="showCancelled"
           showLabel={false}
           record={{ showCancelled }}
@@ -708,41 +770,7 @@ const ERWaitingList = () => {
                 fieldLabel="Chief Complain"
               />
 
-              <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
+            
 
               <MyInput
                 width={200}
@@ -815,14 +843,20 @@ const ERWaitingList = () => {
     );
   }
 
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <BedAssignmentModal
         refetchEncounter={refetchEncounters}
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={String(encounter?.departmentId) ?? String(departmentId)}
+        departmentId={String(encounter?.departmentId) ?? String(departmentId)}
       />
 
       <MyTable
@@ -855,7 +889,7 @@ const ERWaitingList = () => {
         setOpen={setOpenEMRModal}
         title="Patient EMR"
         size="95vw"
-        content={<PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} />}
+        content={<div dir={dir}><PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} /></div>}
         cancelButtonLabel="Close"
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEMRModal(false)}

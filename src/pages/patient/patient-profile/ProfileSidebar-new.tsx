@@ -4,25 +4,27 @@ import Translate from '@/components/Translate';
 import UserSearch from '@/images/svgs/UserSearch';
 
 import {
+  useLazyGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
-  useLazyGetPatientsByAnyDocumentNumberQuery,
- 
+  useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
+import { useLazyGetEncounterByNumberQuery } from '@/services/encounters/patientEncounterService';
 
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav, DatePicker } from 'rsuite';
+import { Button, Form, Input, InputGroup, Panel, Sidebar, Sidenav } from 'rsuite';
 
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Patient } from '@/types/model-types-new';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import './styles.less';
 
 interface ProfileSidebarProps {
   expand: boolean;
@@ -34,6 +36,9 @@ interface ProfileSidebarProps {
   title?: React.ReactNode;
   direction?: string;
   showButton?: boolean;
+  searchRef?: React.MutableRefObject<(() => void) | null>;
+  showPhoneNumberSearch?: boolean;
+  showEncounterNumberSearch?: boolean;
 }
 
 const PAGE_SIZE = 10;
@@ -46,16 +51,19 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   direction = 'left',
   showButton = true,
   refetchData,
-  setRefetchData
+  setRefetchData,
+  searchRef,
+  showPhoneNumberSearch = true,
+  showEncounterNumberSearch = true
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
-
   const [patients, setPatients] = useState<any[]>([]);
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
+  const searchRequestIdRef = useRef(0);
 
   const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
@@ -63,6 +71,40 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
   const [fetchByFullName] = useLazyGetPatientsByFullNameQuery();
   const [fetchByDocumentNo] = useLazyGetPatientsByAnyDocumentNumberQuery();
+  const [fetchEncounterByNumber] = useLazyGetEncounterByNumberQuery();
+  const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+  const selectData = useMemo(() => {
+    const options = [
+      { label: 'Full Name', value: 'fullName' },
+      { label: 'MRN', value: 'patientMrn' },
+      { label: 'Document Number', value: 'documentNo' }
+    ];
+
+    if (showPhoneNumberSearch) {
+      options.push({ label: 'Phone Number', value: 'phoneNumber' });
+    }
+
+    if (showEncounterNumberSearch) {
+      options.push({ label: 'Encounter Number', value: 'encounterNumber' });
+    }
+
+    return options;
+  }, [showPhoneNumberSearch, showEncounterNumberSearch]);
+
+  useEffect(() => {
+    const isPhoneHidden =
+      selectedCriterion === 'phoneNumber' && !showPhoneNumberSearch;
+    const isEncounterHidden =
+      selectedCriterion === 'encounterNumber' && !showEncounterNumberSearch;
+
+    if (isPhoneHidden || isEncounterHidden) {
+      setSelectedCriterion('fullName');
+      setSearchKeyword('');
+      setPatients([]);
+      setLinks({});
+    }
+  }, [showPhoneNumberSearch, showEncounterNumberSearch, selectedCriterion]);
 
   const selectTrigger = () => {
     switch (selectedCriterion) {
@@ -106,7 +148,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         break;
 
       case 'dob':
-        params.date = searchKeyword;
+        if (typeof searchKeyword === 'string') {
+          params.date = searchKeyword;
+        }
         break;
 
       default:
@@ -118,23 +162,128 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const search = useCallback(
     async (page = 0) => {
-      if (selectedCriterion !== 'dob' && searchKeyword.length < 3) return;
-      if (selectedCriterion === 'dob' && searchKeyword.length < 4) return;
+      if (selectedCriterion === 'encounterNumber') {
+        const encounterNumber = String(searchKeyword ?? '').trim();
+        if (!encounterNumber) return;
 
+        const requestId = ++searchRequestIdRef.current;
+        setIsLoadingPatients(true);
+
+        try {
+          const encounter = await fetchEncounterByNumber({
+            encounterNumber
+          }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
+
+          const patientId =
+            (encounter as any)?.patient?.id ?? (encounter as any)?.patientId;
+
+          if (patientId == null) {
+            setPatients([]);
+            setLinks({});
+            return;
+          }
+
+          const patient = await fetchPatientById({ id: patientId }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
+
+          const visiblePatients =
+            patient?.patientStatus !== 'MERGED' ? [patient] : [];
+
+          setPatients(visiblePatients);
+          setLinks({});
+        } catch (e) {
+          if (requestId !== searchRequestIdRef.current) return;
+          console.error('Search error:', e);
+          setPatients([]);
+          setLinks({});
+        } finally {
+          if (requestId === searchRequestIdRef.current) {
+            setIsLoadingPatients(false);
+          }
+        }
+
+        return;
+      }
+
+      if (selectedCriterion !== 'dob' && (!searchKeyword || String(searchKeyword).length < 3))
+        return;
+      if (selectedCriterion === 'dob' && !searchKeyword) return;
+
+      const requestId = ++searchRequestIdRef.current;
       setIsLoadingPatients(true);
+
+      if (selectedCriterion === 'dob' && typeof searchKeyword === 'string') {
+        try {
+          const resp = await fetchByDob({
+            date: searchKeyword,
+            page,
+            size: PAGE_SIZE,
+            sort: 'id,asc'
+          }).unwrap();
+
+          if (requestId !== searchRequestIdRef.current) return;
+
+          const visiblePatients = (resp.data || []).filter(
+            (patient: Patient) => patient?.patientStatus !== 'MERGED'
+          );
+
+          if (page === 0) {
+            setPatients(visiblePatients);
+          } else {
+            setPatients(prev => [...prev, ...visiblePatients]);
+          }
+
+          setLinks(resp.links || {});
+        } catch (e) {
+          if (requestId !== searchRequestIdRef.current) return;
+          console.error('Search error:', e);
+        } finally {
+          if (requestId === searchRequestIdRef.current) {
+            setIsLoadingPatients(false);
+          }
+        }
+
+        return;
+      }
 
       const trigger = selectTrigger();
       const params = buildParams(page);
 
-      const resp = await trigger(params).unwrap();
-      console.log('Search response:', resp);
-      if (page === 0) setPatients(resp.data);
-      else setPatients(prev => [...prev, ...resp.data]);
+      try {
+        const resp = await trigger(params).unwrap();
 
-      setLinks(resp.links || {});
-      setIsLoadingPatients(false);
+        if (requestId !== searchRequestIdRef.current) return;
+
+        const visiblePatients = (resp.data || []).filter(
+          (patient: Patient) => patient?.patientStatus !== 'MERGED'
+        );
+
+        if (page === 0) {
+          setPatients(visiblePatients);
+        } else {
+          setPatients(prev => [...prev, ...visiblePatients]);
+        }
+
+        setLinks(resp.links || {});
+      } catch (e) {
+        if (requestId !== searchRequestIdRef.current) return;
+        console.error('Search error:', e);
+      } finally {
+        if (requestId === searchRequestIdRef.current) {
+          setIsLoadingPatients(false);
+        }
+      }
     },
-    [searchKeyword, selectedCriterion]
+    [
+      searchKeyword,
+      selectedCriterion,
+      fetchEncounterByNumber,
+      fetchPatientById,
+      fetchByDob
+    ]
   );
 
   const loadMore = async () => {
@@ -146,16 +295,26 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   useEffect(() => {
     if (refetchData) {
-      if (searchKeyword.length >= 3) search(0);
+      if (selectedCriterion === 'encounterNumber') {
+        if (String(searchKeyword ?? '').trim()) search(0);
+      } else if (searchKeyword && String(searchKeyword).length >= 3) {
+        search(0);
+      }
       setRefetchData?.(false);
     }
   }, [refetchData]);
 
   useEffect(() => {
-    setPatients([]);
-    setLinks({});
-    setSearchKeyword('');
-  }, [selectedCriterion]);
+    if (searchRef) {
+      searchRef.current = () => {
+        if (selectedCriterion === 'encounterNumber') {
+          if (String(searchKeyword ?? '').trim()) search(0);
+          return;
+        }
+        if (searchKeyword && String(searchKeyword).length >= 3) search(0);
+      };
+    }
+  }, [search, searchKeyword, searchRef, selectedCriterion]);
 
   return (
     <div
@@ -167,8 +326,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       <Sidebar width={expand ? 300 : 56} collapsible className="profile-sidebar">
         <Sidenav expanded={expand} appearance="subtle" className="profile-sidenav">
           <Sidenav.Body>
-            <Nav>
-              {expand ? (
+            {expand ? (
                 <Panel header={title} className="sidebar-panel">
                   {showButton && (
                     <Button onClick={() => setExpand(false)} className="expand-sidebar">
@@ -181,49 +339,47 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
-                        selectData={[
-                          { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-                          { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-                          { label: <Translate>Full Name</Translate>, value: 'fullName' },
-                          {
-                            label: <Translate>Archiving Number</Translate>,
-                            value: 'archivingNumber'
-                          },
-                          {
-                            label: <Translate>Primary Phone Number</Translate>,
-                            value: 'phoneNumber'
-                          },
-                          { label: <Translate>Date of Birth</Translate>, value: 'dob' }
-                        ]}
+                        selectData={selectData}
                         selectDataLabel="label"
                         selectDataValue="value"
                         showLabel={false}
                         record={{ searchCriteria: selectedCriterion }}
-                        setRecord={r => setSelectedCriterion(r.searchCriteria)}
-                        width={300}
+                        setRecord={r => {
+                          const newCriterion = r?.searchCriteria;
+                          if (!newCriterion) return;
+                          if (newCriterion === selectedCriterion) return;
+
+                          searchRequestIdRef.current += 1;
+                          setSelectedCriterion(newCriterion);
+                          setSearchKeyword('');
+                          setPatients([]);
+                          setLinks({});
+                          setIsLoadingPatients(false);
+                        }}
+                        width="100%"
+                        searchable={false}
+                        cleanable={false}
+                        virtualized={false}
+                        preventOverflow={false}
+                        container={() => document.body}
+                        menuClassName="profile-sidebar-search-criteria-menu"
                       />
                     </Form>
 
-                    {/* التعديل فقط هنا */}
                     {selectedCriterion === 'dob' ? (
-                      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                        <DatePicker
-                          format="dd-MM-yyyy"
-                          placeholder="Select Date of Birth"
-                          style={{ flex: 1 }}
-                          oneTap
-                          value={searchKeyword ? new Date(searchKeyword) : null}
-                          onChange={val => {
-                            if (!val) {
-                              setSearchKeyword('');
-                              return;
-                            }
-                            const year = val.getFullYear();
-                            const month = String(val.getMonth() + 1).padStart(2, '0');
-                            const day = String(val.getDate()).padStart(2, '0');
-                            setSearchKeyword(`${year}-${month}-${day}`);
-                          }}
-                        />
+                      <Form style={{ display: 'flex', gap: 8, width: '100%' }}>
+                        <div className="width-problem" style={{ flex: 1 }}>
+                          <MyInput
+                            fieldType="date"
+                            fieldName="dob"
+                            showLabel={false}
+                            width={300}
+                            record={{ dob: searchKeyword }}
+                            setRecord={r => {
+                              setSearchKeyword(r.dob || null);
+                            }}
+                          />
+                        </div>
                         <Button
                           appearance="primary"
                           onClick={() => search(0)}
@@ -231,15 +387,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         >
                           <SearchIcon />
                         </Button>
-                      </div>
+                      </Form>
                     ) : (
-                      <InputGroup inside>
-                        <Input
-                          placeholder="Search Patients"
-                          value={searchKeyword}
-                          onChange={val => setSearchKeyword(val)}
-                          onKeyDown={e => e.key === 'Enter' && search(0)}
-                        />
+                      <InputGroup inside style={{ width: '100%' }}>
+                          <Input
+                            placeholder="Search Patients"
+                            value={searchKeyword}
+                            onChange={val => setSearchKeyword(val)}
+                            onKeyDown={e => e.key === 'Enter' && search(0)}
+                          />
                         <InputGroup.Button onClick={() => search(0)}>
                           <SearchIcon />
                         </InputGroup.Button>
@@ -250,7 +406,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   <Box className="patient-list">
                     {isLoadingPatients ? (
                       Array.from({ length: 4 }).map((_, index) => (
-                        <Box width={250} key={index} className="patient-list-loader">
+                        <Box width="100%" key={index} className="patient-list-loader">
                           <div className="patient-list-loader-circle">
                             <Skeleton
                               variant="circular"
@@ -280,17 +436,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     ) : (
                       <>
                         {patients.map(p => (
-                          <PatientCardWithPicture
+                          <div
                             key={p.id}
-                            patient={p}
-                            onClick={() => setLocalPatient(p)}
-                            actions={
-                              <Button className="actions-button">
-                                <FaEllipsis />
-                              </Button>
-                            }
-                            arrowDirection={direction as any}
-                          />
+                          
+                          >
+                            <PatientCardWithPicture
+                              patient={p}
+                              onClick={() => {
+                              
+                                setLocalPatient(p);
+                              }}
+                              actions={
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {p.patientStatus === 'MERGED' && (
+                                    <span className="patient-merged-badge">
+                                      <Translate>Merged</Translate>
+                                    </span>
+                                  )}
+
+                                  <Button className="actions-button">
+                                    <FaEllipsis />
+                                  </Button>
+                                </div>
+                              }
+                              arrowDirection={direction as any}
+                            />
+                          </div>
                         ))}
 
                         {links?.next && (
@@ -311,7 +482,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   <UserSearch />
                 </Button>
               )}
-            </Nav>
           </Sidenav.Body>
         </Sidenav>
       </Sidebar>

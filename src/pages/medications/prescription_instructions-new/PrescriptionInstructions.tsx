@@ -18,7 +18,8 @@ import {
   useLazyGetPrescriptionInstructionsByCategoryQuery,
   useLazyGetPrescriptionInstructionsByFrequencyQuery,
   useLazyGetPrescriptionInstructionsByRouteQuery,
-  useLazyGetPrescriptionInstructionsByUnitQuery
+  useLazyGetPrescriptionInstructionsByUnitQuery,
+  useLazyGetPrescriptionInstructionsByDoseQuery
 } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
@@ -36,6 +37,7 @@ const PrescriptionInstructions = () => {
   const [fetchByUnit] = useLazyGetPrescriptionInstructionsByUnitQuery();
   const [fetchByRoute] = useLazyGetPrescriptionInstructionsByRouteQuery();
   const [fetchByFrequency] = useLazyGetPrescriptionInstructionsByFrequencyQuery();
+  const [fetchByDose] = useLazyGetPrescriptionInstructionsByDoseQuery();
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -62,6 +64,8 @@ const PrescriptionInstructions = () => {
   const categoryEnumList = useEnumOptions('AgeGroupType');
   const uomEnumList = useEnumOptions('UOM');
   const routEnumList = useEnumOptions('MedRoa');
+
+
   const frequencyEnumList = useEnumOptions('MedFrequency');
 
   // Pagination values
@@ -74,6 +78,7 @@ const PrescriptionInstructions = () => {
   // Available fields for filtering
   const filterFields = [
     { label: 'Category', value: 'category' },
+    { label: 'Dose', value: 'dose' },
     { label: 'Unit', value: 'unit' },
     { label: 'Rout', value: 'rout' },
     { label: 'Frequency', value: 'frequency' }
@@ -81,8 +86,17 @@ const PrescriptionInstructions = () => {
 
   // Header page setUp
   const divContent = 'Prescription Instructions';
+
+
+  useEffect(() => {
   dispatch(setPageCode('Prescription_Instructions'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -128,7 +142,7 @@ const PrescriptionInstructions = () => {
 
   // filters
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -197,6 +211,16 @@ const PrescriptionInstructions = () => {
           placeholder="Enter Value"
           width={220}
         />
+      ) : recordOfFilter['filter'] == 'dose' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="number"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Dose"
+          width={220}
+        />
       ) : (
         <MyInput
           fieldName="value"
@@ -243,6 +267,8 @@ const PrescriptionInstructions = () => {
         response = await fetchByCategory({ category: value, ...params }).unwrap();
       } else if (field === 'unit') {
         response = await fetchByUnit({ unit: value, ...params }).unwrap();
+      } else if (field === 'dose') {
+        response = await fetchByDose({ dose: value, ...params }).unwrap();
       } else if (field === 'frequency') {
         response = await fetchByFrequency({ frequency: value, ...params }).unwrap();
       }
@@ -294,7 +320,7 @@ const PrescriptionInstructions = () => {
     {
       key: 'frequency',
       title: 'Frequency',
-      render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '')
+      render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '-')
     },
     {
       key: 'icons',
@@ -323,19 +349,19 @@ const PrescriptionInstructions = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     setLink(prescriptionInstructionListResponse?.links);
   }, [prescriptionInstructionListResponse?.links]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         totalCount={isFiltered ? filteredTotal : totalCount}

@@ -699,8 +699,16 @@ const DrugOrder = props => {
     setOpenToAdd(true);
   };
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <div className="bt-div">
         <div style={{ width: '500px' }}>
           <SelectPicker
@@ -989,8 +997,8 @@ const DrugOrder = props => {
           }
         />
       </div>
-      <AllergyFloatingButton patientKey={patient.key} />
-    </>
+      <AllergyFloatingButton patientKey={patient?.id} />
+    </div>
   );
 };
 export default DrugOrder;

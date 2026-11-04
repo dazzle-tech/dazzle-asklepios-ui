@@ -12,6 +12,8 @@ export type EnumOptionsParams = {
   exclude?: string[];
   labelOverrides?: Record<string, string>;
   labelFormatter?: (value: string) => string;
+  /** Fetch enums without requiring a login token (public forms). */
+  allowAnonymous?: boolean;
 };
 
 /* ------------------------------- Helpers ------------------------------- */
@@ -63,7 +65,10 @@ function extractEnumStrings(
 
 /* --------------------------- Default labeler --------------------------- */
 function formatEnumLabel(value: string) {
-  return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 /* --------------------------------- API --------------------------------- */
@@ -71,7 +76,7 @@ function formatEnumLabel(value: string) {
 export const enumsApi = createApi({
   reducerPath: 'enumsApi',
   baseQuery: BaseQuery,
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     getAllEnums: builder.query<Enumerations, void>({
       query: () => '/setup-service/v3/api-docs',
       transformResponse: (spec: OpenAPIV3_1.Document): Enumerations => {
@@ -87,51 +92,153 @@ export const enumsApi = createApi({
       },
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
-      },
-    }),
-  }),
+      }
+    })
+  })
 });
 
 export const { useGetAllEnumsQuery } = enumsApi;
 
 /* -------------------------------- Hooks -------------------------------- */
+ // Debug log
+export function useEnumByName(name: string, allowAnonymous = false): string[] {
+  const token = localStorage.getItem('id_token');
 
-export function useEnumByName(name: string): string[] {
-  const { data: allEnums = {} } = useGetAllEnumsQuery();
+  const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
+    skip: !allowAnonymous && !token
+  });
   return allEnums[name] ?? [];
 }
+
+
+const EMPTY_EXCLUDE: string[] = [];
+const EMPTY_LABEL_OVERRIDES: Record<string, string> = {};
 
 export function useEnumOptions(
   name: string,
   params: EnumOptionsParams = {}
 ): { value: string; label: string }[] {
-  const values = useEnumByName(name);
-  const { exclude = [], labelOverrides = {}, labelFormatter } = params;
+  const {
+    exclude = EMPTY_EXCLUDE,
+    labelOverrides = EMPTY_LABEL_OVERRIDES,
+    labelFormatter,
+    allowAnonymous = false
+  } = params;
+  const values = useEnumByName(name, allowAnonymous);
 
   return useMemo(() => {
-    const filtered = values.filter((v) => !exclude.includes(v));
+    const filtered = values.filter(v => !exclude.includes(v));
     const fmt = labelFormatter ?? formatEnumLabel;
 
-    return filtered.map((v) => ({
+    return filtered.map(v => ({
       value: v,
-      label: labelOverrides[v] ?? fmt(v),
+      label: labelOverrides[v] ?? fmt(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
 }
 
+export function useEnumNames(
+  params: {
+    exclude?: string[];
+    labelOverrides?: Record<string, string>;
+    labelFormatter?: (value: string) => string;
+  } = {}
+): { value: string; label: string }[] {
+  const token = localStorage.getItem("id_token");
+
+  const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
+    skip: !token
+  });
+
+  const {
+    exclude = [],
+    labelOverrides = {},
+    labelFormatter = formatClassNameLabel
+  } = params;
+
+  return useMemo(() => {
+    return Object.keys(allEnums)
+      .filter(name => !exclude.includes(name))
+      .sort()
+      .map(name => {
+        const className = name.substring(name.lastIndexOf(".") + 1);
+
+        return {
+          value: className, // ActiveIngredientsControlled
+          label: labelOverrides[className] ?? labelFormatter(className) // Active Ingredients Controlled
+        };
+      });
+  }, [allEnums, exclude, labelOverrides, labelFormatter]);
+}
 export function useEnumCapitalized(
   name: string,
-  params: Omit<EnumOptionsParams, 'labelFormatter'> & { labelFormatter?: (v: string) => string } = {}
+  params: Omit<EnumOptionsParams, 'labelFormatter'> & {
+    labelFormatter?: (v: string) => string;
+  } = {}
 ): { value: string; label: string }[] {
   const values = useEnumByName(name);
   const { exclude = [], labelOverrides = {}, labelFormatter } = params;
 
   return useMemo(() => {
-    const filtered = values.filter((v) => !exclude.includes(v));
+    const filtered = values.filter(v => !exclude.includes(v));
     const fmt = labelFormatter ?? ((v: string) => v);
-    return filtered.map((v) => ({
+    return filtered.map(v => ({
       value: v,
-      label: labelOverrides[v] ?? fmt(v),
+      label: labelOverrides[v] ?? fmt(v)
     }));
   }, [values, exclude, labelOverrides, labelFormatter]);
+}
+function extractScoreFromEnumValue(value: string): number {
+  const scoreMap: Record<string, number> = {
+    // Eye
+    SPONTANEOUS: 4,
+    TO_SPEECH: 3,
+    TO_PAIN: 2,
+    NO_RESPONSE: 1,
+    EYES_CLOSED_DUE_TO_SWELLING: 0,
+
+    // Verbal
+    ORIENTED: 5,
+    CONFUSED_CONVERSATION: 4,
+    INAPPROPRIATE_WORDS: 3,
+    INCOMPREHENSIBLE_SOUNDS: 2,
+    INTUBATED_TRACHEOSTOMY: 0,
+
+    // Motor
+    OBEYS_COMMANDS: 6,
+    LOCALIZES_PAIN: 5,
+    WITHDRAWS_FROM_PAIN: 4,
+    FLEXION_TO_PAIN: 3,
+    EXTENSION_TO_PAIN: 2
+  };
+
+  return scoreMap[value] ?? 0;
+}
+export function useEnumOptionsWithScore(
+  name: string,
+  params: EnumOptionsParams = {}
+): { value: string; label: string; score: number }[] {
+  const values = useEnumByName(name);
+
+  const { exclude = [], labelOverrides = {}, labelFormatter } = params;
+
+  return useMemo(() => {
+    const filtered = values.filter(v => !exclude.includes(v));
+
+    const fmt = labelFormatter ?? formatEnumLabel;
+
+    return filtered.map(v => ({
+      value: v,
+      label: labelOverrides[v] ?? fmt(v),
+      score: extractScoreFromEnumValue(v)
+    }));
+  }, [values, exclude, labelOverrides, labelFormatter]);
+}
+function formatClassNameLabel(value: string) {
+  const className = value.split('.').pop() ?? value;
+
+  return className
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .trim();
 }

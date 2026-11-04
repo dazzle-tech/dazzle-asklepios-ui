@@ -54,7 +54,9 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
                 fieldType="select"
                 fieldName="relationTypeLkey"
                 selectData={relationsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={selectedPatientRelation}
                 setRecord={setSelectedPatientRelation}
@@ -66,7 +68,9 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
                 fieldType="select"
                 fieldName="categoryTypeLkey"
                 selectData={categoryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={selectedPatientRelation}
                 setRecord={setSelectedPatientRelation}

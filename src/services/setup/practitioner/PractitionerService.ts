@@ -82,6 +82,26 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
+    getPractitionersByJobRole: builder.query<
+      PagedResult<any>,
+      { jobRole: string } & PagedParams
+    >({
+      query: ({ jobRole, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/practitioner/by-jobRole/${jobRole}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
     // Get active practitioners by sub-specialty
     getActivePractitionersBySubSpecialty: builder.query<
       PagedResult<any>,
@@ -120,6 +140,96 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
+    // Get practitioners by specialty and department
+    getPractitionersBySpecialityAndDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string; specialty: string } & PagedParams
+    >({
+      query: ({ departmentId, specialty, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/list-by-speciality-and-department',
+        method: 'GET',
+        params: { departmentId, specialty, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get practitioners by department
+    getPractitionerByDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string } & PagedParams
+    >({
+      query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/by-department',
+        method: 'GET',
+        params: { departmentId, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get specialist practitioners by department (optional specialty filter)
+    getSpecialistPractitionersByDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string; specialty?: string } & PagedParams
+    >({
+      query: ({ departmentId, specialty, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/specialists/by-department',
+        method: 'GET',
+        params: {
+          departmentId,
+          ...(specialty ? { specialty } : {}),
+          page,
+          size,
+          sort
+        }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get distinct specialties (sub-specialties) by department
+    getSpecialtiesByDepartment: builder.query<
+      PagedResult<string>,
+      { departmentId: number | string } & PagedParams
+    >({
+      query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/specialties/by-department',
+        method: 'GET',
+        params: { departmentId, page, size, sort }
+      }),
+      transformResponse: (response: string[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
     // Get single practitioner
     getPractitionerById: builder.query<any, number | string>({
       query: id => ({
@@ -133,6 +243,24 @@ export const PractitionerService = createApi({
     getActiveAppointablePractitioners: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/practitioner/active-appointable',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get appointable practitioners based on logged-in facility
+    getAppointablePractitionerByLoggedInFacility: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/appointable/by-loggedIn-facility',
         method: 'GET',
         params: { page, size, sort }
       }),
@@ -222,7 +350,87 @@ export const PractitionerService = createApi({
         };
       },
       providesTags: ['Practitioner']
-    })
+    }),
+
+    // Get all active practitioners
+    getAllActivePractitioners: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/active',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+    getActivePractitionersByFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/practitioner/active/by-facility/${facilityId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    getPractitionersByLinkedUser: builder.query<
+      PagedResult<any>,
+      { linked: boolean | string } & PagedParams
+    >({
+      query: ({ linked, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/by-linked-user',
+        method: 'GET',
+        params: { linked, page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Practitioner'],
+    }),
+
+    getPractitionersByStatus: builder.query<
+      PagedResult<any>,
+      { isActive: boolean | string } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = "id,asc" }) => ({
+        url: "/api/setup/practitioner/by-status",
+        method: "GET",
+        params: { isActive, page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Practitioner"],
+    }),
+
   })
 });
 
@@ -236,10 +444,20 @@ export const {
   useLazyGetActivePractitionersBySubSpecialtyQuery,
   useGetPractitionerByNameQuery,
   useLazyGetPractitionerByNameQuery,
+  useGetPractitionersBySpecialityAndDepartmentQuery,
+  useLazyGetPractitionersBySpecialityAndDepartmentQuery,
+  useGetPractitionerByDepartmentQuery,
+  useLazyGetPractitionerByDepartmentQuery,
+  useGetSpecialistPractitionersByDepartmentQuery,
+  useLazyGetSpecialistPractitionersByDepartmentQuery,
+  useGetSpecialtiesByDepartmentQuery,
+  useLazyGetSpecialtiesByDepartmentQuery,
   useGetPractitionerByIdQuery,
   useLazyGetPractitionerByIdQuery,
   useGetActiveAppointablePractitionersQuery,
   useLazyGetActiveAppointablePractitionersQuery,
+  useGetAppointablePractitionerByLoggedInFacilityQuery,
+  useLazyGetAppointablePractitionerByLoggedInFacilityQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
@@ -249,5 +467,15 @@ export const {
   useExistsPractitionerByUserIdQuery,
   useLazyExistsPractitionerByUserIdQuery,
   useGetSpecialistPractitionersQuery,
-  useLazyGetSpecialistPractitionersQuery
+  useLazyGetSpecialistPractitionersQuery,
+  useGetAllActivePractitionersQuery,
+  useLazyGetAllActivePractitionersQuery,
+  useGetActivePractitionersByFacilityQuery,
+  useLazyGetActivePractitionersByFacilityQuery,
+  useLazyGetPractitionersByJobRoleQuery,
+  useGetPractitionersByLinkedUserQuery,
+  useLazyGetPractitionersByLinkedUserQuery,
+  useGetPractitionersByStatusQuery,
+  useLazyGetPractitionersByStatusQuery,
+
 } = PractitionerService;

@@ -43,8 +43,14 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
   }, [pathologyData]);
 
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <div className="container-of-two-fields-diagnostic">
         <div className="container-of-field-diagnostic">
           <MyInput
@@ -55,7 +61,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="category"
             selectData={categoryLovQueryResponse?.object ?? []}
             fieldType="select"
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -68,7 +76,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="specimenType"
             fieldType="select"
             selectData={specimensLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -85,7 +95,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
             fieldName="analysisProcedure"
             fieldType="select"
             selectData={procedurwLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -108,7 +120,9 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
         fieldName="timeUnit"
         selectData={timeUnitLovQueryResponse?.object ?? []}
         fieldType="select"
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={diagnosticTestPathology}
         setRecord={setDiagnosticTestPathology}

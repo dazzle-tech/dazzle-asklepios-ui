@@ -13,10 +13,14 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import RandomBloodSugar from '@/pages/encounter/encounter-pre-observations-new/observations/RandomBloodSugar';
 import GeneralAssessmentTriage from './component/GeneralAssessmentTriage';
 import ChiefComplainTriage from './component/ChiefComplainTriage';
 import EyeAssessmentHPI from './component/EyeAssessmentHPI';
 import type { ApEncounter } from '@/types/model-types';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+import GlasgowComaScale from '@/pages/encounter/encounter-component/glasgow-coma-scale';
 
 const ViewTriage = () => {
   const location = useLocation();
@@ -113,8 +117,13 @@ const ViewTriage = () => {
     else navigate(-1);
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="er-main-container">
+    <div className="er-main-container" dir={dir}>
       <div className="left-box">
         <div className="bt-field-div">
           <BackButton onClick={handleGoBack} />
@@ -157,6 +166,16 @@ const ViewTriage = () => {
         </Row>
 
         <Row gutter={30}>
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <RandomBloodSugar
+              patientId={patientId}
+              encounterId={encounterId}
+              disabled
+            />
+          )}
+        </Row>
+
+        <Row gutter={30}>
           <GeneralAssessmentTriage patient={patient} encounter={encounter} readOnly />
         </Row>
 
@@ -173,6 +192,21 @@ const ViewTriage = () => {
             encounter={encounter}
             readOnly
           />
+        </Row>
+
+        <Row gutter={30}>
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <SectionContainer
+              title={<Translate>Glasgow Coma Scale Assessment</Translate>}
+              content={
+                <GlasgowComaScale
+                  patient={patient}
+                  encounter={encounter}
+                  viewMode="readOnly"
+                />
+              }
+            />
+          )}
         </Row>
       </div>
 

@@ -165,22 +165,46 @@ const FullViewTable = ({
   sortColumn,
   sortType,
   handlePageChange,
-  handleSortChange
+  handleSortChange,
+  activeIngredientsMap
 }) => {
 
  const tableColumns = [
-      {
-        key: 'medicationsId',
-        dataKey: 'medicationsId',
-        title: <Translate>Medication Name</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-          return genericMedicationListResponse?.data?.find(
-            (item: any) => String(item.id) === String(medId)
-          )?.name;
+    {
+      key: 'activeIngredientId',
+    
+      title: 'Active Ingredients',
+      flexGrow: 1,
+      render: (rowData: any) => {
+       const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        return ingredient?.name ? String(ingredient.name) : '-';
+      }
+
+    },
+    {
+      key: 'medicationName',
+      dataKey: 'medicationsId',
+      title: <Translate>Medication Name</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => {
+        if (rowData?.otherMedicationName?.trim()) {
+          return rowData.otherMedicationName.trim();
         }
-      },
+        const medId =
+          rowData?.medicationsId ??
+          rowData?.genericMedicationsId;
+
+        if (!medId) {
+          return '-';
+        }
+
+        return (
+          genericMedicationListResponse?.data?.find(
+            (item: any) => String(item.id) === String(medId)
+          )?.name ?? '-'
+        );
+      }
+    },
       {
         key: 'instructions',
         dataKey: '',
@@ -262,7 +286,7 @@ const FullViewTable = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Patient Chronic Medication"
+      title={<Translate>Patient Chronic Medication</Translate>}
       content={
       <MyTable
                 columns={tableColumns}
@@ -292,7 +316,7 @@ const FullViewTable = ({
       hideBack={true}
       steps={[
         {
-          title: "Patient Chronic Medication",
+          title: <Translate>Patient Chronic Medication</Translate>,
           icon: <FontAwesomeIcon icon={faPills} />
         }
       ]}

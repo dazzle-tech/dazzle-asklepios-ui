@@ -21,10 +21,8 @@ import {
 } from '@/services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 
 import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
-
 type AdditionalMeasurementsProps = {
-  patient: Patient; 
+  patient: Patient;
   encounterId: number;
   encounter?: any;
   disabled?: boolean;
@@ -48,11 +46,9 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
   const lastProcessedDOB = useRef<string | null>(null);
 
   const [fetchAgeGroupByBirthDate] = useLazyGetAgeGroupByBirthDateQuery();
-    const [updateEncounter] = useUpdateEncounterMutation();
 
   useEffect(() => {
-    const dob =
-      (patient as any)?.dateOfBirth
+    const dob = (patient as any)?.dateOfBirth;
 
     if (!dob) {
       setAgeGroupValue({ ageGroup: '' });
@@ -63,16 +59,14 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
     if (lastProcessedDOB.current === String(dob)) return;
     lastProcessedDOB.current = String(dob);
 
-    const birthDate =
-      String(dob).includes('T') ? String(dob).split('T')[0] : String(dob);
+    const birthDate = String(dob).includes('T') ? String(dob).split('T')[0] : String(dob);
 
     fetchAgeGroupByBirthDate({ birthDate } as any)
       .unwrap()
       .then(res => {
-        // ProfileTabs expects res?.ageGroup
         setAgeGroupValue({ ageGroup: res?.ageGroup ?? '' });
       })
-      .catch(err => {
+      .catch(() => {
         setAgeGroupValue({ ageGroup: '' });
       });
   }, [(patient as any)?.id, (patient as any)?.dateOfBirth]);
@@ -241,7 +235,9 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Additional measurements payload is required.',
@@ -298,7 +294,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
 
       if (isInfant && infantCreatePayload) {
         created = await createInfant(infantCreatePayload as any).unwrap();
-        
       } else if (isGeriatric && geriatricCreatePayload) {
         created = await createGeriatric(geriatricCreatePayload as any).unwrap();
       } else {
@@ -321,35 +316,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Additional measurements saved successfully', sev: 'success' }));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
     } catch (e: any) {
       showApiError(e);
     }
@@ -380,206 +346,204 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSave} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            {isInfant && (
-              <>
-                <Row className="rows-gap">
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      fieldName="hearingTest"
-                      fieldLabel="Hearing Test"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                      required
-                    />
-                  </Col>
-                </Row>
+          {isInfant && (
+            <>
+              <Row className="rows-gap">
+                <Col md={24}>
+                  <MyInput
+                    width="100%"
+                    fieldName="hearingTest"
+                    fieldLabel="Hearing Test"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                    required
+                  />
+                </Col>
+              </Row>
 
-                <Row className="rows-gap">
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="dehydration"
-                      fieldLabel="Dehydration"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
+              <Row className="rows-gap">
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="dehydration"
+                    fieldLabel="Dehydration"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
 
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="nasalFlaring"
-                      fieldLabel="Nasal Flaring"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="nasalFlaring"
+                    fieldLabel="Nasal Flaring"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
 
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="responseToLight"
-                      fieldLabel="Response to Light"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
-                </Row>
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="responseToLight"
+                    fieldLabel="Response to Light"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
+              </Row>
 
-                <Row className="rows-gap">
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="pupilResponse"
-                      fieldLabel="Pupil Response"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
+              <Row className="rows-gap">
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="pupilResponse"
+                    fieldLabel="Pupil Response"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
 
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="abilityToFollowTarget"
-                      fieldLabel="Ability to Follow Target"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="abilityToFollowTarget"
+                    fieldLabel="Ability to Follow Target"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
 
-                  <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="colorTesting"
-                      fieldLabel="Color Testing"
-                      checkedLabel="positive"
-                      unCheckedLabel="negative"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
-                </Row>
-              </>
-            )}
+                <Col md={8}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="colorTesting"
+                    fieldLabel="Color Testing"
+                    checkedLabel="positive"
+                    unCheckedLabel="negative"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
+              </Row>
+            </>
+          )}
 
-            {isGeriatric && (
-              <>
-                <Row className="rows-gap">
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="fallRisk"
-                      fieldLabel="Fall risk"
-                      checkedLabel="yes"
-                      unCheckedLabel="no"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                      required
-                    />
-                  </Col>
-                </Row>
+          {isGeriatric && (
+            <>
+              <Row className="rows-gap">
+                <Col md={24}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="fallRisk"
+                    fieldLabel="Fall risk"
+                    checkedLabel="yes"
+                    unCheckedLabel="no"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                    required
+                  />
+                </Col>
+              </Row>
 
-                <Row className="rows-gap">
-                  <Col md={12}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="visionProblemsAffectingFunction"
-                      fieldLabel="Vision problems affecting function"
-                      checkedLabel="yes"
-                      unCheckedLabel="no"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                      required
-                    />
-                  </Col>
+              <Row className="rows-gap">
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="visionProblemsAffectingFunction"
+                    fieldLabel="Vision problems affecting function"
+                    checkedLabel="yes"
+                    unCheckedLabel="no"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                    required
+                  />
+                </Col>
 
-                  <Col md={12}>
-                    <MyInput
-                      width="100%"
-                      fieldType="checkbox"
-                      fieldName="hearingProblemsAffectingFunction"
-                      fieldLabel="Hearing problems affecting function"
-                      checkedLabel="yes"
-                      unCheckedLabel="no"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                      required
-                    />
-                  </Col>
-                </Row>
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="checkbox"
+                    fieldName="hearingProblemsAffectingFunction"
+                    fieldLabel="Hearing problems affecting function"
+                    checkedLabel="yes"
+                    unCheckedLabel="no"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                    required
+                  />
+                </Col>
+              </Row>
 
-                <Row className="rows-gap">
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      fieldType="textarea"
-                      fieldName="details"
-                      fieldLabel="Details"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                    />
-                  </Col>
-                </Row>
+              <Row className="rows-gap">
+                <Col md={24}>
+                  <MyInput
+                    width="100%"
+                    fieldType="textarea"
+                    fieldName="details"
+                    fieldLabel="Details"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                  />
+                </Col>
+              </Row>
 
-                <Row className="rows-gap">
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      fieldType="textarea"
-                      fieldName="actionToTake"
-                      fieldLabel="Action to take"
-                      record={record}
-                      setRecord={setRecord}
-                      disabled={disabled}
-                      required
-                    />
-                  </Col>
-                </Row>
-              </>
-            )}
-          </Form>
+              <Row className="rows-gap">
+                <Col md={24}>
+                  <MyInput
+                    width="100%"
+                    fieldType="textarea"
+                    fieldName="actionToTake"
+                    fieldLabel="Action to take"
+                    record={record}
+                    setRecord={setRecord}
+                    disabled={disabled}
+                    required
+                  />
+                </Col>
+              </Row>
+            </>
+          )}
         </div>
       }
     />

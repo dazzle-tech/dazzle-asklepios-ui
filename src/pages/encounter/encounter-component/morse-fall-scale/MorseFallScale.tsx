@@ -157,19 +157,28 @@ const MorseFallScale = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div className="container-of-header-actions-morse">
         <Form className="container-of-cancel-actions-morse">
           <MyButton color="var(--deep-blue)" width="90px">
             Cancel
           </MyButton>
           <MyInput
+           className="show-cancelled"
             fieldType="check"
             fieldName=""
             record=""
             setRecord=""
-            fieldLabel="Show Cancelled"
+            fieldLabel={<Translate>Show Cancelled</Translate>}
             showLabel={false}
           />
         </Form>

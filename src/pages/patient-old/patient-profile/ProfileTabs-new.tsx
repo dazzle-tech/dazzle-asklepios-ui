@@ -173,7 +173,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         </h5>
       }
     >
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy/>
     </Panel>
   );
 };

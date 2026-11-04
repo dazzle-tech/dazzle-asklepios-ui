@@ -36,20 +36,20 @@ export const patientPrescriptionMedicationService = createApi({
   endpoints: (builder) => ({
     // GET /api/patient/patient-prescription-medications
     getPatientPrescriptionMedications: builder.query<PagedResult<PatientPrescriptionMedication>, PatientPrescriptionMedicationListParams>({
-          query: ({prescriptionHeaderId, page, size, sort = 'id,asc' }) => ({
-            url: `/api/patient/patient-prescription-medications?prescriptionHeaderId=${prescriptionHeaderId}`,
-            params: { page, size, sort },
-          }),
-          transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
-            const headers = meta?.response?.headers;
-            return {
-              data: response,
-              totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-              links: parseLinkHeader(headers?.get('Link')),
-            };
-          },
-          providesTags: (_res) => ['PatientPrescriptionMedication'],
-        }),
+      query: ({ prescriptionHeaderId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/patient-prescription-medications?prescriptionHeaderId=${prescriptionHeaderId}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: (_res) => ['PatientPrescriptionMedication'],
+    }),
 
     // GET /api/patient/patient-prescription-medications/{id}
     getPatientPrescriptionMedicationById: builder.query<PatientPrescriptionMedication, number>({
@@ -96,42 +96,47 @@ export const patientPrescriptionMedicationService = createApi({
     }),
 
     // DELETE /api/patient/patient-prescription-medications/{id}
-    deletePatientPrescriptionMedication: builder.mutation<void, number>({
-      query: (id) => ({
+    deletePatientPrescriptionMedication: builder.mutation<
+      void,
+      { id: number; cancellationReason: string }
+    >({
+      query: ({ id, cancellationReason }) => ({
         url: `/api/patient/patient-prescription-medications/${id}`,
         method: 'DELETE',
+        body: cancellationReason,
       }),
       onQueryStarted,
-      invalidatesTags: (_res, _err, id) => [
+      invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientPrescriptionMedication', id },
         'PatientPrescriptionMedication',
       ],
     }),
 
     getAllChronicRaw: builder.query<
-          PagedResult<PatientPrescriptionMedication>,
-          { patientId: number } & PagedParams
-        >({
-          query: ({ patientId, page, size, sort = 'id,asc' }) => ({
-            url: `/api/patient/patient-prescription-medications/${patientId}/chronic-medications/raw`,
-            params: { page, size, sort },
-          }),
-          transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
-            const headers = meta?.response?.headers;
-            return {
-              data: response,
-              totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-              links: parseLinkHeader(headers?.get('Link')),
-            };
-          },
-          providesTags: ['PatientPrescriptionMedication'],
-        }),
+      PagedResult<PatientPrescriptionMedication>,
+      { patientId: number } & PagedParams
+    >({
+      query: ({ patientId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/patient-prescription-medications/${patientId}/chronic-medications/raw`,
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['PatientPrescriptionMedication'],
+    }),
   }),
 });
 
 // Export hooks for usage in functional components
 export const {
   useGetPatientPrescriptionMedicationsQuery,
+  useLazyGetPatientPrescriptionMedicationsQuery,
   useGetPatientPrescriptionMedicationByIdQuery,
   useCreatePatientPrescriptionMedicationMutation,
   useUpdatePatientPrescriptionMedicationMutation,

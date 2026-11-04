@@ -136,13 +136,101 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       invalidatesTags: ["DiagnosticOrderTestCollectedSample"],
     }),
 
+    rejectCollectedSample: builder.mutation<
+      DiagnosticOrderTestCollectedSampleResponseVM,
+      number
+    >({
+      query: (id) => ({
+        url: `/api/patient/diagnostic-order-test-collected-samples/${id}/reject`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["DiagnosticOrderTestCollectedSample"],
+    }),
+
     getSampleLabel: builder.query<SampleLabelVM, { orderTestId: number }>({
       query: ({ orderTestId }) => ({
         url: `/api/patient/diagnostic-order-test-collected-samples/sample-label/${orderTestId}`,
         method: 'GET'
       }),
-       providesTags: ["DiagnosticOrderTestCollectedSample"],
+      providesTags: ["DiagnosticOrderTestCollectedSample"],
 
+    }),
+
+
+    getSampleLabelPdf: builder.query<
+      Blob | null,
+      { orderTestId: number; copies?: number;lang?:string }
+    >({
+      query: ({ orderTestId, copies = 1,lang="en" }) => ({
+        url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-label/pdf`,
+        method: "GET",
+        params: { copies,lang },
+        responseHandler: async (response) => {
+          if (response.status === 204) {
+            return null;
+          }
+          return await response.blob();
+        },
+      }),
+    }),
+
+    getSampleLabelsPdf: builder.query<
+      Blob | null,
+      { orderTestId: number; copies?: number ;lang?:string }
+    >({
+      query: ({ orderTestId, copies = 1,lang="en" }) => ({
+        url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-labels/pdf`,
+        method: "GET",
+        params: { copies,lang },
+        responseHandler: async (response) => {
+          if (response.status === 204) {
+            return null;
+          }
+          return await response.blob();
+        },
+      }),
+    }),
+    getOrderSampleLabelPdf: builder.query<
+  Blob | null,
+  { orderId: number; copies?: number; lang?: string }
+>({
+  query: ({ orderId, copies = 1, lang = "en" }) => ({
+    url: `/api/analytics/diagnostic-orders/${orderId}/order-sample-label/pdf`,
+    method: "GET",
+    params: { copies, lang },
+    responseHandler: async (response) => {
+      if (response.status === 204) {
+        return null;
+      }
+      return await response.blob();
+    },
+  }),
+}),
+
+    /* Grouped print for multiple selected order tests: tests sharing the same
+       (analyzer, tubeColor, tubeType) print on one label instead of one each.
+       Tests missing analyzer/tube definition are skipped and reported back
+       via the X-Missing-Definition-Tests response header. */
+    getGroupedSampleLabelsPdf: builder.query<
+      { blob: Blob | null; missingDefinitionTests: string[] },
+      { orderTestIds: number[]; copies?: number; lang?: string }
+    >({
+      query: ({ orderTestIds, copies = 1, lang = "en" }) => ({
+        url: `/api/analytics/diagnostic-order-tests/grouped-sample-labels/pdf`,
+        method: "GET",
+        params: { orderTestIds: orderTestIds.join(","), copies, lang },
+        responseHandler: async (response) => {
+          const blob = response.status === 204 ? null : await response.blob();
+          const header = response.headers.get("X-Missing-Definition-Tests") ?? "";
+          const missingDefinitionTests = header
+            ? header
+                .split(",")
+                .filter(Boolean)
+                .map((name) => decodeURIComponent(name))
+            : [];
+          return { blob, missingDefinitionTests };
+        },
+      }),
     }),
   }),
 });
@@ -156,5 +244,12 @@ export const {
   useCreateCollectedSampleMutation,
   useBulkCreateCollectedSampleSameMutation,
   useDeleteCollectedSampleMutation,
-  useLazyGetSampleLabelQuery
+  useLazyGetSampleLabelQuery,
+  useLazyGetSampleLabelPdfQuery,
+  useGetSampleLabelsPdfQuery,
+  useLazyGetSampleLabelsPdfQuery,
+  useGetOrderSampleLabelPdfQuery,
+  useRejectCollectedSampleMutation,
+  useLazyGetOrderSampleLabelPdfQuery,
+  useLazyGetGroupedSampleLabelsPdfQuery
 } = diagnosticOrderTestCollectedSampleService;

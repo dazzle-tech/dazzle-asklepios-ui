@@ -163,7 +163,7 @@ const OperationSetup = () => {
     }
   };
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -221,8 +221,15 @@ const OperationSetup = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch, pathname]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={operationList?.object || []}
         columns={tableColumns}

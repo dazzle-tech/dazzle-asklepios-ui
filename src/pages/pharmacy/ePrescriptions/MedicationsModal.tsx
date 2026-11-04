@@ -182,8 +182,13 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
     }
   ];
 
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -195,7 +200,7 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
           }
         ]}
         content={
-          <div className="medications-modal">
+          <div className="medications-modal" dir={dir}>
             <div className="header-icon">
               <MyButton>
                 <FontAwesomeIcon icon={faCapsules} className="icon" />
@@ -235,7 +240,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                   fieldLabel="Payment Type"
                   fieldName="paymentTypeLkey"
                   selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={localEncounter}
                   setRecord={setLocalEncounter}
@@ -285,7 +292,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                       fieldType="select"
                       fieldName="insurancePlanTypeLkey"
                       selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={patientInsurance}
                       setRecord={setPatientInsurance}
@@ -326,7 +335,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                     fieldLabel="Payment Method"
                     fieldName="PaymentMethod"
                     selectData={paymentMethodLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={newValue => {
@@ -354,7 +365,9 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                     fieldLabel="Currency"
                     fieldName="Currency"
                     selectData={currencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={() => {
@@ -517,7 +530,7 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
         hideActionBtn={true}
         size="80vw"
       />
-    </>
+    </div>
   );
 };
 

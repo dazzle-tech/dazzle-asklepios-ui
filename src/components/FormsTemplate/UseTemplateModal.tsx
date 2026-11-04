@@ -10,11 +10,25 @@ import { notify } from '@/utils/uiReducerActions';
 import { useGetFormTemplateQuery } from '@/services/setup/formTemplateService';
 import { useCreateFormEntryMutation } from '@/services/setup/formEntriesService';
 
+type UseTemplateModalProps = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  templateRow: any;
+  fromEncounter?: boolean;
+  patientId?: number | null;
+  encounterId?: number | null;
+  onSaved?: (savedEntry: any) => void | Promise<void>;
+};
+
 const UseTemplateModal = ({
-    open,
-    setOpen,
-    templateRow
-}) => {
+  open,
+  setOpen,
+  templateRow,
+  fromEncounter = false,
+  patientId = null,
+  encounterId = null,
+  onSaved
+}: UseTemplateModalProps) => {
     const dispatch = useDispatch();
     const templateId = templateRow?.id;
 
@@ -42,41 +56,112 @@ const UseTemplateModal = ({
         return s;
     }, [tpl?.formJson]);
 
-    const handleSave = async () => {
-        if (!templateRow?.id) return;
+ const handleSave = async () => {
+    if (!templateRow?.id) return;
 
-        // If user didn’t click complete, take current data anyway:
-        const data = completedData ?? survey?.data;
+    const data = completedData ?? survey?.data;
 
+    if (!entryTitle?.trim()) {
+        dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
+        return;
+    }
 
-        if (!entryTitle?.trim()) {
-            dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
-            return;
-        }
-        if (!data || Object.keys(data).length === 0) {
-            dispatch(notify({ msg: 'Please fill the form before saving', sev: 'warning' }));
-            return;
-        }
+    if (!data || Object.keys(data).length === 0) {
+        dispatch(notify({ msg: 'Please fill the form before saving', sev: 'warning' }));
+        return;
+    }
 
-        const facilityId = templateRow.facilityId;
-        const departmentId = templateRow.departmentId;
+    const facilityId = templateRow.facilityId != null ? Number(templateRow.facilityId) : null;
+    const departmentId =
+      templateRow.departmentId != null ? Number(templateRow.departmentId) : null;
 
-        try {
-            await createEntry({
-                title: entryTitle.trim(),
-                templateId: templateRow.id,
-                facilityId,
-                departmentId,
-                dataJson: JSON.stringify(data)
-            }).unwrap();
+    if (!facilityId || Number.isNaN(facilityId)) {
+      dispatch(
+        notify({
+          msg: 'Template facility is missing. Please re-select the form template.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
-            dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
-            setOpen(false);
-        } catch (e) {
-            console.error(e);
-            dispatch(notify({ msg: 'Failed to save form', sev: 'error' }));
-        }
-    };
+    if (!departmentId || Number.isNaN(departmentId)) {
+      dispatch(
+        notify({
+          msg: 'Template department is missing. Please re-select the form template.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    const resolvedPatientId =
+      patientId != null && !Number.isNaN(Number(patientId)) ? Number(patientId) : null;
+    const resolvedEncounterId =
+      encounterId != null && !Number.isNaN(Number(encounterId)) ? Number(encounterId) : null;
+
+    if (fromEncounter) {
+      if (!resolvedPatientId && !resolvedEncounterId) {
+        dispatch(
+          notify({
+            msg: 'Patient and encounter are required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!resolvedPatientId) {
+        dispatch(
+          notify({
+            msg: 'Patient is required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!resolvedEncounterId) {
+        dispatch(
+          notify({
+            msg: 'Encounter is required to save a form from encounter',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
+    try {
+      const saved = await createEntry({
+        title: entryTitle.trim(),
+        templateId: Number(templateRow.id),
+        facilityId,
+        departmentId,
+        dataJson: JSON.stringify(data),
+        patientId: fromEncounter ? resolvedPatientId : resolvedPatientId ?? null,
+        encounterId: fromEncounter ? resolvedEncounterId : resolvedEncounterId ?? null
+      }).unwrap();
+
+      await onSaved?.(saved);
+
+      dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
+      setOpen(false);
+    } catch (e: any) {
+      const serverMsg =
+        e?.data?.message ||
+        e?.data?.detail ||
+        e?.data?.title ||
+        (Array.isArray(e?.data?.fieldErrors) && e.data.fieldErrors[0]?.message);
+
+      dispatch(
+        notify({
+          msg: serverMsg || 'Failed to save form',
+          sev: 'error'
+        })
+      );
+    }
+};
 
     const content = () => (
         <div style={{ padding: 12 }}>

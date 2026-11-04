@@ -19,6 +19,7 @@ const Cardiology = () => {
     return (
        <MyTab 
         data={tabData}
+        lazy
        />
     );
 };

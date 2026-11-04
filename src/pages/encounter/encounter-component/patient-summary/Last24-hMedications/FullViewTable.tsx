@@ -4,6 +4,7 @@ import '../styles.less';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 
 const FullViewTable = ({
   open,
@@ -81,7 +82,7 @@ const FullViewTable = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={modalTitle ? modalTitle : " Patient Chronic Medication"}
+      title={modalTitle ? modalTitle : <Translate>Patient Chronic Medication</Translate>}
       content={<MyTable
         data={combinedArray ?? []}
         columns={medicationColumns}
@@ -93,7 +94,7 @@ const FullViewTable = ({
       hideBack={true}
       steps={[
         {
-          title: modalTitle || "Patient Chronic Medication",
+          title: modalTitle || <Translate>Patient Chronic Medication</Translate>,
           icon: <FontAwesomeIcon icon={faPills} />
         }
       ]}

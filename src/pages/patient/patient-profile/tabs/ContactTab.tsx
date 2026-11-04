@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import clsx from 'clsx';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 interface ContactTabProps {
   localPatient: Patient;
@@ -16,24 +19,98 @@ const ContactTab: React.FC<ContactTabProps> = ({
   validationResult
 }) => {
   // Fetch LOV data for various fields
-  const { data: preferredWayOfContactLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
-  const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
+  const normalizePhoneE164 = (raw: string): string => {
+    const s = raw.trim();
+    if (!s) return '';
+    if (s.startsWith('+')) return s;
+    if (s.startsWith('00')) return '+' + s.slice(2);
+    return '+' + s;
+  };
+
+  const parsePhoneWithPrefix = (phoneValue: unknown): string => {
+    if (!phoneValue) return '';
+
+    if (typeof phoneValue === 'string') return normalizePhoneE164(phoneValue);
+    if (typeof phoneValue !== 'object') return normalizePhoneE164(String(phoneValue));
+
+    const valueObject = phoneValue as Record<string, unknown>;
+    const directPhone =
+      valueObject.phone ??
+      valueObject.phoneNumber ??
+      valueObject.mobileNumber ??
+      valueObject.value ??
+      valueObject.number;
+
+    if (typeof directPhone === 'string' && directPhone.trim()) {
+      return normalizePhoneE164(directPhone);
+    }
+
+    const rawPrefix =
+      valueObject.prefix ?? valueObject.countryCode ?? valueObject.dialCode ?? valueObject.code;
+    const rawNumber =
+      valueObject.localNumber ??
+      valueObject.nationalNumber ??
+      valueObject.mobile ??
+      valueObject.lineNumber;
+
+    const prefix = typeof rawPrefix === 'string' ? rawPrefix.trim() : '';
+    const number = typeof rawNumber === 'string' ? rawNumber.trim() : '';
+    if (!prefix || !number) return '';
+
+    const normalizedPrefix = prefix.startsWith('+') ? prefix : `+${prefix}`;
+    return `${normalizedPrefix}${number}`;
+  };
+
+
+
+  const { data: languages = [] } = useGetAllLanguagesQuery({});
+  const languageOptions = useMemo(
+    () =>
+      [...languages]
+        .filter(language => Boolean(language.langKey?.trim()))
+        .sort((left, right) =>
+          String(left.langName ?? '').localeCompare(String(right.langName ?? ''))
+        ),
+    [languages]
+  );
+
+    useEffect(() => {
+      if (!localPatient?.id && !localPatient?.preferredLanguage && languageOptions.length > 0) {
+        const arabicLanguage = languageOptions.find(
+          language => language.langKey === 'arb'
+        );
+
+        if (arabicLanguage) {
+          setLocalPatient({
+            ...localPatient,
+            preferredLanguage: arabicLanguage.langKey,
+          });
+        }
+      }
+    }, [
+      localPatient?.id,
+      localPatient?.preferredLanguage,
+      languageOptions,
+      setLocalPatient,
+    ]);
+
   return (
-    <Form layout="inline" fluid>
-      <MyInput
-        vr={validationResult}
+    <Form layout="inline" fluid className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}> 
+      <PhoneNumberInput
         column
         required
         fieldName="primaryMobileNumber"
         fieldLabel="Primary Mobile Number"
         record={localPatient}
         setRecord={setLocalPatient}
+        value={parsePhoneWithPrefix(localPatient?.primaryMobileNumber)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
@@ -45,18 +122,20 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         width={170}
       />
-      <MyInput
-        vr={validationResult}
+      <PhoneNumberInput
         column
         fieldLabel="Secondary Mobile Number"
         fieldName="secondMobileNumber"
         record={localPatient}
         setRecord={setLocalPatient}
+        value={parsePhoneWithPrefix(localPatient?.secondMobileNumber)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
         column
+        fieldType="textnumber"
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -66,26 +145,29 @@ const ContactTab: React.FC<ContactTabProps> = ({
         vr={validationResult}
         column
         fieldName="workPhone"
+        fieldType="textnumber"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
       />
+
+    <MyInput
+      vr={validationResult}
+      column
+      fieldLabel="Preferred Language"
+      fieldType="select"
+      fieldName="preferredLanguage"
+      selectData={languageOptions}
+      selectDataLabel="langName"
+      selectDataValue="langKey"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      searchable
+      width={170}
+    />
+
+
       <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Native Language"
-        fieldType="select"
-        fieldName="nativeLanguage"
-        selectData={primaryLangLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
-        width={170}
-      />
-      <MyInput
-        required
         vr={validationResult}
         column
         fieldName="email"
@@ -117,6 +199,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
       <MyInput
         vr={validationResult}
@@ -140,14 +224,18 @@ const ContactTab: React.FC<ContactTabProps> = ({
         searchable={false}
         menuMaxHeight={200}
         width={170}
+        disableByField='isValid'
+
       />
-      <MyInput
-        vr={validationResult}
+      <PhoneNumberInput
         column
+        fieldLabel="Emergency Contact Phone"
         fieldName="emergencyContactPhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        value={parsePhoneWithPrefix(localPatient?.emergencyContactPhone)}
         width={170}
+        resetKey={localPatient?.id ?? 'new'}
       />
       <MyInput
         vr={validationResult}
@@ -162,6 +250,8 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
     </Form>
   );

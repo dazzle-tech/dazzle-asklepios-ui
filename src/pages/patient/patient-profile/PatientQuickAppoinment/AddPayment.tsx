@@ -26,7 +26,7 @@ const AddPayment = ({ isReadOnly }) => {
             title: (
                 <Checkbox />
             ),
-            render: (rowData: any) => (
+            render: () => (
                 <Checkbox />
             )
         },
@@ -62,8 +62,15 @@ const AddPayment = ({ isReadOnly }) => {
         }
     ];
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <div className='payment-method-container'>
+        <div className='payment-method-container' dir={dir}>
             <Form layout="inline" fluid className='fields-container'>
                 <MyInput
                     vr={validationResult}
@@ -71,7 +78,9 @@ const AddPayment = ({ isReadOnly }) => {
                     fieldType="select"
                     fieldName="PaymentMethod"
                     selectData={paymentMethodLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     disabled={isReadOnly}
@@ -90,7 +99,9 @@ const AddPayment = ({ isReadOnly }) => {
                     fieldType="select"
                     fieldName="Currency"
                     selectData={currencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={""}

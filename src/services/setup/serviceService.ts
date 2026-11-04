@@ -64,9 +64,9 @@ export const serviceService = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map((item: any) => ({ type: 'Service' as const, id: item.id })),
-              { type: 'Service', id: 'LIST' },
-            ]
+            ...result.map((item: any) => ({ type: 'Service' as const, id: item.id })),
+            { type: 'Service', id: 'LIST' },
+          ]
           : [{ type: 'Service', id: 'LIST' }],
     }),
 
@@ -74,6 +74,26 @@ export const serviceService = createApi({
     getServices: builder.query<PagedResult<any>, WithFacility & PagedParams>({
       query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/active/by-facility/{facilityId}
+    getActiveServicesByFacility: builder.query<PagedResult<any>, WithFacility & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/active/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/appointable/by-loggedIn-facility
+    getAppointableServicesByLoggedInFacility: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/service/appointable/by-loggedIn-facility',
         params: { page, size, sort },
       }),
       transformResponse: mapPaged,
@@ -93,6 +113,18 @@ export const serviceService = createApi({
       providesTags: ['Service'],
     }),
 
+    getServicesByStatus: builder.query<
+      PagedResult<any>,
+      { isActive: boolean } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-status/${isActive}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
     // GET /api/setup/service/by-code/{code}
     getServicesByCode: builder.query<
       PagedResult<any>,
@@ -100,6 +132,45 @@ export const serviceService = createApi({
     >({
       query: ({ code, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-code/${encodeURIComponent(code)}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-abbreviation/{abbreviation}
+    getServicesByAbbreviation: builder.query<
+      PagedResult<any>,
+      { abbreviation: string } & PagedParams
+    >({
+      query: ({ abbreviation, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-abbreviation/${encodeURIComponent(String(abbreviation))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-price/{price}
+    getServicesByPrice: builder.query<
+      PagedResult<any>,
+      { price: number } & PagedParams
+    >({
+      query: ({ price, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-price/${encodeURIComponent(String(price))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-currency/{currency}
+    getServicesByCurrency: builder.query<
+      PagedResult<any>,
+      { currency: string } & PagedParams
+    >({
+      query: ({ currency, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-currency/${encodeURIComponent(String(currency))}`,
         params: { page, size, sort },
       }),
       transformResponse: mapPaged,
@@ -167,9 +238,9 @@ export const serviceService = createApi({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
-              { type: 'ServiceItems', id: 'LIST' },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
+            { type: 'ServiceItems', id: 'LIST' },
+          ]
           : [{ type: 'ServiceItems', id: 'LIST' }],
     }),
 
@@ -183,9 +254,9 @@ export const serviceService = createApi({
       providesTags: (result, _err, args) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
-              { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
+            { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
+          ]
           : [{ type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` }],
     }),
 
@@ -255,11 +326,22 @@ export const serviceService = createApi({
       ],
     }),
 
-    // GET /api/setup/service/by-department?sourceId=...
-    getServicesByDepartment: builder.query<PagedResult<any>, { sourceId: Id } & PagedParams>({
-      query: ({ sourceId, page, size, sort = 'id,asc' }) => ({
+    // GET /api/setup/service/by-department?sourceId=...&specialty=...
+    getServicesByDepartment: builder.query<
+      PagedResult<any>,
+      { sourceId: Id; specialty?: string | null } & PagedParams
+    >({
+      query: ({ sourceId, specialty, page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/service/by-department',
-        params: { sourceId, page, size, sort },
+        params: {
+          sourceId,
+          ...(specialty != null && specialty !== ''
+            ? { specialty }
+            : {}),
+          page,
+          size,
+          sort,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -276,12 +358,19 @@ export const {
   useLazyGetServicesBulkByIdsQuery,
   useGetServicesQuery,
   useLazyGetServicesQuery,
+  useGetActiveServicesByFacilityQuery,
+  useLazyGetActiveServicesByFacilityQuery,
+  useGetAppointableServicesByLoggedInFacilityQuery,
+  useLazyGetAppointableServicesByLoggedInFacilityQuery,
   useGetServicesByCategoryQuery,
   useLazyGetServicesByCategoryQuery,
   useGetServicesByCodeQuery,
   useLazyGetServicesByCodeQuery,
   useGetServicesByNameQuery,
   useLazyGetServicesByNameQuery,
+  useLazyGetServicesByAbbreviationQuery,
+  useLazyGetServicesByPriceQuery,
+  useLazyGetServicesByCurrencyQuery,
   useAddServiceMutation,
   useUpdateServiceMutation,
   useToggleServiceIsActiveMutation,
@@ -290,6 +379,7 @@ export const {
   useGetServiceItemsQuery,
   useGetServiceItemsByServiceQuery,
   useGetServiceItemByIdQuery,
+  useLazyGetServiceItemByIdQuery,
   useAddServiceItemMutation,
   useUpdateServiceItemMutation,
   useToggleServiceItemIsActiveMutation,
@@ -297,5 +387,7 @@ export const {
   useGetServiceItemSourcesByFacilityQuery,
   useLazyGetServiceItemSourcesByFacilityQuery,
   useGetServicesByDepartmentQuery,
+  useGetServicesByStatusQuery,
+  useLazyGetServicesByStatusQuery,
   useLazyGetServicesByDepartmentQuery,
 } = serviceService;

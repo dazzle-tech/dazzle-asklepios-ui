@@ -38,7 +38,12 @@ const [listRequest, setListRequest] = useState<ListRequest>({
        }, [selectedProduct?.key]);
 
 
-    return (<>
+         // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+    return (<div dir={dir}>
         <InfoCardList
             list={productListResponse?.object || []}
             fields={[
@@ -57,6 +62,6 @@ const [listRequest, setListRequest] = useState<ListRequest>({
                 inventoryTypeLkey: 'Inventory Type',
             }}
          
-        /></>)
+        /></div>)
 }
 export default ProductDetails;

@@ -92,13 +92,15 @@ const ModalProductCard = ({
 
   dispatch(setPageCode('ProductList'));
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+useEffect(() => {
+  
+  dispatch(setDivContent('Facilities'));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // handle click om edit  
   const handleEdit = () => {
@@ -146,6 +148,11 @@ const ModalProductCard = ({
 
   }
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (<>
     <AdvancedModal
@@ -156,15 +163,15 @@ const ModalProductCard = ({
       rightWidth="80%"
       leftTitle={"Product Details"}
       rightTitle="Product Card Details"
-      leftContent={<>
+      leftContent={<div dir={dir}>
          <ProductDetails selectedProduct={product} /> 
-      </>}
+      </div>}
       actionButtonLabel="AMP"
       actionButtonFunction={() =>
          {
         setOpenAmp(true)
       }}
-      rightContent={conjureFormContentOfRightModal()}
+      rightContent={<div dir={dir}>{conjureFormContentOfRightModal()}</div>}
     ></AdvancedModal>
    <AMP open={openAmp} setOpen={setOpenAmp} selectedProduct={product} />
   </>);

@@ -26,6 +26,7 @@ import {
   useToggleDistrictActiveMutation,
   useUpdateDistrictMutation
 } from '@/services/setup/country/countryDistrictService';
+import TranslationModal from '@/components/TranslationModal';
 
 type Props = {
   countryId: number;
@@ -72,13 +73,20 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
 };
-
 const DISTRICT_ERROR_MAP: Record<string, string> = {
   'country.required': 'Country is required.',
   'payload.required': 'District payload is required.',
   'id.required': 'District id is required.',
-  'unique.countryDistrict.namecode': 'District name or code already exists for this country.',
-  'db.constraint': 'Database constraint violation.',
+
+  'unique.countryDistrict.namecode':
+    'District name or code already exists for this country.',
+
+  'db.constraint':
+    'Unable to save the district due to a database constraint.',
+
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
+
   notfound: 'District not found.'
 };
 
@@ -92,7 +100,10 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [deleteMode, setDeleteMode] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [selectedForToggle, setSelectedForToggle] = useState<CountryDistrict | null>(null);
-
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+  const [translationFields, setTranslationFields] = useState<
+    { fieldName: string; value: string }[]
+  >([]);
   // Filter state
   const [recordOfDistrictFilter, setRecordOfDistrictFilter] = useState<{
     filter: string;
@@ -315,9 +326,23 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
       if (body.id) {
         await updateDistrict({ countryId, id: body.id, ...body }).unwrap();
         dispatch(notify({ msg: 'District updated successfully', sev: 'success' }));
+        setTranslationFields([
+          {
+            fieldName: 'name',
+            value: body.name
+          }
+        ]);
+        setShowTranslationModal(true);
       } else {
         await addDistrict({ countryId, ...body }).unwrap();
         dispatch(notify({ msg: 'District added successfully', sev: 'success' }));
+        setTranslationFields([
+          {
+            fieldName: 'name',
+            value: body.name
+          }
+        ]);
+        setShowTranslationModal(true);
       }
 
       setDistrictForEdit({ ...newCountryDistrict });
@@ -380,7 +405,7 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
     );
 
     return (
-      <Form layout="inline" fluid className="flex-dis-row">
+      <Form fluid className="form-of-filters-country-set-up">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -400,27 +425,25 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
 
         {dynamicInput}
 
-        <div className="margin-top-25">
-          <MyButton
-            color="var(--deep-blue)"
-            width="80px"
-            onClick={() => {
-              if (!recordOfDistrictFilter.value && recordOfDistrictFilter.value !== 0) {
-                resetDistrictToUnfiltered();
-              } else {
-                handleDistrictFilterChange(
-                  recordOfDistrictFilter.filter,
-                  recordOfDistrictFilter.value,
-                  0,
-                  districtFilterPagination.size,
-                  districtFilterPagination.sort || 'id,desc'
-                );
-              }
-            }}
-          >
-            Search
-          </MyButton>
-        </div>
+        <MyButton
+          color="var(--deep-blue)"
+          width="80px"
+          onClick={() => {
+            if (!recordOfDistrictFilter.value && recordOfDistrictFilter.value !== 0) {
+              resetDistrictToUnfiltered();
+            } else {
+              handleDistrictFilterChange(
+                recordOfDistrictFilter.filter,
+                recordOfDistrictFilter.value,
+                0,
+                districtFilterPagination.size,
+                districtFilterPagination.sort || 'id,desc'
+              );
+            }
+          }}
+        >
+          Search
+        </MyButton>
       </Form>
     );
   };
@@ -486,28 +509,28 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
         title={<Translate>Districts</Translate>}
         content={
           <>
-            <div className="inputs-dis-flex">
-              <div className="geo-inline-form">
-                <Form fluid layout="inline">
+            <Form fluid>
+              <div className="country-set-up-headers-setup-container">
+                <div className='form-of-filters-set-up'>
                   <MyInput
                     fieldName="name"
                     fieldType="text"
-                    column
                     fieldLabel="District Name"
                     record={districtForEdit}
                     setRecord={setDistrictForEdit}
                     width={200}
+                    required
                   />
                   <MyInput
                     fieldName="code"
                     fieldType="text"
-                    column
                     fieldLabel="Code"
                     record={districtForEdit}
                     setRecord={setDistrictForEdit}
                     width={120}
+                    required
                   />
-                  <div className="margin-top-37">
+                  <div className="form-of-filters-country-set-up">
                     <MyButton
                       color="var(--deep-blue)"
                       width="80px"
@@ -515,8 +538,6 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
                     >
                       Save
                     </MyButton>
-                  </div>
-                  <div className="margin-top-37">
                     <MyButton
                       color="var(--primary-gray)"
                       width="80px"
@@ -525,11 +546,12 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
                       Clear
                     </MyButton>
                   </div>
-                </Form>
+                </div>
+                <div>
+                  {districtFiltersUI()}
+                </div>
               </div>
-
-              {districtFiltersUI()}
-            </div>
+            </Form>
 
             <MyTable
               data={districtTableData}
@@ -549,9 +571,15 @@ const DistrictSection: React.FC<Props> = ({ countryId, onSelect, selectedDistric
               rowClassName={row =>
                 selectedDistrict && row.id === selectedDistrict.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }
+      />
+      <TranslationModal
+        open={showTranslationModal}
+        setOpen={setShowTranslationModal}
+        fields={translationFields}
       />
 
       <DeletionConfirmationModal

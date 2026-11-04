@@ -56,7 +56,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-  const patientConditionEnumOptions = useEnumOptions('PatientCondition');
+  const patientConditionEnumOptions = useEnumOptions('Condition');
 
   useEffect(() => {
     if (latestChiefComplain && !isFetchingLatest) {
@@ -205,7 +205,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   // Effects
   useEffect(() => {
     // TODO update status to be a enum value
-    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'CLOSED' || encounter?.discharge) {
+    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'COMPLETED' || encounter?.discharge) {
       setIsEncounterStatusClosed(true);
     }
   }, [encounter?.status, encounter?.encounterStatus, encounter?.discharge]);
@@ -261,7 +261,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="quality"
             selectData={painPatternLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}
@@ -289,7 +291,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="region"
             selectData={bodyPartsLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}
@@ -303,7 +307,9 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             fieldType="select"
             fieldName="severity"
             selectData={severityLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={chiefComplain}
             setRecord={setChiefComplain}

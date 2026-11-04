@@ -15,7 +15,11 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newPatientWarnings } from '@/types/model-types-constructor-new';
 import { PatientWarnings } from '@/types/model-types-new';
-import { conjureValueBasedOnKeyFromListOfValues, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import {
+  conjureValueBasedOnKeyFromListOfValues,
+  formatDateWithoutSeconds,
+  formatEnumString
+} from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,6 +33,7 @@ import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import WarningDetailsSection from './WarningDetailsSection';
 import './styles.less';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 interface WarningProps {
   patient?: any;
@@ -71,7 +76,6 @@ const Warning = (props: WarningProps) => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
-  console.log("patientWWWW: ", patient);
   // Data fetching + mutations
   const {
     data: warningsListResponse,
@@ -87,12 +91,7 @@ const Warning = (props: WarningProps) => {
       skip: !patient?.id
     }
   );
-  useEffect(() => {
-  if (warningsListResponse) {
-    console.log("warningsListResponse updated: ", warningsListResponse);
-  }
-}, [warningsListResponse]);
-  console.log("warningsListResponse: ", warningsListResponse?.data);
+
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const [cancelPatientWarning] = useCancelPatientWarningMutation();
@@ -129,7 +128,11 @@ const Warning = (props: WarningProps) => {
       key: 'onsetDate',
       title: <Translate>onset Date</Translate>,
       render: (rowData: PatientWarnings) =>
-        rowData.onsetDateUndefined ? <p>Undefined</p> : <p>{new Date(rowData.onsetDate).toLocaleDateString()}</p>
+        rowData.onsetDateUndefined ? (
+          <p>Undefined</p>
+        ) : (
+          <p>{new Date(rowData.onsetDate).toLocaleDateString()}</p>
+        )
     },
     {
       key: 'sourceOfInformation',
@@ -156,14 +159,10 @@ const Warning = (props: WarningProps) => {
             rowData?.status === 'CANCELLED'
               ? '#969fb0'
               : rowData?.status === 'RESOLVED'
-                ? '#800080'
-                : '#45b887'
+              ? '#800080'
+              : '#45b887'
           }
-          contant={
-            <Translate>
-              {formatEnumString(rowData?.status)}
-            </Translate>
-          }
+          contant={<Translate>{formatEnumString(rowData?.status)}</Translate>}
         />
       )
     },
@@ -182,11 +181,15 @@ const Warning = (props: WarningProps) => {
         return (
           <MdModeEdit
             title="Edit"
-            className="icons-style"
+            className="icons-style view-only-action-edit-delete-encounter"
             size={24}
             fill="var(--primary-gray)"
-            onClick={() => {
-              if (isPast) return;
+            onClick={e => {
+              e.stopPropagation();
+              if (isPast || rowData.status !== 'ACTIVE') return;
+              if (rowData.id !== warning?.id) {
+                setWarning(rowData);
+              }
               setOpenDetailsModal(true);
               setOpenToAdd(false);
             }}
@@ -323,8 +326,24 @@ const Warning = (props: WarningProps) => {
     });
   };
 
+  useEffect(() => {
+    dispatch(setPageCode('medical_warnings'));
+    dispatch(setDivContent('Medical Warnings'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div>
+    <div dir={dir}>
       <div className="bt-div-2">
         <div className="bt-left-2">
           {showTableButtons && (
@@ -340,7 +359,9 @@ const Warning = (props: WarningProps) => {
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
                 onClick={() => setOpenConfirmResolvedModel(true)}
-                disabled={!warning?.id || warning?.status === 'RESOLVED' || warning?.status === 'CANCELLED'}
+                disabled={
+                  !warning?.id || warning?.status === 'RESOLVED' || warning?.status === 'CANCELLED'
+                }
               >
                 Resolved
               </MyButton>
@@ -348,15 +369,17 @@ const Warning = (props: WarningProps) => {
               <MyButton
                 prefixIcon={() => <ReloadIcon />}
                 onClick={() => setOpenConfirmUndoResolvedModel(true)}
-                disabled={!warning?.id || warning?.status === 'ACTIVE' || warning?.status === 'CANCELLED'}
+                disabled={
+                  !warning?.id || warning?.status === 'ACTIVE' || warning?.status === 'CANCELLED'
+                }
               >
                 Undo Resolved
               </MyButton>
             </>
           )}
 
-          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-            Show Cancelled
+          <Checkbox className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+            <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>
 
@@ -383,8 +406,12 @@ const Warning = (props: WarningProps) => {
           data={warningsListResponse?.data || []}
           totalCount={totalCount}
           onRowClick={rowData => {
-            setWarning(rowData);
-            setOpenToAdd(false);
+            if (rowData.id === warning?.id) {
+              handleClear();
+            } else {
+              setWarning(rowData);
+              setOpenToAdd(false);
+            }
           }}
           rowClassName={isSelected}
           loading={isLoading}
@@ -405,11 +432,7 @@ const Warning = (props: WarningProps) => {
           onSortChange={handleSortChange}
         />
         {warning?.id && (
-        <WarningDetailsSection
-          warning={warning}
-          setWarning={setWarning}
-          edit={edit}
-        />
+          <WarningDetailsSection warning={warning} setWarning={setWarning} edit={edit} />
         )}
       </div>
 
@@ -422,6 +445,7 @@ const Warning = (props: WarningProps) => {
         fieldName="cancellationReason"
         fieldLabel="Cancellation Reason"
         title="Cancellation"
+        required
       />
 
       <DeletionConfirmationModal

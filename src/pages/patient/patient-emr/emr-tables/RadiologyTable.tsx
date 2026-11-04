@@ -4,7 +4,9 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 
 import {
-  useFilterRadiologyReportsQuery
+  PacsStudyDTO,
+  useFilterRadiologyReportsQuery,
+  useLazyGetStudyImageLinkByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 
 import {
@@ -12,7 +14,6 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 
 import {
-  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
@@ -28,32 +29,49 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faImage } from '@fortawesome/free-solid-svg-icons';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
+import RadiologyReportButton from '@/pages/encounter/encounter-component/diagnostics-result/RadiologyReportButton';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
+import UserDateCell from '@/components/UserDateCell';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import StudyImageViewerModal from '@/pages/rad-module/radiologist-worklist/StudyImageViewrModal';
+import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+  const status = e?.status || e?.originalStatus || e?.data?.status;
+
+  const message = e?.data?.message || e?.data?.detail || e?.error || fallbackMsg;
+
+  if (status === 400 || status === 409 || status === 422) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
 };
-
-const endOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-};
-
 const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
 
-  const today = new Date();
-
     const [page, setPage] = useState(0);
+    const dispatch = useAppDispatch();
   
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+ const [openStudiesModal, setOpenStudiesModal] = useState(false);
  
+ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -64,17 +82,8 @@ const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
-   const ordersQueryParams = useMemo(() => {
-      if (!patient?.id) return skipToken;
-  
-      return {
-        patientId: patient.id,
-        page: 0,
-        size: 1000,
-        sort: 'id,desc'
-      };
-    }, [patient?.id]);
-  
+    const [fetchStudyImageLinkByReportId] =
+      useLazyGetStudyImageLinkByReportIdQuery();
     const { data: radCategoriesLovQueryResponse } =
   useGetLovValuesByCodeQuery('RAD_CATEGORIES');
     
@@ -82,19 +91,41 @@ const resolveCategoryLabel = (key?: any) =>
   radCategoriesLovQueryResponse?.object?.find(
     c => String(c.key) === String(key)
   )?.lovDisplayVale ?? key;
+const handleViewImage = async (reportId: number) => {
+  try {
+    const response =
+      await fetchStudyImageLinkByReportId(reportId).unwrap();
 
-
-      const {
-        data: ordersResponse,
-        isFetching: isOrdersFetching
-      } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-    
-      const orders = ordersResponse?.data ?? [];
-    
-      const orderIds = useMemo(
-        () => orders.map((o: any) => o.id).filter(Boolean),
-        [orders]
+    if (!response?.length) {
+      dispatch(
+        notify({
+          msg: 'No study found for this report',
+          sev: 'warning'
+        })
       );
+      return;
+    }
+
+    if (response.length === 1) {
+      window.open(
+        response[0].link,
+        '_blank',
+        'noopener,noreferrer'
+      );
+      return;
+    }
+
+    setStudies(response);
+    setOpenStudiesModal(true);
+
+  } catch (e) {
+    notifyFromApiError(
+      dispatch,
+      e,
+      'Failed to load radiology image'
+    );
+  }
+};
 
 
     const { data: allRadiologiesResponse } = useGetAllRadiologiesQuery({
@@ -112,20 +143,19 @@ const resolveCategoryLabel = (key?: any) =>
     const queryParams = useMemo(() => {
 
       if (!patient?.id) return skipToken;
-      if (isOrdersFetching) return skipToken;
-      if (!orderIds.length) return skipToken;
 
       return {
         page,
         size: rowsPerPage,
         sort: 'id,desc',
         params: {
-          processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-          orderIdIn: orderIds
+          processingStatusIn: [DiagnosticOrderTestStatus.RESULT_APPROVED],
+          reviewed: true,
+          patientIdIn: [patient.id]
         }
       };
 
-    }, [patient?.id, isOrdersFetching, orderIds, page, rowsPerPage]);
+    }, [patient?.id, page, rowsPerPage]);
 
 
     const {
@@ -299,13 +329,10 @@ const resolveCategoryLabel = (key?: any) =>
       key: 'created',
       title: <Translate>CREATED BY / AT</Translate>,
       render: (row: any) => (
-        <>
-          {row.createdBy ?? '-'}
-          <br />
-          <span style={{ fontSize: 11, color: '#777' }}>
-            {formatDateWithoutSeconds(row.createdDate)}
-          </span>
-        </>
+        <UserDateCell
+          login={row.createdBy}
+          date={row.createdDate}
+        />
       )
     },
 
@@ -367,18 +394,51 @@ const resolveCategoryLabel = (key?: any) =>
           />
         </div>
       )
-    }
+    },
+     {
+          key :'image',
+          title:<Translate>Image</Translate>,
+    
+         render:(rowData: any) => {
+         return <Whisper speaker={<Tooltip>View X-Ray Image</Tooltip>}>
+                        <span>
+                          <FontAwesomeIcon
+                            icon={faImage}
+                            className="icon-radiologist-worklist-size"
+                            style={{
+                              cursor: 'pointer',
+                              opacity: 1,
+                              color: '#1675e0'
+                            }}
+                            onClick={() => handleViewImage(rowData.id)}
+                          />
+                        </span>
+                      </Whisper>}},
 
   ];
+
+  const tableButtons = (
+    <RadiologyReportButton reportId={selectedReport?.id} />
+  );
 
   return (<>
     <MyTable
       columns={columns}
       data={reports}
+      tableButtons={tableButtons}
       loading={isFetching}
       page={page}
       rowsPerPage={rowsPerPage}
       totalCount={totalCount}
+      rowClassName={(row: any) =>
+        selectedReport && row.id === selectedReport.id
+          ? 'selected-row'
+          : ''
+      }
+      onRowClick={(row:any)=>{
+        setSelectedReport(row);
+      }} 
+
       onPageChange={(_, p) => setPage(p)}
       onRowsPerPageChange={(e) => {
         setRowsPerPage(Number(e.target.value));
@@ -398,6 +458,11 @@ const resolveCategoryLabel = (key?: any) =>
       disableDefaultTemplate
     />
   )}
+  <StudyImageViewerModal
+          open={openStudiesModal}
+          onClose={() => setOpenStudiesModal(false)}
+          studies={studies}
+        />
 
   </>);
 };

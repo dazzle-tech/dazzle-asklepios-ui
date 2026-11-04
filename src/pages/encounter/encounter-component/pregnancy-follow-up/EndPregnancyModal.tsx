@@ -139,7 +139,9 @@ const modalContent = (
             record={data}
             setRecord={setData}
             selectData={reasonOptions}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="valueCode"
           />
           <MyInput
@@ -176,7 +178,9 @@ const modalContent = (
   record={data}
   setRecord={setData}
   selectData={deliveryOptions}
-  selectDataLabel="lovDisplayVale"
+   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
   selectDataValue="valueCode"
 />
 
@@ -189,7 +193,9 @@ const modalContent = (
     record={data}
     setRecord={setData}
     selectData={anesthesiaOptions}
-    selectDataLabel="lovDisplayVale"
+     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
     selectDataValue="valueCode"
   />
 )}
@@ -249,7 +255,9 @@ const modalContent = (
                     updateBabyField(idx, { ...baby, ...newBaby })
                   }
                   selectData={genderOptions}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="valueCode"
                 />
                 <MyInput
@@ -319,6 +327,13 @@ const modalContent = (
     setOpen(false);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -329,7 +344,7 @@ const modalContent = (
       actionButtonLabel="Save"
       steps={[{ title: 'End Pregnancy',icon:<FontAwesomeIcon icon={faPersonPregnant}/> }]}
       actionButtonFunction={handleSave}
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
     />
   );
 };

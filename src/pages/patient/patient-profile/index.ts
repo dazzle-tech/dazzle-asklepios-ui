@@ -1,3 +1,3 @@
-import PatientProfile from './PatientProfile';
+import PatientProfile from './PatientProfileCopy-new';
 
 export default PatientProfile;

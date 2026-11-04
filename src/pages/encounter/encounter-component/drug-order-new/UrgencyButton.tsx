@@ -27,8 +27,16 @@ const UrgencyButton = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
-    <div className="urgency-dropdown" ref={btnRef}>
+    <div className="urgency-dropdown" ref={btnRef} dir={dir}>
       <MyButton
         className={`urgency-btn ${selected ? `urgency-${selected.key}` : ''}`}
         prefixIcon={() => (selected ? selected.icon : <FaChevronDown />)}

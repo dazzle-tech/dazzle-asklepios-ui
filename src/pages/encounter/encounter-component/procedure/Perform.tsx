@@ -6,6 +6,7 @@ import {
     useSaveProceduresMutation
 } from '@/services/procedureService';
 import { useGetLovValuesByCodeQuery, useGetProcedureListQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheck, faList, faPlay, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -26,7 +27,7 @@ import MyTab from '@/components/MyTab';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
-    const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+    const categoryOptions = useEnumOptions('ProcedureCategory');
     const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
@@ -109,9 +110,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     width={200}
                     fieldType="select"
                     fieldLabel="Category Type"
-                    selectData={CategoryLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={categoryOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     fieldName={'categoryKey'}
                     record={procedure}
                     setRecord={setProcedure}
@@ -135,7 +136,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Priority"
                     selectData={priorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'priorityLkey'}
                     record={procedure}
@@ -148,7 +151,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Body Part "
                     selectData={bodypartLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'bodyPartLkey'}
                     record={procedure}
@@ -160,7 +165,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     fieldType="select"
                     fieldLabel="Side"
                     selectData={sideLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'sideLkey'}
                     record={procedure}
@@ -203,6 +210,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
              data={tabData}
              activeTab={activeTab}
              setActiveTab={setActiveTab}
+             lazy
             />
         </div>
         <div className='right-box'>

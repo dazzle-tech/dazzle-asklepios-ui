@@ -131,7 +131,7 @@ const AddEditProduct = ({
                                 <Row>
                                     <div className='container-form'>
                                         <div className='title-div'>
-                                            <Text>Maintenance Information</Text>
+                                            <Translate>Maintenance Information</Translate>
 
                                         </div>
                                         <Divider />

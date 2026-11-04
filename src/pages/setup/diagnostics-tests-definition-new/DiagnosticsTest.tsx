@@ -2,6 +2,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -13,6 +14,9 @@ import {
   useLazyGetDiagnosticTestsByNameQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
+  useLazyGetDiagnosticTestsByInternalCodeQuery,
+  useLazyGetDiagnosticTestsByShortNameQuery,
+  useLazyGetDiagnosticTestsByStatusQuery,
   useUpdateDiagnosticTestMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
@@ -23,13 +27,17 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
-import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import { MdDelete, MdModeEdit, MdOutlineDescription, MdLocalOffer } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
 import { Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import Coding from './Coding';
 import DefaultProfileIndicator from './DefaultProfileIndicator';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import Profile from './Profile';
 import './styles.less';
 
@@ -52,9 +60,13 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
   const [openTemplateModal, setOpenTemplateModal] = useState<boolean>(false);
   const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedDiagnosticTestForPolicyAssignment, setSelectedDiagnosticTestForPolicyAssignment] =
+    useState<DiagnosticTest | null>(null);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
+  const priceListPrompt = usePriceListPrompt();
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -85,10 +97,13 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     useToggleDiagnosticTestActiveMutation();
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
+  const [diagnosticTestByInternalCode] = useLazyGetDiagnosticTestsByInternalCodeQuery();
+  const [diagnosticTestByShortName] = useLazyGetDiagnosticTestsByShortNameQuery();
+  const [diagnosticTestByStatus] = useLazyGetDiagnosticTestsByStatusQuery();
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
-
+  const [selectedProfile, setSelectedProfile] = useState<any>(null); // 🔥
   const extractErrorMessage = (error: any): string => {
     const data = error?.data;
 
@@ -113,24 +128,37 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   };
 
 
-const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
-  const missingFields: string[] = [];
+  const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
+    const missingFields: string[] = [];
 
-  if (!test.type) missingFields.push('Test Type');
-  if (!test.name?.trim()) missingFields.push('Name');
-  if (!test.internalCode?.trim()) missingFields.push('Internal Code');
-  if (!test.price && test.price !== 0) missingFields.push('Price');
+    if (!test.type) missingFields.push('Test Type');
+    if (!test.name?.trim()) missingFields.push('Name');
+    if (!test.internalCode?.trim()) missingFields.push('Internal Code');
+    if (!test.price && test.price !== 0) missingFields.push('Price');
 
-  if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
-    missingFields.push('Result Type');
-  }
+    if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
+      missingFields.push('Result Type');
+    }
 
-  if (missingFields.length) {
-    return [`${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`];
-  }
+    if (missingFields.length) {
+      return [`${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`];
+    }
 
-  return [];
-};
+    return [];
+  };
+
+  // Re-run the currently active filter (if any) against its current page/size/sort.
+  // Used after add/update so the filtered list stays in sync with the server.
+  const refreshCurrentFilterIfActive = async (
+    page = filterPagination.page,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!isFiltered) return;
+    const valueForFilter =
+      recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+    await handleFilterChange(recordOfFilter.filter, valueForFilter, page, size, sort);
+  };
 
 
   const handleAddNewDiagnosticTest = async () => {
@@ -145,11 +173,45 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         errors.push('Default Result Type is required for Laboratory tests');
       }
 
+      const isEmpty = (val) => val === null || val === undefined || val === '';
+      const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+      if (
+        diagnosticsTest?.parallelCapacityValue === null ||
+        diagnosticsTest?.parallelCapacityValue === undefined ||
+        diagnosticsTest?.parallelCapacityValue < 1
+      ) {
+        errors.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+      if (diagnosticsTest?.appointable) {
+        if (isEmpty(diagnosticsTest?.defaultDurationMinutes) || diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes is required and should be greater than 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) || diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferAfterMinutes) || diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+        }
+      }
+      else {
+        if (isNotEmpty(diagnosticsTest?.defaultDurationMinutes) && diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes should be greater than 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) && diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferAfterMinutes) && diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes should be greater then or equal 0')
+        }
+      }
+
       if (errors.length) {
         dispatch(
           notify({
             msg: errors.map(e => `• ${e}`).join('\n'),
-            sev: 'error'
+            sev: 'warning'
           })
         );
         return;
@@ -158,6 +220,8 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
       const payload = {
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
+        shortName: diagnosticsTest.name?.trim(),
+        hl7IntegrationCode: diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -181,10 +245,27 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         defaultProfileResultUnit:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
 
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
+        listOfValueId: diagnosticsTest.listOfValueId ?? null,
+
+        parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
+
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
       if (testRequest?.id && response?.id) {
         try {
           await setDiagnosticTestForRequest({
@@ -196,7 +277,9 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         }
       }
 
-      refetchDiagnostics();
+      await refetchDiagnostics();
+      // Keep the filtered list (if a filter is active) in sync with the newly added record
+      await refreshCurrentFilterIfActive();
       setDiagnosticsTest(response);
 
       dispatch(
@@ -221,6 +304,40 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
     try {
       const errors = validateDiagnosticTest(diagnosticsTest);
 
+      const isEmpty = (val) => val === null || val === undefined || val === '';
+      const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+      if (
+        diagnosticsTest?.parallelCapacityValue === null ||
+        diagnosticsTest?.parallelCapacityValue === undefined ||
+        diagnosticsTest?.parallelCapacityValue < 1
+      ) {
+        errors.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+      if (diagnosticsTest?.appointable) {
+        if (isEmpty(diagnosticsTest?.defaultDurationMinutes) || diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes is required and should be greater than 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) || diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferAfterMinutes) || diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+        }
+      }
+      else {
+        if (isNotEmpty(diagnosticsTest?.defaultDurationMinutes) && diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes should be greater than 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) && diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferAfterMinutes) && diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes should be greater then or equal 0')
+        }
+      }
+
       if (errors.length > 0) {
         dispatch(
           notify({
@@ -230,11 +347,12 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         );
         return;
       }
-
       const payload = {
         id: diagnosticsTest.id,
         type: diagnosticsTest.type,
         name: diagnosticsTest.name?.trim(),
+        shortName: diagnosticsTest.shortName?.trim(),
+        hl7IntegrationCode: diagnosticsTest.hl7IntegrationCode?.trim(),
         internalCode: diagnosticsTest.internalCode?.trim(),
 
         ageSpecific: diagnosticsTest.ageSpecific,
@@ -259,12 +377,31 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         defaultProfileResultUnit:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
 
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
+        listOfValueId: diagnosticsTest.listOfValueId ?? null,
+
+        parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
+
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
 
-      refetchDiagnostics();
+      await refetchDiagnostics();
+      // Keep the filtered list (if a filter is active) in sync with the updated record
+      await refreshCurrentFilterIfActive();
       setDiagnosticsTest({ ...response });
 
       dispatch(
@@ -287,17 +424,69 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
 
   const handleToggleActive = async (id: number) => {
     try {
+      const currentItem = (
+        isFiltered
+          ? filteredList
+          : diagnodticsTestList?.data ?? []
+      ).find(item => item.id === id);
+
+      if (!currentItem) return;
+
+      const newActiveStatus = !currentItem.isActive;
+
+
       await toggleDiagnosticTestActive(id).unwrap();
-      dispatch(notify({ msg: 'Status updated successfully', sev: 'success' }));
-      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch {
-      dispatch(notify({ msg: 'Failed to update status', sev: 'error' }));
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        isActive: newActiveStatus
+      }));
+
+      if (isFiltered) {
+        setFilteredList(prev =>
+          prev.map(item =>
+            item.id === id
+              ? {
+                ...item,
+                isActive: newActiveStatus
+              }
+              : item
+          )
+        );
+
+
+      } else {
+        await refetchDiagnostics();
+      }
+
+      dispatch(
+        notify({
+          msg: newActiveStatus
+            ? 'Diagnostic Test activated successfully'
+            : 'Diagnostic Test deactivated successfully',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      console.error(error);
+
+      dispatch(
+        notify({
+          msg: 'Failed to update status',
+          sev: 'error'
+        })
+      );
     }
   };
 
-  const handleDeactiveReactivateDiagnostic = () => {
-    handleToggleActive(diagnosticsTest.id);
-    setOpenConfirmDeleteDiagnosticTest(false);
+  const handleDeactiveReactivateDiagnostic = async () => {
+    if (!diagnosticsTest?.id) return;
+
+    try {
+      await handleToggleActive(diagnosticsTest.id);
+    } finally {
+      setOpenConfirmDeleteDiagnosticTest(false);
+    }
   };
 
 
@@ -340,19 +529,52 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
 
       let response;
 
+      // _cb makes every call's query args unique so RTK Query always performs
+      // a fresh network fetch instead of possibly reusing a cached result from
+      // an earlier call with the exact same (type/name, page, size, sort).
+      // This is what makes the filtered list reflect a just-added/updated record
+      // immediately, without needing to trigger a page/sort change first.
+      const cacheBuster = Date.now();
+
       if (field === 'type') {
         response = await diagnosticTestByTypes({
           type: trimmedValue,
           page,
           size,
-          sort
+          sort,
+          _cb: cacheBuster
         }).unwrap();
       } else if (field === 'name') {
         response = await diagnosticTestByName({
           name: trimmedValue,
           page,
           size,
-          sort
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
+      } else if (field === 'internalCode') {
+        response = await diagnosticTestByInternalCode({
+          internalCode: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
+      } else if (field === 'shortName') {
+        response = await diagnosticTestByShortName({
+          shortName: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
+      } else if (field === 'status') {
+        response = await diagnosticTestByStatus({
+          isActive: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
         }).unwrap();
       } else {
         setIsFiltered(false);
@@ -361,7 +583,7 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         return;
       }
 
-      setFilteredList(response.data ?? []);
+      setFilteredList([...(response.data ?? [])]);
       setFilteredTotal(response.totalCount ?? 0);
       setFilterPagination(prev => ({
         ...prev,
@@ -392,13 +614,25 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
   // Available fields for filtering
   const filterFields = [
     { label: 'Type', value: 'type' },
-    { label: 'Name', value: 'name' }
+    { label: 'Name', value: 'name' },
+    { label: 'Short Name', value: 'shortName' },
+    { label: 'Internal Code', value: 'internalCode' },
+    { label: 'Status', value: 'status' }
   ];
 
   // Header page setUp
   const divContent = 'Diagnostics Tests Definition';
-  dispatch(setPageCode('Diagnostics_Tests'));
-  dispatch(setDivContent(divContent));
+
+
+  useEffect(() => {
+    dispatch(setPageCode('Diagnostics_Tests'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.id === diagnosticsTest.id) {
@@ -433,6 +667,22 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
             setDiagnosticsTest(rowData);
             setOpenAddEditDiagnosticTestPopup(true);
           }}
+        />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: rowData.type,
+              sourceId: rowData.id,
+              itemCode: rowData.internalCode,
+              itemName: rowData.name,
+              unitPrice: rowData.price,
+              currency: rowData.currency
+            })
+          }
         />
 
         {/* Activate / Deactivate */}
@@ -490,6 +740,18 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
           />
         )}
 
+        <FontAwesomeIcon
+          icon={faClipboardList}
+          title="Policy Assignment"
+          className="icons-style"
+          color="var(--primary-gray)"
+          size="lg"
+          onClick={() => {
+            setSelectedDiagnosticTestForPolicyAssignment(rowData);
+            setOpenPolicyAssignmentModal(true);
+          }}
+        />
+
         {/* Profile or Normal Range */}
         {rowData?.type === 'LABORATORY' && (
           <RiFileList2Fill
@@ -508,11 +770,12 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
           <DefaultProfileIndicator
             testId={rowData.id}
             testType={rowData.type}
-            onClick={() => {
+            onClick={(profile) => {
               if (disabled) return;
+
               setDiagnosticsTest(rowData);
+              setSelectedProfile(profile);
               setOpenNormalRangesDirectly(true);
-              setOpenProfileModal(true);
             }}
           />
         )}
@@ -536,8 +799,27 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
       render: rowData => <p>{rowData?.name}</p>
     },
     {
+      key: 'shortName',
+      title: <Translate>Short Name</Translate>,
+      render: rowData => <p>{rowData?.shortName}</p>
+    },
+    {
       key: 'internalCode',
       title: <Translate>Internal Code</Translate>
+    },
+    {
+      key: 'loincCode',
+      title: <Translate>LOINC</Translate>,
+      flexGrow: 2,
+      render: (rowData: DiagnosticTest) => {
+        if (!rowData?.loincCode) return <p>—</p>;
+        return (
+          <p>
+            {rowData.loincCode}
+            {rowData.loincDescription ? ` — ${rowData.loincDescription}` : ''}
+          </p>
+        );
+      }
     },
 
     {
@@ -556,7 +838,7 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -586,7 +868,7 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         searchable={false}
       />
 
-      {recordOfFilter.filter !== 'type' && (
+      {recordOfFilter.filter !== 'type' && recordOfFilter.filter !== 'status' && (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -594,6 +876,24 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder="Search"
+        />
+      )}
+
+      {recordOfFilter.filter === 'status' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: 'true' },
+            { label: 'Inactive', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Status"
+          searchable={false}
         />
       )}
 
@@ -640,10 +940,27 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      page: newPage
-    }));
+    if (isFiltered) {
+      // Update the filtered-pagination page and re-fetch that page from the active filter
+      setFilterPagination(prev => ({
+        ...prev,
+        page: newPage
+      }));
+      const valueForFilter =
+        recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+      handleFilterChange(
+        recordOfFilter.filter,
+        valueForFilter,
+        newPage,
+        filterPagination.size,
+        filterPagination.sort
+      );
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage
+      }));
+    }
   };
 
   // Effects
@@ -654,17 +971,11 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-  // update list when filter is changed
 
   useEffect(() => {
     if (!openProfileModal) {
       setOpenNormalRangesDirectly(false);
+      setSelectedProfile(null);
     }
   }, [openProfileModal]);
 
@@ -678,9 +989,25 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
     }
   }, [testRequest?.type]);
 
+
+  useEffect(() => {
+    if (selectedProfile) {
+      setOpenProfileModal(true);
+    }
+  }, [selectedProfile]);
+
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
+        key={`${isFiltered}-${filteredTotal}-${filteredList.length}-${paginationParams.timestamp}`}
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}
@@ -775,6 +1102,7 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         }
         width={width}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
 
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}
@@ -792,7 +1120,32 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
         open={openProfileModal}
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
+        selectedProfile={selectedProfile}
         openNormalRanges={openNormalRangesDirectly}
+      />
+
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        content={
+          selectedDiagnosticTestForPolicyAssignment?.id ? (
+            <PolicyAssignmentManager
+              resourceType="DIAGNOSTIC_TEST"
+              resourceId={selectedDiagnosticTestForPolicyAssignment.id}
+              facilityId={selectedDiagnosticTestForPolicyAssignment.facilityId}
+              showHeader={false}
+              onSaved={() => {
+                refetchDiagnostics();
+              }}
+            />
+          ) : (
+            <div style={{ padding: 16 }}>Please select a diagnostic test.</div>
+          )
+        }
       />
 
       {openTemplateModal && diagnosticsTest?.id && (

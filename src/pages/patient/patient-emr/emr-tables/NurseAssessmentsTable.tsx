@@ -1,32 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { initialListRequest, ListRequest } from '@/types/types';
 // import { useGetNurseAssessmentsQuery } from '@/services/nurseAssessmentService';
-import { skipToken } from '@reduxjs/toolkit/query';
 
 const NurseAssessmentsTable = ({ patient }) => {
+  void patient;
   const [sortColumn, setSortColumn] = useState('date');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: 'date',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key || undefined
-      }
-    ],
-    pageSize: 15
-  });
 
   // const {
   //   data: nurseResponse,
@@ -45,22 +31,6 @@ const NurseAssessmentsTable = ({ patient }) => {
   //     refetch();
   //   }
   // }, [patient?.key]);
-
-  useEffect(() => {
-    setListRequest({
-      ...initialListRequest,
-      sortBy: 'date',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key || undefined
-        }
-      ],
-      pageNumber: 1
-    });
-  }, [patient?.key]);
 
   // const sortedData = useMemo(() => {
   //   if (!nurseResponse?.object) return [];

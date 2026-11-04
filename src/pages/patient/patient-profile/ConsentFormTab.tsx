@@ -3,6 +3,8 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 
 const ConsentFormTab = ({ patient, isClick }) => {
+  void patient;
+  void isClick;
   //Table Columns Content
   const columns = [
     {
@@ -37,11 +39,21 @@ const ConsentFormTab = ({ patient, isClick }) => {
     },
   ];
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <MyTable
       data={[]}
       columns={columns}
-    />)
+    />
+    </div>
+    )
 };
 
 export default ConsentFormTab;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -6,6 +6,7 @@ import { Payor } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 
 type PayorModalProps = {
   open: boolean;
@@ -18,12 +19,23 @@ type PayorModalProps = {
 const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor, onSave }) => {
   const payorCategories = useEnumOptions('PayorCategory');
 
+  const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
+    useGetAllNphiesPayersQuery(
+      { page: 0, size: 2000, sort: 'nameEn,asc' },
+      { skip: !open }
+    );
+
+  const nphiesPayersList = useMemo(
+    () => (nphiesPayerListResponse?.data ?? []).filter(payer => payer.isActive),
+    [nphiesPayerListResponse]
+  );
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={payor.id ? 'Edit Payor' : 'Add Payor'}
-      size="lg"
+      size="80vw"
       actionButtonLabel="Save"
       actionButtonFunction={onSave}
       modalColor="var(--primary-blue)"
@@ -69,7 +81,59 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 </div>
               }
             />
+            <SectionContainer
+              title="Waseel / NPHIES"
+              content={
+                <div className="flex-row-payor-modal-in-sections">
+                  <MyInput
+                    fieldName="nphiesId"
+                    fieldType="select"
+                    fieldLabel="NPHIES ID"
+                    selectData={nphiesPayersList}
+                    selectDataLabel="nameEn"
+                    selectDataValue="nphiesId"
+                    record={payor}
+                    setRecord={setPayor}
+                    width="12vw"
+                    searchable
+                    loading={isNphiesPayersLoading}
+                    placeholder={
+                      isNphiesPayersLoading
+                        ? 'Loading NPHIES payers...'
+                        : nphiesPayersList.length === 0
+                          ? 'No NPHIES payers found'
+                          : 'Select NPHIES payer'
+                    }
+                  />
 
+                  <MyInput
+                    fieldName="waseelPayerId"
+                    fieldType="text"
+                    fieldLabel="Waseel Payer ID"
+                    record={payor}
+                    setRecord={setPayor}
+                    width="12vw"
+                  />
+
+                  <MyInput
+                    fieldName="tpaNphiesId"
+                    fieldType="text"
+                    fieldLabel="TPA NPHIES ID"
+                    record={payor}
+                    setRecord={setPayor}
+                    width="12vw"
+                  />
+
+                  <MyInput
+                    fieldName="isWaseelEnabled"
+                    fieldType="checkbox"
+                    fieldLabel="Waseel Enabled"
+                    record={payor}
+                    setRecord={setPayor}
+                  />
+                </div>
+              }
+            />
             {/* Section: Contract Period */}
             <SectionContainer
               title="Contract Period"

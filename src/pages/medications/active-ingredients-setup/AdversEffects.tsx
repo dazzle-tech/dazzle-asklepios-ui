@@ -203,7 +203,9 @@ const AdversEffects = ({ activeIngredients }) => {
               placeholder="Select Effect"
               fieldName="adverseEffectLkey"
               selectData={AdversEffectsLovQueryResponseData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={selectedActiveIngredientAdverseEffect}
               setRecord={setSelectedActiveIngredientAdverseEffect}

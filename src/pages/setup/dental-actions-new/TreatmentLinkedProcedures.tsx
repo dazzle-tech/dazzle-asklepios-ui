@@ -1,5 +1,5 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
@@ -20,6 +20,7 @@ import {
 
 import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';  // ← NEW
 import { useGetCdtByCodeQuery } from '@/services/setup/cdtCodeService';
+import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const TreatmentLinkedProcedures = ({
@@ -40,6 +41,33 @@ const TreatmentLinkedProcedures = ({
     useGetByDentalActionQuery(dentalAction?.id, { skip: !dentalAction?.id });
   const [createLink] = useCreateMutation();
   const [deleteLink] = useDeleteMutation();
+
+  // The by-dental-action endpoint only nests the bare id under `cdtId`
+  // ({id: N}, no code/description) -- bulk-fetch the full CDT details.
+  const linkedCdtIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          linkedProcedures
+            .map(row => row?.cdtId?.id)
+            .filter((id): id is number => Boolean(id))
+        )
+      ),
+    [linkedProcedures]
+  );
+
+  const { data: linkedCdtDetails } = useGetCdtByIdsQuery(linkedCdtIds, {
+    skip: linkedCdtIds.length === 0
+  });
+
+  const linkedCdtMap = useMemo(
+    () =>
+      (linkedCdtDetails ?? []).reduce((acc: Record<number, any>, item: any) => {
+        acc[item.id] = item;
+        return acc;
+      }, {}),
+    [linkedCdtDetails]
+  );
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
@@ -138,7 +166,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>CDT Code</Translate>,
       flexGrow: 3,
        render: (row) => {
-        return row?.cdtCode.code ?? '';
+        return linkedCdtMap[row?.cdtId?.id]?.code ?? '';
       },
     },
     {
@@ -146,7 +174,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>Description</Translate>,
       flexGrow: 4,
       render: (row) => {
-        return row?.cdtCode.description ?? '';
+        return linkedCdtMap[row?.cdtId?.id]?.description ?? '';
       },
     },
     {
@@ -173,6 +201,13 @@ const TreatmentLinkedProcedures = ({
   // -----------------------------------------
   // 7) UI
   // -----------------------------------------
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -184,7 +219,7 @@ const TreatmentLinkedProcedures = ({
       actionButtonLabel="Close"
       actionButtonFunction={() => setOpen(false)}
       content={() => (
-        <Form fluid className="container-of-linked-procedures-dental">
+        <Form fluid className="container-of-linked-procedures-dental" dir={dir}>
           <Col>
 
             {/* CDT SELECT WITH SEARCH + PAGINATION */}

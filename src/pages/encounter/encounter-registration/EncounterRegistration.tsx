@@ -42,9 +42,10 @@ import {
   useGetDepartmentsQuery,
   useGetFacilitiesQuery,
   useGetLovValuesByCodeAndParentQuery,
-  useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -127,13 +128,20 @@ const EncounterRegistration = () => {
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: bookingstatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
-  const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
   const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
+  const searchFieldName = fromCamelCaseToDBName(
+    selectedCriterion === 'documentNumber' ? 'documentNo' : selectedCriterion
+  );
+  const searchOperator = selectedCriterion === 'dob' ? 'equals' : 'containsIgnoreCase';
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
   );
@@ -146,8 +154,8 @@ const EncounterRegistration = () => {
     ...listRequest,
     filters: [
       {
-        fieldName: fromCamelCaseToDBName(selectedCriterion) || 'document_no',
-        operator: 'containsIgnoreCase',
+        fieldName: searchFieldName || 'document_no',
+        operator: searchOperator,
         value: searchKeyword || '-1'
       }
     ]
@@ -312,8 +320,8 @@ const EncounterRegistration = () => {
         ignore: false,
         filters: [
           {
-            fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
+            fieldName: searchFieldName,
+            operator: searchOperator,
             value: searchKeyword
           }
         ]
@@ -330,9 +338,7 @@ const EncounterRegistration = () => {
   }, [record]);
 
   useEffect(() => {
-    const header = (
-      "Patient Registration"
-    );
+    const header = 'Patient Registration';
     dispatch(setPageCode('Patient_Registration'));
     dispatch(setDivContent(header));
     return () => {
@@ -490,7 +496,9 @@ const EncounterRegistration = () => {
                       fieldType="select"
                       fieldName="PaymentMethod"
                       selectData={paymentMethodLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={{}}
                       setRecord={newValue => {
@@ -537,7 +545,9 @@ const EncounterRegistration = () => {
                       fieldType="select"
                       fieldName="Currency"
                       selectData={currencyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={{}}
                       setRecord={''}
@@ -791,7 +801,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="documentTypeLkey"
                     selectData={docTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={patientSlice.patient}
                     setRecord={undefined}
@@ -862,7 +874,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -885,7 +899,7 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldLabel="Physician"
                     fieldName="physicianKey"
-                    selectData={practitionerListResponse?.object ?? []}
+                    selectData={practitionerListResponse?.data ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
                     record={localEncounter}
@@ -899,7 +913,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
                     selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -911,7 +927,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="reasonLkey"
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -922,7 +940,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="admissionOrigin"
                     selectData={patOriginLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -951,7 +971,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="encounterStatusLkey"
                     selectData={bookingstatusLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1002,7 +1024,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="paymentTypeLkey"
                     selectData={paymentTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1015,7 +1039,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="InsuranceProvider"
                     selectData={InsuranceProviderLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1046,7 +1072,9 @@ const EncounterRegistration = () => {
                     fieldType="select"
                     fieldName="InsurancePlanType"
                     selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -1182,7 +1210,9 @@ const EncounterRegistration = () => {
                     fieldLabel="Relation"
                     fieldName="relationTypeLkey"
                     selectData={relationsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}

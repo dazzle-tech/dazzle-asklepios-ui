@@ -223,7 +223,9 @@ const Indications = ({ selectedActiveIngredients }) => {
           <MyInput
             fieldType="select"
             selectData={valueUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             height={37}
             width={70}

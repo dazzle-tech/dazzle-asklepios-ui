@@ -41,6 +41,15 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const patient = props.patient || state.patient;
   const encounter = props.encounter || state.encounter;
   const edit = props.edit ?? state.edit;
+  const viewMode =
+    props.viewMode ??
+    state.viewMode ??
+    undefined;
+
+  const readOnlyFinal =
+    viewMode === 'readOnly' || edit === true;
+
+
   const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient });
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
@@ -64,14 +73,14 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [readOnly, setReadOnly] = useState(false);
 
 
-const [painLevel, setPainLevel] = useState(0);
+  const [painLevel, setPainLevel] = useState(0);
 
-    const getTrackColor = (value: number): string => {
-      if (value === 0) return 'transparent';
-      if (value >= 1 && value <= 3) return '#28a745';
-      if (value >= 4 && value <= 7) return 'orange';
-      return 'red';
-    };
+  const getTrackColor = (value: number): string => {
+    if (value === 0) return 'transparent';
+    if (value >= 1 && value <= 3) return '#28a745';
+    if (value >= 4 && value <= 7) return 'orange';
+    return 'red';
+  };
 
 
 
@@ -246,8 +255,20 @@ const [painLevel, setPainLevel] = useState(0);
     }
   }, [patientObservationSummary]);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div
+      ref={ref}
+      className={clsx('basuc-div', { 'disabled-panel': readOnlyFinal })}
+      style={readOnlyFinal ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+      dir={dir}
+    >
       <Form fluid>
         {!(location.pathname == '/nurse-station') && (
           <Row>
@@ -262,7 +283,7 @@ const [painLevel, setPainLevel] = useState(0);
             <Row>
               <Col md={24}>
                 <SectionContainer
-                  title="Patient Observations & Complaints"
+                  title={<Translate>Patient Observations & Complaints</Translate>}
                   content={
                     <>
                       <Row>
@@ -313,7 +334,9 @@ const [painLevel, setPainLevel] = useState(0);
                             fieldType="select"
                             fieldName="encounterPriorityLkey"
                             selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             record={localEncounter}
                             setRecord={setLocalEncounter}
@@ -430,7 +453,9 @@ const [painLevel, setPainLevel] = useState(0);
                           fieldType="select"
                           fieldName="latestpainlevelLkey"
                           selectData={painDegreesLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           record={patientObservationSummary}
                           setRecord={setPatientObservationSummary}
@@ -439,7 +464,7 @@ const [painLevel, setPainLevel] = useState(0);
                       </Col>
                       <Col md={12}>
                         <div className="pain-level-container">
-                            <MyLabel label={`Pain Level (${painLevel}-10)`} />
+                          <MyLabel label={`Pain Level (${painLevel}-10)`} />
 
                           <div className="slider-class" style={{ position: 'relative' }}>
                             <Slider
@@ -488,112 +513,112 @@ const [painLevel, setPainLevel] = useState(0);
 
             {(patientAgeGroupResponse?.object?.valueCode === 'AG_INFANT' ||
               patientAgeGroupResponse?.object?.valueCode === 'AG_NEONATE') && (
-              <Row>
-                <Col md={24}>
-                  <SectionContainer
-                    title="Additional Measurements"
-                    content={
-                      <>
-                        <Row className="rows-gap">
-                          <Col md={24}>
-                            <MyInput
-                              width="100%"
-                              fieldName="latesthearingtest"
-                              fieldLabel="Hearing Test"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestDehydration"
-                              fieldLabel="Dehydration"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestNasalFlaring"
-                              fieldLabel="Nasal Flaring"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestResponseToLight"
-                              fieldLabel="Response to Light"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestPupilResponse"
-                              fieldLabel="Pupil Response"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestAbilityToFollowTarget"
-                              fieldLabel="Ability to Follow Target"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                          <Col md={8}>
-                            <MyInput
-                              width="100%"
-                              fieldType="checkbox"
-                              fieldName="latestColorTesting"
-                              fieldLabel="Color Testing"
-                              checkedLabel="positive"
-                              unCheckedLabel="negative"
-                              record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
-                            />
-                          </Col>
-                        </Row>
-                      </>
-                    }
-                  />
-                </Col>
-              </Row>
-            )}
+                <Row>
+                  <Col md={24}>
+                    <SectionContainer
+                      title="Additional Measurements"
+                      content={
+                        <>
+                          <Row className="rows-gap">
+                            <Col md={24}>
+                              <MyInput
+                                width="100%"
+                                fieldName="latesthearingtest"
+                                fieldLabel="Hearing Test"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestDehydration"
+                                fieldLabel="Dehydration"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestNasalFlaring"
+                                fieldLabel="Nasal Flaring"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestResponseToLight"
+                                fieldLabel="Response to Light"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestPupilResponse"
+                                fieldLabel="Pupil Response"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestAbilityToFollowTarget"
+                                fieldLabel="Ability to Follow Target"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                            <Col md={8}>
+                              <MyInput
+                                width="100%"
+                                fieldType="checkbox"
+                                fieldName="latestColorTesting"
+                                fieldLabel="Color Testing"
+                                checkedLabel="positive"
+                                unCheckedLabel="negative"
+                                record={patientObservationSummary}
+                                disabled={isEncounterStatusClosed || readOnly}
+                                setRecord={setPatientObservationSummary}
+                              />
+                            </Col>
+                          </Row>
+                        </>
+                      }
+                    />
+                  </Col>
+                </Row>
+              )}
             {patientAgeGroupResponse?.object?.valueCode === 'AG_GER' && (
               <Row>
                 <Col md={24}>
@@ -635,7 +660,7 @@ const [painLevel, setPainLevel] = useState(0);
                               fieldLabel="Action to Take"
                               fieldType="textarea"
                               record={patientObservationSummary}
-                              disabled={isEncounterStatusClosed || readOnly}
+                              disabled={isEncounterStatusClosed || readOnlyFinal}
                               setRecord={setPatientObservationSummary}
                             />
                           </Col>

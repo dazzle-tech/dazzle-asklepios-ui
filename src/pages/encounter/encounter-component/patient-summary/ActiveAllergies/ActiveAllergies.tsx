@@ -8,7 +8,7 @@ import { useGetAllergensQuery } from '@/services/setup/allergensService';
 import { PatientAllergiesResponseVM } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-const ActiveAllergies = ({ patient }) => {
+const ActiveAllergies = ({ patient, loadingHeight = undefined }) => {
   // Define filters to fetch allergies specific to a patient and with a certain status
   
   const {
@@ -67,13 +67,14 @@ const ActiveAllergies = ({ patient }) => {
   return (
     <Section
       isContainOnlyTable
-      title="Active Allergies"
+      title={<Translate>Active Allergies</Translate>}
       content={
         <MyTable
           data={activeAllergies}
           columns={tableColumns}
           height={250}
           loading={isLoading}
+          loadingHeight={loadingHeight}
           onRowClick={rowData => {}}
         />
       }

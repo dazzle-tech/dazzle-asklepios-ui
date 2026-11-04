@@ -9,19 +9,21 @@ import {
   useUpdatePatientDocumentMutation,
   useGetPrimaryDocumentsByPatientQuery
 } from '@/services/patients/patientDocumentsService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { PatientDocument } from '@/types/model-types-new';
+import clsx from 'clsx';
 
 const DocumentInfo = ({
   validationResult,
   localPatient,
-  patientDocumentEnum,
-  countryLovQueryResponse
+  patientDocumentEnum
 }) => {
   const dispatch = useAppDispatch();
+  const countryOptions = useEnumOptions('CountryName');
 
   const patientId = localPatient?.id;
 
@@ -67,7 +69,7 @@ const DocumentInfo = ({
 
   // Helper: remove undefined
   const stripUndefined = obj =>
-    Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+    Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 
 
   const handleSave = async () => {
@@ -111,7 +113,10 @@ const DocumentInfo = ({
       title={
         <div className="flex-row-22">
           Document
-          <MyButton onClick={handleSave} disabled={!patientId}>
+          <MyButton onClick={handleSave} disabled={!patientId}  
+              className={clsx('icon-button', { 'not-allowed-cell': localPatient?.patientStatus === 'MERGED' })}
+              style={{ cursor: localPatient?.patientStatus === 'MERGED' ? 'not-allowed' : 'pointer' }}
+          >
             {doc?.id ? 'Update' : 'Save'}
           </MyButton>
         </div>
@@ -138,10 +143,10 @@ const DocumentInfo = ({
             column
             fieldLabel="Document Country"
             fieldType="select"
-            fieldName="countryId"
-            selectData={countryLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
+            fieldName="countryName"
+            selectData={countryOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
             record={doc}
             setRecord={setDoc}
             disabled={doc.type === 'NO_DOC'}
@@ -152,7 +157,7 @@ const DocumentInfo = ({
             vr={validationResult}
             column
             fieldLabel="Document Number"
-            fieldName="number"
+            fieldName="textnumber"
             record={doc}
             setRecord={setDoc}
             disabled={doc.type === 'NO_DOC'}

@@ -1,0 +1,592 @@
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
+import MyInput from '@/components/MyInput';
+import CancellationModal from '@/components/CancellationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import Translate from '@/components/Translate';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+
+import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import {
+  useCancelCurrentMedicationMutation,
+  useGetCurrentMedicationsQuery,
+  useAddCurrentMedicationMutation,
+  useUpdateCurrentMedicationMutation
+} from '@/services/patients/currentMedicationService';
+
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useMemo, useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+
+import AddCurrentMedication from './AddCurrentMedication';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import ExpandableText from '@/components/ExpandMore/ExpandableText';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+
+import { Form, Tooltip, Whisper } from 'rsuite';
+
+const CurrentMedication = ({ patient, edit, toShowData = false, showFreeText = false }) => {
+  const dispatch = useAppDispatch();
+
+  const [open, setOpen] = useState(false);
+  const [selectedMedication, setSelectedMedication] = useState<any>(null);
+  const [freeTextRecord, setFreeTextRecord] = useState({
+    freeText: ''
+  });
+  const [editingFreeTextId, setEditingFreeTextId] = useState<number | null>(null);
+
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc'
+  });
+
+  const [showCancelled, setShowCancelled] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({
+    id: null,
+    status: '',
+    cancellationReason: ''
+  });
+
+  const patientId = Number(patient?.id);
+  const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
+
+  const { data: medicationsResponse, isLoading, refetch } =
+    useGetCurrentMedicationsQuery(
+      {
+        patientId: patient?.id,
+        ...pagination,
+        showCancelled
+      },
+      {
+        skip: !patient?.id
+      }
+    );
+
+  const [cancelCurrentMedication] =
+    useCancelCurrentMedicationMutation();
+
+  const {
+    data: activeIngredientsResponse,
+    isLoading: isLoadingIngredients
+  } = useGetActiveIngredientsQuery({
+    page: 0,
+    size: 1000
+  });
+
+  const activeIngredientMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    activeIngredientsResponse?.data?.forEach(item => {
+      map.set(String(item.id), item.name);
+    });
+
+    return map;
+  }, [activeIngredientsResponse]);
+
+  const isSelected = (row: any) =>
+    selectedMedication && row.id === selectedMedication.id
+      ? 'selected-row'
+      : '';
+
+  const [addCurrentMedication, { isLoading: isSavingFreeText }] =
+    useAddCurrentMedicationMutation();
+  const [updateCurrentMedication, { isLoading: isUpdatingFreeText }] =
+    useUpdateCurrentMedicationMutation();
+
+  const handleSaveFreeText = async () => {
+    const freeText = freeTextRecord.freeText?.trim();
+
+    if (!freeText) {
+      dispatch(notify({ msg: 'Free Text is required.', sev: 'warning' }));
+      return;
+    }
+
+    if (!isValidPatientId) {
+      dispatch(notify({ msg: 'Invalid patient.', sev: 'error' }));
+      return;
+    }
+
+    const payload = {
+      patientId,
+      activeIngredientId: null,
+      dosage: null,
+      unit: null,
+      frequency: null,
+      startDate: null,
+      patientIsFree: true,
+      freeText
+    };
+
+    try {
+      if (editingFreeTextId !== null) {
+        await updateCurrentMedication({
+          ...payload,
+          id: editingFreeTextId
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Free Text updated successfully.', sev: 'success' }));
+      } else {
+        await addCurrentMedication(payload).unwrap();
+
+        dispatch(notify({ msg: 'Free Text saved successfully.', sev: 'success' }));
+      }
+
+      setFreeTextRecord({ freeText: '' });
+      setEditingFreeTextId(null);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        `Failed to ${editingFreeTextId !== null ? 'update' : 'save'} Free Text.`;
+
+      dispatch(notify({ msg: errorMessage, sev: 'error' }));
+    }
+  };
+
+  const handleEdit = (row: any) => {
+    const freeTextValue = String(row?.freeText ?? '').trim();
+    const isPatientIsFreeCheckboxRecord =
+      row?.patientIsFree === true && freeTextValue === 'Patient is Free';
+
+    if (
+      showFreeText &&
+      row?.patientIsFree === true &&
+      freeTextValue &&
+      !isPatientIsFreeCheckboxRecord
+    ) {
+      setEditingFreeTextId(row.id);
+      setFreeTextRecord({
+        freeText: row.freeText || ''
+      });
+      return;
+    }
+    setSelectedMedication(row);
+    setOpen(true);
+  };
+
+  const openCancelDialog = (row: any) => {
+    setOpen(false);
+    setSelectedMedication(null);
+
+    setCancelObject({
+      id: row.id,
+      status: row.status || 'ACTIVE',
+      cancellationReason: ''
+    });
+
+    setOpenCancelModal(true);
+  };
+
+  const handleCancel = async () => {
+    try {
+      await cancelCurrentMedication({
+        id: cancelObject.id,
+        cancellationReason: cancelObject.cancellationReason
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Current Medication cancelled successfully.',
+          sev: 'success'
+        })
+      );
+
+      setOpenCancelModal(false);
+
+      setCancelObject({
+        id: null,
+        status: '',
+        cancellationReason: ''
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.detail ||
+        error?.error ||
+        'Failed to cancel Current Medication.';
+
+      dispatch(
+        notify({
+          msg: errorMessage,
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPagination(prev => ({
+      ...prev,
+      page: newPage
+    }));
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setPagination(prev => ({
+      ...prev,
+      size: parseInt(event.target.value, 10),
+      page: 0
+    }));
+  };
+
+  const tableData = useMemo(
+    () => medicationsResponse?.data ?? [],
+    [medicationsResponse?.data]
+  );
+
+  const totalCount = medicationsResponse?.totalCount ?? 0;
+
+
+  const columns = [
+    {
+      key: 'freeText',
+      title: (
+        <div style={{ minWidth: 350, width: '100%' }}>
+          <Translate>FREE TEXT</Translate>
+        </div>
+      ),
+      minWidth: 350,
+      flexGrow: 3,
+      render: (row: any) => {
+        if (row?.patientIsFree !== true) {
+          return '-';
+        }
+
+        const text = row?.freeText?.trim() || '-';
+
+        return (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={
+              <Tooltip
+                style={{
+                  maxWidth: 500,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {text}
+              </Tooltip>
+            }
+          >
+            <div
+              style={{
+                display: 'block',
+                width: '100%',
+                minWidth: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere'
+              }}
+            >
+              {text}
+            </div>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'medication',
+      title: 'MEDICATION NAME',
+      flexGrow: 4,
+      render: (row: any) =>
+        activeIngredientMap.get(String(row.activeIngredientId)) ?? ''
+    },
+    {
+      key: 'dosage',
+      title: 'DOSAGE',
+      flexGrow: 2,
+      render: (row: any) => (row.dosage ?? row.unit ? `${row.dosage ?? ''} ${formatEnumString(row.unit) ?? ''}`.trim() : '')
+    },
+    {
+      key: 'frequency',
+      title: 'FREQUENCY',
+      flexGrow: 3,
+      render: (row: any) => row.frequency ? formatEnumString(row.frequency) : ''
+    },
+    {
+      key: 'startDate',
+      title: 'START DATE',
+      flexGrow: 3,
+      render: (row: any) =>
+        row?.startDate
+          ? new Date(row.startDate).toLocaleDateString()
+          : ''
+    },
+    {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 3,
+      render: (row: any) => {
+        const status = row?.status ?? 'ACTIVE';
+        return (
+          <MyBadgeStatus
+            contant={formatEnumString(status)}
+            color={
+              status === 'CANCELLED'
+                ? '#dc3545'
+                : status === 'ACTIVE'
+                  ? '#28a745'
+                  : '#6c757d'
+            }
+          />
+        );
+      }
+    },
+    {
+      key: 'createdDate',
+      title: <Translate>CREATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
+      )
+    },
+    {
+      key: 'lastModifiedDate',
+      title: <Translate>UPDATED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) => (
+        <UserDateCell
+          login={row?.lastModifiedBy}
+          date={row?.lastModifiedDate}
+        />
+      )
+    },
+    {
+      key: 'cancelledDate',
+      title: <Translate>CANCELLED AT / BY</Translate>,
+      expandable: true,
+      render: (row: any) =>
+        row?.status?.toString?.() === 'CANCELLED' ? (
+          <UserDateCell
+            login={row?.cancelledBy}
+            date={row?.cancelledDate}
+          />
+        ) : (
+          <span>-</span>
+        )
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>CANCELLATION REASON</Translate>,
+      expandable: true,
+      flexGrow: 4,
+      render: (row: any) =>
+        row?.status === 'CANCELLED' && row?.cancellationReason ? (
+          <ExpandableText
+            text={row.cancellationReason}
+            lines={3}
+            maxChars={30}
+          />
+        ) : (
+          '-'
+        )
+    },
+    ...(!toShowData
+      ? [
+        {
+          key: 'actions',
+          title: '',
+          flexGrow: 2,
+          render: (row: any) => {
+            const status =
+              row?.status?.toString?.() || 'ACTIVE';
+
+            return (
+              <div
+                className="container-of-icons"
+                style={{
+                  display: 'flex',
+                  gap: 12
+                }}
+              >
+                {status !== 'CANCELLED' && (
+                  <>
+                    <MdModeEdit
+                      className="icons-style view-only-action-edit-delete-encounter"
+                      size={22}
+                      fill="var(--primary-gray)"
+                      onClick={() =>
+                        handleEdit(row)
+                      }
+                      style={{
+                        opacity: edit ? 0.5 : 1,
+                        pointerEvents: edit ? 'none' : 'auto',
+                        cursor: edit ? 'not-allowed' : 'pointer',
+                      }}
+                    />
+
+                    <MdDelete
+                      size={22}
+                      className="view-only-action-edit-delete-encounter"
+                      style={{
+                        opacity: edit ? 0.5 : 1,
+                        pointerEvents: edit ? 'none' : 'auto',
+                        cursor: edit ? 'not-allowed' : 'pointer',
+                        color:
+                          'var(--rs-red-500, #f44336)'
+                      }}
+                      title="Cancel"
+                      onClick={() =>
+                        openCancelDialog(row)
+                      }
+                    />
+                  </>
+                )}
+              </div>
+            );
+          }
+        }
+      ]
+      : [])
+  ];
+
+  return (
+    <div className="medical-container-div">
+      <SectionContainer
+        title={<>Current Medication</>}
+        action={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {!toShowData && (
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  setSelectedMedication(null);
+                  setOpen(true);
+                }}
+              >
+                Add
+              </MyButton>
+            )}
+
+            {showFreeText && (
+              <MyButton
+                disabled={
+                  edit ||
+                  isSavingFreeText ||
+                  isUpdatingFreeText ||
+                  !freeTextRecord.freeText?.trim()
+                }
+                onClick={handleSaveFreeText}
+              >
+                {isSavingFreeText || isUpdatingFreeText
+                  ? 'Saving...'
+                  : editingFreeTextId !== null
+                    ? 'Update'
+                    : 'Save'}
+              </MyButton>
+            )}
+          </div>
+        }
+        content={
+          <>
+            {showFreeText && (
+              <Form
+                fluid
+                formValue={freeTextRecord}
+                onChange={(value: any) => setFreeTextRecord(value)}
+              >
+                <MyInput
+                  fieldType="textarea"
+                  fieldLabel="Free Text"
+                  fieldName="freeText"
+                  record={freeTextRecord}
+                  setRecord={setFreeTextRecord}
+                  disabled={edit || isSavingFreeText || isUpdatingFreeText}
+                  width="100%"
+                />
+              </Form>
+            )}
+            
+              <div className="margin-bottom-10 show-cancelled">
+                <MyInput
+                  fieldType="check"
+                  fieldLabel="Show Cancelled"
+                  showLabel={false}
+                  fieldName="showCancelled"
+                  record={{ showCancelled }}
+                  setRecord={(record: any) => {
+                    setShowCancelled(
+                      record.showCancelled
+                    );
+                  }}
+                />
+              </div>
+           
+
+            <MyTable
+              height={450}
+              data={tableData}
+              loading={
+                isLoading || isLoadingIngredients
+              }
+              columns={columns}
+              rowClassName={isSelected}
+              page={pagination.page}
+              rowsPerPage={pagination.size}
+              totalCount={totalCount}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={
+                handleRowsPerPageChange
+              }
+            />
+
+            <AddCurrentMedication
+              open={open}
+              initialData={selectedMedication}
+              patient={patient}
+              setOpen={() => {
+                setOpen(false);
+                setSelectedMedication(null);
+              }}
+            />
+
+            <CancellationModal
+              open={openCancelModal}
+              setOpen={() => {
+                setOpenCancelModal(false);
+                setCancelObject({
+                  id: null,
+                  status: '',
+                  cancellationReason: ''
+                });
+              }}
+              handleCancle={(e?: any) => {
+                e?.preventDefault?.();
+                e?.stopPropagation?.();
+                handleCancel();
+              }}
+              object={cancelObject}
+              setObject={setCancelObject}
+              title="Current Medication"
+              fieldName="cancellationReason"
+              fieldLabel="Cancellation Reason"
+              statusField="status"
+              statusKey="CANCELLED"
+              withReason
+              required
+              size="33vw"
+            />
+          </>
+        }
+      />
+    </div>
+  );
+};
+
+export default CurrentMedication;

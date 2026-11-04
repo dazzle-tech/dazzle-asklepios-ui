@@ -4,7 +4,13 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { Hospitalization } from '@/types/model-types-new';
 
 type Id = number;
-type PagedParams = { page: number; size: number; sort?: string };
+
+type PagedParams = {
+  page: number;
+  size: number;
+  sort?: string;
+  showCancelled?: boolean;
+};
 
 type PagedResult<T> = {
   data: T[];
@@ -12,8 +18,17 @@ type PagedResult<T> = {
   links?: any;
 };
 
-const mapPaged = (response: any[], meta): PagedResult<any> => {
+type CancelHospitalizationRequest = {
+  id: number;
+  cancellationReason?: string;
+};
+
+const mapPaged = (
+  response: Hospitalization[],
+  meta: any
+): PagedResult<Hospitalization> => {
   const headers = meta?.response?.headers;
+
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
@@ -32,16 +47,31 @@ export const hospitalizationService = createApi({
       PagedResult<Hospitalization>,
       { patientId: Id } & PagedParams
     >({
-      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+      query: ({
+        patientId,
+        page,
+        size,
+        sort = 'id,desc',
+        showCancelled = false
+      }) => ({
         url: '/api/patient/hospitalizations',
-        params: { patientId, page, size, sort }
+        params: {
+          patientId,
+          page,
+          size,
+          sort,
+          showCancelled
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Hospitalization']
     }),
 
     /* ========================= CREATE ========================= */
-    addHospitalization: builder.mutation<Hospitalization, Hospitalization>({
+    addHospitalization: builder.mutation<
+      Hospitalization,
+      Hospitalization
+    >({
       query: body => ({
         url: '/api/patient/hospitalizations',
         method: 'POST',
@@ -51,7 +81,10 @@ export const hospitalizationService = createApi({
     }),
 
     /* ========================= UPDATE ========================= */
-    updateHospitalization: builder.mutation<Hospitalization, Hospitalization>({
+    updateHospitalization: builder.mutation<
+      Hospitalization,
+      Hospitalization
+    >({
       query: body => ({
         url: '/api/patient/hospitalizations',
         method: 'PUT',
@@ -60,8 +93,24 @@ export const hospitalizationService = createApi({
       invalidatesTags: ['Hospitalization']
     }),
 
+    /* ========================= CANCEL ========================= */
+    cancelHospitalization: builder.mutation<
+      Hospitalization,
+      CancelHospitalizationRequest
+    >({
+      query: body => ({
+        url: '/api/patient/hospitalizations/cancel',
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['Hospitalization']
+    }),
+
     /* ========================= DELETE ========================= */
-    deleteHospitalization: builder.mutation<void, { id: Id }>({
+    deleteHospitalization: builder.mutation<
+      void,
+      { id: Id }
+    >({
       query: ({ id }) => ({
         url: `/api/patient/hospitalizations/${id}`,
         method: 'DELETE'
@@ -76,5 +125,6 @@ export const {
   useLazyGetHospitalizationsQuery,
   useAddHospitalizationMutation,
   useUpdateHospitalizationMutation,
+  useCancelHospitalizationMutation,
   useDeleteHospitalizationMutation
 } = hospitalizationService;

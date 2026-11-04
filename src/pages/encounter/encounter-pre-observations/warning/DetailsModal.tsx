@@ -101,7 +101,9 @@ const DetailsModal = ({
                     fieldType="select"
                     fieldLabel="Warning Type"
                     selectData={warningTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'warningTypeLkey'}
                     record={warning}
@@ -124,7 +126,9 @@ const DetailsModal = ({
                     fieldType="select"
                     fieldLabel="Severity"
                     selectData={severityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     fieldName={'severityLkey'}
                     record={warning}
@@ -174,7 +178,9 @@ const DetailsModal = ({
                             fieldType="select"
                             fieldLabel="Source of Information"
                             selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'sourceOfInformationLkey'}
                             record={warning}

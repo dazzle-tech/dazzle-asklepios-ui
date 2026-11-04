@@ -6,7 +6,16 @@ import SectionContainer from '@/components/SectionsoContainer';
 const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
   const [formRecord, setFormRecord] = useState({ anyReaction: false, reaction: '' });
   const [showTagField, setShowTagField] = useState(false);
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <SectionContainer
       title={<p className="font-small">Administration Details</p>}
       content={
@@ -94,6 +103,7 @@ const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
         </div>
       }
     />
+  </div>
   );
 };
 

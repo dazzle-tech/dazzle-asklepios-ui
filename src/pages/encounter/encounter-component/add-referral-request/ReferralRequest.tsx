@@ -15,14 +15,17 @@ import {
 } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { extractErrorMessage, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newReferralRequest } from '@/types/model-types-constructor-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { MdModeEdit } from 'react-icons/md';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
+
 const REFERRAL_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Referral request data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -91,6 +94,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 const ReferralRequest = () => {
   const { state } = useLocation();
   const { patient, encounter } = state || {};
+  const viewMode = state?.viewMode;
+  const edit = viewMode === 'readOnly';
+
 
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
@@ -223,13 +229,10 @@ const ReferralRequest = () => {
     const missingFields: string[] = [];
 
     if (!referral?.referralType) missingFields.push('Referral Type');
+    if (!referral?.toFacilityId) missingFields.push('To Facility');
+    if (!referral?.toDepartmentId) missingFields.push('To Department');
     if (!referral?.priority) missingFields.push('Priority');
     if (!referral?.referralReason) missingFields.push('Referral Reason');
-    if (!referral?.toDepartmentId) missingFields.push('To Department');
-
-    if (referral?.referralType === 'EXTERNAL' && !referral?.toFacilityId) {
-      missingFields.push('To Facility');
-    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
@@ -251,13 +254,16 @@ const ReferralRequest = () => {
     try {
       dispatch(showSystemLoader());
 
+      const fromFacilityId = encounter?.facilityId || selectedFacility?.id;
+      const fromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
+
       const payload = {
         ...(referral?.id && { id: Number(referral.id) }),
         patientId,
         encounterId,
         referralType: referral.referralType,
-        fromFacilityId: selectedFacility?.id ? Number(selectedFacility.id) : null,
-        fromDepartmentId: selectedDepartment?.departmentId ? Number(selectedDepartment.departmentId) : null,
+        fromFacilityId: fromFacilityId ? Number(fromFacilityId) : null,
+        fromDepartmentId: fromDepartmentId ? Number(fromDepartmentId) : null,
         toFacilityId:
           referral?.referralType === 'INTERNAL'
             ? selectedFacility?.id
@@ -268,15 +274,14 @@ const ReferralRequest = () => {
               : null,
         toDepartmentId: referral?.toDepartmentId ? Number(referral.toDepartmentId) : null,
         referralReason: referral.referralReason,
-        priority: referral.priority,
-        status: referral.status ?? 'PENDING'
+        priority: referral.priority
       };
 
       if (referral?.id) {
         await updateReferral({ id: referral.id, data: payload }).unwrap();
         dispatch(notify({ msg: 'Referral updated successfully', sev: 'success' }));
       } else {
-        await createReferral(payload as any).unwrap();
+        await createReferral({ ...payload, status: 'REQUESTED' } as any).unwrap();
         dispatch(notify({ msg: 'Referral created successfully', sev: 'success' }));
       }
 
@@ -285,7 +290,7 @@ const ReferralRequest = () => {
       refetch();
       return true;
     } catch (err: any) {
-      handleCrudError(err, dispatch, REFERRAL_ERROR_MAP);
+      dispatch(notify({ msg: extractErrorMessage(err) || 'Save Failed', sev: 'warning' }));
       return false;
     } finally {
       dispatch(hideSystemLoader());
@@ -293,6 +298,8 @@ const ReferralRequest = () => {
   };
 
   const isSelected = (rowData: any) => (rowData?.id === referral?.id ? 'selected-row' : '');
+
+
 
   const tableColumns = [
     {
@@ -361,31 +368,23 @@ const ReferralRequest = () => {
       title: <Translate>Created By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.createdBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.createdDate ? formatDateWithoutSeconds(row.createdDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.createdBy}
+          date={row?.createdDate}
+        />
       )
     },
-
     {
       key: 'acceptedBy',
       title: <Translate>Accepted By/At</Translate>,
       flexGrow: 3,
       expandable: true,
       render: (row: any) => (
-        <>
-          {row?.acceptedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.acceptedDate ? formatDateWithoutSeconds(row.acceptedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.acceptedBy}
+          date={row?.acceptedDate}
+        />
       )
     },
     {
@@ -393,15 +392,11 @@ const ReferralRequest = () => {
       title: <Translate>Rejected By/At</Translate>,
       flexGrow: 3,
       expandable: true,
-
       render: (row: any) => (
-        <>
-          {row?.rejectedBy ?? '-'}
-          <br />
-          <span className="date-table-style">
-            {row?.rejectedDate ? formatDateWithoutSeconds(row.rejectedDate) : '-'}
-          </span>
-        </>
+        <UserDateCell
+          login={row?.rejectedBy}
+          date={row?.rejectedDate}
+        />
       )
     },
     {
@@ -419,11 +414,22 @@ const ReferralRequest = () => {
       align: 'center',
       render: (rowData: any) => (
         <MdModeEdit
-          className="icons-style"
+          className="icons-style view-only-action-edit-delete-encounter"
+          style={{
+            cursor:
+              edit
+                ? 'not-allowed'
+                : 'pointer',
+            opacity:
+              edit
+                ? 0.5
+                : 1
+          }}
           title="Edit"
           size={24}
           fill="var(--primary-gray)"
           onClick={e => {
+            if(edit) return
             e.stopPropagation();
             setReferral({ ...rowData });
             setOpenPopup(true);
@@ -445,85 +451,93 @@ const ReferralRequest = () => {
 
   const listsLoading = isFacilitiesLoading || isFacilitiesFetching || departmentsLoading;
   const pageLoading = isFetching || listsLoading;
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel>
-      <div style={{ position: 'relative' }}>
-        {listsLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 10,
-              background: 'rgba(255,255,255,0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 8
-            }}
-          >
-            <Loader size="md" content="Loading data..." vertical />
-          </div>
-        )}
-
-        <MyTable
-          data={tableData}
-          totalCount={totalCount}
-          loading={pageLoading}
-          columns={tableColumns}
-          rowClassName={isSelected}
-          onRowClick={(rowData: any) => {
-            setReferral(rowData);
-          }}
-          page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={(e: any) => {
-            const newSize = Number(e.target.value);
-            setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
-          }}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          tableButtons={
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setReferral({ ...newReferralRequest });
-                setOpenPopup(true);
+    <div dir={dir}>
+      <Panel dir={dir}>
+        <div style={{ position: 'relative' }}>
+          {listsLoading && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 10,
+                background: 'rgba(255,255,255,0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8
               }}
-              width="109px"
-              disabled={listsLoading}
             >
-              Add New
-            </MyButton>
-          }
-        />
-      </div>
+              <Loader size="md" content="Loading data..." vertical />
+            </div>
+          )}
 
-      <AddEditReferralRequest
-        open={openPopup}
-        setOpen={setOpenPopup}
-        referral={referral}
-        setReferral={setReferral}
-        handleSave={handleSave}
-        width={width}
-      />
-      <CancellationModal
-        open={openCancelModal}
-        setOpen={setOpenCancelModal}
-        object={cancelObject}
-        setObject={setCancelObject}
-        handleCancle={() => setOpenCancelModal(false)}
-        title="Cancel Referral"
-        fieldLabel="Reason for cancellation"
-        fieldName="cancelReason"
-      />
-    </Panel>
+          <MyTable
+            data={tableData}
+            totalCount={totalCount}
+            loading={pageLoading}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            onRowClick={(rowData: any) => {
+              setReferral(rowData);
+            }}
+            page={paginationParams.page}
+            rowsPerPage={paginationParams.size}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={(e: any) => {
+              const newSize = Number(e.target.value);
+              setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
+            }}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            tableButtons={
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={() => {
+                  setReferral({ ...newReferralRequest });
+                  setOpenPopup(true);
+                }}
+                width="109px"
+                disabled={listsLoading || edit}
+              >
+                Add New
+              </MyButton>
+            }
+          />
+        </div>
+
+        <AddEditReferralRequest
+          open={openPopup}
+          setOpen={setOpenPopup}
+          referral={referral}
+          setReferral={setReferral}
+          encounter={encounter}
+          handleSave={handleSave}
+          width={width}
+        />
+        <CancellationModal
+          open={openCancelModal}
+          setOpen={setOpenCancelModal}
+          object={cancelObject}
+          setObject={setCancelObject}
+          handleCancle={() => setOpenCancelModal(false)}
+          title="Cancel Referral"
+          fieldLabel="Reason for cancellation"
+          fieldName="cancelReason"
+        />
+      </Panel>
+    </div>
   );
 };
 

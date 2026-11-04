@@ -147,7 +147,9 @@ const GenericAdministeredMedications = ({
             fieldType="select"
             fieldName="unitLkey"
             selectData={unitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={rowData}
             setRecord={rec =>

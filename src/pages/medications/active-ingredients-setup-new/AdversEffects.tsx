@@ -183,8 +183,15 @@ const sortedList = useMemo(() => {
   // RENDER
   // ---------------------------
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Form fluid>
         <div className="container-of-actions-header-active">
           <div className="container-of-fields-active">
@@ -195,7 +202,9 @@ const sortedList = useMemo(() => {
               record={record}
               setRecord={setRecord}
               selectData={lovData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="lovDisplayVale"
               width={220}
               menuMaxHeight={150}

@@ -417,85 +417,6 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-
-    getDiagnosticOrder: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/diagnostic-order-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrder: builder.mutation({
-      query: (order: ApDiagnosticOrders) => ({
-        url: `/encounter/save-diagnostic-order`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getDiagnosticOrderTest: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/diagnostic-order-test-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTest: builder.mutation({
-      query: (order: ApDiagnosticOrderTests) => ({
-        url: `/encounter/save-diagnostic-order-tests`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestNotesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          'test-id': testid
-        },
-        url: `/encounter/diagnostic-order-test-notes-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTestNotes: builder.mutation({
-      query: (note: ApDiagnosticOrderTestsNotes) => ({
-        url: `/encounter/save-diagnostic-order-tests-notes`,
-        method: 'POST',
-        body: note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestSamplesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          'test-id': testid
-        },
-        url: `/encounter/diagnostic-order-test-samples-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveDiagnosticOrderTestSamples: builder.mutation({
-      query: (note: ApDiagnosticOrderTestsSamples) => ({
-        url: `/encounter/save-diagnostic-order-tests-sample`,
-        method: 'POST',
-        body: note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
     savePsychologicalExams: builder.mutation({
       query: (psychologicalExam: ApPsychologicalExam) => ({
         url: `/encounter/save-psychological-exam`,
@@ -1297,14 +1218,6 @@ export const {
   useSaveDrugOrderMutation,
   useGetDrugOrderMedicationQuery,
   useSaveDrugOrderMedicationMutation,
-  useGetDiagnosticOrderQuery,
-  useGetDiagnosticOrderTestQuery,
-  useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation,
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation,
   useSavePsychologicalExamsMutation,
   useGetPsychologicalExamsQuery,
   useSaveAudiometryPuretoneMutation,

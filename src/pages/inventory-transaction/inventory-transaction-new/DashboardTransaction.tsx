@@ -641,9 +641,14 @@ function DashboardTransaction() {
   };
 
 
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Container style={{ height: "100vh" }}>
+    <Container style={{ height: "100vh" }} dir={dir}>
       <Sidebar
         collapsible
         className="profile-sidebar"
@@ -791,7 +796,9 @@ function DashboardTransaction() {
                       fieldName="transTypeLkey"
                       fieldType="select"
                       selectData={transTypeListResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={transaction}
                       setRecord={setTransaction}
@@ -830,7 +837,9 @@ function DashboardTransaction() {
                             ? transReasonInListResponse?.object ?? []
                             : transReasonOutListResponse?.object ?? []
                       }
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       record={transaction}
                       setRecord={setTransaction}

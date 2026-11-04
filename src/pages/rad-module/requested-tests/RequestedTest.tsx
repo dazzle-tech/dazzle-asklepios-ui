@@ -24,6 +24,8 @@ import { MdOutlineDescription } from 'react-icons/md';
 import { Form, Tooltip, Whisper } from 'rsuite';
 import ApproveRequestModal from './ApproveRequestModal';
 import './style.less';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 
 type Props = {
   page?: number;
@@ -183,7 +185,6 @@ const RequestedTestTable: React.FC<Props> = ({
     }
   };
 
-
   const tableColumns = useMemo(
     () => [
       {
@@ -199,7 +200,7 @@ const RequestedTestTable: React.FC<Props> = ({
       },
       {
         key: 'indication',
-        title: <Translate>Indication</Translate>,
+        title: <Translate>Request Reason</Translate>,
         flexGrow: 2
       },
       {
@@ -296,28 +297,28 @@ const RequestedTestTable: React.FC<Props> = ({
         dataKey: 'createdByAt',
         width: 150,
         expandable: true,
-        render: (row: any) =>
-          row?.createdDate ? (
-            <>
-              {row?.createdBy}
-              <br />
-              <span className="date-table-style">
-                {formatDateWithoutSeconds(row.createdDate)}
-              </span>
-            </>
-          ) : (
-            ' '
-          )
+        render: (row: any) => (
+          <UserDateCell
+            login={row?.createdBy}
+            date={row?.createdDate}
+          />
+        )
       }
     ],
     [hideActions]
   );
 
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
     <>
+  <div dir={dir}>
       <MyTable
         columns={tableColumns}
         data={requestsResponse?.data || []}
@@ -377,6 +378,7 @@ const RequestedTestTable: React.FC<Props> = ({
           setObject={setTest}
           fieldLabel="Reject Reason"
           title="Reject"
+          required
         />
       )}
 
@@ -393,7 +395,7 @@ const RequestedTestTable: React.FC<Props> = ({
           <DiagnosticsTest testRequest={test} />
         )}
       />
-
+  </div>
     </>
   );
 };

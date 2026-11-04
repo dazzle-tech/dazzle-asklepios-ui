@@ -30,6 +30,7 @@ import ActiveIngrediantList from './ActiveIngredient';
 import Substitues from './Substitutes';
 import PlusIcon from '@rsuite/icons/Plus';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const DetailsModal = ({
   edit,
@@ -599,6 +600,8 @@ const DetailsModal = ({
                               fieldLabel="Medication Order Type"
                               selectData={orderTypeLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'drugOrderTypeLkey'}
                               record={orderMedication}
@@ -613,6 +616,8 @@ const DetailsModal = ({
                               fieldLabel="ROA"
                               selectData={filteredList ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="roaLkey"
                               record={orderMedication}
@@ -636,6 +641,8 @@ const DetailsModal = ({
                               fieldLabel="Unit"
                               selectData={unitLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="doseUnitLkey"
                               record={orderMedication}
@@ -658,6 +665,8 @@ const DetailsModal = ({
                               fieldLabel="Unit"
                               selectData={unitsLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="frequencyUnitLkey"
                               record={orderMedication}
@@ -688,6 +697,8 @@ const DetailsModal = ({
                                 fieldLabel="Duration type"
                                 selectData={DurationTypeLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldName="durationTypeLkey"
                                 record={orderMedication}
@@ -784,7 +795,7 @@ const DetailsModal = ({
 
                 <Row className="padding-16">
                   <SectionContainer
-                    title={<Text>Indication</Text>}
+                    title={<Text><Translate>Indication</Translate></Text>}
                     content={
                       <>
                         <Row>
@@ -839,6 +850,8 @@ const DetailsModal = ({
                               fieldLabel="Indication Use"
                               selectData={indicationLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'indicationUseLkey'}
                               record={orderMedication}
@@ -853,6 +866,8 @@ const DetailsModal = ({
                               fieldLabel="Administration Instructions"
                               selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'inst'}
                               record={slectInst}
@@ -1008,6 +1023,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={infusionDeviceLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="infusionDevice"
@@ -1042,6 +1059,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={routeLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="route"
@@ -1058,6 +1077,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={frequencyLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="frequency"

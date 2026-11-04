@@ -1,4 +1,6 @@
+import MyDateHijriInput from '@/components/MyDateHijriInput/MyDateHijriInput';
 import MyInput from '@/components/MyInput';
+import clsx from 'clsx';
 import React from 'react';
 import { Form } from 'rsuite';
 
@@ -12,7 +14,7 @@ const BasicInfo = ({
   patientClassLovQueryResponse
 }) => {
   return (
-    <Form layout="inline">
+    <Form layout="inline"  className={clsx('', { 'disabled-panel': localPatient.patientStatus === 'MERGED' })}>
       <MyInput
         required
         vr={validationResult}
@@ -26,6 +28,7 @@ const BasicInfo = ({
         width={170}
         vr={validationResult}
         column
+        required
         fieldName="secondName"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -62,7 +65,7 @@ const BasicInfo = ({
         searchable={false}
         width={170}
       />
-      <MyInput
+      <MyDateHijriInput
         required
         vr={validationResult}
         column
@@ -72,6 +75,8 @@ const BasicInfo = ({
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
+        disableFutureDates
+        showWarningIfBeforeYear1900
       />
       <MyInput
         vr={validationResult}
@@ -107,6 +112,8 @@ const BasicInfo = ({
         setRecord={setLocalPatient}
         searchable={false}
         width={170}
+        disableByField='isValid'
+
       />
       {localPatient?.incompletePatient ? (
         <MyInput
@@ -127,6 +134,17 @@ const BasicInfo = ({
         fieldLabel="Private Patient"
         fieldType="checkbox"
         fieldName="isPrivatePatient"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
+        required
+        vr={validationResult}
+        column
+        fieldLabel="Citizen"
+        fieldType="checkbox"
+        fieldName="isCitizen"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}

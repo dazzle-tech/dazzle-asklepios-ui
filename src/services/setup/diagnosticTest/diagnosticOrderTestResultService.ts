@@ -32,7 +32,9 @@ type PagedResult<T> = {
 };
 
 export type DiagnosticOrderTestResultFilterParams = {
-  orderIdIn?: number;
+  orderIdIn?: number | number[] | string | string[];
+  patientIdIn?: number[];
+  reviewed?: boolean;
   orderTestId?: number;
   profileTestId?: number;
 
@@ -52,6 +54,49 @@ export type DiagnosticOrderTestResultFilterParams = {
   reviewDateTo?: string;
 
   resultType?: "NUMBER" | "TEXT";
+
+  orderNumber?: string;
+  encounterNumber?: string;
+} & PagedParams;
+
+export type AllDiagnosticOrderTestResultsParams = {
+  resultDateFrom?: string;
+  resultDateTo?: string;
+  showAbnormalOnly?: boolean;
+} & PagedParams;
+
+
+export type DiagnosticOrderTestResultResultsVM = {
+  id: number;
+  orderTestId: number;
+  testId: number;
+  profileTestId: number;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  viewMarker?: string | null;
+  viewNormalRange?: string | null;
+
+  resultDate?: string | null;
+
+  patientName?: string | null;
+  mrn?: string | null;
+
+  orderedBy?: string | null;
+  orderedAt?: string | null;
+
+  encounterId?: number | null;
+
+  hasNote: boolean;
+  isRadiology: boolean;
+};
+
+export type DiagnosticOrderTestResultsPageParams = {
+  resultDateFrom?: string;
+  resultDateTo?: string;
+  showAbnormalOnly?: boolean;
 } & PagedParams;
 
 export type BulkIdsDTO = {
@@ -62,13 +107,20 @@ export type BulkRejectDTO = {
   ids: number[];
   rejectedReason: string;
 };
+export type DiagnosticOrderTestResultBulkCreateDTO = {
+  results: DiagnosticOrderTestResultCreateDTO[];
+};
+export type DiagnosticOrderTestResultIdsFilterParams = Omit<
+  DiagnosticOrderTestResultFilterParams,
+  "page" | "size" | "sort"
+>;
 
 /* ================= Service ================= */
 
 export const diagnosticOrderTestResultService = createApi({
   reducerPath: "diagnosticOrderTestResultApi",
   baseQuery: BaseQuery,
-  tagTypes: ["DiagnosticOrderTestResult"],
+  tagTypes: ["DiagnosticOrderTestResult", "LabResultLog"],
 
   endpoints: (builder) => ({
 
@@ -124,7 +176,7 @@ export const diagnosticOrderTestResultService = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: ["DiagnosticOrderTestResult"],
+      invalidatesTags: ["DiagnosticOrderTestResult", "LabResultLog"],
     }),
 
     /* 🔹 Toggle Review */
@@ -149,6 +201,70 @@ export const diagnosticOrderTestResultService = createApi({
         method: "POST",
       }),
       invalidatesTags: ["DiagnosticOrderTestResult"],
+    }),
+
+    /* 🔹 Results Page */
+    getDiagnosticOrderTestResultsPage: builder.query<
+      PagedResult<DiagnosticOrderTestResultResultsVM>,
+      DiagnosticOrderTestResultsPageParams
+    >({
+      query: ({ page, size, sort, ...params }) => ({
+        url: "/api/patient/diagnostic-order-tests-results/results-page",
+        method: "GET",
+        params: {
+          page,
+          size,
+          sort,
+          ...params,
+        },
+      }),
+
+      transformResponse: (
+        response: DiagnosticOrderTestResultResultsVM[],
+        meta
+      ) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+
+      providesTags: ["DiagnosticOrderTestResult"],
+    }),
+
+    /* 🔹 All Test Results */
+    getAllDiagnosticOrderTestResults: builder.query<
+      PagedResult<DiagnosticOrderTestResultResponseVM>,
+      AllDiagnosticOrderTestResultsParams
+    >({
+      query: ({ page, size, sort, ...params }) => ({
+        url: "/api/patient/diagnostic-order-tests-results/all",
+        method: "GET",
+        params: {
+          page,
+          size,
+          sort,
+          ...params,
+        },
+      }),
+
+      transformResponse: (
+        response: DiagnosticOrderTestResultResponseVM[],
+        meta
+      ) => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+
+      providesTags: ["DiagnosticOrderTestResult"],
     }),
 
     /* 🔹 Bulk Approve */
@@ -198,6 +314,7 @@ export const diagnosticOrderTestResultService = createApi({
         url: `/api/patient/lab-result-logs/by-result/${resultId}`,
         method: "GET",
       }),
+      providesTags: ["LabResultLog"],
     }),
 
     rejectDiagnosticOrderTestResult: builder.mutation<
@@ -224,14 +341,50 @@ export const diagnosticOrderTestResultService = createApi({
       }),
       invalidatesTags: ["DiagnosticOrderTestResult"],
     }),
+    /* 🔹 Bulk Create */
+    bulkCreateDiagnosticOrderTestResult: builder.mutation<
+      void,
+      DiagnosticOrderTestResultBulkCreateDTO>({
+        query: (body) => ({
+          url: "/api/patient/diagnostic-order-tests-results/bulk",
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: ["DiagnosticOrderTestResult"],
+      }
+      ),
+    bulkToggleReviewDiagnosticOrderTestResult: builder.mutation<
+      void,
+      BulkIdsDTO>({
+        query: (body) => ({
+          url: "/api/patient/diagnostic-order-tests-results/bulk-toggle-review",
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: ["DiagnosticOrderTestResult"],
+      }),
+    getDiagnosticOrderTestResultIds: builder.query<
+      number[],
+      DiagnosticOrderTestResultIdsFilterParams
+    >({
+      query: (params) => ({
+        url: "/api/patient/diagnostic-order-tests-results/ids",
+        method: "GET",
+        params,
+      }),
+    }),
+
   }),
+
 });
 
 /* ================= Hooks ================= */
 
 export const {
   useFilterDiagnosticOrderTestResultsQuery,
+  useGetAllDiagnosticOrderTestResultsQuery,
   useCreateDiagnosticOrderTestResultMutation,
+  useGetDiagnosticOrderTestResultsPageQuery,
   useUpdateDiagnosticOrderTestResultMutation,
   useToggleReviewDiagnosticOrderTestResultMutation,
   useApproveDiagnosticOrderTestResultMutation,
@@ -241,4 +394,9 @@ export const {
   useGetFilledProfileTestIdsQuery,
   useGetFilledProfileTestIdsByOrderTestQuery,
   useGetLabResultLogsByResultIdQuery,
+  useBulkCreateDiagnosticOrderTestResultMutation,
+  useBulkToggleReviewDiagnosticOrderTestResultMutation,
+  useGetDiagnosticOrderTestResultIdsQuery,
+  useLazyFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } = diagnosticOrderTestResultService;

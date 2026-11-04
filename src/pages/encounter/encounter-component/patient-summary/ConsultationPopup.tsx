@@ -185,8 +185,8 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
         ...consultationData,
         patientId: patient.key,
         encounterId: encounter.key,
-        fromDepartmentId: authSlice.selectedDepartment?.departmentId,
-        fromFacilityId: authSlice.selectedDepartment?.facilityId,
+        fromDepartmentId: encounter?.departmentId || authSlice.selectedDepartment?.departmentId,
+        fromFacilityId: encounter?.facilityId || authSlice.selectedDepartment?.facilityId,
         createdBy: authSlice.user?.login,
 
         // ToDo status key for ORD_STAT_REQST
@@ -271,7 +271,9 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
                   record={consultationData}
                   setRecord={setConsultationData}
                   selectData={subSpecialityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={150}
                   fieldLabel="Specialty"
@@ -283,7 +285,9 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
                   record={consultationData}
                   setRecord={setConsultationData}
                   selectData={priorityLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   width={150}
                   fieldLabel="Consultation Urgency"

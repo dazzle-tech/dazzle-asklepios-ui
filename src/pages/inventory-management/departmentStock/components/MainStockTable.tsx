@@ -89,7 +89,9 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
         fieldLabel="Product Type"
         fieldName="productType"
         selectData={productsLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         width="140px"
         record={{}}
@@ -101,7 +103,9 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
         fieldName="status"
         fieldLabel="Status"
         selectData={payPymentMethodLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         width="130px"
         record={{}}
@@ -315,8 +319,12 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (
+    const dir = isRTL ? 'rtl' : 'ltr';
+    return (<div dir={dir}>
     <MyTable
       data={data}
       columns={tableColumns}
@@ -331,6 +339,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
           onRefillRequest={() => {}}/></>}
       filters={filters()}
     />
+    </div>
   );
 };
 

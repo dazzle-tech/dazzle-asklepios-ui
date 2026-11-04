@@ -88,8 +88,17 @@ const Departments = () => {
   const divContent = (
     "Departments"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Departments'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && department && rowData.key === department.key) {
@@ -138,12 +147,6 @@ const Departments = () => {
     }
   }, [medicalSheet]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (record['filter']) {

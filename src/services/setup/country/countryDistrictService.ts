@@ -58,6 +58,18 @@ export const countryDistrictService = createApi({
       providesTags: ['CountryDistrict']
     }),
 
+    getDistrictsByNameSearch: builder.query<
+      PagedResult<any>,
+      WithCountry & { name: string } & PagedParams
+    >({
+      query: ({ countryId, name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/country/${countryId}/district/names/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['CountryDistrict']
+    }),
+
     getDistrictsByCode: builder.query<
       PagedResult<any>,
       WithCountry & { code: string } & PagedParams
@@ -116,6 +128,8 @@ export const {
   useLazyGetDistrictsByCountryQuery,
   useGetDistrictsByNameQuery,
   useLazyGetDistrictsByNameQuery,
+  useGetDistrictsByNameSearchQuery,
+  useLazyGetDistrictsByNameSearchQuery,
   useGetDistrictsByCodeQuery,
   useLazyGetDistrictsByCodeQuery,
   useAddDistrictMutation,

@@ -152,7 +152,9 @@ const OccupationalPlans = () => {
                         record={planData}
                         setRecord={setPlanData}
                         selectData={interventionTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         width={200}
                         searchable={false}
@@ -174,7 +176,9 @@ const OccupationalPlans = () => {
                             record={planData}
                             setRecord={setPlanData}
                             selectData={frequencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             width={120}
                             searchable={false}
@@ -210,7 +214,9 @@ const OccupationalPlans = () => {
                             record={planData}
                             setRecord={setPlanData}
                             selectData={frequencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             width={120}
                             searchable={false}
@@ -320,7 +326,9 @@ const OccupationalPlans = () => {
                           record={planData}
                           setRecord={setPlanData}
                           selectData={functionalImprovementLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width={200}
                           searchable={false}
@@ -575,8 +583,8 @@ const OccupationalPlans = () => {
       </div>
       <div className="section-header">
         {/* Toggle canceled plans */}
-        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-          Show Cancelled
+        <Checkbox className="show-cancelled" checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
         <div className="section-buttons">
           <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setInitiatePlanModalOpen(true)}>

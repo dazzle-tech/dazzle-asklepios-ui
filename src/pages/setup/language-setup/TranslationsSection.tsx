@@ -63,6 +63,12 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
     </div>
   );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <SectionContainer
       title={
@@ -71,7 +77,7 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
           {buttons}
         </>
       }
-      content={
+      content={<div dir={dir}>
         <MyTable
           filters={filters}
           data={rows}
@@ -102,20 +108,23 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
               key: 'verified',
               title: 'Verify',
               dataKey: 'verified',
-              width: 80
+              width: 80,
+              render: (rowData: LanguageTranslation) => <span>{rowData.verified ? 'Yes' : 'No'}</span>
             },
             {
               key: 'translated',
               title: 'Translate',
               dataKey: 'translated',
-              width: 80
+              width: 80,
+              render: (rowData: LanguageTranslation) => <span>{rowData.translated ? 'Yes' : 'No'}</span>
             }
           ]}
           onRowClick={onRowClick}
           rowClassName={(rowData: LanguageTranslation) =>
             selectedTranslation?.id === rowData.id ? 'selected-row' : ''
           }
-        />
+          dontTranslateData 
+        /></div>
       }
     />
   );

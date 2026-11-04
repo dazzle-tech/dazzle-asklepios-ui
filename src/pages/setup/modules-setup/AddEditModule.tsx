@@ -70,13 +70,21 @@ const AddEditModule = ({ open, setOpen, operationState, width, module, setModule
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={operationState + ' Module'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
       actionButtonFunction={handleModuleSave}
       steps={[{ title: 'Module Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}

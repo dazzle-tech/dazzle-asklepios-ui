@@ -6,8 +6,16 @@ import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 
 const FluidAdministration = ({ fluidOrder, setFluidOrder, addLog }) => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid className="administration-details">
+    <Form fluid className="administration-details" dir={dir}>
       <div className="flexing">
         {/* Total Requested Amount */}
         <MyInput

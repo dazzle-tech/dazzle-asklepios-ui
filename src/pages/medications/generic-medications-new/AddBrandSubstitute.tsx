@@ -9,7 +9,7 @@ import { notify } from "@/utils/uiReducerActions";
 
 import {
   useGetAllBrandMedicationsQuery,
-} from "@/services/setup/brandmedication/BrandMedicationService ";
+} from "@/services/setup/brandmedication/BrandMedicationService";
 
 import {
   useCreateBrandMedicationSubstituteMutation,
@@ -152,12 +152,19 @@ const filteredMedications =
     </div>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={`Substitutes for ${brandMedication?.name ?? ""}`}
-      content={modalContent}
+        content={<div dir={dir}>{modalContent}</div>}
       steps={[
         { title: "Substitute", icon: <HiOutlineSwitchHorizontal /> },
       ]}

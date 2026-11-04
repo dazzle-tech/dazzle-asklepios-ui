@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
@@ -15,7 +15,7 @@ import {
 } from '@/services/encounterMedical/encounterVaccinationService';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useLazyGetVaccinesByNameQuery } from '@/services/vaccine/vaccineService';
+import { useLazyGetActiveVaccinesByNameQuery } from '@/services/vaccine/vaccineService';
 import {
   useGetVaccineDosesByVaccineIdQuery,
   useGetNextVaccineDoseQuery
@@ -44,6 +44,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import Translate from '@/components/Translate';
 
 const ENCOUNTER_VACCINATION_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
@@ -169,6 +170,8 @@ const AddEncounterVaccine = ({
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [isEncounterVaccineStatusClose, setIsEncounterVacineStatusClose] = useState(false);
   const [isDisabledField, setIsDisabledField] = useState(false);
+  // The vaccine and the brand that was given (and charged) cannot change once saved
+  const isVaccineLocked = isDisabledField || Boolean(encounterVaccination?.id);
 
   const [inputValue, setInputValue] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -177,7 +180,7 @@ const AddEncounterVaccine = ({
   const [hasMoreVaccines, setHasMoreVaccines] = useState(false);
   const [searchSession, setSearchSession] = useState(0);
 
-  const [triggerSearchVaccines, vaccinesSearchState] = useLazyGetVaccinesByNameQuery();
+  const [triggerSearchVaccines, vaccinesSearchState] = useLazyGetActiveVaccinesByNameQuery();
 
   const executeSearch = () => {
     const q = inputValue.trim();
@@ -204,7 +207,7 @@ const AddEncounterVaccine = ({
 
   const [vaccine, setVaccine] = useState<Vaccine>({ ...vaccineObject });
   const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...vaccineBrandObject });
-  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...vaccineDoseObjet });
+  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...(newVaccineDose as VaccineDose) });
   const [vaccineToDose, setVaccineToDose] = useState<VaccineDose>({
     ...newVaccineDose,
     doseNumber: ''
@@ -217,14 +220,11 @@ const AddEncounterVaccine = ({
     vaccineBrandId: vaccineBrandObject?.id ?? null
   });
   const [dosePicker, setDosePicker] = useState<{ vaccineDoseId: number | null }>({
-    vaccineDoseId: vaccineDoseObjet?.id ?? null
+    vaccineDoseId: null
   });
   const [administrationReaction, setAdministrationReactions] = useState<{
     administrationReactionsLkey: string | null;
   }>({ administrationReactionsLkey: '' });
-  const [externalFacilityToggle, setExternalFacilityToggle] = useState<{
-    isExternalFacility: boolean;
-  }>({ isExternalFacility: !!(encounterVaccination as any)?.isExternalFacility });
 
   const [brandPage, setBrandPage] = useState(0);
   const [allBrands, setAllBrands] = useState<VaccineBrand[]>([]);
@@ -234,6 +234,8 @@ const AddEncounterVaccine = ({
   const [addEncounterVaccination] = useAddEncounterVaccinationMutation();
   const [updateEncounterVaccination] = useUpdateEncounterVaccinationMutation();
 
+  const { data: valueUnitLov } =
+    useGetLovValuesByCodeQuery('VALUE_UNIT');
   const typeEnumOptions = useEnumOptions('VaccineType');
   const roaEnumOptions = useEnumOptions('MedRoa');
   const numOfDosesEnumOptions = useEnumOptions('NumberOfDoses');
@@ -261,12 +263,59 @@ const AddEncounterVaccine = ({
     { skip: !vaccineDose?.id }
   );
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (vaccineObject?.id) {
+      setVaccine({
+        ...(newVaccine as Vaccine),
+        ...(vaccineObject as Vaccine)
+      });
+    }
+
+    if (vaccineBrandObject?.id) {
+      setVaccineBrand({
+        ...(newVaccineBrand as VaccineBrand),
+        ...(vaccineBrandObject as VaccineBrand)
+      });
+
+      setBrandPicker({
+        vaccineBrandId: Number(vaccineBrandObject.id)
+      });
+    } else if (encounterVaccination?.vaccineBrandId) {
+      setBrandPicker({
+        vaccineBrandId: Number(encounterVaccination.vaccineBrandId)
+      });
+    }
+
+    if (vaccineDoseObjet?.id) {
+      setVaccineDose({
+        ...(newVaccineDose as VaccineDose),
+        ...(vaccineDoseObjet as VaccineDose)
+      });
+
+      setDosePicker({
+        vaccineDoseId: Number(vaccineDoseObjet.id)
+      });
+    } else if (encounterVaccination?.vaccineDoseId) {
+      setDosePicker({
+        vaccineDoseId: Number(encounterVaccination.vaccineDoseId)
+      });
+    }
+
+  }, [
+    open,
+    vaccineObject,
+    vaccineBrandObject,
+    vaccineDoseObjet,
+    encounterVaccination?.id
+  ]);
+
   const handleClearField = () => {
     setEncounterVaccination({
       ...(newEncounterVaccination as EncounterVaccination),
       status: null
     } as any);
-    setExternalFacilityToggle({ isExternalFacility: false });
     setVaccine({ ...(newVaccine as Vaccine) });
     setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
     setVaccineDose({ ...(newVaccineDose as VaccineDose) });
@@ -469,17 +518,32 @@ const AddEncounterVaccine = ({
     );
   }, [vaccineDose?.id, nextDoseData, intervalOneData, allDoses]);
 
-  useEffect(() => {
-    const isExternal = !!externalFacilityToggle.isExternalFacility;
-    setEncounterVaccination(
-      prev =>
-        ({
-          ...prev,
-          externalFacilityName: isExternal ? (prev as any).externalFacilityName ?? '' : ''
-        } as any)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalFacilityToggle.isExternalFacility]);
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+  // ── Form-safe records: replace null with '' so <input value> is never null ──
+  const vaccineForForm = useMemo(
+    () => ({ ...vaccine, postOpeningDuration: vaccine.postOpeningDuration ?? '' }),
+    [vaccine]
+  );
+  const vaccineBrandForForm = useMemo(
+    () => ({ ...vaccineBrand, volume: vaccineBrand?.volume ?? '' }),
+    [vaccineBrand]
+  );
+  const evForForm = useMemo(
+    () => ({
+      ...(encounterVaccination as any),
+      vaccineLotNumber: encounterVaccination.vaccineLotNumber ?? '',
+      administeredLocation: (encounterVaccination as any).administeredLocation ?? '',
+      externalFacilityName: (encounterVaccination as any).externalFacilityName ?? '',
+      administrationReactions: encounterVaccination.administrationReactions ?? '',
+      notes: encounterVaccination.notes ?? ''
+    }),
+    [encounterVaccination]
+  );
 
   return (
     <AdvancedModal
@@ -496,13 +560,13 @@ const AddEncounterVaccine = ({
         </MyButton>
       }
       rightContent={
-        <div className={clsx('right-main-container', { 'disabled-panel': edit })}>
+        <div className={clsx('right-main-container', { 'disabled-panel': edit })} dir={dir}>
           {/* ── Vaccine Name Search ── */}
           <div className="search-list">
             <MyLabel label="Vaccine Name" />
             <InputGroup inside>
               <Input
-                disabled={isDisabledField}
+                disabled={isVaccineLocked}
                 placeholder="Search"
                 value={inputValue}
                 onChange={value => {
@@ -518,7 +582,7 @@ const AddEncounterVaccine = ({
                   if (e.key === 'Enter') executeSearch();
                 }}
               />
-              <InputGroup.Button disabled={isDisabledField} onClick={executeSearch}>
+              <InputGroup.Button disabled={isVaccineLocked} onClick={executeSearch}>
                 <SearchIcon />
               </InputGroup.Button>
             </InputGroup>
@@ -571,7 +635,7 @@ const AddEncounterVaccine = ({
               column
               disabled
               fieldType="text"
-              fieldLabel="Vaccin Name"
+              fieldLabel="Vaccine Name"
               fieldName="name"
               record={vaccine}
               setRecord={setVaccine}
@@ -665,7 +729,7 @@ const AddEncounterVaccine = ({
                 setBrandPicker({ vaccineBrandId: item.id as number });
               }}
               placeholder={vaccineBrand?.name ? vaccineBrand.name : 'Select'}
-              disabled={isDisabledField}
+              disabled={isVaccineLocked}
             />
             <MyInput
               column
@@ -673,7 +737,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Volume"
               fieldName="volume"
-              record={vaccineBrand}
+              record={vaccineBrandForForm}
               setRecord={setVaccineBrand}
             />
             <MyInput
@@ -695,7 +759,9 @@ const AddEncounterVaccine = ({
               fieldType="select"
               fieldName="manufacture"
               selectData={manufacturerLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={vaccineBrand}
               setRecord={setVaccineBrand}
@@ -708,7 +774,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Vaccine Lot Number"
               fieldName="vaccineLotNumber"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
             <MyInput
@@ -740,7 +806,7 @@ const AddEncounterVaccine = ({
                 setVaccineDose({ ...(newVaccineDose as VaccineDose), ...(item as VaccineDose) });
                 setDosePicker({ vaccineDoseId: item.id as number });
               }}
-              placeholder={vaccineDose?.doseNumber ? String(vaccineDose.doseNumber) : 'Select'}
+              placeholder="Select"
               disabled={isDisabledField}
             />
             <MyInput
@@ -767,7 +833,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Administered Location"
               fieldName="administeredLocation"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
 
@@ -777,8 +843,8 @@ const AddEncounterVaccine = ({
               fieldLabel="Is External Facility"
               fieldType="checkbox"
               fieldName="isExternalFacility"
-              record={externalFacilityToggle}
-              setRecord={setExternalFacilityToggle}
+              record={encounterVaccination}
+              setRecord={setEncounterVaccination}
               disabled={isDisabledField}
             />
             <MyInput
@@ -786,11 +852,15 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="External Facility Name"
               fieldName="externalFacilityName"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
-              disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
+              disabled={
+                isDisabledField ||
+                !(encounterVaccination as any)?.isExternalFacility
+              }
             />
             <MyInput
+              width={"100%"}
               column
               required
               fieldLabel="Date Administered"
@@ -812,7 +882,9 @@ const AddEncounterVaccine = ({
                 fieldType="select"
                 fieldName="administrationReactionsLkey"
                 selectData={medAdversLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={administrationReaction}
                 setRecord={setAdministrationReactions}
@@ -824,7 +896,7 @@ const AddEncounterVaccine = ({
                 fieldType="textarea"
                 fieldLabel="Administration Reactions"
                 fieldName="administrationReactions"
-                record={encounterVaccination}
+                record={evForForm}
                 setRecord={setEncounterVaccination}
                 rows={4}
               />
@@ -835,7 +907,7 @@ const AddEncounterVaccine = ({
               fieldType="textarea"
               fieldLabel="Notes"
               fieldName="notes"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
               rows={6}
             />
@@ -843,7 +915,7 @@ const AddEncounterVaccine = ({
         </div>
       }
       leftContent={
-        <div className="left-main-container">
+        <div className="left-main-container" dir={dir}>
           <Form layout="inline" fluid className="fields-container">
             <MyInput
               width={160}
@@ -860,7 +932,7 @@ const AddEncounterVaccine = ({
               disabled
               fieldLabel="Post Opening Duration"
               fieldName="postOpeningDuration"
-              record={vaccine}
+              record={vaccineForForm}
               setRecord={setVaccine}
             />
             <MyInput
@@ -879,7 +951,9 @@ const AddEncounterVaccine = ({
           </Form>
 
           <div>
-            <h6>Vaccine Brands</h6>
+            <h6>
+              <Translate>Vaccine Brands</Translate>
+            </h6>
             <InfoCardList
               list={vaccine?.id ? allBrands : []}
               fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}
@@ -890,15 +964,28 @@ const AddEncounterVaccine = ({
                 marketingAuthorizationHolder: 'MAH',
                 isActive: 'isActive'
               }}
-              computedFields={{
-                manufacture: (item: any) =>
-                  manufacturerLovQueryResponse?.object?.find((i: any) => i.key === item.manufacture)
-                    ?.lovDisplayVale || ' ',
-                isActive: (item: any) => {
-                  const active = allBrands?.find((i: any) => i.id === item.id)?.isActive;
-                  return active ? 'Yes' : 'No';
-                }
-              }}
+                computedFields={{
+                  manufacture: (item: any) =>
+                    manufacturerLovQueryResponse?.object?.find(
+                      (i: any) => i.key === item.manufacture
+                    )?.lovDisplayVale || ' ',
+
+                  unit: (item: any) => {
+                    const foundUnit = valueUnitLov?.object?.find(
+                      (unit: any) =>
+                        String(unit.key) === String(item.unit)
+                    );
+
+                    return foundUnit?.lovDisplayVale || String(item.unit || '');
+                  },
+                  isActive: (item: any) => {
+                    const active = allBrands?.find(
+                      (i: any) => i.id === item.id
+                    )?.isActive;
+
+                    return active ? 'Yes' : 'No';
+                  }
+                }}
               titleField="name"
             />
           </div>

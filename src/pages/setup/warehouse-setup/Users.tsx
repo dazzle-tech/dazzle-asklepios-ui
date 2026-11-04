@@ -255,6 +255,12 @@ const Users = ({ open, setOpen, warehouse, setWarehouse, refetch }) => {
         );
 
     };
+
+                          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
         <ChildModal
             actionButtonLabel={warehouse?.key ? 'Save' : 'Create'}
@@ -265,7 +271,11 @@ const Users = ({ open, setOpen, warehouse, setWarehouse, refetch }) => {
             showChild={openChildModal}
             setShowChild={setOpenChildModal}
             title="Warehouse Users"
-            mainContent={conjureFormContentOfMainModal}
+            mainContent={(stepNumber) => (
+            <div dir={dir}>
+                {conjureFormContentOfMainModal(stepNumber)}
+            </div>
+            )}
             mainStep={[
                 {
                     title: 'Warehouse User',
@@ -274,7 +284,7 @@ const Users = ({ open, setOpen, warehouse, setWarehouse, refetch }) => {
                 }
             ]}
             childTitle="Add User"
-            childContent={conjureFormContentOfChildModal}
+            childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
             mainSize="sm"
         />
     );

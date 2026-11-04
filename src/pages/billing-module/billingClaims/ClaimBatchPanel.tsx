@@ -1,0 +1,774 @@
+import React, { useMemo, useState } from 'react';
+import { Checkbox, DateRangePicker, Form, Tooltip, Whisper } from 'rsuite';
+
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import {
+  useGetPendingClaimInvoicesQuery,
+  useSubmitClaimBatchMutation
+} from '@/services/waseel-integration/claimService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { useGetAllActivePayorsQuery } from '@/services/setup/payer/PayorService';
+import type { PendingClaimInvoiceResponse } from '@/types/model-types-new';
+import { useAppDispatch } from '@/hooks';
+import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import {
+  WASEEL_CLAIM_TYPE_OPTIONS,
+  isProfessionalClaimType,
+  subTypeOptionsForClaimType
+} from './types';
+import Translate from '@/components/Translate';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCircleCheck,
+  faCircleXmark,
+  faClock,
+  faFileWaveform,
+  faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+
+type ClaimBatchPanelProps = {
+  onSubmitted?: () => void;
+};
+
+const UNAPPROVED_RESULT_LABEL = 'Result not approved';
+const UNAPPROVED_RESULT_MESSAGE =
+  'Select is locked because a test result on this invoice is not Result Approved.';
+const REJECTED_CLAIM_LABEL = 'Rejected';
+const REJECTED_CLAIM_MESSAGE =
+  'This claim was submitted and rejected. It leaves this list once Waseel accepts it.';
+const READY_LABEL = 'Ready';
+const READY_MESSAGE = 'This invoice can be selected and submitted.';
+const NOT_SUBMITTED_LABEL = 'Not submitted';
+const NOT_SUBMITTED_MESSAGE = 'This invoice has not been submitted to Waseel yet.';
+
+const STATUS_GREEN = '#16a34a';
+const STATUS_BLUE = '#2563eb';
+const STATUS_AMBER = '#d97706';
+const STATUS_RED = '#dc2626';
+
+const StatusMark = ({
+  label,
+  color,
+  icon,
+  hint
+}: {
+  label: string;
+  color: string;
+  icon: IconDefinition;
+  hint?: string;
+}) => {
+  const mark = (
+    <span className="bc-status-mark" style={{ ['--mark-color' as string]: color }}>
+      <FontAwesomeIcon icon={icon} />
+      <Translate>{label}</Translate>
+    </span>
+  );
+
+  if (!hint) {
+    return mark;
+  }
+
+  return (
+    <Whisper trigger="hover" placement="top" speaker={<Tooltip>{hint}</Tooltip>}>
+      <span>{mark}</span>
+    </Whisper>
+  );
+};
+
+const isSelectableInvoice = (row: PendingClaimInvoiceResponse) => row.selectable !== false;
+
+const toIsoDateString = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const ClaimBatchPanel: React.FC<ClaimBatchPanelProps> = ({ onSubmitted }) => {
+  const dispatch = useAppDispatch();
+  const [payerNphiesId, setPayerNphiesId] = useState<string | null>(null);
+  const [claimType, setClaimType] = useState<string | null>('PROFESSIONAL');
+  const [claimSubType, setClaimSubType] = useState<string | null>('OUTPATIENT');
+  const [dateRange, setDateRange] = useState<[Date, Date] | null>(currentMonthToTodayRange);
+  const [encounterDateRange, setEncounterDateRange] = useState<[Date, Date] | null>(null);
+  const [appliedPayorId, setAppliedPayorId] = useState<number | null>(null);
+  const [appliedPayerNphiesId, setAppliedPayerNphiesId] = useState<string | null>(null);
+  const [appliedClaimType, setAppliedClaimType] = useState<string | null>(null);
+  const [appliedClaimSubType, setAppliedClaimSubType] = useState<string | null>(null);
+  const [appliedFromDate, setAppliedFromDate] = useState<string | null>(null);
+  const [appliedToDate, setAppliedToDate] = useState<string | null>(null);
+  const [appliedEncounterDateFrom, setAppliedEncounterDateFrom] = useState<string | null>(null);
+  const [appliedEncounterDateTo, setAppliedEncounterDateTo] = useState<string | null>(null);
+  const [medicalRecordNumber, setMedicalRecordNumber] = useState('');
+  const [encounterNumber, setEncounterNumber] = useState('');
+  const [appliedMedicalRecordNumber, setAppliedMedicalRecordNumber] = useState('');
+  const [appliedEncounterNumber, setAppliedEncounterNumber] = useState('');
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+
+  const { data: pendingInvoicesPage, isFetching, refetch } = useGetPendingClaimInvoicesQuery(
+    {
+      payorId: appliedPayorId,
+      payerNphiesId: appliedPayerNphiesId,
+      fromDate: appliedFromDate,
+      toDate: appliedToDate,
+      claimType: appliedClaimType,
+      claimSubType: appliedClaimSubType,
+      encounterDateFrom: appliedEncounterDateFrom,
+      encounterDateTo: appliedEncounterDateTo,
+      medicalRecordNumber: appliedMedicalRecordNumber,
+      encounterNumber: appliedEncounterNumber,
+      page,
+      size: rowsPerPage
+    },
+    {
+      skip:
+        (appliedPayorId == null && !appliedPayerNphiesId) ||
+        !appliedClaimType ||
+        !appliedClaimSubType
+    }
+  );
+
+  const [submitBatch, { isLoading: submitting }] = useSubmitClaimBatchMutation();
+
+  const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
+    useGetAllNphiesPayersQuery({ page: 0, size: 2000, sort: 'nameEn,asc' });
+  const { data: localPayorListResponse } = useGetAllActivePayorsQuery({
+    page: 0,
+    size: 2000,
+    sort: 'id,asc'
+  });
+
+  const payorOptions = useMemo(
+    () =>
+      (nphiesPayerListResponse?.data ?? [])
+        .filter(payer => payer?.nphiesId && payer.isActive !== false)
+        .map(payer => ({
+          nphiesId: String(payer.nphiesId).trim(),
+          label: formatPayorOptionLabel(payer.nameEn, payer.nphiesId)
+        })),
+    [nphiesPayerListResponse]
+  );
+
+  const subTypeOptions = useMemo(
+    () => subTypeOptionsForClaimType(claimType),
+    [claimType]
+  );
+
+  const handleClaimTypeChange = (value: { claimType: string | null }) => {
+    const nextType = value.claimType;
+    setClaimType(nextType);
+    if (!isProfessionalClaimType(nextType)) {
+      setClaimSubType('OUTPATIENT');
+    }
+  };
+
+  const rows = pendingInvoicesPage?.data ?? [];
+  const totalCount = pendingInvoicesPage?.totalCount ?? 0;
+  const selectableInvoiceIds = useMemo(
+    () =>
+      rows
+        .filter(isSelectableInvoice)
+        .map(row => row.financialDocumentId)
+        .filter((id): id is number => id != null),
+    [rows]
+  );
+  const selectedOnPageCount = selectableInvoiceIds.filter(id =>
+    selectedInvoiceIds.includes(id)
+  ).length;
+
+  const toggleRow = (invoiceId: number) => {
+    setSelectedInvoiceIds(current =>
+      current.includes(invoiceId)
+        ? current.filter(id => id !== invoiceId)
+        : [...current, invoiceId]
+    );
+  };
+
+  const toggleAll = () => {
+    const pageIds = new Set(selectableInvoiceIds);
+    const allPageSelected =
+      selectableInvoiceIds.length > 0 && selectedOnPageCount === selectableInvoiceIds.length;
+
+    if (allPageSelected) {
+      setSelectedInvoiceIds(current => current.filter(id => !pageIds.has(id)));
+      return;
+    }
+
+    setSelectedInvoiceIds(current => [...new Set([...current, ...selectableInvoiceIds])]);
+  };
+
+  const handleSearch = () => {
+    const selectedNphiesId = payerNphiesId?.trim() || null;
+
+    if (!selectedNphiesId) {
+      dispatch(notify({ msg: 'Select a payor before searching invoices.', sev: 'warning' }));
+      return;
+    }
+
+    if (!claimType) {
+      dispatch(notify({ msg: 'Select a claim type before searching invoices.', sev: 'warning' }));
+      return;
+    }
+
+    if (!claimSubType) {
+      dispatch(notify({ msg: 'Select a claim sub type before searching invoices.', sev: 'warning' }));
+      return;
+    }
+
+    setAppliedPayorId(resolveLocalPayorId(selectedNphiesId, localPayorListResponse?.data));
+    setAppliedPayerNphiesId(selectedNphiesId);
+    setAppliedClaimType(claimType);
+    setAppliedClaimSubType(claimSubType);
+    setAppliedFromDate(toStartOfDayIso(dateRange?.[0]));
+    setAppliedToDate(toExclusiveEndIso(dateRange?.[1]));
+    setAppliedEncounterDateFrom(toIsoDateString(encounterDateRange?.[0]));
+    setAppliedEncounterDateTo(toIsoDateString(encounterDateRange?.[1]));
+    setAppliedMedicalRecordNumber(medicalRecordNumber.trim());
+    setAppliedEncounterNumber(encounterNumber.trim());
+    setSelectedInvoiceIds([]);
+    setPage(0);
+  };
+
+  const handleSubmitBatch = async () => {
+    if (!selectedInvoiceIds.length) {
+      dispatch(notify({ msg: 'Select at least one insurance invoice.', sev: 'warning' }));
+      return;
+    }
+
+    if (!appliedClaimType || !appliedClaimSubType) {
+      dispatch(notify({ msg: 'Search invoices with a claim type and sub type first.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+      const result = await submitBatch({
+        financialDocumentIds: selectedInvoiceIds,
+        claimType: appliedClaimType,
+        claimSubType: appliedClaimSubType
+      }).unwrap();
+      dispatch(
+        notify({
+          msg:
+            result.message ??
+            `Submitted ${result.submittedClaimCount ?? selectedInvoiceIds.length} claim(s) to Waseel.`,
+          sev: String(result.outcome ?? '').toUpperCase() === 'FAILED' ? 'error' : 'success'
+        })
+      );
+      setSelectedInvoiceIds([]);
+      refetch();
+      onSubmitted?.();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.detail || error?.data?.message || 'Failed to submit claim batch',
+          sev: 'error'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const columns = [
+    {
+      key: 'select',
+      title: (
+        <Checkbox
+          checked={
+            selectableInvoiceIds.length > 0 &&
+            selectedOnPageCount === selectableInvoiceIds.length
+          }
+          indeterminate={
+            selectedOnPageCount > 0 && selectedOnPageCount < selectableInvoiceIds.length
+          }
+          disabled={!selectableInvoiceIds.length}
+          onChange={toggleAll}
+        />
+      ),
+      width: 48,
+      render: (row: PendingClaimInvoiceResponse) => {
+        const invoiceId = row.financialDocumentId;
+        if (invoiceId == null) {
+          return null;
+        }
+
+        const checkbox = (
+          <Checkbox
+            checked={selectedInvoiceIds.includes(invoiceId)}
+            disabled={!isSelectableInvoice(row)}
+            onChange={() => toggleRow(invoiceId)}
+          />
+        );
+
+        if (isSelectableInvoice(row)) {
+          return checkbox;
+        }
+
+        return (
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>{UNAPPROVED_RESULT_MESSAGE}</Tooltip>}
+          >
+            <span>{checkbox}</span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'selectionReason',
+      title: 'Selection',
+      width: 190,
+      render: (row: PendingClaimInvoiceResponse) =>
+        isSelectableInvoice(row) ? (
+          <StatusMark label={READY_LABEL} color={STATUS_GREEN} icon={faCircleCheck} hint={READY_MESSAGE} />
+        ) : (
+          <StatusMark
+            label={UNAPPROVED_RESULT_LABEL}
+            color={STATUS_AMBER}
+            icon={faTriangleExclamation}
+            hint={UNAPPROVED_RESULT_MESSAGE}
+          />
+        )
+    },
+    {
+      key: 'rejectedClaim',
+      title: 'Claim',
+      width: 160,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.rejectedClaim ? (
+          <StatusMark
+            label={REJECTED_CLAIM_LABEL}
+            color={STATUS_RED}
+            icon={faCircleXmark}
+            hint={row.rejectionMessage || REJECTED_CLAIM_MESSAGE}
+          />
+        ) : (
+          <StatusMark
+            label={NOT_SUBMITTED_LABEL}
+            color={STATUS_BLUE}
+            icon={faClock}
+            hint={NOT_SUBMITTED_MESSAGE}
+          />
+        )
+    },
+    {
+      key: 'documentNumber',
+      title: 'Invoice',
+      width: 140,
+      render: (row: PendingClaimInvoiceResponse) => row.documentNumber ?? '-'
+    },
+    {
+      key: 'encounter',
+      title: 'Encounter',
+      width: 100,
+      render: (row: PendingClaimInvoiceResponse) => row?.encounter?.encounterNumber ?? '-'
+    },
+    {
+      key: 'encounterDate',
+      title: 'Encounter Date',
+      width: 150,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.encounter?.createdDate ? formatDateWithoutSeconds(String(row.encounter.createdDate)) : '-'
+    },
+
+    {
+      key: 'encounterType',
+      title: 'Visit type',
+      width: 120,
+      render: (row: PendingClaimInvoiceResponse) =>
+        formatEnumString(row.encounterType ?? row.encounter?.encounterType) || '-'
+    },
+    {
+      key: 'matchingItemCount',
+      title: 'Claim items',
+      width: 110,
+      render: (row: PendingClaimInvoiceResponse) => row.matchingItemCount ?? '-'
+    },
+    {
+      key: 'patientFullName',
+      title: 'PATIENT',
+      render: (row: PendingClaimInvoiceResponse) => {
+        const speaker = (
+          <Tooltip>
+            <div>MRN: {row?.patient?.medicalRecordNumber ?? '-'}</div>
+            <div>Age: {calculateAge(row?.patient?.dateOfBirth)}</div>
+            <div>Gender: {row?.patient?.sexAtBirth ?? '-'}</div>
+          </Tooltip>
+        );
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            {row?.patient?.firstName + " " + row?.patient?.secondName + " " + row?.patient?.lastName}
+
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'claimReference',
+      title: 'Claim ref',
+      width: 180,
+      render: (row: PendingClaimInvoiceResponse) => row.claimReference ?? '-'
+    },
+    {
+      key: 'totalAmount',
+      title: 'Invoice amount',
+      width: 130,
+      render: (row: PendingClaimInvoiceResponse) =>
+        `${Number(row.totalAmount ?? 0).toFixed(2)} ${row.currency ?? 'SAR'}`
+    },
+    {
+      key: 'matchingNetAmount',
+      title: 'Claim amount',
+      width: 130,
+      render: (row: PendingClaimInvoiceResponse) =>
+        `${Number(row.matchingNetAmount ?? 0).toFixed(2)} ${row.currency ?? 'SAR'}`
+    },
+    {
+      key: 'createdDate',
+      title: 'Issued',
+      width: 150,
+      render: (row: PendingClaimInvoiceResponse) =>
+        row.createdDate ? formatDateWithoutSeconds(String(row.createdDate)) : '-'
+    },
+
+    {
+      key: 'actions',
+      title: ' ',
+      render: (row: PendingClaimInvoiceResponse) => {
+        const tooltipEMR = (
+          <Tooltip>
+            <Translate>Go to EMR</Translate>
+          </Tooltip>
+        );
+
+        return (
+          <Form layout="inline" fluid className="nurse-doctor-form">
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={tooltipEMR}
+            >
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    setEmrEncounter(row?.encounter);
+                    setEmrPatient(row?.patient);
+                    setOpenEMRModal(true);
+
+                  }}
+                >
+                  <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </Form>
+        );
+      },
+    }
+  ];
+
+  return (
+    <div className="bc-card bc-card--batch">
+      <div className="bc-card__head">
+        <div>
+          <h2 className="bc-card__head-title">Monthly claim batch</h2>
+          <div className="bc-card__head-meta">
+            Filter insurance invoices by payor, claim type, sub type, and period. Matching invoice
+            lines are submitted as one Waseel claim type; remaining lines stay for another type.
+          </div>
+        </div>
+      </div>
+
+      <Form fluid className="claims-batch-filters-form">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: '12px',
+            flexWrap: 'wrap',
+            marginBottom: '12px'
+          }}
+        >
+          <div style={{ width: '260px' }}>
+            <MyInput
+              fieldLabel="Payor"
+              width="100%"
+              fieldName="payerNphiesId"
+              fieldType="select"
+              selectData={payorOptions}
+              selectDataLabel="label"
+              selectDataValue="nphiesId"
+              record={{ payerNphiesId }}
+              setRecord={(value: { payerNphiesId: number | string | null }) =>
+                setPayerNphiesId(
+                  value.payerNphiesId == null || value.payerNphiesId === ''
+                    ? null
+                    : String(value.payerNphiesId).trim()
+                )
+              }
+              cleanable
+              loading={isNphiesPayersLoading}
+            />
+          </div>
+
+          <div style={{ minWidth: '140px' }}>
+            <MyInput
+              fieldLabel="Type"
+              fieldName="claimType"
+              fieldType="select"
+              selectData={WASEEL_CLAIM_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimType }}
+              setRecord={handleClaimTypeChange}
+              searchable={false}
+              cleanable={false}
+            />
+          </div>
+
+          <div style={{ minWidth: '180px' }}>
+            <MyInput
+              fieldLabel="Sub Type"
+              fieldName="claimSubType"
+              fieldType="select"
+              selectData={subTypeOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={{ claimSubType }}
+              setRecord={(value: { claimSubType: string | null }) =>
+                setClaimSubType(value.claimSubType)
+              }
+              searchable={false}
+              cleanable={false}
+              disabled={!isProfessionalClaimType(claimType)}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Period
+            </label>
+
+            <DateRangePicker
+              value={dateRange}
+              onChange={value => setDateRange(value)}
+              placement="bottomStart"
+              size="sm"
+              style={{ width: '220px' }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <label className="claims-batch-filters__label">
+              Encounter Period
+            </label>
+
+            <DateRangePicker
+              value={encounterDateRange}
+              onChange={value => setEncounterDateRange(value)}
+              placement="bottomStart"
+              cleanable
+              size="sm"
+              style={{ width: '220px' }}
+              container={() => document.body}
+            />
+          </div>
+
+          <div style={{ width: '160px' }}>
+            <MyInput
+              fieldLabel="MRN"
+              fieldName="medicalRecordNumber"
+              fieldType="text"
+              record={{ medicalRecordNumber }}
+              setRecord={(value: { medicalRecordNumber?: string | null }) =>
+                setMedicalRecordNumber(value.medicalRecordNumber ?? '')
+              }
+              width="100%"
+            />
+          </div>
+
+          <div style={{ width: '180px' }}>
+            <MyInput
+              fieldLabel="Encounter number"
+              fieldName="encounterNumber"
+              fieldType="text"
+              record={{ encounterNumber }}
+              setRecord={(value: { encounterNumber?: string | null }) =>
+                setEncounterNumber(value.encounterNumber ?? '')
+              }
+              width="100%"
+            />
+          </div>
+
+          <MyButton
+            appearance="primary"
+            onClick={handleSearch}
+          >
+            Search
+          </MyButton>
+
+          <MyButton
+            appearance="primary"
+            loading={submitting}
+            disabled={!selectedInvoiceIds.length || submitting}
+            onClick={handleSubmitBatch}
+          >
+            Submit ({selectedInvoiceIds.length})
+          </MyButton>
+        </div>
+      </Form>
+
+      <div className="bc-table-wrap">
+        <MyTable
+          columns={columns}
+          data={rows}
+          loading={isFetching}
+          height={320}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+        />
+        <MyModal
+          open={openEMRModal}
+          setOpen={setOpenEMRModal}
+          title="Electronic Medical Record"
+          size="90vw"
+          content={
+            emrPatient && emrEncounter ? (
+              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+            ) : (
+              <div className="encounter-list__no-patient">No patient selected.</div>
+            )
+          }
+          actionButtonLabel="Close"
+          actionButtonFunction={() => setOpenEMRModal(false)}
+          cancelButtonLabel="Cancel"
+        />
+      </div>
+    </div>
+  );
+};
+
+const formatPayorOptionLabel = (nameEn?: string | null, nphiesId?: string | null) => {
+  const name = nameEn?.trim();
+  const code = nphiesId?.trim();
+
+  if (name && code) {
+    return `${name} (${code})`;
+  }
+
+  return name || code || '-';
+};
+
+const resolveLocalPayorId = (
+  nphiesId: string,
+  localPayors?: Array<{ id?: number | null; nphiesId?: string | null }> | null
+) => {
+  const normalized = nphiesId.trim().toLowerCase();
+  const match = (localPayors ?? []).find(
+    payor => String(payor?.nphiesId ?? '').trim().toLowerCase() === normalized
+  );
+
+  return match?.id != null ? Number(match.id) : null;
+};
+
+const currentMonthToTodayRange = (): [Date, Date] => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(0, 0, 0, 0);
+  return [start, end];
+};
+
+const toStartOfDayIso = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start.toISOString();
+};
+
+const toExclusiveEndIso = (date?: Date | null) => {
+  if (!date) {
+    return null;
+  }
+
+  const end = new Date(date);
+  end.setHours(0, 0, 0, 0);
+  end.setDate(end.getDate() + 1);
+  return end.toISOString();
+};
+
+const calculateAge = (dateOfBirth?: string | Date | null) => {
+  if (!dateOfBirth) {
+    return '-';
+  }
+
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return '-';
+  }
+
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+  let days = today.getDate() - birthDate.getDate();
+
+  if (days < 0) {
+    months--;
+
+    const previousMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      0
+    );
+
+    days += previousMonth.getDate();
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return `${years}y ${months}m ${days}d`;
+};
+
+export default ClaimBatchPanel;

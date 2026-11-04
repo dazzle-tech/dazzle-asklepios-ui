@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
 type AddEditServiceProps = {
@@ -28,25 +29,35 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   const currencyOptions = useEnumCapitalized('Currency');
 
   const [facilityListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(facilityListRequest);
 
   useEffect(() => {
+    if (!open) return;
     if (!facilityListResponse || !service?.facilityId) return;
 
     const selectedFacility = facilityListResponse.find(
       (f: any) => Number(f.id) === Number(service.facilityId)
     );
 
-    if (
-      selectedFacility?.defaultCurrency &&
-      selectedFacility.defaultCurrency !== service.currency
-    ) {
-      setService({
-        ...service,
+    if (selectedFacility?.defaultCurrency) {
+      setService((prev: any) => ({
+        ...prev,
         currency: selectedFacility.defaultCurrency
-      });
+      }));
     }
-  }, [service?.facilityId, facilityListResponse]);
+  }, [open, service?.facilityId, facilityListResponse]);
+
+   useEffect(() => {
+   
+     if (!service?.appointable) {
+       
+         setService(prev => ({
+           ...prev,
+           defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+         }));
+       
+     }
+   }, [service?.appointable]);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -120,6 +131,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   width="100%"
                   fieldName="price"
                   fieldType="number"
+                  allowDecimal
                   record={service}
                   setRecord={setService}
                   required
@@ -142,8 +154,80 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   disabled
                 />
               </div>
-              <div className="container-of-field-service" />
+              <div className="container-of-field-service">
+              <MyInput
+                width="100%"
+                fieldType="checkbox"
+                fieldName="appointable"
+                record={service}
+                setRecord={setService}
+              />
+              </div>
             </div>
+            <br />
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <BillingRuleSelect
+                  billingItemType="SERVICE"
+                  record={service}
+                  setRecord={setService}
+                />
+              </div>
+            </div>
+             <br />
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required
+                  showZero
+                />
+               </div>
+               {service?.appointable && (
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultDurationMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                  showZero
+                />
+               </div>
+               )}
+            </div>
+             <br />
+              {service?.appointable && (
+             <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferBeforeMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                  showZero
+                />
+               </div>
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferAfterMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                  showZero
+                />
+               </div>
+             </div>
+              )}
           </Form>
         );
     }
@@ -151,13 +235,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
 
   const isEdit = !!(service?.id ?? service?.key);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={isEdit ? 'Edit Service' : 'New Service'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}

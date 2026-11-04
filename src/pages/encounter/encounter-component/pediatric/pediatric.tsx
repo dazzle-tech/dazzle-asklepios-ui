@@ -469,7 +469,7 @@ const Pediatric = () => {
 
   return (
     <div className="container-pediatric">
-      <MyTab data={tabData} />
+      <MyTab data={tabData} lazy />
     </div>
   );
 };

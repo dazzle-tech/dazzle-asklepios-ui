@@ -1,8 +1,7 @@
-// services/billing/PriceListItemService.ts
 import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
-import { PriceListItem, PriceListItemSaveVM } from "@/types/model-types-new";
+import { PriceListItem } from "@/types/model-types-new";
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 
@@ -23,95 +22,88 @@ export const PriceListItemService = createApi({
   reducerPath: "priceListItemApi",
   baseQuery: BaseQuery,
   tagTypes: ["PriceListItem"],
-  endpoints: (builder) => ({
-
-    // 🔹 Get all price list items (paginated)
+  endpoints: builder => ({
     getAllPriceListItems: builder.query<PagedResult<PriceListItem>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
-        url: "/api/setup/price-list-item",
+        url: "/api/setup/price-list-items",
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: PriceListItem[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          links: parseLinkHeader(headers?.get("Link"))
         };
       },
-      providesTags: ["PriceListItem"],
+      providesTags: ["PriceListItem"]
     }),
 
-    // 🔹 Get items by priceListId (paginated)
     getPriceListItemsByPriceListId: builder.query<
       PagedResult<PriceListItem>,
       { priceListId: number } & PagedParams
     >({
       query: ({ priceListId, page, size, sort = "id,asc" }) => ({
-        url: `/api/setup/price-list-item/by-price-list/${priceListId}`,
+        url: `/api/setup/price-list-items/by-price-list/${priceListId}`,
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: PriceListItem[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          links: parseLinkHeader(headers?.get("Link"))
         };
       },
       providesTags: (result, error, { priceListId }) => [
         { type: "PriceListItem", id: priceListId },
-        "PriceListItem",
-      ],
+        "PriceListItem"
+      ]
     }),
 
-    // 🔹 Get single item
     getPriceListItemById: builder.query<PriceListItem, number>({
-      query: (id) => ({
-        url: `/api/setup/price-list-item/${id}`,
-        method: "GET",
+      query: id => ({
+        url: `/api/setup/price-list-items/${id}`,
+        method: "GET"
       }),
-      providesTags: (result, error, id) => [{ type: "PriceListItem", id }],
+      providesTags: (result, error, id) => [{ type: "PriceListItem", id }]
     }),
 
-    // 🔹 Create item (POST) — بدون id
     createPriceListItem: builder.mutation<PriceListItem, Omit<PriceListItemSaveVM, "id">>({
-      query: (body) => ({
-        url: "/api/setup/price-list-item",
+      query: body => ({
+        url: "/api/setup/price-list-items",
         method: "POST",
-        body,
+        body
       }),
       invalidatesTags: (result, error, body) => [
         "PriceListItem",
-        { type: "PriceListItem", id: body.priceListId },
-      ],
+        { type: "PriceListItem", id: body.priceListId }
+      ]
     }),
 
-    // 🔹 Update item (PUT) — مع id
     updatePriceListItem: builder.mutation<PriceListItem, PriceListItemSaveVM>({
-      query: ({ id, ...body }) => ({
-        url: `/api/setup/price-list-item/${id}`,
+      query: body => ({
+        url: "/api/setup/price-list-items",
         method: "PUT",
-        body,
+        body
       }),
       invalidatesTags: (result, error, { id, priceListId }) => [
         { type: "PriceListItem", id },
         { type: "PriceListItem", id: priceListId },
-        "PriceListItem",
-      ],
+        "PriceListItem"
+      ]
     }),
 
-    // 🔹 Toggle active status
     togglePriceListItemActive: builder.mutation<PriceListItem, number>({
-      query: (id) => ({
-        url: `/api/setup/price-list-item/${id}/toggle-active`,
-        method: "PATCH",
+      query: id => ({
+        url: `/api/setup/price-list-items/${id}/toggle-active`,
+        method: "PATCH"
       }),
-      invalidatesTags: ["PriceListItem"],
-    }),
-  }),
+      invalidatesTags: ["PriceListItem"]
+    })
+  })
 });
 
 export const {
@@ -121,5 +113,5 @@ export const {
   useGetPriceListItemByIdQuery,
   useCreatePriceListItemMutation,
   useUpdatePriceListItemMutation,
-  useTogglePriceListItemActiveMutation,
+  useTogglePriceListItemActiveMutation
 } = PriceListItemService;

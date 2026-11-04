@@ -6,8 +6,10 @@ import { BiExport } from 'react-icons/bi';
 import { PiWarningCircle } from 'react-icons/pi';
 import { MdOutlineFileDownload } from 'react-icons/md';
 import { faUsersLine } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
 const BulkRegistration = ({ open, setOpen }) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const mode = useSelector((state: any) => state.ui.mode);
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -34,8 +36,9 @@ const BulkRegistration = ({ open, setOpen }) => {
               href="/public/files/template.xlsx"
               className="download-color-text container-of-uploader-bulk-registration"
               download
+              
             >
-              <MdOutlineFileDownload fill="#353B66" size={22} />
+              <MdOutlineFileDownload fill={mode === 'dark' ? "#2e3c9f" : "#353B66" } size={22} />
               Download Template
             </a>
             <div>
@@ -66,13 +69,21 @@ const BulkRegistration = ({ open, setOpen }) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Bulk Registration"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       size={width > 600 ? '36vw' : '70vw'}
       steps={[

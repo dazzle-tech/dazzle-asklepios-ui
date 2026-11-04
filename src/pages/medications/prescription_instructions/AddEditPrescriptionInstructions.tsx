@@ -26,7 +26,9 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
             fieldName="categoryLkey" 
             fieldType="select"
             selectData={ageGroupLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             record={prescriptionInstructions}
             setRecord={setPrescriptionInstructions}
@@ -42,7 +44,9 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               fieldName="unitLkey"
               fieldType="select"
               selectData={uomLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={prescriptionInstructions}
               setRecord={setPrescriptionInstructions}
@@ -58,7 +62,9 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               fieldName="routLkey"
               fieldType="select"
               selectData={medRoutLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={prescriptionInstructions}
               setRecord={setPrescriptionInstructions}
@@ -71,7 +77,9 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               fieldName="frequencyLkey" 
              fieldType="select"
               selectData={medFreqLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               record={prescriptionInstructions}
               setRecord={setPrescriptionInstructions} 

@@ -16,7 +16,9 @@ const WoundIdentification = ({ object, setObject }) => {
             record={object}
             setRecord={setObject}
             selectData={woundLocationLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             menuMaxHeight={200}
             disabled={object?.key}
@@ -31,7 +33,9 @@ const WoundIdentification = ({ object, setObject }) => {
             record={object}
             setRecord={setObject}
             selectData={sideLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
+             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
             selectDataValue="key"
             menuMaxHeight={200}
             disabled={object?.key}

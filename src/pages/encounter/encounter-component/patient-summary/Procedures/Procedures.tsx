@@ -24,14 +24,13 @@ const TableLoader = () => (
   </div>
 );
 
-const Procedures = ({ patient }) => {
+const Procedures = ({ patient, loadingHeight = undefined }) => {
   const location = useLocation();
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const [getProcedureById] = useLazyGetProcedureByIdQuery();
   const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
 
@@ -133,17 +132,12 @@ const Procedures = ({ patient }) => {
 
           const proc = proceduresMap.get(Number(rowData.procedureId));
 
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === proc?.categoryType
-          );
-
-          return category?.lovDisplayVale || '';
+          return formatEnumString(proc?.categoryType) || '';
         }
       },
 
     ],
     [
-      CategoryLovQueryResponse,
       proceduresMap,
       dispatch,
       getProcedureById,
@@ -166,13 +160,14 @@ const Procedures = ({ patient }) => {
 
   return (
     <Section
-      title="Procedures"
+      title={<Translate>Procedures</Translate>}
       isContainOnlyTable
       content={
         <MyTable
           columns={tableColumns}
           data={procedures}
           loading={procedureLoding}
+          loadingHeight={loadingHeight}
           page={page}
           rowsPerPage={pageSize}
           totalCount={totalCount}

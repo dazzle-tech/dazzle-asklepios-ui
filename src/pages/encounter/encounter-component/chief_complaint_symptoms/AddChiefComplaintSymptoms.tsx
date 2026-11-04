@@ -188,6 +188,8 @@ const AddChiefComplaintSymptoms = ({
                   setRecord={setComplaintSymptoms}
                   disabled={isDisabledField}
                   searchable={false}
+                          disableByField='isValid'
+
                 />
               </Form>
             }
@@ -210,6 +212,8 @@ const AddChiefComplaintSymptoms = ({
                   record={complaintSymptoms}
                   setRecord={setComplaintSymptoms}
                   disabled={isDisabledField}
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   width={200}
@@ -256,6 +260,8 @@ const AddChiefComplaintSymptoms = ({
                   record={associatedSymptoms}
                   setRecord={setAssociatedSymptoms}
                   disabled={isDisabledField}
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   fieldLabel=""

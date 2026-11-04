@@ -31,8 +31,14 @@ const IntakeOutputBalanceConsultation = () => {
   const [selectedBalance, setSelectedBalance] = useState<any>(null);
   const chartData = balanceData.map(b => ({ x: b.date, y: b.totalIntake - b.totalOutput }));
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="iob-container">
+    <div className="iob-container" dir={dir}>
       <div className="iob-row">
         <div className="iob-half">
           <IntakesTable data={intakeData} totalIntake={2500} />

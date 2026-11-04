@@ -143,6 +143,23 @@ const AddEditPriceListAttributes = ({
             } else {
                 await createAttr(payload).unwrap();
             }
+
+            setAttributeRec({
+                ...newPriceListAttribute,
+                priceListId: priceList.id,
+            });
+
+            dispatch(
+                notify({
+                    msg: "Saved Successfully",
+                    sev: "success"
+                })
+            );
+
+            setPaginationParams(prev => ({
+                ...prev,
+                timestamp: Date.now()
+            }));
             dispatch
             setAttributeRec({
                 ...newPriceListAttribute,
@@ -282,6 +299,13 @@ const AddEditPriceListAttributes = ({
         },
     ];
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
         <MyModal
             title={"Price List Attributes"}
@@ -290,7 +314,7 @@ const AddEditPriceListAttributes = ({
             hideActionBtn={true}
             size="80vh"
             content={
-                <Form fluid>
+                <Form fluid dir={dir}>
                     <Row>
                         <Col md={6}>
                             <MyInput
@@ -315,6 +339,7 @@ const AddEditPriceListAttributes = ({
 
                         <Col md={6}>
                             <MyInput
+                                key={`type-${attributeRec.attributeType ?? 'empty'}`}
                                 required
                                 width="100%"
                                 fieldType={attributeOptions.length > 0 ? "select" : "text"}

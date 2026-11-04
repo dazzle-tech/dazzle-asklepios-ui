@@ -88,36 +88,60 @@ const PatientFamilyMembers = ({ localPatient }) => {
   };
 
   const handleNewRelative = () => {
+    if (localPatient?.isUnknown) {
+      dispatch(
+        notify({
+          msg: "This Patient in unkown , you can't add relative for unkown patient",
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     setSelectedPatientRelation(null);
     setRelationModalOpen(true);
   };
 
-  const handleEditRelative = () => {
-    if (!selectedPatientRelation?.id) return;
-    setRelationModalOpen(true);
-  };
+    const handleEditRelative = () => {
+      if (!selectedPatientRelation?.id) return;
+
+      setSelectedPatientRelation(prev => ({
+        ...prev,
+        relativePatientId: prev?.relativePatient?.id
+      }));
+
+      setRelationModalOpen(true);
+    };
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={dir}>
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewRelative}
-          disabled={!localPatient?.id}
+          disabled={!localPatient?.id ||localPatient.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
         >
-          New Relative
+          <Translate>New Relative</Translate>
         </MyButton>
 
         <MyButton
-          disabled={!selectedPatientRelation?.id}
+          disabled={!selectedPatientRelation?.id || localPatient?.patientStatus === 'MERGED'}
           onClick={handleEditRelative}
           prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
+
         >
           Edit
         </MyButton>
 
         <MyButton
-          disabled={!selectedPatientRelation?.id}
+          disabled={!selectedPatientRelation?.id || localPatient?.patientStatus === 'MERGED'}
           onClick={() => setDeleteRelativeModalOpen(true)}
           prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
         >

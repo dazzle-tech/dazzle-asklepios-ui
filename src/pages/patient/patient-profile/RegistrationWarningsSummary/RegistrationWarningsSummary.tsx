@@ -2,30 +2,25 @@ import MyModal from '@/components/MyModal/MyModal';
 import React, { useEffect, useState } from 'react';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetPatientAdministrativeWarningsQuery } from '@/services/patientService';
+import { useGetWarningsByTypesQuery } from '@/services/patient/patientAdministrativeWarningsService';
 import { Form } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { PatientAdministrativeWarningsResponseVM } from '@/types/model-types-new';
 const RegistrationWarningsSummary = ({ open, setOpen }) => {
   // filter of type
   const [typeFilter, setTypeFilter] = useState({
     types: ['72434655888900', '72468176728600', '5002879774792840']
   });
-  const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest
-    });
   // Fetch warnings Lov response
   const { data: warningsLovQueryResponse } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
   // Fetch adminstrative warnings list response
-  const { data: warnings, isFetching } = useGetPatientAdministrativeWarningsQuery(
-    warningsAdmistritiveListRequest
-  );
-
+  const { data: warnings, isFetching, refetch } = useGetWarningsByTypesQuery({
+    types: typeFilter.types && typeFilter.types.length ? typeFilter.types : undefined
+  });
   // filter for table
   const filters = () => (
     <Form layout="inline" fluid>
@@ -36,7 +31,9 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
           fieldName="types"
           fieldType="checkPicker"
           selectData={warningsLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           fieldLabel="Type"
           selectDataValue="key"
           record={typeFilter}
@@ -51,21 +48,46 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
   const tableColumns = [
     {
       key: 'fullName',
-      title: <Translate>Patient Name</Translate>
+      title: <Translate>Patient Name</Translate>,
+      render: (rowData: PatientAdministrativeWarningsResponseVM) => {
+        const fullName = rowData?.patient?.firstName + " " + rowData?.patient?.lastName;
+
+        return (
+            <span>{fullName ?? ''}</span>
+        );
+      }
     },
     {
       key: 'patientMrn',
-      title: <Translate>MRN</Translate>
+      title: <Translate>MRN</Translate>,
+      render: (rowData: PatientAdministrativeWarningsResponseVM) => {
+        const medicalRecordNumber = rowData?.patient?.medicalRecordNumber
+
+        return (
+            <span>{medicalRecordNumber ?? ''}</span>
+        );
+      }
     },
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      render: (rowData: any) => {
+      render: (rowData: PatientAdministrativeWarningsResponseVM) => {
+        const typeLabel = warningsLovQueryResponse?.object?.find(
+          (lov: any) => lov?.key === rowData?.warningType
+        )?.lovDisplayVale;
+
         return (
           <>
-            <span>{rowData?.warningTypeLvalue?.lovDisplayVale}</span>
+            <span>{typeLabel ?? rowData?.warningType}</span>
           </>
         );
+      }
+    },
+    {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      render: (rowData: PatientAdministrativeWarningsResponseVM) => {
+        return <span>{rowData?.description ?? '-'}</span>;
       }
     },
     {
@@ -76,12 +98,15 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
           <>
             <span>{rowData.createdBy}</span>
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdDate)}
+            </span>
           </>
         );
       }
     }
   ];
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -89,7 +114,7 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
       case 0:
         return (
           <MyTable
-            data={warnings?.object ?? []}
+            data={ warnings ?? []}
             columns={tableColumns}
             height={300}
             loading={isFetching}
@@ -101,22 +126,17 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
 
   // Effects
   useEffect(() => {
-    setWarningsAdmistritiveListRequest({
-      ...initialListRequest,
-      filters:
-        typeFilter['types'].length > 0
-          ? [
-              {
-                fieldName: 'warning_type_lkey',
-                operator: 'in',
-                value: typeFilter['types'].map(key => `(${key})`).join(' ')
-              }
-            ]
-          : []
-    });
-  }, [typeFilter]);
+   if(open)
+    refetch();
+  }, [open, refetch]);
 
-  return (
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -131,6 +151,7 @@ const RegistrationWarningsSummary = ({ open, setOpen }) => {
         }
       ]}
     />
+    </div>
   );
 };
 export default RegistrationWarningsSummary;

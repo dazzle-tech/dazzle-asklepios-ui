@@ -1,0 +1,728 @@
+import {
+  createApi
+} from '@reduxjs/toolkit/query/react';
+
+import {
+  BaseQuery
+} from '../../newApi';
+
+import type {
+  BillingCancellationRequest,
+  BillingCancellationResult,
+  BillingCheckoutRequest,
+  BillingCheckoutResult,
+  BillingPaymentResult,
+  BillingRefundRequest,
+  BillingRefundResult,
+  BillingRefundReversalRequest,
+  BillingRefundReversalResult,
+  CreateAdvancePaymentRequest,
+  EncounterBillingSummary,
+  PrepareDefaultServicesRequest,
+  PrepareDefaultServicesResult,
+  PreviewDefaultServicesPricingRequest,
+  PreviewDefaultServicesPricingResult,
+  BillingRuleEvaluationRequest,
+  BillingRuleEvaluationResponse,
+  WaseelCoverageDetails
+} from '@/types/model-types-new';
+
+export type BillingId =
+  number | string;
+
+export type InsurancePriceListCoverageCheckRequest = {
+  encounterId: number;
+  billingItemType: string;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  diagnosticTestId?: number | null;
+  brandMedicationId?: number | null;
+  currency?: string | null;
+};
+
+export type BillingPaymentSummaryDTO = {
+  paymentId: number;
+  paymentNumber: string;
+  encounterId?: number | null;
+  paymentCategory?: string | null;
+  payerType?: string | null;
+  amount: number;
+  currency?: string | null;
+  status?: string | null;
+  paymentDate?: string | null;
+  receiptNumber?: string | null;
+  externalReference?: string | null;
+  notes?: string | null;
+};
+
+export type PatientWalletMovement = {
+  ledgerId: number;
+  transactionDate?: string | null;
+  movement: 'ADDITION' | 'DEDUCTION' | string;
+  transactionType?: string | null;
+  amount: number;
+  currency?: string | null;
+  balanceAfter?: number | null;
+  description?: string | null;
+  reason?: string | null;
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentCategory?: string | null;
+  paymentMethod?: string | null;
+  encounterNumber?: string | null;
+  encounterId?: number | null;
+  serviceName?: string | null;
+  serviceCode?: string | null;
+  referenceNumber?: string | null;
+  notes?: string | null;
+};
+
+export type RegistrationPendingPaymentItem = {
+  patientServiceProductId: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  encounterNumber?: string | null;
+  patientName?: string | null;
+  patient?: any;
+  bedId?: number | null;
+  bedName?: string | null;
+  itemName?: string | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
+  patientRemainingAmount?: number | null;
+  currency?: string | null;
+  paymentStatus?: string | null;
+  displayPaymentStatus?: string | null;
+  amountsAvailable?: boolean;
+  collectible?: boolean;
+};
+
+export type RegistrationPendingPaymentEncounter = {
+  encounterId: number;
+  encounterNumber?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  patient?: any;
+  bedId?: number | null;
+  bedName?: string | null;
+  pendingItemCount: number;
+  collectible: boolean;
+  items: RegistrationPendingPaymentItem[];
+};
+
+export type InsurancePriceListCoverageCheckResult = {
+  insuranceVisit: boolean;
+  coveredByInsurance: boolean;
+  requiresCashConfirmation: boolean;
+  notCoveredReason: string | null;
+  billingItemType?: string | null;
+  sourceId?: number | null;
+  itemName?: string | null;
+  itemCode?: string | null;
+  cashUnitPrice?: number | null;
+  currency?: string | null;
+  patientInsuranceId?: number | null;
+  warningMessage?: string | null;
+};
+
+export const billingTransactionService =
+  createApi({
+    reducerPath:
+      'billingTransactionService',
+
+    baseQuery:
+      BaseQuery,
+
+    tagTypes: [
+      'EncounterBillingSummary',
+      'PreparedDefaultServices',
+      'BillingPayment',
+      'BillingWallet',
+      'BillingCheckout',
+      'BillingRefund',
+      'PatientFinancialInvoices',
+      'WaseelCoverage',
+      'PatientLedgerSummary',
+      'RegistrationPendingPayment'
+    ],
+
+    endpoints:
+      builder => ({
+        getEncounterBillingSummary:
+          builder.query<
+            EncounterBillingSummary,
+            {
+              encounterId:
+                BillingId;
+
+              timestamp?: number;
+              refreshKey?: number;
+            }
+          >({
+            query: ({
+              encounterId
+            }) => ({
+              url:
+                `/api/patient/billing/encounters/${encodeURIComponent(
+                  String(
+                    encounterId
+                  )
+                )}/summary`,
+
+              method:
+                'GET'
+            }),
+
+            providesTags: (
+              _result,
+              _error,
+              args
+            ) => [
+              {
+                type:
+                  'EncounterBillingSummary',
+
+                id:
+                  String(
+                    args.encounterId
+                  )
+              },
+
+              'BillingWallet'
+            ]
+          }),
+
+        getWaseelCoverage:
+          builder.query<
+            WaseelCoverageDetails,
+            {
+              patientId: BillingId;
+              patientInsuranceId?: BillingId | null;
+            }
+          >({
+            query: ({
+              patientId,
+              patientInsuranceId
+            }) => ({
+              url:
+                `/api/patient/billing/patients/${encodeURIComponent(
+                  String(patientId)
+                )}/waseel-coverage`,
+
+              method: 'GET',
+
+              params:
+                patientInsuranceId == null
+                  ? undefined
+                  : {
+                      patientInsuranceId
+                    }
+            }),
+
+            providesTags: (_result, _error, args) => [
+              {
+                type: 'WaseelCoverage',
+                id: `${args.patientId}:${args.patientInsuranceId ?? 'latest'}`
+              }
+            ]
+          }),
+
+        prepareDefaultServices:
+          builder.mutation<
+            PrepareDefaultServicesResult,
+            {
+              encounterId:
+                BillingId;
+
+              body:
+                PrepareDefaultServicesRequest;
+            }
+          >({
+            query: ({
+              encounterId,
+              body
+            }) => ({
+              url:
+                `/api/patient/billing/encounters/${encodeURIComponent(
+                  String(
+                    encounterId
+                  )
+                )}/prepare-default-services`,
+
+              method:
+                'POST',
+
+              body
+            }),
+
+            invalidatesTags: (
+              _result,
+              _error,
+              args
+            ) => [
+              'PreparedDefaultServices',
+
+              {
+                type:
+                  'EncounterBillingSummary',
+
+                id:
+                  String(
+                    args.encounterId
+                  )
+              },
+
+              'BillingWallet'
+            ]
+          }),
+
+        previewDefaultServicesPricing:
+          builder.mutation<
+            PreviewDefaultServicesPricingResult,
+            {
+              encounterId: BillingId;
+              body: PreviewDefaultServicesPricingRequest;
+            }
+          >({
+            query: ({
+              encounterId,
+              body
+            }) => ({
+              url:
+                `/api/patient/billing/encounters/${encodeURIComponent(
+                  String(encounterId)
+                )}/preview-default-services-pricing`,
+
+              method: 'POST',
+
+              body
+            })
+          }),
+
+        getPaymentsByEncounter:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              encounterId => ({
+                url:
+                  `/api/patient/billing/payments/by-encounter/${encounterId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        getPaymentsByPatient:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              patientId => ({
+                url:
+                  `/api/patient/billing/payments/by-patient/${patientId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        getPatientWalletMovements:
+          builder.query<
+            {
+              data: PatientWalletMovement[];
+              totalCount: number;
+            },
+            {
+              patientId: BillingId;
+              page?: number;
+              size?: number;
+            }
+          >({
+            query:
+              ({
+                patientId,
+                page = 0,
+                size = 10
+              }) => ({
+                url:
+                  `/api/patient/billing/wallet/by-patient/${patientId}/movements`,
+                params: {
+                  page,
+                  size
+                }
+              }),
+
+            transformResponse: (
+              response: PatientWalletMovement[],
+              meta
+            ) => {
+              const rows = Array.isArray(response)
+                ? response
+                : [];
+              const headerCount =
+                meta?.response?.headers?.get(
+                  'X-Total-Count'
+                );
+
+              return {
+                data: rows,
+                totalCount:
+                  headerCount == null
+                    ? rows.length
+                    : Number(headerCount)
+              };
+            },
+
+            providesTags: [
+              'BillingWallet'
+            ]
+          }),
+
+        createAdvancePayment:
+          builder.mutation<
+            BillingPaymentResult,
+            CreateAdvancePaymentRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/payments/advance',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: (
+              _result,
+              _error,
+              arg
+            ) => [
+              'BillingPayment',
+              'BillingWallet',
+              'PatientFinancialInvoices',
+              {
+                type: 'PatientLedgerSummary',
+                id: arg.patientId
+              },
+              {
+                type:
+                  'EncounterBillingSummary',
+                id: String(
+                  arg.encounterId
+                )
+              },
+              'EncounterBillingSummary'
+            ]
+          }),
+
+        getBillingPaymentById:
+          builder.query<
+            BillingPaymentResult,
+            {
+              paymentId:
+                BillingId;
+            }
+          >({
+            query: ({
+              paymentId
+            }) => ({
+              url:
+                `/api/patient/billing/payments/${encodeURIComponent(
+                  String(
+                    paymentId
+                  )
+                )}`,
+
+              method:
+                'GET'
+            }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        checkoutBillingCharge:
+          builder.mutation<
+            BillingCheckoutResult,
+            BillingCheckoutRequest
+          >({
+            async queryFn(body, _api, _extraOptions, baseQuery) {
+              const controller = new AbortController();
+              const timeoutId = window.setTimeout(
+                () => controller.abort(),
+                90_000
+              );
+
+              try {
+                const result = await baseQuery({
+                  url: '/api/patient/billing/checkout',
+                  method: 'POST',
+                  body,
+                  signal: controller.signal
+                });
+
+                if (result.error) {
+                  const aborted =
+                    controller.signal.aborted ||
+                    (result.error.status === 'FETCH_ERROR' &&
+                      String(result.error.error ?? '')
+                        .toLowerCase()
+                        .includes('abort'));
+
+                  if (aborted) {
+                    return {
+                      error: {
+                        status: 'TIMEOUT',
+                        data: {
+                          message:
+                            'Checkout timed out after 90 seconds. Restart the patient service, then try again.'
+                        }
+                      }
+                    };
+                  }
+
+                  return { error: result.error };
+                }
+
+                return {
+                  data: result.data as BillingCheckoutResult
+                };
+              } catch (error: unknown) {
+                const aborted =
+                  error instanceof DOMException &&
+                  error.name === 'AbortError';
+
+                return {
+                  error: {
+                    status: aborted ? 'TIMEOUT' : 'FETCH_ERROR',
+                    data: {
+                      message: aborted
+                        ? 'Checkout timed out after 90 seconds. Check the patient service logs and try again.'
+                        : 'Unable to reach the billing server. Confirm the backend is running.'
+                    }
+                  }
+                };
+              } finally {
+                window.clearTimeout(timeoutId);
+              }
+            },
+
+            invalidatesTags: [
+              'BillingCheckout',
+              'BillingWallet',
+              'EncounterBillingSummary',
+              'PatientLedgerSummary'
+            ]
+          }),
+
+        cancelBillingService:
+          builder.mutation<
+            BillingCancellationResult,
+            BillingCancellationRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/cancel-service',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: [
+              'BillingWallet',
+              'EncounterBillingSummary'
+            ]
+          }),
+
+        refundBillingPayment:
+          builder.mutation<
+            BillingRefundResult,
+            BillingRefundRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/refund',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: [
+              'BillingRefund',
+              'BillingPayment',
+              'BillingWallet',
+              'EncounterBillingSummary'
+            ]
+          }),
+
+        reverseBillingRefund:
+          builder.mutation<
+            BillingRefundReversalResult,
+            BillingRefundReversalRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/refund/reverse',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: [
+              'BillingRefund',
+              'BillingPayment',
+              'BillingWallet',
+              'EncounterBillingSummary'
+            ]
+          }),
+
+        evaluateBillingRule:
+          builder.mutation<
+            BillingRuleEvaluationResponse,
+            BillingRuleEvaluationRequest
+          >({
+            query: body => ({
+              url: '/api/patient/billing/evaluate-billing-rule',
+              method: 'POST',
+              body
+            })
+          }),
+
+        checkInsurancePriceListCoverage:
+          builder.mutation<
+            InsurancePriceListCoverageCheckResult,
+            InsurancePriceListCoverageCheckRequest
+          >({
+            query: body => ({
+              url: '/api/patient/insurance-coverage/price-list-check',
+              method: 'POST',
+              body
+            })
+          }),
+
+        searchRegistrationPendingItems: builder.query<
+          {
+            data: RegistrationPendingPaymentEncounter[];
+            totalCount: number;
+          },
+          {
+            facilityId: number;
+            patientName?: string;
+            page?: number;
+            size?: number;
+            sort?: string;
+          }
+        >({
+          query: ({
+            facilityId,
+            patientName,
+            page = 0,
+            size = 15,
+            sort = 'id,desc'
+          }) => ({
+            url: '/api/patient/billing/registration-pending-items',
+            method: 'GET',
+            params: {
+              facilityId,
+              ...(patientName ? { patientName } : {}),
+              page,
+              size,
+              sort
+            }
+          }),
+          transformResponse: (response: any, meta) => {
+            const rows = Array.isArray(response)
+              ? response
+              : response?.content ?? [];
+
+            return {
+              data: rows as RegistrationPendingPaymentEncounter[],
+              totalCount: Number(
+                meta?.response?.headers?.get('X-Total-Count') ?? 0
+              )
+            };
+          },
+          providesTags: ['RegistrationPendingPayment']
+        }),
+
+        getRegistrationPendingItemChanges: builder.query<
+          {
+            afterId: number;
+            latestId: number;
+            totalCount: number;
+            newItemIds: number[];
+          },
+          {
+            facilityId: number;
+            afterId?: number;
+          }
+        >({
+          query: ({ facilityId, afterId = 0 }) => ({
+            url: '/api/patient/billing/registration-pending-items/changes',
+            method: 'GET',
+            params: {
+              facilityId,
+              afterId
+            }
+          }),
+          providesTags: ['RegistrationPendingPayment']
+        })
+      })
+  });
+
+export const {
+  useGetEncounterBillingSummaryQuery,
+  useLazyGetEncounterBillingSummaryQuery,
+  useGetWaseelCoverageQuery,
+
+  usePrepareDefaultServicesMutation,
+  usePreviewDefaultServicesPricingMutation,
+
+  useCreateAdvancePaymentMutation,
+
+  useGetPaymentsByEncounterQuery,
+  useLazyGetPaymentsByEncounterQuery,
+
+  useGetPaymentsByPatientQuery,
+  useLazyGetPaymentsByPatientQuery,
+
+  useGetPatientWalletMovementsQuery,
+  useLazyGetPatientWalletMovementsQuery,
+
+  useGetBillingPaymentByIdQuery,
+  useLazyGetBillingPaymentByIdQuery,
+
+  useCheckoutBillingChargeMutation,
+
+  useCancelBillingServiceMutation,
+
+  useRefundBillingPaymentMutation,
+
+  useReverseBillingRefundMutation,
+
+  useEvaluateBillingRuleMutation,
+  useCheckInsurancePriceListCoverageMutation,
+
+  useSearchRegistrationPendingItemsQuery,
+  useLazySearchRegistrationPendingItemsQuery,
+  useGetRegistrationPendingItemChangesQuery,
+  useLazyGetRegistrationPendingItemChangesQuery
+} =
+  billingTransactionService;

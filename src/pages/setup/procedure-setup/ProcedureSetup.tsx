@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink, MdAttachMoney } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdLink, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
@@ -15,7 +15,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useEnumOptions } from '@/services/enumsApi';
-import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import {
   useGetProceduresQuery,
   useToggleProcedureIsActiveMutation,
@@ -28,12 +28,15 @@ import type { Procedure } from '@/types/model-types-new';
 import { newProcedure } from '@/types/model-types-constructor-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
+import LinkProcedureItems from './LinkProcedureItems';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
+  const priceListView = usePriceListPrompt();
 
   // Facility context (used to default new procedure)
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -41,7 +44,7 @@ const ProcedureSetup: React.FC = () => {
   const facilityId: number | undefined = selectedFacility?.id;
 
   // Selected procedure and UI state
-  const [procedure, setProcedure] = useState<Procedure>({ ...newProcedure, facilityId });
+  const [procedure, setProcedure] = useState<Procedure>({ ...newProcedure });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirmToggleActive, setOpenConfirmToggleActive] = useState(false);
   const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
@@ -52,6 +55,12 @@ const ProcedureSetup: React.FC = () => {
 
   const [linkPriceOpen, setLinkPriceOpen] = useState(false);
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
+
+  const [linkDocumentOpen, setLinkDocumentOpen] = useState(false);
+
+  const [linkItemsOpen, setLinkItemsOpen] = useState(false);
+  const [linkItemsProcedure, setLinkItemsProcedure] = useState<Procedure | null>(null);
+  const [linkDocumentProcedureId, setLinkDocumentProcedureId] = useState<number | null>(null);
 
   // Filter state
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
@@ -78,9 +87,7 @@ const ProcedureSetup: React.FC = () => {
     timestamp: Date.now(),
   });
 
-  // Enum options for category
-  
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const categoryOptions = useEnumOptions('ProcedureCategory');
 
   // Main list and facilities
   const { data: proceduresPage, isFetching, refetch } = useGetProceduresQuery({
@@ -121,9 +128,6 @@ const ProcedureSetup: React.FC = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch]);
-   useEffect(() => {
-     console.log('recordOfFilter changed', recordOfFilter);
-   }, [recordOfFilter]);
   // Resize listener for modal width
   useEffect(() => {
     const handleResize = () => {
@@ -145,6 +149,11 @@ const ProcedureSetup: React.FC = () => {
   const handleNew = () => {
     setProcedure({ ...newProcedure, facilityId });
     setPopupOpen(true);
+  };
+
+  const handleLinkAssignment = () => {
+    setLinkDocumentProcedureId(procedure?.id ? Number(procedure.id) : null);
+    setLinkDocumentOpen(true);
   };
 
   /**
@@ -393,8 +402,7 @@ const ProcedureSetup: React.FC = () => {
       key: 'categoryType',
       title: <Translate>Category</Translate>,
       flexGrow: 3,
-      render: (row: any) =>
-        row?.categoryType ? conjureValueBasedOnKeyFromList(CategoryLovQueryResponse?.object ?? [], row?.categoryType, 'lovDisplayVale') : '',
+      render: (row: any) => row?.categoryType ? formatEnumString(row.categoryType) : '',
     },
     {
       key: 'isAppointable',
@@ -432,31 +440,41 @@ const ProcedureSetup: React.FC = () => {
         />
       ),
     },
-    {
-      key: 'priceList',
-      title: <Translate>Price List</Translate>,
-      width: 110,
-      align: 'center' as const,
-      render: (row: any) => (
-        <MdAttachMoney
-          className="icons-style"
-          title="Link Prices"
-          size={22}
-          fill="var(--primary-gray)"
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            setLinkPriceProcedureId(Number(row?.id));
-            setLinkPriceOpen(true);
-          }}
-        />
-      ),
-    },
+    // {
+    //   key: 'priceList',
+    //   title: <Translate>Price List</Translate>,
+    //   width: 110,
+    //   align: 'center' as const,
+    //   render: (row: any) => (
+    //     <MdAttachMoney
+    //       className="icons-style"
+    //       title="Link Prices"
+    //       size={22}
+    //       fill="var(--primary-gray)"
+    //       style={{ cursor: 'pointer' }}
+    //       onClick={() => {
+    //         setLinkPriceProcedureId(Number(row?.id));
+    //         setLinkPriceOpen(true);
+    //       }}
+    //     />
+    //   ),
+    // },
     {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 3,
       render: (row: any) => (
         <div className="container-of-icons">
+          <MdMedicalServices
+            className="icons-style"
+            title="Linked Items"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setLinkItemsProcedure(row);
+              setLinkItemsOpen(true);
+            }}
+          />
           <MdModeEdit
             className="icons-style"
             title="Edit"
@@ -466,6 +484,23 @@ const ProcedureSetup: React.FC = () => {
               setProcedure(row);
               setPopupOpen(true);
             }}
+          />
+          <MdLocalOffer
+            className="icons-style"
+            title="Price Lists"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() =>
+              priceListView.view({
+                itemType: 'PROCEDURE',
+                sourceId: row.id,
+                itemCode: row.code,
+                itemName: row.name,
+                unitPrice: row.price,
+                facilityId: row.facilityId,
+                currency: row.currency
+              })
+            }
           />
           {row?.isActive ? (
             <MdDelete
@@ -499,7 +534,7 @@ const ProcedureSetup: React.FC = () => {
 
   // Filters UI
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -517,13 +552,13 @@ const ProcedureSetup: React.FC = () => {
       />
       {recordOfFilter.filter === 'categoryType' ? (
         <MyInput
-           showLabel={false}
+          showLabel={false}
           width="100%"
           fieldType="select"
           fieldLabel="Category Type"
-          selectData={CategoryLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={categoryOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           fieldName="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
@@ -575,8 +610,14 @@ const ProcedureSetup: React.FC = () => {
     }
   }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={tableData}
         totalCount={totalCount}
@@ -591,6 +632,13 @@ const ProcedureSetup: React.FC = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
         tableButtons={
           <div className="container-of-add-new-button">
+            <MyButton
+              color="var(--deep-blue)"
+              onClick={handleLinkAssignment}
+              width="160px"
+            >
+              Link Assignment
+            </MyButton>
             <MyButton
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
@@ -613,6 +661,7 @@ const ProcedureSetup: React.FC = () => {
         onSaveSuccess={handleSaveSuccess}
         actionLoading={isFetching}
       />
+      <PriceListPrompt prompt={priceListView} />
 
       <DeletionConfirmationModal
         open={openConfirmToggleActive}
@@ -632,6 +681,19 @@ const ProcedureSetup: React.FC = () => {
         open={linkPriceOpen}
         setOpen={setLinkPriceOpen}
         procedureId={linkPriceProcedureId ?? 0}
+      />
+
+      <LinkProcedureDocumentAssignment
+        open={linkDocumentOpen}
+        setOpen={setLinkDocumentOpen}
+        defaultProcedureId={linkDocumentProcedureId}
+      />
+
+      <LinkProcedureItems
+        open={linkItemsOpen}
+        setOpen={setLinkItemsOpen}
+        procedureId={linkItemsProcedure?.id ?? 0}
+        facilityId={linkItemsProcedure?.facilityId ?? 0}
       />
     </Panel>
   );

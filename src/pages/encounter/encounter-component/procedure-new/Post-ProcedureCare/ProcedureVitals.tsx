@@ -50,7 +50,9 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="select"
                   selectData={correctLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="countStatusLkey"
                   record={vitals}
@@ -75,7 +77,9 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="select"
                   selectData={numbersLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldName="painScoreLkey"
                   record={vitals}

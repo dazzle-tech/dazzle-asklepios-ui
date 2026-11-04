@@ -24,7 +24,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-    links: parseLinkHeader(headers?.get('Link')),
+    links: parseLinkHeader(headers?.get('Link'))
   };
 };
 
@@ -36,17 +36,17 @@ export const vaccineService = createApi({
     getVaccines: builder.query<PagedResult<modelTypes.Vaccine>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/vaccine',
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Vaccine'],
+      providesTags: ['Vaccine']
     }),
 
     getVaccineById: builder.query<modelTypes.Vaccine, { id: Id }>({
       query: ({ id }) => ({
-        url: `/api/setup/vaccine/${id}`,
+        url: `/api/setup/vaccine/${id}`
       }),
-      providesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
+      providesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine']
     }),
 
     getVaccinesByIds: builder.query<modelTypes.Vaccine[], { ids: Id[] }>({
@@ -55,73 +55,90 @@ export const vaccineService = createApi({
         params: { ids }
       }),
       transformResponse: (res: any) => res ?? [],
-      providesTags: (res) =>
+      providesTags: res =>
         res && Array.isArray(res)
           ? [...res.map((v: any) => ({ type: 'Vaccine' as const, id: v.id })), 'Vaccine']
           : ['Vaccine']
     }),
 
-    getVaccinesByName: builder.query<PagedResult<modelTypes.Vaccine>, { name: string } & PagedParams>({
+    getVaccinesByName: builder.query<
+      PagedResult<modelTypes.Vaccine>,
+      { name: string } & PagedParams
+    >({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine/by-name/${encodeURIComponent(name)}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Vaccine'],
+      providesTags: ['Vaccine']
     }),
 
-    getVaccinesByType: builder.query<PagedResult<modelTypes.Vaccine>, { type: string } & PagedParams>({
+    getVaccinesByType: builder.query<
+      PagedResult<modelTypes.Vaccine>,
+      { type: string } & PagedParams
+    >({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine/by-type/${encodeURIComponent(type)}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Vaccine'],
+      providesTags: ['Vaccine']
     }),
 
-    getVaccinesByRoa: builder.query<PagedResult<modelTypes.Vaccine>, { roa: string } & PagedParams>({
-      query: ({ roa, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/vaccine/by-roa/${encodeURIComponent(roa)}`,
-        params: { page, size, sort },
-      }),
-      transformResponse: mapPaged,
-      providesTags: ['Vaccine'],
-    }),
+    getVaccinesByRoa: builder.query<PagedResult<modelTypes.Vaccine>, { roa: string } & PagedParams>(
+      {
+        query: ({ roa, page, size, sort = 'id,asc' }) => ({
+          url: `/api/setup/vaccine/by-roa/${encodeURIComponent(roa)}`,
+          params: { page, size, sort }
+        }),
+        transformResponse: mapPaged,
+        providesTags: ['Vaccine']
+      }
+    ),
 
     addVaccine: builder.mutation<modelTypes.Vaccine, modelTypes.Vaccine>({
       query: body => ({
         url: '/api/setup/vaccine',
         method: 'POST',
-        body,
+        body
       }),
-      invalidatesTags: ['Vaccine'],
+      invalidatesTags: ['Vaccine']
     }),
 
     updateVaccine: builder.mutation<modelTypes.Vaccine, { id: Id; data: modelTypes.Vaccine }>({
       query: ({ id, data }) => ({
         url: `/api/setup/vaccine/${id}`,
         method: 'PUT',
-        body: data,
+        body: data
       }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine']
     }),
 
     toggleVaccineActive: builder.mutation<modelTypes.Vaccine, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine/${id}/toggle-active`,
-        method: 'PATCH',
+        method: 'PATCH'
       }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine']
     }),
 
     deleteVaccine: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine/${id}`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
-      invalidatesTags: ['Vaccine'],
+      invalidatesTags: ['Vaccine']
     }),
-  }),
+
+    getActiveVaccinesByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/vaccine/active/by-name/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Vaccine']
+    })
+  })
 });
 
 export const {
@@ -140,5 +157,7 @@ export const {
   useToggleVaccineActiveMutation,
   useDeleteVaccineMutation,
   useGetVaccinesByIdsQuery,
-  useLazyGetVaccinesByIdsQuery
+  useLazyGetVaccinesByIdsQuery,
+  useGetActiveVaccinesByNameQuery,
+  useLazyGetActiveVaccinesByNameQuery
 } = vaccineService;

@@ -3,7 +3,7 @@ import MyButton from '../MyButton/MyButton';
 import { Modal } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faArrowRotateLeft, faBoxArchive } from '@fortawesome/free-solid-svg-icons';
 import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
 
@@ -39,6 +39,11 @@ const actionConfig = {
     color: 'var(--primary-blue)',
     icon: faArrowRotateLeft
   },
+  archive: {
+    text: 'Archive',
+    color: 'var(--primary-gray)',
+    icon: faBoxArchive
+  },
   confirm: {
     text: 'Confirm',
     color: 'var(--primary-blue)',
@@ -64,7 +69,7 @@ const DeletionConfirmationModal = ({
       : `Are you sure you want to ${config.text.toLowerCase()} this ${itemToDelete}?`;
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className={`delete-modal ${mode === 'light' ? 'light' : 'dark'}`}>
+    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className={`delete-modal ${mode}`}>
       <Modal.Header>
         <div className="delete-circle-wrapper" style={{ ['--circle-color' as any]: config.color }}>
           <div className="delete-circle-inner" style={{ backgroundColor: config.color }}>
@@ -78,7 +83,7 @@ const DeletionConfirmationModal = ({
         </div>
       </Modal.Body>
       <Modal.Footer className="footer-delete-modal">
-        <MyButton appearance="subtle" color="var(--dark-blue-gray)" onClick={() => setOpen(false)}>
+        <MyButton appearance="subtle" color={mode === 'dark' ? 'var(--white)' : "var(--dark-blue-gray)"} onClick={() => setOpen(false)}>
           {cancelButtonLabel}
         </MyButton>
         <MyButton backgroundColor={config.color} onClick={actionButtonFunction}>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '../MyInput';
-import { Form } from 'rsuite';
+import { Form, SelectPicker } from 'rsuite';
 import './style.less';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/hooks';
@@ -34,19 +34,19 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const isLightMode = mode === 'light';
 
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+useEffect(() => {
+  const handleResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', handleResize);
+  handleResize();
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
-  useEffect(() => {
-    if (width > 800) {
-      setDisplaySearch(true);
-    } else {
-      setDisplaySearch(false);
-    }
-  }, [width, setDisplaySearch]);
+useEffect(() => {
+  const nextValue = width > 800;
+  if (displaySearch !== nextValue) {
+    setDisplaySearch(nextValue);
+  }
+}, [width, displaySearch, setDisplaySearch]);
 
   useEffect(() => {
   if (!record.eventKey) return;
@@ -64,63 +64,115 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
     }
   };
 
-  return (
-    <div className="main-screen-bar-filters-header-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
-      {(width > 800 || !displaySearch) && width > 600 && (
-        <div>
-          <div className="display-flex">
-            <h5>
-              <Translate>{divElement}</Translate>
-            </h5>
-          </div>
-        </div>
-      )}
 
-      <div className="main-screen-bar-filters-header" >
-        <Form fluid layout="inline">
-          <div className="main-screen-bar-buttons-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
-            {width > 800 || displaySearch ? (
-              <>
-                <MyInput
-                  fieldName="eventKey"
-                  selectData={childrenNavs}
-                  selectDataLabel='title'
-                  selectDataValue='eventKey'
-                  fieldType="select"
-                  placeholder="Search"
-                  width={
-                    width < 800 && width > 500 && displaySearch
-                      ? '150px'
-                      : width < 500 && displaySearch
-                      ? '200px'
-                      : '10vw'
-                  }
-                  record={record}
-                  setRecord={setRecord}
-                  showLabel={false}
-                />
-                <IoMdClose
-                  size={24}
-                  style={{
+useEffect(() => {
+  if (!record.eventKey) return;
+
+  dispatch(setScreenKey(record.eventKey));
+
+  const item = childrenNavs.find(
+    c => c.eventKey === record.eventKey
+  );
+
+  if (item?.to) {
+    navigate(item.to);
+  }
+}, [record.eventKey]);
+
+const [isSelectOpen, setIsSelectOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (event: any) => {
+      const path = event.composedPath?.() || [];
+
+      if (
+        path.some((el: any) =>
+          el?.classList?.contains?.('rs-picker-popup')
+        )
+      ) {
+        return;
+      }
+
+      setIsSelectOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () =>
+      window.removeEventListener('scroll', handleScroll, true);
+  }, []);
+
+
+  return (
+    <div
+      className="main-screen-bar-filters-header-main-container"
+      style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+    >
+      <div className="header-title">
+        <h5>
+          <Translate>{divElement}</Translate>
+        </h5>
+      </div>
+
+      <div className="main-screen-bar-filters-header">
+        <Form fluid>
+          <div
+            className="main-screen-bar-buttons-main-container"
+            style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+          >
+            {/* 🔥 Search */}
+          <div className="main-screen-bar-icons-main-container-header">
+            <div className={`search-container ${displaySearch ? 'open' : ''}`}>
+              <SelectPicker
+                data={childrenNavs.map(item => ({
+                  label: item.title,
+                  value: item.eventKey
+                }))}
+                value={record.eventKey}
+                onChange={(value) =>
+                  setRecord({
+                    ...record,
+                    eventKey: value
+                  })
+                }
+                placeholder="Search"
+                searchable
+                cleanable
+                open={isSelectOpen}
+                onOpen={() => setIsSelectOpen(true)}
+                onClose={() => setIsSelectOpen(false)}
+                style={{
+                  width: '20vw',
+                  minWidth: 220
+                }}
+                menuStyle={{
+                  minWidth: '20vw'
+                }}
+                className="header-search-picker"
+              />
+
+              {/* <IoMdClose
+                className="close-btn"
+                size={20}
+                                  style={{
                     background: 'var(--rs-border-primary)',
-                    padding: '6px',
                     borderRadius: '5px',
                     cursor: 'pointer',
                     transition: 'background 0.2s ease, transform 0.2s ease',
-                    display: width > 800 ? 'none' : 'inline',
                   }}
-                  onClick={() => setDisplaySearch(false)}
-                />
-              </>
-            ) : (
+                onClick={() => setDisplaySearch(false)}
+              /> */}
+            </div>
+          </div>
+            {!displaySearch && (
               <SearchIcon
-                title="search"
+                className="search-icon"
                 style={{ margin: '10px', fontWeight: 'bold' }}
                 onClick={() => setDisplaySearch(true)}
               />
             )}
 
-            {(width > 800 || !displaySearch) && width > 600 && (
+            <div className="theme-container">
               <MyInput
                 fieldType="checkbox"
                 checkedLabel="Light"
@@ -130,7 +182,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
                 setRecord={handleThemeToggle}
                 showLabel={false}
               />
-            )}
+            </div>
           </div>
         </Form>
       </div>

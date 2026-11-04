@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 
 import type { PatientEncounter } from '@/types/model-types-new';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 
 import { useEnumOptions } from '@/services/enumsApi';
 
@@ -13,7 +14,14 @@ import {
   useLazyGetDepartmentByIdQuery
 } from '@/services/security/departmentService';
 
-import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
+import {
+  useLazyGetPractitionersByDepartmentQuery,
+} from '@/services/setup/practitioner/PractitionerDepartmentService';
+
+import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+
+import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetProceduresByDepartmentQuery } from '@/services/setup/procedure/procedureService';
 
 import {
   useLazyCountTodayEncountersByFacilityQuery,
@@ -24,6 +32,18 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import './style.less';
+import clsx from 'clsx';
+import { formatDateWithoutSeconds } from '@/utils';
+import { FaRegUser, FaRegCalendarAlt} from 'react-icons/fa';
+const CLINIC_EXCLUDED_ENCOUNTER_REASONS = ['URGENT_VISIT'];
+
+const formatSpecialtyLabel = (value?: string | null) => {
+  if (!value) return '';
+  return value
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};
 
 const RegistrationEncounter = ({
   localEncounter,
@@ -41,21 +61,27 @@ const RegistrationEncounter = ({
   openedFromReferral?: boolean;
 }) => {
   const authSlice = useSelector((state: any) => state.auth);
-console.log("localReferral in RegistrationEncounter: ", localReferral); 
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
   const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
   const [validationResult] = useState({});
+  const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT']
   });
-  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason', {
+    exclude:
+      !isReadOnly && localEncounter?.encounterType === 'CLINIC'
+        ? CLINIC_EXCLUDED_ENCOUNTER_REASONS
+        : undefined
+  });
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
+  const { data: patPromotionLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_PROMOTION');
 
   useEffect(() => {
     if (!localEncounter) {
@@ -87,6 +113,18 @@ console.log("localReferral in RegistrationEncounter: ", localReferral);
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+  const mergeDepartments = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllDepartments(previousDepartments => {
+      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
+      const merged = [...previousDepartments];
+      rows.forEach((department: any) => {
+        if (!seenIds.has(Number(department.id))) merged.push(department);
+      });
+      return merged;
+    });
+  };
 
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
@@ -129,7 +167,6 @@ useEffect(() => {
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openedFromReferral, referralDepartment, localReferral?.toFacilityId, selectedFacilityId]);
-console.log("department fetched by ID: ", referralDepartment);
   useEffect(() => {
     if (!openedFromReferral) return;
     if (!referralDepartment?.id) return;
@@ -201,7 +238,10 @@ console.log("department fetched by ID: ", referralDepartment);
       page: 0,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedFacilityId,
@@ -222,23 +262,12 @@ console.log("department fetched by ID: ", referralDepartment);
       page: deptPage,
       size: deptSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergeDepartments(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptPage, selectedFacilityId, localReferral?.toFacilityId, localEncounter?.encounterType]);
-
-  useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
-
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
-      });
-      return merged;
-    });
-  }, [deptList]);
 
   const deptHasMore = Boolean(deptList?.links?.next);
 
@@ -250,10 +279,62 @@ console.log("department fetched by ID: ", referralDepartment);
     { data: practitionersList, isFetching: isPractitionersFetching }
   ] = useLazyGetPractitionersByDepartmentQuery();
 
-  const practitionersData = practitionersList?.data ?? [];
+  const [triggerGetPractitionerById] =
+    useLazyGetPractitionerByIdQuery();
+
+  const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
+    useLazyGetServicesByDepartmentQuery();
+
+  const defaultProceduresDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const defaultProceduresSpecialty = String(localEncounter?.specialty ?? '').trim();
+
+  const { data: defaultProceduresPage, isFetching: isDefaultProceduresFetching } =
+    useGetProceduresByDepartmentQuery(
+      {
+        sourceId: defaultProceduresDepartmentId,
+        specialty: defaultProceduresSpecialty,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      { skip: !defaultProceduresDepartmentId || !defaultProceduresSpecialty }
+    );
+
+  const defaultProceduresLabel = useMemo(
+    () =>
+      defaultProceduresDepartmentId && defaultProceduresSpecialty
+        ? (defaultProceduresPage?.data ?? [])
+            .map((procedure: any) => String(procedure?.name ?? '').trim())
+            .filter(Boolean)
+            .join(', ')
+        : '',
+    [defaultProceduresPage, defaultProceduresDepartmentId, defaultProceduresSpecialty]
+  );
+
   const practHasMore = Boolean(practitionersList?.links?.next);
 
   const prevDeptRef = useRef<number | null>(null);
+
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+
+  const specialtyDisplayLabel = useMemo(
+    () => formatSpecialtyLabel(localEncounter?.specialty),
+    [localEncounter?.specialty]
+  );
+
+  const mergePractitioners = (rows: any[]) => {
+    if (!rows?.length) return;
+    setAllPractitioners(previousPractitioners => {
+      const seenIds = new Set(
+        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
+      );
+      const merged = [...previousPractitioners];
+      rows.forEach((practitioner: any) => {
+        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
+      });
+      return merged;
+    });
+  };
 
   useEffect(() => {
     const departmentId = Number(localEncounter?.departmentId ?? 0);
@@ -266,11 +347,15 @@ console.log("department fetched by ID: ", referralDepartment);
     setPractPage(0);
 
     if (hasDepartmentChanged) {
-      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => ({
         ...prevEncounter,
+        specialty: null,
         practitionerId: null,
-        followUpEncounterId: null
+        followUpEncounterId: null,
+        defaultServiceId: null
       }));
+      setAllPractitioners([]);
     }
 
     triggerPractitionersByDept({
@@ -278,7 +363,10 @@ console.log("department fetched by ID: ", referralDepartment);
       page: 0,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localEncounter?.departmentId]);
 
@@ -292,46 +380,174 @@ console.log("department fetched by ID: ", referralDepartment);
       page: practPage,
       size: practSize,
       sort: 'id,asc'
-    });
+    })
+      .unwrap()
+      .then((res: any) => mergePractitioners(res?.data ?? []))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [practPage, localEncounter?.departmentId]);
 
-  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+  useEffect(() => {
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    const specialty = String(localEncounter?.specialty ?? '').trim();
+
+    if (!departmentId || !specialty) {
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => {
+        if (!prevEncounter?.defaultServiceId) return prevEncounter;
+        return { ...prevEncounter, defaultServiceId: null };
+      });
+      return;
+    }
+
+    triggerGetDefaultService({
+      sourceId: departmentId,
+      specialty,
+      page: 0,
+      size: 5,
+      sort: 'id,asc'
+    })
+      .unwrap()
+      .then((res: any) => {
+        const service = (res?.data ?? [])[0];
+        const serviceId = service?.id != null ? Number(service.id) : null;
+        const label = String(service?.name ?? service?.serviceName ?? '').trim();
+        setDefaultServiceLabel(label);
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: serviceId
+        }));
+      })
+      .catch(() => {
+        setDefaultServiceLabel('');
+        setLocalEncounter((prevEncounter: any) => ({
+          ...prevEncounter,
+          defaultServiceId: null
+        }));
+      });
+  }, [
+    localEncounter?.departmentId,
+    localEncounter?.specialty,
+    triggerGetDefaultService,
+    setLocalEncounter
+  ]);
 
   useEffect(() => {
-    const rows = practitionersData ?? [];
-    if (!rows.length) return;
+    if (localEncounter?.departmentId) return;
 
-    setAllPractitioners(previousPractitioners => {
-      const seenIds = new Set(
-        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
-      );
-      const merged = [...previousPractitioners];
-      rows.forEach((practitioner: any) => {
-        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
-      });
-      return merged;
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+    prevDeptRef.current = null;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (!prevEncounter?.practitionerId && !prevEncounter?.followUpEncounterId) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
     });
-  }, [practitionersData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.departmentId]);
+
+  useEffect(() => {
+    if (isReadOnly) return;
+    if (localEncounter?.encounterType !== 'CLINIC') return;
+    if (localEncounter?.encounterReason !== 'URGENT_VISIT') return;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (prevEncounter?.encounterReason !== 'URGENT_VISIT') return prevEncounter;
+      return { ...prevEncounter, encounterReason: null };
+    });
+  }, [
+    isReadOnly,
+    localEncounter?.encounterType,
+    localEncounter?.encounterReason,
+    setLocalEncounter
+  ]);
+
+  useEffect(() => {
+    if (localEncounter?.encounterType) return;
+
+    setDeptPage(0);
+    setAllDepartments([]);
+    setPractPage(0);
+    setAllPractitioners([]);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => {
+      if (
+        !prevEncounter?.departmentId &&
+        !prevEncounter?.practitionerId &&
+        !prevEncounter?.followUpEncounterId
+      ) {
+        return prevEncounter;
+      }
+      return {
+        ...prevEncounter,
+        departmentId: 0,
+        practitionerId: null,
+        followUpEncounterId: null
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.encounterType]);
+
+  useEffect(() => {
+    if (!isReadOnly) return;
+
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+
+    if (!practitionerId) return;
+
+    const exists = allPractitioners.some(
+      practitioner => Number(practitioner?.id) === practitionerId
+    );
+
+    if (exists) return;
+
+    triggerGetPractitionerById(practitionerId)
+      .unwrap()
+      .then((practitioner: any) => {
+        if (!practitioner) return;
+
+        setAllPractitioners(previousPractitioners => {
+          const alreadyExists = previousPractitioners.some(
+            item => Number(item?.id) === practitionerId
+          );
+
+          if (alreadyExists) return previousPractitioners;
+
+          return [practitioner, ...previousPractitioners];
+        });
+      })
+      .catch(() => {});
+  }, [
+    isReadOnly,
+    localEncounter?.practitionerId,
+    allPractitioners,
+    triggerGetPractitionerById
+  ]);
 
   useEffect(() => {
     const practitionerId = Number(localEncounter?.practitionerId ?? 0);
-    if (!practitionerId) return;
+    if (!practitionerId || localEncounter?.specialty) return;
 
-    setAllPractitioners(previousPractitioners => {
-      const alreadyExists = previousPractitioners.some(
-        (practitioner: any) => Number(practitioner?.id) === practitionerId
-      );
-      if (alreadyExists) return previousPractitioners;
+    const selectedPractitioner = allPractitioners.find(
+      (practitioner: any) => Number(practitioner.id) === practitionerId
+    );
+    if (!selectedPractitioner?.specialty) return;
 
-      const injectedPractitioner = {
-        id: practitionerId,
-        firstName: (localEncounter as any)?.practitionerFirstName ?? '',
-        lastName: (localEncounter as any)?.practitionerLastName ?? `#${practitionerId}`
-      };
-      return [injectedPractitioner, ...previousPractitioners];
-    });
-  }, [localEncounter?.practitionerId]);
+    setLocalEncounter((prevEncounter: any) => ({
+      ...prevEncounter,
+      specialty: String(selectedPractitioner.specialty),
+    }));
+  }, [localEncounter?.practitionerId, localEncounter?.specialty, allPractitioners, setLocalEncounter]);
 
   const [prevPage, setPrevPage] = useState(0);
   const prevSize = 15;
@@ -402,16 +618,51 @@ console.log("department fetched by ID: ", referralDepartment);
 
   const prevHasMore = Boolean(prevList?.links?.next);
 
+  const handlePractitionerChange = (updatedRecord: PatientEncounter) => {
+    const practitionerId = Number(updatedRecord?.practitionerId ?? 0);
+
+    if (!practitionerId) {
+      setDefaultServiceLabel('');
+      setLocalEncounter((prevEncounter: any) => ({
+        ...prevEncounter,
+        practitionerId: null,
+        specialty: null,
+        defaultServiceId: null,
+      }));
+      return;
+    }
+
+    const selectedPractitioner = allPractitioners.find(
+      (practitioner: any) => Number(practitioner.id) === practitionerId
+    );
+    const specialty = selectedPractitioner?.specialty
+      ? String(selectedPractitioner.specialty)
+      : null;
+
+    setLocalEncounter((prevEncounter: any) => ({
+      ...prevEncounter,
+      practitionerId,
+      specialty,
+      defaultServiceId: null,
+    }));
+  };
+
   const modifiedPrevEncounters = useMemo(() => {
     return (allPrevEncounters ?? []).map((encounter: any) => ({
       ...encounter,
       combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${
-        encounter.status ?? ''
+        getEncounterTreatmentStatus(encounter)
       }`
     }));
   }, [allPrevEncounters]);
 
-  return (
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir} className={clsx('', { 'disabled-panel': localPatient?.patientStatus === 'MERGED' })}>
     <Form fluid layout="inline" className="fields-container">
       <MyInput
         vr={validationResult}
@@ -425,6 +676,7 @@ console.log("department fetched by ID: ", referralDepartment);
       />
 
       <MyInput
+        key={EncounterTypeEnum?.length || 0}
         required
         vr={validationResult}
         column
@@ -452,7 +704,7 @@ console.log("department fetched by ID: ", referralDepartment);
         selectDataValue="id"
         record={localEncounter}
         setRecord={setLocalEncounter}
-        searchable
+        searchable={true}
         disabled={
           isReadOnly ||
           !Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0) ||
@@ -470,6 +722,7 @@ console.log("department fetched by ID: ", referralDepartment);
 
       <MyInput
         vr={validationResult}
+        required={localEncounter?.encounterType !== 'EMERGENCY'}
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
@@ -478,7 +731,7 @@ console.log("department fetched by ID: ", referralDepartment);
         selectDataLabel={['firstName', 'lastName']}
         selectDataValue="id"
         record={localEncounter}
-        setRecord={setLocalEncounter}
+        setRecord={handlePractitionerChange}
         disabled={isReadOnly || !localEncounter?.departmentId}
         loading={isPractitionersFetching}
         searchable
@@ -489,6 +742,54 @@ console.log("department fetched by ID: ", referralDepartment);
             setPractPage(page);
           }
         }}
+      />
+
+      <MyInput
+        vr={validationResult}
+        required
+        column
+        fieldLabel="Specialty"
+        fieldName="specialtyDisplay"
+        record={{ specialtyDisplay: specialtyDisplayLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.practitionerId
+            ? 'Select practitioner first'
+            : specialtyDisplayLabel || 'No specialty assigned'
+        }
+      />
+
+      <MyInput
+        column
+        fieldLabel="Default Service"
+        fieldName="defaultServiceLabel"
+        record={{ defaultServiceLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.specialty
+            ? 'Select practitioner first'
+            : isDefaultServiceFetching
+              ? 'Loading...'
+              : defaultServiceLabel || 'No linked service found'
+        }
+      />
+
+      <MyInput
+        column
+        fieldLabel="Default Procedures"
+        fieldName="defaultProceduresLabel"
+        record={{ defaultProceduresLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.specialty
+            ? 'Select practitioner first'
+            : isDefaultProceduresFetching
+              ? 'Loading...'
+              : defaultProceduresLabel || 'No linked procedure found'
+        }
       />
 
       <MyInput
@@ -512,7 +813,7 @@ console.log("department fetched by ID: ", referralDepartment);
         vr={validationResult}
         column
         fieldType="select"
-        fieldLabel="Reason"
+        fieldLabel="Service"
         fieldName="encounterReason"
         selectData={EncounterReasonEnum ?? []}
         selectDataLabel="label"
@@ -556,7 +857,9 @@ console.log("department fetched by ID: ", referralDepartment);
         fieldLabel="Origin Type"
         fieldName="originType"
         selectData={patOriginLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localEncounter}
         setRecord={setLocalEncounter}
@@ -575,10 +878,45 @@ console.log("department fetched by ID: ", referralDepartment);
       />
 
       <MyInput
+        vr={validationResult}
+        column
+        fieldType="select"
+        fieldLabel="Promotion Name"
+        fieldName="promotionName"
+        selectData={patPromotionLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        searchable={false}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldLabel="Promotion Code"
+        fieldName="promotionCode"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+      />
+
+      <MyInput
         column
         fieldType="textarea"
         fieldLabel="Notes"
         fieldName="notes"
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        record={localEncounter}
+      />
+       <MyInput
+        column
+        fieldType="textarea"
+        fieldLabel="Chief Complaint"
+        fieldName="chiefComplaint"
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
         record={localEncounter}
@@ -619,7 +957,45 @@ console.log("department fetched by ID: ", referralDepartment);
           />
         </div>
       </div>
+      <div className="encounter-audit-info">
+  <div className="encounter-audit-title">
+    <span>Audit Information</span>
+  </div>
+
+  <div className="encounter-audit-content">
+    <div className="audit-item">
+      <div className="audit-icon">
+        <FaRegUser  />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created By</span>
+        <span className="audit-value">
+          {localEncounter?.createdBy || '-'}
+        </span>
+      </div>
+    </div>
+
+    <div className="audit-divider" />
+
+    <div className="audit-item">
+      <div className="audit-icon">
+         <FaRegCalendarAlt />
+      </div>
+
+      <div className="audit-details">
+        <span className="audit-label">Created At</span>
+        <span className="audit-value">
+          {localEncounter?.createdDate
+            ? formatDateWithoutSeconds(localEncounter.createdDate)
+            : '-'}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
     </Form>
+  </div>
   );
 };
 

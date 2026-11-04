@@ -348,6 +348,7 @@ const ChiefComplain = ({ patient, encounter, edit }) => {
           <Translate>Cancel</Translate>
         </MyButton>
         <Checkbox
+         className="show-cancelled"
           onChange={(value, checked) => {
             if (checked) {
               //TODO convert key to code
@@ -357,7 +358,7 @@ const ChiefComplain = ({ patient, encounter, edit }) => {
             }
           }}
         >
-          Show Cancelled
+                <Translate>Show Cancelled</Translate>
         </Checkbox>
         <Checkbox
           onChange={(value, checked) => {

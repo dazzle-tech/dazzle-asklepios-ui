@@ -1,7 +1,6 @@
 import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientHistorySummary from './PatientHistorySummary';
-import { useGetPatientSummaryQuery } from '@/services/encounterService'; 
 
 interface Props {
   open: boolean;
@@ -22,6 +21,14 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
   handleSave,
   lang = 'en'
 }) => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -31,12 +38,12 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
       bodyheight="75vh"
       hideActionBtn={true}
       content={() => (
-        (
+        (<div dir={dir}>
             <PatientHistorySummary
               patient={patient}
               encounter={encounter}
               edit={edit}
-            />
+            /> </div>
           )
       )}
     />

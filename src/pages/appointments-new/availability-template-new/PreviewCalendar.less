@@ -1,0 +1,143 @@
+.calendar-modern {
+  display: flex;
+  background: #f6f7f9;
+  border-radius: 12px;
+  height: calc(48px + 24 * 64px);
+}
+
+.calendar-time {
+  width: 80px;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+}
+
+.time-header-label {
+  height: 48px;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.time-label {
+  height: 64px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #6b7280;
+  box-sizing: border-box;
+}
+
+
+.calendar-columns {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  gap: 16px;
+  padding: 0 16px 16px 16px;
+}
+
+
+.calendar-column {
+  flex: 1;
+  position: relative;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  overflow: visible;
+}
+
+.column-header {
+  height: 48px;
+  padding: 12px;
+  font-weight: 700;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-radius: 16px;
+}
+
+.column-body {
+  position: relative;
+  height: calc(24 * 64px);
+  margin-top: 0;
+}
+
+
+
+.pool-card {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.pool-card-header {
+  padding: 10px 14px;
+  font-weight: 700;
+  color: #fff;
+  font-size: 14px;
+}
+
+.pool-card-body {
+  padding: 12px 14px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pool-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #475569;
+}
+
+.pool-row span {
+  opacity: 0.8;
+}
+
+.pool-row strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.slot-card-modern {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  background: #fff;
+  border-left: 4px solid;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  z-index: 6;
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.slot-time {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.slot-capacity {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+}

@@ -404,13 +404,18 @@ const AddEditTransfer: React.FC<AddEditTransferProps> = ({
 
         );
     }
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
         <AdvancedModal
             open={open}
             setOpen={setOpen}
             //   title={transfer?.key ? "Edit Inventory Transfer" : "New Inventory Transfer"}
-            leftContent={leftContent()}
-            rightContent={rightContent()}
+            leftContent={<div dir={dir}>{leftContent()}</div>}
+            rightContent={<div dir={dir}>{rightContent()}</div>}
             leftWidth="20%"
             rightWidth="80%"
         />

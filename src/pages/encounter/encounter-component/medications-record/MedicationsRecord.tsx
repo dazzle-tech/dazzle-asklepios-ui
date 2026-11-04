@@ -9,6 +9,7 @@ import PatientChronic from './PatientChronic';
 import Prescriptions from './Prescriptions';
 import { useLocation } from 'react-router-dom';
 import MyTab from '@/components/MyTab';
+import UCCMedications from './UCCMedications/UCCMedications';
 const MedicationsRecord = () => {
   const location = useLocation();
   const { patient} = location.state || {};
@@ -27,6 +28,14 @@ const MedicationsRecord = () => {
       content: (
         <Prescriptions
           // genericMedicationListResponse={genericMedicationListResponse?.object}
+          patient={patient}
+        />
+      )
+    },
+    {
+      title: 'UCC Medications',
+      content: (
+        <UCCMedications
           patient={patient}
         />
       )
@@ -53,8 +62,21 @@ const MedicationsRecord = () => {
     // }
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-      <MyTab data={tabData} />
+    <MyTab
+    lazy
+      data={tabData.map(tab => ({
+        ...tab,
+        content: <div dir={dir}>{tab.content}</div>
+      }))}
+    />
   );
 };
 export default MedicationsRecord;

@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, Middleware } from '@reduxjs/toolkit';
 
 import { idParsingService } from '@/services/idParsingService';
 import { summarizationService } from '@/services/summarizationService';
@@ -22,15 +22,21 @@ import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
+import { patientActivityService } from './services/patients/patientActivityService';
+import { documentManagementService } from './services/patients/documentManagementService';
+import { patientMergeService } from './services/patients/patientMergeService';
 
 import { setupService } from '@/services/setupService';
 import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
+import { dentalChartService } from '@/services/dental/dentalChartService';
+import { dentalTreatmentPlanService } from '@/services/dental/dentalTreatmentPlanService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { pharmaceuticalService } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
@@ -46,11 +52,8 @@ import { encounterAttachmentsService } from './services/encounters/attachmentsSe
 import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 
-import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
-import { labService } from './services/labService';
-import { radService } from '@/services/radService';
 import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
@@ -64,10 +67,13 @@ import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
+import { emailSettingsService } from './services/system-configurations/emailSettingsService';
+import { whatsappSettingsService } from './services/system-configurations/whatsappSettingsService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
+import { userBookableDepartmentService } from './services/security/userBookableDepartments';
 
 import { MedicalsheetsService } from './services/MedicalSheetsService';
 
@@ -79,11 +85,11 @@ import { PractitionerService } from './services/setup/practitioner/PractitionerS
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 
 import { Icd10Service } from './services/setup/icd10service';
-import { ResourceService } from './services/setup/resource/ResourceService';
 
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
+import { analyzerService } from './services/setup/analyzerService';
 
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
@@ -112,11 +118,15 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService';
 import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+import { medFrequencySetupService } from './services/setup/med-frequency-setup/medFrequencySetupService';
+import { surveyQuestionService } from './services/setup/survey-question/surveyQuestionService';
+import { surveySectionService } from './services/setup/survey-question/surveySectionService';
+import { surveyTextService } from './services/setup/survey-question/surveyTextService';
 
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 
@@ -137,6 +147,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { stimulsoftReportService } from './services/reports/stimulsoftReportService';
 import { userStickyNotesService } from './services/userStickyNotes/userStickyNotes';
 import { BillingService } from './services/billing/BillingService';
 import { PriceListItemService } from './services/billing/PriceListItemService';
@@ -155,7 +166,6 @@ import { DischargePlanningService } from '@/services/setup/DischargePlanningServ
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
-import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
@@ -188,6 +198,7 @@ import { encounterAssessmentService } from './services/medicalsheetsEncounter/cl
 import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { randomBloodSugarService } from './services/medicalsheetsEncounter/observations/randomBloodSugarService';
 import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
@@ -200,8 +211,121 @@ import { patientPrescriptionMedicationService } from './services/patients/Prescr
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
-import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
+import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
+import { radiologyReportService } from './services/reports/radiologyReportService';
+import { observationServiceNew } from './services/observationServiceNew';
+import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
+import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
+import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
+import { notificationService } from './services/notification-management/notificationService';
+import { patientSatisfactionSurveyService } from './services/patient-satisfaction/patientSatisfactionSurveyService';
+import {
+  patientComplaintPublicService,
+  patientComplaintService
+} from './services/patient-complaints/patientComplaintService';
+import { surveyResponseService, surveyService } from './services/survey/surveyService';
+import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
+import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
+import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
+import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
+import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { availabilityTemplateIntervalBreakService } from './services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
+import { appointmentFromTemplateService } from './services/appointment/appointmentService';
+import { departmentServicesService } from './services/departmentServicesService';
+import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
+import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
+import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
+import { appointmentWaitingListService } from '@/services/appointment/appointmentWaitingList/appointmentWaitingListService';
+import { roomService } from './services/setup/room/roomService';
+import { bedService } from './services/setup/room/bedService';
+import { bedRoomService } from './services/setup/room/bedRoomService';
+import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+import { currentMedicationService } from './services/patients/currentMedicationService';
+import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
+import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
+import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
+import { glasgowComaScaleAssessmentService } from './services/medicalsheetsEncounter/glasgowComaScaleAssessmentService';
+import { cchiApi } from './services/waseel-integration/cchiService';
+import { eligibilityApi } from './services/waseel-integration/eligibilityService';
+import { preAuthorizationApi } from './services/waseel-integration/preAuthorizationService';
+import { claimApi } from './services/waseel-integration/claimService';
+import { insuranceReceivablesApi } from './services/billing/insuranceReceivablesService';
+import { claimSettlementApi } from './services/billing/claimSettlementService';
+import { PayorPlanCoverageClassService } from './services/setup/payer/PayorPlanCoverageClassService';
+import { appointmentPolicyAssignmentService } from './services/appointment/appointmentPolicyAssignment/appointmentPolicyAssignmentService';
+import { systemConfigService } from '@/services/systemConfigService';
+import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
+import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
+import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
+import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
+import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
+import { billingConfigurationService } from './services/billing/billingConfigurationService';
+import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
+import { discountService } from './services/billing/discountService';
+import { taxService } from './services/billing/taxService';
+import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
+import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
+import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
+import { billingTransactionService } from './services/billing/billingTransactionService';
+import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
+import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
+import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
+import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
+import { patientTimelineService } from './services/patients/patientTimelineService';
+import { autoPopulationService } from './services/auto-Population/autoPopulationService';
+import { dischargeReportService } from './services/ai-services/dischargeReportService';
+import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
+import { refreshHl7EventsService } from './services/refreshHl7EventsService';
+import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
+import { nephrologyRenalFunctionService } from './services/dialysis/nephrologyRenalFunctionService';
+import { nephrologyTreatmentPlanService } from './services/dialysis/nephrologyTreatmentPlanService';
+import { dialysisSessionService } from './services/dialysis/dialysisSessionService';
+import { dialysisFlowReadingService } from './services/dialysis/dialysisFlowReadingService';
+import { dialysisMedicationService } from './services/dialysis/dialysisMedicationService';
+import { claimEncounterCopyService } from './services/billing/claimEncounterCopyService';
+import { claimEncounterDiagnosisService } from './services/billing/claimEncounterDiagnosisService';
+import { claimEncounterProgressNoteService } from './services/billing/claimEncounterProgressNoteService';
+import { claimEncounterCopySocialHistoryService } from './services/billing/claimEncounterCopySocialHistoryService';
+import { claimEncounterCopySurgicalHistoryService } from './services/billing/claimEncounterCopySurgicalHistoryService';
+import { claimEncounterCopyPatientProblemService } from './services/billing/claimEncounterCopyPatientProblemService';
+import { claimEncounterCopyFamilyHistoryService } from './services/billing/claimEncounterCopyFamilyHistoryService';
+import { claimEncounterCopyHospitalizationService } from './services/billing/claimEncounterCopyHospitalizationService';
+import { claimEncounterCopyCurrentMedicationService } from './services/billing/claimEncounterCopyCurrentMedicationService';
+import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
+import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
+import { clinicalSummaryVoiceService } from './services/ai-services/clinicalSummaryVoiceService';
+import { ambientDraftService } from './services/ai-services/ambientDraftService';
+import { encounterAmbientService } from './services/encounters/encounterAmbientService';
+import { ambientScribeSetupService } from './services/setup/ambientScribeSetupService';
+const rtkDispatchLoopGuard: Middleware = () => {
+  let inCascade = false;
+  const queued: any[] = [];
+  return next => action => {
+    const type = typeof (action as any)?.type === 'string' ? (action as any).type : '';
+    if (!type.endsWith('/config/middlewareRegistered')) return next(action);
+
+    if (inCascade) {
+      queued.push(action);
+      return action;
+    }
+    inCascade = true;
+    try {
+      const result = next(action);
+      while (queued.length) next(queued.shift());
+      return result;
+    } finally {
+      inCascade = false;
+    }
+  };
+};
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -227,11 +351,24 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
-
+    [patientActivityService.reducerPath]: patientActivityService.reducer,
+    [documentManagementService.reducerPath]: documentManagementService.reducer,
+    [patientMergeService.reducerPath]: patientMergeService.reducer,
+    [patientTimelineService.reducerPath]: patientTimelineService.reducer,
+    [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
+    [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
+    [ambientDraftService.reducerPath]: ambientDraftService.reducer,
+    [encounterAmbientService.reducerPath]: encounterAmbientService.reducer,
+    [ambientScribeSetupService.reducerPath]: ambientScribeSetupService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
-
     [systemConfigurationService.reducerPath]: systemConfigurationService.reducer,
+
+    [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
+    [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
+    [appointmentPolicyAssignmentService.reducerPath]: appointmentPolicyAssignmentService.reducer,
+    [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -240,6 +377,7 @@ export const store = configureStore({
     // medication / active ingredients
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [pharmaceuticalService.reducerPath]: pharmaceuticalService.reducer,
     [activeIngredientSpecialPopulationService.reducerPath]:
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
@@ -258,12 +396,11 @@ export const store = configureStore({
     // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-    // appointment
-    [appointmentService.reducerPath]: appointmentService.reducer,
-
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
+    [dentalChartService.reducerPath]: dentalChartService.reducer,
+    [dentalTreatmentPlanService.reducerPath]: dentalTreatmentPlanService.reducer,
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
@@ -276,9 +413,7 @@ export const store = configureStore({
       inventoryTransactionAttachmentService.reducer,
 
     // lab / rad / operation / procedures
-    [labService.reducerPath]: labService.reducer,
     [operationService.reducerPath]: operationService.reducer,
-    [radService.reducerPath]: radService.reducer,
     [procedureService.reducerPath]: procedureService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
@@ -288,6 +423,10 @@ export const store = configureStore({
 
     // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
+    [medFrequencySetupService.reducerPath]: medFrequencySetupService.reducer,
+    [surveyQuestionService.reducerPath]: surveyQuestionService.reducer,
+    [surveySectionService.reducerPath]: surveySectionService.reducer,
+    [surveyTextService.reducerPath]: surveyTextService.reducer,
 
     // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
@@ -303,13 +442,28 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+    [emailSettingsService.reducerPath]: emailSettingsService.reducer,
+    [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
+    [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
+    [mobileAppConfigService.reducerPath]: mobileAppConfigService.reducer,
+    [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
+    [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
+    [notificationService.reducerPath]: notificationService.reducer,
+    [patientSatisfactionSurveyService.reducerPath]: patientSatisfactionSurveyService.reducer,
+    [patientComplaintPublicService.reducerPath]: patientComplaintPublicService.reducer,
+    [patientComplaintService.reducerPath]: patientComplaintService.reducer,
+    [surveyService.reducerPath]: surveyService.reducer,
+    [surveyResponseService.reducerPath]: surveyResponseService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
+    [userBookableDepartmentService.reducerPath]: userBookableDepartmentService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
 
     // medical sheets
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
+
+    [departmentServicesService.reducerPath]: departmentServicesService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -335,8 +489,8 @@ export const store = configureStore({
     // age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
+    [analyzerService.reducerPath]: analyzerService.reducer,
 
     // diagnostic tests
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
@@ -363,6 +517,17 @@ export const store = configureStore({
 
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
+    [claimEncounterCopyService.reducerPath]: claimEncounterCopyService.reducer,
+    [claimEncounterDiagnosisService.reducerPath]: claimEncounterDiagnosisService.reducer,
+    [claimEncounterProgressNoteService.reducerPath]: claimEncounterProgressNoteService.reducer,
+    [claimEncounterCopySocialHistoryService.reducerPath]: claimEncounterCopySocialHistoryService.reducer,
+    [claimEncounterCopySurgicalHistoryService.reducerPath]: claimEncounterCopySurgicalHistoryService.reducer,
+    [claimEncounterCopyPatientProblemService.reducerPath]: claimEncounterCopyPatientProblemService.reducer,
+    [claimEncounterCopyFamilyHistoryService.reducerPath]: claimEncounterCopyFamilyHistoryService.reducer,
+    [claimEncounterCopyHospitalizationService.reducerPath]: claimEncounterCopyHospitalizationService.reducer,
+    [claimEncounterCopyCurrentMedicationService.reducerPath]: claimEncounterCopyCurrentMedicationService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestResultService.reducerPath]: claimEncounterCopyDiagnosticOrderTestResultService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestReportService.reducerPath]: claimEncounterCopyDiagnosticOrderTestReportService.reducer,
 
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -402,10 +567,17 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // patient billing (new endpoints)
+    [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
+    [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+    [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
+    [appointmentWaitingListService.reducerPath]: appointmentWaitingListService.reducer,
+
     // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+    [stimulsoftReportService.reducerPath]: stimulsoftReportService.reducer,
 
     // sticky notes
     [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
@@ -427,10 +599,16 @@ export const store = configureStore({
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
-    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
-
+    [radiologyReportService.reducerPath]: radiologyReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
+
+    [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
+    [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
+    [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
+    [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
     // AI Services
@@ -438,6 +616,7 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+     [dischargeReportService.reducerPath]: dischargeReportService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
     [progressNoteService.reducerPath]: progressNoteService.reducer,
     [patientProcedureService.reducerPath]: patientProcedureService.reducer,
@@ -471,6 +650,10 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    [medicationValidationService.reducerPath]: medicationValidationService.reducer,
+
+     [autoPopulationService.reducerPath]: autoPopulationService.reducer,
+
     //er-triage
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
@@ -480,6 +663,7 @@ export const store = configureStore({
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
 
     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [randomBloodSugarService.reducerPath]: randomBloodSugarService.reducer,
 
     [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
     [patientObservationsComplaintsService.reducerPath]:
@@ -488,245 +672,340 @@ export const store = configureStore({
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
     [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
     [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
-    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]:
+      patientPrescriptionMedicationService.reducer,
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer
+    [patientAdministrativeWarningsService.reducerPath]:
+      patientAdministrativeWarningsService.reducer,
+    [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+    [flaccPainSacoreService.reducerPath]: flaccPainSacoreService.reducer,
+
+    // setup - room and bed management
+    [roomService.reducerPath]: roomService.reducer,
+    [bedService.reducerPath]: bedService.reducer,
+    [bedRoomService.reducerPath]: bedRoomService.reducer,
+    [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer,
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
+    [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
+    [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
+
+    [glasgowComaScaleAssessmentService.reducerPath]: glasgowComaScaleAssessmentService.reducer,
+    [cchiApi.reducerPath]: cchiApi.reducer,
+    [eligibilityApi.reducerPath]: eligibilityApi.reducer,
+    [preAuthorizationApi.reducerPath]: preAuthorizationApi.reducer,
+    [claimApi.reducerPath]: claimApi.reducer,
+    [insuranceReceivablesApi.reducerPath]: insuranceReceivablesApi.reducer,
+    [claimSettlementApi.reducerPath]: claimSettlementApi.reducer,
+    [PayorPlanCoverageClassService.reducerPath]: PayorPlanCoverageClassService.reducer,
+    [systemConfigService.reducerPath]: systemConfigService.reducer,
+
+    [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
+    [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
+
+    [priceListSetupService.reducerPath]: priceListSetupService.reducer,
+    [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
+    [billingConfigurationService.reducerPath]: billingConfigurationService.reducer,
+    [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
+    [taxService.reducerPath]: taxService.reducer,
+    [discountService.reducerPath]: discountService.reducer,
+
+    [billingTransactionService.reducerPath]: billingTransactionService.reducer,
+    [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
+    [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
+    [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
+    [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
+    [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer,
+    [nephrologyKidneyAssessmentService.reducerPath]: nephrologyKidneyAssessmentService.reducer,
+    [nephrologyRenalFunctionService.reducerPath]: nephrologyRenalFunctionService.reducer,
+    [nephrologyTreatmentPlanService.reducerPath]: nephrologyTreatmentPlanService.reducer,
+    [dialysisSessionService.reducerPath]: dialysisSessionService.reducer,
+    [dialysisFlowReadingService.reducerPath]: dialysisFlowReadingService.reducer,
+    [dialysisMedicationService.reducerPath]: dialysisMedicationService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
-  (getDefaultMiddleware().concat(...[
-    // ai
-    idParsingService.middleware,
-    summarizationService.middleware,
-
-    // ui
-    uiService.middleware,
-
-    // auth / account
-    authService.middleware,
-    authServiceApi.middleware,
-    accountApi.middleware,
-
-    // patient
-    patientService.middleware,
-    newPatientService.middleware,
-    addressService.middleware,
-    hipaaService.middleware,
-    patientPreferredHealthProfessionalService.middleware,
-    patientDocumentsService.middleware,
-
-    // inventory
-    inventoryService.middleware,
-    inventoryProductsService.middleware,
-
-    // setup
-    setupService.middleware,
-
-    // medication / active ingredients
-    medicationsSetupService.middleware,
-    activeIngredientSynonymsService.middleware,
-    activeIngredientAdverseEffectService.middleware,
-    activeIngredientIndicationService.middleware,
-    activeIngredientSpecialPopulationService.middleware,
-    activeIngredientContraindicationService.middleware,
-    activeIngredientPreRequestedTestService.middleware,
-    activeIngredientDrugInteractionService.middleware,
-    activeIngredientFoodInteractionService.middleware,
-    activeIngredientsService.middleware,
-
-    // appointment / clinical
-    appointmentService.middleware,
-    dvmService.middleware,
-    encounterService.middleware,
-    dentalService.middleware,
-    observationService.middleware,
-
-    // attachments
-    attachmentService.middleware,
-    patientAttachmentService.middleware,
-    encounterAttachmentsService.middleware,
-    inventoryTransferAttachmentService.middleware,
-    inventoryTransactionAttachmentService.middleware,
-
-    // lab / rad / procedure / operation
-    labService.middleware,
-    radService.middleware,
-    procedureService.middleware,
-    operationService.middleware,
-
-    // recovery / user
-    recoveryService.middleware,
-    userService.middleware,
-    potintialService.middleware,
-
-    // enums / security
-    enumsApi.middleware,
-    facilityService.middleware,
-    departmentService.middleware,
-    organizationDefinitionService.middleware,
-    roleService.middleware,
-    userRoleService.middleware,
-    enumService.middleware,
-    userDepartmentService.middleware,
-
-    // medical sheets
-    MedicalsheetsService.middleware,
-    vitalSignsService.middleware,
-
-    // services / language / translation
-    serviceService.middleware,
-    MedicationCategoriesService.middleware,
-    MedicationCategoriesClassService.middleware,
-    languageService.middleware,
-    translationService.middleware,
-
-    // practitioner
-    formTemplateService.middleware,
-    FormEntriesService.middleware,
-    PractitionerService.middleware,
-    PractitionerDepartmentService.middleware,
-
-    // misc setup
-    ResourceService.middleware,
-    ageGroupService.middleware,
-    Icd10Service.middleware,
-    allergensService.middleware,
-
-    // diagnostic tests
-    diagnosticTestService.middleware,
-    cdtCodeService.middleware,
-    loincCodeService.middleware,
-    cptCodeService.middleware,
-    laboratoryService.middleware,
-    diagnosticTestProfileService.middleware,
-    diagnosticTestPathologyService.middleware,
-    radiologyService.middleware,
-    diagnosticTestNormalRangeService.middleware,
-    diagnosticTestCodingService.middleware,
-
-    // dental actions
-    dentalActionService.middleware,
-    CdtDentalActionService.middleware,
-
-    // vaccines
-    vaccineService.middleware,
-    vaccineBrandsService.middleware,
-    vaccineDosesService.middleware,
-    vaccineDosesIntervalService.middleware,
-
-    // brand medications
-    BrandMedicationService.middleware,
-    BrandMedicationSubstituteService.middleware,
-    BrandMedicationActiveIngredientService.middleware,
-
-    // prescription instruction
-    prescriptionInstructionService.middleware,
-
-    // uom
-    uomGroupService.middleware,
-
-    // geo
-    countryService.middleware,
-    countryDistrictService.middleware,
-    districtCommunityService.middleware,
-    communityAreaService.middleware,
-
-    // discharge
-    dischargePService.middleware,
-    DischargePlanningService.middleware,
-
-    // reporting
-    resultReportApi.middleware,
-    invoiceReportApi.middleware,
-
-    // visit duration
-    visitDurationService.middleware,
-
-    // catalog
-    catalogService.middleware,
-    catalogDiagnosticTestService.middleware,
-
-    // billing / price list
-    BillingService.middleware,
-    PriceListService.middleware,
-    PriceListItemService.middleware,
-
-    // report templates
-    ReportTemplateService.middleware,
-    DiagnosticTestTemplateService.middleware,
-
-    // sticky notes
-    userStickyNotesService.middleware,
-
-    // referral
-    referralRequestService.middleware,
-
-    // payer
-    PayorService.middleware,
-    PayorPlanService.middleware,
-
-    PatientRelationService.middleware,
-    patientInsurancesService.middleware,
-    patientInsuranceCoveragesService.middleware,
-    encounterVaccinationService.middleware,
-    patientEncounterService.middleware,
-    patientPaymentsService.middleware,
-    priceListAttributesService.middleware,
-    prescriptionPService.middleware,
-    radiologyReportApi.middleware,
-    clinicalSummaryService.middleware,
-    clinicalRecommendationsService.middleware,
-    medicationTestOrdersValidationService.middleware,
-    patientProblemService.middleware,
-    familyHistoryService.middleware,
-    hospitalizationService.middleware,
-    surgicalHistoryService.middleware,
-    socialHistoryService.middleware,
-    favoriteDiagnosticTestService.middleware,
-    diagnosticOrderTestService.middleware,
-    diagnosticOrderService.middleware,
-    diagnosticOrderTestCollectedSampleService.middleware,
-    diagnosticOrderTestTechnicianNoteService.middleware,
-    diagnosticTestRequestService.middleware,
-    externalTestService.middleware,
-    diagnosticOrderTestResultService.middleware,
-    diagnosticOrderTestResultTechnicianNoteService.middleware,
-    diagnosticOrderTestReportService.middleware,
-    diagnosticOrderTestReportCommentsService.middleware,
-    patientDiagnosticResultHistoryService.middleware,
-    patientReportService.middleware,
-    progressNoteService.middleware,
-    patientProcedureService.middleware,
-    consultationService.middleware,
-    portalService.middleware,
-    telephonicConsultationService.middleware,
-    ICDTreeService.middleware,
-    //er-triage
-    generalAssessmentService.middleware,
-    chiefComplainService.middleware,
-    emergencyTriageService.middleware,
-    encounterAssessmentService.middleware,
-    encounterPlanService.middleware,
-    patientDiagnosisService.middleware,
-    vitalSignsService.middleware,
-    bodyMeasurementsService.middleware,
-    patientObservationsComplaintsService.middleware,
-    painAssessmentService.middleware,
-    additionalMeasurementsService.middleware,
-    patientAllergiesService.middleware,
-    patientWarningsService.middleware,
-    procedureSetupService.middleware,
-    ReviewOfSystemService.middleware,
-    patientPrescriptionService.middleware,
-    patientPrescriptionMedicationService.middleware,
-    patientServicesAndProductsService.middleware,
-    NextOfKinService.middleware,
-    RelationsMatrixService.middleware,
-    patientAdministrativeWarningsService.middleware,
-    systemConfigurationService.middleware
-  ]) as any)
+    getDefaultMiddleware({
+      // Reducer tree is huge — these dev checks are too expensive here.
+      immutableCheck: false,
+      serializableCheck: false
+    })
+      .prepend(rtkDispatchLoopGuard)
+      .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .concat(
+        idParsingService.middleware,
+        summarizationService.middleware,
+        uiService.middleware,
+        authService.middleware,
+        authServiceApi.middleware,
+        accountApi.middleware,
+        patientService.middleware,
+        newPatientService.middleware,
+        addressService.middleware,
+        hipaaService.middleware,
+        patientPreferredHealthProfessionalService.middleware,
+        patientDocumentsService.middleware,
+        patientActivityService.middleware,
+        documentManagementService.middleware,
+        patientMergeService.middleware,
+        inventoryService.middleware,
+        inventoryProductsService.middleware,
+        setupService.middleware,
+        medicationsSetupService.middleware,
+        activeIngredientSynonymsService.middleware,
+        pharmaceuticalService.middleware,
+        activeIngredientAdverseEffectService.middleware,
+        activeIngredientIndicationService.middleware,
+        activeIngredientSpecialPopulationService.middleware,
+        activeIngredientContraindicationService.middleware,
+        activeIngredientPreRequestedTestService.middleware,
+        activeIngredientDrugInteractionService.middleware,
+        activeIngredientFoodInteractionService.middleware,
+        activeIngredientsService.middleware,
+        dvmService.middleware,
+        encounterService.middleware,
+        dentalChartService.middleware,
+        dentalTreatmentPlanService.middleware,
+        dentalService.middleware,
+        observationService.middleware,
+        attachmentService.middleware,
+        patientAttachmentService.middleware,
+        encounterAttachmentsService.middleware,
+        inventoryTransferAttachmentService.middleware,
+        inventoryTransactionAttachmentService.middleware,
+        procedureService.middleware,
+        operationService.middleware,
+        recoveryService.middleware,
+        userService.middleware,
+        potintialService.middleware,
+        enumsApi.middleware,
+        facilityService.middleware,
+        departmentService.middleware,
+        organizationDefinitionService.middleware,
+        emailSettingsService.middleware,
+        whatsappSettingsService.middleware,
+        roleService.middleware,
+        userRoleService.middleware,
+        enumService.middleware,
+        userDepartmentService.middleware,
+        userBookableDepartmentService.middleware,
+        MedicalsheetsService.middleware,
+        vitalSignsService.middleware,
+        randomBloodSugarService.middleware,
+        serviceService.middleware,
+        MedicationCategoriesService.middleware,
+        MedicationCategoriesClassService.middleware,
+        languageService.middleware,
+        translationService.middleware,
+        formTemplateService.middleware,
+        FormEntriesService.middleware,
+        PractitionerService.middleware,
+        PractitionerDepartmentService.middleware,
+        ageGroupService.middleware,
+        Icd10Service.middleware,
+        allergensService.middleware,
+        analyzerService.middleware,
+        diagnosticTestService.middleware,
+        cdtCodeService.middleware,
+        loincCodeService.middleware,
+        cptCodeService.middleware,
+        laboratoryService.middleware,
+        diagnosticTestProfileService.middleware,
+        diagnosticTestPathologyService.middleware,
+        radiologyService.middleware,
+        diagnosticTestNormalRangeService.middleware,
+        diagnosticTestCodingService.middleware,
+        dentalActionService.middleware,
+        CdtDentalActionService.middleware,
+        vaccineService.middleware,
+        vaccineBrandsService.middleware,
+        vaccineDosesService.middleware,
+        vaccineDosesIntervalService.middleware,
+        BrandMedicationService.middleware,
+        BrandMedicationSubstituteService.middleware,
+        BrandMedicationActiveIngredientService.middleware,
+        prescriptionInstructionService.middleware,
+        medFrequencySetupService.middleware,
+        surveyQuestionService.middleware,
+        surveySectionService.middleware,
+        surveyTextService.middleware,
+        uomGroupService.middleware,
+        countryService.middleware,
+        countryDistrictService.middleware,
+        districtCommunityService.middleware,
+        communityAreaService.middleware,
+        dischargePService.middleware,
+        DischargePlanningService.middleware,
+        resultReportApi.middleware,
+        invoiceReportApi.middleware,
+        visitDurationService.middleware,
+        catalogService.middleware,
+        catalogDiagnosticTestService.middleware,
+        BillingService.middleware,
+        PriceListService.middleware,
+        PriceListItemService.middleware,
+        patientBillingInvoiceService.middleware,
+        patientBillingInvoiceItemService.middleware,
+        appointmentRequestService.middleware,
+        appointmentWaitingListService.middleware,
+        ReportTemplateService.middleware,
+        DiagnosticTestTemplateService.middleware,
+        stimulsoftReportService.middleware,
+        userStickyNotesService.middleware,
+        referralRequestService.middleware,
+        PayorService.middleware,
+        PayorPlanService.middleware,
+        PatientRelationService.middleware,
+        patientInsurancesService.middleware,
+        patientInsuranceCoveragesService.middleware,
+        encounterVaccinationService.middleware,
+        patientEncounterService.middleware,
+        patientPaymentsService.middleware,
+        priceListAttributesService.middleware,
+        prescriptionPService.middleware,
+        clinicalSummaryService.middleware,
+        clinicalRecommendationsService.middleware,
+        medicationTestOrdersValidationService.middleware,
+        patientProblemService.middleware,
+        familyHistoryService.middleware,
+        hospitalizationService.middleware,
+        surgicalHistoryService.middleware,
+        socialHistoryService.middleware,
+        favoriteDiagnosticTestService.middleware,
+        diagnosticOrderTestService.middleware,
+        diagnosticOrderService.middleware,
+        diagnosticOrderTestCollectedSampleService.middleware,
+        diagnosticOrderTestTechnicianNoteService.middleware,
+        diagnosticTestRequestService.middleware,
+        externalTestService.middleware,
+        diagnosticOrderTestResultService.middleware,
+        diagnosticOrderTestResultTechnicianNoteService.middleware,
+        diagnosticOrderTestReportService.middleware,
+        diagnosticOrderTestReportCommentsService.middleware,
+        patientDiagnosticResultHistoryService.middleware,
+        patientReportService.middleware,
+        progressNoteService.middleware,
+        patientProcedureService.middleware,
+        consultationService.middleware,
+        portalService.middleware,
+        telephonicConsultationService.middleware,
+        ICDTreeService.middleware,
+        generalAssessmentService.middleware,
+        chiefComplainService.middleware,
+        emergencyTriageService.middleware,
+        encounterAssessmentService.middleware,
+        encounterPlanService.middleware,
+        patientDiagnosisService.middleware,
+        bodyMeasurementsService.middleware,
+        patientObservationsComplaintsService.middleware,
+        painAssessmentService.middleware,
+        additionalMeasurementsService.middleware,
+        patientAllergiesService.middleware,
+        patientWarningsService.middleware,
+        procedureSetupService.middleware,
+        ReviewOfSystemService.middleware,
+        patientPrescriptionService.middleware,
+        patientPrescriptionMedicationService.middleware,
+        patientServicesAndProductsService.middleware,
+        NextOfKinService.middleware,
+        RelationsMatrixService.middleware,
+        patientAdministrativeWarningsService.middleware,
+        systemConfigurationService.middleware,
+        radiologyReportService.middleware,
+        observationServiceNew.middleware,
+        organizationHolidaysService.middleware,
+        mobileAppConfigService.middleware,
+        notificationHeaderService.middleware,
+        notificationTemplateService.middleware,
+        notificationService.middleware,
+        patientSatisfactionSurveyService.middleware,
+        patientComplaintPublicService.middleware,
+        patientComplaintService.middleware,
+        surveyService.middleware,
+        surveyResponseService.middleware,
+        PolicyDefinitionService.middleware,
+        PolicyAssignmentService.middleware,
+        appointmentPolicyAssignmentService.middleware,
+        SkillDefinitionService.middleware,
+        availabilityTemplateService.middleware,
+        availabilityGenerationBatchService.middleware,
+        availabilityTemplateIntervalService.middleware,
+        availabilityTemplateIntervalBreakService.middleware,
+        appointmentFromTemplateService.middleware,
+        departmentServicesService.middleware,
+        roomService.middleware,
+        bedService.middleware,
+        bedRoomService.middleware,
+        encounterAssignToBedService.middleware,
+        currentMedicationService.middleware,
+        uccMedicationOrderService.middleware,
+        dentalProcedureService.middleware,
+        laboratoryReportsService.middleware,
+        glasgowComaScaleAssessmentService.middleware,
+        systemConfigService.middleware,
+        medicationValidationService.middleware,
+        cchiApi.middleware,
+        eligibilityApi.middleware,
+        preAuthorizationApi.middleware,
+        claimApi.middleware,
+        insuranceReceivablesApi.middleware,
+        claimSettlementApi.middleware,
+        PayorPlanCoverageClassService.middleware,
+        waseelSbsSetupService.middleware,
+        sickLeaveReportService.middleware,
+        patientSickLeaveService.middleware,
+        glasgowComaScaleAssessmentService.middleware,
+        systemConfigService.middleware,
+        NphiesPayerService.middleware,
+        priceListSetupService.middleware,
+        billingRuleSetupService.middleware,
+        billingConfigurationService.middleware,
+        financialDocumentNumberingService.middleware,
+        taxService.middleware,
+        discountService.middleware,
+        billingTransactionService.middleware,
+        invoiceGenerationService.middleware,
+        financialDocumentAdjustmentService.middleware,
+        flaccPainSacoreService.middleware,
+        PointOfSaleCheckInService.middleware,
+        PointOfSaleConfigurationService.middleware,
+        PointOfSaleTransactionService.middleware,
+        pointOfSaleWebhookLogService.middleware,
+        financialDocumentAdjustmentService.middleware,
+        patientTimelineService.middleware,
+        autoPopulationService.middleware,
+        dischargeReportService.middleware,
+         ocrParsingService.middleware,
+        labInterpretationService.middleware,
+        nephrologyKidneyAssessmentService.middleware,
+        nephrologyRenalFunctionService.middleware,
+        nephrologyTreatmentPlanService.middleware,
+        dialysisSessionService.middleware,
+        dialysisFlowReadingService.middleware,
+        dialysisMedicationService.middleware,
+        claimEncounterCopyService.middleware,
+        claimEncounterDiagnosisService.middleware,
+        claimEncounterProgressNoteService.middleware,
+        claimEncounterCopySocialHistoryService.middleware,
+        claimEncounterCopySurgicalHistoryService.middleware,
+        claimEncounterCopyPatientProblemService.middleware,
+        claimEncounterCopyFamilyHistoryService.middleware,
+        claimEncounterCopyHospitalizationService.middleware,
+        claimEncounterCopyCurrentMedicationService.middleware,
+        claimEncounterCopyDiagnosticOrderTestResultService.middleware,
+        claimEncounterCopyDiagnosticOrderTestReportService.middleware,
+        clinicalSummaryVoiceService.middleware,
+        ambientDraftService.middleware,
+        encounterAmbientService.middleware,
+        ambientScribeSetupService.middleware
+      ) as any
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

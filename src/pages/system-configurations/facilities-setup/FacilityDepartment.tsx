@@ -23,13 +23,21 @@ const FacilityDepartment = ({ open, setOpen, departments, width }) => {
   const conjureFormContent = () => {
     return <MyTable height={300} data={departments ?? []} columns={tableColumns} />;
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={'Facility Departments'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       hideActionBtn
       hideBack
       hideCancel

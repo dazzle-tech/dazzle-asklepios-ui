@@ -76,7 +76,11 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldLabel="Product Type"
           fieldName="productType"
           selectData={productsLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+            selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
+ disableByField='isValid'
+
           selectDataValue="key"
           width="140px"
           record={{}}
@@ -88,7 +92,11 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldName="status"
           fieldLabel="Status"
           selectData={payPymentMethodLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+            selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
+ disableByField='isValid'
+
           selectDataValue="key"
           width="130px"
           record={{}}
@@ -282,8 +290,12 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (
+    const dir = isRTL ? 'rtl' : 'ltr';
+  return (<div dir={dir}>
     <MyTable
       data={data}
       columns={tableColumns}
@@ -302,7 +314,7 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
       filters={filters()}
       selectedRows={selectedRows}
       onSelectedRowsChange={setSelectedRows}
-    />
+    />  </div>
   );
 };
 

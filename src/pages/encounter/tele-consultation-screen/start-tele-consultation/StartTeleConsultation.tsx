@@ -35,7 +35,6 @@ import Procedures from '../../encounter-component/patient-summary/Procedures/Pro
 import TeleScreenProcedures from './TeleScreenProcedures';
 import TeleScreenOperationRequests from './TeleScreenOperationRequests';
 import TeleScreenConsultation from './TeleScreenConsultation';
-import TeleScreenSelectTests from './TeleScreenDiagnosticsOrder';
 import TeleScreenMedicationOrder from './TeleScreenMedicationOrder';
 import ContinuousObservations from '../../continuous-observations/ContinuousObservations';
 import PatientHistorySummary from '../../encounter-component/patient-history/MedicalHistory/PatientHistorySummary';
@@ -151,8 +150,14 @@ const StartTeleConsultation = () => {
   const displayName = sliceauth?.user?.firstName + ' ' + sliceauth?.user?.lastName;
   const email = sliceauth?.user?.email;
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="main-start-tele-consultation-container-handle">
+    <div className="main-start-tele-consultation-container-handle" dir={dir}>
       <div className="container">
         <div className="left-box">
           <Panel>
@@ -306,14 +311,7 @@ const StartTeleConsultation = () => {
             refetch={() => {}}
           />
         )}
-        {showSelectTestsModal && (
-          <TeleScreenSelectTests
-            open={showSelectTestsModal}
-            setOpen={setShowSelectTestsModal}
-            patient={patient}
-            encounter={encounter}
-          />
-        )}
+       
         
       </div>
       {/* Extra Sections  // hide  */}

@@ -1,18 +1,21 @@
 import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
 
 import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
 import DetailsModal from './DetailsModal';
 import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
 import RequestTestModal from './RequestTestModal';
 import TestCardModal from './TestCardModal';
-import TransferList from './TransferTestList';
+import TestTypeSections from './test-type-sections';
 
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
+import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 
 type Props = {
   // data
@@ -80,12 +83,15 @@ type Props = {
   // handlers
   handleSaveTest: () => void;
   handleSaveTests: () => void;
+  handleSaveAndSubmitTests: () => void;
   handleCancle: () => void;
 
   orderTestRefetch: () => any;
   setSelectedRows: (v: number[]) => void;
 
-  handleRecallFavoriteTest: (t: any) => Promise<void> | void;
+  handleRecallFavoriteTests: (tests: any[]) => Promise<void> | void;
+
+  handleLoadMore: () => void;
 };
 
 const DiagnosticsOrderModals: React.FC<Props> = props => {
@@ -150,16 +156,46 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
 
     handleSaveTest,
     handleSaveTests,
+    handleSaveAndSubmitTests,
     handleCancle,
 
     orderTestRefetch,
     setSelectedRows,
-
-    handleRecallFavoriteTest
+    handleLoadMore,
+    handleRecallFavoriteTests
   } = props;
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const { uncoveredItems, checkItems, clearUncoveredItems } = useInsurancePriceListCoverage(
+    encounter?.id
+  );
+
+  useEffect(() => {
+    if (!openTestsModal) {
+      clearUncoveredItems();
+      return;
+    }
+
+    const tests = (rightItems ?? []).filter(item => item?.id);
+    if (!tests.length) {
+      clearUncoveredItems();
+      return;
+    }
+
+    void checkItems(
+      tests.map((item: any) => ({
+        billingItemType: item.type || item.testType || 'LABORATORY',
+        diagnosticTestId: Number(item.id ?? item.testId)
+      }))
+    );
+  }, [openTestsModal, rightItems, checkItems, clearUncoveredItems]);
+
   return (
-    <>
+    <div dir={dir}>
       <DetailsModal
         order={orders}
         test={test}
@@ -169,8 +205,10 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOrderTest={setOrderTest}
         handleSaveTest={handleSaveTest}
         edit={edit}
+        patient={encounter?.patient}
+        facilityId={encounter?.facilityId}
+        encounterId={encounter?.id}
       />
-
 
       <CancellationModal
         open={openConfirmDeleteModel}
@@ -181,12 +219,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         fieldName="cancellationReason"
         fieldLabel={'Cancellation Reason'}
         title={'Cancellation'}
+        required={true}
       />
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${test?.test?.testName ?? test?.testName ?? ''}`}
+        title={`Attachments - ${test?.testName ?? test?.name ?? ''}`}
         size="lg"
         hideActionBtn
         content={
@@ -195,7 +234,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
             source="DIAGNOSTIC_ORDER_ATTACHMENT"
             sourceId={test?.id ? Number(test.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
@@ -205,20 +244,20 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenTestsModal}
         title="Select Tests"
         actionButtonFunction={handleSaveTests}
-        size="50vw"
+        footerButtons={
+          <MyButton onClick={handleSaveAndSubmitTests}>Save &amp; Submit</MyButton>
+        }
+        size="96vw"
+        bodyheight="calc(100vh - 230px)"
         content={
-          <TransferList
-            open={openTestsModal}
-            leftItems={leftItems}
-            rightItems={rightItems}
-            setLeftItems={setLeftItems}
-            setRightItems={setRightItems}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            searchType={searchType}
-            setSearchType={setSearchType}
-            isFetching={isFetching}
-          />
+          <div dir={dir} className="test-type-sections-modal-content">
+            <UncoveredInsuranceWarning items={uncoveredItems} />
+            <TestTypeSections
+              open={openTestsModal}
+              selectedTests={rightItems}
+              setSelectedTests={setRightItems}
+            />
+          </div>
         }
       />
 
@@ -238,8 +277,8 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         open={openRequestTestModal}
         setOpen={setOpenRequestTestModal}
         fromDepartmentId={resolveFromDepartmentId()}
-        fromFacilityId={selectedDepartment?.facilityId}
-        onSuccess={() => { }}
+        fromFacilityId={encounter?.facilityId || selectedDepartment?.facilityId}
+        onSuccess={() => {}}
       />
 
       <MyModal
@@ -248,8 +287,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         title="Test Card"
         size="42vw"
         position="center"
+        hideActionBtn={true}
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
-        content={<TestCardModal orderTest={orderTest} test={test} />}
+        content={
+          <div dir={dir}>
+            <TestCardModal orderTest={orderTest} test={test} />
+          </div>
+        }
       />
 
       <BulkAssignDepartmentModal
@@ -261,6 +305,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
           orderTestRefetch();
           setSelectedRows([]);
         }}
+        facilityId={encounter?.facilityId}
       />
 
       <RecallFavoriteDiagnosticOrdersModal
@@ -269,10 +314,10 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         favoriteTests={favoriteTests ?? []}
         loading={loadingFavorites}
         onRecall={tests => {
-          Promise.all(tests.map((t: any) => handleRecallFavoriteTest(t)));
+          handleRecallFavoriteTests(tests);
         }}
       />
-    </>
+    </div>
   );
 };
 

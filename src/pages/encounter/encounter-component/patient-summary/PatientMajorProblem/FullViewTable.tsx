@@ -1,14 +1,13 @@
 import React, { useMemo } from 'react';
 import { faLungsVirus } from '@fortawesome/free-solid-svg-icons';
-import '../styles.less'
+import '../styles.less';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Translate from '@/components/Translate';
 
 const FullViewTable = ({ open, setOpen, data, icdMap }) => {
-
-   const tableColumns = useMemo(
+  const tableColumns = useMemo(
     () => [
       {
         key: 'diagnosisId',
@@ -52,22 +51,23 @@ const FullViewTable = ({ open, setOpen, data, icdMap }) => {
     [icdMap]
   );
 
-    return (
-        <MyModal
-            open={open}
-            setOpen={setOpen}
-            title="Patient Major Problem"
-            content={<MyTable
-                data={data ?? []}
-                columns={tableColumns}
-                height={300}
-            />}
-            hideCancel={false}
-            bodyheight="70vh"
-            hideBack={true}
-            steps={[{ title: "Major Diagnoses", icon:  <FontAwesomeIcon icon={faLungsVirus }/>}]}
-            hideActionBtn={true}
-        />
-    );
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title={<Translate>Chronic Diseases</Translate>}
+      content={<MyTable data={data ?? []} columns={tableColumns} height={300} />}
+      hideCancel={false}
+      bodyheight="70vh"
+      hideBack={true}
+      steps={[
+        {
+          title: <Translate>Chronic Diseases</Translate>,
+          icon: <FontAwesomeIcon icon={faLungsVirus} />
+        }
+      ]}
+      hideActionBtn={true}
+    />
+  );
 };
 export default FullViewTable;

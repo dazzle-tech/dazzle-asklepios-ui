@@ -57,7 +57,7 @@ const LedgerAccountTable = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleLedgerData);
+  const [tableData] = useState(sampleLedgerData);
 
   const sortedData = [...tableData].sort((a, b) => {
     const aValue = a[sortColumn];

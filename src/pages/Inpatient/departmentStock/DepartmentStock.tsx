@@ -303,8 +303,14 @@ const DepartmentStock = () => {
    * Main component render
    * Returns the complete Department Stock interface
    */
+
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container-internal-drug-order">
+    <div className="container-internal-drug-order" dir={dir}>
       {/* Main content area with table and filters */}
       <div className="container-of-tables-int">
         {/* Header section with department/stock selectors and action buttons */}

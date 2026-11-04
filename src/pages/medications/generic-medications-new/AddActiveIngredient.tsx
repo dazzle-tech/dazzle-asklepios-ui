@@ -1,9 +1,9 @@
 import MyButton from "@/components/MyButton/MyButton";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
-import MyInput from "@/components/MyInput"; // ← تمت إضافته
+import MyInput from "@/components/MyInput";
 import { newBrandMedicationActiveIngredient } from "@/types/model-types-constructor-new";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Row, Col } from "rsuite";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 
@@ -18,51 +18,109 @@ import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList } from "@
 import { MdDelete } from "react-icons/md";
 import Translate from "@/components/Translate";
 
-import { useGetActiveIngredientsQuery } from "@/services/setup/activeIngredients/activeIngredientsService";
+import {
+  useGetActiveIngredientsQuery,
+  useGetActiveIngredientsByNameQuery,
+  useGetActiveIngredientsByIdsMutation,
+} from "@/services/setup/activeIngredients/activeIngredientsService";
 
-const AddActiveIngredient = ({ open, setOpen, brandMedication }) => {
+const AddActiveIngredient = ({ open, setOpen, brandMedication, onSaved }) => {
   const [BrandActive, setBrandActive] = useState({
     ...newBrandMedicationActiveIngredient,
   });
+
+  const [page, setPage] = useState(0);
+  const [activeIngredients, setActiveIngredients] = useState([]);
+  const [activeIngredientSearch, setActiveIngredientSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
+  const [activeIngredientMap, setActiveIngredientMap] = useState<Record<string, string>>({});
 
   const { data: BrandActiveIngrediant } = useGetActiveIngredientsByBrandQuery(
     brandMedication?.id,
     { skip: !brandMedication?.id }
   );
-    
-  const {data:activeIngredientList}=useGetActiveIngredientsQuery({})
+
+  const {
+    data: activeIngredientList,
+    isFetching: isFetchingActiveIngredients,
+  } = useGetActiveIngredientsQuery(
+    {
+      page,
+      size: 15,
+      sort: "name,asc",
+    },
+    {
+      skip: Boolean(debouncedSearch),
+    }
+  );
+
+  const {
+    data: searchedActiveIngredientList,
+    isFetching: isFetchingSearchedActiveIngredients,
+  } =
+    useGetActiveIngredientsByNameQuery(
+      {
+        name: debouncedSearch,
+        page,
+        size: 5,
+        sort: "name,asc",
+      },
+      {
+        skip: !debouncedSearch,
+      }
+    );
+
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(activeIngredientSearch.trim());
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [activeIngredientSearch]);
+
+  const handleActiveIngredientSearch = (value: string) => {
+    setPage(0);
+    setActiveIngredientSearch(value);
+
+    if (value.trim()) {
+      setActiveIngredients([]);
+    }
+  };
+
   const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
 
   const [createActive] = useCreateActiveIngredientMutation();
   const [deleteActive] = useDeleteActiveIngredientMutation();
-
+  const [getActiveIngredientsByIds] =
+    useGetActiveIngredientsByIdsMutation();
   const isSelected = (rowData) =>
     rowData?.id === BrandActive?.id ? "selected-row" : "";
 
   // Save (Create)
-const handleSave = async () => {
-  try {
-    await createActive({
-      ...BrandActive,
-      brandId: brandMedication?.id
-    }).unwrap();
+  const handleSave = async () => {
+    try {
+      await createActive({
+        ...BrandActive,
+        brandId: brandMedication?.id
+      }).unwrap();
 
-    setBrandActive({ ...newBrandMedicationActiveIngredient });
+      await onSaved?.();
+      setBrandActive({ ...newBrandMedicationActiveIngredient });
 
-  } catch (error) {
-    console.error("❌ Error while saving Active Ingredient:", error);
-  }
-};
+    } catch (error) {
+    }
+  };
 
-const handleDelete = async (id) => {
-  try {
-    await deleteActive(id).unwrap();  
-    setBrandActive({ ...newBrandMedicationActiveIngredient });
+  const handleDelete = async (id) => {
+    try {
+      await deleteActive(id).unwrap();
+      setBrandActive({ ...newBrandMedicationActiveIngredient });
 
-  } catch (error) {
-    console.error("❌ Delete Error:", error);
-  }
-};
+    } catch (error) {
+    }
+  };
 
   // Icons
   const iconsForActions = (rowData) => (
@@ -72,7 +130,7 @@ const handleDelete = async (id) => {
         size={24}
         fill="var(--primary-pink)"
         title="Delete"
-         onClick={() => handleDelete(rowData.id)}
+        onClick={() => handleDelete(rowData.id)}
       />
     </div>
   );
@@ -81,18 +139,17 @@ const handleDelete = async (id) => {
   const tableActiveIngredientColumns = [
     {
       key: "activeIngredientId",
-      title: <Translate>Active Ingredient</Translate>,
+      title: "Active Ingredient",
       flexGrow: 3,
-    render: (rowData) => (
-        <span>
-         
-          {conjureValueBasedOnIDFromList(
-            activeIngredientList?.data ?? [],
-            rowData.activeIngredientId,
-            "name"
-          )}
-        </span>
-      ),
+      render: (rowData) => {
+        const id = String(rowData?.activeIngredientId ?? "");
+
+        return (
+          <span>
+            {activeIngredientMap[id] ?? id}
+          </span>
+        );
+      },
     },
     {
       key: "strength",
@@ -117,6 +174,152 @@ const handleDelete = async (id) => {
     },
   ];
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+  useEffect(() => {
+    const response = debouncedSearch
+      ? searchedActiveIngredientList
+      : activeIngredientList;
+
+    if (!response?.data) return;
+
+    setActiveIngredients(prev => {
+      const combined =
+        page === 0
+          ? response.data
+          : [...prev, ...response.data];
+
+      return Array.from(
+        new Map(
+          combined
+            .filter(item => item?.id != null)
+            .map(item => [String(item.id), item])
+        ).values()
+      );
+    });
+
+    setActiveIngredientMap(prev => {
+      const next = { ...prev };
+
+      response.data.forEach(item => {
+        if (item?.id != null) {
+          next[String(item.id)] = item.name;
+        }
+      });
+
+      return next;
+    });
+  }, [
+    activeIngredientList,
+    searchedActiveIngredientList,
+    debouncedSearch,
+    page,
+  ]);
+
+  useEffect(() => {
+    if (!BrandActive?.activeIngredientId) return;
+
+    const selected = activeIngredients.find(
+      item => String(item.id) === String(BrandActive.activeIngredientId)
+    );
+
+    if (!selected) return;
+
+    setActiveIngredientMap(prev => ({
+      ...prev,
+      [String(selected.id)]: selected.name,
+    }));
+  }, [BrandActive?.activeIngredientId, activeIngredients]);
+
+  useEffect(() => {
+    if (!BrandActiveIngrediant?.length) return;
+
+    const ids = Array.from(
+      new Set(
+        BrandActiveIngrediant
+          .map(item => item?.activeIngredientId)
+          .filter(id => id != null)
+          .map(id => String(id))
+      )
+    );
+
+    if (!ids.length) return;
+
+    const loadActiveIngredientNames = async () => {
+      try {
+        const result = await getActiveIngredientsByIds(
+          ids.map(id => Number(id))
+        ).unwrap();
+
+        setActiveIngredientMap(prev => {
+          const next = { ...prev };
+
+          result.forEach(item => {
+            if (item?.id != null) {
+              next[String(item.id)] = item.name;
+            }
+          });
+
+          return next;
+        });
+      } catch (error) {
+        console.error(
+          "Failed to load active ingredient names:",
+          error
+        );
+      }
+    };
+
+    loadActiveIngredientNames();
+  }, [BrandActiveIngrediant, getActiveIngredientsByIds]);
+
+
+  const handleFetchMore = () => {
+    if (
+      isFetchingActiveIngredients ||
+      isFetchingSearchedActiveIngredients
+    ) {
+      return;
+    }
+
+    const response = debouncedSearch
+      ? searchedActiveIngredientList
+      : activeIngredientList;
+
+    if (activeIngredients.length < (response?.totalCount ?? 0)) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+
+  const isActiveIngredientLoading =
+    isFetchingActiveIngredients ||
+    isFetchingSearchedActiveIngredients;
+
+  const activeIngredientTotalCount = debouncedSearch
+    ? searchedActiveIngredientList?.totalCount ?? 0
+    : activeIngredientList?.totalCount ?? 0;
+
+  const activeIngredientSelectData = (() => {
+    if (!selectedActiveIngredient?.id) {
+      return activeIngredients;
+    }
+
+    const exists = activeIngredients.some(
+      item => String(item?.id) === String(selectedActiveIngredient.id)
+    );
+
+    if (exists) {
+      return activeIngredients;
+    }
+
+    return [selectedActiveIngredient, ...activeIngredients];
+  })();
+
   return (
     <MyModal
       title={"Add Active Ingredient"}
@@ -124,19 +327,35 @@ const handleDelete = async (id) => {
       setOpen={setOpen}
       hideActionBtn={true}
       content={
-        <>
+        <div dir={dir}>
           <Form fluid>
 
-            
+
             <Row>
               <Col md={8}>
                 <MyInput
                   required
                   width="100%"
-                  fieldType="select"
+                  fieldType="selectPagination"
                   selectDataLabel="name"
                   selectDataValue="id"
-                  selectData={activeIngredientList?.data??[]}
+                  selectData={activeIngredientSelectData}
+
+                  searchKeyWard={activeIngredientSearch}
+                  setSearchKeyWard={handleActiveIngredientSearch}
+
+                  loading={isActiveIngredientLoading}
+
+                  hasMore={
+                    activeIngredients.length < activeIngredientTotalCount
+                  }
+
+                  onFetchMore={handleFetchMore}
+
+                  onSelectItem={(item) => {
+                    setSelectedActiveIngredient(item);
+                  }}
+
                   fieldLabel="Active Ingredient ID"
                   fieldName="activeIngredientId"
                   record={BrandActive}
@@ -165,6 +384,8 @@ const handleDelete = async (id) => {
                   fieldType="select"
                   selectData={unitLov?.object ?? []}
                   selectDataLabel="lovDisplayVale"
+                  disableByField='isValid'
+
                   selectDataValue="key"
                   record={BrandActive}
                   setRecord={setBrandActive}
@@ -182,16 +403,23 @@ const handleDelete = async (id) => {
               </MyButton>
             </div>
 
-         
+
             <MyTable
               height={450}
               data={BrandActiveIngrediant ?? []}
               columns={tableActiveIngredientColumns}
               rowClassName={isSelected}
-              onRowClick={(rowData) => setBrandActive(rowData)}
+              onRowClick={(rowData) => {
+                setBrandActive(rowData);
+                // the paginated list may not hold this ingredient -> add it so the field shows its name
+                const id = String(rowData?.activeIngredientId ?? "");
+                setSelectedActiveIngredient(
+                  activeIngredientMap[id] ? { id: rowData.activeIngredientId, name: activeIngredientMap[id] } : null
+                );
+              }}
             />
           </Form>
-        </>
+        </div>
       }
       size="70vh"
     />

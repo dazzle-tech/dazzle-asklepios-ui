@@ -1,6 +1,5 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { setEncounter } from '@/reducers/patientSlice';
 import * as icons from '@rsuite/icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
@@ -9,7 +8,6 @@ import { Checkbox, Grid, Input, Panel } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyCard from '@/components/MyCard';
 import MyTable from '@/components/MyTable';
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import {
   useCreateReviewOfSystemMutation,
   useDeleteReviewOfSystemByIdMutation,
@@ -25,14 +23,12 @@ import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 import Summary from './Summery';
 
-const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
+const ReviewOfSystems = ({ edit, patient, encounter , setEncounter, ...props }) => {
   const dispatch = useAppDispatch();
 
   const [openModel, setOpenModel] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
-  const [localEncounter, setLocalEncounter] = useState({ ...encounter });
-  const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
@@ -40,7 +36,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     parentValueKey: selectedSystem.key
   });
 
-  // ✅ New API: get all by encounter
+ 
   const {
     data: rosList,
     refetch: refetchRos,
@@ -50,7 +46,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
   const [createRos] = useCreateReviewOfSystemMutation();
   const [updateRos] = useUpdateReviewOfSystemMutation();
   const [deleteRos] = useDeleteReviewOfSystemByIdMutation();
-
+ 
   // mainData map: key = systemDetail (detailId), value = ros record
   const [mainData, setMainData] = useState<Record<string, any>>({});
 
@@ -64,22 +60,53 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     }
   }, [rosList]);
 
-  const saveChanges = async () => {
-    try {
-      await saveEncounterChanges(localEncounter).unwrap();
-      dispatch(notify({ msg: 'Findings Saved Successfully', sev: 'success' }));
-    } catch (error) {
-      console.error('Encounter save failed:', error);
-      dispatch(notify({ msg: 'Findings Save Failed', sev: 'error' }));
-    }
-  };
 
-  useEffect(() => {
-    if (saveEncounterChangesMutation.status === 'fulfilled') {
-      dispatch(setEncounter(saveEncounterChangesMutation.data));
-      setLocalEncounter(saveEncounterChangesMutation.data);
+const handleClearSection = async () => {
+  if (!selectedSystem?.key) return;
+
+  try {
+    const sectionItems =
+      bodySystemsDetailLovQueryResponse?.object ?? [];
+
+    for (const item of sectionItems) {
+      const existing = mainData[String(item.key)];
+
+      if (existing?.id) {
+        await deleteRos(existing.id).unwrap();
+      }
     }
-  }, [saveEncounterChangesMutation]);
+
+    setMainData(prev => {
+      const clone = { ...prev };
+
+      sectionItems.forEach(item => {
+        delete clone[String(item.key)];
+      });
+
+      return clone;
+    });
+
+    setSelectedSystem({ ...newApLovValues });
+
+    refetchRos();
+
+    dispatch(
+      notify({
+        msg: 'Section cleared successfully',
+        sev: 'success'
+      })
+    );
+  } catch (e) {
+    dispatch(
+      notify({
+        msg: 'Failed to clear section',
+        sev: 'error'
+      })
+    );
+  }
+};
+
+
 
   const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
   const paginatedData = bodySystemsDetailLovQueryResponse?.object ?? [];
@@ -197,50 +224,71 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     ]
   );
 
+
+
+
   return (
     <>
       <Panel>
         <Grid fluid>
           <div className="top-div">
-            <div style={{ ...(props?.noTitle && { display: 'none' }) }}>
-              <Translate>Physical Examination & Findings</Translate>
-            </div>
-
             <div className="bt-right">
-              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />}>
-                Findings
+              <MyButton
+                disabled={!selectedSystem?.key || edit}
+                onClick={handleClearSection}
+              >
+                Clear
               </MyButton>
+            <div className="filter-form-disable-fix">
+            <MyButton
+              onClick={() => {
+                setOpenModel(!openModel);
+              }}
+              prefixIcon={() => <icons.List />}
+              // className="filter-form-disable-fix show-cancelled"
+            >
+              Findings
+            </MyButton>
+            </div>
             </div>
           </div>
 
           <div className="details-style">
-            <div className="system-style">
+            {openModel && (
+              <div className="summary-popup">
+                <Summary
+                  list={rosList}
+                  encounter={encounter}
+                  setEncounter={setEncounter}
+                  system={bodySystemsLovQueryResponse}
+                  edit={edit}
+                />
+              </div>
+            )}
+          <div className="system-container">
+            <div className="system-style filter-form-disable-fix">
               {bodySystemsLovQueryResponse?.object?.map((item: any) => (
                 <MyCard
                   key={item.key}
-                  showArrow={true}
+                  showArrow
                   leftArrow={false}
                   arrowClick={() => setSelectedSystem(item)}
                   footerContant={item.lovDisplayVale}
+                  isSelected={selectedSystem?.key === item.key}
                 />
               ))}
             </div>
 
             <div className="system-details">
-              <MyTable data={paginatedData} columns={tableColumns} loading={rosLoading} />
+              <MyTable
+                data={paginatedData}
+                columns={tableColumns}
+                loading={rosLoading}
+              />
             </div>
           </div>
+          </div>
         </Grid>
-
-        <Summary
-          open={openModel}
-          setOpen={setOpenModel}
-          list={rosList}
-          encounter={localEncounter}
-          setEncounter={setLocalEncounter}
-          saveEncounter={saveChanges}
-          system={bodySystemsLovQueryResponse}
-        />
       </Panel>
     </>
   );

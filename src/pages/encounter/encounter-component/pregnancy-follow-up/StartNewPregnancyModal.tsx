@@ -75,6 +75,13 @@ const StartNewPregnancyModal: React.FC<StartNewPregnancyModalProps> = ({
     setOpen(false);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -86,7 +93,7 @@ const StartNewPregnancyModal: React.FC<StartNewPregnancyModalProps> = ({
         steps={[{ title: 'Start New Pregnancy',icon:<FontAwesomeIcon icon={faPersonPregnant}/> }]}
       actionButtonFunction={handleSave}
       content={
-        <Form fluid layout="vertical" className="start-new-pregnancy-form">
+        <Form fluid layout="vertical" className="start-new-pregnancy-form" dir={dir}>
           {/* LMP input */}
           <MyInput
             width="25vw"

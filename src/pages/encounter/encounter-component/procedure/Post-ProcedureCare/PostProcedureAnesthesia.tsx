@@ -95,7 +95,9 @@ const PostProcedureAnesthesia = forwardRef<anesthsiaRef, AnesthesiaProps>(
                   width="100%"
                   da
                   selectData={oxsatQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName={'oxygenSaturationLkey'}
@@ -106,7 +108,9 @@ const PostProcedureAnesthesia = forwardRef<anesthsiaRef, AnesthesiaProps>(
                 <MyInput
                   width="100%"
                   selectData={conscLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName={'consciousnessLkey'}
@@ -118,7 +122,9 @@ const PostProcedureAnesthesia = forwardRef<anesthsiaRef, AnesthesiaProps>(
                 <MyInput
                   width="100%"
                   selectData={circuLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName={'circulationLkey'}
@@ -131,7 +137,9 @@ const PostProcedureAnesthesia = forwardRef<anesthsiaRef, AnesthesiaProps>(
                 <MyInput
                   width="100%"
                   selectData={respirLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName={'respirationLkey'}
@@ -143,7 +151,9 @@ const PostProcedureAnesthesia = forwardRef<anesthsiaRef, AnesthesiaProps>(
                 <MyInput
                   width="100%"
                   selectData={activityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName={'activityLkey'}

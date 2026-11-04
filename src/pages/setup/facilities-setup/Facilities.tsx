@@ -73,20 +73,21 @@ const Facilities = () => {
       handleFilterChange('facilityName', recordOfSearchForFacility['facilityName']);
     }, [recordOfSearchForFacility]);
 
-    useEffect(() => {
-      return () => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent('  '));
-      };
-    }, [location.pathname, dispatch]);
-  
   // Page header setup
   const divContent = (
     "Facilities"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Facilities'));
   dispatch(setDivContent(divContent));
-
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Handle click on Add New Button
   const handleNew = () => {
     setAddress(newApAddresses);

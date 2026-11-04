@@ -54,7 +54,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={routeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="route"
@@ -84,7 +86,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={frequencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="frequency"
@@ -158,7 +162,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={infusionDeviceLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="infusionDevice"
@@ -174,7 +180,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   selectData={priorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="priority"
@@ -213,13 +221,21 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={fluidOrder?.key ? 'Edit Fluid Order' : 'New Fluid Order'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={fluidOrder?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Fluid Order Info', icon: <FontAwesomeIcon icon={faSyringe} /> }]}

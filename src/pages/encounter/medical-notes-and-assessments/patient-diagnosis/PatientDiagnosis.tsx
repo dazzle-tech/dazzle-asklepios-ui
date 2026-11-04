@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -22,7 +22,7 @@ import {
 
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
-
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import type { PatientDiagnosis as PatientDiagnosisType } from '@/types/model-types-new';
 import './styles.less';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -34,6 +34,60 @@ type PatientDiagnosisProps = {
   title?: React.ReactNode;
   width?: string;
   onDiagnosisSaved?: () => void;
+};
+
+const extractRows = (resp: any): any[] => {
+  if (Array.isArray(resp)) return resp;
+  if (Array.isArray(resp?.data)) return resp.data;
+  if (Array.isArray(resp?.content)) return resp.content;
+  if (Array.isArray(resp?.items)) return resp.items;
+  return [];
+};
+
+const extractTotal = (resp: any, rows: any[]): number => {
+  if (typeof resp?.totalElements === 'number') return resp.totalElements;
+  if (typeof resp?.totalCount === 'number') return resp.totalCount;
+  if (typeof resp?.count === 'number') return resp.count;
+  return rows.length;
+};
+
+/** One paginated list of the patient's diagnoses, optionally limited to (or excluding) one encounter. */
+const useDiagnosesPage = (
+  patientId: number | null,
+  encounterId: number | null,
+  currentEncounter: boolean,
+  skip = false
+) => {
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    sort: 'createdDate,desc'
+  });
+
+  const { data, isFetching, refetch } = useGetPatientDiagnosesByPatientIdQuery(
+    {
+      patientId: patientId as any,
+      ...(encounterId ? { encounterId, currentEncounter } : {}),
+      page: pagination.page,
+      size: pagination.size,
+      sort: pagination.sort
+    },
+    { skip: skip || !patientId }
+  );
+
+  const rows = useMemo(() => (skip ? [] : extractRows(data)), [data, skip]);
+  const totalCount = useMemo(() => extractTotal(data, rows), [data, rows]);
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = parseInt(event.target.value, 10);
+    setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+  };
+
+  return { rows, totalCount, isFetching, refetch, pagination, handlePageChange, handleRowsPerPageChange };
 };
 
 const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
@@ -75,15 +129,6 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDiagnosisToDelete, setSelectedDiagnosisToDelete] =
     useState<PatientDiagnosisType | null>(null);
-
-  useEffect(() => {
-    setDiagnosis({
-      diagnosisId: latestDiagnosis?.diagnosisId ?? null,
-      type: latestDiagnosis?.type ?? null,
-      suspected: latestDiagnosis?.suspected ?? false,
-      major: latestDiagnosis?.major ?? false
-    });
-  }, [latestDiagnosis?.id, encounterIdNumber]);
 
   const clearForm = () => {
     setDiagnosis({
@@ -140,63 +185,28 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     } as PatientDiagnosisType;
   }, [patientIdNumber, encounterIdNumber, diagnosis]);
 
-  const [pagination, setPagination] = useState({
-    page: 0,
-    size: 10,
-    sort: 'createdDate,desc'
-  });
+  // Diagnoses added in this visit (all patient diagnoses when there is no encounter)
+  const currentVisit = useDiagnosesPage(patientIdNumber, encounterIdNumber, true);
+  // Diagnoses added in the patient's previous visits
+  const previousVisits = useDiagnosesPage(patientIdNumber, encounterIdNumber, false, !encounterIdNumber);
 
-  const {
-    data: patientDiagnosesResp,
-    isFetching: isFetchingTable,
-    refetch: refetchTable
-  } = useGetPatientDiagnosesByPatientIdQuery(
-    {
-      patientId: patientIdNumber as any,
-      page: pagination.page,
-      size: pagination.size,
-      sort: pagination.sort
-    } as any,
-    { skip: !patientIdNumber }
-  );
-
-  const tableData = useMemo(() => {
-    if (Array.isArray(patientDiagnosesResp)) return patientDiagnosesResp;
-    if (Array.isArray((patientDiagnosesResp as any)?.data)) {
-      return (patientDiagnosesResp as any).data;
-    }
-    if (Array.isArray((patientDiagnosesResp as any)?.content)) {
-      return (patientDiagnosesResp as any).content;
-    }
-    if (Array.isArray((patientDiagnosesResp as any)?.items)) {
-      return (patientDiagnosesResp as any).items;
-    }
-    return [];
-  }, [patientDiagnosesResp]);
-
-  const totalCount = useMemo(() => {
-    if (typeof (patientDiagnosesResp as any)?.totalElements === 'number') {
-      return (patientDiagnosesResp as any).totalElements;
-    }
-    if (typeof (patientDiagnosesResp as any)?.totalCount === 'number') {
-      return (patientDiagnosesResp as any).totalCount;
-    }
-    if (typeof (patientDiagnosesResp as any)?.count === 'number') {
-      return (patientDiagnosesResp as any).count;
-    }
-    return tableData.length;
-  }, [patientDiagnosesResp, tableData]);
+  const refetchTables = async () => {
+    await Promise.all([
+      currentVisit.refetch(),
+      encounterIdNumber ? previousVisits.refetch() : Promise.resolve()
+    ]);
+  };
 
   const [fetchIcdByIds] = useLazyGetIcdDiagnosesByIdsQuery();
   const [icdMap, setIcdMap] = useState<Record<number, any>>({});
 
   const pageDiagnosisIds = useMemo(() => {
-    const ids = (tableData ?? [])
+    const ids = [...currentVisit.rows, ...previousVisits.rows]
       .map((r: any) => Number(r?.diagnosisId))
       .filter((v: any) => Number.isFinite(v) && v > 0);
 
     return Array.from(new Set(ids));
-  }, [tableData]);
+  }, [currentVisit.rows, previousVisits.rows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -250,12 +260,37 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       setSelectedDiagnosisToDelete(null);
 
       await refetchLatest();
-      await refetchTable();
+      await refetchTables();
 
       onDiagnosisSaved?.();
     } catch (error: any) {
       showApiError(error);
     }
+  };
+
+
+  const UserDateCell = ({
+    login,
+    date
+  }: {
+    login?: string;
+    date?: string;
+  }) => {
+    const { data: fullName } = useGetUserFullNameByLoginQuery(login, {
+      skip: !login
+    });
+
+    if (!date && !login) return null;
+
+    return (
+      <>
+        {fullName || login || ''}
+        <br />
+        <span className="date-table-style">
+          {date ? formatDateWithoutSeconds(date) : ''}
+        </span>
+      </>
+    );
   };
 
   const tableColumns = useMemo(
@@ -294,7 +329,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       },
       {
         key: 'major',
-        title: <Translate>Major</Translate>,
+        title: <Translate>Chronic</Translate>,
         flexGrow: 2,
         render: (row: any) => (row?.major ? 'Yes' : 'No')
       },
@@ -304,15 +339,73 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         expandable: true,
         flexGrow: 2,
         render: row => (
-          <>
-            {row.createdBy}
-            <br />
-            <span className="date-table-style">
-              {row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''}
-            </span>
-          </>
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       },
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        flexGrow: 1,
+        render: (row: any) => {
+          const canDelete =
+            Number(row.encounterId) === encounterIdNumber;
+
+          return (
+            <button
+              type="button"
+              className="pd-delete-btn"
+              onClick={() => handleOpenDeleteModal(row)}
+              disabled={disabled || isDeleting || !canDelete}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor:
+                  disabled || isDeleting || !canDelete
+                    ? 'not-allowed'
+                    : 'pointer'
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          );
+        }
+      }
+    ],
+    [icdMap, disabled, isDeleting, encounterIdNumber]
+  );
+
+  // Copies a diagnosis from a previous visit into this visit with the same attributes
+  const handleClone = async (row: PatientDiagnosisType) => {
+    if (!patientIdNumber || !encounterIdNumber) {
+      dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      await createPatientDiagnosis({
+        patientId: patientIdNumber,
+        encounterId: encounterIdNumber,
+        diagnosisId: row.diagnosisId ?? null,
+        type: row.type ?? null,
+        suspected: row.suspected ?? false,
+        major: row.major ?? false
+      } as PatientDiagnosisType).unwrap();
+
+      dispatch(notify({ msg: 'Diagnosis cloned to current visit', sev: 'success' }));
+      await refetchTables();
+
+      onDiagnosisSaved?.();
+    } catch (error: any) {
+      showApiError(error);
+    }
+  };
+
+  const previousTableColumns = useMemo(
+    () => [
+      ...tableColumns.filter(col => col.key !== 'actions'),
       {
         key: 'actions',
         title: <Translate>Actions</Translate>,
@@ -321,32 +414,24 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
           <button
             type="button"
             className="pd-delete-btn"
-            onClick={() => handleOpenDeleteModal(row)}
-            disabled={disabled || isDeleting}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: disabled || isDeleting ? 'not-allowed' : 'pointer'
-            }}
+            title="Clone to current visit"
+            onClick={() => handleClone(row)}
+            disabled={disabled || isSaving}
+            style={{ cursor: disabled || isSaving ? 'not-allowed' : 'pointer' }}
           >
-            <FontAwesomeIcon icon={faTrash} />
+            <FontAwesomeIcon icon={faCopy} />
           </button>
         )
       }
     ],
-    [icdMap, disabled, isDeleting]
+    [tableColumns, disabled, isSaving, patientIdNumber, encounterIdNumber]
   );
 
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSize = parseInt(event.target.value, 10);
-    setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-  };
-
   const savingBusy = isFetchingLatest || isSaving;
+
+useEffect(() => {
+  console.log('DIAGNOSIS', diagnosis);
+}, [diagnosis]);
 
   const handleSave = async () => {
     if (!payload.patientId) {
@@ -370,20 +455,18 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     }
 
     try {
-      const createResponse = await createPatientDiagnosis(payload as any).unwrap();
+      await createPatientDiagnosis(payload as any).unwrap();
 
-      setDiagnosis(previousDiagnosis => ({
-        ...previousDiagnosis,
-        ...createResponse,
-        patientId: patientIdNumber,
-        encounterId: encounterIdNumber,
-        id: undefined
-      }));
+      dispatch(
+        notify({
+          msg: 'Diagnosis saved successfully',
+          sev: 'success'
+        })
+      );
 
-      dispatch(notify({ msg: 'Diagnosis saved successfully', sev: 'success' }));
-
-      await refetchLatest();
-      await refetchTable();
+      clearForm();
+      console.log('CLEARED');
+      await refetchTables();
 
       onDiagnosisSaved?.();
     } catch (error: any) {
@@ -414,8 +497,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
             />
 
             <div className="pd-fields-inline">
-              <div className="pd-field">
                 <MyInput
+                  width="15vw"
                   required
                   fieldType="select"
                   selectData={diagnosisTypeOptions ?? []}
@@ -427,10 +510,9 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   fieldLabel="Type"
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
+                  width="100%"
                   fieldLabel="Suspected"
                   fieldType="checkbox"
                   fieldName="suspected"
@@ -438,18 +520,16 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
 
-              <div className="pd-field-switch">
                 <MyInput
-                  fieldLabel="Major"
+                  width="100%"
+                  fieldLabel="Chronic"
                   fieldType="checkbox"
                   fieldName="major"
                   record={diagnosis}
                   setRecord={setDiagnosis}
                   disabled={disabled}
                 />
-              </div>
             </div>
 
             <div className="pd-footer">
@@ -466,19 +546,38 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
 
         <div className="pd-card">
           <div className="pd-card-title">
-            <Translate>Diagnoses</Translate>
+            <Translate>{encounterIdNumber ? 'Current Visit Diagnoses' : 'Diagnoses'}</Translate>
           </div>
 
           <MyTable
-            data={tableData}
-            totalCount={totalCount}
-            loading={isFetchingTable}
+            data={currentVisit.rows}
+            totalCount={currentVisit.totalCount}
+            loading={currentVisit.isFetching}
             columns={tableColumns}
-            page={pagination.page}
-            rowsPerPage={pagination.size}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
+            page={currentVisit.pagination.page}
+            rowsPerPage={currentVisit.pagination.size}
+            onPageChange={currentVisit.handlePageChange}
+            onRowsPerPageChange={currentVisit.handleRowsPerPageChange}
           />
+
+          {encounterIdNumber && (
+            <div className="pd-section">
+              <div className="pd-card-title">
+                <Translate>Previous Visits Diagnoses</Translate>
+              </div>
+
+              <MyTable
+                data={previousVisits.rows}
+                totalCount={previousVisits.totalCount}
+                loading={previousVisits.isFetching}
+                columns={previousTableColumns}
+                page={previousVisits.pagination.page}
+                rowsPerPage={previousVisits.pagination.size}
+                onPageChange={previousVisits.handlePageChange}
+                onRowsPerPageChange={previousVisits.handleRowsPerPageChange}
+              />
+            </div>
+          )}
         </div>
       </div>
 

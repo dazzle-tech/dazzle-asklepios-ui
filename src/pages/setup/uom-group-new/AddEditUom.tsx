@@ -39,6 +39,7 @@ import {
 } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
+import TranslationModal from '@/components/TranslationModal';
 const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
   const dispatch = useAppDispatch();
   const [uomUnit, setUomUnit] = useState<UOMGroupUnit>({
@@ -54,6 +55,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
   const [childStep, setChildStep] = useState<number>(-1);
   const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
   const [openAddEditRelationPopup, setOpenAddEditRelationPopup] = useState<boolean>(false);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   // enum for uoms
   const uoms = useEnumOptions('UOM');
   // Fetch units list response
@@ -146,7 +148,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         toUnitId: uomRelation?.toUnit?.id,
         relation: uomRelation?.relation
       });
-      
+
   }, [openAddEditRelationPopup]);
 
   // icons column for relation table
@@ -215,6 +217,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
               record={uom}
               setRecord={setUom}
               width="100%"
+              required
             />
             <MyInput
               fieldLabel="Description"
@@ -223,6 +226,16 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
               record={uom}
               setRecord={setUom}
               width="100%"
+            />
+            <TranslationModal
+              open={showTranslationModal}
+              setOpen={setShowTranslationModal}
+              fields={[
+                {
+                  fieldName: 'name',
+                  value: uom.name
+                }
+              ]}
             />
           </Form>
         );
@@ -356,6 +369,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         return (
           <Form>
             <MyInput
+              required
               fieldType="select"
               fieldName="uom"
               record={uomUnit}
@@ -429,50 +443,102 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
 
   // Handle Save Uom
   const handleSave = () => {
-    if (!uom?.id)
+
+    if (!uom?.name?.trim()) {
+      dispatch(
+        notify({
+          msg: 'Missing field is required : UOM group',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!uom?.id) {
       createUomGroup(uom)
         .unwrap()
         .then(result => {
           setUom(result);
           refetchUomGroups();
+
           dispatch(
             notify({
-              msg: 'The UOM group Added/Edited successfully ',
+              msg: 'The UOM group Added/Edited successfully',
               sev: 'success'
             })
           );
+          setShowTranslationModal(true);
         })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+        .catch(() => {
+          dispatch(
+            notify({
+              msg: 'Missing field is required : UOM group',
+              sev: 'warning'
+            })
+          );
         });
-    else {
-      const updatedUom = { id: uom?.id, description: uom?.description, name: uom?.name };
+    } else {
+      const updatedUom = {
+        id: uom.id,
+        description: uom.description,
+        name: uom.name
+      };
+
       updateUomGroup(updatedUom)
         .unwrap()
         .then(result => {
           setUom(result);
           refetchUomGroups();
+
           dispatch(
             notify({
-              msg: 'The UOM group updated successfully ',
+              msg: 'The UOM group updated successfully',
               sev: 'success'
             })
           );
+          setShowTranslationModal(true);
         })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+        .catch(() => {
+          dispatch(
+            notify({
+              msg: 'Missing field is required : UOM group',
+              sev: 'warning'
+            })
+          );
         });
     }
   };
 
   // Handle Save Uom unit
   const handleSaveUnits = () => {
+    let messages: string[] = [];
+
+    if (
+      uomUnit?.uom === null ||
+      uomUnit?.uom === undefined ||
+      uomUnit?.uom === ''
+    ) {
+      messages.push('Unit is required');
+    }
+
+    if (
+      uomUnit?.uomOrder === null ||
+      uomUnit?.uomOrder === undefined ||
+      uomUnit?.uomOrder === ''
+    ) {
+      messages.push('Order is required');
+    }
+
+    if (messages.length > 0) {
+      dispatch(
+        notify({
+          msg: messages.join('\n'),
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     if (!uomUnit?.id) {
       createUomGroupUnits({
         groupId: uom?.id,
@@ -481,30 +547,41 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         .unwrap()
         .then(() => {
           uomUnitRefetch();
+
           setUomUnit({
             ...newUOMGroupUnit
           });
+
           dispatch(
             notify({
-              msg: 'The UOM group unit was created successfully ',
+              msg: 'The UOM group unit was created successfully',
               sev: 'success'
             })
           );
         })
         .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+          const errorMessage =
+            e?.data?.fieldErrors?.[0]?.message ||
+            e?.data?.message ||
+            'Failed to create UOM unit';
+
+          dispatch(
+            notify({
+              msg: errorMessage,
+              sev: 'warning'
+            })
+          );
         });
     } else {
       updateUomGroupUnits(uomUnit)
         .unwrap()
         .then(() => {
           uomUnitRefetch();
+
           setUomUnit({
             ...newUOMGroupUnit
           });
+
           dispatch(
             notify({
               msg: 'The UOM group unit was updated successfully',
@@ -513,10 +590,17 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
           );
         })
         .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
+          const errorMessage =
+            e?.data?.fieldErrors?.[0]?.message ||
+            e?.data?.message ||
+            'Failed to update UOM unit';
+
+          dispatch(
+            notify({
+              msg: errorMessage,
+              sev: 'warning'
+            })
+          );
         });
     }
   };
@@ -589,6 +673,13 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
     });
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       open={open}
@@ -597,7 +688,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
       showChild={childStep == 1 ? openAddEditRelationPopup : openAddEditPopup}
       setShowChild={childStep == 1 ? setOpenAddEditRelationPopup : setOpenAddEditPopup}
       childTitle={childStep == 1 ? 'New/Edit UOM Relation' : 'New/Edit UOM Units'}
-      childContent={conjureFormChildContent}
+      childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
       actionChildButtonFunction={childStep == 1 ? handleSaveRelation : handleSaveUnits}
       mainStep={[
         {
@@ -624,8 +715,13 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         },
         { title: 'UOM Conversion', icon: <FontAwesomeIcon icon={faBoxesPacking} /> }
       ]}
-      mainContent={conjureFormContent}
-      mainSize="40vw"
+      mainContent={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
+      // mainSize="40vw"
+      mainSize='sm'
     />
   );
 };

@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -15,10 +16,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, HStack, Message, Panel, useToaster } from 'rsuite';
+import { Checkbox, Form, HStack, Message, Panel, Tooltip, useToaster, Whisper } from 'rsuite';
 
 import {
-  useFilterDiagnosticOrderTestResultsQuery
+  useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
@@ -33,24 +35,20 @@ import {
   useFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import {
-  useGenerateLabResultsPdfMutation
-} from '@/services/setup/resultReportApi';
-import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import {
-  initialListRequest,
-  initialListRequestAllValues
-} from '@/types/types';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
+import LaboratoryReportButton from './LaboratoryReportButton';
+import LabInterpretationAI from './LabInterpretationAI';
+import LovValueCell from '@/components/LovValueCell';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 type Props = {
   patient: any;
 };
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
+
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
 const startOfDay = (date: Date) => {
   const d = new Date(date);
@@ -65,6 +63,32 @@ const endOfDay = (date: Date) => {
 };
 
 const renderMarker = (marker?: string) => {
+  const isCritical =
+    marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
+
+  if (isCritical) {
+    return (
+      <Whisper
+        placement="top"
+        speaker={<Tooltip>Critical</Tooltip>}
+      >
+        <span
+          style={{
+            color: 'red',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <FontAwesomeIcon
+            icon={marker === 'CRITICAL_UPPER' ? faArrowUp : faArrowDown}
+          />
+        </span>
+      </Whisper>
+    );
+  }
+
   switch (marker) {
     case 'ABNORMAL_MARKER':
       return <FontAwesomeIcon icon={faCircleExclamation} />;
@@ -72,43 +96,35 @@ const renderMarker = (marker?: string) => {
       return <FontAwesomeIcon icon={faArrowUp} />;
     case 'LOWER_LIMIT':
       return <FontAwesomeIcon icon={faArrowDown} />;
-    case 'CRITICAL_UPPER':
-      return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowUp} />
-        </HStack>
-      );
-    case 'CRITICAL_LOWER':
-      return (
-        <HStack spacing={6}>
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          <FontAwesomeIcon icon={faArrowDown} />
-        </HStack>
-      );
     default:
       return formatEnumString(marker);
   }
 };
 
+const getDefaultDateFilter = () => {
+  const toDate = new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setDate(fromDate.getDate() - 3);
+
+  return { fromDate, toDate };
+};
+
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
-  const toaster = useToaster();
   const patientId = patient?.id;
 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-
+  const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<any>({
-    fromDate: null,
-    toDate: null
-  });
-
+  const [dateFilter, setDateFilter] = useState<any>(getDefaultDateFilter);
+  const [appliedFilters, setAppliedFilters] = useState<any>(() => ({
+    ...dateFilter,
+    showAbnormal
+  }));
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
-  const [generatePdf, { isLoading: isGeneratingPdf }] =
-    useGenerateLabResultsPdfMutation();
 
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
@@ -121,26 +137,16 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     };
   }, [patientId]);
 
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+  // Orders are only needed to display the order number; results are filtered by patient directly.
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
 
   const orders = ordersResponse?.data ?? [];
 
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
   const queryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
-    if (isOrdersFetching) return skipToken;
-
-    if (!orderIds.length) return skipToken;
-
     const params: any = {
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       page: pageIndex,
       size: rowsPerPage,
       processingStatus: 'RESULT_APPROVED',
@@ -148,7 +154,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       reviewed: true
     };
 
-    if (showAbnormal) {
+    if (appliedFilters.showAbnormal) {
       params.markerIn = [
         'UPPER_LIMIT',
         'LOWER_LIMIT',
@@ -158,29 +164,29 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       ];
     }
 
-    if (dateFilter.fromDate) {
-      params.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
+    if (appliedFilters.fromDate) {
+      params.approvedDateFrom = startOfDay(appliedFilters.fromDate).toISOString();
     }
 
-    if (dateFilter.toDate) {
-      params.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
+    if (appliedFilters.toDate) {
+      params.approvedDateTo = endOfDay(appliedFilters.toDate).toISOString();
     }
 
     return params;
   }, [
     patientId,
-    orderIds,
     pageIndex,
     rowsPerPage,
-    showAbnormal,
-    dateFilter,
-    isOrdersFetching
+    appliedFilters
   ]);
 
   const {
     data: response,
-    isFetching: isResultsFetching
+    isFetching: isResultsFetching,
+    refetch: refetchResults
   } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
+  const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
+    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: notesResponse } = useGetNotesByResultIdQuery(
     openNotesModal && selectedResultId ? selectedResultId : skipToken
@@ -189,43 +195,46 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const results = response?.data ?? [];
   const totalCount = response?.totalCount ?? 0;
 
-  const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-    page: 0,
-    size: 10000
-  });
+  const profileIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          results
+            .map((result: any) => result.profileTestId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [results]
+  );
+
+  const [fetchProfilesByIds, { data: profilesResponse }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
+
+  useEffect(() => {
+    if (profileIds.length > 0) {
+      fetchProfilesByIds(profileIds);
+    }
+  }, [profileIds, fetchProfilesByIds]);
 
   const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map((p: any) => [p.id, p]) ?? []),
+    () => new Map(profilesResponse?.map((profile: any) => [profile.id, profile]) ?? []),
     [profilesResponse]
   );
 
-  const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+    const resolveUnitDisplay = (row: any) => {
+      const profile = row.profile;
+      if (!profile || isLovProfile(row)) return null;
 
-  const { data: allLovValues } =
-    useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+      if (!profile.resultUnit) return null;
 
-  const { data: lovDefinitions } =
-    useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+      const unit = valueUnitLov?.object?.find(
+        (u: any) => String(u.key) === String(profile.resultUnit)
+      )?.lovDisplayVale;
 
-  const resolveLovDisplayValue = (lovId: any, key: any) => {
-    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
-      return key;
-    }
+      return unit || null;
+    };
 
-    const lovDef = lovDefinitions.object.find(
-      (d: any) => String(d.key) === String(lovId)
-    );
-
-    if (!lovDef?.lovCode) return key;
-
-    return (
-      allLovValues.object.find(
-        (v: any) =>
-          String(v.lovCode) === String(lovDef.lovCode) &&
-          String(v.key) === String(key)
-      )?.lovDisplayVale ?? key
-    );
-  };
 
   const orderTestIds = useMemo(
     () => results.map((r: any) => r.orderTestId).filter(Boolean),
@@ -248,157 +257,220 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     [orderTests]
   );
 
-  const {
-    data: allTestsResponse,
-    isFetching: isAllTestsFetching
-  } = useGetAllDiagnosticTestsQuery(
-    patientId ? { page: 0, size: 10000 } : skipToken
+  const testIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          orderTests
+            .map((orderTest: any) => orderTest.testId)
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+        )
+      ),
+    [orderTests]
   );
 
-  const allTests = allTestsResponse?.data ?? [];
+  const {
+    data: diagnosticTests = [],
+    isFetching: isAllTestsFetching
+  } = useGetDiagnosticTestsByIdsQuery(
+    { ids: testIds },
+    {
+      skip: testIds.length === 0
+    }
+  );
 
   const testMap = useMemo(
-    () => new Map(allTests.map((t: any) => [t.id, t])),
-    [allTests]
+    () => new Map(diagnosticTests.map((test: any) => [test.id, test])),
+    [diagnosticTests]
   );
 
-  const handleGeneratePdf = async () => {
-    if (!patientId || !normalizedResults.length) return;
+
+
+  const orderMap = useMemo(
+    () => new Map(orders.map((o: any) => [o.id, o])),
+    [orders]
+  );
+
+  const normalizedResults = useMemo(() => {
+  return results.map((r: any) => {
+    const orderTest = orderTestMap.get(r.orderTestId);
+
+    const order = orderTest
+      ? orderMap.get(String(orderTest.orderId))
+      : null;
+
+    const test = orderTest
+      ? testMap.get(orderTest.testId)
+      : null;
+
+    const profile = profilesMap.get(r.profileTestId);
+
+
+    return {
+      ...r,
+      orderId: orderTest?.orderId ?? '',
+      orderNumber: order?.orderNumber ?? '',
+      testName: profile?.name ?? ' ',
+      profile,
+    };
+  });
+}, [
+  results,
+  orderTestMap,
+  orderMap,
+  testMap,
+  profilesMap
+
+]);
+
+  const allSelected =
+    normalizedResults.length > 0 &&
+    normalizedResults.every(row => selectedRows.includes(row.id));
+
+  const handleSelectAll = async (checked: boolean) => {
+    const currentPageIds = normalizedResults.map(row => row.id);
+
+    if (!checked) {
+      setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
+      return;
+    }
+
+    if (!patientId) return;
 
     try {
-      const pdfData = {
-        patientInfo: {
-          name: patient?.fullName,
-          mrn: patient?.patientMrn,
-          dob: patient?.dob,
-          gender: patient?.gender
-        },
-        results: normalizedResults
+      const idsParams: any = {
+        patientIdIn: [patientId],
+        processingStatus: 'RESULT_APPROVED',
+        reviewed: true
       };
 
-      const file = await generatePdf(pdfData).unwrap();
+      if (appliedFilters.showAbnormal) {
+        idsParams.markerIn = [
+          'UPPER_LIMIT',
+          'LOWER_LIMIT',
+          'ABNORMAL_MARKER',
+          'CRITICAL_UPPER',
+          'CRITICAL_LOWER'
+        ];
+      }
 
-      const blob = new Blob([file], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Lab_Results_${Date.now()}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      if (appliedFilters.fromDate) {
+        idsParams.approvedDateFrom = startOfDay(appliedFilters.fromDate).toISOString();
+      }
 
-      toaster.push(
-        <Message type="success" showIcon>
-          Report Generated Successfully
-        </Message>
-      );
-    } catch {
-      toaster.push(
-        <Message type="error" showIcon>
-          Failed To Generate Report
-        </Message>
-      );
+      if (appliedFilters.toDate) {
+        idsParams.approvedDateTo = endOfDay(appliedFilters.toDate).toISOString();
+      }
+
+      const ids = await getAllResultIds(idsParams).unwrap();
+      setSelectedRows(ids);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const normalizedResults = useMemo(() => {
-    return results.map((r: any) => {
-      const orderTest = orderTestMap.get(r.orderTestId);
-      const test = orderTest ? testMap.get(orderTest.testId) : null;
-      const profile = profilesMap.get(r.profileTestId);
-      const isLovTest = profile?.resultType?.toUpperCase() === 'LOV';
-
-      let value = '';
-      let unit = '';
-      let normalRangeValue = ' ';
-
-      if (isLovTest) {
-        value = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.resultValueText
-        );
-
-        normalRangeValue = resolveLovDisplayValue(
-          profile?.listOfValueId,
-          r.viewNormalRange
-        );
-      } else {
-        value =
-          r.resultValueNumber !== null &&
-          r.resultValueNumber !== undefined
-            ? String(r.resultValueNumber)
-            : '';
-
-        unit =
-          valueUnitLov?.object?.find(
-            (u: any) =>
-              String(u.key) === String(test?.defaultProfileResultUnit)
-          )?.lovDisplayVale ?? '';
-
-        normalRangeValue = r.viewNormalRange ?? ' ';
-      }
-
-      return {
-        ...r,
-        orderId: orderTest?.orderId ?? ' ',
-        testName: test?.name ?? ' ',
-        resultValue: value,
-        unit,
-        normalRange: normalRangeValue
-      };
-    });
-  }, [
-    results,
-    orderTestMap,
-    testMap,
-    profilesMap,
-    valueUnitLov,
-    lovDefinitions,
-    allLovValues
-  ]);
+  const handleSelectRow = (rowId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedRows(prev => [...prev, rowId]);
+    } else {
+      setSelectedRows(prev => prev.filter(id => id !== rowId));
+    }
+  };
 
   const columns = [
     {
+      key: 'select',
+      width: 60,
+      align: 'center',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          onChange={(_, checked) => handleSelectAll(checked)}
+        />
+      ),
+      render: (row: any) => (
+        <Checkbox
+          checked={selectedRows.includes(row.id)}
+          onChange={(_, checked) =>
+            handleSelectRow(row.id, checked)
+          }
+        />
+      )
+    },
+    {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
-      render: (row: any) => row.orderId
+      render: (row: any) => row.orderNumber
     },
     {
       key: 'resultDate',
       title: <Translate>RESULT DATE</Translate>,
       render: (row: any) =>
-        row.reviewDate ? formatDateWithoutSeconds(row.reviewDate) : ' '
+        row.reviewDate ? formatDateWithoutSeconds(row.createdDate) : ' '
     },
     {
       key: 'testName',
       title: <Translate>TEST NAME</Translate>,
       render: (row: any) => row.testName
     },
-    {
-      key: 'result',
-      title: <Translate>TEST RESULT, UNIT</Translate>,
-      render: (row: any) => {
-        const hasValue =
-          row.resultValue !== null &&
-          row.resultValue !== undefined &&
-          row.resultValue !== '';
+      {
+              key: 'resultValue',
+              title: <Translate>RESULT VALUE</Translate>,
+              render: (row: any) => {
+                const profile = row.profile;
+    
+                const value = row.resultValueNumber ?? row.resultValueText ?? '';
+    
+                if (isLovProfile(row)) {
+                  return (
+                    <LovValueCell
+                      valueKey={value}
+                    />
+                  );
+                }
+    
+                const unit = resolveUnitDisplay(row);
+    
+                return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
+              }
+            },
 
-        return (
-          <>
-            <span>{row.resultValue}</span>
-            {hasValue && row.unit && (
-              <span style={{ marginLeft: 6, color: '#666' }}>
-                {row.unit}
-              </span>
-            )}
-          </>
-        );
-      }
-    },
     {
-      key: 'normalRange',
-      title: <Translate>NORMAL RANGE</Translate>,
-      render: (row: any) => row.normalRange ?? ' '
-    },
+              key: 'normalRange',
+              title: <Translate>NORMAL RANGE</Translate>,
+              render: (row: any) => {
+                const profile = row.profile;
+                const hasViewRange =
+                  row.normalRangeValue && row.normalRangeValue.trim() !== '';
+    
+                const hasMinMaxRange =
+                  row.minValue !== null &&
+                  row.minValue !== undefined &&
+                  row.maxValue !== null &&
+                  row.maxValue !== undefined;
+    
+                if (hasViewRange) {
+                  if (isLovProfile(row)) {
+                    return (
+                      <LovValueCell
+                        valueKey={String(row.normalRangeValue)}
+                      />
+                    );
+                  }
+    
+                  const unit = resolveUnitDisplay(row);
+                  return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
+                }
+    
+                if (hasMinMaxRange) {
+                  const unit = resolveUnitDisplay(row);
+                  return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
+                }
+    
+                return ' ';
+              }
+            },
     {
       key: 'marker',
       title: <Translate>MARKER</Translate>,
@@ -415,7 +487,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
           className='icon-radiologist-worklist-size'
           style={{
             cursor: 'pointer',
-            color: row.hasNote ? '#1675e0' : 'gray'
+            color: row.hasNote ? 'var(--primary-blue)' : 'gray'
           }}
           onClick={() => {
             setSelectedResultId(row.id);
@@ -426,8 +498,29 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     }
   ];
 
+  const handleSearch = () => {
+    setPageIndex(0);
+    if (
+      dateFilter.fromDate?.valueOf() === appliedFilters.fromDate?.valueOf() &&
+      dateFilter.toDate?.valueOf() === appliedFilters.toDate?.valueOf() &&
+      showAbnormal === appliedFilters.showAbnormal
+    ) {
+      refetchResults();
+      return;
+    }
+    setAppliedFilters({ ...dateFilter, showAbnormal });
+  };
+
+  const handleClearFilters = () => {
+    const defaults = getDefaultDateFilter();
+    setDateFilter(defaults);
+    setShowAbnormal(false);
+    setAppliedFilters({ ...defaults, showAbnormal: false });
+    setPageIndex(0);
+  };
+
   const filters = (
-    <Form fluid>
+    <Form fluid className="filter-form-disable-fix">
       <div className='diagnostics-result-filters-main-container'>
         <MyInput
           width={160}
@@ -455,32 +548,27 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
             Show Abnormal Result
           </Checkbox>
         </div>
+        <AdvancedSearchFilters
+          showAdvancedButton={false}
+          searchOnClick={handleSearch}
+          clearOnClick={handleClearFilters}
+        />
       </div>
     </Form>
   );
 
   const tableButtons = (
-    <MyButton
-      onClick={handleGeneratePdf}
-      loading={isGeneratingPdf}
-      disabled={!patientId || !normalizedResults.length}
-      appearance='ghost'
-      prefixIcon={() => (
-        <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
-      )}
-      style={{ marginLeft: 'auto' }}
-    >
-      Generate Complete Report
-    </MyButton>
+    <LaboratoryReportButton resultIds={selectedRows} />
   );
 
   useEffect(() => {
     setPageIndex(0);
-  }, [patientId, dateFilter, showAbnormal]);
+  }, [patientId, appliedFilters]);
 
   if (!patientId) {
     return null;
   }
+
 
   return (
     <Panel defaultExpanded ref={ref}>
@@ -488,8 +576,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         filters={filters}
         columns={columns}
         data={normalizedResults}
+        onRowClick={(row) => {
+          setSelectedResult(row);
+        }}
+        rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
-          isOrdersFetching ||
           isResultsFetching ||
           isOrderTestsFetching ||
           isAllTestsFetching
@@ -511,6 +602,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         handleSendMessage={{}}
         disabled
       />
+       <LabInterpretationAI patientId={patientId} />
     </Panel>
   );
 });

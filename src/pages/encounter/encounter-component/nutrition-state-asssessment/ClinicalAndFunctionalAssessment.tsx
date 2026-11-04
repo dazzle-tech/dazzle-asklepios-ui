@@ -7,6 +7,7 @@ import './styles.less';
 import PressureUlcerRiskAssessmentModal from '../pressure-ulce-risk-assessment/PressureUlcerRiskAssessmentModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
   const initialSampleData = [
     {
@@ -51,14 +52,22 @@ const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
     setModalOpen(false);
   };
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Row>
-        <Text>Appetite Status</Text>
+        <Text><Translate>Appetite Status</Translate></Text>
         <RadioGroup inline>
-          <Radio value="good">Good</Radio>
-          <Radio value="reduced">Reduced</Radio>
-          <Radio value="npo">NPO</Radio>
+          <Radio value="good"><Translate>Good</Translate></Radio>
+          <Radio value="reduced"><Translate>Reduced</Translate></Radio>
+          <Radio value="npo"><Translate>NPO</Translate></Radio>
         </RadioGroup>
       </Row>
       <Row>
@@ -105,7 +114,7 @@ const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
           <Icd10Search
             object={object}
             setOpject={setObject}
-            label="Diagnosis Impacting Nutrition"
+            label={<Translate>Diagnosis Impacting Nutrition</Translate>}
             fieldName="diagnosisImpactingNutrition"
           />
         </div>

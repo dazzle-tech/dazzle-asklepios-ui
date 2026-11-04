@@ -463,8 +463,16 @@ const DetailsModal = ({
       );
     }
   };
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -492,17 +500,17 @@ const DetailsModal = ({
         }
         rightTitle="Medication Order Details"
         leftContent={
-          <>
+          <div dir={dir}>
             <div className="left-content-wrapper">
               <div className="left-content-active-ingrediant-list">
                 <ActiveIngrediantList selectedGeneric={selectedGeneric} />
               </div>
               <MedicalTestsTable />
             </div>
-          </>
+          </div>
         }
         footerButtons={
-          <div className="footer-buttons">
+          <div className="footer-buttons" dir={dir}>
             <MyButton
               appearance="ghost"
               onClick={() => {
@@ -516,6 +524,7 @@ const DetailsModal = ({
           </div>
         }
         rightContent={
+        <div dir={dir}>
           <Form fluid>
             <Row
               gutter={20}
@@ -633,6 +642,8 @@ const DetailsModal = ({
                               fieldLabel="Medication Order Type"
                               selectData={orderTypeLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'drugOrderTypeLkey'}
                               record={orderMedication}
@@ -647,6 +658,8 @@ const DetailsModal = ({
                               fieldLabel="ROA"
                               selectData={filteredList ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="roaLkey"
                               record={orderMedication}
@@ -670,6 +683,8 @@ const DetailsModal = ({
                               fieldLabel="Unit"
                               selectData={unitLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="doseUnitLkey"
                               record={orderMedication}
@@ -692,6 +707,8 @@ const DetailsModal = ({
                               fieldLabel="Unit"
                               selectData={unitsLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName="frequencyUnitLkey"
                               record={orderMedication}
@@ -722,6 +739,8 @@ const DetailsModal = ({
                                 fieldLabel="Duration type"
                                 selectData={DurationTypeLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldName="durationTypeLkey"
                                 record={orderMedication}
@@ -873,6 +892,8 @@ const DetailsModal = ({
                               fieldLabel="Indication Use"
                               selectData={indicationLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'indicationUseLkey'}
                               record={orderMedication}
@@ -887,6 +908,8 @@ const DetailsModal = ({
                               fieldLabel="Administration Instructions"
                               selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
+                                      disableByField='isValid'
+
                               selectDataValue="key"
                               fieldName={'inst'}
                               record={slectInst}
@@ -1043,6 +1066,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={infusionDeviceLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="infusionDevice"
@@ -1077,6 +1102,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={routeLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="route"
@@ -1093,6 +1120,8 @@ const DetailsModal = ({
                                 width="100%"
                                 selectData={frequencyLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
+                                        disableByField='isValid'
+
                                 selectDataValue="key"
                                 fieldType="select"
                                 fieldName="frequency"
@@ -1250,6 +1279,7 @@ const DetailsModal = ({
               </Col>
             </Row>
           </Form>
+        </div>
         }
       ></AdvancedModal>
       <Substitues
@@ -1274,7 +1304,7 @@ const DetailsModal = ({
         source="MEDICATION_ORDER_ATTACHMENT"
         sourceId={capturedSourceId}
       />
-    </>
+    </div>
   );
 };
 export default DetailsModal;

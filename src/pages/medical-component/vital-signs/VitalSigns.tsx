@@ -17,21 +17,28 @@ import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip, Whisper } from 'rsuite';
+import AllGraphsModal from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/AllGraphsModal';
+import Translate from '@/components/Translate';
+import VitalSignsHistoryModal from '@/pages/medical-component/vital-signs/VitalSignsHistoryModal';
 
 type VitalSignsProps = {
   patientId: number;
   encounterId: number;
-  /**
-   * If true:
-   * - fetch latest TRIAGE vital signs by encounter
-   * - prefill the form with that record (if exists)
-   * - force isTriage to be true on save
-   */
   isTriage?: boolean;
   encounter?: any;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+
+  showExtendedFields?: boolean;
+  showFluidAssessment?: boolean;
+  showHistoryButton?: boolean;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  prefill?: Partial<VitalSignsModelObject> | null;
+  onSaved?: (saved?: VitalSignsModelObject) => void;
 };
 
 const VitalSigns: React.FC<VitalSignsProps> = ({
@@ -41,7 +48,14 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Vital Signs'
+  title = 'Vital Signs',
+  showExtendedFields = true,
+  showFluidAssessment = false,
+  showHistoryButton = false,
+  collapsible = false,
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -53,31 +67,51 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   const [createVitalSigns] = useCreateVitalSignsMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
 
-  // Non-triage latest
+  // Latest active for encounter (nursing or triage)
   const { data: latestVitalSignsByEncounterId } = useGetLatestVitalSignsByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId || isTriage }
   );
 
-  // Triage latest
-  const { data: latestTriageVitalSignsByEncounterId } = useGetLatestTriageVitalSignsByEncounterIdQuery(
-    { encounterId },
-    { skip: !encounterId || !isTriage }
-  );
+  // Triage latest — triage mode always; nursing mode only as fallback when no nursing reading
+  const { data: latestTriageVitalSignsByEncounterId } =
+    useGetLatestTriageVitalSignsByEncounterIdQuery(
+      { encounterId },
+      {
+        skip:
+          !encounterId ||
+          (!isTriage &&
+            latestVitalSignsByEncounterId != null &&
+            (latestVitalSignsByEncounterId as any)?.isTriage === false)
+      }
+    );
 
   // === Local state ===
   const [meanArterialPressureValue, setMeanArterialPressureValue] = useState<string | null>(null);
+  const [openHistoryModal, setOpenHistoryModal] = useState(false);
 
   const [vitalSigns, setVitalSigns] = useState<VitalSignsModelObject>({
     ...newVitalSigns,
+    ...(prefill ?? {}),
     patientId,
     encounterId,
     isTriage
   });
 
-
   useEffect(() => {
-    const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
+    if (prefill) return;
+
+    let source: VitalSignsModelObject | null | undefined = null;
+
+    if (isTriage) {
+      source = latestTriageVitalSignsByEncounterId;
+    } else if (latestVitalSignsByEncounterId) {
+      // Prefer latest active for this encounter (nursing saves stay; triage fills until nursing saves)
+      source = latestVitalSignsByEncounterId;
+    } else {
+      source = latestTriageVitalSignsByEncounterId;
+    }
+
     if (!source) return;
 
     setVitalSigns(previousVitalSigns => ({
@@ -86,20 +120,17 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       id: undefined,
       patientId,
       encounterId,
-      isTriage, 
-      isActive:
-        typeof (source as any)?.isActive === 'boolean'
-          ? (source as any).isActive
-          : true
+      isTriage,
+      isActive: typeof (source as any)?.isActive === 'boolean' ? (source as any).isActive : true
     }));
   }, [
     isTriage,
     latestVitalSignsByEncounterId,
     latestTriageVitalSignsByEncounterId,
     patientId,
-    encounterId
+    encounterId,
+    prefill
   ]);
-
 
   useEffect(() => {
     const diastolicValue = Number(vitalSigns?.bloodPressureDiastolic);
@@ -125,12 +156,19 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       temperature: vitalSigns.temperature ?? null,
       oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
       respiratoryRate: vitalSigns.respiratoryRate ?? null,
-      isTriage, 
-      isActive: typeof vitalSigns.isActive === 'boolean' ? vitalSigns.isActive : true,
+
+      fluidStatus: vitalSigns.fluidStatus ?? null,
+      edema: vitalSigns.edema ?? null,
+      urineOutput: vitalSigns.urineOutput ?? null,
+
+      isTriage,
+      isActive:
+        typeof vitalSigns.isActive === 'boolean'
+          ? vitalSigns.isActive
+          : true,
       notes: vitalSigns.notes ?? null
     };
   }, [vitalSigns, patientId, encounterId, isTriage]);
-
 
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
@@ -184,7 +222,9 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Vital signs payload is required.',
@@ -216,52 +256,48 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       return;
     }
 
+    const missingFields: string[] = [];
+    if (!vitalSigns.bloodPressureSystolic && vitalSigns.bloodPressureSystolic !== 0)
+      missingFields.push('Blood Pressure Systolic');
+    if (!vitalSigns.bloodPressureDiastolic && vitalSigns.bloodPressureDiastolic !== 0)
+      missingFields.push('Blood Pressure Diastolic');
+    if (!vitalSigns.heartRate && vitalSigns.heartRate !== 0) missingFields.push('Heart Rate');
+    if (!vitalSigns.temperature && vitalSigns.temperature !== 0) missingFields.push('Temperature');
+    if (!vitalSigns.oxygenSaturation && vitalSigns.oxygenSaturation !== 0)
+      missingFields.push('Oxygen Saturation');
+    if (!vitalSigns.respiratoryRate && vitalSigns.respiratoryRate !== 0)
+      missingFields.push('Respiratory Rate');
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill in the required fields:\n${missingFields
+            .map(f => `• ${f}`)
+            .join('\n')}`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     try {
       const createResponse = await createVitalSigns(vitalSignsCreatePayload as any).unwrap();
-         
+
       setVitalSigns(previousVitalSigns => ({
         ...previousVitalSigns,
         ...createResponse,
         patientId,
         encounterId,
-        isTriage, 
-        id: undefined 
+        isTriage,
+        id: undefined
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-      }
+      onSaved?.(createResponse);
     } catch (error: any) {
       showApiError(error);
     }
   };
-
   const handleClearVitalSigns = () => {
     setVitalSigns({
       ...newVitalSigns,
@@ -272,22 +308,63 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     setMeanArterialPressureValue(null);
   };
 
+  const [openGraphsModal, setOpenGraphsModal] = useState(false);
+
+  const titleContent = (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8
+      }}
+    >
+      <span>{title}</span>
+
+      <Whisper
+        placement="top"
+        trigger="hover"
+        speaker={
+          <Tooltip>
+            Graph
+          </Tooltip>
+        }
+      >
+        <FontAwesomeIcon
+          icon={faChartLine}
+          className="icons-style"
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenGraphsModal(true);
+          }}
+        />
+      </Whisper>
+    </div>
+  );
+
+
   return (
+    <>
     <SectionContainer
-      title={title}
+    collapsible={collapsible}
+    defaultCollapsed={defaultCollapsed}
+      title={titleContent}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
+          {showHistoryButton && (
+            <MyButton onClick={() => setOpenHistoryModal(true)}>History</MyButton>
+          )}
           <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClearVitalSigns} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
-        <div style={width ? { width } : {}}>
-          <Form fluid>
+        <Form fluid>
+          <div style={width ? { width } : {}}>
             <div className="vital-signs-handle-position-row">
               <MyInput
                 width="100%"
@@ -311,34 +388,41 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 required
               />
 
-              <div className="container-Column">
-                <MyLabel label="MAP" />
-                <div>
-                  <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
-                  <text>{meanArterialPressureValue}</text>
+              {showExtendedFields && (
+                <div className="container-Column">
+                  <MyLabel label="MAP" />
+                  <div>
+                    <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
+                    <span>{meanArterialPressureValue}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="margin-bot-10">
-              <MyInput
-                width="100%"
-                fieldType="select"
-                fieldLabel="Measurment Site"
-                fieldName="measurementSite"
-                selectData={bloodPressureMeasurementSiteLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                searchable={false}
-              />
-            </div>
+            {showExtendedFields && (
+              <div className="margin-bot-10">
+                <MyInput
+                  required={isTriage}
+                  width={isTriage ? '42%' : '100%'}
+                  fieldType="select"
+                  fieldLabel="Measurment Site"
+                  fieldName="measurementSite"
+                  selectData={bloodPressureMeasurementSiteLov?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  disableByField="isValid"
+                  selectDataValue="key"
+                  record={vitalSigns}
+                  setRecord={setVitalSigns}
+                  disabled={disabled}
+                  searchable={false}
+                />
+              </div>
+            )}
 
             <div className="vital-signs-handle-position-row">
               <MyInput
-                width="100%"
+                required
+                width={showExtendedFields ? '10vw' : '100%'}
                 fieldType="number"
                 fieldName="heartRate"
                 rightAddon="bpm"
@@ -349,30 +433,34 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
               />
 
               <MyInput
-                width="100%"
+                required
+                width={showExtendedFields ? '10vw' : '100%'}
                 fieldType="number"
                 rightAddon="C"
                 fieldName="temperature"
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
-                required
+                allowDecimal
               />
             </div>
 
             <div className="vital-signs-handle-position-row">
               <MyInput
-                width="100%"
+                required
+                width={showExtendedFields ? '10vw' : '100%'}
                 fieldType="number"
                 rightAddon=" % "
                 fieldName="oxygenSaturation"
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
+                allowDecimal
               />
 
               <MyInput
-                width="100%"
+                required
+                width={showExtendedFields ? '10vw' : '100%'}
                 fieldType="number"
                 rightAddon="bpm"
                 rightAddonwidth={45}
@@ -384,19 +472,76 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
               />
             </div>
 
-            <MyInput
-              fieldLabel="Note"
-              width="100%"
-              fieldName="notes"
-              fieldType="textarea"
-              record={vitalSigns}
-              setRecord={setVitalSigns}
-              disabled={disabled}
-            />
-          </Form>
-        </div>
+
+{showFluidAssessment && (
+  <div className="vital-signs-fluid-assessment">
+    <div className="vital-signs-fluid-assessment-fields">
+      <div className="vital-signs-handle-position-row">
+        <MyInput
+          width="100%"
+          fieldType="text"
+          fieldName="fluidStatus"
+          fieldLabel="Fluid Status"
+          record={vitalSigns}
+          setRecord={setVitalSigns}
+          disabled={disabled}
+        />
+
+        <MyInput
+          width="100%"
+          fieldType="text"
+          fieldName="edema"
+          fieldLabel="Edema"
+          record={vitalSigns}
+          setRecord={setVitalSigns}
+          disabled={disabled}
+        />
+      </div>
+
+      <MyInput
+        width="100%"
+        fieldType="text"
+        fieldName="urineOutput"
+        fieldLabel="Urine Output"
+        record={vitalSigns}
+        setRecord={setVitalSigns}
+        disabled={disabled}
+      />
+    </div>
+  </div>
+)}
+
+
+            {showExtendedFields && (
+              <MyInput
+                fieldLabel="Note"
+                width="100%"
+                fieldName="notes"
+                fieldType="textarea"
+                record={vitalSigns}
+                setRecord={setVitalSigns}
+                disabled={disabled}
+              />
+            )}
+          </div>
+
+
+          <AllGraphsModal
+            open={openGraphsModal}
+            setOpen={setOpenGraphsModal}
+            patient={{ id: patientId }}
+          />
+        </Form>
       }
     />
+    {showHistoryButton && (
+      <VitalSignsHistoryModal
+        open={openHistoryModal}
+        setOpen={setOpenHistoryModal}
+        encounterId={encounterId}
+      />
+    )}
+    </>
   );
 };
 

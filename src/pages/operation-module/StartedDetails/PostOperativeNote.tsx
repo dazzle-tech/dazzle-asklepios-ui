@@ -2,7 +2,6 @@ import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
 import StaffAssignment from "@/pages/encounter/encounter-component/procedure/StaffMember";
-import { useGetActiveResourcesByTypeQuery } from "@/services/setup/resource/ResourceService";
 import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationStaffListQuery, useGetPostOpHandoverByOperationQuery, useSaveOperationRequestsMutation, useSaveOperationStaffMutation, useSavePostOpNotesHandoverMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationPostOpNotesHandover, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
@@ -18,12 +17,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
         skip: !operation?.key
     });
     const [save] = useSavePostOpNotesHandoverMutation();
-    const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
-      resourceType: 'INPATIENT_ADMISSION',
-      page: 0,
-      size: 1000,
-      sort: 'id,asc'
-    });
+    const { data: inpatientDepartmentListResponse } = { data: { data: [] as unknown[] } };
     const { data: outcomelovqueryresponse } = useGetLovValuesByCodeQuery('PROC_OUTCOMES');
     const { data: statuslovqueryresponse } = useGetLovValuesByCodeQuery('PATIENT_STATUS');
     const { data: event, refetch: eventFetch } = useGetIntraoperativeEventsByOperationKeyQuery(operation?.key);
@@ -346,7 +340,9 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                     width="100%"
                                     fieldType="select"
                                     selectData={statuslovqueryresponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                     selectDataValue="key"
                                     fieldName="recoveryConditionLkey"
                                     record={operativeNote}
@@ -359,7 +355,9 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                         width="100%"
                                         fieldType="select"
                                         selectData={outcomelovqueryresponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                                         selectDataValue="key"
                                         fieldName="surgeryStatusLkey"
                                         record={operativeNote}

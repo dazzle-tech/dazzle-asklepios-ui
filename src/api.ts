@@ -9,13 +9,16 @@ export const baseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080', // TODO change from config file to env variable
   prepareHeaders: (headers: Headers, { endpoint, type, getState }) => {
     if (endpoint === 'loadTenant' && type === 'query') {
-      headers.set('access_token', `${config.tenantSecurityToken ? config.tenantSecurityToken : '4994'}`); // TODO change from config file to secure secrets storing/loading
+      headers.set(
+        'id_token',
+        `${config.tenantSecurityToken ? config.tenantSecurityToken : '4994'}`
+      ); // TODO change from config file to secure secrets storing/loading
     } else {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('id_token');
       if (token) {
-        headers.set('access_token', `${token}`);
+        headers.set('id_token', `${token}`);
       } else {
-        headers.set('access_token', `wrong_token`);
+        headers.set('id_token', `wrong_token`);
       }
     }
 
@@ -28,13 +31,13 @@ export const dummyBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080', // TODO change from config file to env variable
   prepareHeaders: (headers: Headers, { endpoint, type }) => {
     if (endpoint === 'loadTenant' && type === 'query') {
-      headers.set('access_token', `${config.tenantSecurityToken}`); // TODO change from config file to secure secrets storing/loading
+      headers.set('id_token', `${config.tenantSecurityToken}`); // TODO change from config file to secure secrets storing/loading
     } else {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('id_token');
       if (token) {
-        headers.set('access_token', `${token}`);
+        headers.set('id_token', `${token}`);
       } else {
-        headers.set('access_token', `wrong_token`);
+        headers.set('id_token', `wrong_token`);
       }
     }
     return headers;
@@ -55,24 +58,22 @@ export const onQueryStarted = async (body, { dispatch, queryFulfilled }) => {
     if (data?._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
- } catch (err: any) {
-  const status = err?.error?.originalStatus ?? err?.error?.status; // <-- مهم
-  const data = err?.error?.data;
+  } catch (err: any) {
+    const status = err?.error?.originalStatus ?? err?.error?.status; // <-- مهم
+    const data = err?.error?.data;
 
-  const msg =
-    typeof data === 'string'
-      ? data
-      : data?.message || data?.msg || 'Request failed';
+    const msg = typeof data === 'string' ? data : data?.message || data?.msg || 'Request failed';
 
-  if (status === 409) {
-    dispatch(notify({ msg: msg || 'Conflict Error', sev: 'warning' }));
-    return;
+    if (status === 409) {
+      dispatch(notify({ msg: msg || 'Conflict Error', sev: 'warning' }));
+      return;
+    }
+
+    if (status === 422) {
+      dispatch(notify({ msg: msg || 'Unprocessable Entity', sev: 'error' }));
+      return;
+    }
+
+    dispatch(notify({ msg: msg || 'Internal Server Error', sev: 'error' }));
   }
-
-  if (status === 422) {
-    dispatch(notify({ msg: msg || 'Unprocessable Entity', sev: 'error' }));
-    return;
-  }
-
-  dispatch(notify({ msg: msg || 'Internal Server Error', sev: 'error' }));
-}};
+};

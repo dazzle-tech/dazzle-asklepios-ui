@@ -60,8 +60,15 @@ const InsuranceBenefitsCard: React.FC<InsuranceBenefitsCardProps> = ({ data = {}
     }
   ];
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="benefits-card">
+    <div className="benefits-card" dir={dir}>
       <div className="benefits-card__header">
         <div className="benefits-card__header-icon">
           <FontAwesomeIcon icon={faShieldHeart} className="benefits-card__header-icon-svg" />

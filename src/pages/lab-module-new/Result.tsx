@@ -1,9 +1,12 @@
-import ChatModal from '@/components/ChatModal';
-import MyTable from '@/components/MyTable';
-import Translate from '@/components/Translate';
 import CancellationModal from '@/components/CancellationModal';
+import ChatModal from '@/components/ChatModal';
+import LovValueCell from '@/components/LovValueCell';
+import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppDispatch } from '@/hooks';
 import {
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
@@ -14,19 +17,19 @@ import {
   useBulkApproveDiagnosticOrderTestResultMutation,
   useBulkRejectDiagnosticOrderTestResultMutation,
   useFilterDiagnosticOrderTestResultsQuery,
+  useLazyGetDiagnosticOrderTestResultIdsQuery,
   useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetLaboratoriesByTestIdsQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+
 import {
-  useGetLovAllValuesQuery,
-  useGetLovsQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faArrowDown,
@@ -36,34 +39,33 @@ import {
   faDiagramPredecessor,
   faFileLines,
   faPenToSquare,
-  faPrint,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, {
   forwardRef,
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState
 } from 'react';
+import { FaChartLine } from 'react-icons/fa';
 import {
-  Button,
   Checkbox,
   HStack,
   Panel,
   Tooltip,
   Whisper
 } from 'rsuite';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { FaChartLine } from 'react-icons/fa';
+import LaboratoryReportButton from '../encounter/encounter-component/diagnostics-result/LaboratoryReportButton';
 import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
 import EditResultModal from './EditResultModal';
 import LogResult from './LogResult';
 import NormalRangeModal from './NormalRangeModal';
-import MyButton from '@/components/MyButton/MyButton';
 
 type SortType = 'asc' | 'desc';
 
@@ -73,45 +75,17 @@ type Props = {
   setTest: (test: any) => void;
   refetchAllLabData: () => Promise<void>;
 };
-
 type PaginationParams = {
   page: number;
   size: number;
   sort: string;
 };
 
-const isLovProfile = (profile?: any) =>
-  profile?.resultType?.toUpperCase() === 'LOV';
+const getResultType = (row: any) =>
+  (row?.resultTypeAtEntry ?? row?.profile?.resultType)?.toUpperCase()?.trim();
 
-const resolveLovDisplayValue = (
-  profile: any,
-  key: any,
-  lovDefinitions: any,
-  allLovValues: any
-) => {
-  if (
-    !profile?.listOfValueId ||
-    key == null ||
-    !lovDefinitions?.object ||
-    !allLovValues?.object
-  ) {
-    return key;
-  }
+const isLovProfile = (row: any) => getResultType(row) === 'LOV';
 
-  const lovDef = lovDefinitions.object.find(
-    (d: any) => String(d.key) === String(profile.listOfValueId)
-  );
-
-  if (!lovDef?.lovCode) return key;
-
-  return (
-    allLovValues.object.find(
-      (v: any) =>
-        String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === String(key)
-    )?.lovDisplayVale ?? key
-  );
-};
 
 const Result = forwardRef<any, Props>(
   ({ order, loading, setTest, refetchAllLabData }, ref) => {
@@ -136,27 +110,27 @@ const Result = forwardRef<any, Props>(
     const [selectedResultIds, setSelectedResultIds] = useState<number[]>([]);
     const [isBulkRejectMode, setIsBulkRejectMode] = useState(false);
 
+    // ── Critical confirmation modal state ────────────────────────────────────
+    const [openCriticalConfirmModal, setOpenCriticalConfirmModal] = useState(false);
+    const [pendingApproveRow, setPendingApproveRow] = useState<any>(null);
+    const [isBulkCriticalApprove, setIsBulkCriticalApprove] = useState(false);
+    // ─────────────────────────────────────────────────────────────────────────
+
     const [paginationParams, setPaginationParams] = useState<PaginationParams>({
       page: 0,
-      size: 5,
+      size: 20,
       sort: 'id,asc'
     });
     const [sortType, setSortType] = useState<SortType>('asc');
     const [normalRangesMap, setNormalRangesMap] = useState<Record<number, any[]>>({});
 
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-    const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
-    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
-    const allTests = allTestsResponse?.data ?? [];
-    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
-    const allLabs = allLabsResponse?.data ?? [];
-    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
-      page: 0,
-      size: 10000,
-      sort: 'id,asc'
-    });
-    const allProfiles = profilesResponse?.data ?? [];
+    const [fetchDiagnosticTestsByIds, { data: diagnosticTestsByIdsResponse }] =
+      useLazyGetDiagnosticTestsByIdsQuery();
+    const [fetchLaboratoriesByTestIds, { data: labsByTestIds }] =
+      useLazyGetLaboratoriesByTestIdsQuery();
+    const [getProfilesByIds, { data: profilesResponse }] =
+      useGetDiagnosticTestProfilesByIdsMutation();
 
     const [fetchNormalRangesByProfileTestId] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
     const [approveResult] = useApproveDiagnosticOrderTestResultMutation();
@@ -164,10 +138,9 @@ const Result = forwardRef<any, Props>(
     const [bulkApproveResults] = useBulkApproveDiagnosticOrderTestResultMutation();
     const [bulkRejectResults] = useBulkRejectDiagnosticOrderTestResultMutation();
     const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
+    const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
 
-    const testsMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
-    const labByTestIdMap = useMemo(() => new Map(allLabs.map(l => [l.testId, l])), [allLabs]);
-    const profilesMap = useMemo(() => new Map(allProfiles.map(p => [p.id, p])), [allProfiles]);
+   
 
     const {
       data: resultsResponse,
@@ -198,6 +171,70 @@ const Result = forwardRef<any, Props>(
       [results]
     );
 
+    const profilesMap = useMemo(
+      () => new Map((profilesResponse ?? []).map((profile: any) => [profile.id, profile])),
+      [profilesResponse]
+    );
+ const testIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIdsResponse ?? []).map((test: any) => [test.id, test])),
+      [diagnosticTestsByIdsResponse]
+    );
+    const labTestIds = useMemo(
+      () =>
+        Array.from(
+          new Set(
+            profileTestIds
+              .map((profileId: any) => profilesMap.get(profileId)?.testId)
+              .filter((id): id is number => id != null)
+          )
+        ),
+      [profileTestIds, profilesMap]
+    );
+
+    const labByTestIdMap = useMemo(
+      () => new Map((labsByTestIds ?? []).map((lab: any) => [lab.testId, lab])),
+      [labsByTestIds]
+    );
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      getProfilesByIds(profileTestIds)
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [getProfilesByIds, profileTestIds]);
+
+    useEffect(() => {
+      if (!testIds.length) return;
+
+      fetchDiagnosticTestsByIds({ ids: testIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchDiagnosticTestsByIds, testIds]);
+
+    useEffect(() => {
+      if (!labTestIds.length) return;
+
+      fetchLaboratoriesByTestIds({ testIds: labTestIds })
+        .unwrap()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }, [fetchLaboratoriesByTestIds, labTestIds]);
+
     const {
       data: resultNotesResponse,
       refetch: refetchResultNotes
@@ -223,10 +260,11 @@ const Result = forwardRef<any, Props>(
       [normalizedResults]
     );
 
-    const selectableResultIds = useMemo(
-      () => selectableResults.map(r => r.id),
-      [selectableResults]
-    );
+    const
+      selectableResultIds = useMemo(
+        () => selectableResults.map(r => r.id),
+        [selectableResults]
+      );
 
     const isAllSelected =
       selectableResultIds.length > 0 &&
@@ -263,94 +301,209 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
+const resolveResultDisplay = (row: any) => {
+  const resultType = getResultType(row);
+  if (!resultType) return ' ';
 
-    const resolveResultDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile) return ' ';
+  if (resultType === 'LOV') {
+    return (
+      <LovValueCell
+        valueKey={row.resultValueText}
+      />
+    );
+  }
 
-      if (isLovProfile(profile)) {
-        return resolveLovDisplayValue(
-          profile,
-          row.resultValueText,
-          lovDefinitions,
-          allLovValues
-        );
-      }
+  if (resultType === 'TEXT') {
+    return row.resultValueText ?? ' ';
+  }
 
-      return row.resultValueNumber ?? ' ';
-    };
+  return row.resultValueNumber ?? ' ';
+};
 
-    const resolveUnitDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
-      if (!profile.resultUnit) return null;
+   const resolveUnitDisplay = (row: any) => {
+  const profile = row.profile;
+    if (!profile || isLovProfile(row)) return null;
 
-      const unit = valueUnitLov?.object?.find(
-        (u: any) => String(u.key) === String(profile.resultUnit)
-      )?.lovDisplayVale;
+  if (!profile.resultUnit) return null;
 
-      return unit || null;
-    };
+  const unit = valueUnitLov?.object?.find(
+    (u: any) => String(u.key) === String(profile.resultUnit)
+  )?.lovDisplayVale;
 
-    const handleApprove = async (row: any) => {
+  return unit || null;
+};
+
+    const isCriticalResult = (row: any) =>
+      row?.viewMarker === 'CRITICAL_UPPER' || row?.viewMarker === 'CRITICAL_LOWER';
+
+    // ── Actual approve execution (called after confirmation) ──────────────────
+    const doApprove = async (row: any) => {
       try {
         await approveResult(row.id).unwrap();
         setSelectedResultIds(prev => prev.filter(id => id !== row.id));
         refetch();
         await refetchAllLabData();
+        dispatch(notify({ msg: 'Result approved successfully', sev: 'success' }));
       } catch (e: any) {
         dispatch(
           notify({
-            msg:
-              e?.data?.message ||
-              e?.data?.detail ||
-              e?.error ||
-              'Approve failed',
+            msg: e?.data?.message || e?.data?.detail || e?.error || 'Approve failed',
+            sev: 'error'
+          })
+        );
+      }
+    };
+    const handleApprove = (row: any) => {
+
+      if (isResultEmpty(row)) {
+        dispatch(
+          notify({
+            msg: 'Cannot approve. Result value is missing.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (isCriticalResult(row)) {
+        setPendingApproveRow(row);
+        setIsBulkCriticalApprove(false);
+        setOpenCriticalConfirmModal(true);
+      } else {
+        doApprove(row);
+      }
+    };
+    const doBulkApprove = async (idsToApprove?: number[]) => {
+      const resolvedIds = idsToApprove ?? selectedResultIds;
+      if (!resolvedIds?.length) return;
+      try {
+        await bulkApproveResults({ ids: resolvedIds }).unwrap();
+        setSelectedResultIds([]);
+        handleToggleSelectAll(false);
+        await refetch();
+        await refetchAllLabData();
+        dispatch(notify({ msg: 'Selected results approved successfully', sev: 'success' }));
+      } catch (e: any) {
+        dispatch(
+          notify({
+            msg: e?.data?.message || e?.data?.detail || e?.error || 'Bulk approve failed',
             sev: 'error'
           })
         );
       }
     };
 
-    const handleBulkApprove = async () => {
-      if (!selectedResultIds.length) return;
+    // ─────────────────────────────────────────────────────────────────────────
 
-      try {
-        await bulkApproveResults({
-          ids: selectedResultIds
-        }).unwrap();
+  const isResultEmpty = (row: any) => {
+  const resultType = getResultType(row);
+  if (!resultType) return true;
 
-        setSelectedResultIds([]);
-        refetch();
-        await refetchAllLabData();
+  if (resultType === 'LOV' || resultType === 'TEXT') {
+    return (
+      row.resultValueText === null ||
+      row.resultValueText === undefined ||
+      row.resultValueText === ''
+    );
+  }
 
+  return (
+    row.resultValueNumber === null ||
+    row.resultValueNumber === undefined
+  );
+};
+
+
+
+    const handleBulkApprove = () => {
+      const eligibleIds = normalizedResults
+        .filter(row => {
+          const isSelected = selectedResultIds.includes(row.id);
+          const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+          return (isSelected || isSelectAllChecked) && row.processingStatus === 'RESULT_READY';
+        })
+        .map(row => row.id);
+
+      if (!eligibleIds.length) {
         dispatch(
           notify({
-            msg: 'Selected results approved successfully',
-            sev: 'success'
+            msg: 'No results are eligible for approval.',
+            sev: 'warning'
           })
         );
-      } catch (e: any) {
-        dispatch(
-          notify({
-            msg:
-              e?.data?.message ||
-              e?.data?.detail ||
-              e?.error ||
-              'Bulk approve failed',
-            sev: 'error'
-          })
-        );
+        return;
       }
+
+      const emptyResults = normalizedResults.filter(
+        row =>
+          eligibleIds.includes(row.id) &&
+          isResultEmpty(row)
+      );
+
+      if (emptyResults.length > 0) {
+        dispatch(
+          notify({
+            msg: 'Some selected results are empty. Please fill them before approval.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const hasCritical = normalizedResults.some(
+        row =>
+          eligibleIds.includes(row.id) &&
+          isCriticalResult(row)
+      );
+
+      setSelectedResultIds(eligibleIds);
+
+      if (hasCritical) {
+        setIsBulkCriticalApprove(true);
+        setPendingApproveRow(null);
+        setOpenCriticalConfirmModal(true);
+      } else {
+        void doBulkApprove(eligibleIds);
+      }
+    };
+
+    const handleCriticalConfirmYes = () => {
+      setOpenCriticalConfirmModal(false);
+      if (isBulkCriticalApprove) {
+        const idsToApprove = selectedResultIds.length ? selectedResultIds : [];
+        void doBulkApprove(idsToApprove);
+      } else if (pendingApproveRow) {
+        doApprove(pendingApproveRow);
+      }
+      setPendingApproveRow(null);
+      setIsBulkCriticalApprove(false);
+    };
+
+    const handleCriticalConfirmNo = () => {
+      setOpenCriticalConfirmModal(false);
+      setPendingApproveRow(null);
+      setIsBulkCriticalApprove(false);
     };
 
     const handleReject = async () => {
       try {
-        if (isBulkRejectMode) {
-          if (!selectedResultIds.length) return;
+        const resolvedIds = (() => {
+          if (isBulkRejectMode) {
+            const isSelectAllChecked = selectableResultIds.length > 0 && selectableResultIds.every(id => selectedResultIds.includes(id));
+            if (isSelectAllChecked) {
+              return selectableResultIds;
+            }
+            return selectedResultIds;
+          }
 
+          return selectedResult?.id ? [selectedResult.id] : [];
+        })();
+
+        if (!resolvedIds.length) return;
+
+        if (isBulkRejectMode) {
           await bulkRejectResults({
-            ids: selectedResultIds,
+            ids: resolvedIds,
             rejectedReason: resultRejectReason
           }).unwrap();
 
@@ -396,7 +549,6 @@ const Result = forwardRef<any, Props>(
     };
 
     const toggleSelectRow = (row: any, checked: boolean) => {
-      if (row.processingStatus !== 'RESULT_READY') return;
 
       setSelectedResultIds(prev =>
         checked
@@ -407,14 +559,28 @@ const Result = forwardRef<any, Props>(
       );
     };
 
-    const handleToggleSelectAll = (checked: boolean) => {
-      if (checked) {
-        setSelectedResultIds(selectableResultIds);
-      } else {
-        setSelectedResultIds([]);
+
+    const handleToggleSelectAll = async (checked: boolean) => {
+      const currentPageIds = normalizedResults.map(row => row.id);
+
+      if (!checked) {
+        setSelectedResultIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+        return;
+      }
+
+      if (!order?.id) return;
+
+      try {
+        const ids = await getAllResultIds({
+          orderIdIn: order.id,
+          ...(categoryFilter.value ? { category: categoryFilter.value } : {})
+        }).unwrap();
+
+        setSelectedResultIds(ids);
+      } catch (e) {
+        console.error(e);
       }
     };
-
     const columns: ColumnConfig[] = [
       {
         key: 'select',
@@ -423,18 +589,18 @@ const Result = forwardRef<any, Props>(
             checked={isAllSelected}
             indeterminate={isIndeterminate}
             onChange={(_, checked) => handleToggleSelectAll(checked)}
+            onClick={(e) => e.stopPropagation()}
           />
         ),
         align: 'center',
         width: 60,
         render: (row: any) => {
-          const disabled = row.processingStatus !== 'RESULT_READY';
           return (
             <Checkbox
               checked={selectedResultIds.includes(row.id)}
-              disabled={disabled}
               onChange={(_, checked) => toggleSelectRow(row, checked)}
               onClick={(e) => e.stopPropagation()}
+
             />
           );
         }
@@ -476,49 +642,58 @@ const Result = forwardRef<any, Props>(
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         align: 'center',
-        render: (row: any) => (
-          <Whisper
-            placement="top"
-            trigger="hover"
-            container={() => document.body}
-            speaker={<Tooltip>View Normal Ranges</Tooltip>}
-          >
-            <span style={{ display: 'inline-block' }}>
-              <FaChartLine
-                size={18}
-                color="var(--primary-gray)"
-                style={{ cursor: 'pointer', opacity: 0.8 }}
-                onClick={() => {
-                  setSelectedResult(row);
-                  setOpenNormalRangeModal(true);
-                }}
-              />
-            </span>
-          </Whisper>
-        )
+        render: (row: any) => {
+          const isText = getResultType(row) === 'TEXT';
+
+          if (isText) {
+            return '-';
+          }
+
+          return (
+            <Whisper
+              placement="top"
+              trigger="hover"
+              container={() => document.body}
+              speaker={<Tooltip>View Normal Ranges</Tooltip>}
+            >
+              <span style={{ display: 'inline-block' }}>
+                <FaChartLine
+                  size={18}
+                  color="var(--primary-gray)"
+                  style={{ cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => {
+                    setSelectedResult(row);
+                    setOpenNormalRangeModal(true);
+                  }}
+                />
+              </span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
         render: (row: any) => {
-          const profile = row.profile;
+          const isText = getResultType(row) === 'TEXT';
 
+          if (isText) {
+            return '-';
+          }
           const hasViewRange =
             row.viewNormalRange && row.viewNormalRange.trim() !== '';
-
+   
           const hasMinMaxRange =
             row.minValue !== null &&
             row.minValue !== undefined &&
             row.maxValue !== null &&
             row.maxValue !== undefined;
-
           if (hasViewRange) {
-            if (isLovProfile(profile)) {
-              return resolveLovDisplayValue(
-                profile,
-                row.viewNormalRange,
-                lovDefinitions,
-                allLovValues
+            if (isLovProfile(row)) {
+              return (
+                <LovValueCell
+                  valueKey={row.viewNormalRange}
+                />
               );
             }
 
@@ -552,14 +727,14 @@ const Result = forwardRef<any, Props>(
             case 'CRITICAL_UPPER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red' />
                   <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
                 </HStack>
               );
             case 'CRITICAL_LOWER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red' />
                   <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
                 </HStack>
               );
@@ -583,6 +758,9 @@ const Result = forwardRef<any, Props>(
                 icon={faDiagramPredecessor}
                 style={{ cursor: 'pointer', opacity: 0.8 }}
                 onClick={() => {
+                  console.log('🔍 Selected Row:', row);
+                  console.log('🆔 row.profileTestId:', row.profileTestId);
+
                   setSelectedComparisonProfileId(row.profileTestId);
                   setOpenComparisonModal(true);
                 }}
@@ -632,10 +810,15 @@ const Result = forwardRef<any, Props>(
           const canEdit = row.processingStatus === 'RESULT_READY';
           const canApprove = row.processingStatus === 'RESULT_READY';
           const canReject = row.processingStatus === 'RESULT_READY';
+          const canPrint = row.processingStatus === 'RESULT_APPROVED';
 
           return (
             <HStack spacing={10}>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Edit Result</Tooltip>}
+              >
                 <span>
                   <FontAwesomeIcon
                     icon={faPenToSquare}
@@ -653,7 +836,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Approve Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Approve Result</Tooltip>}
+              >
                 <span>
                   <CheckRoundIcon
                     onClick={() => {
@@ -671,7 +858,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject Result</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Reject Result</Tooltip>}
+              >
                 <span>
                   <WarningRoundIcon
                     onClick={() => {
@@ -691,9 +882,11 @@ const Result = forwardRef<any, Props>(
                 </span>
               </Whisper>
 
-              <FontAwesomeIcon icon={faPrint} style={{ opacity: 0.5 }} />
-
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={<Tooltip>Logs</Tooltip>}
+              >
                 <FontAwesomeIcon
                   icon={faFileLines}
                   style={{ cursor: 'pointer', opacity: 0.8 }}
@@ -713,13 +906,10 @@ const Result = forwardRef<any, Props>(
         title: <Translate>REJECTED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.rejectedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.rejectedAt ? formatDateWithoutSeconds(row.rejectedAt) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.rejectedBy}
+            date={row.rejectedAt}
+          />
         )
       },
       {
@@ -727,13 +917,21 @@ const Result = forwardRef<any, Props>(
         title: <Translate>APPROVED AT / BY</Translate>,
         expandable: true,
         render: (row: any) => (
-          <>
-            <span>{row.approvedBy ?? ' '}</span>
-            <br />
-            <span className="date-table-style">
-              {row.approvedAt ? formatDateWithoutSeconds(row.approvedDate) : ' '}
-            </span>
-          </>
+          <UserDateCell
+            login={row.approvedBy}
+            date={row.approvedDate}
+          />
+        )
+      },
+      {
+        key: 'createdAt',
+        title: <Translate>CREATED AT / BY</Translate>,
+        expandable: true,
+        render: (row: any) => (
+          <UserDateCell
+            login={row.createdBy}
+            date={row.createdDate}
+          />
         )
       }
     ];
@@ -794,140 +992,195 @@ const Result = forwardRef<any, Props>(
       });
     }, [fetchNormalRangesByProfileTestId, normalRangesMap, profileTestIds]);
 
+    const previousOrderId = useRef(order?.id);
+
     useEffect(() => {
-      const currentIds = normalizedResults.map(r => r.id);
-      setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
-    }, [normalizedResults]);
+      if (previousOrderId.current !== order?.id) {
+        setSelectedResultIds([]);
+        previousOrderId.current = order?.id;
+      }
+    }, [order?.id]);
+
+
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
     return (
-      <Panel
-        defaultExpanded
-        header={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span />
-            <HStack spacing={10}>
+      <div dir={dir}>
+        <Panel
+          defaultExpanded
+          header={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span />
+              <HStack spacing={10}>
 
-              <Whisper placement="top" speaker={<Tooltip>Approve</Tooltip>}>
-                <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    prefixIcon={() => <CheckRoundIcon />}
-                    disabled={!selectedResultIds.length}
-                    onClick={handleBulkApprove}
-                  >
-                    Approve Selected
-                  </MyButton>
-                </span>
-              </Whisper>
+                <Whisper placement="top" speaker={<Tooltip>Approve</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <MyButton
+                      prefixIcon={() => <CheckRoundIcon />}
+                      disabled={!selectedResultIds.length}
+                      onClick={handleBulkApprove}
+                    >
+                      Approve Selected
+                    </MyButton>
+                  </span>
+                </Whisper>
 
-              <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
-                <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    prefixIcon={() => <WarningRoundIcon />}
-                    appearance="ghost"
-                    disabled={!selectedResultIds.length}
-                    onClick={() => {
-                      setIsBulkRejectMode(true);
-                      setOpenResultRejectModal(true);
-                    }}
-                  >
-                    Reject Selected
-                  </MyButton>
-                </span>
-              </Whisper>
-            </HStack>
-          </div>
-        }
-      >
-        <MyTable
-          columns={columns}
-          data={normalizedResults}
-          loading={loading || isFetching}
-          page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          totalCount={resultsResponse?.totalCount ?? 0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          rowClassName={isResultSelected}
-          onRowClick={rowData => {
-            setSelectedRow(rowData);
-            if (rowData?.orderTestId) {
-              setTest({
-                id: rowData.orderTestId,
-                processingStatus: rowData.processingStatus,
-                status: rowData.status
-              });
-            }
-          }}
-        />
-
-        <ChatModal
-          open={openResultNoteModal}
-          setOpen={setOpenResultNoteModal}
-          title="Result Comments"
-          list={resultNotesResponse ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendResultNote}
-        />
-
-        <LogResult
-          open={openLogsModal}
-          setOpen={setOpenLogsModal}
-          result={selectedResultForLogs}
-        />
-
-        <CancellationModal
-          open={openResultRejectModal}
-          setOpen={(open: boolean) => {
-            setOpenResultRejectModal(open);
-            if (!open) {
-              setIsBulkRejectMode(false);
-              setResultRejectReason('');
-            }
-          }}
-          fieldName="rejectedReason"
-          handleCancle={handleReject}
-          object={{ rejectedReason: resultRejectReason }}
-          setObject={(obj: any) => setResultRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title={isBulkRejectMode ? 'Reject Selected Results' : 'Reject Result'}
-        />
-
-        <EditResultModal
-          open={openEditModal}
-          setOpen={setOpenEditModal}
-          result={selectedResultForEdit}
-          onSuccess={() => refetch()}
-        />
-
-        <NormalRangeModal
-          open={openNormalRangeModal}
-          setOpen={setOpenNormalRangeModal}
-          ranges={
-            selectedResult
-              ? normalRangesMap[selectedResult.profileTestId] ?? []
-              : []
+                <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <MyButton
+                      prefixIcon={() => <WarningRoundIcon />}
+                      appearance="ghost"
+                      disabled={!selectedResultIds.length}
+                      onClick={() => {
+                        setIsBulkRejectMode(true);
+                        setOpenResultRejectModal(true);
+                      }}
+                    >
+                      Reject Selected
+                    </MyButton>
+                  </span>
+                </Whisper>
+                <Whisper placement='top' speaker={<Tooltip>Print Results Report</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <LaboratoryReportButton resultIds={selectedResultIds} />
+                  </span>
+                </Whisper>
+              </HStack>
+            </div>
           }
-        />
-
-        <MyModal
-          open={openComparisonModal}
-          setOpen={setOpenComparisonModal}
-          title="Laboratory Result Comparison"
-          size="80vw"
-          bodyheight="85vh"
-          hideActionBtn
-          content={() => (
-            <LaboratoryResultComparison
-              patient={{ key: order?.patientId }}
-              profileTestId={selectedComparisonProfileId}
-              hideTestNameFilter={true}
+        >
+          <div className='laboratory-table-size-container'>
+            <MyTable
+              columns={columns}
+              data={normalizedResults}
+              loading={loading || isFetching}
+              page={paginationParams.page}
+              rowsPerPage={paginationParams.size}
+              totalCount={resultsResponse?.totalCount ?? 0}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortColumn={sortColumn}
+              sortType={sortType}
+              onSortChange={handleSortChange}
+              rowClassName={isResultSelected}
+              onRowClick={rowData => {
+                setSelectedRow(rowData);
+                if (rowData?.orderTestId) {
+                  setTest({
+                    id: rowData.orderTestId,
+                    processingStatus: rowData.processingStatus,
+                    status: rowData.status
+                  });
+                }
+              }}
             />
-          )}
-        />
-      </Panel>
+          </div>
+
+          <ChatModal
+            open={openResultNoteModal}
+            setOpen={setOpenResultNoteModal}
+            title="Result Comments"
+            list={resultNotesResponse ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendResultNote}
+          />
+
+          <LogResult
+            open={openLogsModal}
+            setOpen={setOpenLogsModal}
+            result={selectedResultForLogs}
+          />
+
+          <CancellationModal
+            open={openResultRejectModal}
+            setOpen={(open: boolean) => {
+              setOpenResultRejectModal(open);
+              if (!open) {
+                setIsBulkRejectMode(false);
+                setResultRejectReason('');
+              }
+            }}
+            fieldName="rejectedReason"
+            handleCancle={handleReject}
+            object={{ rejectedReason: resultRejectReason }}
+            setObject={(obj: any) => setResultRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title={isBulkRejectMode ? 'Reject Selected Results' : 'Reject Result'}
+            required
+          />
+
+          <EditResultModal
+            open={openEditModal}
+            setOpen={setOpenEditModal}
+            result={selectedResultForEdit}
+            onSuccess={() => refetch()}
+          />
+
+          <NormalRangeModal
+            open={openNormalRangeModal}
+            setOpen={setOpenNormalRangeModal}
+            ranges={
+              selectedResult
+                ? (normalRangesMap[selectedResult.profileTestId] ?? []).filter(
+                    (range: any) => range.isActive === true
+                  )
+                : []
+            }
+            profileTestId={selectedResult?.profileTestId ?? null}
+            resultTypeAtEntry={selectedResult?.resultTypeAtEntry}
+          />
+
+          <MyModal
+            open={openCriticalConfirmModal}
+            setOpen={setOpenCriticalConfirmModal}
+            title="Approve Result — Confirmation Required"
+            size="30vw"
+            bodyheight="30vh"
+            pagesCount={1}
+            hideBack
+            actionButtonLabel="Yes, Approve"
+            actionButtonFunction={handleCriticalConfirmYes}
+            cancelButtonLabel="No, Keep Unapproved"
+            handleCancelFunction={handleCriticalConfirmNo}
+            content={() => (
+              <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+                <FontAwesomeIcon
+                  icon={faTriangleExclamation}
+                  style={{ fontSize: '2.5rem', color: 'var(--primary-pink)', marginBottom: 16 }}
+                />
+                <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 8 }}>
+                  You are about to <span style={{ color: 'var(--primary-pink)' }}>APPROVE</span> this result.
+                </p>
+                <p style={{ fontSize: '0.95rem', color: 'var(--gray-dark)' }}>
+                  Communicated to Healthcare Provider?
+                </p>
+              </div>
+            )}
+          />
+
+          <MyModal
+            open={openComparisonModal}
+            setOpen={setOpenComparisonModal}
+            title="Laboratory Result Comparison"
+            size="80vw"
+            bodyheight="85vh"
+            hideActionBtn
+            content={() => (
+              <LaboratoryResultComparison
+                patient={{ id: order?.patientId }}
+                profileTestId={selectedComparisonProfileId}
+                hideTestNameFilter={true}
+              />
+            )}
+          />
+        </Panel>
+      </div>
     );
   }
 );

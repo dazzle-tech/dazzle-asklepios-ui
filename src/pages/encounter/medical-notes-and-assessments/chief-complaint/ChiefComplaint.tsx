@@ -142,7 +142,9 @@ const ChiefComplaint = () => {
                 fieldType="select"
                 fieldName="latestpainlevelLkey"
                 selectData={timeUnitsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={{}}
                 setRecord={{}}
@@ -201,7 +203,9 @@ const ChiefComplaint = () => {
                     fieldType="select"
                     fieldName="latestpainlevelLkey"
                     selectData={painPatternLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={{}}
@@ -261,7 +265,9 @@ const ChiefComplaint = () => {
                     fieldType="select"
                     fieldName="latestpainlevelLkey"
                     selectData={bodyPartsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     record={{}}
                     setRecord={{}}

@@ -40,7 +40,9 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           fieldType="select"
           fieldName="securityAccessLevelLkey"
           selectData={securityAccessLevelLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={localPatient}
           setRecord={setLocalPatient}

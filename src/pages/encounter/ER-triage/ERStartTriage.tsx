@@ -103,8 +103,17 @@ const ERStartTriage = (props:ERTriageProps) => {
   const divContent = (
     "ER Start Triage"
   );
+
+useEffect(() => {
   dispatch(setPageCode('Start_Triage'));
   dispatch(setDivContent(divContent));
+
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // handle Complete Encounter Function
   const handleCompleteEncounter = async () => {
@@ -155,12 +164,6 @@ const ERStartTriage = (props:ERTriageProps) => {
   }, [saveTriageMutation]);
   // Effects
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
   useEffect(() => {
     if (triageResponse?.object?.length === 1) {
       setEmergencyTriage(triageResponse.object[0]);

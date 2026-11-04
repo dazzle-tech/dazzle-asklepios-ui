@@ -19,12 +19,10 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
   // LOV Queries
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
-  const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
   // Enums
+  const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
@@ -44,19 +42,29 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
   }, [procedure?.toFacilityId, getDepartmentsByFacility]);
 
   // Load procedures by facility and category
-  useEffect(() => {
-    const facilityId = procedure?.toFacilityId;
 
-    if (facilityId && procedure?.categoryKey) {
-      getProcedureByFacility({
-        facilityId: facilityId,
-        category: procedure.categoryKey,
-        page: 0,
-        size: 20,
-        sort: 'name,asc'
-      });
-    }
-  }, [procedure?.toFacilityId, procedure?.categoryKey, getProcedureByFacility]);
+    useEffect(() => {
+      const facilityId = procedure?.toFacilityId;
+      const category =
+        procedure?.categoryKey ||
+        procedure?.categoryId;
+
+      if (facilityId && category) {
+        getProcedureByFacility({
+          facilityId,
+          category,
+          page: 0,
+          size: 20,
+          sort: 'name,asc'
+        });
+      }
+    }, [
+      procedure?.toFacilityId,
+      procedure?.categoryKey,
+      procedure?.categoryId,
+      getProcedureByFacility
+    ]);
+
 
   if (!procedure) return null;
 
@@ -76,7 +84,7 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
       }
     >
       <Form fluid>
-        <div className='margin-bottom-10' >
+        <div className="margin-bottom-10">
           <SectionContainer
             title="Procedure Details"
             content={
@@ -99,10 +107,10 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                   width="100%"
                   fieldType="select"
                   fieldLabel="Category Type"
-                  selectData={CategoryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="categoryKey"
+                  selectData={categoryOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  fieldName="categoryId"
                   record={procedure}
                   setRecord={() => {}}
                 />
@@ -193,7 +201,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                         fieldType="select"
                         fieldLabel="Body Part"
                         selectData={bodypartLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="lovDisplayVale"
                         fieldName="bodyPart"
                         record={procedure}
@@ -206,7 +216,9 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
                         fieldType="select"
                         fieldLabel="Side"
                         selectData={sideLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="lovDisplayVale"
                         fieldName="side"
                         record={procedure}

@@ -1,0 +1,3 @@
+import PatientSatisfactionSurveyResponses from './PatientSatisfactionSurveyResponses';
+
+export default PatientSatisfactionSurveyResponses;

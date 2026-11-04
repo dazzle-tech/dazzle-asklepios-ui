@@ -181,7 +181,9 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                       <MyInput
                         width="100%"
                         selectData={asaLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldType="select"
                         fieldName="asaScoreLkey"
@@ -195,7 +197,9 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                       <MyInput
                         width="100%"
                         selectData={airwayLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         fieldType="select"
                         fieldName="airwayGradeLkey"

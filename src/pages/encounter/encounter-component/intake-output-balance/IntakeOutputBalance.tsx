@@ -257,7 +257,13 @@ const IntakeOutputBalance = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  return (
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <Row gutter={15} className="d">
       <Col md={12}>
         <Row>
@@ -302,7 +308,7 @@ const IntakeOutputBalance = () => {
       <Col md={12}>
         <Row>
           <SectionContainer 
-           title={<>Intakes
+           title={<><Translate>Intakes</Translate>
            
                            <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
@@ -347,7 +353,7 @@ const IntakeOutputBalance = () => {
         </Row>
         <Row>
           <SectionContainer 
-           title={<>Outputs
+           title={<><Translate>Outputs</Translate>
                 <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
@@ -391,7 +397,7 @@ const IntakeOutputBalance = () => {
           />
         </Row>
       </Col>
-    </Row>
+    </Row></div>
   );
 };
 

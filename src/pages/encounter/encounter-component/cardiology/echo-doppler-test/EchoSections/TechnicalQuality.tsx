@@ -30,6 +30,8 @@ const TechnicalQuality: React.FC<Props> = ({ record, setRecord }) => {
             selectDataValue="key"
             record={record}
             setRecord={setRecord}
+                    disableByField='isValid'
+
           />
           <RadioGroup
             name="imageQuality"

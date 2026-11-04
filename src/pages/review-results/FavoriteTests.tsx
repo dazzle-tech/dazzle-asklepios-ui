@@ -3,7 +3,7 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import { faFlask, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Button, HStack, Panel, Tooltip, Whisper } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 
 import {
   useAddFavoriteDiagnosticTestMutation,
@@ -15,28 +15,41 @@ import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/d
 import { DiagnosticTest } from '@/types/model-types-new';
 
 import './styles.less';
+import { useAppSelector } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useDispatch } from 'react-redux';
+import MyInput from '@/components/MyInput';
 
 interface FavoriteTestsProps {
-  user: number;
+  isModal?: boolean;
 }
 
-const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
+const FavoriteTests: React.FC<FavoriteTestsProps> = ({ isModal = false }) => {
   const [favoriteTestIds, setFavoriteTestIds] = useState<number[]>([]);
+  const mode = useAppSelector((state) => state.ui.mode);
+  const dispatch = useDispatch();
 
-  const [paginationParams] = useState({
+    const PAGE_SIZE = 60;
+
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: PAGE_SIZE,
     sort: 'id,asc',
     timestamp: Date.now()
   });
 
+const authSlice=useAppSelector((state) => state.auth);
+const user = authSlice?.user;
   const { data: diagnodticsTestList, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user });
+  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user?.id });
   const [addFavorite] = useAddFavoriteDiagnosticTestMutation();
   const [deleteFavorite] = useDeleteFavoriteDiagnosticTestMutation();
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
-  const allTests: DiagnosticTest[] = diagnodticsTestList?.data ?? [];
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [allTests, setAllTests] = useState<DiagnosticTest[]>([]);
 
   useEffect(() => {
     if (favorites) {
@@ -49,10 +62,10 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
 
     try {
       if (isFavorite) {
-        await deleteFavorite({ userId: user, testId }).unwrap();
+        await deleteFavorite({ userId: user.id, testId }).unwrap();
         setFavoriteTestIds(prev => prev.filter(id => id !== testId));
       } else {
-        await addFavorite({ userId: user, testId }).unwrap();
+        await addFavorite({ userId: user.id, testId }).unwrap();
         setFavoriteTestIds(prev => [...prev, testId]);
       }
     } catch (error) {
@@ -72,36 +85,126 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
     return 'linear-gradient(135deg, #718096 0%, #4a5568 100%)';
   };
 
-  const filteredTests =
-    typeFilter === 'ALL'
-      ? allTests
-      : allTests.filter(t => t.type === typeFilter);
+  const filteredTests = allTests.filter(test => {
+
+      const matchesType =
+          typeFilter === 'ALL'
+          || test.type === typeFilter;
+
+      const matchesName =
+          !searchTerm
+          || test.name?.toLowerCase().includes(
+              searchTerm.toLowerCase()
+          );
+
+      return matchesType && matchesName;
+
+  });
+
+useEffect(() => {
+
+    const newTests =
+        diagnodticsTestList?.data ?? [];
+
+    if (paginationParams.page === 0) {
+
+        setAllTests(newTests);
+
+    }
+    else {
+
+        setAllTests(prev => [
+
+            ...prev,
+
+            ...newTests
+
+        ]);
+
+    }
+
+}, [diagnodticsTestList]);
+
+
+const hasMore =
+    (diagnodticsTestList?.data?.length ?? 0)
+    === PAGE_SIZE;
+
+
+
+    const handleLoadMore = () => {
+
+    setPaginationParams(prev => ({
+
+        ...prev,
+
+        page: prev.page + 1,
+
+        timestamp: Date.now()
+
+    }));
+
+};
+
+
+  useEffect(() => {
+    if (isModal) return;
+
+    dispatch(setPageCode('REVIEW_RESULTS'));
+    dispatch(setDivContent('Favorite Test'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch, isModal]);
+
+
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <div className="favorite-tests">
+  <div dir={dir}>
+    <div className={`favorite-tests ${mode}`}>
 
-      <HStack spacing={10} style={{ marginBottom: 20 }}>
-        <Button
+      <div className="date-filter-form" style={{ marginBottom: 20 }}>
+        <MyButton
           appearance={typeFilter === 'ALL' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('ALL')}
         >
           All
-        </Button>
+        </MyButton>
 
-        <Button
+        <MyButton
           appearance={typeFilter === 'LABORATORY' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('LABORATORY')}
         >
           Laboratory
-        </Button>
+        </MyButton>
 
-        <Button
+        <MyButton
           appearance={typeFilter === 'RADIOLOGY' ? 'primary' : 'ghost'}
           onClick={() => setTypeFilter('RADIOLOGY')}
         >
           Radiology
-        </Button>
-      </HStack>
+        </MyButton>
+      <Form>
+        <MyInput
+            fieldName="search"
+            fieldType="text"
+            placeholder="Search by Test Name..."
+            record={{ search: searchTerm }}
+            setRecord={(r:any)=>setSearchTerm(r.search)}
+            showLabel={false}
+            width="15vw"
+        />
+      </Form>
+      </div>
 
 
       <div className="favorite-test-review-result-boxes-container">
@@ -166,6 +269,19 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
         })}
       </div>
 
+      {hasMore && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+          <MyButton
+            appearance="ghost"
+            onClick={handleLoadMore}
+            disabled={isFetching}
+          >
+            Load More
+          </MyButton>
+        </div>
+      )}
+
+
       {!isFetching && allTests.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">
@@ -181,6 +297,7 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
       )}
 
     </div>
+  </div>
   );
 };
 

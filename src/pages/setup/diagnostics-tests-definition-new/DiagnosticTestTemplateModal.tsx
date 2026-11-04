@@ -20,11 +20,11 @@ import {
 } from "@/services/setup/report-template/DiagnosticTestTemplate";
 import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
 import "./styles.less";
+import Translate from "@/components/Translate";
 
 interface DiagnosticTestTemplateModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-
   testId: number;
   initialData?: {
     id?: number;
@@ -181,6 +181,12 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
     }
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -197,11 +203,11 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
       size="50vw"
       bodyheight="38vw"
       content={
-        <Form fluid layout="inline">
+        <Form fluid layout="inline" dir={dir}>
           <MyInput
             column
             width="100%"
-            fieldLabel="Template Name"
+            fieldLabel={<Translate>Template Name</Translate>}
             fieldName="name"
             fieldType="text"
             record={formData}
@@ -255,7 +261,7 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
                 overflow: "auto",
               }}
               editorState={editorState}
-              onEditorStateChange={readOnly ? () => {} : setEditorState}
+              onEditorStateChange={readOnly ? () => { } : setEditorState}
               toolbarHidden={readOnly}
               readOnly={readOnly}
               editorClassName="custom-editor"

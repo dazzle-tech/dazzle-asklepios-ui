@@ -31,6 +31,12 @@ const UomConversionModal = ({ open, setOpen, uom }) => {
     { key: "relation", title: "Relation" }
   ];
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -41,7 +47,7 @@ const UomConversionModal = ({ open, setOpen, uom }) => {
       hideBack
       hideActionBtn
       content={() => (
-        <Form fluid>
+        <Form fluid dir={dir}>
           <MyTable height={350} data={relationsList ?? []} columns={columns} />
         </Form>
       )}

@@ -1,39 +1,29 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import LovValueCell from '@/components/LovValueCell';
 import Translate from '@/components/Translate';
-import { useGetLovAllValuesQuery } from '@/services/setupService';
-import { initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
-import React from 'react';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import React, { useEffect } from 'react';
 
 type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
   ranges: any[];
+  profileTestId: number | null;
+  resultTypeAtEntry?: string;
 };
 
-const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
+const NormalRangeModal = ({ open, setOpen, ranges, profileTestId, resultTypeAtEntry }: Props) => {
 
-  // list of value new function
-  const { data: allLovValues } =
-    useGetLovAllValuesQuery({ ...initialListRequestAllValues }); 
-
-  const resolveLovKeysDisplay = (lovKeys?: string[]) => {
-    if (!Array.isArray(lovKeys) || !lovKeys.length) return ' ';
-    if (!allLovValues?.object) return ' ';
-
-    return lovKeys
-      .map(key =>
-        allLovValues.object.find(
-          v => String(v.key) === String(key)
-        )?.lovDisplayVale
-      )
-      .filter(Boolean)
-      .join(', ') || ' ';
-  };
-
-
-
+  const [getProfilesByIds, { data: profileTests, isLoading }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
+  useEffect(() => {
+    if (profileTestId) {
+      getProfilesByIds([profileTestId]);
+    }
+  }, [profileTestId]);
+  const profileTest = profileTests?.[0];
   const columns = [
     {
       key: 'gender',
@@ -60,13 +50,35 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
       title: <Translate>RANGE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (r.rangeFrom != null || r.rangeTo != null) {
-          return `${r.rangeFrom ?? ' '} - ${r.rangeTo ?? ' '}`;
+        const resultType = (resultTypeAtEntry ?? profileTest?.resultType)?.toUpperCase()?.trim();
+
+        if (resultType === 'NUMBER') {
+          switch (r.normalRangeType) {
+            case 'RANGE':
+              return `${r.rangeFrom ?? '-'} - ${r.rangeTo ?? '-'}`;
+
+            case 'LESS_THAN':
+              return `< ${r.rangeTo ?? '-'}`;
+
+            case 'MORE_THAN':
+              return `> ${r.rangeFrom ?? '-'}`;
+
+            default:
+              return '-';
+          }
         }
-        if (Array.isArray(r.lovKeys) && r.lovKeys.length) {
-          return resolveLovKeysDisplay(r.lovKeys);
+
+        if (resultType === 'LOV') {
+          return Array.isArray(r.lovKeys) && r.lovKeys.length ? (
+            <LovValueCell valueKey={r.lovKeys.join(',')} />
+          ) : '-';
         }
-        return ' ';
+
+        if (resultType === 'TEXT') {
+          return r.resultText ?? '-';
+        }
+
+        return '-';
       }
     },
     {
@@ -74,32 +86,60 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
       title: <Translate>CRITICAL VALUE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (r.criticalValue != null) return r.criticalValue;
-        if (r.criticalValueLessThan != null)
+        if (!r.criticalValue) {
+          return ' ';
+        }
+
+        const hasLessThan =
+          r.criticalValueLessThan !== null &&
+          r.criticalValueLessThan !== undefined;
+
+        const hasMoreThan =
+          r.criticalValueMoreThan !== null &&
+          r.criticalValueMoreThan !== undefined;
+
+        if (hasLessThan && hasMoreThan) {
+          return `< ${r.criticalValueLessThan}  OR  > ${r.criticalValueMoreThan}`;
+        }
+        if (hasLessThan) {
           return `< ${r.criticalValueLessThan}`;
-        if (r.criticalValueMoreThan != null)
+        }
+        if (hasMoreThan) {
           return `> ${r.criticalValueMoreThan}`;
+        }
+
         return ' ';
       }
-    }
+    }    
   ];
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Normal Ranges"
-      position='center'
-      size="40vw"
-      bodyheight='auto'
-      content={
-        <MyTable
-          columns={columns}
-          data={ranges ?? []}
-          height={400}
-        />}
-    />
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Normal Ranges"
+        position='center'
+        size="40vw"
+        bodyheight='auto'
+        hideActionBtn
+        content={
+          <div dir={dir}>
+            <MyTable
+              columns={columns}
+              data={ranges ?? []}
+              height={400}
+            />
+          </div>}
+      />
+    </div>
   );
 };
 

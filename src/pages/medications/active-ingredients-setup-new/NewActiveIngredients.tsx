@@ -24,6 +24,7 @@ import MOAAndPharmacokinetics from './MOAAndPharmacokinetics';
 import DrugDrugAndFoodInteractions from './DrugDrugAndFoodInteractions';
 import PregnancyLactationAndSpecialPopulation from './PregnancyLactationAndSpecialPopulation';
 import Synonyms from './Synonyms';
+import Pharmaceuticals from './Pharmaceuticals';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
 import PreRequestedTests from './Pre-requestedTests';
@@ -58,9 +59,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
     }
   );
   // Fetch controlled medications categories Lov response
-const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
-  labelFormatter: formatControlledEnumLabel
-});
+  const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
+    labelFormatter: formatControlledEnumLabel
+  });
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
@@ -112,8 +113,10 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           ...response
         });
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       const data = error?.data ?? {};
+
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
       const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
@@ -124,11 +127,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
 
       if (isValidation && Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
         const fieldLabels: Record<string, string> = {
-       name:'Active Ingredient Name'
+          name: 'Active Ingredient Name'
         };
+
         const normalizeMsg = (msg: string) => {
           const m = (msg || '').toLowerCase();
-          if (m.includes('must not be null')) return 'is required';
+
+          if (m.includes('must not be null')) {
+            return 'is required';
+          }
+
           return msg || 'invalid value';
         };
 
@@ -137,26 +145,39 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           return `• ${label}: ${normalizeMsg(fe.message)}`;
         });
 
-        dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'warning' }));
+        dispatch(
+          notify({
+            msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+            sev: 'warning'
+          })
+        );
+
         return;
       }
 
-      const messageProp: string = data?.message || '';
-      const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
+      const cleanBackendMessage = (msg?: string) => {
+        if (!msg) return undefined;
 
-      const keyMap: Record<string, string> = {
-        name: 'Active Ingredient Name is required.',
+        return msg
+          .replace(/^error\./, '')
+          .replace(/\s+/g, ' ')
+          .trim();
       };
 
       const humanMsg =
-        (errorKey && keyMap[errorKey]) ||
+        cleanBackendMessage(data?.message) ||
         data?.detail ||
         data?.title ||
-        data?.message ||
         'Unexpected error';
 
-      dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
-    } 
+      dispatch(
+        notify({
+          msg: humanMsg + suffix,
+          sev: 'error'
+        })
+      );
+    }
+
   };
 
   // Effects
@@ -200,12 +221,26 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
   const tabData = useMemo(
     () => [
       {
+        title: 'Pharmaceuticals',
+        content: (
+          <Section
+            title="Pharmaceuticals"
+            content={<Pharmaceuticals activeIngredient={activeIngredient} />}
+            setOpen={() => { }}
+            rightLink=""
+            openedContent={null}
+            disabled={!isExisting}
+          />
+        ),
+        disabled: !isExisting
+      },
+      {
         title: 'Indications',
         content: (
           <Section
             title="Indications"
             content={<Indications selectedActiveIngredients={activeIngredient} />}
-            setOpen={() => {}}
+            setOpen={() => { }}
             rightLink=""
             openedContent={null}
             disabled={!isExisting}
@@ -219,7 +254,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           <Section
             title="Contraindications"
             content={<Contraindications activeIngredients={activeIngredient} />}
-            setOpen={() => {}}
+            setOpen={() => { }}
             rightLink=""
             openedContent={null}
             disabled={!isExisting}
@@ -257,7 +292,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           <Section
             title="Dose Adjustment"
             content={<DoseAdjustment activeIngredients={activeIngredient} />}
-            setOpen={() => {}}
+            setOpen={() => { }}
             rightLink=""
             openedContent={null}
             disabled={!isExisting}
@@ -271,7 +306,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           <Section
             title="Synonyms"
             content={<Synonyms activeIngredients={activeIngredient} />}
-            setOpen={() => {}}
+            setOpen={() => { }}
             rightLink=""
             openedContent={null}
             disabled={!isExisting}
@@ -285,7 +320,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           <Section
             title="Pre-requested Tests"
             content={<PreRequestedTests activeIngredient={activeIngredient} />}
-            setOpen={() => {}}
+            setOpen={() => { }}
             rightLink=""
             openedContent={null}
             disabled={!isExisting}
@@ -297,8 +332,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
     [activeIngredient, isExisting]
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Panel
+      dir={dir}
       header={
         <h3 className="title">
           <Translate>New/Edit Active Ingredient</Translate>
@@ -329,7 +372,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 name: '',
                 medicalCategoryId: null,
                 drugClassId: null,
-                atcCode: null,
+                atcCode: '',
                 isControlled: false,
                 controlled: null,
                 hasBlackBoxWarning: false,
@@ -433,16 +476,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
-                    fieldName="highRiskMed"
+                    fieldName="highAlert"
                     fieldType="checkbox"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
                   />
                 </Col>
-              
+
               </Row>
               <Row>
-              <Col md={6}>
+                <Col md={6}>
                   <MyInput
                     width="100%"
                     fieldName="abortiveMedication"
@@ -488,6 +531,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
+                    fieldName="isLookAlikeSoundAlike"
+                    fieldType="checkbox"
+                    record={activeIngredient}
+                    setRecord={setActiveIngredient}
+                    fieldLabel="Is Look-Alike/Sound-Alike"
+                  />
+                </Col>
+                <Col md={6}>
+                  <MyInput
+                    width="100%"
                     fieldName="hasBlackBoxWarning"
                     fieldType="checkbox"
                     record={activeIngredient}
@@ -506,13 +559,15 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                     />
                   )}
                 </Col>
+
               </Row>
               <br />
             </Form>
           </Stack.Item>
         </Stack>
-        <MyTab 
-         data={tabData}
+        <MyTab
+          data={tabData}
+          lazy
         />
       </Panel>
     </Panel>

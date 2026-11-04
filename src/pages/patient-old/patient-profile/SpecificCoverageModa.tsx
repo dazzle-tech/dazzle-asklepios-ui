@@ -89,7 +89,9 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
                         fieldType="select"
                         fieldName="typeLkey"
                         selectData={isnuranceCovgTypResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientInsuranceCoverage}
                         setRecord={setPatientInsuranceCoverage}
@@ -101,7 +103,9 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
                         fieldType="select"
                         fieldName="coverageTypeLkey"
                         selectData={isnuranceCovgItemsResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientInsuranceCoverage}
                         setRecord={setPatientInsuranceCoverage}

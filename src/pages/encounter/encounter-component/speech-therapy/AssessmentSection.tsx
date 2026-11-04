@@ -134,7 +134,9 @@ const AssessmentSection = () => {
               record={planData}
               setRecord={setPlanData}
               selectData={communicationModeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               width={230}
               searchable={false}
@@ -146,7 +148,9 @@ const AssessmentSection = () => {
               record={planData}
               setRecord={setPlanData}
               selectData={speechIntellLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               width={200}
               searchable={false}
@@ -158,7 +162,9 @@ const AssessmentSection = () => {
               record={planData}
               setRecord={setPlanData}
               selectData={voiceQualityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               width={200}
               searchable={false}
@@ -170,7 +176,9 @@ const AssessmentSection = () => {
               record={planData}
               setRecord={setPlanData}
               selectData={fluencyLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
+               selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
               selectDataValue="key"
               width={200}
               searchable={false}

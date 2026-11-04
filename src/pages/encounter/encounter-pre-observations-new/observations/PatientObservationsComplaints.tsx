@@ -4,10 +4,9 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
 
 import './styles.less';
-
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import type {
   PatientEncounter,
   PatientObservationsComplaints as PatientObservationsComplaintsModel
@@ -19,34 +18,53 @@ import {
   useGetLatestPatientObservationsComplaintsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+
 type PatientObservationsComplaintsProps = {
   patientId: number;
   encounterId: number;
-  encounter?: any;
+  encounter: PatientEncounter;
+  setEncounter: (e: PatientEncounter) => void;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  prefill?: Partial<PatientObservationsComplaintsModel> | null;
+  onSaved?: (saved?: PatientObservationsComplaintsModel) => void;
 };
 
 const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
   patientId,
   encounterId,
   encounter,
+  setEncounter,
   disabled = false,
   width = '100%',
-  title = 'Patient Observations & Complaints'
+  title = 'Nursing Assessment',
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
-  // Enums / LOVs
   const patientConditions = useEnumOptions('Condition');
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const encounterPriority = useEnumOptions('EncounterPriority');
+  const modeOfArrivalOptions = useEnumOptions('ModeOfArrival');
+  const bloodGroupOptions = useEnumOptions('BloodGroup', {
+    labelOverrides: {
+      A_POSITIVE: 'A+',
+      A_NEGATIVE: 'A-',
+      B_POSITIVE: 'B+',
+      B_NEGATIVE: 'B-',
+      AB_POSITIVE: 'AB+',
+      AB_NEGATIVE: 'AB-',
+      O_POSITIVE: 'O+',
+      O_NEGATIVE: 'O-',
+      UNKNOWN: 'Unknown'
+    }
+  });
 
-  // === API ===
   const [createPatientObservationsComplaints] = useCreatePatientObservationsComplaintsMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
 
@@ -55,48 +73,140 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     { skip: !encounterId }
   );
 
-  // === Local state ===
+  const { data: patientData, refetch: refetchPatient } = useGetPatientByIdQuery(
+    { id: patientId },
+    { skip: !patientId }
+  );
+
   const [record, setRecord] = useState<PatientObservationsComplaintsModel>({
     ...newPatientObservationsComplaints,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
 
+
+const { data: sourceOfInformationLovQueryResponse } =
+  useGetLovValuesByCodeQuery('RELATION');
+
+const sourceOfInformationOptions = useMemo(
+  () =>
+    (sourceOfInformationLovQueryResponse?.object ?? []).map((item: any) => ({
+      ...item,
+      key: String(item.key)
+    })),
+  [sourceOfInformationLovQueryResponse]
+);
+
+
+
+
+  const [byPatient, setByPatient] = useState(prefill?.byPatient !== false);
+  const [clearKey, setClearKey] = useState(0);
+
+  // Populate form from latest encounter observations.
+  // Blood group and patient conditions are intentionally excluded — they are
+  // patient-level data managed by the effects below.
+useEffect(() => {
+  if (prefill || !latestByEncounter) return;
+
+  setByPatient(latestByEncounter.byPatient ?? true);
+
+  setRecord(prev => ({
+    ...prev,
+    ...latestByEncounter,
+    bloodGroup: prev.bloodGroup,
+    patientConditions: prev.patientConditions,
+    id: undefined,
+    patientId,
+    encounterId,
+    sourceOfInformation:
+      latestByEncounter.sourceOfInformation != null
+        ? String(latestByEncounter.sourceOfInformation)
+        : null,
+    isActive:
+      typeof latestByEncounter.isActive === 'boolean'
+        ? latestByEncounter.isActive
+        : true
+  }));
+}, [latestByEncounter, patientId, encounterId, prefill]);
+
+  // Blood group and patient conditions are always driven by the patient record.
+  // Both run on initial load and after every save (refetchPatient updates patientData).
   useEffect(() => {
-    if (!latestByEncounter) return;
+    if (!patientData?.bloodGroup) return;
 
     setRecord(prev => ({
       ...prev,
-      ...latestByEncounter,
-      id: undefined,
-      patientId,
-      encounterId,
-      isActive:
-        typeof (latestByEncounter as any)?.isActive === 'boolean'
-          ? (latestByEncounter as any).isActive
-          : true
+      bloodGroup: patientData.bloodGroup ?? null
     }));
-  }, [latestByEncounter, patientId, encounterId]);
+  }, [patientData?.bloodGroup]);
 
-  /**
-   * CREATE payload only (no id / audit fields).
-   */
+  useEffect(() => {
+    if (!patientData?.patientConditions) return;
+
+    setRecord(prev => ({
+      ...prev,
+      patientConditions: patientData.patientConditions ?? null
+    }));
+  }, [patientData?.patientConditions]);
+
+  // Pregnancy and lactation are recorded for female patients only.
+  const isFemale = String(patientData?.sexAtBirth ?? '').toUpperCase() === 'FEMALE';
+
   const createPayload = useMemo(() => {
     return {
       patientId,
       encounterId,
       reasonOfVisit: record.reasonOfVisit ?? null,
+      modeOfArrival: record.modeOfArrival ?? null,
+
+      byPatient,
+      sourceOfInformation: byPatient
+        ? null
+        : record.sourceOfInformation ?? null,
       functionalStatus: record.functionalStatus ?? null,
-      patientConditions: (record as any).patientConditions ?? null,
+      patientConditions: record.patientConditions ?? null,
       cognitiveCheck: record.cognitiveCheck ?? null,
-      isActive: typeof record.isActive === 'boolean' ? record.isActive : true
+      bloodGroup: record.bloodGroup ?? null,
+      isPregnant: isFemale ? Boolean(record.isPregnant) : null,
+      isLactating: isFemale ? Boolean(record.isLactating) : null,
+      isActive:
+        typeof record.isActive === 'boolean'
+          ? record.isActive
+          : true
     };
-  }, [record, patientId, encounterId]);
+  }, [record, patientId, encounterId, byPatient, isFemale]);
+
+  const toEncounterPayload = (enc: any): PatientEncounter => ({
+    id: Number(enc?.id),
+    patientId: Number(enc?.patientId ?? enc?.patient?.id),
+    encounterNumber: enc?.encounterNumber ?? null,
+    facilityId: Number(enc?.facilityId),
+    departmentId: Number(enc?.departmentId),
+    practitionerId: enc?.practitionerId ?? null,
+    paymentDate: enc?.paymentDate,
+    amount: enc?.amount,
+    encounterType: enc?.encounterType,
+    encounterReason: enc?.encounterReason,
+    followUpEncounterId: enc?.followUpEncounterId ?? enc?.followUpEncounter?.id ?? null,
+    priorityLevel: enc?.priorityLevel,
+    originType: enc?.originType ?? null,
+    originName: enc?.originName ?? null,
+    notes: enc?.notes ?? null,
+    departmentDailySequenceNumber: enc?.departmentDailySequenceNumber ?? null,
+    encounterDate: enc?.encounterDate ?? null,
+    status: enc?.status,
+    chiefComplaint: enc?.chiefComplaint ?? null,
+    hasPrescription: Boolean(enc?.hasPrescription),
+    hasOrder: Boolean(enc?.hasOrder),
+    isObserved: Boolean(enc?.isObserved)
+  });
 
   const normalizeFieldErrorMessage = (message: string) => {
     const m = (message || '').toLowerCase();
-    if (m.includes('must not be null')) return 'is required';
-    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('must not be null')) return 'must not be empty';
+    if (m.includes('must not be blank')) return 'must not be empty';
     if (m.includes('size must be between')) return 'length is out of range';
     if (m.includes('must be greater')) return 'value is too small';
     if (m.includes('must be less')) return 'value is too large';
@@ -122,7 +232,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         patientConditions: 'Patient Conditions',
         cognitiveCheck: 'Cognitive Check',
         isActive: 'Active',
-        id: 'Id'
+        id: 'Id',
+        priorityLevel: 'Priority'
       };
 
       const lines = data.fieldErrors.map((fe: any) => {
@@ -145,7 +256,10 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     const keyMap: Record<string, string> = {
       'payload.required': 'Patient observations & complaints payload is required.',
       'patient.required': 'Patient id is required.',
+      'patient.notfound': 'Patient not found.',
       'encounter.required': 'Encounter id is required.',
+      'db.constraint': 'Database constraint violated while saving.',
+      'patient.invalid': 'Invalid patient id.',
       notfound: 'No patient observations & complaints found.'
     };
 
@@ -157,32 +271,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       'Unexpected error';
 
     dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
-  };
-  const buildEncounterUpdateBody = (row: any) => {
-    const body: any = {
-      id: row?.id,
-      patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
-      encounterNumber: row?.encounterNumber ?? null,
-      facilityId: row?.facilityId,
-      departmentId: row?.departmentId,
-      practitionerId: row?.practitionerId ?? null,
-      encounterType: row?.encounterType,
-      encounterReason: row?.encounterReason,
-      followUpEncounterId: row?.followUpEncounterId ?? null,
-      priorityLevel: row?.priorityLevel,
-      originType: row?.originType ?? null,
-      originName: row?.originName ?? null,
-      notes: row?.notes ?? null,
-      departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
-      encounterDate: row?.encounterDate ?? null,
-      status: row?.status,
-      chiefComplaint: row?.chiefComplaint ?? null,
-      hasPrescription: row?.hasPrescription ?? false,
-      hasOrder: row?.hasOrder ?? false,
-      isObserved: true
-    };
-
-    return body;
   };
 
   const handleSave = async () => {
@@ -196,39 +284,19 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       return;
     }
 
+    const missing: string[] = [];
+    if (!record.reasonOfVisit?.trim()) missing.push('• Reason Of Visit: must not be empty');
+    if (!encounter.priorityLevel) missing.push('• Priority: must not be empty');
+
+    if (missing.length > 0) {
+      dispatch(
+        notify({ msg: `Please fix the following fields:\n${missing.join('\n')}`, sev: 'warning' })
+      );
+      return;
+    }
+
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
-      if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId:
-              encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
-
       setRecord(prev => ({
         ...prev,
         ...created,
@@ -237,7 +305,17 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         id: undefined
       }));
 
+      const encounterPayload = toEncounterPayload(encounter);
+      const updatedEncounter = await updateEncounter({
+        id: encounter.id,
+        body: encounterPayload
+      }).unwrap();
+      setEncounter(updatedEncounter);
+
+      await refetchPatient();
+
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+      onSaved?.(created);
     } catch (err: any) {
       showApiError(err);
     }
@@ -247,90 +325,199 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     setRecord({
       ...newPatientObservationsComplaints,
       patientId,
-      encounterId
-    } as any);
+      encounterId,
+      patientConditions: '' as any,
+      sourceOfInformation: null
+    });
+
+    setByPatient(true);
+
+    setEncounter({
+      ...encounter,
+      priorityLevel: null as any
+    });
+
+    setClearKey(prev => prev + 1);
   };
 
   return (
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSave} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div style={width ? { width } : {}}>
-          <Form fluid>
+          <MyInput
+            required
+            width="100%"
+            fieldName="reasonOfVisit"
+            fieldType="textarea"
+            record={record}
+            setRecord={setRecord}
+            disabled={disabled}
+          />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Mode of Arrival"
+            fieldType="select"
+            fieldName="modeOfArrival"
+            record={record}
+            setRecord={setRecord}
+            selectData={modeOfArrivalOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            disabled={disabled}
+            searchable={false}
+          />
+
+
+          
+            <div className="source-information-row">
+          <div className="source-information-col">
+<MyInput
+  width="100%"
+  fieldType="select"
+  fieldLabel="Source Of Information"
+  selectData={sourceOfInformationOptions}
+  selectDataLabel="lovDisplayVale"
+  selectDataValue="key"
+  fieldName="sourceOfInformation"
+  record={record}
+  setRecord={setRecord}
+  disabled={disabled || byPatient}
+  searchable={false}
+/>
+          </div>
+
+          <div className="source-information-col">
             <MyInput
-              required
               width="100%"
-              fieldName="reasonOfVisit"
-              fieldType="textarea"
-              record={record}
-              setRecord={setRecord}
+              fieldLabel="By Patient"
+              fieldType="checkbox"
+              fieldName="byPatient"
+              record={{ byPatient }}
+              setRecord={(value: any) => {
+                const nextValue = value?.byPatient ?? true;
+
+                setByPatient(nextValue);
+
+                if (nextValue) {
+                  setRecord(prev => ({
+                    ...prev,
+                    sourceOfInformation: null
+                  }));
+                }
+              }}
               disabled={disabled}
             />
+          </div>
+            </div>
 
+          <div className="functional-cognitive-row">
+            <div className="functional-cognitive-col">
+              <MyInput
+                width="100%"
+                fieldLabel="Functional Status"
+                fieldName="functionalStatus"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                disabled={disabled}
+              />
+            </div>
+
+            <div className="functional-cognitive-col">
+              <MyInput
+                width="100%"
+                fieldLabel="Cognitive Check"
+                fieldName="cognitiveCheck"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                disabled={disabled}
+              />
+            </div>
+          </div>
+
+          {isFemale && (
             <div className="functional-cognitive-row">
               <div className="functional-cognitive-col">
                 <MyInput
                   width="100%"
-                  fieldLabel="Functional Status"
-                  fieldName="functionalStatus"
-                  fieldType="textarea"
+                  fieldLabel="Pregnant"
+                  fieldType="checkbox"
+                  fieldName="isPregnant"
                   record={record}
                   setRecord={setRecord}
                   disabled={disabled}
                 />
               </div>
-
               <div className="functional-cognitive-col">
                 <MyInput
                   width="100%"
-                  fieldLabel="Cognitive Check"
-                  fieldName="cognitiveCheck"
-                  fieldType="textarea"
+                  fieldLabel="Lactating"
+                  fieldType="checkbox"
+                  fieldName="isLactating"
                   record={record}
                   setRecord={setRecord}
                   disabled={disabled}
                 />
               </div>
             </div>
+          )}
 
-            <MultiSelectAppender
-              label="Patient Conditions"
-              options={patientConditions ?? []}
-              optionLabel="label"
-              optionValue="value"
-              object={record.patientConditions ?? ''}
-              setObject={(value: string) =>
-                setRecord(prev => ({
-                  ...prev,
-                  patientConditions: value
-                }))
-              }
-            />
+          {/* <MultiSelectAppender
+            key={clearKey}
+            label="Patient Conditions"
+            options={patientConditions ?? []}
+            optionLabel="label"
+            optionValue="value"
+            object={record.patientConditions ?? ''}
+            setObject={(value: string) =>
+              setRecord(prev => ({
+                ...prev,
+                patientConditions: value
+              }))
+            }
+          /> */}
 
-            <MyInput
-              width="100%"
-              fieldLabel="Priority"
-              fieldType="select"
-              fieldName="priorityLkey"
-              selectData={encounterPriorityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
-              disabled={disabled}
-              searchable={false}
-            />
-          </Form>
+          <MyInput
+            width="100%"
+            fieldLabel="Blood Group"
+            fieldType="select"
+            fieldName="bloodGroup"
+            selectData={bloodGroupOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={record}
+            setRecord={setRecord}
+            disabled={disabled}
+            searchable={false}
+          />
+
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Priority"
+            fieldType="select"
+            fieldName="priorityLevel"
+            selectData={encounterPriority ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={encounter}
+            setRecord={setEncounter}
+            disabled={disabled}
+            searchable={false}
+          />
         </div>
       }
     />

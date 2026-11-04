@@ -17,11 +17,9 @@ import {
   useSaveIntraoperativeEventsMutation,
   useSaveOperationStaffMutation
 } from '@/services/operationService';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery,
-  useGetUsersQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeQuery, useGetUsersQuery } from '@/services/setupService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+
 import {
   newApOperationIntraoperativeEvents,
   newApOperationStaff,
@@ -34,7 +32,14 @@ import { Col, Divider, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
 import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-order-new';
 import clsx from 'clsx';
 import Section from '@/components/Section';
-const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable, activeTab, setActiveTab }) => {
+const IntraoperativeEventsTracking = ({
+  operation,
+  patient,
+  encounter,
+  editable,
+  activeTab,
+  setActiveTab
+}) => {
   const dispatch = useAppDispatch();
   const [intraoperative, setIntraoperative] = useState({ ...newApOperationIntraoperativeEvents });
 
@@ -53,7 +58,10 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
   const [surgicalP, setSurgicalP] = useState({ ...newApOperationSurgicalPreparationIncision });
 
   const { data: registration } = useGetOperationPatientArrivalByOperationQuery(operation?.key);
-  const { data: practtionerList } = useGetPractitionersQuery({ ...initialListRequest });
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: !open }
+  );
   const [save] = useSaveIntraoperativeEventsMutation();
   const [tag, setTag] = useState([]);
   const [status, setStatus] = useState<string>('');
@@ -416,7 +424,9 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
                       width="100%"
                       fieldType="select"
                       selectData={severitylovqueryresponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       searchable={false}
                       fieldName="complicationSeverityLkey"
@@ -552,7 +562,7 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
                       disabled={true}
                       fieldType="select"
                       fieldLabel="Surgeon"
-                      selectData={practtionerList?.object ?? []}
+                      selectData={practitionerListResponse?.data ?? []}
                       selectDataLabel="practitionerFullName"
                       selectDataValue="key"
                       width="100%"
@@ -593,11 +603,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
                         data={[]}
                         columns={MedicationsGivenColumns}
                         height={250}
-                        onRowClick={rowData => { }}
+                        onRowClick={rowData => {}}
                       />
                     }
                     rightLink=""
-                    setOpen={() => { }}
+                    setOpen={() => {}}
                     openedContent=""
                   />
                 </Col>
@@ -610,11 +620,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
                         data={[]}
                         columns={FluidsGivenColumns}
                         height={250}
-                        onRowClick={rowData => { }}
+                        onRowClick={rowData => {}}
                       />
                     }
                     rightLink=""
-                    setOpen={() => { }}
+                    setOpen={() => {}}
                     openedContent=""
                   />
                 </Col>
@@ -626,11 +636,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable,
                         data={[]}
                         columns={BloodProductsGivenColumns}
                         height={250}
-                        onRowClick={rowData => { }}
+                        onRowClick={rowData => {}}
                       />
                     }
                     rightLink=""
-                    setOpen={() => { }}
+                    setOpen={() => {}}
                     openedContent=""
                   />
                 </Col>

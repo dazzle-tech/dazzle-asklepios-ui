@@ -8,6 +8,7 @@ import { FaProcedures } from 'react-icons/fa';
 import MyInput from "@/components/MyInput";
 import { Dropdown, Form } from "rsuite";
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { useEnumOptions } from "@/services/enumsApi";
 import { ApOperationCoding, ApOperationPriceList } from "@/types/model-types";
 import { newApOperationCoding, newApOperationPriceList, newApOperationSetup } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
@@ -85,8 +86,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
     });
     // Fetch currency list response
     const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
-    // Fetch category list response
-    const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+    const categoryOptions = useEnumOptions('ProcedureCategory');
     // Fetch code type list response
     const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
 
@@ -296,9 +296,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                                     width="100%"
                                     fieldType="select"
                                     fieldLabel="Category Type"
-                                    selectData={CategoryLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    selectData={categoryOptions ?? []}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     fieldName={'categoryLkey'}
                                     record={operation}
                                     setRecord={setOperation}
@@ -501,7 +501,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                             fieldType="select"
                             fieldLabel="Code Type"
                             selectData={codeTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'codeTypeLkey'}
                             record={operationCode}
@@ -535,7 +537,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                             fieldType="select"
                             fieldLabel="Currency"
                             selectData={currencyLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
+                             selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                             selectDataValue="key"
                             fieldName={'currencyLkey'}
                             record={operationprice}
@@ -658,6 +662,12 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
     });
   }, [contraindicationsDescription]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (<>
         <ChildModal
             hideActionChildBtn
@@ -667,7 +677,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
             showChild={openChildModal}
             setShowChild={setOpenChildModal}
             title={operation?.key ? 'Edit operation' : 'New operation'}
-            mainContent={conjureFormContentOfMainModal}
+            mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
             mainStep={[
                 {
                     title: 'Info',
@@ -686,12 +696,12 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                     icon: <FaMoneyBillAlt />
                 }
             ]}
-            childTitle={childStep == 1 ? 'New Code' : 'New Price List'} // baaaaaaaaaaack
-            childContent={conjureFormContentOfChildModal}
+            childTitle={childStep == 1 ? 'New Code' : 'New Price List'}
+            childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
             mainSize="40vw"
             childStep={[
                 {
-                    title: childStep == 1 ? 'Coding' : 'Price List', //baack
+                    title: childStep == 1 ? 'Coding' : 'Price List',
                     icon: childStep == 1 ? <FaQrcode /> : <FaMoneyBillAlt />,
                     footer: (
                         <MyButton onClick={childStep == 1 ? handleSaveCoding : handleSavePrice}>Save</MyButton>

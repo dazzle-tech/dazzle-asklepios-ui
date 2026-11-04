@@ -19,6 +19,18 @@
 }
 
 .favorite-tests {
+  --favorite-card-bg: #ffffff;
+  --favorite-card-text: #2c3e50;
+  --favorite-card-muted: #5a6c7d;
+  --favorite-card-subtle: #8492a6;
+  --favorite-card-info-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --favorite-empty-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --favorite-border: rgba(102, 126, 234, 0.12);
+  --favorite-shadow: 0 3px 10px rgba(102, 126, 234, 0.12);
+  --favorite-hover-shadow: 0 16px 32px rgba(102, 126, 234, 0.2);
+  --favorite-favorite-btn-bg: rgba(255, 255, 255, 0.95);
+  --favorite-favorite-btn-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+
   .test-card {
     position: relative;
     border-radius: 16px;
@@ -27,12 +39,14 @@
     cursor: pointer;
     height: 100%;
     border: none !important;
-    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.12);
-    width: 17vw;
+    box-shadow: var(--favorite-shadow);
+    width: min(100%, 17vw);
+    background: var(--favorite-card-bg);
+    color: var(--favorite-card-text);
 
     &:hover {
       transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 16px 32px rgba(102, 126, 234, 0.2) !important;
+      box-shadow: var(--favorite-hover-shadow) !important;
     }
   }
 
@@ -44,7 +58,7 @@
     height: 80px;
     z-index: 0;
     opacity: 0.95;
-    width: 40vw;
+    width: 100%;
 
     &::after {
       content: '';
@@ -85,14 +99,14 @@
   .test-name {
     font-size: 14px;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--favorite-card-text);
     margin-bottom: 8px;
     line-height: 1.3;
     min-height: 36px;
   }
 
   .test-info {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--favorite-card-info-bg);
     border-radius: 8px;
     padding: 8px 10px;
     margin-bottom: 0;
@@ -100,7 +114,7 @@
 
   .test-type {
     font-size: 11px;
-    color: #5a6c7d;
+    color: var(--favorite-card-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -108,7 +122,7 @@
 
   .test-code {
     font-size: 9px;
-    color: #8492a6;
+    color: var(--favorite-card-subtle);
     margin-top: 2px;
     font-family: 'Courier New', monospace;
   }
@@ -119,7 +133,7 @@
     left: 12px;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--favorite-favorite-btn-bg);
     backdrop-filter: blur(10px);
     border-radius: 50%;
     display: flex;
@@ -128,7 +142,7 @@
     cursor: pointer;
     z-index: 3;
     transition: all 0.3s ease;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--favorite-favorite-btn-shadow);
 
     &:hover {
       transform: scale(1.1) rotate(10deg);
@@ -143,8 +157,9 @@
   .empty-state {
     text-align: center;
     padding: 60px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--favorite-empty-bg);
     border-radius: 20px;
+    color: var(--favorite-card-text);
 
     .empty-icon {
       font-size: 80px;
@@ -159,6 +174,50 @@
 
     p {
       color: #8492a6;
+    }
+  }
+
+  &.dark {
+    --favorite-card-bg: #1b1f2a;
+    --favorite-card-text: #f1f5f9;
+    --favorite-card-muted: #cbd5e1;
+    --favorite-card-subtle: #94a3b8;
+    --favorite-card-info-bg: linear-gradient(135deg, #223044 0%, #1a2432 100%);
+    --favorite-empty-bg: linear-gradient(135deg, #1d2533 0%, #121826 100%);
+    --favorite-border: rgba(148, 163, 184, 0.14);
+    --favorite-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    --favorite-hover-shadow: 0 18px 36px rgba(0, 0, 0, 0.38);
+    --favorite-favorite-btn-bg: rgba(17, 24, 39, 0.92);
+    --favorite-favorite-btn-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+
+    .test-card {
+      border: 1px solid var(--favorite-border) !important;
+    }
+
+    .card-gradient-bg::after {
+      background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.82) 100%);
+    }
+
+    .favorite-btn {
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .favorite-btn.active {
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    }
+
+    .empty-state {
+      .empty-icon {
+        color: #94a3b8;
+      }
+
+      h3 {
+        color: #f8fafc;
+      }
+
+      p {
+        color: #cbd5e1;
+      }
     }
   }
 }

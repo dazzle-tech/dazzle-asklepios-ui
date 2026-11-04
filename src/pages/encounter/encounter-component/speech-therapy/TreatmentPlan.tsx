@@ -154,7 +154,9 @@ const TreatmentPlan = () => {
                     record={planData}
                     setRecord={setPlanData}
                     selectData={timeUnitLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width={120}
                     searchable={false}
@@ -179,7 +181,9 @@ const TreatmentPlan = () => {
                     record={planData}
                     setRecord={setPlanData}
                     selectData={timeUnitLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
+                     selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                     selectDataValue="key"
                     width={120}
                     searchable={false}

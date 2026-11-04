@@ -1,0 +1,491 @@
+import React, { useEffect, useState } from 'react';
+import { Col, Form, Row } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPills } from '@fortawesome/free-solid-svg-icons';
+
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+
+import {
+  useAddCurrentMedicationMutation,
+  useUpdateCurrentMedicationMutation
+} from '@/services/patients/currentMedicationService';
+
+import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { useEnumOptions } from '@/services/enumsApi';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  DURATION_TYPE_OPTIONS,
+  getSavedDuration,
+  isIncompleteDuration,
+  isSameCalendarDay,
+  resolveDurationInput
+} from '@/utils/durationDate';
+
+import {
+  CurrentMedicationForm,
+  CurrentMedicationCreate,
+  CurrentMedicationUpdate
+} from '@/types/model-types-new';
+
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
+const handleCrudError = (err: any, dispatch: any) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const normalizeMsg = (msg: string) => {
+      const m = (msg || '').toLowerCase();
+
+      if (m.includes('must not be null')) return 'is required';
+      if (m.includes('must not be blank')) return 'must not be blank';
+      if (m.includes('size must be between')) return 'length is out of range';
+      if (m.includes('must be greater')) return 'value is too small';
+      if (m.includes('must be less')) return 'value is too large';
+      if (m.includes('must be a date in the past or in the present')) {
+        return 'cannot be a future date';
+      }
+
+      return msg || 'invalid value';
+    };
+
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg:
+          `Please fix the following fields:\n${lines.join('\n')}` +
+          suffix,
+        sev: 'warning'
+      })
+    );
+
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const humanMsg =
+    data?.detail ||
+    data?.title ||
+    messageProp ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'warning'
+    })
+  );
+};
+
+const AddCurrentMedication = ({
+  open,
+  setOpen,
+  initialData,
+  patient
+}) => {
+  const dispatch = useAppDispatch();
+
+  const [formData, setFormData] = useState<CurrentMedicationForm>({
+    id: undefined,
+    patientId: 0,
+    activeIngredientId: undefined,
+    dosage: null,
+    unit: null,
+    frequency: null,
+    startDate: null,
+    startDurationType: null,
+    startDuration: null,
+    patientIsFree: false,
+    freeText: null
+  });
+
+  const [startDateResetKey, setStartDateResetKey] = useState(0);
+
+  const [addCurrentMedication] =
+    useAddCurrentMedicationMutation();
+
+  const [updateCurrentMedication] =
+    useUpdateCurrentMedicationMutation();
+
+  const { data: activeIngredientsResponse } =
+    useGetActiveIngredientsQuery({
+      page: 0,
+      size: 1000
+    });
+
+  const unitOptions = useEnumOptions('UOM');
+  const frequencyOptions = useEnumOptions('MedFrequency');
+
+  const activeIngredientOptions =
+    activeIngredientsResponse?.data
+      ?.filter(item => item.isActive)
+      .map(item => ({
+        label: item.name,
+        value: item.id
+      })) || [];
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        startDurationType: initialData.startDurationType ?? null,
+        startDuration: initialData.startDuration ?? null,
+        patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null
+      });
+    } else {
+      setFormData({
+        id: undefined,
+        patientId: Number(patient?.id),
+        activeIngredientId: undefined,
+        dosage: null,
+        unit: null,
+        frequency: null,
+        startDate: null,
+        startDurationType: null,
+        startDuration: null,
+        patientIsFree: false,
+        freeText: null
+      });
+    }
+
+    setStartDateResetKey(prev => prev + 1);
+  }, [initialData, open, patient?.id]);
+
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          activeIngredientId: undefined,
+          dosage: null,
+          unit: null,
+          frequency: null,
+          startDate: null,
+          startDurationType: null,
+          startDuration: null,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
+
+  const savedStartDuration = getSavedDuration(
+    initialData?.startDurationType,
+    initialData?.startDuration,
+    initialData?.startDate
+  );
+
+  const handleStartDurationChange = (next: any) => {
+    const { durationType, duration, date, error } = resolveDurationInput(
+      next?.startDurationType,
+      next?.startDuration,
+      savedStartDuration
+    );
+
+    if (error) {
+      dispatch(notify({ msg: error, sev: 'warning' }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      startDurationType: durationType,
+      startDuration: duration,
+      ...(date ? { startDate: date } : {})
+    }));
+  };
+
+  const handleStartDateChange = (next: any) => {
+    const startDate = next?.startDate ?? null;
+    if (isSameCalendarDay(startDate, formData.startDate)) return;
+    setFormData(prev => ({
+      ...prev,
+      startDate,
+      startDurationType: null,
+      startDuration: null
+    }));
+  };
+
+  const handleSave = async () => {
+    const isFree = formData.patientIsFree === true;
+
+    if (!isFree) {
+      if (!formData.activeIngredientId) {
+        dispatch(
+          notify({
+            msg: 'Medication is required',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (isIncompleteDuration(formData.startDurationType, formData.startDuration)) {
+        dispatch(
+          notify({
+            msg: 'Date Type and Number must be provided together',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!formData.startDate) {
+        dispatch(
+          notify({
+            msg: 'Start Date is required',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
+    try {
+      if (formData.id) {
+        const payload: CurrentMedicationUpdate = {
+          id: formData.id,
+          patientId: Number(patient?.id),
+          activeIngredientId: isFree ? null : formData.activeIngredientId,
+          dosage: isFree ? null : formData.dosage,
+          unit: isFree ? null : formData.unit,
+          frequency: isFree ? null : formData.frequency,
+          startDate: isFree ? null : formData.startDate,
+          startDurationType: isFree ? null : formData.startDurationType ?? null,
+          startDuration: isFree ? null : formData.startDuration ?? null,
+          patientIsFree: isFree,
+          freeText: isFree ? PATIENT_IS_FREE_TEXT : null
+        };
+
+        await updateCurrentMedication(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Medication updated successfully',
+            sev: 'success'
+          })
+        );
+
+        setOpen(false);
+      } else {
+        const payload: CurrentMedicationCreate = {
+          patientId: Number(patient?.id),
+          activeIngredientId: isFree ? null : formData.activeIngredientId,
+          dosage: isFree ? null : formData.dosage,
+          unit: isFree ? null : formData.unit,
+          frequency: isFree ? null : formData.frequency,
+          startDate: isFree ? null : formData.startDate,
+          startDurationType: isFree ? null : formData.startDurationType ?? null,
+          startDuration: isFree ? null : formData.startDuration ?? null,
+          patientIsFree: isFree,
+          freeText: isFree ? PATIENT_IS_FREE_TEXT : null
+        };
+
+        await addCurrentMedication(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Medication added successfully',
+            sev: 'success'
+          })
+        );
+
+        setFormData({
+          id: undefined,
+          patientId: Number(patient?.id),
+          activeIngredientId: undefined,
+          dosage: null,
+          unit: null,
+          frequency: null,
+          startDate: null,
+          startDurationType: null,
+          startDuration: null,
+          patientIsFree: false,
+          freeText: null
+        });
+
+        setStartDateResetKey(prev => prev + 1);
+      }
+    } catch (err) {
+      handleCrudError(err, dispatch);
+    }
+  };
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+  const content = (
+    <Form fluid className="fields-container">
+      <Row gutter={16}>
+        <Col md={24}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Patient Is Free"
+            fieldType="checkbox"
+            fieldName="patientIsFree"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col md={24}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Medication"
+            fieldName="activeIngredientId"
+            fieldType="select"
+            selectData={activeIngredientOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={formData}
+            setRecord={setFormData}
+            searchable
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={16} style={{ marginTop: 10 }}>
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Date Type"
+            fieldType="select"
+            fieldName="startDurationType"
+            selectData={DURATION_TYPE_OPTIONS}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={formData}
+            setRecord={handleStartDurationChange}
+            searchable={false}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Number"
+            fieldType="number"
+            fieldName="startDuration"
+            record={formData}
+            setRecord={handleStartDurationChange}
+            min={0}
+            step={1}
+            showZero
+            disabled={formData.patientIsFree || !formData.startDurationType}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            key={startDateResetKey}
+            width="100%"
+            column
+            fieldLabel="Start Date"
+            fieldType="date"
+            fieldName="startDate"
+            disableFutureDates
+            record={formData}
+            setRecord={handleStartDateChange}
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={16} style={{ marginTop: 10 }}>
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Dosage"
+            fieldType="number"
+            fieldName="dosage"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldType="select"
+            fieldLabel="Unit"
+            selectData={unitOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            fieldName="unit"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+
+        <Col md={8}>
+          <MyInput
+            width="100%"
+            column
+            fieldType="select"
+            fieldLabel="Frequency"
+            selectData={frequencyOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            fieldName="frequency"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </Col>
+      </Row>
+    </Form>
+  );
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Add / Edit Current Medication"
+      steps={[
+        {
+          title: 'Current Medication',
+          icon: <FontAwesomeIcon icon={faPills} />
+        }
+      ]}
+      actionButtonFunction={handleSave}
+      position="right"
+      size="33vw"
+      content={<div dir={dir}>{content}</div>}
+    />
+  );
+};
+
+export default AddCurrentMedication;

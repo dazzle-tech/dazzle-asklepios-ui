@@ -4,7 +4,7 @@ import { Country } from '@/types/model-types-new';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 interface AddEditCountryModalProps {
   open: boolean;
@@ -21,7 +21,7 @@ const AddEditCountryModal: React.FC<AddEditCountryModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Country>(country);
   const [loading, setLoading] = useState(false);
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const countryEnum = useEnumOptions('CountryName');
 
   useEffect(() => {
     setFormData(country);
@@ -49,9 +49,9 @@ const AddEditCountryModal: React.FC<AddEditCountryModalProps> = ({
               fieldLabel="Country"
               fieldType="select"
               fieldName="name"
-              selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              selectData={countryEnum}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={formData}
               setRecord={setFormData}
               menuMaxHeight={200}

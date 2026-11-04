@@ -5,29 +5,23 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaComment } from 'react-icons/fa';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useAppSelector } from '@/hooks';
 import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
-const AddEditReferralRequest = ({
-  open,
-  setOpen,
-  width,
-  referral,
-  setReferral,
-  handleSave
-}) => {
+const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, encounter, handleSave }) => {
   const referralTypeOptions = useEnumOptions('ReferralType');
   const priorityOptions = useEnumOptions('ReferralPriority');
 
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
+  const fromFacilityId = encounter?.facilityId || selectedFacility?.id;
+  const fromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
 
-  const { data: facilityResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityResponse } = useGetActiveFacilitiesQuery({});
 
-  const facilityOptions =
-    facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
+  const facilityOptions = facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
 
   // ─── Departments ────────────────────────────────────────────────────────────
 
@@ -95,22 +89,21 @@ const AddEditReferralRequest = ({
   );
 
   useEffect(() => {
-    if (!selectedFacility?.id || !open) return;
+    if (!fromFacilityId || !open) return;
 
     setReferral(prev => ({
       ...prev,
-      fromFacilityId: Number(selectedFacility.id),
-      fromDepartmentId: selectedDepartment?.departmentId ?? null,
+      fromFacilityId: Number(fromFacilityId),
+      fromDepartmentId: fromDepartmentId ?? null,
       toFacilityId:
-        prev?.referralType === 'INTERNAL'
-          ? Number(selectedFacility.id)
-          : prev?.toFacilityId ?? null
+        prev?.referralType === 'INTERNAL' ? Number(selectedFacility.id) : prev?.toFacilityId ?? null
     }));
   }, [
     open,
     referral?.referralType,
     selectedFacility?.id,
-    selectedDepartment?.departmentId,
+    fromFacilityId,
+    fromDepartmentId,
     setReferral
   ]);
 
@@ -127,7 +120,7 @@ const AddEditReferralRequest = ({
       ...prev,
       toDepartmentId: null
     }));
-  }, [open, resetDepartmentsState, setReferral]);
+    }, [open, resetDepartmentsState, setReferral]);
 
   useEffect(() => {
     if (!open) return;
@@ -162,10 +155,18 @@ const AddEditReferralRequest = ({
     });
   }, [open, referral?.toFacilityId, resetDepartmentsState, loadDepartments]);
 
-  const toDepartmentOptions = allDepartments.map(d => ({
-    label: d.name ?? '',
-    value: d.id
-  }));
+  const toDepartmentOptions = allDepartments
+    .filter(
+      d =>
+        !(
+          Number(referral?.toFacilityId) === Number(selectedFacility?.id) &&
+          Number(d.id) === Number(fromDepartmentId)
+        )
+    )
+    .map(d => ({
+      label: d.name ?? '',
+      value: d.id
+    }));
 
   const conjureFormContent = () => (
     <Form fluid>
@@ -262,13 +263,19 @@ const AddEditReferralRequest = ({
     </Form>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={referral?.id ? 'Edit Referral Request' : 'New Referral Request'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={referral?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Referral Request Info', icon: <FaComment /> }]}

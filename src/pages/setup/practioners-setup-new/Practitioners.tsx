@@ -2,6 +2,7 @@ import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
+import MyModal from '@/components/MyModal/MyModal';
 import Translate from "@/components/Translate";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import { useEnumOptions } from "@/services/enumsApi";
@@ -11,7 +12,10 @@ import {
   useGetAllPractitionersQuery,
   useLazyGetPractitionerByNameQuery,
   useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersByJobRoleQuery,
+  useLazyGetPractitionersByLinkedUserQuery,
   useLazyGetPractitionersBySpecialtyQuery,
+  useLazyGetPractitionersByStatusQuery,
   useTogglePractitionerActiveMutation,
   useUpdatePractitionerMutation
 } from "@/services/setup/practitioner/PractitionerService";
@@ -26,9 +30,13 @@ import { FaUndo } from "react-icons/fa";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useDispatch } from "react-redux";
 import { Form, Panel, Tooltip, Whisper } from "rsuite";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import AddEditPractitioner from "./AddEditPractitioner";
 import "./styles.less";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import TranslationModal from "@/components/TranslationModal";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -37,7 +45,7 @@ const Practitioners = () => {
   const [practitioner, setPractitioner] = useState<Practitioner>({
     ...newPractitioner,
   });
-  
+
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditPractitioner, setOpenAddEditPractitioner] =
     useState<boolean>(false);
@@ -47,6 +55,10 @@ const Practitioners = () => {
   ] = useState<boolean>(false);
   const [stateOfDeleteModal, setStateOfDeleteModal] =
     useState<string>("deactivate");
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
+  const [selectedPractitionerForPolicyAssignment, setSelectedPractitionerForPolicyAssignment] =
+    useState<Practitioner | null>(null);
   const [recordOfFilter, setRecordOfFilter] = useState({
     filter: "",
     value: "",
@@ -80,8 +92,12 @@ const Practitioners = () => {
   const [togglePractitionerActive] = useTogglePractitionerActiveMutation();
   const [getPractitionersByFacility] = useLazyGetPractitionersByFacilityQuery();
   const [getPractitionersBySpecialty] = useLazyGetPractitionersBySpecialtyQuery();
+  const [getPractitionersByJobRole] = useLazyGetPractitionersByJobRoleQuery();
   const [getPractitionerByName] = useLazyGetPractitionerByNameQuery();
+  const [getPractitionersByLinkedUser] = useLazyGetPractitionersByLinkedUserQuery();
+  const [getPractitionersByStatus] = useLazyGetPractitionersByStatusQuery();
   const specility = useEnumOptions('Specialty');
+  const jobRole = useEnumOptions('JobRole');
   const [link, setLink] = useState({})
   const totalCount = practitionerListResponse?.totalCount ?? 0;
   const links = practitionerListResponse?.links || {};
@@ -116,6 +132,9 @@ const Practitioners = () => {
     { label: "Specialty", value: "specialty" },
     { label: "Facility", value: "facility" },
     { label: "Name", value: "name" },
+    { label: "Job Role", value: "jobRole" },
+     { label: "Linked to User", value: "linkedToUser" },
+     { label: "Status", value: "status" },
   ];
   const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
     try {
@@ -138,8 +157,16 @@ const Practitioners = () => {
         response = await getPractitionersBySpecialty({ specialty: value, ...params }).unwrap();
       } else if (field === "facility") {
         response = await getPractitionersByFacility({ facilityId: value, ...params }).unwrap();
+      } else if (field === "jobRole") {
+        response = await getPractitionersByJobRole({ jobRole: value, ...params }).unwrap();
       } else if (field === "name") {
         response = await getPractitionerByName({ name: value, ...params }).unwrap();
+      }
+      else if (field === "linkedToUser") {
+        response = await getPractitionersByLinkedUser({ linked: value, ...params }).unwrap();
+      }
+      else if (field === "status") {
+        response = await getPractitionersByStatus({isActive: value, ...params, }).unwrap();
       }
 
       setFilteredList(response.data ?? []);
@@ -174,8 +201,12 @@ const Practitioners = () => {
     }
   };
 
+  const PRACTITIONER_ERROR_MAP: Record<string, string> = {
+    "error.userexists": "User already exists",
+  };
 
-  // ──────────────────────────── CRUD HANDLERS ────────────────────────────
+
+    // ──────────────────────────── CRUD HANDLERS ────────────────────────────
   const handleAddNew = async () => {
     try {
       const payload = {
@@ -195,30 +226,78 @@ const Practitioners = () => {
         secondaryLicenseValidUntil: practitioner.secondaryLicenseValidUntil,
         dateOfBirth: practitioner.dateOfBirth,
         jobRole: practitioner.jobRole,
-        gender: practitioner.gender,
+        gender: practitioner.gender?.toUpperCase(),
         isActive: practitioner.isActive,
+        parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: practitioner?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
+        nationalNumber:practitioner.nationalNumber
+        
       };
 
       const Response = await createPractitioner(payload).unwrap();
+
       dispatch(
         notify({ msg: "Practitioner added successfully", sev: "success" })
       );
+      setShowTranslationModal(true)
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setPractitioner({ ...Response });
-    } catch (error) {
-      console.error("Error updating practitioner:", error);
 
+    } catch (error: any) {
+      console.log("FULL ERROR:", error);
 
-      if (error?.data?.fieldErrors?.length) {
-        const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+      const data = error?.data ?? {};
+
+      if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const messages = data.fieldErrors
+          .map((fe: any) => `${fe.field}: ${fe.message}`)
           .join("\n");
+
         dispatch(notify({ msg: messages, sev: "error" }));
-      } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
-      } else {
-        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+        return;
       }
+
+let backendKey = data?.properties?.message;
+
+if (!backendKey && typeof data?.properties === "string") {
+  const match = data.properties.match(/message=([^,}]+)/);
+  backendKey = match?.[1];
+}
+
+if (!backendKey && typeof data?.message === "string") {
+  backendKey = data.message;
+}
+
+if (!backendKey && typeof error === "string") {
+  const match = error.match(/error\.[a-zA-Z0-9]+/);
+  backendKey = match?.[0];
+}
+
+      // 🟩 mapping
+      if (backendKey && PRACTITIONER_ERROR_MAP[backendKey]) {
+        dispatch(
+          notify({
+            msg: PRACTITIONER_ERROR_MAP[backendKey],
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      // 🟦 fallback
+      dispatch(
+        notify({
+          msg:
+            backendKey ||
+            data?.detail ||
+            data?.title ||
+            "Something went wrong",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -245,8 +324,14 @@ const Practitioners = () => {
           practitioner.secondaryLicenseValidUntil || null,
         dateOfBirth: practitioner.dateOfBirth || null,
         jobRole: practitioner.jobRole || null,
-        gender: practitioner.gender || null,
+        gender: practitioner.gender?.toUpperCase() || null,
         isActive: practitioner.isActive,
+        parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: practitioner?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
+        nationalNumber:practitioner?.nationalNumber
       };
 
       await updatePractitioner(payload).unwrap();
@@ -254,21 +339,54 @@ const Practitioners = () => {
       dispatch(
         notify({ msg: "Practitioner updated successfully", sev: "success" })
       );
+      setShowTranslationModal(true)
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch (error) {
-      console.error("Error updating practitioner:", error);
 
+    } catch (error: any) {
+      console.log("FULL ERROR:", error);
 
-      if (error?.data?.fieldErrors?.length) {
-        const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+      const data = error?.data ?? {};
+
+      // 🟥 validation errors
+      if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const messages = data.fieldErrors
+          .map((fe: any) => `${fe.field}: ${fe.message}`)
           .join("\n");
+
         dispatch(notify({ msg: messages, sev: "error" }));
-      } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
-      } else {
-        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+        return;
       }
+
+      // 🟨 extract message (object أو string)
+      let backendKey = data?.properties?.message;
+
+      if (!backendKey && typeof data?.properties === "string") {
+        const match = data.properties.match(/message=([^,}]+)/);
+        backendKey = match?.[1];
+      }
+
+      // 🟩 mapping
+      if (backendKey && PRACTITIONER_ERROR_MAP[backendKey]) {
+        dispatch(
+          notify({
+            msg: PRACTITIONER_ERROR_MAP[backendKey],
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      // 🟦 fallback
+      dispatch(
+        notify({
+          msg:
+            backendKey ||
+            data?.detail ||
+            data?.title ||
+            "Something went wrong",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -328,6 +446,17 @@ const Practitioners = () => {
           }}
         />
       )}
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedPractitionerForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
+        }}
+      />
     </div>
   );
 
@@ -352,10 +481,11 @@ const Practitioners = () => {
         const matched = list.find((x) => x.key === rowData?.subSpecialty);
         const subSpecName = matched?.lovDisplayVale ?? "No Sub Specialty";
 
+        
         return (
           <div style={{ display: "inline-block", position: "relative" }}>
             <Whisper
-              placement="topStart"  // 👈 يجعل tooltip فوق الكلمة مباشرة
+              placement="topStart" 
               trigger={isSpecialist ? "hover" : "none"}
               speaker={
                 isSpecialist ? (
@@ -384,8 +514,8 @@ const Practitioners = () => {
       render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
     },
     {
-      key:"userId", title:<Translate>Linked to User</Translate>, flexGrow:3,
-      render:(rowData)=><p>{rowData?.userId?"Yes":"No"}</p>
+      key: "userId", title: <Translate>Linked to User</Translate>, flexGrow: 3,
+      render: (rowData) => <p>{rowData?.userId ? "Yes" : "No"}</p>
     },
     {
       key: "isActive",
@@ -423,7 +553,7 @@ const Practitioners = () => {
 
   // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
-    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         fieldName="filter"
         fieldType="select"
@@ -451,6 +581,20 @@ const Practitioners = () => {
         />
       )}
 
+      {recordOfFilter.filter === "jobRole" && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={jobRole ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          showLabel={false}
+          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          placeholder="Select Job Role"
+        />
+      )}
+
       {recordOfFilter.filter === "facility" && (
         <MyInput
           fieldName="value"
@@ -475,9 +619,48 @@ const Practitioners = () => {
           placeholder="Enter Name"
         />
       )}
+      {recordOfFilter.filter === "linkedToUser" && (
+       <MyInput
+        fieldName="value"
+        fieldType="select"
+        selectData={[
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+       ]}
+       selectDataLabel="label"
+       selectDataValue="value"
+       record={recordOfFilter}
+       setRecord={(u) =>
+         setRecordOfFilter({ ...recordOfFilter, value: u.value })
+       }
+       showLabel={false}
+       placeholder="Select Linked to User"
+      />
+    )}
+    {recordOfFilter.filter === "status" && (
+     <MyInput
+       fieldName="value"
+       fieldType="select"
+       selectData={[
+        { label: "Active", value: "true" },
+        { label: "Inactive", value: "false" },
+       ]}
+       selectDataLabel="label"
+       selectDataValue="value"
+       record={recordOfFilter}
+       setRecord={(u) =>
+       setRecordOfFilter({
+        ...recordOfFilter,
+        value: u.value,
+      })
+      }
+      showLabel={false}
+      placeholder="Select Status"
+    />
+   )}
 
-      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name"
-        && (
+      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name" && recordOfFilter.filter !== "jobRole"
+        && recordOfFilter.filter !== "linkedToUser" && recordOfFilter.filter !== "status" &&(
           <MyInput
             fieldName="value"
             fieldType="text"
@@ -502,8 +685,16 @@ const Practitioners = () => {
 
 
   // ──────────────────────────── RENDER ────────────────────────────
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
 
 
       <MyTable
@@ -549,7 +740,7 @@ const Practitioners = () => {
             Add New
           </MyButton>
         </div>}
-
+        dontTranslateData 
 
       />
 
@@ -563,6 +754,26 @@ const Practitioners = () => {
         width={width}
       />
 
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Practitioner Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedPractitionerForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="PRACTITIONER"
+              resourceId={selectedPractitionerForPolicyAssignment.id ?? 0}
+              facilityId={selectedPractitionerForPolicyAssignment.facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
+      />
+
       <DeletionConfirmationModal
         open={openConfirmDeletePractitionerModal}
         setOpen={setOpenConfirmDeletePractitionerModal}
@@ -570,6 +781,16 @@ const Practitioners = () => {
         actionButtonFunction={handleDeactiveReactivatePractitioner}
         actionType={stateOfDeleteModal}
       />
+      <TranslationModal
+                    open={showTranslationModal}
+                    setOpen={setShowTranslationModal}
+                    fields={[
+                      {
+                        fieldName: 'Full Name',
+                        value: practitioner.firstName + " " + practitioner.lastName
+                      }
+                    ]}
+                  />
     </Panel>
   );
 };

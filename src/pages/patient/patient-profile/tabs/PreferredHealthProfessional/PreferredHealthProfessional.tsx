@@ -106,7 +106,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
       .unwrap()
       .then(() => {
         dispatch(
-          notify({ msg: 'Preferred Health Professional Deleted Successfully', sev: 'success' })
+          notify({ msg: 'Primary Care Provider Deleted Successfully', sev: 'success' })
         );
         refetch();
       });
@@ -185,6 +185,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             <FontAwesomeIcon
               icon={faUserPen}
               style={{ cursor: 'pointer' }}
+              disabled={patient?.patientStatus === 'MERGED'}
               onClick={() => {
                 setPatientHP(row);
                 setPractitioner(p || { ...newPractitioner });
@@ -195,6 +196,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             <FontAwesomeIcon
               icon={faTrash}
               style={{ marginLeft: 15, color: 'var(--primary-pink)', cursor: 'pointer' }}
+              disabled={patient?.patientStatus === 'MERGED'}
               onClick={() => {
                 setPatientHP(row);
                 setDeletePreferredHealthModalOpen(true);
@@ -208,7 +210,15 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
 
   const isSelected = row => (row?.id === patientHP?.id ? 'selected-row' : '');
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <div className="tab-main-container">
       <AddPrefferdHealthProfessionalModal
         open={open}
@@ -232,10 +242,10 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewPreferredHP}
-          disabled={isClick}
+          disabled={isClick || patient?.patientStatus === 'MERGED'}
           prefixIcon={() => <PlusRound />}
         >
-          New Preferred Health Professional
+          New Primary Care Provider
         </MyButton>
       </div>
 
@@ -244,6 +254,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         loading={isFetching}
         columns={columns}
         onRowClick={row => {
+          
           const p = practitionersMap[row.practitionerId];
           setPatientHP(row);
           setEditable(true);
@@ -256,6 +267,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+    </div>
     </div>
   );
 };

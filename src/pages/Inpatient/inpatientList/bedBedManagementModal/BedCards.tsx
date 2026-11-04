@@ -399,13 +399,18 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
     { name: 'IV Pump', status: 'active' }
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="bedcards-container">
+    <div className="bedcards-container"dir={dir}>
       <div className="icu-floor-plan-wrapper">
         <SectionContainer
           title={''}
           content={
-            <div className="icu-floor-plan">
+            <div className="icu-floor-plan" dir={dir}>
               {groupedDataArray.map((row, rowIndex) => (
                 <div key={rowIndex} className="bed-row">
                   <div className="beds-in-row">

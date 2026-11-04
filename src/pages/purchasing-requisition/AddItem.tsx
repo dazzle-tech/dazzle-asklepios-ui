@@ -243,7 +243,9 @@ const AddItem = ({ open, setOpen }) => {
             { key: 'ORD-1801', lovDisplayVale: 'ORD-1801 | Hand Sanitizer 250ml' },
             { key: 'ORD-1850', lovDisplayVale: 'ORD-1850 | Blood Pressure Monitor' }
           ]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
         />
 
@@ -252,7 +254,9 @@ const AddItem = ({ open, setOpen }) => {
           fieldName="unitOfMeasurement"
           fieldType="select"
           selectData={UOMLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={''}
@@ -322,7 +326,9 @@ const AddItem = ({ open, setOpen }) => {
             { key: 'asset', lovDisplayVale: 'Asset' },
             { key: 'consumable', lovDisplayVale: 'Consumable' }
           ]}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={editRow || record}
           setRecord={setRecord}
@@ -341,6 +347,11 @@ const AddItem = ({ open, setOpen }) => {
     </Form>
   );
 
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <>
       <ChildModal
@@ -371,8 +382,8 @@ const AddItem = ({ open, setOpen }) => {
           }
         ]}
         childTitle="Add Item"
-        mainContent={content}
-        childContent={childModalContent}
+        mainContent={<div dir={dir}>{content}</div>}
+        childContent={<div dir={dir}>{childModalContent}</div>}
         hideActionChildBtn={true}
         mainSize="md"
         childSize="sm"

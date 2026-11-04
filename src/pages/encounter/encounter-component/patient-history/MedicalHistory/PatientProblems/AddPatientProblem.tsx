@@ -10,89 +10,26 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   useAddPatientProblemMutation,
-  useUpdatePatientProblemMutation
+  useUpdatePatientProblemMutation,
+  useLazyGetPatientProblemsQuery
 } from '@/services/patients/patientProblemService';
+
+import {
+  useUpdatePatientConditionsMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
+
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-
-const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
-  const data = err?.data ?? {};
-  const traceId = data?.traceId || data?.requestId || data?.correlationId;
-  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
-
-  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const normalizeMsg = (msg: string) => {
-      const m = (msg || '').toLowerCase();
-      if (m.includes('must not be null')) return 'is required';
-      if (m.includes('must not be blank')) return 'must not be blank';
-      if (m.includes('size must be between')) return 'length is out of range';
-      if (m.includes('must be greater')) return 'value is too small';
-      if (m.includes('must be less')) return 'value is too large';
-      return msg || 'invalid value';
-    };
-
-    const lines = data.fieldErrors.map((fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`);
-
-    dispatch(
-      notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-
-  const messageProp: string = data?.message || '';
-  if (
-    messageProp.includes('ConstraintViolationImpl') ||
-    messageProp.includes('Validation failed')
-  ) {
-    const violations: string[] = [];
-
-    const violationPattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
-    let match;
-
-    while ((match = violationPattern.exec(messageProp)) !== null) {
-      const field = match[1];
-      const message = match[2];
-
-      const normalizedMsg = message.includes('must not be null')
-        ? 'is required'
-        : message.includes('must not be blank')
-        ? 'must not be blank'
-        : message.includes('size must be between')
-        ? 'length is out of range'
-        : message.includes('must be greater')
-        ? 'value is too small'
-        : message.includes('must be less')
-        ? 'value is too large'
-        : message;
-
-      violations.push(`• ${field}: ${normalizedMsg}`);
-    }
-
-    if (violations.length > 0) {
-      dispatch(
-        notify({
-          msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-  }
-
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.error;
-
-  const humanMsg =
-    (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
-    data?.title ||
-    data?.message ||
-    'Unexpected error';
-
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
-};
+import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
+import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
+import {
+  DURATION_TYPE_OPTIONS,
+  getSavedDuration,
+  isIncompleteDuration,
+  isSameCalendarDay,
+  resolveDurationInput
+} from '@/utils/durationDate';
 
 const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Patient problem payload is required.',
@@ -104,205 +41,485 @@ const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'field.required': 'This field is required.',
   'validation.failed': 'Please fix validation errors.',
   'duplicate.entry': 'A patient problem with these values already exists.',
+  'dateOfDiagnosis.required': 'Date of Diagnosis is required.',
+  'diagnosisDuration.incomplete': 'Date Type and Number must be provided together.',
+  'diagnosisDurationType.invalid': 'Date Type must be Years, Months or Days.',
+  'diagnosisDuration.negative': 'Number must not be negative.',
+  'diagnosisDuration.fraction': 'Number must be a whole number.',
+  'diagnosisDuration.overflow': 'Number is too large.',
+  'diagnosisDuration.outOfRange': 'The resulting date of diagnosis is out of range.',
   notfound: 'Patient problem not found.'
 };
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? {};
+  const messageProp: string = data?.message || '';
+
+  const errorKey = messageProp.startsWith('error.')
+    ? messageProp.substring(6)
+    : data?.error;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg,
+      sev: 'warning'
+    })
+  );
+};
+
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
 
 const emptyPatientProblem = {
   id: undefined,
   patientId: undefined,
   condition: '',
   dateOfDiagnosis: null,
-  status: null,
+  diagnosisDurationType: null,
+  diagnosisDuration: null,
+  conditionStatus: null,
   type: null,
   dateOfResolution: null,
   byPatient: true,
-  sourceOfInformation: null
+  sourceOfInformation: null,
+  patientIsFree: false,
+  freeText: null
 };
 
-const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
+const normalizeConditions = (value = '') =>
+  Array.from(
+    new Set(
+      String(value)
+        .split(',')
+        .map(x => x.trim())
+        .filter(Boolean)
+    )
+  );
+
+const AddPatientProblem = ({ open, setOpen, initialData, patient, onSaved }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
+  const [formKey, setFormKey] = useState(0);
 
-  const statusOptions = useEnumOptions('EncounterVaccinationStatus');
+  const patientConditions = useEnumOptions('Condition');
+
+  const { data: statusLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
+  const [updatePatientConditions] = useUpdatePatientConditionsMutation();
+  const [getProblems] = useLazyGetPatientProblemsQuery();
+  const [getPatient] = useLazyGetPatientByIdQuery();
+
+  const normalizeSavedValue = (value: any) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'object') {
+      return (
+        value?.key ??
+        value?.value ??
+        value?.id ??
+        value?.code ??
+        value?.lovKey ??
+        null
+      );
+    }
+    return value;
+  };
 
   useEffect(() => {
     if (initialData) {
-      setFormData({ ...initialData, patientId: Number(patient?.id) });
+      setFormData({
+        ...emptyPatientProblem,
+        ...initialData,
+        patientId: Number(patient?.id)
+      });
     } else {
-      setFormData({ ...emptyPatientProblem, patientId: Number(patient?.id) });
+      setFormData({
+        ...emptyPatientProblem,
+        patientId: Number(patient?.id)
+      });
     }
   }, [initialData, open, patient?.id]);
 
+  const savedDiagnosisDuration = getSavedDuration(
+    initialData?.diagnosisDurationType,
+    initialData?.diagnosisDuration,
+    initialData?.dateOfDiagnosis
+  );
+
+  const handleDiagnosisDurationChange = (next: any) => {
+    const { durationType, duration, date, error } = resolveDurationInput(
+      next?.diagnosisDurationType,
+      next?.diagnosisDuration,
+      savedDiagnosisDuration
+    );
+
+    if (error) {
+      dispatch(notify({ msg: error, sev: 'warning' }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      diagnosisDurationType: durationType,
+      diagnosisDuration: duration,
+      ...(date ? { dateOfDiagnosis: date } : {})
+    }));
+  };
+
+  const handleDateOfDiagnosisChange = (next: any) => {
+    const dateOfDiagnosis = next?.dateOfDiagnosis ?? null;
+    if (isSameCalendarDay(dateOfDiagnosis, formData.dateOfDiagnosis)) return;
+    setFormData(prev => ({
+      ...prev,
+      dateOfDiagnosis,
+      diagnosisDurationType: null,
+      diagnosisDuration: null
+    }));
+  };
+
   const handleSave = async () => {
+    const normalizedType = normalizeSavedValue(formData.type);
+    const normalizedConditionStatus = normalizeSavedValue(formData.conditionStatus);
+    const normalizedSourceOfInformation = normalizeSavedValue(
+      formData.byPatient ? null : formData.sourceOfInformation
+    );
+
+    const isFree = formData.patientIsFree === true;
+
     const payload = {
       id: formData.id,
       patientId: Number(patient.id),
-      condition: formData.condition,
-      dateOfDiagnosis: formData.dateOfDiagnosis,
-      status: formData.status,
-      type: formData.type,
-      dateOfResolution: formData.dateOfResolution,
-      byPatient: formData.byPatient,
-      sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation
+      condition: isFree ? '' : String(formData.condition ?? '').trim(),
+      dateOfDiagnosis: isFree ? null : formData.dateOfDiagnosis,
+      diagnosisDurationType: isFree ? null : formData.diagnosisDurationType ?? null,
+      diagnosisDuration: isFree ? null : formData.diagnosisDuration ?? null,
+      conditionStatus: isFree ? null : normalizedConditionStatus,
+      type: isFree ? null : normalizedType,
+      dateOfResolution: isFree ? null : formData.dateOfResolution,
+      byPatient: isFree ? true : formData.byPatient,
+      sourceOfInformation: isFree ? null : normalizedSourceOfInformation,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
-    let errorMsg = "";
-    if (!payload.condition) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Condition Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Condition Can`t be empty"
+    const errors: string[] = [];
+
+    if (!isFree) {
+      if (!payload.condition) {
+        errors.push('Condition is required');
+      }
+
+      if (isIncompleteDuration(payload.diagnosisDurationType, payload.diagnosisDuration)) {
+        errors.push('Date Type and Number must be provided together');
+      }
+
+      if (!payload.dateOfDiagnosis) {
+        errors.push('Date of Diagnosis is required');
+      }
+
+      if (!payload.conditionStatus) {
+        errors.push('Condition Status is required');
+      }
+
+      if (!payload.type) {
+        errors.push('Type is required');
+      }
+
+      if (payload.byPatient === false && !payload.sourceOfInformation) {
+        errors.push(
+          'Source of Information is required when problem is not reported by patient'
+        );
+      }
     }
-    if (!payload.dateOfDiagnosis) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Date Of Diagnosis Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Date Of Diagnosis Can`t be empty"
+    if (errors.length) {
+      dispatch(notify({ msg: errors.join(', '), sev: 'warning' }));
+      return;
     }
-    if (!payload.status) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Status Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Status Can`t be empty"
-    }
-    if (!payload.type) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Type Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Type Can`t be empty"
-    }
-    
-    if (!errorMsg) {
 
     try {
       if (formData.id) {
         await updatePatientProblem(payload).unwrap();
-        dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
       } else {
         await addPatientProblem(payload).unwrap();
-        dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
       }
 
-      setOpen(false);
+      const response = await getProblems(
+        {
+          patientId: patient.id,
+          page: 0,
+          size: 1000,
+          showCancelled: false,
+          timestamp: Date.now()
+        } as any,
+        true
+      ).unwrap();
+
+      const withoutFreeLabel = (values: string[]) =>
+        values.filter(value => value.toLowerCase() !== 'patient is free');
+
+      const conditions = Array.from(
+        new Set(
+          withoutFreeLabel([
+            ...normalizeConditions(patient?.patientConditions),
+            ...(response.data ?? []).flatMap((problem: any) =>
+              problem?.patientIsFree === true ? [] : normalizeConditions(problem.condition)
+            ),
+            ...(payload.patientIsFree ? [] : normalizeConditions(payload.condition))
+          ])
+        )
+      ).join(',');
+
+      await updatePatientConditions({
+        id: patient.id,
+        patientConditions: conditions
+      }).unwrap();
+      await getPatient(
+        {
+          id: patient.id,
+          timestamp: Date.now()
+        } as any,
+        true
+      ).unwrap();
+
+      dispatch(setRefetchPatientSide(true));
+      onSaved?.();
+
+      dispatch(
+        notify({
+          msg: formData.id
+            ? 'Patient problem updated successfully'
+            : 'Patient problem added successfully',
+          sev: 'success'
+        })
+      );
+
+      if (formData.id) {
+        setOpen(false);
+      } else {
+        setFormData({
+          ...emptyPatientProblem,
+          patientId: Number(patient?.id)
+        });
+        setFormKey(prev => prev + 1);
+      }
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
-  }
-  else {
-      dispatch(notify({ msg: errorMsg, sev: "warning" }));
-    }
   };
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          condition: '',
+          dateOfDiagnosis: null,
+          diagnosisDurationType: null,
+          diagnosisDuration: null,
+          conditionStatus: null,
+          type: null,
+          dateOfResolution: null,
+          byPatient: true,
+          sourceOfInformation: null,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
 
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
   const content = (
     <Form fluid className="fields-container">
       <Row>
-      <Row>
-        <Col md={12}>
-      <MyInput
-       width='100%'
-        column
-        fieldLabel="Condition"
-        fieldName="condition"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
-        </Col>
-        <Col md={12}>
-      <MyInput
-       width='100%'
-        column
-        fieldLabel="Date of diagnosis"
-        fieldType="date"
-        fieldName="dateOfDiagnosis"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
-      </Col>
+        <MyInput
+          width={'14vw'}
+          column
+          fieldLabel="Patient Is Free"
+          fieldType="checkbox"
+          fieldName="patientIsFree"
+          record={formData}
+          setRecord={setFormData}
+
+        />
+        <Row>
+          <Col md={24}>
+            <div style={{ marginBottom: 12 }}>
+              <MultiSelectAppender
+                disabled={formData.patientIsFree}
+                key={formKey}
+                label="Condition"
+                options={patientConditions ?? []}
+                optionLabel="label"
+                optionValue="value"
+                object={formData.condition ?? ''}
+                setObject={(value: string) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    condition: value
+                  }))
+                }
+              />
+            </div>
+          </Col>
         </Row>
+
+        <Row>
+          <Col md={8}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date Type"
+              fieldType="select"
+              fieldName="diagnosisDurationType"
+              selectData={DURATION_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={formData}
+              setRecord={handleDiagnosisDurationChange}
+              searchable={false}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+
+          <Col md={8}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Number"
+              fieldType="number"
+              fieldName="diagnosisDuration"
+              record={formData}
+              setRecord={handleDiagnosisDurationChange}
+              min={0}
+              step={1}
+              showZero
+              disabled={formData.patientIsFree || !formData.diagnosisDurationType}
+            />
+          </Col>
+
+          <Col md={8}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date of diagnosis"
+              fieldType="date"
+              fieldName="dateOfDiagnosis"
+              record={formData}
+              setRecord={handleDateOfDiagnosisChange}
+              disableFutureDates
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+        </Row>
+
         <Row>
           <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Status"
-        fieldType="select"
-        fieldName="status"
-        selectData={statusOptions ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        required
-      />
-       </Col>
-       <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Type"
-        fieldType="select"
-        fieldName="type"
-        selectData={typeLov?.object ?? []}
-        selectDataValue="key"
-        selectDataLabel="lovDisplayVale"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        required
-      />
-      </Col>
-      </Row>
-      <Row>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Date of resolution"
-        fieldType="date"
-        fieldName="dateOfResolution"
-        record={formData}
-        setRecord={setFormData}
-      />
-      </Row>
-       <Row>
-        <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="By Patient"
-        fieldType="checkbox"
-        fieldName="byPatient"
-        record={formData}
-        setRecord={setFormData}
-      />
-      </Col>
-      <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Source of information"
-        fieldType="select"
-        fieldName="sourceOfInformation"
-        selectData={sourceLov?.object ?? []}
-        selectDataValue="key"
-        selectDataLabel="lovDisplayVale"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        disabled={formData.byPatient === true}
-      />
-      </Col>
-      </Row>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Condition Status"
+              fieldType="select"
+              fieldName="conditionStatus"
+              selectData={statusLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              disableByField="isValid"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Type"
+              fieldType="select"
+              fieldName="type"
+              selectData={typeLov?.object ?? []}
+              selectDataValue="key"
+              selectDataLabel="lovDisplayVale"
+              disableByField="isValid"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+        </Row>
+
+        <Row>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Date of resolution"
+            fieldType="date"
+            fieldName="dateOfResolution"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </Row>
+
+        <Row>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="By Patient"
+              fieldType="checkbox"
+              fieldName="byPatient"
+              record={formData}
+              setRecord={setFormData}
+              disabled={formData.patientIsFree}
+            />
+          </Col>
+
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Source of information"
+              fieldType="select"
+              fieldName="sourceOfInformation"
+              selectData={sourceLov?.object ?? []}
+              selectDataValue="key"
+              selectDataLabel="lovDisplayVale"
+              disableByField="isValid"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              disabled={formData.byPatient === true || formData.patientIsFree}
+            />
+          </Col>
+        </Row>
       </Row>
     </Form>
   );
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -318,7 +535,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

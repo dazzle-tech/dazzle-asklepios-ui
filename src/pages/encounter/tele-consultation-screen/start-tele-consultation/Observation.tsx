@@ -237,11 +237,15 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
       dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
     }
   };
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   // ---------- Render ----------
   return (
-    <div className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div className={clsx('basuc-div', { 'disabled-panel': edit })} dir={dir}>
       <Form fluid>
         {/* Save / Clear buttons */}
         <Row className="action-row">
@@ -304,7 +308,9 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                         fieldType="select"
                         fieldName="priorityLkey"
                         selectData={encounterPriorityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientObservationSummary}
                         setRecord={setPatientObservationSummary}
@@ -419,7 +425,9 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                         fieldType="select"
                         fieldName="latestpainlevelLkey"
                         selectData={painDegreesLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
+                         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                         selectDataValue="key"
                         record={patientObservationSummary}
                         setRecord={setPatientObservationSummarySafe}
@@ -488,7 +496,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           fieldName="latesthearingtest"
                           fieldLabel="Hearing Test"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -504,7 +512,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -517,7 +525,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -530,7 +538,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
@@ -546,7 +554,7 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
                           checkedLabel="positive"
                           unCheckedLabel="negative"
                           record={patientObservationSummary}
-                          disabled={isEncounterStatusClosed || readOnly}
+                          disabled={isEncounterStatusClosed || readOnly || edit}
                           setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>

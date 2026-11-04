@@ -30,7 +30,9 @@ const AddEditMdtNote = ({
                 fieldName="shift"
                 fieldType="select"
                 selectData={shiftsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={mdtNote}
                 setRecord={setMdtNote}
@@ -40,7 +42,9 @@ const AddEditMdtNote = ({
                 fieldName="role"
                 fieldType="select"
                 selectData={rolesLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
+                 selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                 selectDataValue="key"
                 record={mdtNote}
                 setRecord={setMdtNote}
@@ -63,13 +67,21 @@ const AddEditMdtNote = ({
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={mdtNote?.key ? 'MDT Notes' : 'MDT Notes'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}> {conjureFormContent()} </div>}
       actionButtonLabel={mdtNote?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'MDT Notes', icon:<FontAwesomeIcon icon={faComment} />}]}

@@ -285,7 +285,7 @@ const DispenseSelectedOrdersTable = () => {
     },
     {
       key: 'DayNo',
-      title: <Translate>Day No.</Translate>,
+      title: <Translate>Day Number</Translate>,
       render: rowData => {
         return rowData.DayNo || rowData.dayNo || 'N/A';
       }
@@ -452,7 +452,9 @@ const DispenseSelectedOrdersTable = () => {
           fieldName=""
           fieldLabel="Order Status"
           selectData={orderstatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
+           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
           selectDataValue="key"
           record={{}}
           setRecord={{}}
@@ -527,8 +529,13 @@ const DispenseSelectedOrdersTable = () => {
     );
   };
 
+                  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container-of-tables-int width-100">
+    <div className="container-of-tables-int width-100" dir={dir}>
       <MyNestedTable
         data={data}
         columns={orderColumns}

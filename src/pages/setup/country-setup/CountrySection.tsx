@@ -14,7 +14,6 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { newCountry } from '@/types/model-types-constructor-new';
@@ -29,7 +28,7 @@ import {
   useUpdateCountryMutation
 } from '@/services/setup/country/countryService';
 
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 type Props = {
   onSelect: (c: Country | null) => void;
@@ -86,14 +85,18 @@ const COUNTRY_ERROR_MAP: Record<string, string> = {
   'id.required': 'Country id is required.',
   'unique.country.namecode': 'Country name or code already exists.',
   'db.constraint': 'Database constraint violation.',
+  'db.duplicate.primarykey':
+    'A system configuration issue was detected. Please contact support.',
   notfound: 'Country not found.'
 };
-
 const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
   const dispatch = useAppDispatch();
 
-  const { data: lovResponse } = useGetLovValuesByCodeQuery('CNTRY');
-
+  const enumOptions = useEnumOptions('CountryName');
+  const enumLabelMap = useMemo(
+    () => Object.fromEntries(enumOptions.map(o => [o.value, o.label])),
+    [enumOptions]
+  );
   const [countryForEdit, setCountryForEdit] = useState<Country>({ ...newCountry });
 
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
@@ -238,7 +241,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       setIsCountryFiltered(true);
       setCountryFilterPagination(prev => ({ ...prev, page, size, sort }));
     } catch {
-      dispatch(notify({ msg: 'Failed to filter countries', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to filter countries', sev: 'warning' }));
       resetCountryToUnfiltered();
     }
   };
@@ -301,7 +304,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
 
   const handleSaveCountry = async (payload: Country) => {
     if (!payload.name?.trim()) {
-      dispatch(notify({ msg: 'Country name is required', sev: 'error' }));
+      dispatch(notify({ msg: 'Country name is required', sev: 'warning' }));
       return;
     }
 
@@ -349,7 +352,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       dispatch(
         notify({
           msg: deleteMode === 'deactivate' ? 'Failed to deactivate' : 'Failed to activate',
-          sev: 'error'
+          sev: 'warning'
         })
       );
     } finally {
@@ -368,9 +371,9 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
           fieldLabel=""
           fieldType="select"
           fieldName="value"
-          selectData={lovResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={enumOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={recordOfCountryFilter}
           setRecord={setRecordOfCountryFilter}
           menuMaxHeight={200}
@@ -437,8 +440,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       key: 'name',
       title: <Translate>Country Name</Translate>,
       flexGrow: 3,
-      render: (row: Country) =>
-        conjureValueBasedOnKeyFromList(lovResponse?.object ?? [], row.name, 'lovDisplayVale')
+      render: (row: Country) => enumLabelMap[row.name] || enumLabelMap[row.code] || row.name
     },
     { key: 'code', title: <Translate>Code</Translate>, flexGrow: 2 },
     {
@@ -492,6 +494,55 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       )
     }
   ];
+const filters = (<div className="inputs-dis-flex">
+                  <div className="geo-inline-form">
+                    <Form fluid layout="inline" className="flex-dis-row">
+                      <MyInput
+                        fieldName="name"
+                        fieldType="select"
+                        column
+                        fieldLabel="Country Name"
+                        record={countryForEdit}
+                        setRecord={setCountryForEdit}
+                        selectData={enumOptions}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        width={220}
+                        required
+                      />
+                      <MyInput
+                        fieldName="code"
+                        fieldType="text"
+                        fieldLabel="Code"
+                        column
+                        record={countryForEdit}
+                        setRecord={setCountryForEdit}
+                        width={120}
+                        required
+                      />
+                      <div className="margin-top-37">
+                        <MyButton
+                          color="var(--deep-blue)"
+                          width="80px"
+                          onClick={() => handleSaveCountry(countryForEdit)}
+                        >
+                          Save
+                        </MyButton>
+                      </div>
+                      <div className="margin-top-37">
+                        <MyButton
+                          color="var(--primary-gray)"
+                          width="80px"
+                          onClick={() => setCountryForEdit({ ...newCountry })}
+                        >
+                          Clear
+                        </MyButton>
+                      </div>
+                    </Form>
+                  </div>
+
+                  {countryFiltersUI()}
+                 </div>);
 
   return (
     <>
@@ -499,54 +550,6 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
         title={<Translate>Country</Translate>}
         content={
           <>
-            <div className="inputs-dis-flex">
-              <div className="geo-inline-form">
-                <Form fluid layout="inline" className="flex-dis-row">
-                  <MyInput
-                    fieldName="name"
-                    fieldType="select"
-                    column
-                    fieldLabel="Country Name"
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    selectData={lovResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    width={220}
-                  />
-                  <MyInput
-                    fieldName="code"
-                    fieldType="text"
-                    fieldLabel="Code"
-                    column
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    width={120}
-                  />
-                  <div className="margin-top-37">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="80px"
-                      onClick={() => handleSaveCountry(countryForEdit)}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
-                  <div className="margin-top-37">
-                    <MyButton
-                      color="var(--primary-gray)"
-                      width="80px"
-                      onClick={() => setCountryForEdit({ ...newCountry })}
-                    >
-                      Clear
-                    </MyButton>
-                  </div>
-                </Form>
-              </div>
-
-              {countryFiltersUI()}
-            </div>
-
             <MyTable
               data={countryTableData}
               columns={countryColumns}
@@ -556,13 +559,14 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
                 isCountryFiltered ? countryFilterPagination.size : countryPaginationParams.size
               }
               onPageChange={handleCountryPageChange}
+              filters={filters}
               onRowsPerPageChange={handleCountryRowsPerPageChange}
               loading={countriesFetching || byNameResult?.isFetching || byCodeResult?.isFetching}
-              filters={null}
               onRowClick={row => onSelect(row as Country)}
               rowClassName={row =>
                 selectedCountry && row.id === selectedCountry.id ? 'selected-row' : ''
               }
+              dontTranslateData 
             />
           </>
         }

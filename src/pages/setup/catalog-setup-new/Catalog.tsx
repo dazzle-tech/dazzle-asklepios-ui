@@ -3,11 +3,14 @@ import './styles.less';
 import { Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
-import './styles.less';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import PolicyAssignmentManager from '@/components/PolicyAssignment';
 import { formatEnumString } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -35,6 +38,9 @@ const Catalog = () => {
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openTestsPopup, setOpenTestsPopup] = useState<boolean>(false);
+  const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
+  const [selectedCatalogForPolicyAssignment, setSelectedCatalogForPolicyAssignment] =
+    useState<CatalogResponseVM | null>(null);
   const [openConfirmDeleteCatalog, setOpenConfirmDeleteCatalog] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
@@ -66,8 +72,17 @@ const Catalog = () => {
   const testTypeEnum = useEnumOptions('TestType');
   // Header page setUp
   const divContent = 'Catalog';
+
+
+  useEffect(() => {
   dispatch(setPageCode('Catalog'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Pagination values
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
@@ -97,7 +112,7 @@ const Catalog = () => {
   };
 
   // Icons column (Edit ,delete, Tests)
-  const iconsForActions = () => (
+  const iconsForActions = (rowData: CatalogResponseVM) => (
     <div className="container-of-icons">
       <MdModeEdit
         className="icons-style"
@@ -105,6 +120,7 @@ const Catalog = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
+          setDiagnosticsTestCatalogHeader(rowData);
           setPopupOpen(true);
         }}
       />
@@ -114,6 +130,7 @@ const Catalog = () => {
         size={24}
         fill="var(--primary-pink)"
         onClick={() => {
+          setDiagnosticsTestCatalogHeader(rowData);
           setOpenConfirmDeleteCatalog(true);
         }}
       />
@@ -123,7 +140,19 @@ const Catalog = () => {
         size={21}
         fill="var(--primary-gray)"
         onClick={() => {
+          setDiagnosticsTestCatalogHeader(rowData);
           setOpenTestsPopup(true);
+        }}
+      />
+      <FontAwesomeIcon
+        icon={faClipboardList}
+        title="Policy Assignment"
+        className="icons-style"
+        style={{ color: 'var(--deep-blue)', cursor: 'pointer' }}
+        size="lg"
+        onClick={() => {
+          setSelectedCatalogForPolicyAssignment(rowData);
+          setOpenPolicyAssignmentModal(true);
         }}
       />
     </div>
@@ -152,13 +181,13 @@ const Catalog = () => {
       key: 'icons',
       title: '',
       flexGrow: 3,
-      render: () => iconsForActions()
+      render: (rowData: CatalogResponseVM) => iconsForActions(rowData)
     }
   ];
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -331,15 +360,15 @@ const Catalog = () => {
     setLink(diagnosticsTestCatalogHeaderListResponse?.links);
   }, [diagnosticsTestCatalogHeaderListResponse?.links]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         totalCount={isFiltered ? filteredTotal : totalCount}
@@ -395,6 +424,25 @@ const Catalog = () => {
         setOpen={setPopupOpen}
         diagnosticsTestCatalogHeader={diagnosticsTestCatalogHeader}
         width={width}
+      />
+      <MyModal
+        open={openPolicyAssignmentModal}
+        setOpen={setOpenPolicyAssignmentModal}
+        title="Catalog Policy Assignment"
+        bodyheight="70vh"
+        size="70vw"
+        hideBack
+        hideActionBtn
+        content={
+          selectedCatalogForPolicyAssignment ? (
+            <PolicyAssignmentManager
+              resourceType="CATALOG"
+              resourceId={selectedCatalogForPolicyAssignment.id ?? 0}
+              facilityId={selectedCatalogForPolicyAssignment.facilityId ?? 0}
+              showHeader={false}
+            />
+          ) : null
+        }
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteCatalog}

@@ -5,7 +5,16 @@ import './styles.less';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 
 const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryModel }) => {
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="drawer-container">
       <Drawer
         size="md"
@@ -21,6 +30,7 @@ const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryM
         </Drawer.Body>
       </Drawer>
     </div>
+  </div>
   );
 };
 

@@ -92,7 +92,9 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
                   fieldName={field.fieldName}
                   fieldLabel={field.label}
                   selectData={lovMap[field.lovCode] ?? []}
-                  selectDataLabel="lovDisplayVale"
+                   selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                   selectDataValue="key"
                   record={record}
                   setRecord={setRecord}

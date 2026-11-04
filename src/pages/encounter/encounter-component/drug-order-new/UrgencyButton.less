@@ -60,7 +60,7 @@
   left: 0;
   z-index: 10;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 6px;
   width: 100%;
 }
@@ -72,4 +72,9 @@
 
 .urgency-item:hover {
   background: #f5f5f5;
+}
+.rs-theme-dark{
+  .urgency-menu{
+    background-color: var(--dark-black) !important;
+  }
 }

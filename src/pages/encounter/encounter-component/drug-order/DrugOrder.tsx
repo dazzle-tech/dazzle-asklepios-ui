@@ -768,7 +768,7 @@ const DrugOrder = props => {
                 setShowCanceled(!showCanceled);
               }}
             >
-              Show canceled orders
+            <Translate>Show Canceled Orders</Translate>
             </Checkbox>
           </div>
         </div>

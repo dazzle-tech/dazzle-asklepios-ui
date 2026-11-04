@@ -234,13 +234,22 @@ const AddEditDVMRule = ({
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={dvmRule?.key ? 'Edit DVM Rule' : 'New DVM Rule'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={dvmRule?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'DVM Rule info', icon: <FontAwesomeIcon icon={faClipboardCheck} /> }]}

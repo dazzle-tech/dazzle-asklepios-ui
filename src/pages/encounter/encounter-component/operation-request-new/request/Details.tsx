@@ -94,6 +94,13 @@ const Details = ({
     }
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <MyModal
@@ -117,7 +124,7 @@ const Details = ({
             {/* First Row: Facility, Department, Operation Date Time, Priority */}
             <SectionContainer
               title={<></>}
-              content={
+              content={<div dir={dir}>
                 <Row gutter={20} className="rows-gap">
                   <Col md={6}>
                     <MyInput
@@ -162,7 +169,9 @@ const Details = ({
                     <MyInput
                       fieldType="select"
                       selectData={orderPriorityLov?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
+                       selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                       selectDataValue="key"
                       width="100%"
                       fieldName="priorityLkey"
@@ -173,7 +182,7 @@ const Details = ({
                       showLabel={true}
                     />
                   </Col>
-                </Row>
+                </Row> </div>
               }
             ></SectionContainer>
             <div className="margin-top10">
@@ -201,7 +210,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={procedureLevelLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="operationLevelLkey"
@@ -215,7 +226,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={operationOrderTypeLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="operationTypeLkey"
@@ -234,7 +247,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={bodyPartsLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="bodyPartLkey"
@@ -248,7 +263,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={sidesLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="sideOfProcedureLkey"
@@ -263,7 +280,9 @@ const Details = ({
                         <MyInput
                           fieldType="select"
                           selectData={anesthTypesLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
+                           selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
                           selectDataValue="key"
                           width="100%"
                           fieldName="plannedAnesthesiaTypeLkey"
@@ -347,7 +366,8 @@ const Details = ({
             </div>
           </Form>
         }
-      ></MyModal>
+      />
+      
       <AttachmentUploadModal
         isOpen={isAttachmentModalOpen}
         setIsOpen={setIsAttachmentModalOpen}

@@ -41,16 +41,21 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+  const consultationType = useEnumOptions('ConsultationType');
   const consultationLevel = useEnumOptions('ConsultationLevel');
 
   const [triggerGetSpecialistPractitioners, practitionersResult] =
     useLazyGetSpecialistPractitionersQuery();
 
-  const [
-    getSpecialtyConsultation,
-    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
-  ] = useGetSpecialtyConsultationMutation();
+
+    const [
+      getSpecialtyConsultation,
+      {
+        isLoading: aiLoading,
+        error: aiError
+      }
+    ] = useGetSpecialtyConsultationMutation();
+
 
   const aiSummary = localAiSummary;
   const destinationType = formData?.destinationType ?? 'DEPARTMENT';
@@ -114,7 +119,15 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
 
   if (!consultation) return null;
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <Panel
       bordered
       className="preview-consultation"
@@ -129,7 +142,7 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
         </div>
       }
     >
-      <Form fluid className="disabled-panel">
+      <Form fluid>
         <div className="main-details-consultion-page-container">
           <SectionContainer
             title={<Translate>Choose Consultant</Translate>}
@@ -213,6 +226,8 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                         record={formData}
                         setRecord={() => {}}
                         required
+                                disableByField='isValid'
+
                       />
 
                       <button
@@ -271,23 +286,23 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   record={formData}
                   setRecord={() => {}}
                   required
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   width={'12vw'}
                   disabled={true}
                   fieldType="select"
                   fieldLabel="Consultation Type"
-                  selectData={
-                    Array.isArray(consultationTypeLovQueryResponse?.object)
-                      ? consultationTypeLovQueryResponse.object
-                      : []
-                  }
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={Array.isArray(consultationType) ? consultationType : []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   fieldName={'consultationType'}
                   record={formData}
                   setRecord={() => {}}
                   required
+                          disableByField='isValid'
+
                 />
                 <MyInput
                   width={'12vw'}
@@ -378,6 +393,7 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
         </div>
       </Form>
     </Panel>
+    </div>
   );
 };
 

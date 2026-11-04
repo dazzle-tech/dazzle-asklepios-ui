@@ -51,8 +51,17 @@ const ActiveIngredientsSetup = () => {
   const divContent = (
       "Active Ingredients"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Active_Ingredients'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // Available fields for filtering
   const filterFields = [
@@ -270,12 +279,6 @@ const ActiveIngredientsSetup = () => {
   };
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (saveActiveIngredientMutation.data) {

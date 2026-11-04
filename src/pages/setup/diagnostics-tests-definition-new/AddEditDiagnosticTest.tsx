@@ -1,5 +1,9 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import BillingRuleSelect, {
+  testTypeToBillingItemType
+} from '@/components/BillingRuleSelect/BillingRuleSelect';
+import LoincSearchable from '@/components/LoincSearchComponent';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
@@ -56,7 +60,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   testRequest
 }) => {
   const dispatch = useAppDispatch();
-    const authSlice = useAppSelector(state => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState({ ...newPathology });
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([]);
@@ -83,7 +87,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
     ...initialListRequest,
     pageSize: 1000
   });
-  const {data:facility}=useGetFacilityByIdQuery(selectedDepartment?.facilityId ?? skipToken, { skip: !selectedDepartment?.facilityId });
+  const { data: facility } = useGetFacilityByIdQuery(selectedDepartment?.facilityId ?? skipToken, { skip: !selectedDepartment?.facilityId });
   // Fetch Age Group Lov response
 
   const ageGroups = useEnumOptions('AgeGroupType');
@@ -321,14 +325,25 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   }, [open, testRequest?.type]);
 
   useEffect(() => {
-   if(open && !diagnosticsTest?.id){
-    console.log('Facility data in useEffect:', facility);
-    
-    setDiagnosticsTest(prev => ({
-      ...prev,
-      currency:facility?.defaultCurrency ?? null 
-    }));}
-  }, [open,facility]);
+    if (open && !diagnosticsTest?.id) {
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        currency: facility?.defaultCurrency ?? null
+      }));
+    }
+  }, [open, facility]);
+
+  useEffect(() => {
+
+    if (!diagnosticsTest?.appointable) {
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+      }));
+
+    }
+  }, [diagnosticsTest?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -339,7 +354,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               <div className="container-of-field-diagnostic">
                 <MyInput
                   required
-                  width="%100%"
+                  width="100%"
                   fieldLabel="Test Type"
                   fieldType="select"
                   fieldName="type"
@@ -348,7 +363,15 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   selectDataValue="value"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
-
+                  onSelectItem={() => {
+                    setDiagnosticsTest(prev => ({
+                      ...prev,
+                      billingRuleId: null,
+                      loincCodeId: null,
+                      loincCode: null,
+                      loincDescription: null
+                    }));
+                  }}
                 />
               </div>
               <div className="container-of-field-diagnostic">
@@ -360,10 +383,30 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   setRecord={setDiagnosticsTest}
                 />
               </div>
+               <div className="container-of-field-diagnostic">
+                <MyInput
+               
+                  width="100%"
+                  fieldName="shortName"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                />
+              </div>
             </div>
 
             {diagnosticsTest.type === 'LABORATORY' && (
               <>
+                <br />
+                <div className="container-of-two-fields-diagnostic">
+                  <div className="container-of-two-loinc-diagnostic">
+                    <LoincSearchable
+                      object={diagnosticsTest}
+                      setOpject={setDiagnosticsTest}
+                      fieldName="loincCodeId"
+                      label="LOINC"
+                    />
+                  </div>
+                </div>
                 <br />
                 <div className="container-of-two-fields-diagnostic">
                   <div className="container-of-field-diagnostic">
@@ -424,7 +467,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         placeholder="Selected LOV"
                       />
                     </div>
-
                   )}
 
                   {diagnosticsTest.defaultProfileResultType === 'NUMBER' && (
@@ -441,160 +483,270 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                         record={diagnosticsTest}
                         setRecord={setDiagnosticsTest}
                       />
-                    </div>)}
+                    </div>
+                  )}
+
+                  {diagnosticsTest.defaultProfileResultType === 'TEXT' && (
+                    <div className="container-of-field-diagnostic">
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Text Result"
+                        fieldName="defaultProfileResultType"
+                        disabled
+                        record={diagnosticsTest}
+                        setRecord={setDiagnosticsTest}
+                      />
+                    </div>
+                  )}
                 </div>
               </>
             )}
             <br />
-            <MyInput
-              required
-              width="100%"
-              fieldName="internalCode"
-              record={diagnosticsTest}
-              setRecord={setDiagnosticsTest}
-            />
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
+
                 <MyInput
-                required
+                  required
                   width="100%"
-                  fieldName="price"
-                  fieldType='number'
+                  fieldName="internalCode"
+                  record={diagnosticsTest}
+                  setRecord={setDiagnosticsTest}
+                />
+                 <MyInput
+                  
+                  width="100%"
+                  fieldLabel='Integration Code'
+                  fieldName="hl7IntegrationCode"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
               </div>
               <div className="container-of-field-diagnostic">
+                
                 <MyInput
-                  disabled={true}
-                  width="%100%"
-                  fieldLabel="Currency"
-                  fieldType="select"
-                  fieldName="currency"
-                  selectData={Currency ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
-              </div>
-            </div>
-            <br />
-            <MyInput
-              width="100%"
-              fieldName="specialNotes"
-              fieldType="textarea"
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={diagnosticsTest}
-              setRecord={setDiagnosticsTest}
-            />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
+                  required={diagnosticsTest.type==="RADIOLOGY"?true:false}
                   width="100%"
-                  fieldName="genderSpecific"
-                  fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  fieldName="modality"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
+                </div>
+
               </div>
-              {diagnosticsTest.genderSpecific && (
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
-                    width="%100"
-                    fieldLabel="Gender"
+                    required
+                    width="100%"
+                    fieldName="price"
+                    fieldType='number'
+                    allowDecimal
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    disabled={true}
+                    width="100%"
+                    fieldLabel="Currency"
                     fieldType="select"
-                    fieldName="gender"
-                    selectData={genders ?? []}
+                    fieldName="currency"
+                    selectData={Currency ?? []}
                     selectDataLabel="label"
                     selectDataValue="value"
                     record={diagnosticsTest}
                     setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="specialPopulation"
-                  fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
               </div>
-              {diagnosticsTest.specialPopulation && (
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <BillingRuleSelect
+                    billingItemType={testTypeToBillingItemType(
+                      diagnosticsTest?.type
+                    )}
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+              </div>
+              <br />
+              <MyInput
+                width="100%"
+                fieldName="specialNotes"
+                fieldType="textarea"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
-                    fieldLabel="Special Pouplation"
-                    selectData={SpecialPopulationLovQueryResponse?.object ?? []}
-                    fieldType="checkPicker"
+                    fieldName="genderSpecific"
+                    fieldType="checkbox"
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    fieldName="testKey"
-                    record={diagnosticTestSpecialPopulation}
-                    setRecord={setDiagnosticTestSpecialPopulation}
-                    menuMaxHeight={150}
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="ageSpecific"
-                  fieldType="checkbox"
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
+                {diagnosticsTest.genderSpecific && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Gender"
+                      fieldType="select"
+                      fieldName="gender"
+                      selectData={genders ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                    />
+                  </div>
+                )}
               </div>
-              {diagnosticsTest.ageSpecific && (
+              <br />
+              <div className="container-of-two-fields-diagnostic">
                 <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
-                    fieldLabel="Age Group"
-                    selectData={ageGroups ?? []}
-                    fieldType="checkPicker"
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    fieldName="ageGroupList"
-                    record={ageGroupList}
-                    setRecord={setAgeGroupList}
-                    menuMaxHeight={100}
+                    fieldName="specialPopulation"
+                    fieldType="checkbox"
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
                   />
                 </div>
-              )}
-            </div>
-            <br />
-            <div className="container-of-two-fields-diagnostic">
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  width="100%"
-                  fieldName="appointable"
-                  fieldType="checkbox"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />
+                {diagnosticsTest.specialPopulation && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Special Pouplation"
+                      selectData={SpecialPopulationLovQueryResponse?.object ?? []}
+                      fieldType="checkPicker"
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="testKey"
+                      record={diagnosticTestSpecialPopulation}
+                      setRecord={setDiagnosticTestSpecialPopulation}
+                      menuMaxHeight={150}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    width="100%"
+                    fieldName="ageSpecific"
+                    fieldType="checkbox"
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+                {diagnosticsTest.ageSpecific && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      fieldLabel="Age Group"
+                      selectData={ageGroups ?? []}
+                      fieldType="checkPicker"
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      fieldName="ageGroupList"
+                      record={ageGroupList}
+                      setRecord={setAgeGroupList}
+                      menuMaxHeight={100}
+                    />
+                  </div>
+                )}
+              </div>
+              <br />
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    width="100%"
+                    fieldName="appointable"
+                    fieldType="checkbox"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />
+                </div>
+              </div>
+
+              <div className="container-of-two-fields-diagnostic">
+                <div className="container-of-field-diagnostic">
+                  <MyInput
+                    fieldType="number"
+                    fieldName="parallelCapacityValue"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                    width="100%"
+                    required
+                    showZero
+                  />
+                </div>
+                {diagnosticsTest?.appointable && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultDurationMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                      showZero
+                    />
+                  </div>
+                )}
+              </div>
+              {diagnosticsTest?.appointable && (
+                <div className="container-of-two-fields-diagnostic">
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferBeforeMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                      showZero
+                    />
+                  </div>
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferAfterMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                      showZero
+                    />
+                  </div>
+                </div>
+              )}
           </Form>
         );
       case 1:
         return handleShowComponent();
     }
   };
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -613,7 +765,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       setOpen={setOpen}
       position="right"
       title={diagnosticsTest?.id ? 'Edit Diagnostic Test' : 'New Diagnostic Test'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       steps={[
         {
           title: 'Basic Info',

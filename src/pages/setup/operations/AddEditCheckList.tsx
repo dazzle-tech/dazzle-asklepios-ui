@@ -34,6 +34,13 @@ const AddEditCheckList = ({ open, setOpen, checklist, setChecklist, width }) => 
   };
   // Effects
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       actionButtonLabel={checklist?.key ? 'Save' : 'Create'}
@@ -42,7 +49,11 @@ const AddEditCheckList = ({ open, setOpen, checklist, setChecklist, width }) => 
       setOpen={setOpen}
       position="right"
       title={checklist?.key ? 'Edit CheckList' : 'New CheckList'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContentOfMainModal(stepNumber)}
+        </div>
+      )}
       steps={[
         {
           title: 'Basic Info',

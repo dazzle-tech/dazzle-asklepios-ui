@@ -9,6 +9,7 @@ import BloodCardQuestions from './BloodCardQuestions';
 import OrderDetails from './OrderDetails';
 import PatientInformation from './PatientInformation';
 import NotesAndHistory from './NotesAndHistory';
+import Translate from '@/components/Translate';
 const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -20,7 +21,7 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
               <Col md={12}>
                 <Row>
                   <SectionContainer
-                    title={<Text>Patient Information</Text>}
+                    title={<Text><Translate>Patient Information</Translate></Text>}
                     content={
                       <PatientInformation bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
                     }
@@ -28,7 +29,7 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
                 </Row>
                 <Row>
                   <SectionContainer
-                    title={<Text>Notes & History</Text>}
+                    title={<Text><Translate>Notes & History</Translate></Text>}
                     content={
                       <NotesAndHistory bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
                     }
@@ -38,13 +39,13 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
               <Col md={12}>
                 <Row>
                   <SectionContainer
-                    title={<Text>Order Details</Text>}
+                    title={<Text><Translate>Order Details</Translate></Text>}
                     content={<OrderDetails bloodorder={bloodorder} setBloodOrder={setBloodOrder} />}
                   />
                 </Row>
                 <Row>
                   <SectionContainer
-                    title={<Text>Blood Card Questions</Text>}
+                    title={<Text><Translate>Blood Card Questions</Translate></Text>}
                     content={
                       <BloodCardQuestions bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
                     }
@@ -56,13 +57,20 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
         );
     }
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={bloodorder?.key ? 'Edit Blood Order' : 'New Blood Order'}
       position="left"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={bloodorder?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Blood Order Info', icon: <FontAwesomeIcon icon={faDroplet} /> }]}

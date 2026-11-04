@@ -42,6 +42,9 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
       category: ''
     });
 
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+
     /* ===================== FILTERS ===================== */
     const cleanFilters = (filters: any) => {
       const cleaned: any = Object.fromEntries(
@@ -90,23 +93,21 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
 const queryParams =
   !patientId || isOrdersFetching || !orderIds.length
     ? skipToken
-    : showCancelled
-    ? {
-        status: DiagnosticOrderTestStatus.CANCELLED,
-        orderIdIn: orderIds,
-        ...cleanedFilters
-      }
     : {
-        excludeStatus: DiagnosticOrderTestStatus.CANCELLED,
         orderIdIn: orderIds,
+        page,
+        size: pageSize,
+        ...(showCancelled
+          ? {}
+          : { excludeStatus: DiagnosticOrderTestStatus.CANCELLED }),
         ...cleanedFilters
       };
 
-const {
-  data: orderTestResponse,
-  isLoading,
-  refetch
-} = useFilterDiagnosticOrderTestsQuery(queryParams);
+    const {
+      data: orderTestResponse,
+      isLoading,
+      refetch
+    } = useFilterDiagnosticOrderTestsQuery(queryParams);
 
 
     /* 🔥 expose refetch to parent */
@@ -117,6 +118,7 @@ const {
     }));
 
     const orderTestList: any[] = orderTestResponse?.data ?? [];
+    const totalCount = orderTestResponse?.totalCount ?? 0;
 
     /* ===================== ALL TESTS ===================== */
     const { data: testsResponse } = useGetAllDiagnosticTestsQuery({
@@ -173,6 +175,12 @@ const {
         title: <Translate>STATUS</Translate>,
         flexGrow: 1,
         render: (row: any) => formatEnumString(row.status)
+      },
+      {
+        key: 'processingStatus',
+        title: <Translate>PROCESSING STATUS</Translate>,
+        flexGrow: 1,
+        render: (row: any) => formatEnumString(row.processingStatus)
       }
     ];
 
@@ -184,7 +192,7 @@ const {
       useGetLovValuesByCodeQuery('RAD_CATEGORIES');
 
     const tableFilters = (
-      <Form fluid layout="inline">
+      <Form fluid layout="inline" className="filter-form-disable-fix">
         <MyInput
           column
           width={140}
@@ -229,32 +237,61 @@ const {
                   : []
             }
             selectDataLabel="lovDisplayVale"
+                    disableByField='isValid'
+
             selectDataValue="key"
             record={filters}
             setRecord={setFilters}
             searchable={false}
           />
         )}
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', height: '100%', marginTop: 22 }}>
+          <Checkbox
+            className="show-cancelled"
+            checked={showCancelled}
+            onChange={(_, checked) => setShowCancelled(checked)}
+          >
+            <Translate>Show Cancelled</Translate>
+          </Checkbox>
+        </div>
       </Form>
     );
 
     /* ===================== RENDER ===================== */
-    return (
-      <>
-        <Checkbox
-          checked={showCancelled}
-          onChange={(_, checked) => setShowCancelled(checked)}
-        >
-          Show Cancelled
-        </Checkbox>
 
+    const handlePageChange = (_: unknown, newPage: number) => {
+      setPage(newPage);
+    };
+
+    const handleRowsPerPageChange = (
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      setPageSize(parseInt(event.target.value, 10));
+      setPage(0);
+    };
+
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    return (
+      <div dir={dir}>
         <MyTable
           loading={isLoading}
           data={normalizedRows}
           columns={tableColumns}
           filters={tableFilters}
+          page={page}
+          rowsPerPage={pageSize}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </>
+      </div>
     );
   }
 );

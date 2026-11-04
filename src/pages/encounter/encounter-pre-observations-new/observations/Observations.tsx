@@ -8,8 +8,11 @@ import BodyMeasurements from './BodyMeasurements';
 import PatientObservationsComplaints from './PatientObservationsComplaints';
 import PainAssessment from './PainAssessment';
 import AdditionalMeasurements from './AdditionalMeasurements';
+import RandomBloodSugar from './RandomBloodSugar';
 import { Patient, PatientEncounter } from '@/types/model-types-new';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
+import { useAppDispatch } from '@/hooks';
 export type ObservationsRef = {};
 
 type ObservationsProps = {
@@ -20,6 +23,7 @@ type ObservationsProps = {
 
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const state = location.state || {};
   const patient = props.patient || (state.patient as Patient);
   const encounter = props.encounter || (state.encounter as PatientEncounter);
@@ -29,17 +33,28 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   const [localPatient] = useState<Patient>({ ...patient });
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({ ...(encounter as any) });
-
+console.log(localPatient);
   useEffect(() => {
-    if (localEncounter?.status === 'CLOSED') {
+    if (localEncounter?.status === 'COMPLETED') {
       setIsEncounterStatusClosed(true);
     } else {
       setIsEncounterStatusClosed(false);
     }
   }, [localEncounter?.status]);
 
+
+  useEffect(() => {
+  dispatch(setPageCode('observations'));
+  dispatch(setDivContent('Observations'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   return (
-    <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div ref={ref as any} className={clsx('basuc-div')}>
       <Form fluid>
         <Row>
           <Col md={12}>
@@ -47,10 +62,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               <Col md={24}>
                 <PatientObservationsComplaints
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}
+                  setEncounter={setLocalEncounter} 
                 />
               </Col>
             </Row>
@@ -58,10 +74,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               <Col md={24}>
                 <VitalSigns
                   width="28vw"
-                  disabled={false}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number(localPatient.id)}
                   encounterId={Number(localEncounter.id)}
                   encounter={localEncounter}
+                  showHistoryButton
                 />
               </Col>
             </Row>
@@ -71,9 +88,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               <Col md={24}>
                 <BodyMeasurements
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
-                  patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
-                  encounterId={Number((localEncounter as any)?.id)}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
+                  patient={localPatient}
+                  patientId={Number(localPatient?.id)}
+                  encounterId={Number(localEncounter?.id)}
                   encounter={localEncounter}
                 />
               </Col>
@@ -82,18 +100,29 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               <Col md={24}>
                 <PainAssessment
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}
                 />
               </Col>
             </Row>
+            
+            <Row>
+            <Col md={24}>
+              <RandomBloodSugar
+                width="100%"
+                disabled={isEncounterStatusClosed || readOnly || edit}
+                patientId={Number(localPatient.id)}
+                encounterId={Number(localEncounter.id)}
+              />
+            </Col>
+          </Row>
             <Row>
               <Col md={24}>
                 <AdditionalMeasurements
                   width="100%"
-                  disabled={isEncounterStatusClosed || readOnly}
+                  disabled={isEncounterStatusClosed || readOnly || edit}
                   patient={localPatient as any}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}

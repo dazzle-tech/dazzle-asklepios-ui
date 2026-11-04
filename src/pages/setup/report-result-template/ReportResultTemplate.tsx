@@ -179,19 +179,6 @@ const ReportResultTemplate = () => {
           record={filterValue}
           setRecord={setFilterValue}
         />
-
-        <div className="bt-right">
-          <MyButton
-            prefixIcon={() => <PlusIcon />}
-            onClick={() => {
-              setSelectedTemplate(null);
-              setViewOnly(false);
-              setModalOpen(true);
-            }}
-          >
-            Add New
-          </MyButton>
-        </div>
       </div>
     </Form>
   );
@@ -278,8 +265,15 @@ const ReportResultTemplate = () => {
     return () => clearTimeout(delay);
   }, [filterValue.name]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={isFiltered ? filterResponse?.data ?? [] : data?.data ?? []}
         totalCount={
@@ -288,6 +282,18 @@ const ReportResultTemplate = () => {
         loading={isLoading || fetchingFilter}
         columns={columns}
         filters={filters}
+        tableButtons={<div className="bt-right">
+                  <MyButton
+                    prefixIcon={() => <PlusIcon />}
+                    onClick={() => {
+                      setSelectedTemplate(null);
+                      setViewOnly(false);
+                      setModalOpen(true);
+                    }}
+                  >
+                    Add New
+                  </MyButton>
+                </div>}
         page={isFiltered ? filterPagination.page : paginationParams.page}
         rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
         onPageChange={handlePageChange}

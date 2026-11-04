@@ -1,222 +1,91 @@
+
 import React, { useEffect, useState } from 'react';
-import {
-  Panel,
-  Form,
-  Whisper,
-  Tooltip,
-  Popover,
-  Dropdown
-} from 'rsuite';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete } from 'react-icons/md';
-import { FaEdit, FaListAlt } from 'react-icons/fa';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-import './styles.less';
-import SearchPatientCriteria from '@/components/SearchPatientCriteria';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useGetDepartmentsQuery } from '@/services/setupService';
-import { Tabs } from 'rsuite';
+import { useSearchParams } from 'react-router-dom';
+
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { FaFileExport, FaFileImport, FaFileWaveform, FaPaperclip, FaPaperPlane, FaPerson, FaPlay } from 'react-icons/fa6';
-import InpatientTablePage from './InpatientTablePage';
-import OutpatientTablePage from './OutpatientTablePage';
+import SettlementReportPanel from '@/pages/billing-module/settlementReport/SettlementReport';
 
-const Claimscreen = () => {
+import ClaimsWorkspace from './ClaimsWorkspace';
+import './styles.less';
+import PreClaimClinicalAndCodingReview from './Pre-ClaimClinicalAndCodingReview';
 
+type ClaimsTab = 'claims' | 'settlement' | 'preClaimClinicalAndCodingReview';
+
+const ClaimsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const getInitialTab = (): ClaimsTab => {
+    const tab = searchParams.get('tab');
 
-  const divContent = (
-    "Claims"
-  );
+    if (tab === 'settlement' || tab === 'preClaimClinicalAndCodingReview') {
+      return tab;
+    }
 
-useEffect(() => {
-  dispatch(setPageCode('ProductList'));
-  dispatch(setDivContent('Claims'));
-}, [dispatch]);
+    return 'claims';
+  };
 
+  const [activeTab, setActiveTab] = useState<ClaimsTab>(getInitialTab);
 
-  const [selectedRow, setSelectedRow] = useState<any>(null);
-  const [filter, setFilter] = useState<any>({});
-  const [openActionsMenu, setOpenActionsMenu] = useState(false);
+  useEffect(() => {
+    dispatch(setPageCode('Claims'));
+    dispatch(setDivContent('Claims'));
+  }, [dispatch]);
 
+  const handleTabChange = (tab: ClaimsTab) => {
+    setActiveTab(tab);
 
-const STATUSOPTIONS = [
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'In Progress', value: 'IN_PROGRESS' },
-  { label: 'Completed', value: 'COMPLETED' },
-  { label: 'Rejected', value: 'REJECTED' }
-];
+    if (tab === 'claims') {
+      setSearchParams({}, { replace: true });
+      return;
+    }
 
+    setSearchParams({ tab }, { replace: true });
+  };
 
-  const content = (<>
-    <div className="advanced-filters">
-      <Form fluid className="dissss">
-        <div className='advanced-filters-claims-screen'>
-        <MyInput
-          width="10vw"
-          fieldLabel="Coding Status"
-          fieldName="department"
-          fieldType="checkPicker"
-          selectData={STATUSOPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-        />
+  return (
+    <div className="bc-page" data-page="billing-claims-v2">
+      <header className="bc-toolbar">
+        <div className="bc-toolbar__main">
+          <div className="bc-toolbar__title-wrap">
+            <span className="bc-toolbar__eyebrow">Waseel</span>
+            <h1 className="bc-toolbar__title">Insurance Claims</h1>
+          </div>
+        </div>
 
-        <MyInput
-          width="10vw"
-          fieldLabel="Claim Billing Mode"
-          fieldName="department"
-          fieldType="checkPicker"
-          selectData={STATUSOPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-        />
+        <nav className="bc-tabs" aria-label="Claims sections">
+          <button
+            type="button"
+            className={`bc-tab${activeTab === 'claims' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('claims')}
+          >
+            Claims
+          </button>
+          <button
+            type="button"
+            className={`bc-tab${activeTab === 'settlement' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('settlement')}
+          >
+            Settlement Report
+          </button>
+           <button
+            type="button"
+            className={`bc-tab${activeTab === 'preClaimClinicalAndCodingReview' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('preClaimClinicalAndCodingReview')}
+          >
+            Pre-Claim Clinical & Coding Review
+          </button>
+        </nav>
+      </header>
 
-        <MyInput
-          width="10vw"
-          fieldLabel="Assigned"
-          fieldName="department"
-          fieldType="checkPicker"
-          selectData={STATUSOPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-        />
-        <MyInput
-          fieldName="scheduledTransfusion"
-          fieldType="check"
-          fieldLabel="Assigned To Me"
-          showLabel={false}
-          record={filter}
-          setRecord={setFilter}
-        />
+      {activeTab === 'claims' && <ClaimsWorkspace />}
 
-        <MyInput
-          fieldName="scheduledTransfusion"
-          fieldType="check"
-          fieldLabel="Un Assigned"
-          showLabel={false}
-          record={filter}
-          setRecord={setFilter}
-        />
+      {activeTab === 'preClaimClinicalAndCodingReview' && <PreClaimClinicalAndCodingReview />}
 
-        <MyInput
-          width="10vw"
-          fieldLabel="Encounter Billing Mode"
-          fieldName="department"
-          fieldType="checkPicker"
-          selectData={STATUSOPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-        /></div>
-      </Form>
-    </div></>);
-
-  const filters = () => (
-    <div className='my-table-filters'>
-    <Form layout='inline' fluid>
-      <div className='container-of-filter-fields-department-date-filters'>
-        <MyInput
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={filter}
-          setRecord={setFilter}
-          showLabel={false}
-          column
-        />
-        <MyInput
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={filter}
-          setRecord={setFilter}
-          showLabel={false}
-          column
-        />
-      </div>
-
-      <SearchPatientCriteria record={filter} setRecord={setFilter} />
-
-      <MyInput
-        width="10vw"
-        fieldLabel="Department"
-        fieldName="department"
-        fieldType="checkPicker"
-        selectData={STATUSOPTIONS}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filter}
-        setRecord={setFilter}
-        column
-      />
-      <MyInput
-        width="10vw"
-        fieldLabel="Encounter Status"
-        fieldName="department"
-        fieldType="checkPicker"
-        selectData={STATUSOPTIONS}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filter}
-        setRecord={setFilter}
-        column
-      />
-
-      <MyInput
-        width="10vw"
-        fieldLabel="insurance"
-        fieldName="department"
-        fieldType="checkPicker"
-        selectData={STATUSOPTIONS}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filter}
-        setRecord={setFilter}
-        column
-      />
-
-    </Form>
-
-          <AdvancedSearchFilters
-        searchFilter={true}
-        content={content}
-      />
+      {activeTab === 'settlement' && <SettlementReportPanel />}
     </div>
   );
-
-  return (<div className='claims-main-page-container-handle'>
-    <Panel>
-        {filters()}
-
- <Tabs defaultActiveKey="1" appearance="subtle">
-
-
-    <Tabs.Tab eventKey="1" title="OutPatient">
-                <OutpatientTablePage />
-
-    </Tabs.Tab>
-
-    <Tabs.Tab eventKey="3" title="Inpatient">
-                <InpatientTablePage />
-    </Tabs.Tab>
-  </Tabs>
-
-    </Panel>
-  </div>);
 };
 
-export default Claimscreen;
+export default ClaimsScreen;

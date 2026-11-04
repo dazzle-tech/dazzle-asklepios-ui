@@ -32,7 +32,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="maritalStatusLkey"
         selectData={maritalStatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -45,7 +47,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="nationalityLkey"
         selectData={nationalityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -58,7 +62,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="religionLkey"
         selectData={religeonLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -72,7 +78,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="ethnicityLkey"
         selectData={ethnicityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -85,7 +93,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="occupationLkey"
         selectData={occupationLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -98,7 +108,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="responsiblePartyLkey"
         selectData={responsiblePartyLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -111,7 +123,9 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldType="select"
         fieldName="educationalLevelLkey"
         selectData={educationalLevelLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
+         selectDataLabel="lovDisplayVale"
+ disableByField='isValid'
+
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
