@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdDelete, MdLink, MdModeEdit } from 'react-icons/md';
+import { MdContentCopy, MdDelete, MdLink, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -9,8 +9,16 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import DeactivationReasonModal from '@/components/DeactivationReasonModal';
+import CoverageClassCloneModal from './CoverageClassCloneModal';
 import { useAppDispatch } from '@/hooks';
-import { coverageHeaderName, notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
+import {
+  coverageHeaderName,
+  notifyError,
+  notifySuccess,
+  notifyWarning,
+  useDebouncedSearch
+} from './coverageHelpers';
 import {
   useCreateCoverageClassMutation,
   useLinkCoverageClassPolicyMutation,
@@ -42,11 +50,15 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [pending, setPending] = useState<CoverageClass | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
+  const [cloneSource, setCloneSource] = useState<CoverageClass | null>(null);
   const [linkClass, setLinkClass] = useState<CoverageClass | null>(null);
   const [linkForm, setLinkForm] = useState<{ insuranceCompanyPolicyId?: number | null }>({});
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 10, sort: 'name,asc' });
+  const [searchFilter, setSearchFilter] = useState<{ name: string; policy: string }>({ name: '', policy: '' });
+  const nameSearch = useDebouncedSearch(searchFilter.name ?? '');
+  const policySearch = useDebouncedSearch(searchFilter.policy ?? '');
   const classesQuery = useListCoverageClassesQuery(
-    { contractId: Number(contract.id), ...paginationParams },
+    { contractId: Number(contract.id), ...paginationParams, name: nameSearch, policy: policySearch },
     { skip: !contract.id }
   );
   const [createClass] = useCreateCoverageClassMutation();
@@ -60,13 +72,21 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
   const headerName = coverageHeaderName(contract);
 
   useEffect(() => {
+    setPaginationParams(prev => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  }, [nameSearch, policySearch]);
+
+  useEffect(() => {
+    setSearchFilter({ name: '', policy: '' });
+  }, [contract.id]);
+
+  useEffect(() => {
     if (!selected?.id && rows.length) {
       onSelect(rows[0]);
     }
   }, [onSelect, rows, selected?.id]);
 
   const policyOptions = (policiesQuery.data ?? []).map(policy => ({
-    label: `${policy.policyName} (${policy.policyCode})`,
+    label: [policy.policyName, policy.policyNumber, policy.policyCode].filter(Boolean).join(' - '),
     value: policy.id
   }));
 
@@ -96,6 +116,20 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
       setLinkOpen(false);
     } catch (error: any) {
       notifyError(dispatch, error, 'Unable to link policy');
+    }
+  };
+
+  const changeStatus = async (reason?: string) => {
+    if (!pending?.id) return;
+    setConfirmOpen(false);
+    try {
+      const updated = await toggleActive({ id: pending.id, reason }).unwrap();
+      if (selected?.id === updated.id) {
+        onSelect(updated);
+      }
+      notifySuccess(dispatch, 'Coverage class status updated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update class status');
     }
   };
 
@@ -137,6 +171,24 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
             </>
           ) : null}
         </div>
+        <Form fluid className="coverage-class-search">
+          <MyInput
+            width="200px"
+            fieldName="name"
+            record={searchFilter}
+            setRecord={setSearchFilter}
+            showLabel={false}
+            placeholder="Search class"
+          />
+          <MyInput
+            width="240px"
+            fieldName="policy"
+            record={searchFilter}
+            setRecord={setSearchFilter}
+            showLabel={false}
+            placeholder="Search policy"
+          />
+        </Form>
         {contract.isActive ? (
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
@@ -174,7 +226,14 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
             key: 'isActive',
             title: <Translate>Status</Translate>,
             flexGrow: 1,
-            render: (row: CoverageClass) => (row.isActive ? 'Active' : 'Inactive')
+            render: (row: CoverageClass) =>
+              row.isActive ? (
+                'Active'
+              ) : (
+                <span title={row.inactiveReason ?? undefined}>
+                  Inactive{row.inactiveReason ? ` — ${row.inactiveReason}` : ''}
+                </span>
+              )
           },
           {
             key: 'actions',
@@ -192,6 +251,18 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
                     openPolicyLink(row);
                   }}
                 />
+                {contract.isActive ? (
+                  <MdContentCopy
+                    className="icons-style"
+                    title="Clone Class"
+                    size={20}
+                    fill="var(--primary-gray)"
+                    onClick={event => {
+                      event.stopPropagation();
+                      setCloneSource(row);
+                    }}
+                  />
+                ) : null}
                 <MdModeEdit
                   className="icons-style"
                   size={22}
@@ -279,31 +350,34 @@ const CoverageClassTable = ({ contract, selected, onSelect }: Props) => {
               selectData={policyOptions}
               selectDataLabel="label"
               selectDataValue="value"
-              placeholder="Select a policy for this insurance company"
+              placeholder="Search by policy name, number or code"
               searchable
             />
           </Form>
         }
       />
 
+      <CoverageClassCloneModal
+        open={Boolean(cloneSource)}
+        setOpen={open => !open && setCloneSource(null)}
+        source={cloneSource}
+        onCloned={onSelect}
+      />
+
+      <DeactivationReasonModal
+        open={confirmOpen && toggleActionType === 'deactivate'}
+        setOpen={setConfirmOpen}
+        itemLabel="Class"
+        itemName={pending?.name}
+        onConfirm={changeStatus}
+      />
+
       <DeletionConfirmationModal
-        open={confirmOpen}
+        open={confirmOpen && toggleActionType === 'reactivate'}
         setOpen={setConfirmOpen}
         itemToDelete="Coverage class"
         actionType={toggleActionType}
-        actionButtonFunction={async () => {
-          if (!pending?.id) return;
-          setConfirmOpen(false);
-          try {
-            const updated = await toggleActive(pending.id).unwrap();
-            if (selected?.id === updated.id) {
-              onSelect(updated);
-            }
-            notifySuccess(dispatch, 'Coverage class status updated');
-          } catch (error: any) {
-            notifyError(dispatch, error, 'Unable to update class status');
-          }
-        }}
+        actionButtonFunction={() => changeStatus()}
       />
     </div>
   );

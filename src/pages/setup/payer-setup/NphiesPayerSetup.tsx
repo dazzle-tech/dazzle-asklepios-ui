@@ -11,6 +11,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdAssignment, MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import DeactivationReasonModal from '@/components/DeactivationReasonModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -387,6 +388,9 @@ const NphiesPayerSetup = () => {
     if (selectedPayer.website?.trim() && !WEBSITE_PATTERN.test(selectedPayer.website.trim())) {
       errors.push('Website must be a valid URL');
     }
+    if (selectedPayer.validFrom && selectedPayer.validTo && selectedPayer.validTo < selectedPayer.validFrom) {
+      errors.push('Valid To must be on or after Valid From');
+    }
 
     if (errors.length > 0) {
       dispatch(
@@ -457,6 +461,8 @@ const NphiesPayerSetup = () => {
         website: blankToNull(selectedPayer.website),
         isActive: selectedPayer.isActive,
         approvalCoverageCompany: blankToNull(selectedPayer.approvalCoverageCompany),
+        validFrom: blankToNull(selectedPayer.validFrom),
+        validTo: blankToNull(selectedPayer.validTo),
         tpaIds
       };
 
@@ -505,11 +511,11 @@ const NphiesPayerSetup = () => {
     }
   };
 
-  const handleToggleActive = async () => {
+  const handleToggleActive = async (reason?: string) => {
     if (!selectedPayer?.id) return;
     try {
       dispatch(showSystemLoader());
-      await toggleNphiesPayerActive(selectedPayer.id).unwrap();
+      await toggleNphiesPayerActive({ id: selectedPayer.id, reason }).unwrap();
       dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
       dispatch(
         notify({
@@ -676,7 +682,14 @@ const NphiesPayerSetup = () => {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 1,
-      render: (rowData: NphiesPayer) => <span>{rowData.isActive ? 'Active' : 'Inactive'}</span>
+      render: (rowData: NphiesPayer) =>
+        rowData.isActive ? (
+          <span>Active</span>
+        ) : (
+          <span title={rowData.inactiveReason ?? undefined}>
+            Inactive{rowData.inactiveReason ? ` — ${rowData.inactiveReason}` : ''}
+          </span>
+        )
     },
     {
       key: 'actions',
@@ -896,11 +909,19 @@ const NphiesPayerSetup = () => {
         ]}
       />
 
+      <DeactivationReasonModal
+        open={openConfirmToggle && toggleActionType === 'deactivate'}
+        setOpen={setOpenConfirmToggle}
+        itemLabel="Payer Company"
+        itemName={selectedPayer?.nameEn}
+        onConfirm={handleToggleActive}
+      />
+
       <DeletionConfirmationModal
-        open={openConfirmToggle}
+        open={openConfirmToggle && toggleActionType === 'reactivate'}
         setOpen={setOpenConfirmToggle}
         itemToDelete="Payer Company"
-        actionButtonFunction={handleToggleActive}
+        actionButtonFunction={() => handleToggleActive()}
         actionType={toggleActionType}
       />
 

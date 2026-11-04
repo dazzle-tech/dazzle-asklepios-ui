@@ -20,7 +20,7 @@ import {
 } from '@/services/setup/coverageManagement/coverageManagementService';
 import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
 import BillingCategoryItemFields from './BillingCategoryItemFields';
-import { notifyError, notifySuccess, notifyWarning } from './coverageHelpers';
+import { exceedsPercentage, notifyError, notifySuccess, notifyWarning, percentageMax } from './coverageHelpers';
 import { useRuleModalTitle } from './RuleModalTitleContext';
 
 const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
@@ -102,8 +102,8 @@ const PreApprovalPanel = ({
       notifyWarning(dispatch, 'Limit value must be greater than zero');
       return;
     }
-    if (record.valueType === 'PERCENTAGE' && Number(record.limitValue) > 100) {
-      notifyWarning(dispatch, 'Percentage limit cannot be greater than 100');
+    if (exceedsPercentage(record.valueType === 'PERCENTAGE', record.limitValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
       return;
     }
     if (record.targetLevel !== 'DEPARTMENT' && record.targetLevel !== 'FACILITY' && !record.source) {
@@ -361,6 +361,7 @@ const PreApprovalPanel = ({
               fieldName="limitValue"
               record={record}
               setRecord={setRecord}
+              max={percentageMax(record.valueType === 'PERCENTAGE')}
             />
           </Form>
         }

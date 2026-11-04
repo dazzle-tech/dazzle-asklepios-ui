@@ -3,9 +3,10 @@ import { MdLayers, MdModeEdit, MdToggleOff } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import DeactivationReasonModal from '@/components/DeactivationReasonModal';
 import { InsuranceCompanyPolicy, NphiesPayer } from '@/types/model-types-new';
 import {
-  useGetInsuranceCompanyPoliciesQuery,
+  useSearchInsuranceCompanyPoliciesQuery,
   useToggleInsuranceCompanyPolicyActiveMutation
 } from '@/services/setup/payer/InsuranceCompanyPolicyService';
 import { useAppDispatch } from '@/hooks';
@@ -21,6 +22,17 @@ const formatDate = (value?: string | null) => {
   return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
 };
 
+type PolicySearchField = 'policyName' | 'policyNumber' | 'policyCode';
+
+type PolicyFilter = Record<PolicySearchField, string>;
+
+const emptyPolicyFilter: PolicyFilter = { policyName: '', policyNumber: '', policyCode: '' };
+
+const filterBy = (field: PolicySearchField, value: string): PolicyFilter => ({
+  ...emptyPolicyFilter,
+  [field]: value
+});
+
 type InsuranceCompanyPoliciesPanelProps = {
   insuranceCompany: NphiesPayer | null;
 };
@@ -32,24 +44,46 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
   const companyId = insuranceCompany?.id;
   const [classesOpen, setClassesOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<InsuranceCompanyPolicy | null>(null);
-  const { data, isFetching } = useGetInsuranceCompanyPoliciesQuery(companyId as number, {
-    skip: !companyId
-  });
+  const [policyFilter, setPolicyFilter] = useState<PolicyFilter>(emptyPolicyFilter);
+  const [appliedPolicyFilter, setAppliedPolicyFilter] = useState<PolicyFilter>(emptyPolicyFilter);
+  const { data, isFetching } = useSearchInsuranceCompanyPoliciesQuery(
+    { insuranceCompanyId: companyId as number, ...appliedPolicyFilter },
+    { skip: !companyId }
+  );
   const [toggleActive] = useToggleInsuranceCompanyPolicyActiveMutation();
 
   useEffect(() => {
     setClassesOpen(false);
     setEditOpen(false);
+    setDeactivateOpen(false);
     setSelectedPolicy(null);
+    setPolicyFilter(emptyPolicyFilter);
+    setAppliedPolicyFilter(emptyPolicyFilter);
   }, [companyId]);
 
-  const changeStatus = async (policy: InsuranceCompanyPolicy) => {
+  const applyHeaderSearch = (field: PolicySearchField, value: string) => {
+    const next = filterBy(field, value.trim());
+    setPolicyFilter(next);
+    setAppliedPolicyFilter(next);
+  };
+
+  const searchableColumn = (field: PolicySearchField, placeholder: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: policyFilter[field],
+    onSearchChange: (value: string) => setPolicyFilter(filterBy(field, value)),
+    onSearchSubmit: (value?: string) => applyHeaderSearch(field, value ?? policyFilter[field])
+  });
+
+  const changeStatus = async (policy: InsuranceCompanyPolicy, reason?: string) => {
     if (!companyId) {
       return;
     }
     try {
-      await toggleActive({ insuranceCompanyId: companyId, policyId: policy.id }).unwrap();
+      await toggleActive({ insuranceCompanyId: companyId, policyId: policy.id, reason }).unwrap();
+      setDeactivateOpen(false);
       dispatch(
         notify({
           msg: policy.isActive === false ? 'Policy activated' : 'Policy deactivated',
@@ -69,17 +103,20 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
     {
       key: 'policyName',
       title: <Translate>Policy Name</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+      ...searchableColumn('policyName', 'Search policy name')
     },
     {
       key: 'policyNumber',
       title: <Translate>Policy Number</Translate>,
-      flexGrow: 2
+      flexGrow: 2,
+      ...searchableColumn('policyNumber', 'Search policy number')
     },
     {
       key: 'policyCode',
       title: <Translate>Policy Code</Translate>,
-      flexGrow: 2
+      flexGrow: 2,
+      ...searchableColumn('policyCode', 'Search policy code')
     },
     {
       key: 'validFrom',
@@ -97,7 +134,14 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 1,
-      render: (row: InsuranceCompanyPolicy) => <span>{row.isActive === false ? 'Inactive' : 'Active'}</span>
+      render: (row: InsuranceCompanyPolicy) =>
+        row.isActive === false ? (
+          <span title={row.inactiveReason ?? undefined}>
+            Inactive{row.inactiveReason ? ` — ${row.inactiveReason}` : ''}
+          </span>
+        ) : (
+          <span>Active</span>
+        )
     },
     {
       key: 'actions',
@@ -135,7 +179,8 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
               fill="var(--primary-gray)"
               onClick={event => {
                 event.stopPropagation();
-                changeStatus(row);
+                setSelectedPolicy(row);
+                setDeactivateOpen(true);
               }}
             />
           )}
@@ -166,6 +211,13 @@ const InsuranceCompanyPoliciesPanel: React.FC<InsuranceCompanyPoliciesPanelProps
         setOpen={setClassesOpen}
         insuranceCompanyId={companyId}
         policy={selectedPolicy}
+      />
+      <DeactivationReasonModal
+        open={deactivateOpen}
+        setOpen={setDeactivateOpen}
+        itemLabel="Policy"
+        itemName={selectedPolicy?.policyName}
+        onConfirm={reason => selectedPolicy && changeStatus(selectedPolicy, reason)}
       />
       <InsuranceCompanyPolicyModal
         open={editOpen}

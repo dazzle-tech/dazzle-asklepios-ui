@@ -1558,6 +1558,8 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
   isActive: true,
 
   approvalCoverageCompany: null,
+  validFrom: null,
+  validTo: null,
 
   tpaIds: [],
   tpas: [],

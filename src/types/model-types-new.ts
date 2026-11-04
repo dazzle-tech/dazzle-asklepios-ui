@@ -2543,6 +2543,11 @@ export interface NphiesPayer {
 
   approvalCoverageCompany?: string | null;
 
+  inactiveReason?: string | null;
+
+  validFrom?: string | null;
+  validTo?: string | null;
+
   tpaIds?: number[];
   tpas?: LinkedTpa[];
 
@@ -2566,6 +2571,7 @@ export interface InsuranceCompanyPolicy {
   validFrom: string;
   validTo?: string | null;
   isActive?: boolean;
+  inactiveReason?: string | null;
 }
 
 export interface TpaDefinition {
@@ -7750,6 +7756,7 @@ export type PreviewDefaultServicePricingResult = {
   cashUnitPrice?: number | null;
   /** The coverage contract holds this service for pre-approval; shares are zero until the decision. */
   preAuthorizationRequired?: boolean;
+  contractCashReason?: string | null;
 };
 
 export type PreviewDefaultServicesPricingResult = {

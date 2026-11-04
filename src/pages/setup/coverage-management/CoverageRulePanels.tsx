@@ -16,7 +16,7 @@ import BillingCategoryItemFields from './BillingCategoryItemFields';
 import PreApprovalPanel from './PreApprovalPanel';
 import CoverageLimitExclusionModal from './CoverageLimitExclusionModal';
 import { RuleModalTitleProvider, useRuleModalTitle } from './RuleModalTitleContext';
-import { discountCategoryLabel, discountItemLabel, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, withSelectedDiagnoses } from './coverageHelpers';
+import { departmentPickerValue, departmentScope, discountCategoryLabel, discountItemLabel, exceedsPercentage, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, percentageMax, withSelectedDiagnoses } from './coverageHelpers';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import {
   useCreateDiscountMutation,
@@ -220,13 +220,28 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
   const [paging, setPaging] = useState(emptyPage);
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState<any>({});
+  const facilityLookup = useLookupPaging(String(open));
+  const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
+  const facilities = useSearchCoverageFacilitiesQuery({ page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch }, { skip: !open });
+  const departments = useSearchCoverageDepartmentsQuery(
+    { facilityId: Number(record.facilityId), page: departmentLookup.page, size: 15, search: departmentLookup.appliedSearch },
+    { skip: !open || !record.facilityId }
+  );
   const { data, isFetching } = useListCopaymentsQuery({ classId, isActive, ...paging });
   const [save] = useSaveCopaymentMutation();
   const [toggleActive] = useToggleCopaymentActiveMutation();
 
   const saveRow = async () => {
+    if (!record.facilityId) {
+      notifyWarning(dispatch, 'Facility is required');
+      return;
+    }
+    if (exceedsPercentage(record.valueType === 'PERCENTAGE', record.valueAmount)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
     try {
-      await save({ classId, body: record }).unwrap();
+      await save({ classId, body: { ...record, ...departmentScope(record.departmentId) } }).unwrap();
       notifySuccess(dispatch, record.id ? 'Co-payment updated' : 'Co-payment saved');
       setOpen(false);
     } catch (error: any) {
@@ -254,6 +269,7 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
         readOnly={readOnly}
         onAdd={() => {
           setRecord({
+            departmentId: departmentPickerValue({ allDepartments: true }),
             encounterType: 'ALL',
             valueType: 'PERCENTAGE'
           });
@@ -270,6 +286,8 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
         onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
         onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
         columns={[
+          { key: 'facilityName', title: 'Facility', flexGrow: 2, render: (row: any) => row.facilityName || 'All' },
+          { key: 'departmentName', title: 'Department', flexGrow: 2, render: (row: any) => row.departmentName || 'All' },
           { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
           { key: 'valueType', title: 'Value Type', flexGrow: 1, render: (row: any) => formatEnumString(row.valueType) },
           { key: 'valueAmount', title: 'Value', flexGrow: 1 },
@@ -283,7 +301,7 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
                 readOnly={readOnly}
                 isActive={row.isActive}
                 onEdit={() => {
-                  setRecord(row);
+                  setRecord({ ...row, departmentId: departmentPickerValue(row) });
                   setOpen(true);
                 }}
                 onToggle={() => changeStatus(row)}
@@ -294,9 +312,11 @@ const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boo
       />
       <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Patient Co-Payment' : 'Patient Co-Payment')} size="56vw" bodyheight="40vh" actionButtonFunction={saveRow} content={
         <Form fluid className="coverage-form-grid">
+          <CoveragePagedSelect fieldName="facilityId" fieldLabel="Facility name" record={record} setRecord={next => setRecord({ ...next, departmentId: departmentPickerValue({ allDepartments: true }) })} result={facilities} page={facilityLookup.page} setPage={facilityLookup.setPage} search={facilityLookup.search} setSearch={facilityLookup.setSearch} required />
+          <CoveragePagedSelect fieldName="departmentId" fieldLabel="Department" record={record} setRecord={setRecord} result={departments} page={departmentLookup.page} setPage={departmentLookup.setPage} search={departmentLookup.search} setSearch={departmentLookup.setSearch} includeAll required disabled={!record.facilityId} />
           <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
           <MyInput required width="100%" fieldLabel="Value Type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
-          <MyInput required width="100%" fieldLabel="Value Entry" fieldType="number" fieldName="valueAmount" record={record} setRecord={setRecord} />
+          <MyInput required width="100%" fieldLabel="Value Entry" fieldType="number" fieldName="valueAmount" record={record} setRecord={setRecord} max={percentageMax(record.valueType === 'PERCENTAGE')} />
         </Form>
       } />
     </>
@@ -362,6 +382,10 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
       notifyWarning(dispatch, 'Select at least one specific diagnosis');
       return;
     }
+    if (exceedsPercentage(record.valueType === 'PERCENTAGE', record.limitValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
     try {
       await saveTerm({
         classId,
@@ -371,8 +395,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
           diagnoses: selectedDiagnoses.map(diagnosisId => ({ diagnosisId })),
           diagnosisId: selectedDiagnoses[0] ?? null,
           diagnosisCode: record.diagnosisCode || null,
-          allDepartments: !record.departmentId || Number(record.departmentId) === 0,
-          departmentId: !record.departmentId || Number(record.departmentId) === 0 ? null : record.departmentId
+          ...departmentScope(record.departmentId)
         }
       }).unwrap();
       notifySuccess(dispatch, record.id ? 'Coverage rule updated' : 'Coverage rule saved');
@@ -402,6 +425,10 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
     }
     if (item.limitValue == null || Number(item.limitValue) <= 0) {
       notifyWarning(dispatch, 'Limit value must be greater than zero');
+      return;
+    }
+    if (exceedsPercentage(item.valueType === 'PERCENTAGE', item.limitValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
       return;
     }
     const billingItemType = item.billingItemType === 'ALL' ? null : item.billingItemType;
@@ -650,7 +677,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
             </>
           )}
           <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
-          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={record} setRecord={setRecord} />
+          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={record} setRecord={setRecord} max={percentageMax(record.valueType === 'PERCENTAGE')} />
         </Form>
       } />
 
@@ -663,7 +690,7 @@ const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType:
             showSubcategory={termType === 'LIMIT'}
           />
           <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={item} setRecord={setItem} selectData={valueTypes} />
-          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={item} setRecord={setItem} />
+          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={item} setRecord={setItem} max={percentageMax(item.valueType === 'PERCENTAGE')} />
           <MyInput required width="100%" fieldLabel="Status" fieldType="select" fieldName="isActive" record={item} setRecord={setItem} selectData={statusOptions} selectDataLabel="label" selectDataValue="value" searchable={false} />
         </Form>
       } />
@@ -717,6 +744,10 @@ const DiscountPanel = ({
     }
     if (record.discountValue == null || Number(record.discountValue) <= 0) {
       notifyWarning(dispatch, 'Discount value must be greater than zero');
+      return;
+    }
+    if (exceedsPercentage(record.discountType === 'PERCENTAGE', record.discountValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
       return;
     }
     if (!record.billingItemType) {
@@ -815,7 +846,7 @@ const DiscountPanel = ({
       <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Discount' : 'Discount')} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
         <Form fluid className="coverage-form-grid">
           <MyInput required width="100%" fieldLabel="Discount type" fieldType="select" fieldName="discountType" record={record} setRecord={setRecord} selectData={discountTypes} />
-          <MyInput required width="100%" fieldLabel="Value" fieldType="number" fieldName="discountValue" record={record} setRecord={setRecord} />
+          <MyInput required width="100%" fieldLabel="Value" fieldType="number" fieldName="discountValue" record={record} setRecord={setRecord} max={percentageMax(record.discountType === 'PERCENTAGE')} />
           <BillingCategoryItemFields open={open} record={record} setRecord={setRecord} showSubcategory />
           <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
         </Form>

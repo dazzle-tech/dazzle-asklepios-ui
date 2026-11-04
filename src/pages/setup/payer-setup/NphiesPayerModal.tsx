@@ -193,6 +193,8 @@ const NphiesPayerModal: React.FC<NphiesPayerModalProps> = ({
                     searchable={false}
                     cleanable
                   />
+                  <MyInput {...fieldProps} fieldName="validFrom" fieldType="date" fieldLabel="Valid From" />
+                  <MyInput {...fieldProps} fieldName="validTo" fieldType="date" fieldLabel="Valid To" />
                 </div>
               }
             />

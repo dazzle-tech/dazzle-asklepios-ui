@@ -211,10 +211,11 @@ export const NphiesPayerService = createApi({
       invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     }),
 
-    toggleNphiesPayerActive: builder.mutation<NphiesPayer, number | string>({
-      query: id => ({
+    toggleNphiesPayerActive: builder.mutation<NphiesPayer, { id: number | string; reason?: string }>({
+      query: ({ id, reason }) => ({
         url: `/api/setup/nphies-payers/${id}/toggle-active`,
-        method: 'PATCH'
+        method: 'PATCH',
+        body: { reason: reason ?? null }
       }),
       invalidatesTags: ['NphiesPayer', 'TpaDefinition']
     }),

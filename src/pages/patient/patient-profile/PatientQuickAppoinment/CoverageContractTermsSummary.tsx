@@ -5,9 +5,25 @@ import { formatEnumString } from '@/utils';
 import { useResolveCoverageContractQuery } from '@/services/setup/coverageManagement/coverageManagementService';
 import type { PatientInsurance } from '@/types/model-types-new';
 
+const CASH_REASON_LABELS: Record<string, string> = {
+  CONTRACT_EXCLUSION: 'excluded in the Exclusions tab',
+  NOT_IN_COVERAGES: 'not matched by any rule in the Coverages tab',
+  NO_CONTRACT_COPAYMENT: 'no co-payment rule was read for this service',
+  MANUAL_COVERAGE: 'the coverage saved on the patient insurance overrides the contract'
+};
+
+type CashService = {
+  serviceName: string;
+  contractCashReason?: string | null;
+};
+
 type Props = {
   insurance?: PatientInsurance | null;
   encounterType?: string | null;
+  facilityId?: number | null;
+  departmentId?: number | null;
+  cashServices?: CashService[];
+  pricingError?: string | null;
   isWaseelEnabled?: boolean | null;
   payerNphiesId?: string | null;
 };
@@ -15,6 +31,10 @@ type Props = {
 const CoverageContractTermsSummary = ({
   insurance,
   encounterType,
+  facilityId,
+  departmentId,
+  cashServices = [],
+  pricingError,
   isWaseelEnabled,
   payerNphiesId
 }: Props) => {
@@ -32,7 +52,9 @@ const CoverageContractTermsSummary = ({
       tpaName: insurance?.tpaName || undefined,
       policyNumber: insurance?.policyNumber ? String(insurance.policyNumber) : undefined,
       className: insurance?.policyClassName || undefined,
-      encounterType: encounterType || undefined
+      encounterType: encounterType || undefined,
+      facilityId: facilityId || undefined,
+      departmentId: departmentId || undefined
     },
     { skip: !canResolve }
   );
@@ -89,11 +111,17 @@ const CoverageContractTermsSummary = ({
               </div>
             ) : (
               <div>
-                Coverage contract matched, but no co-payment rule was found for this encounter type. Other contract
+                Coverage contract matched, but no co-payment rule was found for this visit department and encounter type. Other contract
                 tab rules still apply when they match this visit. Eligibility follows the insurance expiration date.
                 A Waseel eligibility check is not required.
               </div>
             )}
+            {cashServices.map(service => (
+              <div key={service.serviceName}>
+                <strong>{service.serviceName}</strong> is billed fully to the patient, without the co-payment:{' '}
+                {CASH_REASON_LABELS[service.contractCashReason ?? ''] ?? service.contractCashReason}.
+              </div>
+            ))}
           </div>
         </Message>
       ) : (
@@ -102,6 +130,11 @@ const CoverageContractTermsSummary = ({
             'No coverage contract matches this insurance policy. Patient share uses insurance defaults if configured.'}
         </Message>
       )}
+      {pricingError ? (
+        <Message type="error" showIcon>
+          Patient and insurance shares could not be calculated, so the amounts below are not final: {pricingError}
+        </Message>
+      ) : null}
     </div>
   );
 };

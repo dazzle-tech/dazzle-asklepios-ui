@@ -185,6 +185,7 @@ type DefaultServiceRow = {
   cashUnitPrice?: number | null;
   notCoveredReason?: string | null;
   preAuthorizationRequired?: boolean;
+  contractCashReason?: string | null;
 };
 
 type BillingFormState = {
@@ -903,6 +904,11 @@ const PatientPaymentInfo =
         useState(0);
 
       const [
+        pricingPreviewError,
+        setPricingPreviewError
+      ] = useState<string | null>(null);
+
+      const [
         pricingPreviewLoading,
         setPricingPreviewLoading
       ] =
@@ -1239,7 +1245,11 @@ const PatientPaymentInfo =
             className:
               patientInsurance?.policyClassName || undefined,
             encounterType:
-              localEncounter?.encounterType || undefined
+              localEncounter?.encounterType || undefined,
+            facilityId:
+              facilityId || undefined,
+            departmentId:
+              departmentId || undefined
           },
           { skip: !canResolveContract }
         );
@@ -1570,7 +1580,8 @@ const PatientPaymentInfo =
                 requiresCashConfirmation: false,
                 cashUnitPrice: null,
                 notCoveredReason: null,
-                preAuthorizationRequired: false
+                preAuthorizationRequired: false,
+                contractCashReason: null
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -2770,6 +2781,8 @@ const PatientPaymentInfo =
                     }
                   ).unwrap();
 
+                setPricingPreviewError(null);
+
                 if (
                   result.coverageType ===
                     'INSURANCE' &&
@@ -2860,7 +2873,9 @@ const PatientPaymentInfo =
                             notCoveredReason:
                               null,
                             preAuthorizationRequired:
-                              false
+                              false,
+                            contractCashReason:
+                              null
                           };
                         }
 
@@ -2902,13 +2917,23 @@ const PatientPaymentInfo =
                           preAuthorizationRequired:
                             Boolean(
                               priced.preAuthorizationRequired
-                            )
+                            ),
+                          contractCashReason:
+                            priced.contractCashReason ??
+                            null
                         };
                       }
                     )
                 );
-              } catch {
-                // Keep setup prices when price-list preview is unavailable.
+              } catch (error: any) {
+                // Keep setup prices when price-list preview is unavailable, and say so:
+                // without a preview the whole amount shows on the patient.
+                setPricingPreviewError(
+                  error?.data?.detail ??
+                    error?.data?.message ??
+                    error?.data?.title ??
+                    'Pricing preview failed.'
+                );
               } finally {
                 setPricingPreviewLoading(
                   false
@@ -6201,6 +6226,13 @@ const PatientPaymentInfo =
                     encounterType={
                       localEncounter?.encounterType
                     }
+                    facilityId={facilityId}
+                    departmentId={departmentId}
+                    cashServices={selectedRows.filter(
+                      row =>
+                        row.contractCashReason
+                    )}
+                    pricingError={pricingPreviewError}
                     isWaseelEnabled={
                       selectedPayor?.isWaseelEnabled
                     }

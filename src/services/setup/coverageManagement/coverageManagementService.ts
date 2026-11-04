@@ -75,14 +75,35 @@ export type CoverageClass = {
   coverageContractId?: number;
   name?: string;
   isActive?: boolean;
+  inactiveReason?: string | null;
   insuranceCompanyPolicyId?: number | null;
   policyName?: string | null;
   policyCode?: string | null;
   policyNumber?: string | null;
 };
 
+export type CoverageClassCloneSection =
+  | 'CO_PAYMENT'
+  | 'COVERAGE'
+  | 'COVERAGE_LIMIT'
+  | 'CASH_LIMIT'
+  | 'DISCOUNT'
+  | 'EXCLUSION'
+  | 'PRE_APPROVAL';
+
+export type CoverageClassClone = {
+  name: string;
+  sections: CoverageClassCloneSection[];
+  copyPolicyLink: boolean;
+};
+
 export type CoverageCopayment = {
   id?: number;
+  facilityId?: number | null;
+  facilityName?: string | null;
+  allDepartments?: boolean;
+  departmentId?: number | null;
+  departmentName?: string | null;
   encounterType?: string;
   valueType?: string;
   valueAmount?: number | string;
@@ -540,15 +561,17 @@ export const coverageManagementService = createApi({
     }),
     listCoverageClasses: builder.query<
       PagedResult<CoverageClass>,
-      PagedParams & { contractId: number; isActive?: boolean }
+      PagedParams & { contractId: number; isActive?: boolean; name?: string; policy?: string }
     >({
-      query: ({ contractId, page, size, sort = 'id,desc', isActive }) => ({
+      query: ({ contractId, page, size, sort = 'id,desc', isActive, name, policy }) => ({
         url: `/api/setup/coverage-contracts/${contractId}/classes`,
         params: {
           page,
           size,
           sort,
-          ...(typeof isActive === 'boolean' ? { isActive } : {})
+          ...(typeof isActive === 'boolean' ? { isActive } : {}),
+          ...(name?.trim() ? { name: name.trim() } : {}),
+          ...(policy?.trim() ? { policy: policy.trim() } : {})
         }
       }),
       transformResponse: (res: CoverageClass[], meta) => toPagedResult(res, meta),
@@ -570,8 +593,16 @@ export const coverageManagementService = createApi({
       }),
       invalidatesTags: ['CoverageClass']
     }),
-    toggleCoverageClassActive: builder.mutation<CoverageClass, number>({
-      query: id => ({ url: `/api/setup/coverage-classes/${id}/toggle-active`, method: 'PATCH' }),
+    toggleCoverageClassActive: builder.mutation<CoverageClass, { id: number; reason?: string }>({
+      query: ({ id, reason }) => ({
+        url: `/api/setup/coverage-classes/${id}/toggle-active`,
+        method: 'PATCH',
+        body: { reason: reason ?? null }
+      }),
+      invalidatesTags: ['CoverageClass']
+    }),
+    cloneCoverageClass: builder.mutation<CoverageClass, { id: number; body: CoverageClassClone }>({
+      query: ({ id, body }) => ({ url: `/api/setup/coverage-classes/${id}/clone`, method: 'POST', body }),
       invalidatesTags: ['CoverageClass']
     }),
     linkCoverageClassPolicy: builder.mutation<
@@ -860,6 +891,7 @@ export const {
   useUpdateCoverageClassMutation,
   useToggleCoverageClassActiveMutation,
   useLinkCoverageClassPolicyMutation,
+  useCloneCoverageClassMutation,
   useSearchCoverageCompaniesQuery,
   useSearchCoverageInsurancePayersQuery,
   useSearchCoverageTpaInsurancePayersQuery,

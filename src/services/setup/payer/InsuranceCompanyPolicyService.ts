@@ -20,6 +20,13 @@ export type PolicyCoverageClass = {
   coverageName?: string | null;
 };
 
+export type InsuranceCompanyPolicySearch = {
+  insuranceCompanyId: number;
+  policyName?: string;
+  policyNumber?: string;
+  policyCode?: string;
+};
+
 const toList = <T,>(res: T[] | { data?: T[] } | null | undefined): T[] =>
   Array.isArray(res) ? res : res?.data ?? [];
 
@@ -35,6 +42,22 @@ export const InsuranceCompanyPolicyService = createApi({
       }),
       transformResponse: toList,
       providesTags: (_result, _error, insuranceCompanyId) => [
+        { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
+      ]
+    }),
+
+    searchInsuranceCompanyPolicies: builder.query<InsuranceCompanyPolicy[], InsuranceCompanyPolicySearch>({
+      query: ({ insuranceCompanyId, policyName, policyNumber, policyCode }) => ({
+        url: `/api/setup/nphies-payers/${insuranceCompanyId}/policies`,
+        method: 'GET',
+        params: {
+          ...(policyName?.trim() ? { policyName: policyName.trim() } : {}),
+          ...(policyNumber?.trim() ? { policyNumber: policyNumber.trim() } : {}),
+          ...(policyCode?.trim() ? { policyCode: policyCode.trim() } : {})
+        }
+      }),
+      transformResponse: toList,
+      providesTags: (_result, _error, { insuranceCompanyId }) => [
         { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
       ]
     }),
@@ -69,11 +92,12 @@ export const InsuranceCompanyPolicyService = createApi({
 
     toggleInsuranceCompanyPolicyActive: builder.mutation<
       InsuranceCompanyPolicy,
-      { insuranceCompanyId: number; policyId: number }
+      { insuranceCompanyId: number; policyId: number; reason?: string }
     >({
-      query: ({ insuranceCompanyId, policyId }) => ({
+      query: ({ insuranceCompanyId, policyId, reason }) => ({
         url: `/api/setup/nphies-payers/${insuranceCompanyId}/policies/${policyId}/toggle-active`,
-        method: 'PATCH'
+        method: 'PATCH',
+        body: { reason: reason ?? null }
       }),
       invalidatesTags: (_result, _error, { insuranceCompanyId }) => [
         { type: 'InsuranceCompanyPolicy', id: insuranceCompanyId }
@@ -95,6 +119,7 @@ export const InsuranceCompanyPolicyService = createApi({
 
 export const {
   useGetInsuranceCompanyPoliciesQuery,
+  useSearchInsuranceCompanyPoliciesQuery,
   useCreateInsuranceCompanyPolicyMutation,
   useUpdateInsuranceCompanyPolicyMutation,
   useToggleInsuranceCompanyPolicyActiveMutation,

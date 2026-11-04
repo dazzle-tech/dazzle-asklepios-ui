@@ -118,6 +118,27 @@ export function withAllOption(options: CoverageLookupItem[]) {
   return [ALL_LOOKUP_OPTION, ...options.filter(item => item.id !== 0)];
 }
 
+const isAllDepartments = (departmentId?: number | string | null) => !departmentId || Number(departmentId) === 0;
+
+/** Maps the department picker value (empty or the "All" option) to the API's department scope. */
+export function departmentScope(departmentId?: number | string | null) {
+  const allDepartments = isAllDepartments(departmentId);
+  return { allDepartments, departmentId: allDepartments ? null : departmentId };
+}
+
+/** Maps a saved row back to the department picker value, showing "All" for all-departments rules. */
+export function departmentPickerValue(row: { allDepartments?: boolean | null; departmentId?: number | null }) {
+  return row.allDepartments || !row.departmentId ? ALL_LOOKUP_OPTION.id : row.departmentId;
+}
+
+export const MAX_PERCENTAGE = 100;
+
+export const percentageMax = (isPercentage: boolean) => (isPercentage ? MAX_PERCENTAGE : undefined);
+
+export function exceedsPercentage(isPercentage: boolean, value?: number | string | null) {
+  return isPercentage && Number(value) > MAX_PERCENTAGE;
+}
+
 export function formatLookupLabel(item: CoverageLookupItem) {
   const base =
     item.code && item.name && item.code !== item.name
