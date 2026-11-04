@@ -718,7 +718,19 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
       <InsuranceCheckoutValidationModal
         open={validationOpen}
         onClose={() => setValidationOpen(false)}
-        missing={checkoutValidation?.missing ?? []}
+        missing={
+          checkoutValidation?.missingRequirements &&
+          checkoutValidation.missingRequirements.length > 0
+            ? Array.from(
+                new Map(
+                  checkoutValidation.missingRequirements.map(item => [
+                    String(item.code || item.label),
+                    item.label?.trim() || item.code
+                  ])
+                ).values()
+              )
+            : checkoutValidation?.missing ?? []
+        }
         diagnostics={checkoutValidation?.diagnosticApprovals ?? []}
         billingItems={summary.items}
       />

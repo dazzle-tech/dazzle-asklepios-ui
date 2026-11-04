@@ -161,6 +161,7 @@ import { consultationService } from './services/consultation/consultationService
 import { portalService } from './services/portalService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { SupportiveDocumentRequirementService } from './services/setup/payer/SupportiveDocumentRequirementService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { formTemplateService } from './services/setup/formTemplateService';
@@ -586,6 +587,8 @@ export const store = configureStore({
     // payer
     [PayorService.reducerPath]: PayorService.reducer,
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+    [SupportiveDocumentRequirementService.reducerPath]:
+      SupportiveDocumentRequirementService.reducer,
 
     [patientInsurancesService.reducerPath]: patientInsurancesService.reducer,
     [patientInsuranceCoveragesService.reducerPath]: patientInsuranceCoveragesService.reducer,
@@ -860,6 +863,7 @@ export const store = configureStore({
         referralRequestService.middleware,
         PayorService.middleware,
         PayorPlanService.middleware,
+        SupportiveDocumentRequirementService.middleware,
         PatientRelationService.middleware,
         patientInsurancesService.middleware,
         patientInsuranceCoveragesService.middleware,
