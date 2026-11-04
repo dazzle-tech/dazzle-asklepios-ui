@@ -212,6 +212,7 @@ import { patientServicesAndProductsService } from './services/encounters/patient
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
+import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 import { radiologyReportService } from './services/reports/radiologyReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
@@ -362,6 +363,7 @@ export const store = configureStore({
     [ambientScribeSetupService.reducerPath]: ambientScribeSetupService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
+    [systemConfigurationService.reducerPath]: systemConfigurationService.reducer,
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
     [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
@@ -915,6 +917,7 @@ export const store = configureStore({
         NextOfKinService.middleware,
         RelationsMatrixService.middleware,
         patientAdministrativeWarningsService.middleware,
+        systemConfigurationService.middleware,
         radiologyReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,

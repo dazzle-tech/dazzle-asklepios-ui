@@ -289,6 +289,7 @@ const EmailSettings = lazy (() => import ( './pages/system-configurations/email-
 const WhatsAppSettings = lazy (() => import ( './pages/system-configurations/whatsapp-settings'));
 const OrganizationHolidays = lazy (() => import ( './pages/system-configurations/organization-holidays'));
 const MobileAppConfiguration = lazy (() => import ( './pages/system-configurations/mobile-app-configuration'));
+const Configurations = lazy (() => import ( './pages/system-configurations/configuration/SystemConfiguration'));
 const NotificationRule = lazy (() => import ( './pages/notification-management/notification-rule'));
 const EmailNotification = lazy (() => import ( './pages/notification-management/email-notification'));
 const SmsNotification = lazy (() => import ( './pages/notification-management/sms-notification'));
@@ -734,6 +735,7 @@ const App = () => {
               <Route path="tax-setup" element={<TaxSetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
+              <Route path="configurations" element={<Configurations />} />
               <Route path="email-settings" element={<EmailSettings />} />
               <Route path="whatsapp-settings" element={<WhatsAppSettings />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />

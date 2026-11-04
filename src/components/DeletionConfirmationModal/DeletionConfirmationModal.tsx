@@ -47,7 +47,7 @@ const actionConfig = {
   confirm: {
     text: 'Confirm',
     color: 'var(--primary-blue)',
-    icon: faArrowRotateLeft
+    icon: faCircleCheck
   }
 };
 
