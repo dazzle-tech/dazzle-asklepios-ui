@@ -804,6 +804,21 @@ const PatientsLists = () => {
           ? patientSearchApplied?.patientName?.trim() || undefined
           : filters.mrnFilter.trim() || undefined,
 
+      primaryMobileNumber:
+        patientSearchApplied?.searchByField === 'phoneNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      documentNumber:
+        patientSearchApplied?.searchByField === 'documentNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      dateOfBirth:
+        patientSearchApplied?.searchByField === 'dob'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
       encounterType: filters.encounterType,
 
       encounterNumber: filters.encounterNumber.trim() || undefined,
@@ -865,7 +880,8 @@ const PatientsLists = () => {
 
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const canSeeNurseStation = jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
-  const canSeeDoctorVisit = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
+  const canSeeDoctorVisit =
+    jobRole === 'PHYSICIAN' || jobRole === 'DENTIST' || Boolean(authSlice.user?.admin);
   const canSeeEMR = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
   const canSeePrint =
     jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);

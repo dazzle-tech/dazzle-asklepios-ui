@@ -26,6 +26,7 @@ type Props = {
   setOpenCancellation: React.Dispatch<React.SetStateAction<boolean>>;
   setSummaryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleNewPrescriptionAndAddMedication: () => void;
+  handleClearSelection: () => void;
 };
 
 const isDraftStatus = (status: any) => {
@@ -46,9 +47,11 @@ const PrescriptionToolbar = ({
   setSelectedRows,
   setOpenCancellation,
   setSummaryModalOpen,
-  handleNewPrescriptionAndAddMedication
+  handleNewPrescriptionAndAddMedication,
+  handleClearSelection
 }: Props) => {
   const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+  const hasSelection = currentPrescription?.id != null;
 
   // Drafts on top, then newest first
   const displayedPrescriptions = useMemo(() => {
@@ -75,7 +78,14 @@ const PrescriptionToolbar = ({
             <span className="orders-list-header-title">
               <Translate>Prescriptions</Translate>
             </span>
-            <span className="orders-list-count-badge">{displayedPrescriptions.length}</span>
+            <div className="orders-list-header-actions">
+              {hasSelection && (
+                <MyButton appearance="ghost" size="xs" onClick={handleClearSelection}>
+                  Clear Selection
+                </MyButton>
+              )}
+              <span className="orders-list-count-badge">{displayedPrescriptions.length}</span>
+            </div>
           </div>
 
           <div className="orders-compact-list">
@@ -149,7 +159,7 @@ const PrescriptionToolbar = ({
               onClick={handleNewPrescriptionAndAddMedication}
               prefixIcon={() => <PlusIcon />}
               loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-              disabled={edit || isNurse || isSubmitted}
+              disabled={edit || isNurse || (hasSelection && isSubmitted)}
             >
               Add Medication
             </MyButton>

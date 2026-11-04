@@ -95,16 +95,69 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
-  if (!raw)
-    return { patientName: undefined as string | undefined, mrn: undefined as string | undefined };
-  if (searchByField === 'patientMrn') return { patientName: undefined, mrn: raw };
-  return { patientName: raw, mrn: undefined };
+  if (!raw) {
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
+  }
+
+  if (searchByField === 'patientMrn') {
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -362,20 +415,7 @@ const EncounterList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-  const [patientSearchApplied, setPatientSearchApplied] = useState<any>({
-    searchByField: 'fullName',
-    patientName: ''
-  });
   const [record, setRecord] = useState<any>({});
-
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied(prev => ({
-      ...prev,
-      ...(patientSearchDraft ?? {})
-    }));
-
-    setPage(0);
-  }, [patientSearchDraft]);
 
 
   const {
@@ -907,7 +947,6 @@ const EncounterList = () => {
     };
 
     setPatientSearchDraft({ ...clearedSearch });
-    setPatientSearchApplied({ ...clearedSearch });
 
     setPage(0);
 
@@ -919,6 +958,9 @@ const EncounterList = () => {
       statusIn: [...DEFAULT_STATUS],
       patientName: undefined,
       mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined,
       encounterReasons: undefined,
       chiefComplaint: undefined,
       priorities: undefined,
@@ -937,7 +979,7 @@ const EncounterList = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
 
   const canSeeNurseStation = isAdmin || jobRole === 'NURSE';
-  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'DENTIST';
   const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
   const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
@@ -1385,8 +1427,7 @@ const EncounterList = () => {
           <SearchPatientCriteria
             record={patientSearchDraft}
             setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
-            liveSearchMinLength={3}
+            liveSearchMinLength={0}
           />
 
           <MyInput
@@ -1431,7 +1472,8 @@ const EncounterList = () => {
           const normalizedPriorities =
             uniqueNonEmpty(priorities) ??
             uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+          const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+            derivePatientFilters(patientSearchDraft);
           const normalizedPractitionerId =
             practitionerId === null || practitionerId === undefined || practitionerId === ''
               ? undefined
@@ -1450,6 +1492,9 @@ const EncounterList = () => {
             statusIn: normalizedStatusIn,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterReasons: normalizedEncounterReasons,
             chiefComplaint,
             priorities: normalizedPriorities,
@@ -1541,6 +1586,9 @@ const EncounterList = () => {
       statusIn: DEFAULT_STATUS,
       patientName: undefined,
       mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined,
       encounterReasons: undefined,
       chiefComplaint: undefined,
       priorities: undefined,

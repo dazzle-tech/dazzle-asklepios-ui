@@ -1,13 +1,14 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdMedicalServices } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditService from './AddEditService';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import LinkedItems from './LinkedItems';
 import './styles.less';
@@ -53,6 +54,7 @@ const ServiceSetup: React.FC = () => {
 
   // UI state
   const [popupOpen, setPopupOpen] = useState(false);
+  const priceListPrompt = usePriceListPrompt();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
@@ -320,6 +322,16 @@ const ServiceSetup: React.FC = () => {
         setPopupOpen(false);
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'SERVICE',
+        sourceId: saved?.id ?? service.id!,
+        itemCode: payloadBody.code,
+        itemName: payloadBody.name,
+        unitPrice: payloadBody.price,
+        facilityId: effectiveFacilityId,
+        currency: payloadBody.currency
+      });
 
       if (isFiltered) {
         const { data: nextData, added } = upsertIntoFiltered(
@@ -629,6 +641,23 @@ const ServiceSetup: React.FC = () => {
           setPopupOpen(true);
         }}
       />
+      <MdLocalOffer
+        className="icons-style"
+        title="Price Lists"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() =>
+          priceListPrompt.view({
+            itemType: 'SERVICE',
+            sourceId: rowData.id,
+            itemCode: rowData.code,
+            itemName: rowData.name,
+            unitPrice: rowData.price,
+            facilityId: rowData.facilityId,
+            currency: rowData.currency
+          })
+        }
+      />
       {rowData?.isActive ? (
         <MdDelete
           className="icons-style"
@@ -924,6 +953,7 @@ const ServiceSetup: React.FC = () => {
         setService={setService}
         handleSave={handleSave}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
       <MyModal
         open={openPolicyAssignmentModal}
         setOpen={setOpenPolicyAssignmentModal}

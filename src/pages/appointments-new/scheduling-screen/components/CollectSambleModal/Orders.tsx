@@ -25,7 +25,8 @@ type OrdersProps = {
   loading?: boolean;
   orderNumberFilter?: string;
   departmentFilter?: any;
-  selectedPatient?: any;
+  /** null = no patient filter; [] or ids = filter (empty forces no rows via sentinel) */
+  patientIdIn?: number[] | null;
   filters?: React.ReactNode;
   departmentId?: number | string;
   fromDepartmentId?: number | string;
@@ -38,7 +39,7 @@ const Orders = forwardRef<any, OrdersProps>(
   dateFilter,
   loading,
   orderNumberFilter,
-  selectedPatient,
+  patientIdIn,
   departmentFilter,
   filters,
   departmentId: departmentIdProp,
@@ -96,7 +97,7 @@ useEffect(() => {
   }));
 }, [
   orderNumberFilter,
-  selectedPatient?.id,
+  patientIdIn,
   departmentId,
   fromDepartmentId,
   dateFilter?.fromDate,
@@ -128,8 +129,10 @@ const {
         submittedDateFrom: fromDateParam,
         submittedDateTo: toDateParam,
 
-        ...(selectedPatient?.id
-          ? { patientIdIn: [selectedPatient.id] }
+        ...(patientIdIn != null
+          ? {
+              patientIdIn: patientIdIn.length > 0 ? patientIdIn : [-1]
+            }
           : {}),
 
         ...(orderNumberFilter?.trim()

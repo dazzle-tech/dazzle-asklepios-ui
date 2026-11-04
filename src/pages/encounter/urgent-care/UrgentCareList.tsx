@@ -75,6 +75,7 @@ import Translate from '@/components/Translate';
 import AllNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import AssignNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import ApprovedResultsCell from '@/pages/encounter/encounter-list/ApprovedResultsCell';
+import DiagnosticOrderStatusCell from '@/pages/encounter/encounter-list/DiagnosticOrderStatusCell';
 
 dayjs.extend(duration);
 
@@ -101,24 +102,69 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw) {
     return {
       patientName: undefined as string | undefined,
-      mrn: undefined as string | undefined
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
     };
   }
 
   if (searchByField === 'patientMrn') {
-    return { patientName: undefined, mrn: raw };
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
   }
 
-  return { patientName: raw, mrn: undefined };
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -239,6 +285,12 @@ const UrgentCareList = () => {
   });
   const [openAllNursesModal, setOpenAllNursesModal] = useState<boolean>(false);
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
   const [triggerGetDepartmentById, { data: departmentData, isFetching: isDepartmentFetching }] =
@@ -322,10 +374,6 @@ const UrgentCareList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-  const [patientSearchApplied, setPatientSearchApplied] = useState<any>({
-    searchByField: 'fullName',
-    patientName: ''
-  });
   const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
 
@@ -337,11 +385,6 @@ const UrgentCareList = () => {
   const isEmergencyDepartment = useMemo(() => {
     return String(departmentData?.encounterType ?? '').toUpperCase() === 'EMERGENCY';
   }, [departmentData]);
-
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
-    setPage(0);
-  }, [patientSearchDraft]);
 
   const filterParams = appliedFilters;
 
@@ -912,6 +955,38 @@ const handleRowsPerPageChange = useCallback(
     return `${minutes} min`;
   };
 
+  const ENDED_ENCOUNTER_STATUSES = useMemo(
+    () => new Set(['COMPLETED', 'DISCHARGED', 'CANCELLED', 'CANCELED', 'CLOSED']),
+    []
+  );
+
+  const calculateLengthOfStay = (row: any) => {
+    const createdAt = row?.createdAt;
+    if (!createdAt) return '-';
+
+    const start = dayjs(createdAt);
+    if (!start.isValid()) return '-';
+
+    const statusUpper = String(row?.status ?? '').toUpperCase();
+    const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+    const endRaw = row?.dischargeAt ?? row?.completedAt;
+
+    if (isEnded) {
+      if (!endRaw) return '-';
+      const end = dayjs(endRaw);
+      if (!end.isValid()) return '-';
+      const dur = dayjs.duration(end.diff(start));
+      const hours = Math.floor(dur.asHours());
+      const minutes = dur.minutes();
+      return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    }
+
+    const dur = dayjs.duration(dayjs(nowMs).diff(start));
+    const hours = Math.floor(dur.asHours());
+    const minutes = dur.minutes();
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
+
   const handleClearFilters = () => {
     const now = new Date();
     const lastWeek = new Date(now);
@@ -938,7 +1013,6 @@ const handleRowsPerPageChange = useCallback(
 
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft({ ...clearedSearch });
-    setPatientSearchApplied({ ...clearedSearch });
 
     setPage(0);
     setIsSearchTriggered(false);
@@ -1105,6 +1179,16 @@ const handleRowsPerPageChange = useCallback(
         )
     },
     {
+      key: 'latestDiagnosticOrderStatus',
+      title: 'Diagnostic Order Status',
+      render: (row: any) => (
+        <DiagnosticOrderStatusCell
+          status={row?.latestDiagnosticOrderStatus}
+          encounterId={row?.id}
+        />
+      )
+    },
+    {
       key: 'approvedResults',
       title: 'APPROVED RESULTS',
       render: (row: any) => (
@@ -1166,6 +1250,12 @@ const handleRowsPerPageChange = useCallback(
       expandable: true,
       render: (row: any) =>
         calculateDoorToPhysician(row?.createdAt, row?.startedDate)
+    },
+    {
+      key: 'lengthOfStay',
+      title: 'Length of Stay',
+      expandable: true,
+      render: (row: any) => calculateLengthOfStay(row)
     },
     {
       key: 'status',
@@ -1303,7 +1393,8 @@ const handleRowsPerPageChange = useCallback(
               )}
 
                {(statusUpper === 'ONGOING' ||
-              statusUpper === 'ASSIGNED_TO_BED') && (
+              statusUpper === 'ASSIGNED_TO_BED' ||
+              statusUpper === 'TRIAGE_STARTED') && (
                 <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
                   <div>
                     <MyButton
@@ -1395,7 +1486,7 @@ const handleRowsPerPageChange = useCallback(
           <SearchPatientCriteria
             record={patientSearchDraft}
             setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
+            liveSearchMinLength={0}
           />
 
           <MyInput
@@ -1425,7 +1516,10 @@ const handleRowsPerPageChange = useCallback(
           const fromDate = toISODate(dateFilter.fromDate);
           const toDate = toISODate(dateFilter.toDate);
 
-          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+          const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+            derivePatientFilters(patientSearchDraft);
+
+          setPage(0);
 
           setAppliedFilters({
             departmentId: String(departmentId),
@@ -1434,13 +1528,16 @@ const handleRowsPerPageChange = useCallback(
             statusIn: uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterReasons: uniqueNonEmpty(encounterReasons),
             chiefComplaint: record?.chiefComplain || undefined,
             priorities: uniqueNonEmpty(priorities),
             hasPrescription,
             hasOrder,
             isObserved,
-            page,
+            page: 0,
             size: pageSize,
             sort: DEFAULT_SORT
           });

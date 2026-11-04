@@ -236,6 +236,15 @@ export const newService: modelTypes.Service = {
 };
 
 // ------------------- Service Item -------------------
+export const newProcedureItem: modelTypes.ProcedureItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  specialty: undefined,
+  procedureId: undefined,
+  isActive: true
+};
+
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',
@@ -736,6 +745,7 @@ export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
   atcCode: '',
+  code: '',
   type: '',
   roa: '',
   siteOfAdministration: '',
@@ -2924,7 +2934,6 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
-  fastingBloodGlucose: null,
 
   fluidStatus: null,
   edema: null,
@@ -2938,6 +2947,16 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   createdDate: null,
   lastModifiedDate: null
 };
+export const newRandomBloodSugar: modelTypes.RandomBloodSugar = {
+  id: undefined,
+  patientId: 0,
+  encounterId: 0,
+  randomBloodGlucose: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 export const newBodyMeasurements: modelTypes.BodyMeasurements = {
   id: undefined,
 
@@ -3290,7 +3309,7 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
 export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  toothNumber: undefined,
+  toothNumbers: [],
   surface: '',
   anesthesiaUsed: null,
   dose: null,

@@ -39,9 +39,26 @@ export const PayorService = createApi({
         category?: PayorCategory;
         name?: string;
         code?: string;
+        startDate?: string;
+        expiryDate?: string;
+        nphiesId?: string;
+        isWaseelEnabled?: string;
+        isActive?: string;
       }
     >({
-      query: ({ page, size, sort = 'id,asc', category, name, code }) => ({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        category,
+        name,
+        code,
+        startDate,
+        expiryDate,
+        nphiesId,
+        isWaseelEnabled,
+        isActive
+      }) => ({
         url: '/api/setup/payor',
         method: 'GET',
         params: {
@@ -50,7 +67,12 @@ export const PayorService = createApi({
           sort,
           ...(category ? { category } : {}),
           ...(name ? { name } : {}),
-          ...(code ? { code } : {})
+          ...(code ? { code } : {}),
+          ...(startDate ? { startDate } : {}),
+          ...(expiryDate ? { expiryDate } : {}),
+          ...(nphiesId ? { nphiesId } : {}),
+          ...(isWaseelEnabled ? { isWaseelEnabled } : {}),
+          ...(isActive ? { isActive } : {})
         }
       }),
       transformResponse: (response: Payor[], meta) => {

@@ -106,9 +106,11 @@ const AttachmentUploadModal = ({
     try {
       if (encounterId) {
         // Upload encounter attachments one at a time (backend accepts single file)
+        // patientId is sent with encounterId so the backend can verify the encounter belongs to the patient
         const uploadPromises = selectedFiles.map(file =>
           uploadEncounterAttachment({
             encounterId,
+            patientId,
             file, // Single file
             type: selectedAttachType.typeLkey || undefined,
             details: attachmentDetails.attachmentDetails || undefined,

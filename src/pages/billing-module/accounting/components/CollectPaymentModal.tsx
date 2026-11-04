@@ -490,7 +490,12 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
           <MyButton onClick={onClose} disabled={isLoading}>
             Cancel
           </MyButton>
-          <MyButton appearance="primary" loading={isLoading || isProcessingCard} onClick={handleSubmit}>
+          <MyButton
+            appearance="primary"
+            loading={isLoading || isProcessingCard}
+            disabled={isLoading || isProcessingCard}
+            onClick={handleSubmit}
+          >
             Collect payment
           </MyButton>
         </Modal.Footer>

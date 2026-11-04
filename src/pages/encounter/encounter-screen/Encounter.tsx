@@ -1,6 +1,7 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
@@ -8,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import ExternalResultModal from './external-results/ExternalResultModal';
 import ScanDocumentButton from './external-results/ScanDocumentButton';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
@@ -28,6 +30,7 @@ import {
   faCheckDouble,
   faClockRotateLeft,
   faFileLines,
+  faPaperclip,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -149,6 +152,7 @@ const Encounter = ({
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [openExternalResultModal, setOpenExternalResultModal] = useState(false);
+  const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -1023,6 +1027,15 @@ const handleGoBack = () => {
                     <ScanDocumentButton disabled={edit} onClick={() => setOpenExternalResultModal(true)} />
 
                     <MyButton
+                      prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
+                      onClick={() => {
+                        setOpenAttachmentsModal(true);
+                      }}
+                    >
+                      <Translate>Attachments</Translate>
+                    </MyButton>
+
+                    <MyButton
                       disabled={edit}
                       size="small"
                       backgroundColor="orange"
@@ -1257,6 +1270,30 @@ const handleGoBack = () => {
         setOpen={setOpenExternalResultModal}
         patient={patientToSend}
         encounter={propsData?.encounter}
+      />
+
+      <MyModal
+        open={openAttachmentsModal}
+        setOpen={setOpenAttachmentsModal}
+        title={<Translate>Attachments</Translate>}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={localEncounter ?? propsData?.encounter}
+            patientId={
+              (patientToSend as any)?.id ??
+              (patientToSend as any)?.key ??
+              (localEncounter as any)?.patientId ??
+              patientIdToFetch
+            }
+            allSources={true}
+            source="NURSE_STATION_ATTACHMENT"
+            edit={edit}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
       />
 
       <PatientHistorySummaryModal

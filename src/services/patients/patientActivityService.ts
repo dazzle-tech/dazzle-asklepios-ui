@@ -84,6 +84,20 @@ export type PatientTaskSummary = {
   completedToday: number;
 };
 
+export type PatientTaskCalendar = {
+  tasks: PatientTaskRow[];
+  overdue: PatientTaskRow[];
+  overdueCount: number;
+  truncated: boolean;
+};
+
+export type PatientTaskCalendarQuery = Omit<PatientTaskQuery, 'page' | 'size' | 'sort'> & {
+  dueFrom: string;
+  dueTo: string;
+  /** Start of the user's today. Open tasks due before this stay in the late rail. */
+  overdueBefore: string;
+};
+
 export const patientActivityService = createApi({
   reducerPath: 'patientActivityApi',
   baseQuery: BaseQuery,
@@ -336,6 +350,20 @@ export const patientActivityService = createApi({
       providesTags: [{ type: 'PatientTask', id: 'LIST' }]
     }),
 
+    getPatientTaskCalendar: builder.query<PatientTaskCalendar, PatientTaskCalendarQuery>({
+      query: ({ status, priority, ...rest }) => ({
+        url: '/api/patient/tasks/calendar',
+        params: {
+          ...(status?.length ? { status: status.join(',') } : {}),
+          ...(priority?.length ? { priority: priority.join(',') } : {}),
+          ...Object.fromEntries(
+            Object.entries(rest).filter(([, value]) => value !== undefined && value !== '' && value !== false)
+          )
+        }
+      }),
+      providesTags: [{ type: 'PatientTask', id: 'LIST' }]
+    }),
+
     getActivityPlans: builder.query<ActivityPlan[], void>({
       query: () => ({ url: '/api/patient/activity-plans' }),
       providesTags: [{ type: 'ActivitySetup', id: 'PLANS' }]
@@ -394,6 +422,7 @@ export const {
   useToggleActivityPlanMutation,
   useGetPatientTasksQuery,
   useGetPatientTaskSummaryQuery,
+  useGetPatientTaskCalendarQuery,
   useGetPatientActivityQuery,
   useGetActivityHistoryQuery,
   useGetActivityCommentsQuery,

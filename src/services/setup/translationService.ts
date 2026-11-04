@@ -19,6 +19,15 @@ const parseLinkHeader = (linkHeader?: string | null): LinkMap | undefined => {
   return map;
 };
 
+const mapPagedTranslations = (rows: LanguageTranslation[], meta: any): PagedResult<LanguageTranslation> => {
+  const headers = meta?.response?.headers;
+  return {
+    data: rows,
+    totalCount: Number(headers?.get('X-Total-Count') ?? rows?.length ?? 0),
+    links: parseLinkHeader(headers?.get('Link'))
+  };
+};
+
 const qs = (o: Record<string, unknown>) =>
   Object.entries(o)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -135,7 +144,43 @@ export const translationService = createApi({
         };
       },
       providesTags: ['Translations'],
-    }), 
+    }),
+
+    getTranslationsByKey: builder.query<
+      PagedResult<LanguageTranslation>,
+      { lang: string; key: string } & PagedParams
+    >({
+      query: ({ lang, key, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/translations/search/by-key',
+        params: { lang, key, page: page ?? 0, size: size ?? 10, sort }
+      }),
+      transformResponse: mapPagedTranslations,
+      providesTags: ['Translations']
+    }),
+
+    getTranslationsByVerified: builder.query<
+      PagedResult<LanguageTranslation>,
+      { lang: string; verified: string } & PagedParams
+    >({
+      query: ({ lang, verified, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/translations/search/by-verified/${encodeURIComponent(verified)}`,
+        params: { lang, page: page ?? 0, size: size ?? 10, sort }
+      }),
+      transformResponse: mapPagedTranslations,
+      providesTags: ['Translations']
+    }),
+
+    getTranslationsByTranslated: builder.query<
+      PagedResult<LanguageTranslation>,
+      { lang: string; translated: string } & PagedParams
+    >({
+      query: ({ lang, translated, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/translations/search/by-translated/${encodeURIComponent(translated)}`,
+        params: { lang, page: page ?? 0, size: size ?? 10, sort }
+      }),
+      transformResponse: mapPagedTranslations,
+      providesTags: ['Translations']
+    }),
   }),
 });
 
@@ -150,4 +195,8 @@ export const {
   useGetDictionaryQuery,
   useLazyGetDictionaryQuery,
   useGetTranslationsQuery,
+  useLazyGetTranslationsQuery,
+  useLazyGetTranslationsByKeyQuery,
+  useLazyGetTranslationsByVerifiedQuery,
+  useLazyGetTranslationsByTranslatedQuery,
 } = translationService;

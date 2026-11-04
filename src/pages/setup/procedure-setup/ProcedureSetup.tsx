@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdLink, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
@@ -28,12 +28,15 @@ import type { Procedure } from '@/types/model-types-new';
 import { newProcedure } from '@/types/model-types-constructor-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
 import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
+import LinkProcedureItems from './LinkProcedureItems';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
+  const priceListView = usePriceListPrompt();
 
   // Facility context (used to default new procedure)
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -54,6 +57,9 @@ const ProcedureSetup: React.FC = () => {
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
 
   const [linkDocumentOpen, setLinkDocumentOpen] = useState(false);
+
+  const [linkItemsOpen, setLinkItemsOpen] = useState(false);
+  const [linkItemsProcedure, setLinkItemsProcedure] = useState<Procedure | null>(null);
   const [linkDocumentProcedureId, setLinkDocumentProcedureId] = useState<number | null>(null);
 
   // Filter state
@@ -459,6 +465,16 @@ const ProcedureSetup: React.FC = () => {
       flexGrow: 3,
       render: (row: any) => (
         <div className="container-of-icons">
+          <MdMedicalServices
+            className="icons-style"
+            title="Linked Items"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setLinkItemsProcedure(row);
+              setLinkItemsOpen(true);
+            }}
+          />
           <MdModeEdit
             className="icons-style"
             title="Edit"
@@ -468,6 +484,23 @@ const ProcedureSetup: React.FC = () => {
               setProcedure(row);
               setPopupOpen(true);
             }}
+          />
+          <MdLocalOffer
+            className="icons-style"
+            title="Price Lists"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() =>
+              priceListView.view({
+                itemType: 'PROCEDURE',
+                sourceId: row.id,
+                itemCode: row.code,
+                itemName: row.name,
+                unitPrice: row.price,
+                facilityId: row.facilityId,
+                currency: row.currency
+              })
+            }
           />
           {row?.isActive ? (
             <MdDelete
@@ -628,6 +661,7 @@ const ProcedureSetup: React.FC = () => {
         onSaveSuccess={handleSaveSuccess}
         actionLoading={isFetching}
       />
+      <PriceListPrompt prompt={priceListView} />
 
       <DeletionConfirmationModal
         open={openConfirmToggleActive}
@@ -653,6 +687,13 @@ const ProcedureSetup: React.FC = () => {
         open={linkDocumentOpen}
         setOpen={setLinkDocumentOpen}
         defaultProcedureId={linkDocumentProcedureId}
+      />
+
+      <LinkProcedureItems
+        open={linkItemsOpen}
+        setOpen={setLinkItemsOpen}
+        procedureId={linkItemsProcedure?.id ?? 0}
+        facilityId={linkItemsProcedure?.facilityId ?? 0}
       />
     </Panel>
   );

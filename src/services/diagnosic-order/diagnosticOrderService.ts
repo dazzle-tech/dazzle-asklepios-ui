@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
+import { patientEncounterService } from '@/services/encounters/patientEncounterService';
 import {
   DiagnosticOrder,
   DiagnosticOrderCreateDTO,
@@ -169,9 +170,18 @@ getOrdersByEncounter: builder.query<
         query: ({ sort, ...rest }) => {
           const params = new URLSearchParams();
           Object.entries(rest).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              params.append(key, String(value));
+            if (value === undefined || value === null) return;
+            // Spring List params: prefer repeated keys (patientIdIn=1&patientIdIn=2).
+            // CSV strings are also accepted; avoid String([1,2]) ambiguity for non-primitives.
+            if (Array.isArray(value)) {
+              value.forEach(item => {
+                if (item !== undefined && item !== null) {
+                  params.append(key, String(item));
+                }
+              });
+              return;
             }
+            params.append(key, String(value));
           });
           if (Array.isArray(sort)) {
             sort.forEach(s => params.append('sort', s));
@@ -212,7 +222,16 @@ getOrdersByEncounter: builder.query<
       }),
       invalidatesTags: (_r, _e, id) => [
         { type: 'DiagnosticOrder', id },
+        'DiagnosticOrder',
       ],
+      async onQueryStarted(_id, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(patientEncounterService.util.invalidateTags(['PatientEncounter']));
+        } catch {
+          // submit failed; keep existing encounter list cache
+        }
+      },
     }),
 
   }),
@@ -228,6 +247,7 @@ export const {
   useDeleteDiagnosticOrderMutation,
   useGetOrdersByPatientQuery,
   useGetOrdersByEncounterQuery,
+  useLazyGetOrdersByEncounterQuery,
   useGetOrdersByPatientAndEncounterQuery,
   useFilterDiagnosticOrdersQuery,
   useLazyFilterDiagnosticOrdersQuery,

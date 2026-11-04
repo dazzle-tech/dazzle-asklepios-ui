@@ -107,6 +107,27 @@ export const NphiesPayerService = createApi({
         };
       },
       providesTags: ['NphiesPayer']
+    }),
+
+    getNphiesPayersByStatus: builder.query<
+      PagedResult<NphiesPayer>,
+      { isActive: string } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = 'id,desc' }) => ({
+        url: `/api/setup/nphies-payers/by-status/${isActive}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (res: NphiesPayer[], meta) => {
+        const h = meta?.response?.headers;
+
+        return {
+          data: res,
+          totalCount: Number(h?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(h?.get('Link'))
+        };
+      },
+      providesTags: ['NphiesPayer']
     })
   })
 });
@@ -122,5 +143,6 @@ export const {
   useLazyGetNphiesPayersByNameEnQuery,
 
   useGetNphiesPayersByNameArQuery,
+  useGetNphiesPayersByStatusQuery,
   useLazyGetNphiesPayersByNameArQuery
 } = NphiesPayerService;

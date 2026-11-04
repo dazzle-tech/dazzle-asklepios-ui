@@ -281,6 +281,38 @@ export interface ServiceItemUpdate {
   lastModifiedDate?: Date | null;
 }
 
+export interface ProcedureItem {
+  id?: number;
+  type: string; // @Enumerated(EnumType.STRING) -> ProcedureItemsType
+  sourceId: number; // FK to the source entity (e.g., Department id)
+  specialty?: string | null; // sub-specialty LOV key (required for DEPARTMENTS)
+  procedureId?: number | null;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/procedure-items) */
+export interface ProcedureItemCreate {
+  type: string;
+  sourceId: number;
+  specialty?: string | null;
+  procedureId: number;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/procedure-items/{id}) */
+export interface ProcedureItemUpdate {
+  id: number;
+  type: string;
+  sourceId: number;
+  specialty?: string | null;
+  procedureId: number;
+  isActive: boolean;
+}
+
 export type CatalogResponseVM = {
   id: number;
   name: string;
@@ -966,6 +998,7 @@ export interface UploadPatientAttachmentParams {
 
 export interface UploadEncounterAttachmentParams {
   encounterId: number;
+  patientId?: number;
   file: File;
   type?: string;
   details?: string;
@@ -1332,6 +1365,7 @@ export interface Vaccine {
   id?: number;
   name: string;
   atcCode?: string | null;
+  code?: string | null;
   type: string;
   roa: string;
   siteOfAdministration?: string | null;
@@ -4174,6 +4208,7 @@ export interface DiagnosticOrder extends AuditingEntity {
   id?: number;
   patientId?: number;
   encounterId?: number;
+  orderNumber?: string;
   saveDraft?: boolean;
   status?: DiagnosticStatus;
   submittedBy?: string;
@@ -5021,7 +5056,6 @@ export interface VitalSigns {
     temperature?: number | null;
     oxygenSaturation?: number | null;
     respiratoryRate?: number | null;
-    fastingBloodGlucose?: string | null;
 
     fluidStatus?: string | null;
     edema?: string | null;
@@ -5034,6 +5068,16 @@ export interface VitalSigns {
 
     createdDate?: Date | string | null;
     lastModifiedDate?: Date | string | null;
+}
+
+export interface RandomBloodSugar {
+  id?: number;
+  patientId: number;
+  encounterId: number;
+  randomBloodGlucose?: string | null;
+  isActive: boolean;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
 }
 
 export interface BodyMeasurements {
@@ -5793,7 +5837,7 @@ export interface DentalProcedureResponseVM {
   id?: number;
   patientId?: number;
   encounterId?: number;
-  toothNumber?: ToothNumber;
+  toothNumbers?: ToothNumber[];
   surface?: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
@@ -5816,7 +5860,7 @@ export interface DentalProcedureResponseVM {
 export interface DentalProcedureCreateDTO {
   patientId: number;
   encounterId: number;
-  toothNumber: ToothNumber;
+  toothNumbers: ToothNumber[];
   surface: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
@@ -5831,7 +5875,7 @@ export interface DentalProcedureCreateDTO {
 
 export interface DentalProcedureUpdateDTO {
   id: number;
-  toothNumber: ToothNumber;
+  toothNumbers: ToothNumber[];
   surface: string;
   anesthesiaUsed?: string | null;
   dose?: number | null;
@@ -6286,6 +6330,8 @@ export type PriceListSetupItem = {
   nonStandardCode?: string | null;
   itemName?: string;
 
+  // Read-only: the item's name in its setup definition
+  setupItemName?: string | null;
 
   unitPrice?: number;
   discountPercentage?: number;
@@ -7296,6 +7342,12 @@ export type PrepareDefaultServiceItem = {
   isExempted: boolean;
 };
 
+export type PrepareDefaultProcedureItem = {
+  procedureId: number;
+  sequence: number;
+  isExempted: boolean;
+};
+
 export type PrepareDefaultServicesRequest = {
   patientId: number;
   facilityId: number;
@@ -7303,6 +7355,7 @@ export type PrepareDefaultServicesRequest = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
+  procedures?: PrepareDefaultProcedureItem[];
   requestId: string;
   payZeroNow?: boolean | null;
   acceptUncoveredAsCash?: boolean | null;
@@ -7315,6 +7368,14 @@ export type PreparedDefaultServiceResult = {
   billingResult: BillingOperationResult;
 };
 
+export type PreparedDefaultProcedureResult = {
+  patientServiceProductId: number;
+  patientProcedureId: number;
+  procedureId: number;
+  sequence: number;
+  billingResult: BillingOperationResult;
+};
+
 export type PrepareDefaultServicesResult = {
   patientId: number;
   encounterId: number;
@@ -7322,6 +7383,7 @@ export type PrepareDefaultServicesResult = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PreparedDefaultServiceResult[];
+  procedures?: PreparedDefaultProcedureResult[];
   processed: boolean;
   message: string;
 };
@@ -7333,10 +7395,12 @@ export type PreviewDefaultServicesPricingRequest = {
   coverageType: BillingCoverageType;
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
+  procedures?: PrepareDefaultProcedureItem[];
 };
 
 export type PreviewDefaultServicePricingResult = {
-  serviceId: number;
+  serviceId: number | null;
+  procedureId?: number | null;
   sequence: number;
   setupUnitPrice: number | null;
   unitPrice: number | null;
@@ -7367,6 +7431,7 @@ export type PreviewDefaultServicesPricingResult = {
   taxAmount: number;
   netAmount: number;
   items: PreviewDefaultServicePricingResult[];
+  procedures?: PreviewDefaultServicePricingResult[];
 };
 
 export type BillingOperationResult = {
@@ -8802,7 +8867,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
   id: number;
   claimEncounterCopyId: number;
   diagnosticOrderTestResultId?: number | null;
-  orderTestId: number;
+  orderTestId?: number | null;
+  /** Set when the test was ordered from Service & Products (no diagnostic order test). */
+  patientServiceProductId?: number | null;
   profileTestId?: number | null;
 
   resultValueNumber?: number | null;
@@ -8825,7 +8892,8 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
-  orderTestId: number;
+  orderTestId?: number | null;
+  patientServiceProductId?: number | null;
   profileTestId?: number | null;
   resultValueNumber?: number | null;
   resultValueText?: string | null;
@@ -8841,7 +8909,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
   id: number;
   claimEncounterCopyId: number;
   diagnosticOrderTestReportId?: number | null;
-  orderTestId: number;
+  orderTestId?: number | null;
+  /** Set when the test was ordered from Service & Products (no diagnostic order test). */
+  patientServiceProductId?: number | null;
 
   report?: string | null;
   radiologistInformation?: string | null;
@@ -8862,7 +8932,8 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO {
-  orderTestId: number;
+  orderTestId?: number | null;
+  patientServiceProductId?: number | null;
   report?: string | null;
   radiologistInformation?: string | null;
   criticalFindings?: string | null;

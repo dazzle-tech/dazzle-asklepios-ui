@@ -63,12 +63,22 @@ const DentalProcedures = ({ patient, encounter }: any) => {
   // ─────────── Columns ───────────
   const columns: ColumnConfig[] = [
     {
-      key: 'toothNumber',
+      key: 'toothNumbers',
       title: <Translate>Tooth Number</Translate>,
-      render: row =>
-        ToothEnum?.find((t: any) => t.value === row.toothNumber)?.label ||
-        row.toothNumber ||
-        '-'
+      render: row => {
+        const values = Array.isArray(row.toothNumbers)
+          ? row.toothNumbers
+          : row.toothNumber
+            ? [row.toothNumber]
+            : [];
+        const labels = values
+          .filter(Boolean)
+          .map(
+            (value: string) =>
+              ToothEnum?.find((tooth: any) => tooth.value === value)?.label || value
+          );
+        return labels.length ? labels.join(', ') : '-';
+      }
     },
     {
       key: 'surface',
