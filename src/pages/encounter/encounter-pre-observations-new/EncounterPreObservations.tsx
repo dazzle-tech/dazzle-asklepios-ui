@@ -9,7 +9,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 
-import { faArrowLeft, faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheckDouble, faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaSearch } from 'react-icons/fa';
 
@@ -18,6 +18,9 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 import { MedicalSheets } from '@/config/modules-config';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
 
 import clsx from 'clsx';
 import NurseSummeryReportButton from './NurseSummeryReportButton';
@@ -58,6 +61,7 @@ useEffect(() => {
   if (!location.pathname.includes('/nurse-station')) return;
 
   const fromPatientsLists = location.state?.fromPage === 'PatientsLists';
+  const fromOpdVisitList = location.state?.fromPage === 'OpdVisitList';
   const encounterDeptId = propsData?.encounter?.departmentId;
 
   if (
@@ -82,6 +86,10 @@ useEffect(() => {
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
+
+  const nurseEncounterId = propsData?.encounter?.id;
+  const isAmendmentOpen = useOpenAmendmentSession(nurseEncounterId);
+  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
 
   const viewMode = propsData?.viewMode;
   const isFromEMR =
@@ -156,14 +164,65 @@ useEffect(() => {
       patient: propsData?.patient,
       encounter: propsData?.encounter,
       edit,
+      isAmendmentOpen,
       fromPage: currentFromPage,
       viewMode: propsData?.viewMode
     }),
-    [propsData?.patient, propsData?.encounter, edit, currentFromPage, propsData?.viewMode]
+    [propsData?.patient, propsData?.encounter, edit, isAmendmentOpen, currentFromPage, propsData?.viewMode]
   );
+  useEffect(() => {
+    if (
+      localEncounter?.encounterType === 'INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
+      if (pageSource === 'Urgent_Care_List') {
+        navigate('/urgent-care-department-list', { state: { shouldRefetch: true } });
+      } else {
+        navigate('/encounter-list', { state: { shouldRefetch: true } });
+      }
+    }
+  }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);
+
+  const handleCompleteEncounter = async () => {
+    try {
+      if (!localEncounter) return;
+
+      dispatch(showSystemLoader());
+      await completeEncounter(localEncounter).unwrap();
+
+      dispatch(
+        notify({
+          msg: isAmendmentOpen ? 'Visit amendment finished' : 'Completed Successfully',
+          sev: 'success'
+        })
+      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.amendment.completeNotAllowed':
+          'This encounter has an open amendment. Finish the amendment before completing the encounter.',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
   const handleGoBack = () => {
     if (pageSource === 'PatientsLists') {
       navigate('/patients-list');
+      return;
+    }
+
+    if (pageSource === 'OpdVisitList') {
+      navigate('/opd-visit-list');
       return;
     }
 
@@ -186,18 +245,28 @@ useEffect(() => {
     <div className="container">
       <div className="left-box">
         <Panel>
-          <div className="container-bt">
-            <div className="left">
+        <div
+          className="container-bt"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}
+        >    
+        <div className="left">
               {!inModal && (
                 <BackButton
                   onClick={handleGoBack}
-                 text={
-                  pageSource === 'PatientsLists'
-                    ? 'To Patients list'
-                    : pageSource === 'Urgent_Care_List'
-                      ? 'To Urgent Care list'
-                      : 'To Encounters list'
-                 }
+                  text={
+                    pageSource === 'PatientsLists'
+                      ? 'To Patients list'
+                      : pageSource === 'OpdVisitList'
+                        ? 'To OPD Visit List'
+                        : pageSource === 'Urgent_Care_List'
+                          ? 'To Urgent Care list'
+                          : 'To Encounters list'
+                  }
                 />
               )}
               {!inModal && (
@@ -224,11 +293,17 @@ useEffect(() => {
               </Form>
             </div>
 
-            {!inModal && (
-              <div className="right">
-                <NurseSummeryReportButton encounterId={localEncounter?.id} />
-              </div>
-            )}
+          {!inModal && (
+            <div
+              className="right"
+              style={{
+                marginLeft: 'auto',
+                flexShrink: 0
+              }}
+            >
+              <NurseSummeryReportButton encounterId={localEncounter?.id} />
+            </div>
+          )}
           </div>
 
           <Divider />
@@ -285,6 +360,7 @@ useEffect(() => {
                       patient: propsData?.patient,
                       encounter: propsData?.encounter,
                       edit,
+                      isAmendmentOpen,
                       setLocalEncounter
                     }}
                   />

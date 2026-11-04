@@ -44,6 +44,7 @@ export type RadiologyReportIdsFilterParams = {
   patientIdIn?: number[];
 
   orderNumber?: string;
+  encounterNumber?: string;
 };
 
 

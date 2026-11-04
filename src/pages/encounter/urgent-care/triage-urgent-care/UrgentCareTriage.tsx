@@ -5,7 +5,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
@@ -41,7 +41,8 @@ import {
   POST_PAYMENT_TREATMENT_STATUS
 } from '@/utils/encounterStatusHelpers';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBedPulse, faBolt, faCircleExclamation, faCirclePlay, faCommentMedical, faFileLines, faMoneyBillWave, faPause, faRectangleXmark, faShareFromSquare, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import AssignNurseModal from '@/pages/encounter/encounter-component/AllNursesModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -99,6 +100,102 @@ const formatDuration = (ms: number | null): string => {
   const minutes = totalMinutes % 60;
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
+};
+
+const ENDED_ENCOUNTER_STATUSES = new Set([
+  'COMPLETED',
+  'DISCHARGED',
+  'CANCELLED',
+  'CANCELED',
+  'CLOSED'
+]);
+
+const formatLengthOfStay = (row: any, nowMs: number): string => {
+  const start = toDateSafe(row?.createdAt);
+  if (!start) return '';
+
+  const statusUpper = String(row?.status ?? row?.treatmentStatus ?? '').toUpperCase();
+  const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+  const end = isEnded
+    ? toDateSafe(row?.dischargeAt ?? row?.completedAt)
+    : new Date(nowMs);
+
+  if (!end) return '';
+  return formatDuration(end.getTime() - start.getTime());
+};
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
+const derivePatientFilters = (appliedSearch: any) => {
+  const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
+  const rawValue = appliedSearch?.patientName ?? appliedSearch?.searchText ?? '';
+  const raw =
+    rawValue instanceof Date
+      ? (() => {
+          const y = rawValue.getFullYear();
+          const m = String(rawValue.getMonth() + 1).padStart(2, '0');
+          const d = String(rawValue.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        })()
+      : String(rawValue ?? '').trim();
+
+  if (!raw) {
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
+  }
+
+  if (searchByField === 'patientMrn') {
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
@@ -470,8 +567,7 @@ const UrgentCareTriage = () => {
     toDate: new Date()
   }));
 
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [patientSearchResetToken, setPatientSearchResetToken] = useState(0);
+  const [patientSearchDraft, setPatientSearchDraft] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
@@ -483,10 +579,17 @@ const UrgentCareTriage = () => {
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
   const [encounterStatusOverrides, setEncounterStatusOverrides] = useState<Record<number, string>>({});
+  const [openAllNursesModal, setOpenAllNursesModal] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
-  const selectedPatientRef = useRef<any>(selectedPatient);
+  const patientSearchRef = useRef<any>(patientSearchDraft);
 
   const setDateFilterSafe = (next: any) => {
     dateFilterRef.current = next;
@@ -496,9 +599,10 @@ const UrgentCareTriage = () => {
     encounterStatusRef.current = next;
     setEncounterStatus(next);
   };
-  const setSelectedPatientSafe = (next: any) => {
-    selectedPatientRef.current = next;
-    setSelectedPatient(next);
+  const setPatientSearchSafe = (next: any) => {
+    const value = typeof next === 'function' ? next(patientSearchRef.current) : next;
+    patientSearchRef.current = value;
+    setPatientSearchDraft(value);
   };
 
   const divContent = 'Urgent Care Triage';
@@ -515,7 +619,7 @@ const UrgentCareTriage = () => {
   const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(5);
   const DEFAULT_SORT = 'id,desc';
   const [searchTick, setSearchTick] = useState(1);
   const [hasSearched, setHasSearched] = useState(true);
@@ -525,19 +629,13 @@ const UrgentCareTriage = () => {
 
     const df = dateFilterRef.current;
     const es = encounterStatusRef.current;
-    const sp = selectedPatientRef.current;
+    const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+      derivePatientFilters(patientSearchRef.current);
 
     const fromDateObj = toDateSafe(df?.fromDate);
     const toDateObj = toDateSafe(df?.toDate);
     const fromDate = fromDateObj ? formatDate(fromDateObj) : undefined;
     const toDate = toDateObj ? formatDate(toDateObj) : undefined;
-
-    const patientName =
-      sp?.firstName || sp?.lastName
-        ? `${sp.firstName ?? ''} ${sp.lastName ?? ''}`.trim()
-        : undefined;
-
-    const mrn = sp?.medicalRecordNumber || undefined;
 
     const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
       String(v ?? '').toUpperCase()
@@ -551,11 +649,15 @@ const UrgentCareTriage = () => {
       statuses: statusesCsv,
       patientName,
       mrn,
+      primaryMobileNumber,
+      documentNumber,
+      dateOfBirth,
       practitionerId: undefined,
       page,
       size: pageSize,
       sort: DEFAULT_SORT,
-      timestamp: searchTick
+      timestamp: searchTick,
+      sortByPriority: true
     };
   }, [departmentId, page, pageSize, searchTick]);
 
@@ -720,27 +822,6 @@ const UrgentCareTriage = () => {
     return m;
   }, [emergencyLevelEnumOptions]);
 
-  const priorityOrderMap = useMemo(() => {
-    const rank = (value: string) => {
-      const v = String(value ?? '').toUpperCase();
-      if (
-        v.includes('URGENT') ||
-        v.includes('CRITICAL') ||
-        v.includes('STAT') ||
-        v.includes('EMERG')
-      ) {
-        return 0;
-      }
-      return null;
-    };
-    const m = new Map<string, number>();
-    encounterPriorityEnumOptions.forEach((opt, idx) => {
-      if (opt?.value == null) return;
-      const forced = rank(String(opt.value));
-      m.set(String(opt.value), forced ?? idx + 10);
-    });
-    return m;
-  }, [encounterPriorityEnumOptions]);
 
   const priorityLabelMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -759,22 +840,8 @@ const UrgentCareTriage = () => {
     return m;
   }, [encounterPriorityEnumOptions]);
 
-  const sortedTableData = useMemo(() => {
-    const copied = [...(normalizedRows ?? [])];
-    copied.sort((a, b) => {
-      const aKey = a?.priorityLevel ? String(a.priorityLevel) : '';
-      const bKey = b?.priorityLevel ? String(b.priorityLevel) : '';
-      const aOrder = aKey ? priorityOrderMap.get(aKey) ?? 999999 : 999999;
-      const bOrder = bKey ? priorityOrderMap.get(bKey) ?? 999999 : 999999;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      const aDate = a?.encounterDate ? new Date(a.encounterDate).getTime() : 0;
-      const bDate = b?.encounterDate ? new Date(b.encounterDate).getTime() : 0;
-      return aDate - bDate;
-    });
-    return copied;
-  }, [normalizedRows, priorityOrderMap]);
 
-  const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
+  const tableData = useMemo(() => normalizedRows ?? [], [normalizedRows]);
 
   const isSelected = (rowData: any) => {
     if (
@@ -1134,8 +1201,7 @@ const handleCancelEncounter = async () => {
 
     setDateFilterSafe(nextDateFilter);
     setEncounterStatusSafe(nextEncounterStatus);
-    setSelectedPatientSafe(null);
-    setPatientSearchResetToken(v => v + 1);
+    setPatientSearchSafe({ ...EMPTY_PATIENT_SEARCH });
 
     triggerSearch();
   };
@@ -1346,6 +1412,17 @@ const handleCancelEncounter = async () => {
         );
       }
     },
+    {
+      key: 'assignedNurseName',
+      title: <Translate>Assigned Nurse</Translate>,
+      expandable: true
+    },
+    {
+      key: 'lengthOfStay',
+      title: <Translate>Length of Stay</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatLengthOfStay(rowData, nowMs)
+    },
        
     {
       key: 'actions',
@@ -1354,6 +1431,7 @@ const handleCancelEncounter = async () => {
         const isPendingPayment = isPendingPaymentStatus(rowData);
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
+        const tooltipAssignedNurse = <Tooltip>Assign Nurse</Tooltip>;
 
         const statusUpper = getEncounterTreatmentStatus(rowData);
 
@@ -1519,6 +1597,26 @@ const handleCancelEncounter = async () => {
               isReceptionist={isReceptionist}
             />
 
+            {!isPendingPayment &&
+              (statusUpper === 'ONGOING' ||
+                statusUpper === 'ASSIGNED_TO_BED' ||
+                statusUpper === 'TRIAGE_STARTED') && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipAssignedNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                      setLocalEncounter(rowData);
+                      setOpenAllNursesModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faShareFromSquare} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+
             {['WAITING_TRIAGE', 'NEW', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
@@ -1591,10 +1689,10 @@ const handleCancelEncounter = async () => {
               record={dateFilter}
               setRecord={setDateFilterSafe}
             />
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatientSafe}
-              resetToken={patientSearchResetToken}
+            <SearchPatientCriteria
+              record={patientSearchDraft}
+              setRecord={setPatientSearchSafe}
+              liveSearchMinLength={0}
             />
 
             <MyInput
@@ -1651,8 +1749,18 @@ const handleCancelEncounter = async () => {
             setExpand={setPatientSidebarOpen}
             windowHeight={windowHeight}
             setLocalPatient={(p: any) => {
-              setSelectedPatientSafe(p);
+              const mrn = p?.medicalRecordNumber ?? p?.patientMrn ?? '';
+              const fullName = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+              setPatientSearchSafe(
+                mrn
+                  ? { searchByField: 'patientMrn', patientName: String(mrn) }
+                  : { searchByField: 'fullName', patientName: fullName }
+              );
               setPatientSidebarOpen(false);
+              triggerSearch();
             }}
             refetchData={refetchPatientSidebar}
             setRefetchData={setRefetchPatientSidebar}
@@ -1669,6 +1777,7 @@ const handleCancelEncounter = async () => {
           data={tableData}
           columns={tableColumns}
           rowClassName={isSelected}
+          rowTestId={row => `encounter-row-${row.id}`}
           loading={isLoading || (manualSearchTriggered && isFetching)}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
@@ -1728,6 +1837,12 @@ const handleCancelEncounter = async () => {
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
+      />
+
+      <AssignNurseModal
+        open={openAllNursesModal}
+        setOpen={setOpenAllNursesModal}
+        encounterId={encounter?.id}
       />
     </div>
   );

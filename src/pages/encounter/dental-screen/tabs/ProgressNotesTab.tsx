@@ -6,27 +6,31 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 
 import {
+  useGetProgressNotesByChartQuery,
   useSaveProgressNotesMutation,
   useDeleteProgressNoteMutation
-} from '@/services/dentalService';
+} from '@/services/dental/dentalChartService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaCheck } from 'react-icons/fa6';
 import { Panel } from 'rsuite';
 
 interface ProgressNotesTabProps {
-  progressNotes: any[];
-  setProgressNotes: (notes: any[]) => void;
-  currentChart: any;
+  chartId: number;
   dispatch: (action: any) => void;
 }
 
-const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
-  progressNotes,
-  setProgressNotes,
-  currentChart,
-  dispatch
-}) => {
+const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({ chartId, dispatch }) => {
+  const { data: progressNotesData } = useGetProgressNotesByChartQuery(chartId, {
+    skip: !chartId
+  });
+
+  const [progressNotes, setProgressNotes] = useState<any[]>([]);
+
+  useEffect(() => {
+    setProgressNotes(progressNotesData ?? []);
+  }, [progressNotesData]);
+
   const [saveProgressNotes, saveProgressNotesMutation] = useSaveProgressNotesMutation();
   const [deleteProgressNote, deleteProgressNotesMutation] = useDeleteProgressNoteMutation();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -44,7 +48,7 @@ const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
   // Delete note effect
   useEffect(() => {
     if (deleteProgressNotesMutation.status === 'fulfilled') {
-      setProgressNotes(prev => prev.filter(note => note.key !== noteToDelete?.key));
+      setProgressNotes(prev => prev.filter(note => note.id !== noteToDelete?.id));
       setNoteToDelete(null);
     } else if (deleteProgressNotesMutation.status === 'rejected') {
       dispatch({ type: 'NOTIFY', payload: { msg: 'Delete Failed', sev: 'error' } });
@@ -77,8 +81,8 @@ const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
       title: <Translate>Audit</Translate>,
       render: (row: any) => (
         <Box>
-          {row.createAudit}
-          {row.updatedAudit && ` / ${row.updatedAudit}`}
+          {row.createdBy}
+          {row.createdDate && ` / ${row.createdDate}`}
         </Box>
       )
     },
@@ -107,18 +111,18 @@ const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
           <Translate>Progress Notes</Translate>
           <Box display="flex" gap={2} justifyContent={'flex-end'}>
             <MyButton
-              onClick={() =>
-                setProgressNotes([
-                  { key: null, chartKey: currentChart.key, note: '' },
-                  ...progressNotes
-                ])
-              }
+              onClick={() => setProgressNotes([{ id: null, note: '' }, ...progressNotes])}
             >
               <AddIcon /> Add New
             </MyButton>
             <MyButton
-              onClick={() => saveProgressNotes(progressNotes).unwrap()}
-              disabled={saveProgressNotesMutation.isLoading}
+              onClick={() =>
+                saveProgressNotes({
+                  chartId,
+                  notes: progressNotes.map(n => ({ id: n.id, note: n.note }))
+                }).unwrap()
+              }
+              disabled={saveProgressNotesMutation.isLoading || !chartId}
             >
               <FaCheck /> Save Notes
             </MyButton>
@@ -138,8 +142,10 @@ const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
         setOpen={setConfirmDeleteOpen}
         itemToDelete="note"
         actionButtonFunction={() => {
-          if (noteToDelete) {
-            deleteProgressNote(noteToDelete).unwrap();
+          if (noteToDelete?.id) {
+            deleteProgressNote(noteToDelete.id).unwrap();
+          } else if (noteToDelete) {
+            setProgressNotes(prev => prev.filter(n => n !== noteToDelete));
           }
           setConfirmDeleteOpen(false);
         }}

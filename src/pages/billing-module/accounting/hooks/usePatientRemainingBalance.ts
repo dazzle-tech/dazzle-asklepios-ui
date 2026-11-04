@@ -108,6 +108,11 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
     await Promise.all([refetchLedgerSummary(), refetchFinancialDocuments()]);
   };
 
+  const loadingBalance =
+    patientId != null &&
+    ledgerSummary == null &&
+    (loadingLedgerInitial || loadingDocuments || loadingInvoiceOutstanding);
+
   return {
     ledgerSummary,
     walletAvailable,
@@ -116,12 +121,7 @@ export const usePatientRemainingBalance = (patientId: number | null | undefined)
     insuranceOutstanding,
     invoiceOutstandingTotal,
     remainingBalance,
-    loadingBalance:
-      (patientId != null &&
-        loadingLedgerInitial &&
-        ledgerSummary == null) ||
-      loadingDocuments ||
-      loadingInvoiceOutstanding,
+    loadingBalance,
     refreshBalance
   };
 };

@@ -1,12 +1,18 @@
 import {
   PointOfSaleTransactionDTO,
   usePurchaseMutation,
+  useRecordManualEntryMutation,
   useRefreshTransactionStatusMutation,
 } from '@/services/point-of-sale/PointOfSaleTransactionService';
 
 import { isCreditCardPaymentMethod }
   from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { useState } from 'react';
+
+export type ManualCardEntry = {
+  panNumber: string;
+  transactionId: string;
+};
 
 export type CreditCardMachinePaymentRequest = {
   amount: number;
@@ -21,6 +27,8 @@ export type CreditCardMachinePaymentRequest = {
   sourceReferenceId?: number | null;
 
   facilityId?: number | null;
+
+  manualEntry?: ManualCardEntry | null;
 };
 export type CreditCardMachinePaymentResult = {
   ok: boolean;
@@ -43,19 +51,48 @@ export const getEnteredPaymentAmount = (
     : 0;
 };
 
+const POS_FAILED_STATUSES = [
+  'DECLINED',
+  'FAILED',
+  'CANCELLED',
+  'CANCELED',
+  'REJECTED',
+  'ERROR'
+];
+
+const normalizePosStatus = (
+  status?: string | null
+): string =>
+  String(status ?? '').trim().toUpperCase();
+
+const extractCardLastFour = (
+  panNumber?: string | null
+): string | null => {
+
+  const digits =
+    String(panNumber ?? '')
+      .replace(/\D/g, '');
+
+  return digits.length >= 4
+    ? digits.slice(-4)
+    : null;
+};
+
 export const useCreditCardMachinePayment = () => {
  const [isProcessingCard, setIsProcessingCard] =useState(false);
- console.log('isProcessingCard', isProcessingCard);
   const [purchase] =
     usePurchaseMutation();
 
   const [refreshTransactionStatus] =
     useRefreshTransactionStatusMutation();
+
+  const [recordManualEntry] =
+    useRecordManualEntryMutation();
   const waitForFinalStatus = async (
     transactionId: number
-  ): Promise<PointOfSaleTransactionDTO> => {
+  ): Promise<Partial<PointOfSaleTransactionDTO>> => {
 
-    const maxAttempts = 20;
+    const maxAttempts = 12;
 
     for (
       let attempt = 0;
@@ -67,22 +104,28 @@ export const useCreditCardMachinePayment = () => {
         setTimeout(resolve, 3000)
       );
 
-      const transaction =
-        await refreshTransactionStatus(
-          transactionId
-        ).unwrap();
-
-      if (
-        transaction.transactionStatus ===
-        'APPROVED'
-      ) {
-
-        return transaction;
+      let transaction: PointOfSaleTransactionDTO;
+      try {
+        transaction =
+          await refreshTransactionStatus(
+            transactionId
+          ).unwrap();
+      } catch (error) {
+        // A single failed poll should not abort a payment the terminal may still approve.
+        console.warn('POS status refresh failed', error);
+        continue;
       }
 
+      const status =
+        normalizePosStatus(
+          transaction.transactionStatus
+        );
+
+      console.log('POS transaction status', transactionId, status);
+
       if (
-        transaction.transactionStatus ===
-        'DECLINED'
+        status === 'APPROVED' ||
+        POS_FAILED_STATUSES.includes(status)
       ) {
 
         return transaction;
@@ -90,9 +133,8 @@ export const useCreditCardMachinePayment = () => {
     }
 
     return {
-      ok: false,
-      amount: 0,
-      message:
+      transactionStatus: 'TIMEOUT',
+      responseMessage:
         'Transaction is still being processed. Please check the transaction status later.'
     };
   };
@@ -145,6 +187,90 @@ export const useCreditCardMachinePayment = () => {
             'Enter a credit card payment amount greater than zero.'
         };
       }
+
+      if (request.manualEntry) {
+
+        const panNumber =
+          request.manualEntry.panNumber?.trim();
+
+        const transactionId =
+          request.manualEntry.transactionId?.trim();
+
+        if (!panNumber || !transactionId) {
+
+          return {
+            ok: false,
+            amount: 0,
+            message:
+              'Enter the card number and transaction id for the manual card entry.'
+          };
+        }
+
+        setIsProcessingCard(true);
+
+        try {
+
+          const manualTransaction =
+            await recordManualEntry({
+
+              patientId: Number(
+                request.patientId
+              ),
+
+              sourceType:
+                request.sourceType,
+
+              sourceReferenceId:
+                request.sourceReferenceId != null
+                  ? Number(
+                    request.sourceReferenceId
+                  )
+                  : 0,
+
+              amount,
+
+              panNumber,
+
+              transactionId
+
+            }).unwrap();
+
+          return {
+            ok: true,
+            amount,
+            authorizationCode: null,
+            processorReference:
+              manualTransaction.rrn,
+            cardLastFour:
+              extractCardLastFour(
+                manualTransaction.panNumber
+              ),
+            message:
+              'Manual card entry recorded.'
+          };
+
+        } catch (error) {
+
+          console.error(
+            'MANUAL POS ENTRY ERROR',
+            error
+          );
+
+          return {
+            ok: false,
+            amount: 0,
+            message:
+              getPosErrorMessage(
+                error?.message
+              )
+          };
+
+        } finally {
+
+          setIsProcessingCard(false);
+        }
+      }
+
   setIsProcessingCard(true);
       try {
         const posResponse =
@@ -168,9 +294,15 @@ export const useCreditCardMachinePayment = () => {
 
 
 
+        const initialStatus =
+          normalizePosStatus(
+            posResponse.transactionStatus
+          );
+
+        console.log('POS purchase status', posResponse.id, initialStatus);
+
         if (
-          posResponse.transactionStatus !==
-          'PROCESSING'
+          POS_FAILED_STATUSES.includes(initialStatus)
         ) {
 
           return {
@@ -183,13 +315,18 @@ export const useCreditCardMachinePayment = () => {
           };
         }
 
+        // The terminal may approve synchronously; only poll when still pending.
         const finalTransaction =
-          await waitForFinalStatus(
-            posResponse.id
-          );
+          initialStatus === 'APPROVED'
+            ? posResponse
+            : await waitForFinalStatus(
+              posResponse.id
+            );
 
         if (
-          finalTransaction.transactionStatus !==
+          normalizePosStatus(
+            finalTransaction.transactionStatus
+          ) !==
           'APPROVED'
         ) {
           const getPosMessage = (
@@ -236,6 +373,10 @@ export const useCreditCardMachinePayment = () => {
             finalTransaction.authCode,
           processorReference:
             finalTransaction.externalTransactionId,
+          cardLastFour:
+            extractCardLastFour(
+              finalTransaction.panNumber
+            ),
           message:
             'POS payment approved.'
         };
@@ -284,6 +425,13 @@ export const useCreditCardMachinePayment = () => {
         ) => void | Promise<void>;
       }
     ) => {
+
+      console.log(
+        'paymentMethodCode',
+        paymentMethodCode,
+        'isCreditCard',
+        isCreditCardPaymentMethod(paymentMethodCode)
+      );
 
       if (
         !isCreditCardPaymentMethod(
@@ -335,7 +483,10 @@ export const useCreditCardMachinePayment = () => {
             options?.sourceReferenceId,
 
           facilityId:
-            options?.facilityId
+            options?.facilityId,
+
+          manualEntry:
+            options?.manualEntry
 
         });
 

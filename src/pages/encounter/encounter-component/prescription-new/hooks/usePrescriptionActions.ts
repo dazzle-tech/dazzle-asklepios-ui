@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { notify } from '@/utils/uiReducerActions';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import { useCheckInsurancePriceListCoverageMutation } from '@/services/billing/billingTransactionService';
@@ -98,7 +99,23 @@ export const usePrescriptionActions = ({
     };
 
 
+    // Blocks a second Submit while one is in progress (double click); the ref reacts before the next render.
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
+
     const handleConfirmSubmitPres = async () => {
+        if (submittingRef.current) return;
+        submittingRef.current = true;
+        setIsSubmitting(true);
+        try {
+            await submitCurrentPrescription();
+        } finally {
+            submittingRef.current = false;
+            setIsSubmitting(false);
+        }
+    };
+
+    const submitCurrentPrescription = async () => {
         if (!currentPrescription?.id) return;
 
         const submittedPrescriptionId = currentPrescription.id;
@@ -161,6 +178,11 @@ export const usePrescriptionActions = ({
             if (isUncoveredCashCancelled(error)) {
                 return;
             }
+            if ((error as any)?.data?.message === 'error.alreadySubmitted') {
+                dispatch(notify({ msg: 'This prescription is already submitted', type: 'warning' } as any));
+                await preRefetch();
+                return;
+            }
             dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
         }
     };
@@ -215,6 +237,7 @@ export const usePrescriptionActions = ({
     return {
         handleCancle,
         handleConfirmSubmitPres,
+        isSubmitting,
         handleNewPrescriptionAndAddMedication
     };
 };

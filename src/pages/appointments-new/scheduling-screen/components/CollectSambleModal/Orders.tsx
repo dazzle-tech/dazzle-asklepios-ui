@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
 import { useGetPatientDiagnosesByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import PrintOrderSampleLabelAction from '@/pages/lab-module-new/PrintOrderSampleLabelAction';
 import './style.less';
 
 type OrdersProps = {
@@ -24,7 +25,8 @@ type OrdersProps = {
   loading?: boolean;
   orderNumberFilter?: string;
   departmentFilter?: any;
-  selectedPatient?: any;
+  /** null = no patient filter; [] or ids = filter (empty forces no rows via sentinel) */
+  patientIdIn?: number[] | null;
   filters?: React.ReactNode;
   departmentId?: number | string;
   fromDepartmentId?: number | string;
@@ -37,7 +39,7 @@ const Orders = forwardRef<any, OrdersProps>(
   dateFilter,
   loading,
   orderNumberFilter,
-  selectedPatient,
+  patientIdIn,
   departmentFilter,
   filters,
   departmentId: departmentIdProp,
@@ -95,7 +97,7 @@ useEffect(() => {
   }));
 }, [
   orderNumberFilter,
-  selectedPatient?.id,
+  patientIdIn,
   departmentId,
   fromDepartmentId,
   dateFilter?.fromDate,
@@ -127,8 +129,10 @@ const {
         submittedDateFrom: fromDateParam,
         submittedDateTo: toDateParam,
 
-        ...(selectedPatient?.id
-          ? { patientIdIn: [selectedPatient.id] }
+        ...(patientIdIn != null
+          ? {
+              patientIdIn: patientIdIn.length > 0 ? patientIdIn : [-1]
+            }
           : {}),
 
         ...(orderNumberFilter?.trim()
@@ -144,24 +148,6 @@ useImperativeHandle(ref, () => ({
 
 
 const allOrdersList = ordersResponse?.data ?? [];
-
-
-console.log('ORDERS RESPONSE:', ordersResponse);
-
-console.log('ORDERS TOTAL COUNT:', ordersResponse?.totalCount);
-
-console.log(
-  'ORDERS:',
-  allOrdersList.map((o: any) => ({
-    id: o.id,
-    orderNumber: o.orderNumber,
-    status: o.status,
-    labStatus: o.labStatus,
-    departmentId: o.departmentId,
-    fromDepartmentId: o.fromDepartmentId,
-    patientId: o.patientId
-  }))
-);
 
 const ordersList = allOrdersList;
 const totalCount = ordersResponse?.totalCount ?? 0;
@@ -302,6 +288,16 @@ const totalCount = ordersResponse?.totalCount ?? 0;
               <FontAwesomeIcon icon={faLandMineOn} className="urgent-icon-style" />
             </Whisper>
           ) : null
+      },
+      {
+        key: 'print',
+        title: <Translate>PRINT</Translate>,
+        width: 30,
+        render: (rowData: any) => (
+          <div onClick={e => e.stopPropagation()}>
+            <PrintOrderSampleLabelAction rowData={rowData} />
+          </div>
+        )
       }
     ];
 

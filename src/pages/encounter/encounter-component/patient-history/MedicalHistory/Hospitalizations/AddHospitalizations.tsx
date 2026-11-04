@@ -13,6 +13,16 @@ import {
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import Translate from '@/components/Translate';
+import {
+  DURATION_TYPE_OPTIONS,
+  getSavedDuration,
+  isIncompleteDuration,
+  isSameCalendarDay,
+  resolveDurationInput
+} from '@/utils/durationDate';
+import './style.less';
+
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
 
 /*  ERROR HANDLER  */
 
@@ -99,6 +109,13 @@ const PATIENT_ADMISSION_ERROR_MAP: Record<string, string> = {
   'patient.invalid': 'Invalid patient reference.',
   duplicate: 'Hospitalization already exists for this patient.',
   'db.constraint': 'Database constraint violation.',
+  'dateOfAdmission.required': 'Date of admission is required.',
+  'admissionDuration.incomplete': 'Date Type and Number must be provided together.',
+  'admissionDurationType.invalid': 'Date Type must be Years, Months or Days.',
+  'admissionDuration.negative': 'Number must not be negative.',
+  'admissionDuration.fraction': 'Number must be a whole number.',
+  'admissionDuration.overflow': 'Number is too large.',
+  'admissionDuration.outOfRange': 'The resulting date of admission is out of range.',
   notfound: 'Hospitalization record not found.'
 };
 
@@ -111,10 +128,14 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     reason: '',
     admissionType: '',
     dateOfAdmission: null,
+    admissionDurationType: null,
+    admissionDuration: null,
     lengthOfStayDays: null,
     outcomes: '',
     medicalInterventionsPerformed: '',
-    patientId: null
+    patientId: null,
+    patientIsFree: false,
+    freeText: null
   });
 
   /*  LOAD  */
@@ -123,7 +144,11 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.id)
+        admissionDurationType: initialData.admissionDurationType ?? null,
+        admissionDuration: initialData.admissionDuration ?? null,
+        patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null
       });
     } else {
       setFormData({
@@ -131,35 +156,114 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         reason: '',
         admissionType: '',
         dateOfAdmission: null,
+        admissionDurationType: null,
+        admissionDuration: null,
         lengthOfStayDays: null,
         outcomes: '',
         medicalInterventionsPerformed: '',
-        patientId: Number(patient?.id)
+        patientId: Number(patient?.id),
+        patientIsFree: false,
+        freeText: null
       });
     }
   }, [initialData, open, patient?.id]);
+
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          facility: '',
+          reason: '',
+          admissionType: '',
+          dateOfAdmission: null,
+          admissionDurationType: null,
+          admissionDuration: null,
+          lengthOfStayDays: null,
+          outcomes: '',
+          medicalInterventionsPerformed: '',
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [formData.patientIsFree]);
 
   /*  MUTATIONS  */
 
   const [addHospitalization] = useAddHospitalizationMutation();
   const [updateHospitalization] = useUpdateHospitalizationMutation();
 
+  /*  ADMISSION DURATION  */
+
+  const savedAdmissionDuration = getSavedDuration(
+    initialData?.admissionDurationType,
+    initialData?.admissionDuration,
+    initialData?.dateOfAdmission
+  );
+
+  const handleAdmissionDurationChange = (next: any) => {
+    const { durationType, duration, date, error } = resolveDurationInput(
+      next?.admissionDurationType,
+      next?.admissionDuration,
+      savedAdmissionDuration
+    );
+
+    if (error) {
+      dispatch(notify({ msg: error, sev: 'warning' }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      admissionDurationType: durationType,
+      admissionDuration: duration,
+      ...(date ? { dateOfAdmission: date } : {})
+    }));
+  };
+
+  const handleDateOfAdmissionChange = (next: any) => {
+    const dateOfAdmission = next?.dateOfAdmission ?? null;
+    if (isSameCalendarDay(dateOfAdmission, formData.dateOfAdmission)) return;
+    setFormData(prev => ({
+      ...prev,
+      dateOfAdmission,
+      admissionDurationType: null,
+      admissionDuration: null
+    }));
+  };
+
   /*  SAVE  */
 
   const handleSave = async () => {
+    const isFree = formData.patientIsFree === true;
     let errorMsg = '';
 
-    if (!formData.facility) errorMsg = 'Facility can’t be empty';
-    if (!formData.reason)
-      errorMsg = errorMsg ? `${errorMsg}, Reason can’t be empty` : 'Reason can’t be empty';
-    if (!formData.dateOfAdmission)
-      errorMsg = errorMsg
-        ? `${errorMsg}, Date of admission can’t be empty`
-        : 'Date of admission can’t be empty';
-    if (!formData.admissionType)
-      errorMsg = errorMsg
-        ? `${errorMsg}, Admission Type can’t be empty`
-        : 'Admission Type can’t be empty';
+    if (!isFree) {
+      if (!formData.facility) errorMsg = 'Facility can’t be empty';
+      if (!formData.reason)
+        errorMsg = errorMsg ? `${errorMsg}, Reason can’t be empty` : 'Reason can’t be empty';
+      if (isIncompleteDuration(formData.admissionDurationType, formData.admissionDuration))
+        errorMsg = errorMsg
+          ? `${errorMsg}, Date Type and Number must be provided together`
+          : 'Date Type and Number must be provided together';
+      if (!formData.dateOfAdmission)
+        errorMsg = errorMsg
+          ? `${errorMsg}, Date of admission can’t be empty`
+          : 'Date of admission can’t be empty';
+      if (!formData.admissionType)
+        errorMsg = errorMsg
+          ? `${errorMsg}, Admission Type can’t be empty`
+          : 'Admission Type can’t be empty';
+    }
 
     if (errorMsg) {
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
@@ -167,15 +271,19 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     }
 
     const payload = {
-      id: formData.id,
-      patientId: Number(patient.id),
-      facility: formData.facility,
-      reason: formData.reason,
-      admissionType: formData.admissionType,
-      dateOfAdmission: formData.dateOfAdmission,
-      lengthOfStayDays: formData.lengthOfStayDays,
-      outcomes: formData.outcomes,
-      medicalInterventionsPerformed: formData.medicalInterventionsPerformed
+      ...(formData.id ? { id: formData.id } : {}),
+      patientId: Number(patient?.id),
+      facility: isFree ? '' : formData.facility,
+      reason: isFree ? '' : formData.reason,
+      admissionType: isFree ? '' : formData.admissionType,
+      dateOfAdmission: isFree ? null : formData.dateOfAdmission,
+      admissionDurationType: isFree ? null : formData.admissionDurationType ?? null,
+      admissionDuration: isFree ? null : formData.admissionDuration ?? null,
+      lengthOfStayDays: isFree ? null : formData.lengthOfStayDays,
+      outcomes: isFree ? '' : formData.outcomes,
+      medicalInterventionsPerformed: isFree ? '' : formData.medicalInterventionsPerformed,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
     try {
@@ -191,10 +299,14 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
           reason: '',
           admissionType: '',
           dateOfAdmission: null,
+          admissionDurationType: null,
+          admissionDuration: null,
           lengthOfStayDays: null,
           outcomes: '',
           medicalInterventionsPerformed: '',
-          patientId: Number(patient?.id)
+          patientId: Number(patient?.id),
+          patientIsFree: false,
+          freeText: null
         });
       }
     } catch (err: any) {
@@ -202,85 +314,153 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     }
   };
 
-  /*  CONTENT  */
 
   const content = (
-    <Form fluid layout="inline" className="fields-container">
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Facility"
-        fieldName="facility"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
+    <Form fluid className="hospitalization-form">
+      <div className="hospitalization-full-width">
+        <MyInput
+          width="100%"
+          column
+          fieldLabel="Patient Is Free"
+          fieldType="checkbox"
+          fieldName="patientIsFree"
+          record={formData}
+          setRecord={setFormData}
+        />
+      </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Reason"
-        fieldName="reason"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
+      <div className="hospitalization-row">
+        <div className="hospitalization-field">
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Facility"
+            fieldName="facility"
+            record={formData}
+            setRecord={setFormData}
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
+          />
+        </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Admission Type"
-        fieldName="admissionType"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
+        <div className="hospitalization-field">
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Admission Type"
+            fieldName="admissionType"
+            record={formData}
+            setRecord={setFormData}
+            required={!formData.patientIsFree}
+            disabled={formData.patientIsFree}
+          />
+        </div>
+      </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Date of admission"
-        fieldType="date"
-        fieldName="dateOfAdmission"
-        record={formData}
-        setRecord={setFormData}
-        disableFutureDates
-        required
-      />
+      <div className="hospitalization-full-width">
+        <MyInput
+          width="100%"
+          column
+          fieldLabel="Reason"
+          fieldName="reason"
+          record={formData}
+          setRecord={setFormData}
+          required={!formData.patientIsFree}
+          disabled={formData.patientIsFree}
+        />
+      </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel={
-          <span>
-            <Translate>Length of stay</Translate>
-            <Translate>(Days)</Translate>
-          </span>
-        }
-        fieldType="number"
-        fieldName="lengthOfStayDays"
-        record={formData}
-        setRecord={setFormData}
-      />
+      <div className="hospitalization-admission">
+        <div className="hospitalization-row">
+          <div className="hospitalization-date-type">
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date Type"
+              fieldType="select"
+              fieldName="admissionDurationType"
+              selectData={DURATION_TYPE_OPTIONS}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={formData}
+              setRecord={handleAdmissionDurationChange}
+              searchable={false}
+              disabled={formData.patientIsFree}
+            />
+          </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Outcomes"
-        fieldName="outcomes"
-        record={formData}
-        setRecord={setFormData}
-      />
+          <div className="hospitalization-number">
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Number"
+              fieldType="number"
+              fieldName="admissionDuration"
+              record={formData}
+              setRecord={handleAdmissionDurationChange}
+              min={0}
+              step={1}
+              showZero
+              disabled={formData.patientIsFree || !formData.admissionDurationType}
+            />
+          </div>
 
-      <MyInput
-        width={'100%'}
-        column
-        fieldLabel="Medical Interventions Performed"
-        fieldType="textarea"
-        fieldName="medicalInterventionsPerformed"
-        record={formData}
-        setRecord={setFormData}
-      />
+          <div className="hospitalization-date">
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date of admission"
+              fieldType="date"
+              fieldName="dateOfAdmission"
+              record={formData}
+              setRecord={handleDateOfAdmissionChange}
+              disableFutureDates
+              required={!formData.patientIsFree}
+              disabled={formData.patientIsFree}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="hospitalization-row">
+        <div className="hospitalization-field">
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Length of stay (Days)"
+            fieldType="number"
+            fieldName="lengthOfStayDays"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </div>
+
+        <div className="hospitalization-field">
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Outcomes"
+            fieldName="outcomes"
+            record={formData}
+            setRecord={setFormData}
+            disabled={formData.patientIsFree}
+          />
+        </div>
+      </div>
+
+      <div className="hospitalization-full-width">
+        <MyInput
+          width="100%"
+          column
+          fieldLabel="Medical Interventions Performed"
+          fieldType="textarea"
+          fieldName="medicalInterventionsPerformed"
+          record={formData}
+          setRecord={setFormData}
+          disabled={formData.patientIsFree}
+        />
+      </div>
     </Form>
   );
 
@@ -293,7 +473,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add / Edit Hospitalizations"
+      title="Add / Edit Hospitalizations  "
       steps={[{ title: 'Hospitalizations', icon: <FontAwesomeIcon icon={faHospitalUser} /> }]}
       actionButtonFunction={handleSave}
       position="right"

@@ -3,9 +3,7 @@ import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import { Form } from 'rsuite';
-import MyInput from '../MyInput';
 import SearchPatientCriteria from '../SearchPatientCriteria';
-
 
 const samplePatientsData = [
   {
@@ -16,7 +14,10 @@ const samplePatientsData = [
     emergencyContact: 'Jane Smith',
     relation: 'Wife',
     phone: '+123456789',
-    email: 'john.smith@email.com'
+    email: 'john.smith@email.com',
+    mrn: '001234',
+    documentNumber: 'ID-1001',
+    dob: '1980-05-12'
   },
   {
     id: 2,
@@ -26,7 +27,10 @@ const samplePatientsData = [
     emergencyContact: 'Michael Brown',
     relation: 'Husband',
     phone: '+987654321',
-    email: 'alice.brown@email.com'
+    email: 'alice.brown@email.com',
+    mrn: '005678',
+    documentNumber: 'ID-2002',
+    dob: '1974-09-03'
   }
 ];
 
@@ -40,23 +44,46 @@ const columns: ColumnConfig[] = [
   { key: 'email', title: <Translate>Email</Translate>, dataKey: 'email' }
 ];
 
-
-
-
 const PatientsTable = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-const [record, setRecord] = useState<any>({});
+  const [record, setRecord] = useState<any>({});
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
-  const paginatedData = samplePatientsData.slice(
-    page * rowsPerPage,
-    (page + 1) * rowsPerPage
-  );
+  const matchesSearch = (row: any) => {
+    const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+    const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+    if (!raw) return true;
+    if (field === 'patientMrn') return String(row?.mrn ?? '').toLowerCase().includes(raw);
+    if (field === 'phoneNumber') return String(row?.phone ?? '').toLowerCase().includes(raw);
+    if (field === 'documentNumber')
+      return String(row?.documentNumber ?? '').toLowerCase().includes(raw);
+    if (field === 'dob')
+      return String(row?.dob ?? '') === String(appliedPatientSearch?.patientName ?? '').trim();
+    return String(row?.name ?? '').toLowerCase().includes(raw);
+  };
 
+  const filteredData = samplePatientsData.filter(matchesSearch);
 
-const filters = (
+  const paginatedData = filteredData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+
+  const filters = (
     <Form fluid className="dissss">
-        <SearchPatientCriteria record={record} setRecord={setRecord}/>
+      <SearchPatientCriteria
+        record={record}
+        setRecord={setRecord}
+        liveSearchMinLength={0}
+        onSearchClick={() => {
+          setAppliedPatientSearch({
+            searchByField: record?.searchByField ?? 'fullName',
+            patientName: record?.patientName ?? ''
+          });
+          setPage(0);
+        }}
+      />
     </Form>
   );
 
@@ -68,7 +95,7 @@ const filters = (
       page={page}
       filters={filters}
       rowsPerPage={rowsPerPage}
-      totalCount={samplePatientsData.length}
+      totalCount={filteredData.length}
       onPageChange={(_, newPage) => setPage(newPage)}
       onRowsPerPageChange={e => {
         setRowsPerPage(parseInt(e.target.value, 10));

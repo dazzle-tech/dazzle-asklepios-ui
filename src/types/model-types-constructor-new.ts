@@ -29,6 +29,7 @@ export const newApUser: modelTypes.ApUser = {
   allowOngoingVisit: false,
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
+  canReturnClaimForResubmit: false,
 };
 
 // ------------------- Candidate -------------------
@@ -235,6 +236,15 @@ export const newService: modelTypes.Service = {
 };
 
 // ------------------- Service Item -------------------
+export const newProcedureItem: modelTypes.ProcedureItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  specialty: undefined,
+  procedureId: undefined,
+  isActive: true
+};
+
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',
@@ -345,6 +355,18 @@ export const newAllergen: modelTypes.Allergen = {
   lastModifiedDate: null
 };
 
+// ------------------- Analyzer -------------------
+export const newAnalyzer: modelTypes.Analyzer = {
+  id: undefined,
+  code: '',
+  type: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
 // ------------------- Diagnostic Test -------------------
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
@@ -379,6 +401,9 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   defaultBufferAfterMinutes: 0,
   modality:null,
   billingRuleId: null,
+  loincCodeId: null,
+  loincCode: null,
+  loincDescription: null,
 };
 
 
@@ -444,7 +469,8 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
-  timing: null
+  timing: null,
+  analyzerId: undefined
 };
 
 // default empty object
@@ -563,6 +589,18 @@ export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   cdtId: 0
 };
 
+// ------------------- Pharmaceutical -------------------
+export const newPharmaceutical: modelTypes.Pharmaceutical = {
+  id: undefined,
+  activeIngredientId: 0,
+  pharmaceuticalName: '',
+  code: '',
+  billingCode: '',
+  itemDescription: '',
+  secondDescription: '',
+  isActive: true
+};
+
 // ------------------- Special Population -------------------
 export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
   id: undefined,
@@ -666,6 +704,14 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   price: 0,
   currency: '',
   billingRuleId: null,
+  facilityId: null,
+  priceBaseUomId: null,
+  registrationNumber: '',
+  integrationCode: '',
+  gtinCode: '',
+  descriptionCode: '',
+  medDistributeArea: [],
+  localMarket: false,
 };
 
 // ------------------- Substitute -------------------
@@ -699,6 +745,7 @@ export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
   atcCode: '',
+  code: '',
   type: '',
   roa: '',
   siteOfAdministration: '',
@@ -721,10 +768,14 @@ export const newVaccineBrand: modelTypes.VaccineBrand = {
   id: undefined,
   vaccineId: undefined,
   name: '',
+  code: '',
   manufacture: '',
   volume: 0,
   unit: '',
   marketingAuthorizationHolder: '',
+  facilityId: null,
+  price: null,
+  currency: null,
   isActive: true,
   createdBy: '',
   createdDate: null,
@@ -1183,7 +1234,9 @@ export const newAppointmentFromTemplateQuickAppointmentDTO: modelTypes.Appointme
   note: null,
   followUpEncounterId: null,
   originType: null,
-  originName: null
+  originName: null,
+  promotionName: null,
+  promotionCode: null
 };
 
 export const newAppointmentFromTemplateQuickAppointmentResponseVM: modelTypes.AppointmentFromTemplateQuickAppointmentResponseVM = {
@@ -1788,7 +1841,7 @@ export const newPatient: modelTypes.Patient = {
   lastNameSecondaryLang: '',
 
   primaryMobileNumber: '',
-  receiveSms: false,
+  receiveSms: true,
   secondMobileNumber: '',
   homePhone: '',
   workPhone: '',
@@ -1818,6 +1871,7 @@ export const newPatient: modelTypes.Patient = {
 
   isCchiPatient: false,
   documentId: '',
+  isCitizen: false,
    
   isVerified: false,
   isCompletedPatient: false,
@@ -1992,6 +2046,9 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   originType: null,
   originName: null,
+
+  promotionName: null,
+  promotionCode: null,
 
   notes: null,
 
@@ -2928,7 +2985,10 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
-  fastingBloodGlucose: null,
+
+  fluidStatus: null,
+  edema: null,
+  urineOutput: null,
 
   isTriage: false,
   isActive: true,
@@ -2938,6 +2998,16 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   createdDate: null,
   lastModifiedDate: null
 };
+export const newRandomBloodSugar: modelTypes.RandomBloodSugar = {
+  id: undefined,
+  patientId: 0,
+  encounterId: 0,
+  randomBloodGlucose: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 export const newBodyMeasurements: modelTypes.BodyMeasurements = {
   id: undefined,
 
@@ -2968,6 +3038,8 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   functionalStatus: null,
   cognitiveCheck: null,
   bloodGroup: null,
+  isPregnant: null,
+  isLactating: null,
   createdDate: null,
   lastModifiedDate: null
 };
@@ -3288,7 +3360,7 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
 export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  toothNumber: undefined,
+  toothNumbers: [],
   surface: '',
   anesthesiaUsed: null,
   dose: null,
@@ -3430,11 +3502,15 @@ export const newPatientProblem: modelTypes.PatientProblem = {
   patient: null,
   condition: null,
   dateOfDiagnosis: null,
+  diagnosisDurationType: null,
+  diagnosisDuration: null,
   conditionStatus: null,
   type: null,
   dateOfResolution: null,
   byPatient: true,
   sourceOfInformation: null,
+  patientIsFree: false,
+  freeText: null,
   status: 'ACTIVE',
   cancelledBy: null,
   cancelledDate: null,
@@ -3594,6 +3670,7 @@ export const newBillingRule: modelTypes.BillingRule = {
   name: undefined,
   billingItemType: 'SERVICE',
   billingTrigger: modelTypes.BillingTrigger.ENCOUNTER_CREATED,
+  paymentType: 'BOTH',
   isDefault: false
 };
 
@@ -3676,6 +3753,9 @@ modelTypes.Tax = {
 
   applicableOn:
     'INVOICE',
+
+  citizenCategory:
+    'ALL',
 
   validFrom:
     '',
@@ -3802,7 +3882,8 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   invoiceOutstandingAmount: 0,
   items: [],
   coverageType: null,
-  patientInsuranceId: null
+  patientInsuranceId: null,
+  encounterWalletAmount: 0
 };
 
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
@@ -4093,4 +4174,19 @@ export const newTimelineResponse: modelTypes.TimelineResponse = {
     input_fields_count: 0,
     timeline_event_count: 0
   }
-}
+};
+
+export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM = {
+  id: undefined,
+  configKey: '',
+  configType: '',
+  configValue: '',
+  description: ''
+};
+
+export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
+  configKey: '',
+  configType: '',
+  configValue: '',
+  description: ''
+};

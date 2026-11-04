@@ -13,17 +13,19 @@
 
 /* Dark Mode */
 .container-form-section.dark {
-  background-color: var(--dark-black) !important; 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 6px rgba(255, 255, 255, 0.05);
+  background-color: var(--dark-black) !important;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(255, 255, 255, 0.05);
   color: #fff !important;
-}
-.container-form-section.dark {
+
   .title-div.rs-form,
   .title-div.rs-form * {
     color: #fff !important;
   }
-  .title-div{
-    background-color: var(--dark-black) !important; 
+
+  .title-div {
+    background-color: var(--dark-black) !important;
   }
 }
 
@@ -44,8 +46,7 @@
   flex-wrap: wrap;
 
   overflow-x: clip;
-    background-color: var(--one-health-theme-header);
-
+  background-color: var(--one-health-theme-header);
 }
 
 .title-text {
@@ -55,10 +56,73 @@
   word-break: break-word;
 }
 
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .title-action {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* ============================= */
+/* Collapsible */
+/* ============================= */
+
+.container-form-section.collapsible {
+  .title-div {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .collapse-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    font-size: 13px;
+
+    transition: transform 0.25s ease;
+  }
+
+  .collapsible-content {
+    display: grid;
+    grid-template-rows: 1fr;
+
+    opacity: 1;
+
+    transition:
+      grid-template-rows 0.3s ease,
+      opacity 0.2s ease;
+  }
+
+  .collapsible-content-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &.collapsed {
+    .collapsible-content {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+
+    .collapse-icon {
+      transform: rotate(-90deg);
+    }
+  }
+
+  &.expanded {
+    .collapse-icon {
+      transform: rotate(0deg);
+    }
+  }
 }
 
 /* ============================= */
@@ -87,14 +151,12 @@
 /* Responsive */
 /* ============================= */
 
-/* Tablet */
 @media (max-width: 1024px) {
   .container-form-section {
     padding: 10px;
   }
 }
 
-/* Mobile */
 @media (max-width: 640px) {
   .container-form-section {
     padding: 8px;

@@ -3,7 +3,7 @@ import { Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { MdCheckCircle } from "react-icons/md";
+import { MdCheckCircle, MdLocalOffer } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -27,6 +27,7 @@ import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import AddEditBrandMedication from "./AddEditBrandMedication";
+import PriceListPrompt, { usePriceListPrompt } from "@/components/PriceListPrompt";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import Translate from "@/components/Translate";
 import { MdModeEdit, MdDelete } from "react-icons/md";
@@ -60,6 +61,14 @@ const FIELD_LABELS: Record<string, string> = {
   uomGroupUnitId: "Base UOM",
   price: "Price",
   currency: "Currency",
+  facilityId: "Facility",
+  priceBaseUomId: "Price Base Unit",
+  registrationNumber: "Registration Number",
+  integrationCode: "Integration Code",
+  gtinCode: "GTIN Code",
+  descriptionCode: "Description Code",
+  medDistributeArea: "Med Distribute Area",
+  localMarket: "Local Market",
 };
 
 const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
@@ -67,6 +76,9 @@ const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
   dosageformrequired: "Dosage Form is required.",
   uomGrouprequired: "UOM Group is required.",
   uomGroupUnitrequired: "Base UOM is required.",
+  facilityrequired: "Facility is required.",
+  priceBaseUomrequired: "Price Base Unit is required.",
+  priceBaseUomNotInGroup: "Price Base Unit must belong to the selected UOM Group.",
   notfound: "Requested Brand Medication record was not found.",
 };
 
@@ -230,6 +242,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
     const [openSubstitute, setOpenSubstitute] = useState(false);
     const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+    const priceListPrompt = usePriceListPrompt();
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
 
@@ -289,15 +302,26 @@ const prettifyInlineBackendMessage = (message: string): string => {
 
     const handleSave = async () => {
       try {
+        let saved: any;
         if (brandMedication.id) {
           const { hasActiveIngredient, ...updatePayload } = brandMedication;
-          await updateBrandMedication(updatePayload).unwrap();
+          saved = await updateBrandMedication(updatePayload).unwrap();
           dispatch(notify({ msg: "Updated successfully", sev: "success" }));
         } else {
           const { hasActiveIngredient, ...payload } = brandMedication;
-          await addBrandMedication(payload).unwrap();
+          saved = await addBrandMedication(payload).unwrap();
           dispatch(notify({ msg: "Added successfully", sev: "success" }));
         }
+
+        priceListPrompt.prompt({
+          itemType: "MEDICATION",
+          sourceId: saved?.id ?? brandMedication.id,
+          itemCode: saved?.code ?? brandMedication.code,
+          itemName: saved?.name ?? brandMedication.name,
+          unitPrice: saved?.price ?? brandMedication.price,
+          facilityId: saved?.facilityId ?? brandMedication.facilityId,
+          currency: saved?.currency ?? brandMedication.currency,
+        });
 
         setOpenAddEditPopup(false);
         refetch();
@@ -536,6 +560,22 @@ const prettifyInlineBackendMessage = (message: string): string => {
             setOpenAddEditPopup(true);
           }}
         />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={22}
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: "MEDICATION",
+              sourceId: row.id,
+              itemCode: row.code,
+              itemName: row.name,
+              unitPrice: row.price,
+              facilityId: row.facilityId,
+              currency: row.currency
+            })
+          }
+        />
 
         {row.isActive ? (
           <MdDelete
@@ -701,6 +741,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
           setBrandMedication={setBrandMedication}
           handleSave={handleSave}
         />
+        <PriceListPrompt prompt={priceListPrompt} />
 
         <DeletionConfirmationModal
           open={openConfirmModal}

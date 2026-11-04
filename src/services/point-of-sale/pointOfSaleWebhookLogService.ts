@@ -4,6 +4,10 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 export type PointOfSaleWebhookLogDTO = {
   id: number;
   transactionId?: number | null;
+  sourceType?: 'ENCOUNTER' | 'WALLET_BALANCE' | null;
+  patientId?: number | null;
+  encounterId?: number | null;
+  encounterNumber?: string | null;
   orderId?: string | null;
   externalTransactionId?: string | null;
   responseCode?: string | null;
@@ -15,12 +19,14 @@ export type PointOfSaleWebhookLogDTO = {
   merchantId?: string | null;
   processingStatus?: string | null;
   processed?: boolean | null;
+  alreadyPaid?: boolean | null;
   createdDate?: string | null;
 };
 
 export type PointOfSaleWebhookLogFilter = {
   externalTransactionId?: string;
   orderId?: string;
+  encounterNumber?: string;
   responseCode?: string;
   processingStatus?: string;
   fromDate?: string;

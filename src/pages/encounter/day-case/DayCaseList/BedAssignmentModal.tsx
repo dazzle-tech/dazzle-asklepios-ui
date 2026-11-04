@@ -15,11 +15,11 @@ import { useAddEncounterAssignToBedMutation } from '@/services/patients/emergenc
 
 
 import { useGetAvailableRoomsByDepartmentAndGenderQuery } from '@/services/setup/room/roomService';
+import { useLazyGetActiveBedsByRoomIdQuery } from '@/services/setup/room/bedService';
 import {
-  useLazyGetActiveBedsByRoomIdQuery,
-  useOccupyBedMutation
-} from '@/services/setup/room/bedService';
-import { useMoveWaitingListToNewMutation } from '@/services/encounters/patientEncounterService';
+  patientEncounterService,
+  useMoveWaitingListToNewMutation
+} from '@/services/encounters/patientEncounterService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import {
   useLazyGetLatestEmergencyTriageByEncounterQuery,
@@ -43,6 +43,7 @@ const ASSIGN_TO_BED_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'room.notfound': 'Room not found.',
   'bed.notfound': 'Bed not found.',
+  'bed.notAvailable': 'Selected bed is no longer available. Please choose another bed.',
   'department.notfound': 'Department not found.',
   'release.logic.invalid': 'Invalid release state.',
   'db.constraint': 'Database constraint violation while saving assignment.',
@@ -124,7 +125,6 @@ const BedAssignmentModal: React.FC<Props> = ({
   const [addEncounterAssignToBed, { isLoading: isSavingAssignment }] =
     useAddEncounterAssignToBedMutation();
 
-  const [occupyBed, { isLoading: isOccupyingBed }] = useOccupyBedMutation();
   const [moveWaitingListToNew, { isLoading: isMovingEncounterStatus }] =
     useMoveWaitingListToNewMutation();
   const [getLatestEmergencyTriage] = useLazyGetLatestEmergencyTriageByEncounterQuery();
@@ -276,13 +276,6 @@ const BedAssignmentModal: React.FC<Props> = ({
       }
 
       try {
-        await occupyBed({ id: record.bedId }).unwrap();
-      } catch (err) {
-        console.error('occupy bed error', err);
-        throw err;
-      }
-
-      try {
         const latestTriage = await getLatestEmergencyTriage(encounterId, true).unwrap();
         if (latestTriage?.id && !latestTriage.completedDate) {
           await completeEmergencyTriage({ id: Number(latestTriage.id) }).unwrap();
@@ -304,6 +297,8 @@ const BedAssignmentModal: React.FC<Props> = ({
         })
       );
 
+      // Encounter status changed to ASSIGNED_TO_BED: refresh every cached encounter list (e.g. ER department list)
+      dispatch(patientEncounterService.util.invalidateTags(['PatientEncounter']));
       refetchEncounter?.();
       handleClose();
     } catch (err: any) {
@@ -383,7 +378,7 @@ const BedAssignmentModal: React.FC<Props> = ({
       bodyheight="60vh"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={
-        isSavingAssignment || isOccupyingBed || isMovingEncounterStatus
+        isSavingAssignment || isMovingEncounterStatus
       }
       content={<div dir={dir}>{modalContent}</div>}
     />

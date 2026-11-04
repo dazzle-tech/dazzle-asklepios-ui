@@ -14,7 +14,7 @@ const ToothHistoryTab: React.FC<ToothHistoryTabProps> = ({ selectedTooth, dental
       title: 'Action Type',
       render: (rowData: any) => (
         <small>
-          {dentalActionsMap[rowData.actionKey]?.type === 'treatment' ? (
+          {dentalActionsMap[rowData.dentalActionId]?.type === 'TREATMENT' ? (
             <b style={{ color: 'green' }}>Treatment</b>
           ) : (
             <b style={{ color: 'red' }}>Condition</b>
@@ -33,17 +33,17 @@ const ToothHistoryTab: React.FC<ToothHistoryTabProps> = ({ selectedTooth, dental
                 ? 'Added '
                 : rowData.logType === 'CHANGE'
                 ? 'Changed To'
-                : 'Removed '}
+                : 'Cancelled '}
             </b>{' '}
           </Translate>
-          <Translate> {dentalActionsMap[rowData.actionKey]?.description}</Translate>
-          <Translate> @ {rowData.fingerprint}</Translate>
+          <Translate> {dentalActionsMap[rowData.dentalActionId]?.description}</Translate>
+          <Translate> @ {rowData.logOwner}</Translate>
         </span>
       )
     }
   ];
 
-  return <MyTable data={selectedTooth.toothHistory || []} columns={columns} height={650} />;
+  return <MyTable data={selectedTooth.history || []} columns={columns} height={650} />;
 };
 
 export default ToothHistoryTab;

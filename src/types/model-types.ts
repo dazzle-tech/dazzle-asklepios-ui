@@ -606,25 +606,7 @@ export interface ApDentalAction {
 	favorite:boolean;
 } 
 
-export interface ApDentalChart { 
-	key:string;
-	encounterKey:string;
-	patientKey:string;
-	chartDate:Date;
-	type:string;
-	chartSequence:number;
-	status:string;
-	treatmentPlan:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
-export interface ApDentalChartProgressNote { 
+export interface ApDentalChartProgressNote {
 	key:string;
 	chartKey:string;
 	note:string;
@@ -652,33 +634,7 @@ export interface ApDentalChartTooth {
 	toothNumberNumeric:number;
 } 
 
-export interface ApDentalPlannedTreatment { 
-	key:string;
-	patientKey:string;
-	encounterKey:string;
-	type:string;
-	visitNumber:number;
-	cdtKey:string;
-	toothKey:string;
-	note:string;
-	surfaceLkey:string;
-	billingTypeLkey:string;
-	fees:number;
-	insurance:number;
-	discount:number;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-	statusLkey:string;
-	source:string;
-	sourceKey:string;
-} 
-
-export interface ApDepartment { 
+export interface ApDepartment {
 	key:string;
 	facilityKey:string;
 	name:string;

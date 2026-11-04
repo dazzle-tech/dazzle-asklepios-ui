@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { isPhoneValid } from '@/utils/phoneNumber';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -16,6 +17,7 @@ import {
 
 import { notify } from '@/utils/uiReducerActions';
 import { formatEnumString } from '@/utils';
+import { isCitizenFromDocumentType } from '@/utils/patientCitizen';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
@@ -486,7 +488,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
   const patientDocumentEnum = useEnumOptions('DocumentType', {
-    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+    exclude: ['NO_DOCUMENT',  'DRIVING_LICENSE',  'SOCIAL_CARD']
   });
 
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
@@ -948,14 +950,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  const isPhoneValid = (phone: any) => {
-    if (!phone) return false;
-
-    const digits = String(phone).replace(/\D/g, '');
-
-    return digits.length > 3;
-  };
-
   const validateMandatoryPatientFields = (): boolean => {
     const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
       const value = (localPatient as any)?.[key];
@@ -1143,7 +1137,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
         await addNoDocument({
           patientId: localPatient.id,
           type: 'NO_DOCUMENT',
-          isPrimary: secondaryDocument.isPrimary ?? false
+          isPrimary: secondaryDocument.isPrimary ?? false,
+          isCitizen: Boolean(localPatient?.isCitizen)
         }).unwrap();
 
         dispatch(notify({ msg: 'No Document Added Successfully', sev: 'success' }));
@@ -1159,7 +1154,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
-      number: String(secondaryDocument.number ?? '').trim()
+      number: String(secondaryDocument.number ?? '').trim(),
+      isCitizen: Boolean(localPatient?.isCitizen)
     };
 
     try {
@@ -1217,6 +1213,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }));
     }
   }, [secondaryDocument.type, secondaryDocument.isPrimary]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const isCitizen = isCitizenFromDocumentType(secondaryDocument?.type);
+    setLocalPatient(prev =>
+      Boolean(prev?.isCitizen) === isCitizen ? prev : { ...prev, isCitizen }
+    );
+  }, [open, secondaryDocument?.type]);
 
   useEffect(() => {
     if (!open) {
@@ -1302,6 +1309,16 @@ const CreateNewPatient = ({ open, setOpen }) => {
               selectData={genderEnum ?? []}
               selectDataLabel="label"
               selectDataValue="value"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
+            <MyInput
+              width={200}
+              required
+              column
+              fieldLabel="Citizen"
+              fieldType="checkbox"
+              fieldName="isCitizen"
               record={localPatient}
               setRecord={setLocalPatient}
             />
@@ -1442,6 +1459,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 }
               />
             )}
+
+            <MyInput
+              required
+              column
+              width={300}
+              fieldLabel="Citizen"
+              fieldType="checkbox"
+              fieldName="isCitizen"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
 
             {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
           </Form>

@@ -40,6 +40,76 @@ export type InsurancePriceListCoverageCheckRequest = {
   currency?: string | null;
 };
 
+export type BillingPaymentSummaryDTO = {
+  paymentId: number;
+  paymentNumber: string;
+  encounterId?: number | null;
+  paymentCategory?: string | null;
+  payerType?: string | null;
+  amount: number;
+  currency?: string | null;
+  status?: string | null;
+  paymentDate?: string | null;
+  receiptNumber?: string | null;
+  externalReference?: string | null;
+  notes?: string | null;
+};
+
+export type PatientWalletMovement = {
+  ledgerId: number;
+  transactionDate?: string | null;
+  movement: 'ADDITION' | 'DEDUCTION' | string;
+  transactionType?: string | null;
+  amount: number;
+  currency?: string | null;
+  balanceAfter?: number | null;
+  description?: string | null;
+  reason?: string | null;
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentCategory?: string | null;
+  paymentMethod?: string | null;
+  encounterNumber?: string | null;
+  encounterId?: number | null;
+  serviceName?: string | null;
+  serviceCode?: string | null;
+  referenceNumber?: string | null;
+  notes?: string | null;
+};
+
+export type RegistrationPendingPaymentItem = {
+  patientServiceProductId: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  encounterNumber?: string | null;
+  patientName?: string | null;
+  patient?: any;
+  bedId?: number | null;
+  bedName?: string | null;
+  itemName?: string | null;
+  patientShareAmount?: number | null;
+  insuranceShareAmount?: number | null;
+  patientRemainingAmount?: number | null;
+  currency?: string | null;
+  paymentStatus?: string | null;
+  displayPaymentStatus?: string | null;
+  amountsAvailable?: boolean;
+  collectible?: boolean;
+};
+
+export type RegistrationPendingPaymentEncounter = {
+  encounterId: number;
+  encounterNumber?: string | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  patient?: any;
+  bedId?: number | null;
+  bedName?: string | null;
+  pendingItemCount: number;
+  collectible: boolean;
+  items: RegistrationPendingPaymentItem[];
+};
+
 export type InsurancePriceListCoverageCheckResult = {
   insuranceVisit: boolean;
   coveredByInsurance: boolean;
@@ -71,7 +141,9 @@ export const billingTransactionService =
       'BillingCheckout',
       'BillingRefund',
       'PatientFinancialInvoices',
-      'WaseelCoverage'
+      'WaseelCoverage',
+      'PatientLedgerSummary',
+      'RegistrationPendingPayment'
     ],
 
     endpoints:
@@ -225,6 +297,90 @@ export const billingTransactionService =
 
               body
             })
+          }),
+
+        getPaymentsByEncounter:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              encounterId => ({
+                url:
+                  `/api/patient/billing/payments/by-encounter/${encounterId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        getPaymentsByPatient:
+          builder.query<
+            BillingPaymentSummaryDTO[],
+            BillingId
+          >({
+            query:
+              patientId => ({
+                url:
+                  `/api/patient/billing/payments/by-patient/${patientId}`
+              }),
+
+            providesTags: [
+              'BillingPayment'
+            ]
+          }),
+
+        getPatientWalletMovements:
+          builder.query<
+            {
+              data: PatientWalletMovement[];
+              totalCount: number;
+            },
+            {
+              patientId: BillingId;
+              page?: number;
+              size?: number;
+            }
+          >({
+            query:
+              ({
+                patientId,
+                page = 0,
+                size = 10
+              }) => ({
+                url:
+                  `/api/patient/billing/wallet/by-patient/${patientId}/movements`,
+                params: {
+                  page,
+                  size
+                }
+              }),
+
+            transformResponse: (
+              response: PatientWalletMovement[],
+              meta
+            ) => {
+              const rows = Array.isArray(response)
+                ? response
+                : [];
+              const headerCount =
+                meta?.response?.headers?.get(
+                  'X-Total-Count'
+                );
+
+              return {
+                data: rows,
+                totalCount:
+                  headerCount == null
+                    ? rows.length
+                    : Number(headerCount)
+              };
+            },
+
+            providesTags: [
+              'BillingWallet'
+            ]
           }),
 
         createAdvancePayment:
@@ -484,7 +640,75 @@ export const billingTransactionService =
               method: 'POST',
               body
             })
-          })
+          }),
+
+        searchRegistrationPendingItems: builder.query<
+          {
+            data: RegistrationPendingPaymentEncounter[];
+            totalCount: number;
+          },
+          {
+            facilityId: number;
+            patientName?: string;
+            page?: number;
+            size?: number;
+            sort?: string;
+          }
+        >({
+          query: ({
+            facilityId,
+            patientName,
+            page = 0,
+            size = 15,
+            sort = 'id,desc'
+          }) => ({
+            url: '/api/patient/billing/registration-pending-items',
+            method: 'GET',
+            params: {
+              facilityId,
+              ...(patientName ? { patientName } : {}),
+              page,
+              size,
+              sort
+            }
+          }),
+          transformResponse: (response: any, meta) => {
+            const rows = Array.isArray(response)
+              ? response
+              : response?.content ?? [];
+
+            return {
+              data: rows as RegistrationPendingPaymentEncounter[],
+              totalCount: Number(
+                meta?.response?.headers?.get('X-Total-Count') ?? 0
+              )
+            };
+          },
+          providesTags: ['RegistrationPendingPayment']
+        }),
+
+        getRegistrationPendingItemChanges: builder.query<
+          {
+            afterId: number;
+            latestId: number;
+            totalCount: number;
+            newItemIds: number[];
+          },
+          {
+            facilityId: number;
+            afterId?: number;
+          }
+        >({
+          query: ({ facilityId, afterId = 0 }) => ({
+            url: '/api/patient/billing/registration-pending-items/changes',
+            method: 'GET',
+            params: {
+              facilityId,
+              afterId
+            }
+          }),
+          providesTags: ['RegistrationPendingPayment']
+        })
       })
   });
 
@@ -497,6 +721,15 @@ export const {
   usePreviewDefaultServicesPricingMutation,
 
   useCreateAdvancePaymentMutation,
+
+  useGetPaymentsByEncounterQuery,
+  useLazyGetPaymentsByEncounterQuery,
+
+  useGetPaymentsByPatientQuery,
+  useLazyGetPaymentsByPatientQuery,
+
+  useGetPatientWalletMovementsQuery,
+  useLazyGetPatientWalletMovementsQuery,
 
   useGetBillingPaymentByIdQuery,
   useLazyGetBillingPaymentByIdQuery,
@@ -511,6 +744,11 @@ export const {
 
   useEvaluateBillingRuleMutation,
   useCheckInsurancePriceListCoverageMutation,
-  useClosePreAuthorizationAlertMutation
+  useClosePreAuthorizationAlertMutation,
+
+  useSearchRegistrationPendingItemsQuery,
+  useLazySearchRegistrationPendingItemsQuery,
+  useGetRegistrationPendingItemChangesQuery,
+  useLazyGetRegistrationPendingItemChangesQuery
 } =
   billingTransactionService;

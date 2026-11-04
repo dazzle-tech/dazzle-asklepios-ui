@@ -1,6 +1,6 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useEffect, useState } from 'react';
-import TransferTestList from './TransferTestList';
+import TestTypeSections from './test-type-sections';
 
 type Props = {
   open: boolean;
@@ -17,27 +17,22 @@ const RecallFavoriteDiagnosticOrdersModal = ({
   loading,
   onRecall
 }: Props) => {
-  const [leftItems, setLeftItems] = useState<any[]>([]);
-  const [rightItems, setRightItems] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<any>({});
+  const [selectedTests, setSelectedTests] = useState<any[]>([]);
 
   /* ================= effects ================= */
 
+  // Start with nothing selected every time the popup opens
   useEffect(() => {
     if (!open) return;
-    setLeftItems(favoriteTests);
-    setRightItems([]);
-    setSearchTerm('');
-    setSearchType({});
-  }, [open, favoriteTests]);
+    setSelectedTests([]);
+  }, [open]);
 
   /* ================= handlers ================= */
 
   const handleRecall = () => {
-    if (!rightItems.length) return;
+    if (!selectedTests.length) return;
 
-    onRecall(rightItems);
+    onRecall(selectedTests);
     setOpen(false);
   };
 
@@ -56,21 +51,19 @@ const RecallFavoriteDiagnosticOrdersModal = ({
       open={open}
       setOpen={setOpen}
       title="Recall from Favorites"
-      size="45vw"
+      size="96vw"
+      bodyheight="calc(100vh - 230px)"
       actionButtonFunction={handleRecall}
       content={
-        <TransferTestList
-          open={open}
-          leftItems={leftItems}
-          rightItems={rightItems}
-          setLeftItems={setLeftItems}
-          setRightItems={setRightItems}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchType={searchType}
-          setSearchType={setSearchType}
-          isFetching={loading}
-        />
+        <div className="test-type-sections-modal-content">
+          <TestTypeSections
+            open={open}
+            items={favoriteTests}
+            loading={loading}
+            selectedTests={selectedTests}
+            setSelectedTests={setSelectedTests}
+          />
+        </div>
       }
     />
   </div>

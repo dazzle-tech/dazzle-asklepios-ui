@@ -56,6 +56,10 @@ const InformationDesk: React.FC = () => {
     { skip: !open }
   );
   const [record, setRecord] = useState<any>({});
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
 
   const [searchPatient, setSearchPatient] = useState<ApPatient>({
     ...newApPatient,
@@ -92,6 +96,9 @@ const InformationDesk: React.FC = () => {
     companioncard: 'test',
     fullName: 'Jane Smith',
     patientMrn: '1005',
+    phoneNumber: '+123456789',
+    documentNumber: 'ID-1005',
+    dob: '1985-03-15',
     visitTypeLkey: 'INPATIENT',
     visitTypeLvalue: { lovDisplayVale: 'Inpatient' },
     visitId: 'VIS123456',
@@ -250,7 +257,22 @@ const InformationDesk: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [(searchPatient as any)?.dob]);
 
-  const sortedData = [...[companionDummyRow]].sort((a, b) => {
+  const matchesPatientSearch = (row: any) => {
+    const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+    const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+    if (!raw) return true;
+    if (field === 'patientMrn') return String(row?.patientMrn ?? '').toLowerCase().includes(raw);
+    if (field === 'phoneNumber') return String(row?.phoneNumber ?? '').toLowerCase().includes(raw);
+    if (field === 'documentNumber')
+      return String(row?.documentNumber ?? '').toLowerCase().includes(raw);
+    if (field === 'dob')
+      return String(row?.dob ?? '') === String(appliedPatientSearch?.patientName ?? '').trim();
+    return String(row?.fullName ?? '').toLowerCase().includes(raw);
+  };
+
+  const filteredData = [companionDummyRow].filter(matchesPatientSearch);
+
+  const sortedData = [...filteredData].sort((a, b) => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
     if (aVal === bVal) return 0;
@@ -385,7 +407,18 @@ const InformationDesk: React.FC = () => {
               setRecord={setSearchPatient}
               searchable={false}
             />
-            <SearchPatientCriteria record={record} setRecord={setRecord} />
+            <SearchPatientCriteria
+              record={record}
+              setRecord={setRecord}
+              liveSearchMinLength={0}
+              onSearchClick={() => {
+                setAppliedPatientSearch({
+                  searchByField: record?.searchByField ?? 'fullName',
+                  patientName: record?.patientName ?? ''
+                });
+                setPage(0);
+              }}
+            />
           </div>
         </Form>
       </div>
@@ -418,7 +451,7 @@ const InformationDesk: React.FC = () => {
         }}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={sortedData.length}
+        totalCount={filteredData.length}
         onPageChange={(_, newPage) => setPage(newPage)}
         onRowsPerPageChange={e => {
           setRowsPerPage(parseInt(e.target.value, 10));

@@ -16,36 +16,15 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import './style.less';
 import Translate from '@/components/Translate';
+import { SocialHistory } from '@/types/model-types-new';
 
-type SocialHistory = {
-  id?: number | null;
-  patientId?: number | null;
-
-  isCurrentSmoker?: boolean;
-  smokeStartDate?: any;
-  cigaretteAmount?: number | null;
-  cigaretteType?: string;
-
-  isPreviousSmoker?: boolean;
-  smokeQuitDate?: any;
-
-  exposureToSecondHandSmoke?: boolean;
-
-  alcoholConsumption?: boolean;
-  typeOfAlcohol?: string;
-  alcoholSinceWhen?: any;
-
-  substanceUse?: boolean;
-  route?: any;
-  frequency?: any;
-
-  physicalLimitation?: any;
-  diagnosedEatingDisorders?: any;
-};
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
 
 const newSocialHistory: SocialHistory = {
   id: null,
   patientId: null,
+  patientIsFree: false,
+  freeText: null,
 
   isCurrentSmoker: false,
   smokeStartDate: null,
@@ -169,6 +148,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       setRecord({
         id: initialData.id,
         patientId: patient?.id,
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null,
 
         isCurrentSmoker: initialData.isCurrentSmoker || false,
         smokeStartDate: initialData.smokeStartDate || null,
@@ -196,7 +177,44 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     }
   }, [open, initialData, patient?.id]);
 
+  useEffect(() => {
+    setRecord(prev => {
+      if (prev.patientIsFree === true) {
+        return {
+          ...prev,
+          isCurrentSmoker: false,
+          smokeStartDate: null,
+          cigaretteAmount: null,
+          cigaretteType: '',
+          isPreviousSmoker: false,
+          smokeQuitDate: null,
+          exposureToSecondHandSmoke: false,
+          alcoholConsumption: false,
+          typeOfAlcohol: '',
+          alcoholSinceWhen: null,
+          substanceUse: false,
+          route: null,
+          frequency: null,
+          physicalLimitation: null,
+          diagnosedEatingDisorders: null,
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
+  }, [record.patientIsFree]);
+
   const validateBeforeSave = (): string[] => {
+    if (record.patientIsFree === true) return [];
+
     const errors: string[] = [];
     const today = new Date();
     today.setHours(23, 59, 59, 999);
@@ -242,42 +260,44 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       return;
     }
 
-    const payload: any = {
-      patientId: Number(patient?.id),
+    const isFree = record.patientIsFree === true;
 
-      isCurrentSmoker: record.isCurrentSmoker ?? false,
+    const payload: SocialHistory = {
+      patientId: Number(patient?.id),
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null,
+
+      isCurrentSmoker: isFree ? false : record.isCurrentSmoker ?? false,
       smokeStartDate:
-        record.isCurrentSmoker && record.smokeStartDate
+        !isFree && record.isCurrentSmoker && record.smokeStartDate
           ? toNoonTimestamp(record.smokeStartDate)
           : null,
-      cigaretteAmount: record.isCurrentSmoker ? (record.cigaretteAmount ?? null) : null,
-      cigaretteType: record.isCurrentSmoker
-        ? (record.cigaretteType?.trim() || null)
-        : null,
+      cigaretteAmount: !isFree && record.isCurrentSmoker ? (record.cigaretteAmount ?? null) : null,
+      cigaretteType:
+        !isFree && record.isCurrentSmoker ? record.cigaretteType?.trim() || null : null,
 
-      isPreviousSmoker: record.isPreviousSmoker ?? false,
+      isPreviousSmoker: isFree ? false : record.isPreviousSmoker ?? false,
       smokeQuitDate:
-        record.isPreviousSmoker && record.smokeQuitDate
+        !isFree && record.isPreviousSmoker && record.smokeQuitDate
           ? toNoonTimestamp(record.smokeQuitDate)
           : null,
 
-      exposureToSecondHandSmoke: record.exposureToSecondHandSmoke ?? false,
+      exposureToSecondHandSmoke: isFree ? false : record.exposureToSecondHandSmoke ?? false,
 
-      alcoholConsumption: record.alcoholConsumption ?? false,
-      typeOfAlcohol: record.alcoholConsumption
-        ? (record.typeOfAlcohol?.trim() || null)
-        : null,
+      alcoholConsumption: isFree ? false : record.alcoholConsumption ?? false,
+      typeOfAlcohol:
+        !isFree && record.alcoholConsumption ? record.typeOfAlcohol?.trim() || null : null,
       alcoholSinceWhen:
-        record.alcoholConsumption && record.alcoholSinceWhen
+        !isFree && record.alcoholConsumption && record.alcoholSinceWhen
           ? toNoonTimestamp(record.alcoholSinceWhen)
           : null,
 
-      substanceUse: record.substanceUse ?? false,
-      route: record.substanceUse ? (record.route || null) : null,
-      frequency: record.substanceUse ? (record.frequency || null) : null,
+      substanceUse: isFree ? false : record.substanceUse ?? false,
+      route: !isFree && record.substanceUse ? record.route || null : null,
+      frequency: !isFree && record.substanceUse ? record.frequency || null : null,
 
-      physicalLimitation: record.physicalLimitation || null,
-      diagnosedEatingDisorders: record.diagnosedEatingDisorders || null
+      physicalLimitation: isFree ? null : record.physicalLimitation || null,
+      diagnosedEatingDisorders: isFree ? null : record.diagnosedEatingDisorders || null
     };
 
     if (record.id) {
@@ -299,8 +319,21 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     }
   };
 
+  const isFree = record.patientIsFree === true;
+
   const content = (
     <div className="padding-8">
+      <Form fluid layout="inline" className="fields-container">
+        <MyInput
+          width={'100%'}
+          column
+          fieldLabel="Patient Is Free"
+          fieldType="checkbox"
+          fieldName="patientIsFree"
+          record={record}
+          setRecord={setRecord}
+        />
+      </Form>
       <CollapsibleSection
         title={<Translate>Smoking History</Translate>}
         icon={faSmoking}
@@ -319,7 +352,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isCurrentSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record?.isPreviousSmoker}
+              disabled={isFree || record?.isPreviousSmoker}
             />
           </div>
           {record?.isCurrentSmoker && (
@@ -327,7 +360,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               <MyInput
                 width={'100%'}
                 column
-                required
+                required={!isFree}
+                disabled={isFree}
                 fieldType="date"
                 fieldLabel="Start date"
                 fieldName="smokeStartDate"
@@ -338,7 +372,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               <MyInput
                 width={'100%'}
                 column
-                required
+                required={!isFree}
+                disabled={isFree}
                 fieldType="number"
                 fieldLabel="Amount"
                 fieldName="cigaretteAmount"
@@ -354,6 +389,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="cigaretteType"
                 record={record}
                 setRecord={setRecord}
+                disabled={isFree}
               />
             </>
           )}
@@ -367,7 +403,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isPreviousSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record?.isCurrentSmoker}
+              disabled={isFree || record?.isCurrentSmoker}
             />
           </div>
           {record?.isPreviousSmoker && (
@@ -375,7 +411,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               <MyInput
                 width={'100%'}
                 column
-                required
+                required={!isFree}
+                disabled={isFree}
                 fieldType="date"
                 fieldLabel="Quit date"
                 fieldName="smokeQuitDate"
@@ -394,6 +431,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             fieldName="exposureToSecondHandSmoke"
             record={record}
             setRecord={setRecord}
+            disabled={isFree}
           />
         </Form>
       </CollapsibleSection>
@@ -416,6 +454,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="alcoholConsumption"
               record={record}
               setRecord={setRecord}
+              disabled={isFree}
             />
           </div>
           {record?.alcoholConsumption && (
@@ -423,7 +462,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               <MyInput
                 width={'100%'}
                 column
-                required
+                required={!isFree}
+                disabled={isFree}
                 fieldType="date"
                 fieldLabel="Since when"
                 fieldName="alcoholSinceWhen"
@@ -439,6 +479,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 fieldName="typeOfAlcohol"
                 record={record}
                 setRecord={setRecord}
+                disabled={isFree}
               />
             </>
           )}
@@ -463,6 +504,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="substanceUse"
               record={record}
               setRecord={setRecord}
+              disabled={isFree}
             />
           </div>
           {record?.substanceUse && (
@@ -479,6 +521,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
+                disabled={isFree}
               />
 
               <MyInput
@@ -494,6 +537,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
                 record={record}
                 setRecord={setRecord}
                 searchable={false}
+                disabled={isFree}
               />
             </>
           )}
@@ -522,6 +566,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             record={record}
             setRecord={setRecord}
             searchable={false}
+            disabled={isFree}
           />
 
           <MyInput
@@ -537,6 +582,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
             record={record}
             setRecord={setRecord}
             searchable={false}
+            disabled={isFree}
           />
         </Form>
       </CollapsibleSection>

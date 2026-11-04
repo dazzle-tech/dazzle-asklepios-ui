@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Checkbox, Loader, Tag, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,6 +20,8 @@ import {
   computeRowRemainingAmount,
 
   formatBillingChargeStatus,
+
+  isCancelledBillingLineStatus,
 
   formatBillingPriceSource,
 
@@ -171,6 +173,16 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 }) => {
 
   const selectable = Boolean(onSelectionChange);
+
+  const [showCancelled, setShowCancelled] = useState(false);
+
+  const visibleRows = useMemo(
+    () =>
+      showCancelled
+        ? rows
+        : rows.filter(row => !isCancelledBillingLineStatus(row.status)),
+    [rows, showCancelled]
+  );
 
 
 
@@ -540,9 +552,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       key: 'unitPrice',
 
-      title: 'Unit price',
+      title: 'Unit price (Gross amount)',
 
-      width: 110,
+      width: 170,
 
       render: (row: UnifiedBillingChargeRow) =>
         formatMoney(row.unitPrice, row.currency || currency)
@@ -553,7 +565,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       key: 'setupUnitPrice',
 
-      title: 'Setup price',
+      title: 'Cash price',
 
       width: 110,
 
@@ -566,11 +578,36 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     {
 
+      key: 'taxAmount',
+
+      title: 'Tax',
+
+      width: 170,
+
+      render: (row: UnifiedBillingChargeRow) => {
+        const amount = formatMoney(row.taxAmount ?? 0, row.currency || currency);
+        const rate = Number(row.taxRate);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          return amount;
+        }
+
+        const percent = rate.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        });
+
+        return `${amount} (${percent}%)`;
+      }
+
+    },
+
+    {
+
       key: 'netAmount',
 
-      title: 'Net',
+      title: 'Net amount',
 
-      width: 100,
+      width: 110,
 
       render: (row: UnifiedBillingChargeRow) =>
 
@@ -589,6 +626,20 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       render: (row: UnifiedBillingChargeRow) =>
 
         formatMoney(row.patientAmount, row.currency || currency)
+
+    },
+
+    {
+
+      key: 'insuranceAmount',
+
+      title: 'Claim share',
+
+      width: 110,
+
+      render: (row: UnifiedBillingChargeRow) =>
+
+        formatMoney(row.insuranceAmount ?? 0, row.currency || currency)
 
     },
 
@@ -809,30 +860,32 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
         height={360}
 
-        data={rows}
+        data={visibleRows}
 
         columns={columns}
 
         tableButtons={
 
-          onCollectPayment ? (
-
-            <MyButton
-
-              disabled={
-                disabled ||
-                selectedRowIds.length === 0
-              }
-
-              onClick={onCollectPayment}
-
+          <div className="billing-accounting__table-toolbar">
+            <Checkbox
+              className={`billing-accounting__show-cancelled${
+                showCancelled ? ' billing-accounting__show-cancelled--on' : ''
+              }`}
+              checked={showCancelled}
+              onChange={(_, checked) => setShowCancelled(checked)}
             >
+              Show cancelled
+            </Checkbox>
 
-              Collect payment ({selectedRowIds.length})
-
-            </MyButton>
-
-          ) : undefined
+            {onCollectPayment ? (
+              <MyButton
+                disabled={disabled || selectedRowIds.length === 0}
+                onClick={onCollectPayment}
+              >
+                Collect payment ({selectedRowIds.length})
+              </MyButton>
+            ) : null}
+          </div>
 
         }
 

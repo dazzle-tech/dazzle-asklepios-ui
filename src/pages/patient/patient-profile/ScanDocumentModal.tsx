@@ -188,15 +188,27 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
   };
 
   useEffect(() => {
-    setLocalPatient(
-      { ...localPatient,
-         firstName: parsingResponse?.givenNames,
-         lastName: parsingResponse?.familyName,
-         sexAtBirth: parsingResponse?.sex,
-         dateOfBirth: parsingResponse?.dateOfBirth,
-         nationality: parsingResponse?.nationality
-      });
-  }, [parsingResponse])
+    const hasParsedData =
+      Boolean(parsingResponse?.givenNames) ||
+      Boolean(parsingResponse?.familyName) ||
+      Boolean(parsingResponse?.sex) ||
+      Boolean(parsingResponse?.dateOfBirth) ||
+      Boolean(parsingResponse?.nationality);
+
+    if (!hasParsedData) {
+      return;
+    }
+
+    setLocalPatient({
+      ...localPatient,
+      firstName: parsingResponse.givenNames || localPatient.firstName,
+      lastName: parsingResponse.familyName || localPatient.lastName,
+      sexAtBirth: parsingResponse.sex || localPatient.sexAtBirth,
+      dateOfBirth: parsingResponse.dateOfBirth || localPatient.dateOfBirth,
+      nationality: parsingResponse.nationality || localPatient.nationality
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsingResponse]);
 
   const isIdDocument = ID_TYPES.includes(documentType);
   const canScanAndParse = selectedFile && isIdDocument;

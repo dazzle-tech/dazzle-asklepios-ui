@@ -17,6 +17,7 @@ import Allergies from "@/pages/encounter/encounter-pre-observations-new/Allergie
 
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import RandomBloodSugar from '@/pages/encounter/encounter-pre-observations-new/observations/RandomBloodSugar';
 import type { ApEncounter } from '@/types/model-types';
 import GlasgowComaScale from "@/pages/encounter/encounter-component/glasgow-coma-scale";
 import BodyMeasurements from "@/pages/encounter/encounter-pre-observations-new/observations/BodyMeasurements";
@@ -214,6 +215,16 @@ const handleGoBack = () => {
               isTriage
               disabled
               title="Vital Signs"
+            />
+          )}
+        </Row>
+
+        <Row gutter={30}>
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <RandomBloodSugar
+              patientId={patientId}
+              encounterId={encounterId}
+              disabled
             />
           )}
         </Row>

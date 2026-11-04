@@ -68,10 +68,67 @@
 }
 
 /* 🔥 Chart Container */
+.dashboard-tabs {
+  > .rs-nav {
+    margin-bottom: 12px;
+  }
+
+  .stimulsoft-dashboard-page > .rs-panel-body {
+    max-height: calc(100vh - 210px);
+  }
+
+  .stimulsoft-dashboard-viewer-scroll {
+    height: calc(100vh - 290px);
+  }
+}
+
+.dashboard-my-tasks {
+  margin-bottom: 12px;
+}
+
+.dashboard-my-tasks-header {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.dashboard-my-tasks-counts {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dashboard-my-tasks-foot {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
 .stimulsoft-dashboard-toolbar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.stimulsoft-dashboard-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stimulsoft-dashboard-default-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--primary-blue);
+  color: #fff;
 }
 
 .stimulsoft-dashboard-page.rs-panel {

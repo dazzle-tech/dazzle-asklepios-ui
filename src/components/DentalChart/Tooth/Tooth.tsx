@@ -1,4 +1,5 @@
 import React, { CSSProperties, useMemo } from 'react';
+import { toothIndexFromEnum, toothImageCodeFromEnum } from '@/utils/toothNumber';
 
 const Tooth = ({ chartTooth }) => {
   const width = 50;
@@ -14,11 +15,11 @@ const Tooth = ({ chartTooth }) => {
     top: '0px'
   };
 
-  const isUpper = chartTooth.toothNumberNumeric < 17;
+  const isUpper = chartTooth.toothNumber ? toothIndexFromEnum(chartTooth.toothNumber) < 17 : true;
 
   const hasImplant = useMemo(() => {
-    return chartTooth.toothActions?.some(action => action.imageName === 'Implant');
-  }, [chartTooth.toothActions]);
+    return chartTooth.actions?.some(action => action.imageName === 'Implant');
+  }, [chartTooth.actions]);
 
   function loadImage(base: boolean, toothNumber: string, actionImageName?: string) {
     let imageName = '';
@@ -34,7 +35,9 @@ const Tooth = ({ chartTooth }) => {
   }
 
   const baseToothImage =
-    !chartTooth.missing && !hasImplant ? loadImage(true, chartTooth.toothNumber) : null;
+    !chartTooth.missing && !hasImplant && chartTooth.toothNumber
+      ? loadImage(true, toothImageCodeFromEnum(chartTooth.toothNumber))
+      : null;
 
   return (
     <div style={{ display: 'inline-block', position: 'relative', width }}>
@@ -48,13 +51,18 @@ const Tooth = ({ chartTooth }) => {
       )}
 
       {!chartTooth.missing &&
-        chartTooth.toothActions?.map(toothAction => {
-          const actionImage = loadImage(false, chartTooth.toothNumber, toothAction.imageName);
+        chartTooth.toothNumber &&
+        chartTooth.actions?.map(toothAction => {
+          const actionImage = loadImage(
+            false,
+            toothImageCodeFromEnum(chartTooth.toothNumber),
+            toothAction.imageName
+          );
           if (!actionImage) return null;
 
           return (
             <img
-              key={toothAction.key}
+              key={toothAction.id}
               src={actionImage}
               style={isUpper ? upperToothStyle : lowerToothStyle}
               width={width}

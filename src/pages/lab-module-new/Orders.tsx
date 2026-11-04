@@ -25,7 +25,8 @@ type OrdersProps = {
   loading?: boolean;
   orderNumberFilter?: string;
   departmentFilter?: any;
-  selectedPatient?: any;
+  /** null = no patient filter; [] or ids = filter (empty forces no rows via sentinel) */
+  patientIdIn?: number[] | null;
   filters?: React.ReactNode;
   orderTests?: any[];
 };
@@ -37,7 +38,7 @@ const Orders = forwardRef<any, OrdersProps>(
     dateFilter,
     loading,
     orderNumberFilter,
-    selectedPatient,
+    patientIdIn,
     departmentFilter,
     filters,
     orderTests
@@ -87,7 +88,7 @@ const Orders = forwardRef<any, OrdersProps>(
       setPaginationParams(prev => ({ ...prev, page: 0 }));
     }, [
       orderNumberFilter,
-      selectedPatient?.id,
+      patientIdIn,
       departmentFilter?.fromDepartmentIdIn
     ]);
     const [refreshHl7Events, { isLoading: isRefreshing }] =
@@ -136,8 +137,10 @@ const Orders = forwardRef<any, OrdersProps>(
           submittedDateFrom: fromDateParam,
           submittedDateTo: toDateParam,
 
-          ...(selectedPatient?.id
-            ? { patientIdIn: [selectedPatient.id] }
+          ...(patientIdIn != null
+            ? {
+                patientIdIn: patientIdIn.length > 0 ? patientIdIn : [-1]
+              }
             : {}),
 
           ...(departmentFilter?.fromDepartmentIdIn

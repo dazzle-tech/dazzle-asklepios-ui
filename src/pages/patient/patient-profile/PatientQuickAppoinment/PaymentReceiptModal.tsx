@@ -46,6 +46,9 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
   autoPrint = false
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const showItemTax = (receipt?.items ?? []).some(
+    item => Number(item.taxAmount ?? 0) > 0
+  );
   const hasAutoPrintedRef = useRef(false);
 
   const handlePrint = useCallback(() => {
@@ -216,6 +219,7 @@ const barcodeRef = useRef<SVGSVGElement>(null);
                   <th>Service Type</th>
                   <th>Qty</th>
                   <th>Unit</th>
+                  {showItemTax && <th>Tax</th>}
                   <th>Net</th>
                   <th>Patient Share</th>
                 </tr>
@@ -227,6 +231,9 @@ const barcodeRef = useRef<SVGSVGElement>(null);
                     <td>{item.type}</td>
                     <td>{item.quantity}</td>
                     <td>{formatMoney(item.unitPrice, receipt.currency)}</td>
+                    {showItemTax && (
+                      <td>{formatMoney(item.taxAmount ?? 0, receipt.currency)}</td>
+                    )}
                     <td>{formatMoney(item.netAmount, receipt.currency)}</td>
                     <td>{formatMoney(item.patientShare, receipt.currency)}</td>
                   </tr>

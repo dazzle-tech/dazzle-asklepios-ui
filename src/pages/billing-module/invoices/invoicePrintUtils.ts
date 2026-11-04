@@ -8,13 +8,76 @@ import type {
   PatientFinancialInvoice
 } from '@/services/billing/invoiceGenerationService';
 import type { EncounterBillingItemSummary } from '@/types/model-types-new';
-import type { UnifiedBillingChargeRow } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import {
+  isCancelledBillingLineStatus,
+  resolvePatientDisplayName,
+  type UnifiedBillingChargeRow
+} from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import {
   formatBillingItemType,
   isTechnicalBillingLabel
 } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 
 import type { InvoicePrintChargeContext } from './useInvoicePrintLookups';
+
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+const hasExplicitTimeZone = (value: string) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+
+/**
+ * Invoice timestamps arrive as UTC. A value with no offset is still UTC;
+ * convert it to the browser's local time before printing.
+ */
+const toLocalInvoiceDate = (value?: string | Date | null): Date | null => {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  let raw = String(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  raw = raw.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+
+  const hasTime = /(?:T|\s)\d{2}:\d{2}/.test(raw);
+  if (hasTime && !hasExplicitTimeZone(raw)) {
+    raw = `${raw.includes('T') ? raw : raw.replace(' ', 'T')}Z`;
+  }
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatLocalInvoiceDateTime = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+
+export const formatInvoicePrintDateTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value) ?? new Date();
+  return formatLocalInvoiceDateTime(date);
+};
+
+export const formatInvoicePrintDate = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+export const formatInvoicePrintTime = (value?: string | Date | null) => {
+  const date = toLocalInvoiceDate(value);
+  if (!date) {
+    return '';
+  }
+
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+};
 
 export type InvoicePrintLineItem = {
   serviceCode: string;
@@ -165,8 +228,20 @@ export const formatApplicableOnLabel = (value?: string | null) => {
       return 'Invoice';
     case 'INVOICE_LINE':
       return 'Invoice line';
+    case 'CHARGE_LINE':
+      return 'Charge line';
     case 'SERVICE':
       return 'Service';
+    case 'PROCEDURE':
+      return 'Procedure';
+    case 'MEDICATION':
+      return 'Medication';
+    case 'LABORATORY':
+      return 'Laboratory';
+    case 'RADIOLOGY':
+      return 'Radiology';
+    case 'PATHOLOGY':
+      return 'Pathology';
     case 'PRODUCT':
       return 'Product';
     default:
@@ -457,19 +532,48 @@ const mapIssuedLineToPrintItem = (
   };
 };
 
+const isCancelledPrintLine = (
+  chargeContext: InvoicePrintChargeContext,
+  lineItem: Pick<InvoiceLineItem, 'chargeLineId' | 'patientServiceProductId' | 'status'>
+): boolean => {
+  if (isCancelledBillingLineStatus(lineItem.status)) {
+    return true;
+  }
+
+  const billingItem = findBillingItem(
+    chargeContext,
+    lineItem.chargeLineId,
+    lineItem.patientServiceProductId
+  );
+  if (isCancelledBillingLineStatus(billingItem?.status)) {
+    return true;
+  }
+
+  const chargeRow = chargeContext.chargeRows.find(
+    row =>
+      (lineItem.chargeLineId != null &&
+        Number(row.chargeLineId) === Number(lineItem.chargeLineId)) ||
+      (lineItem.patientServiceProductId != null &&
+        Number(row.patientServiceProductId) === Number(lineItem.patientServiceProductId))
+  );
+
+  return isCancelledBillingLineStatus(chargeRow?.status);
+};
+
 const buildItemsFromChargeRows = (
   chargeContext: InvoicePrintChargeContext,
   invoiceType: InvoicePrintData['invoiceType'],
   lineItemFilter?: InvoiceLineItem[]
 ): InvoicePrintLineItem[] => {
-  if (lineItemFilter?.length) {
+  if (lineItemFilter) {
     return lineItemFilter
+      .filter(item => !isCancelledPrintLine(chargeContext, item))
       .map(item => mapIssuedLineToPrintItem(item, chargeContext, invoiceType))
       .filter((item): item is InvoicePrintLineItem => item != null);
   }
 
   return chargeContext.chargeRows
-    .filter(row => row.isBilled)
+    .filter(row => row.isBilled && !isCancelledBillingLineStatus(row.status))
     .map(row =>
       mapChargeRowToPrintItem(
         row,
@@ -585,9 +689,7 @@ export const buildInvoicePrintDataFromEncounter = ({
               : formatMoneyValue(encounterDetails.billingSummary?.insuranceOutstandingAmount)
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
 
@@ -613,7 +715,7 @@ export const buildInvoicePrintDataFromEncounter = ({
       netAmount: totals.netAmount,
       taxAmount: totals.taxAmount
     }),
-    patientName: encounterDetails.patient?.fullName ?? '-',
+    patientName: resolvePatientDisplayName(null, encounterDetails.patient?.fullName),
     patientMrn: encounterDetails.patient?.medicalRecordNumber ?? '-',
     nationalId: encounterDetails.patient?.nationalId ?? undefined,
     mobileNumber: encounterDetails.patient?.mobileNumber ?? undefined,
@@ -650,21 +752,29 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
       ? 'INSURANCE_CLAIM'
       : 'PATIENT';
 
-  const items = buildItemsFromChargeRows(chargeContext, invoiceType, lineItems);
+  const printableLineItems = lineItems.filter(
+    item => !isCancelledPrintLine(chargeContext, item)
+  );
+
+  const items = buildItemsFromChargeRows(
+    chargeContext,
+    invoiceType,
+    lineItems.length > 0 ? printableLineItems : undefined
+  );
 
   const totals =
     items.length > 0
       ? buildTotals(items, {
           invoiceTotalAmount: invoice.totalAmount,
-          lineItems
+          lineItems: printableLineItems
         })
       : {
           grossAmount: formatMoneyValue(invoice.totalAmount),
-          discountAmount: lineItems.reduce(
+          discountAmount: printableLineItems.reduce(
             (sum, item) => sum + formatMoneyValue(item.discountAmount),
             0
           ),
-          taxAmount: lineItems.reduce(
+          taxAmount: printableLineItems.reduce(
             (sum, item) => sum + formatMoneyValue(item.taxAmount),
             0
           ),
@@ -674,18 +784,10 @@ export const buildInvoicePrintDataFromIssuedInvoice = ({
             invoiceType === 'INSURANCE_CLAIM' ? formatMoneyValue(invoice.totalAmount) : 0
         };
 
-  const invoiceDate = invoice.createdDate
-    ? String(invoice.createdDate).substring(0, 19).replace('T', ' ')
-    : new Date().toLocaleString();
+  const invoiceDate = formatInvoicePrintDateTime(invoice.createdDate);
 
   const insuranceFields = resolveInsuranceFields(invoice, eligibilitySnapshot);
-  const composedPatientName = [patient?.firstName, patient?.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  const patientName =
-    encounterDetails?.patient?.fullName ??
-    (composedPatientName || patient?.fullName || patient?.name || '-');
+  const patientName = resolvePatientDisplayName(patient, encounterDetails?.patient?.fullName);
 
   return {
     invoiceNumber: invoice.documentNumber,

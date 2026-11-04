@@ -4,6 +4,7 @@ import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagn
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Form, Row } from 'rsuite';
 
 import DetailsCard from '@/components/DetailsCard';
@@ -18,6 +19,7 @@ import {
   faRectangleList,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
@@ -26,9 +28,13 @@ import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import ReviewResults from './ReviewResults';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import './styles.less';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -51,7 +57,9 @@ const Lab = () => {
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
   const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+  const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+  const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
   const [activeKey2, setActiveKey2] = useState('1');
@@ -210,6 +218,27 @@ const Lab = () => {
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  const handleClearFilters = () => {
+    const now = new Date();
+    setDateFilter({ fromDate: now, toDate: now });
+    setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+    setResolvedPatientIds(null);
+    setDepartmentFilter({ fromDepartmentIdIn: null });
+    setOrderNumberFilter('');
+  };
+
+  const handleSearchFilters = async () => {
+    const raw = patientSearch?.patientName;
+    const hasValue =
+      raw instanceof Date || String(raw ?? '').trim().length > 0;
+    const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+    // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+    flushSync(() => {
+      setResolvedPatientIds(ids);
+    });
+    await refetchAllLabData();
+  };
+
   const tablefilters = (<>
               <Form fluid className="filter-form-lab-filters">
                 <MyInput
@@ -230,12 +259,11 @@ const Lab = () => {
                   setRecord={setDateFilter}
                   showLabel={false}
                 />
-                <PatientSearch
-                  value={selectedPatient}
-                  onChange={setSelectedPatient}
-                  showLabel={false}
-                  width="22vw"
-                  containerMinWidth={250}
+                <SearchPatientCriteria
+                  record={patientSearch}
+                  setRecord={setPatientSearch}
+                  liveSearchMinLength={0}
+                  searchMarginTop={0}
                 />
                 <MyInput
                   width="12vw"
@@ -258,6 +286,11 @@ const Lab = () => {
                   record={{ orderNumber: orderNumberFilter }}
                   setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
                   showLabel={false}
+                />
+                <AdvancedSearchFilters
+                  showAdvancedButton={false}
+                  searchOnClick={handleSearchFilters}
+                  clearOnClick={handleClearFilters}
                 />
 
               </Form>
@@ -373,7 +406,7 @@ const Lab = () => {
                       dateFilter={dateFilter}
                       loading={globalLoading}
                       orderNumberFilter={orderNumberFilter}
-                      selectedPatient={selectedPatient}
+                      patientIdIn={resolvedPatientIds}
                       departmentFilter={departmentFilter}
                       filters={tablefilters}
                       orderTests={orderTests}

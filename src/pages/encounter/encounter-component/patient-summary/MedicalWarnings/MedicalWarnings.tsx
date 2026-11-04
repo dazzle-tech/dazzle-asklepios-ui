@@ -10,7 +10,7 @@ import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/pat
 import { PatientWarnings } from '@/types/model-types-new';
 import { conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-const MedicalWarnings = ({ patient }) => {
+const MedicalWarnings = ({ patient, loadingHeight = undefined }) => {
 
  const {
      data: warningsListResponse,
@@ -65,6 +65,7 @@ const MedicalWarnings = ({ patient }) => {
           columns={tableColumns}
           height={250}
           loading={isLoading}
+          loadingHeight={loadingHeight}
           onRowClick={rowData => {}}
         />
       }

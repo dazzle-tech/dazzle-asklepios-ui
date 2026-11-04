@@ -3,21 +3,102 @@
   width: 100%;
 }
 
-.left {
+.encounter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.encounter-toolbar .left,
+.encounter-toolbar-nav {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1 1 280px;
+  min-width: 0;
 }
 
-.right {
+.encounter-toolbar-search {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 100%;
+  width: auto;
+}
+
+.encounter-toolbar-search .rs-form-group,
+.encounter-toolbar-search .rs-input-group,
+.encounter-toolbar-search .rs-form-control-wrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+.encounter-toolbar .right,
+.encounter-toolbar-actions {
   display: flex;
-  justify-content: center;
-  align-items: end;
-  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 420px;
+  min-width: 0;
+  margin-inline-start: auto;
   border-radius: 5px;
   height: auto;
+}
+
+.encounter-toolbar-actions-main {
+  display: flex;
   flex-wrap: wrap;
-  margin-left: auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.encounter-toolbar-actions-trailing {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.encounter-toolbar .rs-btn,
+.encounter-toolbar button.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-height: 32px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.encounter-toolbar-actions-trailing > div {
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .encounter-toolbar-nav,
+  .encounter-toolbar-actions {
+    flex: 1 1 100%;
+  }
+
+  .encounter-toolbar-actions {
+    justify-content: flex-start;
+    margin-inline-start: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .encounter-toolbar-search {
+    flex: 1 1 100%;
+  }
 }
 
 .drawer-style {

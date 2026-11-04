@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dropdown } from 'rsuite';
+import { SelectPicker } from 'rsuite';
 import './styles.less';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -42,6 +42,15 @@ const Instructions = ({
       size: 1000,
       sort: 'id,asc'
     });
+
+  const predefinedInstructionOptions = useMemo(
+    () =>
+      (predefinedInstructionsListResponse?.data ?? []).map((item: any) => ({
+        label: buildInstructionTitle(item),
+        value: item.id
+      })),
+    [predefinedInstructionsListResponse?.data]
+  );
 
   const [selectedPreDefine, setSelectedPreDefine] = useState<any>(null);
   const [manual, setManual] = useState<string | null>(null);
@@ -173,21 +182,20 @@ const Instructions = ({
               Pre-defined Instructions <span style={{ color: 'red' }}>*</span>
             </span>
           </div>
-          <Dropdown
+          <SelectPicker
             className="fill-width-instructions"
-            title={buildInstructionTitle(selectedPreDefine)}
-          >
-            {predefinedInstructionsListResponse?.data?.map((item: any) => (
-              <Dropdown.Item
-                key={item.id}
-                onClick={() => setSelectedPreDefine(item)}
-              >
-                {[item.dose, item.unit, item.rout, item.frequency]
-                  .filter(Boolean)
-                  .join(', ')}
-              </Dropdown.Item>
-            ))}
-          </Dropdown>
+            data={predefinedInstructionOptions}
+            value={selectedPreDefine?.id ?? null}
+            onChange={(value: any) =>
+              setSelectedPreDefine(
+                predefinedInstructionsListResponse?.data?.find((item: any) => item.id === value) ??
+                  null
+              )
+            }
+            placeholder={buildInstructionTitle()}
+            searchable
+            block
+          />
         </div>
       )}
 

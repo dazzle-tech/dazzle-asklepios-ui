@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -7,15 +8,25 @@ import SettlementReportPanel from '@/pages/billing-module/settlementReport/Settl
 
 import ClaimsWorkspace from './ClaimsWorkspace';
 import './styles.less';
+import PreClaimClinicalAndCodingReview from './Pre-ClaimClinicalAndCodingReview';
 
-type ClaimsTab = 'claims' | 'settlement';
+type ClaimsTab = 'claims' | 'settlement' | 'preClaimClinicalAndCodingReview';
 
 const ClaimsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<ClaimsTab>(
-    searchParams.get('tab') === 'settlement' ? 'settlement' : 'claims'
-  );
+
+  const getInitialTab = (): ClaimsTab => {
+    const tab = searchParams.get('tab');
+
+    if (tab === 'settlement' || tab === 'preClaimClinicalAndCodingReview') {
+      return tab;
+    }
+
+    return 'claims';
+  };
+
+  const [activeTab, setActiveTab] = useState<ClaimsTab>(getInitialTab);
 
   useEffect(() => {
     dispatch(setPageCode('Claims'));
@@ -24,11 +35,13 @@ const ClaimsScreen: React.FC = () => {
 
   const handleTabChange = (tab: ClaimsTab) => {
     setActiveTab(tab);
-    if (tab === 'settlement') {
-      setSearchParams({ tab: 'settlement' }, { replace: true });
+
+    if (tab === 'claims') {
+      setSearchParams({}, { replace: true });
       return;
     }
-    setSearchParams({}, { replace: true });
+
+    setSearchParams({ tab }, { replace: true });
   };
 
   return (
@@ -56,10 +69,21 @@ const ClaimsScreen: React.FC = () => {
           >
             Settlement Report
           </button>
+           <button
+            type="button"
+            className={`bc-tab${activeTab === 'preClaimClinicalAndCodingReview' ? ' bc-tab--active' : ''}`}
+            onClick={() => handleTabChange('preClaimClinicalAndCodingReview')}
+          >
+            Pre-Claim Clinical & Coding Review
+          </button>
         </nav>
       </header>
 
-      {activeTab === 'claims' ? <ClaimsWorkspace /> : <SettlementReportPanel />}
+      {activeTab === 'claims' && <ClaimsWorkspace />}
+
+      {activeTab === 'preClaimClinicalAndCodingReview' && <PreClaimClinicalAndCodingReview />}
+
+      {activeTab === 'settlement' && <SettlementReportPanel />}
     </div>
   );
 };

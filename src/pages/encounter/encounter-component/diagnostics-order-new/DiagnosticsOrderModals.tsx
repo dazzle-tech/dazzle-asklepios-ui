@@ -4,13 +4,14 @@ import React, { useEffect } from 'react';
 
 import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
 
 import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
 import DetailsModal from './DetailsModal';
 import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
 import RequestTestModal from './RequestTestModal';
 import TestCardModal from './TestCardModal';
-import TransferList from './TransferTestList';
+import TestTypeSections from './test-type-sections';
 
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
@@ -82,6 +83,7 @@ type Props = {
   // handlers
   handleSaveTest: () => void;
   handleSaveTests: () => void;
+  handleSaveAndSubmitTests: () => void;
   handleCancle: () => void;
 
   orderTestRefetch: () => any;
@@ -154,6 +156,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
 
     handleSaveTest,
     handleSaveTests,
+    handleSaveAndSubmitTests,
     handleCancle,
 
     orderTestRefetch,
@@ -241,22 +244,18 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenTestsModal}
         title="Select Tests"
         actionButtonFunction={handleSaveTests}
-        size="50vw"
+        footerButtons={
+          <MyButton onClick={handleSaveAndSubmitTests}>Save &amp; Submit</MyButton>
+        }
+        size="96vw"
+        bodyheight="calc(100vh - 230px)"
         content={
-          <div dir={dir}>
+          <div dir={dir} className="test-type-sections-modal-content">
             <UncoveredInsuranceWarning items={uncoveredItems} />
-            <TransferList
+            <TestTypeSections
               open={openTestsModal}
-              leftItems={leftItems}
-              rightItems={rightItems}
-              setLeftItems={setLeftItems}
-              setRightItems={setRightItems}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              searchType={searchType}
-              setSearchType={setSearchType}
-              isFetching={isFetching}
-              onLoadMore={handleLoadMore}
+              selectedTests={rightItems}
+              setSelectedTests={setRightItems}
             />
           </div>
         }
@@ -278,7 +277,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         open={openRequestTestModal}
         setOpen={setOpenRequestTestModal}
         fromDepartmentId={resolveFromDepartmentId()}
-        fromFacilityId={selectedDepartment?.facilityId}
+        fromFacilityId={encounter?.facilityId || selectedDepartment?.facilityId}
         onSuccess={() => {}}
       />
 

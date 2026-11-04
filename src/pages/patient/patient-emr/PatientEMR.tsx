@@ -15,9 +15,11 @@ import {
   faCalendar,
   faConciergeBell,
   faClockRotateLeft,
+  faDroplet,
   faFileInvoice,
   faHouseChimneyMedical,
   faMoneyBillTransfer,
+  faNotesMedical,
   faPaperclip,
   faPersonShelter,
   faPills,
@@ -55,6 +57,8 @@ import './styles.less';
 import DiagnosisTable from './emr-tables/DiagnosisTable';
 import PreviousMeasurementsMain from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
 import DentalProcedures from './emr-tables/DentalProcedures';
+import NephrologyAssessmentEmr from './emr-tables/NephrologyAssessmentEmr';
+import DialysisSessionEmr from './emr-tables/DialysisSessionEmr';
 import PatientTimelineModal from '@/components/PatientTimelineModal/PatientTimelineModal';
 
 const { getHeight } = DOMHelper;
@@ -240,6 +244,21 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')
                 }
                 active={activeSectionCard === 'documents'}
+              />
+            </div>
+
+            <div className="animation-emr-card-patient-emr">
+              <EMRCard
+                number={2}
+                footerText="Dialysis"
+                icon={faDroplet}
+                backgroundColor="var(--card-light-blue)"
+                width={170}
+                height={100}
+                onClick={() =>
+                  setActiveSectionCard(activeSectionCard === 'dialysis' ? null : 'dialysis')
+                }
+                active={activeSectionCard === 'dialysis'}
               />
             </div>
 
@@ -589,6 +608,46 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               </div>
             )}
 
+            {activeSectionCard === 'dialysis' && (
+              <div className="emr-main-row-handle">
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Nephrology Assessment"
+                    icon={faNotesMedical}
+                    backgroundColor="var(--card-light-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(
+                        activeCard === 'nephrologyassessment'
+                          ? null
+                          : 'nephrologyassessment'
+                      )
+                    }
+                    active={activeCard === 'nephrologyassessment'}
+                  />
+                </div>
+
+                <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={4}
+                    footerText="Dialysis Session"
+                    icon={faDroplet}
+                    backgroundColor="var(--card-light-blue)"
+                    width={150}
+                    height={100}
+                    onClick={() =>
+                      setActiveCard(
+                        activeCard === 'dialysissession' ? null : 'dialysissession'
+                      )
+                    }
+                    active={activeCard === 'dialysissession'}
+                  />
+                </div>
+              </div>
+            )}
+
             {activeSectionCard === 'services' && (
               <div className="emr-main-row-handle">
                 <div className="animation-emr-card-patient-emr">
@@ -755,6 +814,17 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   content={<AttachmentsTable localPatient={localPatient} />}
                 />
 
+                {/* ================= DIALYSIS ================= */}
+                <SectionContainer
+                  title={<Translate>Nephrology Assessment</Translate>}
+                  content={<NephrologyAssessmentEmr patient={localPatient} />}
+                />
+
+                <SectionContainer
+                  title={<Translate>Dialysis Session</Translate>}
+                  content={<DialysisSessionEmr patient={localPatient} />}
+                />
+
                 {/* ================= SERVICES ================= */}
                 {/* <SectionContainer
                 title={<Translate>Applied Services</Translate>}
@@ -814,6 +884,12 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               encounter={undefined}
               edit={undefined}
             />
+          )}
+          {activeCard === 'nephrologyassessment' && (
+            <NephrologyAssessmentEmr patient={localPatient} />
+          )}
+          {activeCard === 'dialysissession' && (
+            <DialysisSessionEmr patient={localPatient} />
           )}
         </div>
 

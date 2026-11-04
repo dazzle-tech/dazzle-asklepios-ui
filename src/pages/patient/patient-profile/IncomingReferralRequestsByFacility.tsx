@@ -138,7 +138,6 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
     const tableData = useMemo(() => {
         return referralListResponse?.data ?? referralListResponse ?? [];
     }, [referralListResponse]);
-    console.log("tableData: ", tableData)
     const totalCount = referralListResponse?.totalCount ?? tableData.length ?? 0;
 
     useEffect(() => {

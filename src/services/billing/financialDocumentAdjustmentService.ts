@@ -126,6 +126,9 @@ export type CollectInvoiceBalanceRequest = {
   paymentMethodId: number;
   requestId: string;
   notes?: string | null;
+  authorizationCode?: string | null;
+  processorReference?: string | null;
+  cardLastFour?: string | null;
 };
 
 export type CollectInvoiceBalanceResult = {
@@ -209,6 +212,10 @@ export type PreviewCatalogItemPricingRequest = {
   coverageType?: 'SELF_PAY' | 'INSURANCE';
   patientInsuranceId?: number | null;
   invoiceId?: number | null;
+  // MEDICATION: UOM unit to price in (null = the brand's price base unit)
+  uomGroupUnitId?: number | null;
+  // VACCINE: the vaccine brand to price
+  vaccineBrandId?: number;
 };
 
 export type PreviewCatalogItemPricingResult = {

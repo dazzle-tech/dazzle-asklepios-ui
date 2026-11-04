@@ -21,7 +21,6 @@ import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 const OrganizationDefinition = () => {
   const dispatch = useAppDispatch();
-  const [width, setWidth] = useState<number>(window.innerWidth);
   const [organization, setOrganization] = useState<OrganizationDefinitionType>({ ...newOrganizationDefinition });
   const [showAdminsModal, setShowAdminsModal] = useState(false);
 
@@ -38,12 +37,6 @@ const OrganizationDefinition = () => {
 
 
   // Effects
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -115,9 +108,6 @@ const OrganizationDefinition = () => {
     let errorMsg = '';
     if (!organization.name) {
       errorMsg = 'Organization Name is required';
-    }
-    if (organization.taxValue === undefined || organization.taxValue === null) {
-      errorMsg = errorMsg ? `${errorMsg}, Tax Value is required` : 'Tax Value is required';
     }
     if (!organization.defaultTimeZone) {
       errorMsg = errorMsg ? `${errorMsg}, Default Time Zone is required` : 'Default Time Zone is required';
@@ -307,27 +297,6 @@ const OrganizationDefinition = () => {
           />
         </div>
         <div className='organization-section-Column'>
-          <Section
-            title={<Translate>Tax Information</Translate>}
-            content={
-              <div className='organization-section'>
-                <MyInput
-                  fieldLabel={<span><Translate>Tax Value</Translate> (%)</span>}
-                  fieldName="taxValue"
-                  fieldType="number"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                  required
-                />
-              </div>
-            }
-            setOpen={() => { }}
-            rightLink={null}
-            openedContent={null}
-            disabled={isLoadingData}
-          />
           <Section
             title={<Translate>Appointment Configuration</Translate>}
             content={

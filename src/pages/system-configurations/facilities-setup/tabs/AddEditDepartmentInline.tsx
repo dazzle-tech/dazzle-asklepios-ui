@@ -392,7 +392,8 @@ const defaultNurseMedicalSheetsInfo = (
             record={department}
             setRecord={setDepartment}
             width="100%"
-            required
+            required={Boolean(department?.parallelCapacityEnabled)}
+            min={department?.parallelCapacityEnabled ? 1 : 0}
             showZero
           />
 

@@ -15,11 +15,13 @@ import FullViewTable from './FullViewTable';
 type PatientDiagnosisProps = {
   patient: any;
   encounter: any;
+  loadingHeight?: number | string;
 };
 
 const PatientMajorProblem: React.FC<PatientDiagnosisProps> = ({
   patient,
   encounter,
+  loadingHeight,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -156,6 +158,7 @@ const PatientMajorProblem: React.FC<PatientDiagnosisProps> = ({
        <MyTable
             data={tableData}
             loading={isFetchingTable}
+            loadingHeight={loadingHeight}
             columns={tableColumns}
           />
       }

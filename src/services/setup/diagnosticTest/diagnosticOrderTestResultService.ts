@@ -32,7 +32,9 @@ type PagedResult<T> = {
 };
 
 export type DiagnosticOrderTestResultFilterParams = {
-  orderIdIn?: number;
+  orderIdIn?: number | number[] | string | string[];
+  patientIdIn?: number[];
+  reviewed?: boolean;
   orderTestId?: number;
   profileTestId?: number;
 
@@ -52,6 +54,9 @@ export type DiagnosticOrderTestResultFilterParams = {
   reviewDateTo?: string;
 
   resultType?: "NUMBER" | "TEXT";
+
+  orderNumber?: string;
+  encounterNumber?: string;
 } & PagedParams;
 
 export type AllDiagnosticOrderTestResultsParams = {

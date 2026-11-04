@@ -31,6 +31,8 @@ type PatientObservationsComplaintsProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  prefill?: Partial<PatientObservationsComplaintsModel> | null;
+  onSaved?: (saved?: PatientObservationsComplaintsModel) => void;
 };
 
 const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
@@ -40,7 +42,9 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   setEncounter,
   disabled = false,
   width = '100%',
-  title = 'Nursing Assessment'
+  title = 'Nursing Assessment',
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -76,6 +80,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   const [record, setRecord] = useState<PatientObservationsComplaintsModel>({
     ...newPatientObservationsComplaints,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
@@ -96,14 +101,14 @@ const sourceOfInformationOptions = useMemo(
 
 
 
-  const [byPatient, setByPatient] = useState(true);
+  const [byPatient, setByPatient] = useState(prefill?.byPatient !== false);
   const [clearKey, setClearKey] = useState(0);
 
   // Populate form from latest encounter observations.
   // Blood group and patient conditions are intentionally excluded — they are
   // patient-level data managed by the effects below.
 useEffect(() => {
-  if (!latestByEncounter) return;
+  if (prefill || !latestByEncounter) return;
 
   setByPatient(latestByEncounter.byPatient ?? true);
 
@@ -124,7 +129,7 @@ useEffect(() => {
         ? latestByEncounter.isActive
         : true
   }));
-}, [latestByEncounter, patientId, encounterId]);
+}, [latestByEncounter, patientId, encounterId, prefill]);
 
   // Blood group and patient conditions are always driven by the patient record.
   // Both run on initial load and after every save (refetchPatient updates patientData).
@@ -146,6 +151,9 @@ useEffect(() => {
     }));
   }, [patientData?.patientConditions]);
 
+  // Pregnancy and lactation are recorded for female patients only.
+  const isFemale = String(patientData?.sexAtBirth ?? '').toUpperCase() === 'FEMALE';
+
   const createPayload = useMemo(() => {
     return {
       patientId,
@@ -161,12 +169,14 @@ useEffect(() => {
       patientConditions: record.patientConditions ?? null,
       cognitiveCheck: record.cognitiveCheck ?? null,
       bloodGroup: record.bloodGroup ?? null,
+      isPregnant: isFemale ? Boolean(record.isPregnant) : null,
+      isLactating: isFemale ? Boolean(record.isLactating) : null,
       isActive:
         typeof record.isActive === 'boolean'
           ? record.isActive
           : true
     };
-  }, [record, patientId, encounterId, byPatient]);
+  }, [record, patientId, encounterId, byPatient, isFemale]);
 
   const toEncounterPayload = (enc: any): PatientEncounter => ({
     id: Number(enc?.id),
@@ -305,6 +315,7 @@ useEffect(() => {
       await refetchPatient();
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+      onSaved?.(created);
     } catch (err: any) {
       showApiError(err);
     }
@@ -436,6 +447,33 @@ useEffect(() => {
               />
             </div>
           </div>
+
+          {isFemale && (
+            <div className="functional-cognitive-row">
+              <div className="functional-cognitive-col">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Pregnant"
+                  fieldType="checkbox"
+                  fieldName="isPregnant"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={disabled}
+                />
+              </div>
+              <div className="functional-cognitive-col">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Lactating"
+                  fieldType="checkbox"
+                  fieldName="isLactating"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+          )}
 
           {/* <MultiSelectAppender
             key={clearKey}

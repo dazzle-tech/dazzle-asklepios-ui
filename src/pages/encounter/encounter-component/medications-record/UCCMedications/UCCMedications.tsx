@@ -4,6 +4,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -33,6 +34,7 @@ import MedicationAdministrationModal from '@/pages/encounter/urgent-care/Medicat
 import MedicationAdministrationLogs from '@/pages/encounter/urgent-care/MedicationAdministrationLogs';
 import { Tooltip, Whisper } from 'rsuite';
 import { useLocation } from 'react-router-dom';
+import UccCreatePlanIcon from './UccCreatePlanIcon';
 
 type Props = {
   patient: any;
@@ -53,11 +55,13 @@ type MedicationOrderRow = {
   doseUnit?: string;
   route?: string;
 
+  frequency?: string;
   frequencyNumber?: number;
   frequencyUnit?: string;
   duration?: number;
   startTime?: string;
   doseTime?: string;
+  orderGroupId?: number;
 
   status?: string;
   isHighAlert?: boolean;
@@ -117,9 +121,11 @@ const InstructionsCell = ({
     row?.doseUnit
       ? unitMap[String(row.doseUnit)] || row.doseUnit
       : null,
-    row?.frequencyNumber && row?.frequencyUnit
-      ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
-      : null,
+    row?.frequency
+      ? formatEnumString(row.frequency)
+      : row?.frequencyNumber && row?.frequencyUnit
+        ? `${row.frequencyNumber} ${formatEnumString(row.frequencyUnit)}`
+        : null,
     row?.route
       ? roaMap[String(row.route)] || row.route
       : null
@@ -146,7 +152,8 @@ const formatDate = (date: any) => {
 const UCCMedications = ({ patient, ...props }: Props) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const edit = isAmendmentOpen || (props.edit ?? location.state?.edit ?? false);
   const [administrationModalOpen, setAdministrationModalOpen] =
     useState(false);
 
@@ -161,10 +168,11 @@ const UCCMedications = ({ patient, ...props }: Props) => {
   const weekAgo = new Date();
   weekAgo.setDate(today.getDate() - 7);
 
+  // Newest medication first; its doses in time order (first dose on top)
   const [orderedParams, setOrderedParams] = useState({
     page: 0,
     size: 10,
-    sort: 'createdDate,desc'
+    sort: ['orderGroupId,desc', 'doseTime,asc', 'id,asc']
   });
 
   const [adminParams, setAdminParams] = useState({
@@ -281,7 +289,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
 
 
   const handleDiscard = async () => {
-    if (!selectedRow) return;
+    if (isAmendmentOpen || !selectedRow) return;
 
     try {
       await discardOrder({
@@ -316,6 +324,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
   const handleDoubleCheck = async (
     row: MedicationOrderRow
   ) => {
+    if (isAmendmentOpen) return;
     try {
       await doubleCheckOrder(row.id).unwrap();
 
@@ -440,7 +449,7 @@ const UCCMedications = ({ patient, ...props }: Props) => {
     {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
-      width: 120,
+      width: 150,
       align: 'center',
       render: (row: MedicationOrderRow) => {
         return (
@@ -514,6 +523,8 @@ const UCCMedications = ({ patient, ...props }: Props) => {
                     }}
                   />
                 </Whisper>
+
+                <UccCreatePlanIcon row={row} disabled={edit} onSaved={() => refetchOrdered()} />
 
               </>
             )}

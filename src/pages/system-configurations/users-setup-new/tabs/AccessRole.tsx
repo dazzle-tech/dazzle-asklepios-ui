@@ -46,16 +46,13 @@ const AccessRole = ({ user }) => {
     return;
   }
 
-  // check if already has role in same facility
-  const hasRoleInFacility = userRoles.some((ur) => {
-    const roleFacilityId = conjureValueBasedOnIDFromList(allRoles ?? [], ur.roleId, "facilityId");
-    return roleFacilityId && roleFacilityId === selectedFacility.id;
-  });
+  // check if user already has this role
+  const alreadyHasRole = userRoles.some((ur) => ur.roleId === selectedRole.id);
 
-  if (hasRoleInFacility) {
+  if (alreadyHasRole) {
     dispatch(
       notify({
-        msg: `User already has a role in facility ${selectedFacility.name}. Delete it first.`,
+        msg: `User already has role ${selectedRole.name}.`,
         sev: "warning",
       })
     );

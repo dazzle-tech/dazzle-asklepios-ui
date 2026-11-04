@@ -157,6 +157,92 @@ export const getInsuranceStatus = (
   };
 };
 
+const startOfLocalDay = (value: string | Date): Date | null => {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      return null;
+    }
+
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value).trim());
+
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+};
+
+/** True when the policy expiry date is today or later. */
+export const isInsuranceExpiryStillValid = (
+  expirationDate: string | Date | null | undefined
+): boolean => {
+  if (expirationDate == null || expirationDate === '') {
+    return false;
+  }
+
+  const expiry = startOfLocalDay(expirationDate);
+
+  if (!expiry) {
+    return false;
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return expiry >= today;
+};
+
+export const patientInsuranceRecordId = (
+  insurance: {
+    id?: number | string | null;
+    key?: number | string | null;
+    patientInsuranceId?: number | string | null;
+  } | null
+  | undefined
+): number | null => {
+  const parsed = Number(
+    insurance?.id ?? insurance?.key ?? insurance?.patientInsuranceId
+  );
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
+/** Prefer the primary policy that is still within its expiry date. */
+export const pickDefaultPatientInsurance = <
+  T extends {
+    id?: number | string | null;
+    key?: number | string | null;
+    patientInsuranceId?: number | string | null;
+    expirationDate?: string | Date | null;
+    isPrimary?: boolean | null;
+  }
+>(
+  insurances: T[] | null | undefined
+): T | null => {
+  const valid = (insurances ?? []).filter(insurance =>
+    isInsuranceExpiryStillValid(insurance?.expirationDate)
+  );
+
+  if (!valid.length) {
+    return null;
+  }
+
+  return valid.find(insurance => insurance?.isPrimary) ?? valid[0];
+};
+
 export const resolveNphiesPayerNameById = (
   nphiesId: string | number | null | undefined,
   nphiesPayersList: NphiesPayer[] = [],

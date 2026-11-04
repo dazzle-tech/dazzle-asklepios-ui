@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -8,7 +9,6 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
@@ -72,9 +72,18 @@ const endOfDay = (d: Date) => {
   return x;
 };
 
+const getDefaultDateRange = (): { fromDate: Date | null; toDate: Date | null } => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 3);
+
+  return {
+    fromDate: weekAgo,
+    toDate: new Date()
+  };
+};
+
 const Reports = ({ patient }) => {
   const dispatch = useAppDispatch();
-  const today = new Date();
   const patientId = patient?.id;
 
   const [page, setPage] = useState(0);
@@ -91,10 +100,8 @@ const Reports = ({ patient }) => {
 const [openStudiesModal, setOpenStudiesModal] = useState(false);
 
 const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
-  const [orderDate, setOrderDate] = useState({
-    fromDate: today,
-    toDate: today
-  });
+  const [orderDate, setOrderDate] = useState(getDefaultDateRange);
+  const [appliedDate, setAppliedDate] = useState(orderDate);
 
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
@@ -102,50 +109,26 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
 
  const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
-  const ordersQueryParams = useMemo(() => {
-    if (!patientId) return skipToken;
-
-    return {
-      patientId,
-      page: 0,
-      size: 1000,
-      sort: 'id,desc'
-    };
-  }, [patientId]);
-
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-
-  const orders = ordersResponse?.data ?? [];
-
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
-
   const queryParams = useMemo(() => {
     if (!patientId) return null;
-    if (isOrdersFetching) return null;
-    if (!orderIds.length) return null;
 
     return {
-      processingStatus: 'RESULT_APPROVED',
+      processingStatusIn: ['RESULT_APPROVED'],
       reviewed: true,
-      orderIdIn: orderIds,
-      ...(orderDate.fromDate
-        ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
+      patientIdIn: [patientId],
+      ...(appliedDate.fromDate
+        ? { approvedDateFrom: startOfDay(appliedDate.fromDate).toISOString() }
         : {}),
-      ...(orderDate.toDate
-        ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
+      ...(appliedDate.toDate
+        ? { approvedDateTo: endOfDay(appliedDate.toDate).toISOString() }
         : {})
     };
-  }, [patientId, isOrdersFetching, orderIds, orderDate]);
+  }, [patientId, appliedDate]);
 
   const {
     data,
-    isFetching
+    isFetching,
+    refetch
   } = useFilterRadiologyReportsQuery(
     queryParams
       ? {
@@ -421,6 +404,25 @@ const handleViewImage = async (reportId: number) => {
     }
   ];
 
+  const handleSearch = () => {
+    setPage(0);
+    if (
+      orderDate.fromDate?.valueOf() === appliedDate.fromDate?.valueOf() &&
+      orderDate.toDate?.valueOf() === appliedDate.toDate?.valueOf()
+    ) {
+      refetch();
+      return;
+    }
+    setAppliedDate({ ...orderDate });
+  };
+
+  const handleClearFilters = () => {
+    const defaults = getDefaultDateRange();
+    setOrderDate(defaults);
+    setAppliedDate(defaults);
+    setPage(0);
+  };
+
   const filters = (
     <Form layout="inline" fluid className="filter-form-disable-fix">
       <MyInput
@@ -440,6 +442,11 @@ const handleViewImage = async (reportId: number) => {
         fieldName="toDate"
         record={orderDate}
         setRecord={setOrderDate}
+      />
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={handleSearch}
+        clearOnClick={handleClearFilters}
       />
     </Form>
   );
@@ -492,7 +499,7 @@ const handleViewImage = async (reportId: number) => {
 
   useEffect(() => {
     setPage(0);
-  }, [patientId, orderDate]);
+  }, [patientId, appliedDate]);
 
   if (!patientId) {
     return null;
@@ -505,7 +512,7 @@ const handleViewImage = async (reportId: number) => {
         tableButtons={tableButtons}
         columns={reportColumns}
         data={reports}
-        loading={isOrdersFetching || isFetching || (!!reports.length && !isDataLoaded)}
+        loading={isFetching ||(!!reports.length && !isDataLoaded)}
         page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}

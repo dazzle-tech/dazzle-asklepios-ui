@@ -15,6 +15,9 @@ import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 const dummyRow = {
   fullName: 'Ali Hassan',
   patientMrn: 'MRN567890',
+  phoneNumber: '+15551234',
+  documentNumber: 'ID-567890',
+  dob: '1965-01-20',
   age: 60,
   genderLvalue: { lovDisplayVale: 'Male' },
   encounterTypeLvalue: { lovDisplayVale: 'Inpatient' },
@@ -78,6 +81,10 @@ const columns = [
 
 const DischargedPatients = () => {
   const [filters, setFilters] = useState({ from: '', to: '', patient: '', visitId: '' });
+  const [appliedPatientSearch, setAppliedPatientSearch] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
   const [sortColumn, setSortColumn] = useState('fullName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
@@ -90,7 +97,20 @@ const DischargedPatients = () => {
   const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
   const { data: departmentsResponse } = useGetDepartmentsQuery(initialListRequest);
 
-  const data = [dummyRow];
+  const matchesPatientSearch = (row: any) => {
+    const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
+    const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
+    if (!raw) return true;
+    if (field === 'patientMrn') return String(row?.patientMrn ?? '').toLowerCase().includes(raw);
+    if (field === 'phoneNumber') return String(row?.phoneNumber ?? '').toLowerCase().includes(raw);
+    if (field === 'documentNumber')
+      return String(row?.documentNumber ?? '').toLowerCase().includes(raw);
+    if (field === 'dob')
+      return String(row?.dob ?? '') === String(appliedPatientSearch?.patientName ?? '').trim();
+    return String(row?.fullName ?? '').toLowerCase().includes(raw);
+  };
+
+  const data = [dummyRow].filter(matchesPatientSearch);
 
   const sorted = [...data].sort((a, b) => {
     const aVal = a[sortColumn];
@@ -165,7 +185,18 @@ const content = (
           setRecord={setFilters}
         />
 
-<SearchPatientCriteria record={filters} setRecord={setFilters}/>
+<SearchPatientCriteria
+  record={filters}
+  setRecord={setFilters}
+  liveSearchMinLength={0}
+  onSearchClick={() => {
+    setAppliedPatientSearch({
+      searchByField: (filters as any)?.searchByField ?? 'fullName',
+      patientName: (filters as any)?.patientName ?? ''
+    });
+    setPage(0);
+  }}
+/>
 
 
       </div>

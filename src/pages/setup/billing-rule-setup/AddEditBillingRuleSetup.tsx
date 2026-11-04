@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { Form } from 'rsuite';
 
@@ -36,6 +36,19 @@ type Props = {
   onSaveSuccess?: () => void;
 };
 
+const WORKFLOW_TRIGGERS = [
+  'SUBMIT_ORDER',
+  'COLLECT_SAMPLE',
+  'ACCEPT_ORDER',
+  'APPROVED'
+];
+
+const FALLBACK_PAYMENT_OPTIONS = [
+  { value: 'SELF_PAY', label: 'Self Pay' },
+  { value: 'INSURANCE', label: 'Insurance' },
+  { value: 'BOTH', label: 'Both' }
+];
+
 const normalizeBillingRuleError = (
   error: any
 ) => {
@@ -47,6 +60,10 @@ const normalizeBillingRuleError = (
       return 'A billing rule with this name already exists.';
     case 'id.mismatch':
       return 'Billing rule id mismatch. Please refresh and try again.';
+    case 'trigger.serviceType':
+      return 'This billing trigger is only available for laboratory or radiology.';
+    case 'paymentType.required':
+      return 'Payment type is required.';
     default:
       return (
         data?.detail ??
@@ -75,9 +92,63 @@ const AddEditBillingRuleSetup: React.FC<
     useEnumOptions('BillingItemTypes') ??
     [];
 
-  const triggerOptions =
+  const loadedTriggerOptions =
     useEnumOptions('BillingTrigger') ??
     [];
+
+  const loadedPaymentOptions =
+    useEnumOptions('BillingRulePaymentType') ??
+    [];
+
+  const paymentOptions =
+    loadedPaymentOptions.length > 0
+      ? loadedPaymentOptions
+      : FALLBACK_PAYMENT_OPTIONS;
+
+  const triggerOptions = useMemo(() => {
+    const itemType = billingRule.billingItemType;
+
+    return loadedTriggerOptions.filter(option => {
+      if (option.value === 'COLLECT_SAMPLE') {
+        return itemType === 'LABORATORY';
+      }
+
+      if (
+        option.value === 'SUBMIT_ORDER' ||
+        option.value === 'ACCEPT_ORDER' ||
+        option.value === 'APPROVED'
+      ) {
+        return (
+          itemType === 'LABORATORY' ||
+          itemType === 'RADIOLOGY'
+        );
+      }
+
+      return true;
+    });
+  }, [loadedTriggerOptions, billingRule.billingItemType]);
+
+  useEffect(() => {
+    if (!open || !billingRule.billingTrigger) {
+      return;
+    }
+
+    const stillAllowed = triggerOptions.some(
+      option => option.value === billingRule.billingTrigger
+    );
+
+    if (!stillAllowed) {
+      setBillingRule(current => ({
+        ...current,
+        billingTrigger: 'ORDERED'
+      }));
+    }
+  }, [
+    open,
+    billingRule.billingTrigger,
+    setBillingRule,
+    triggerOptions
+  ]);
 
   const [
     addBillingRule,
@@ -108,6 +179,21 @@ const AddEditBillingRuleSetup: React.FC<
       return 'Billing trigger is required.';
     }
 
+    if (
+      billingRule.billingTrigger === 'COLLECT_SAMPLE' &&
+      billingRule.billingItemType !== 'LABORATORY'
+    ) {
+      return 'Collect Sample is available for laboratory only.';
+    }
+
+    if (
+      WORKFLOW_TRIGGERS.includes(billingRule.billingTrigger) &&
+      billingRule.billingItemType !== 'LABORATORY' &&
+      billingRule.billingItemType !== 'RADIOLOGY'
+    ) {
+      return 'This billing trigger is only available for laboratory or radiology.';
+    }
+
     return null;
   };
 
@@ -132,6 +218,8 @@ const AddEditBillingRuleSetup: React.FC<
         billingRule.billingItemType!,
       billingTrigger:
         billingRule.billingTrigger!,
+      paymentType:
+        billingRule.paymentType ?? 'BOTH',
       isDefault: Boolean(
         billingRule.isDefault
       )
@@ -214,6 +302,34 @@ const AddEditBillingRuleSetup: React.FC<
           isEnum
         />
       </div>
+
+      <br />
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Payment Type"
+        fieldType="select"
+        fieldName="paymentType"
+        selectData={paymentOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={{
+          ...billingRule,
+          paymentType: billingRule.paymentType ?? 'BOTH'
+        }}
+        setRecord={setBillingRule}
+        searchable={false}
+      />
+
+      {WORKFLOW_TRIGGERS.includes(
+        billingRule.billingTrigger ?? ''
+      ) ? (
+        <p className="billing-rule-debit-note-hint">
+          This trigger decides when the charge line is created for laboratory
+          or radiology. The price calculation stays on the selected billing rule.
+        </p>
+      ) : null}
 
       {billingRule.billingTrigger === 'DEBIT_NOTE' ? (
         <p className="billing-rule-debit-note-hint">

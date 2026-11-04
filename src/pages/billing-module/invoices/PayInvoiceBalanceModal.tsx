@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Modal, Text } from 'rsuite';
+import { Checkbox, Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -17,11 +17,14 @@ import { notify } from '@/utils/uiReducerActions';
 import PaymentMethodSelector from '@/pages/billing-module/accounting/components/PaymentMethodSelector';
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  capPaymentToBalance,
   computeWalletCollectAmounts,
   formatMoney,
+  isCreditCardPaymentMethod,
   isWalletPaymentMethod,
   makeRequestId,
-  mergeBillingPaymentMethodOptions
+  mergeBillingPaymentMethodOptions,
+  roundMoney
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import { resolveInvoiceDisplayNumber } from './invoiceDisplayUtils';
 import { useCreditCardMachinePayment } from '@/utils/cardMachinePayment';
@@ -112,7 +115,10 @@ console.log("Resolved Patient ID:", resolvedPatientId);
   const [form, setForm] = useState({
     amount: 0,
     paymentMethodCode: '',
-    notes: ''
+    notes: '',
+    manualCardEntry: false,
+    manualCardPanNumber: '',
+    manualCardTransactionId: ''
   });
 
   const [collectInvoiceBalance, { isLoading }] = useCollectInvoiceBalanceMutation();
@@ -172,7 +178,10 @@ console.log("Resolved Patient ID:", resolvedPatientId);
     setForm({
       amount: suggestedAmount,
       paymentMethodCode: '',
-      notes: ''
+      notes: '',
+      manualCardEntry: false,
+      manualCardPanNumber: '',
+      manualCardTransactionId: ''
     });
   }, [open, suggestedAmount]);
 
@@ -228,7 +237,7 @@ console.log("Resolved Patient ID:", resolvedPatientId);
       return;
     }
 
-    if (Number(paymentAmount.toFixed(4)) > Number(outstandingAmount.toFixed(4))) {
+    if (roundMoney(paymentAmount) > roundMoney(outstandingAmount)) {
       dispatch(
         notify({
           msg: `Amount exceeds outstanding balance (${formatMoney(outstandingAmount, currency)}).`,
@@ -237,9 +246,11 @@ console.log("Resolved Patient ID:", resolvedPatientId);
       );
       return;
     }
+
+    paymentAmount = capPaymentToBalance(paymentAmount, outstandingAmount);
     const chargeCreditCardIfNeeded = async () => {
       if (resolvedPatientId == null || resolvedEncounterId == null) {
-        return true;
+        return { proceed: true, cardResult: null };
       }
 
       const creditCardCollect = await collectCreditCardAmountOrSkip(
@@ -249,7 +260,13 @@ console.log("Resolved Patient ID:", resolvedPatientId);
           patientId: resolvedPatientId,
           sourceType: 'ENCOUNTER',
           sourceReferenceId: resolvedEncounterId,
-          facilityId: null
+          facilityId: null,
+          manualEntry: form.manualCardEntry
+            ? {
+                panNumber: form.manualCardPanNumber,
+                transactionId: form.manualCardTransactionId
+              }
+            : null
         }
       );
 
@@ -260,15 +277,24 @@ console.log("Resolved Patient ID:", resolvedPatientId);
             sev: 'warning'
           })
         );
-        return false;
+        return { proceed: false };
       }
 
-      return true;
+      return {
+        proceed: true,
+        cardResult: creditCardCollect.skipped
+          ? null
+          : {
+              authorizationCode: creditCardCollect.result?.authorizationCode ?? null,
+              processorReference: creditCardCollect.result?.processorReference ?? null,
+              cardLastFour: creditCardCollect.result?.cardLastFour ?? null
+            }
+      };
     };
 
-    const creditCardCharged = await chargeCreditCardIfNeeded();
+    const creditCardCharge = await chargeCreditCardIfNeeded();
 
-    if (!creditCardCharged) {
+    if (!creditCardCharge.proceed) {
       return;
     }
 
@@ -282,7 +308,10 @@ console.log("Resolved Patient ID:", resolvedPatientId);
             selectedMethod?.id ?? selectedMethod?.key ?? selectedMethod?.valueId ?? 0
           ),
           requestId: makeRequestId('INVOICE-PAY'),
-          notes: form.notes.trim() || `Invoice balance payment ${resolvedDocumentNumber}`
+          notes: form.notes.trim() || `Invoice balance payment ${resolvedDocumentNumber}`,
+          authorizationCode: creditCardCharge.cardResult?.authorizationCode ?? null,
+          processorReference: creditCardCharge.cardResult?.processorReference ?? null,
+          cardLastFour: creditCardCharge.cardResult?.cardLastFour ?? null
         }
       }).unwrap();
 
@@ -437,6 +466,40 @@ console.log("Resolved Patient ID:", resolvedPatientId);
                 }))
               }
             />
+            {isCreditCardPaymentMethod(form.paymentMethodCode) && (
+              <>
+                <Checkbox
+                  checked={form.manualCardEntry}
+                  onChange={(_, checked) =>
+                    setForm(previous => ({ ...previous, manualCardEntry: checked }))
+                  }
+                >
+                  Charged manually on a separate terminal
+                </Checkbox>
+                {form.manualCardEntry && (
+                  <>
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Card Number"
+                      fieldName="manualCardPanNumber"
+                      record={form}
+                      setRecord={setForm}
+                      width="100%"
+                    />
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Transaction ID"
+                      fieldName="manualCardTransactionId"
+                      record={form}
+                      setRecord={setForm}
+                      width="100%"
+                    />
+                  </>
+                )}
+              </>
+            )}
             <MyInput
               column
               fieldType="number"

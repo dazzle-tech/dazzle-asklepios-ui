@@ -3,6 +3,35 @@ import { newPatient, newPatientInsurance } from '@/types/model-types-constructor
 
 const PATIENT_SAVE_KEYS = Object.keys(newPatient) as (keyof Patient)[];
 
+export const hasReturnedCchiDocument = (
+  document?: { number?: string | null; documentNumber?: string | null } | null
+): boolean => Boolean(String(document?.number ?? document?.documentNumber ?? '').trim());
+
+export const wasCchiPatientFound = (
+  patient?: Partial<Patient> | null,
+  document?: { number?: string | null; documentNumber?: string | null } | null
+): boolean => {
+  if (hasReturnedCchiDocument(document)) {
+    return true;
+  }
+
+  if (!patient) {
+    return false;
+  }
+
+  const identity = [
+    patient.firstName,
+    patient.secondName,
+    patient.thirdName,
+    patient.lastName,
+    patient.documentId
+  ]
+    .filter(value => value != null && String(value).trim() !== '')
+    .join('');
+
+  return identity.trim() !== '';
+};
+
 export const pickPatientFields = (source?: Partial<Patient> | null): Partial<Patient> => {
   if (!source) return {};
 

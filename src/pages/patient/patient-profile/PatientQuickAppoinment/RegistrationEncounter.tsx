@@ -21,6 +21,7 @@ import {
 import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetProceduresByDepartmentQuery } from '@/services/setup/procedure/procedureService';
 
 import {
   useLazyCountTodayEncountersByFacilityQuery,
@@ -80,6 +81,7 @@ const RegistrationEncounter = ({
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
+  const { data: patPromotionLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_PROMOTION');
 
   useEffect(() => {
     if (!localEncounter) {
@@ -282,6 +284,32 @@ useEffect(() => {
 
   const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
     useLazyGetServicesByDepartmentQuery();
+
+  const defaultProceduresDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const defaultProceduresSpecialty = String(localEncounter?.specialty ?? '').trim();
+
+  const { data: defaultProceduresPage, isFetching: isDefaultProceduresFetching } =
+    useGetProceduresByDepartmentQuery(
+      {
+        sourceId: defaultProceduresDepartmentId,
+        specialty: defaultProceduresSpecialty,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      { skip: !defaultProceduresDepartmentId || !defaultProceduresSpecialty }
+    );
+
+  const defaultProceduresLabel = useMemo(
+    () =>
+      defaultProceduresDepartmentId && defaultProceduresSpecialty
+        ? (defaultProceduresPage?.data ?? [])
+            .map((procedure: any) => String(procedure?.name ?? '').trim())
+            .filter(Boolean)
+            .join(', ')
+        : '',
+    [defaultProceduresPage, defaultProceduresDepartmentId, defaultProceduresSpecialty]
+  );
 
   const practHasMore = Boolean(practitionersList?.links?.next);
 
@@ -749,6 +777,22 @@ useEffect(() => {
       />
 
       <MyInput
+        column
+        fieldLabel="Default Procedures"
+        fieldName="defaultProceduresLabel"
+        record={{ defaultProceduresLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.specialty
+            ? 'Select practitioner first'
+            : isDefaultProceduresFetching
+              ? 'Loading...'
+              : defaultProceduresLabel || 'No linked procedure found'
+        }
+      />
+
+      <MyInput
         vr={validationResult}
         column
         fieldType="select"
@@ -828,6 +872,32 @@ useEffect(() => {
         column
         fieldLabel="Origin Name"
         fieldName="originName"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldType="select"
+        fieldLabel="Promotion Name"
+        fieldName="promotionName"
+        selectData={patPromotionLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        disableByField="isValid"
+        selectDataValue="key"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        searchable={false}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldLabel="Promotion Code"
+        fieldName="promotionCode"
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}

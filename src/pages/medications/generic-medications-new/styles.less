@@ -6,3 +6,62 @@
   display: flex;
   gap: 20px;
 }
+
+/* Add/Edit Brand Medication – Information step */
+.brand-medication-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  // fields sit in the grid, so drop MyInput's own bottom margin
+  .my-input-container,
+  .rs-form-group {
+    margin-bottom: 0 !important;
+  }
+}
+
+// Even grid: 3 columns by default, fewer on smaller screens
+.brand-medication-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+
+  &.brand-medication-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  &.brand-medication-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 1200px) {
+    &,
+    &.brand-medication-grid-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    &,
+    &.brand-medication-grid-4,
+    &.brand-medication-grid-2 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+// Toggles in one row, wrapping when there is no room
+.brand-medication-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin-bottom: 12px;
+}
+
+// Shown when the saved currency differs from the selected facility's currency
+.brand-medication-currency-warning {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--primary-orange, #d97706);
+}

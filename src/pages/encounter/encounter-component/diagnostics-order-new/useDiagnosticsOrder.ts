@@ -171,6 +171,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const departments = departmentsResponse?.data ?? [];
 
   const resolveFromDepartmentId = () => {
+    if (encounter?.departmentId) return encounter.departmentId;
+
     const selectedDeptId = selectedDepartment?.departmentId;
     const selectedDeptName = selectedDepartment?.departmentName ?? selectedDepartment?.name;
     const selectedFacilityId = selectedDepartment?.facilityId;
@@ -250,11 +252,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const isSubmitDisabled = !orderId || orders?.status !== 'NEW';
 
-  const { data: ordersListResponse, refetch: ordersRefetch } = useFilterDiagnosticOrdersQuery(
+  const {
+    data: ordersListResponse,
+    refetch: ordersRefetch,
+    isSuccess: ordersSuccess,
+    isError: ordersError
+  } = useFilterDiagnosticOrdersQuery(
     patientId && encounterId ? { patientId, encounterId } : skipToken
   );
 
   const ordersList = ordersListResponse?.data ?? [];
+  const ordersLoaded = ordersSuccess || ordersError || !(patientId && encounterId);
 
   const hasOpenOrder = ordersList.some((o: any) => o.status === 'NEW' || o.saveDraft === true);
 
@@ -714,7 +722,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     return warnings;
   };
 
-  const handleSaveTests = async () => {
+  // Resolves true when every selected test was saved without errors
+  const handleSaveTests = async (): Promise<boolean> => {
     setOpenTestsModal(false);
 
 
@@ -723,12 +732,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!fromDepartmentId) {
       dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
-      return;
+      return false;
     }
 
     try {
@@ -861,9 +870,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
+      return failed.length === 0;
     } catch (error: any) {
       if (isUncoveredCashCancelled(error)) {
-        return;
+        return false;
       }
       console.error('Save tests failed:', error);
       dispatch(
@@ -872,6 +882,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           sev: 'error'
         })
       );
+      return false;
     }
     finally {
       console.log("Fainaly ")
@@ -886,8 +897,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       encounterId,
       labStatus: DiagnosticStatus.NEW,
       radStatus: DiagnosticStatus.NEW,
-      fromDepartmentId: selectedDepartment?.departmentId,
-      fromFacilityId: selectedDepartment?.facilityId
+      fromDepartmentId: encounter?.departmentId || selectedDepartment?.departmentId,
+      fromFacilityId: encounter?.facilityId || selectedDepartment?.facilityId
     };
 
     const response = await createOrder(createPayload).unwrap();
@@ -1065,6 +1076,38 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
   };
 
+  // open Select Tests on the open draft order if there is one, otherwise create a new order first
+  const handleOpenTestsSelection = async (): Promise<boolean> => {
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return false;
+    }
+
+    if (String(authSlice.user?.jobRole ?? '').toUpperCase() === 'NURSE') {
+      dispatch(notify({ msg: 'Nurses cannot create diagnostic orders', sev: 'warning' }));
+      return false;
+    }
+
+    const draftOrder = orders?.id && isDraftOrder(orders) ? orders : ordersList.find(isDraftOrder);
+
+    try {
+      setLoading?.(true);
+      if (draftOrder) {
+        setOrders(draftOrder);
+      } else {
+        await createNewOrder();
+      }
+      setOpenTestsModal(true);
+      return true;
+    } catch (error) {
+      console.error('Create order failed:', error);
+      dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+      return false;
+    } finally {
+      setLoading?.(false);
+    }
+  };
+
   const handleRecallFavoriteTest = async (t: any, targetOrderId?: number) => {
     const _orderId = targetOrderId ?? orders?.id;
 
@@ -1195,6 +1238,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     loadTests,
     hasOpenOrder,
     isSubmitDisabled,
+    ordersLoaded,
 
     // filters
     filters,
@@ -1267,6 +1311,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
     handleRecallFavoriteTests,
+    handleOpenTestsSelection,
 
     // helpers
     normalizeOrderTest,

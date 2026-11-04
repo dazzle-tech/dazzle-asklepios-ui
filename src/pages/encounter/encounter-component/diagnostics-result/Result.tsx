@@ -1,3 +1,4 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -100,6 +101,14 @@ const renderMarker = (marker?: string) => {
   }
 };
 
+const getDefaultDateFilter = () => {
+  const toDate = new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setDate(fromDate.getDate() - 3);
+
+  return { fromDate, toDate };
+};
+
 const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const patientId = patient?.id;
 
@@ -108,13 +117,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [showAbnormal, setShowAbnormal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<any>(() => {
-    const toDate = new Date();
-    const fromDate = new Date(toDate);
-    fromDate.setDate(fromDate.getDate() - 14);
-
-    return { fromDate, toDate };
-  });
+  const [dateFilter, setDateFilter] = useState<any>(getDefaultDateFilter);
+  const [appliedFilters, setAppliedFilters] = useState<any>(() => ({
+    ...dateFilter,
+    showAbnormal
+  }));
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
@@ -130,26 +137,16 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     };
   }, [patientId]);
 
-  const {
-    data: ordersResponse,
-    isFetching: isOrdersFetching
-  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+  // Orders are only needed to display the order number; results are filtered by patient directly.
+  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
 
   const orders = ordersResponse?.data ?? [];
 
-  const orderIds = useMemo(
-    () => orders.map((o: any) => o.id).filter(Boolean),
-    [orders]
-  );
   const queryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
-    if (isOrdersFetching) return skipToken;
-
-    if (!orderIds.length) return skipToken;
-
     const params: any = {
-      orderIdIn: orderIds,
+      patientIdIn: [patientId],
       page: pageIndex,
       size: rowsPerPage,
       processingStatus: 'RESULT_APPROVED',
@@ -157,7 +154,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       reviewed: true
     };
 
-    if (showAbnormal) {
+    if (appliedFilters.showAbnormal) {
       params.markerIn = [
         'UPPER_LIMIT',
         'LOWER_LIMIT',
@@ -167,28 +164,26 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       ];
     }
 
-    if (dateFilter.fromDate) {
-      params.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
+    if (appliedFilters.fromDate) {
+      params.approvedDateFrom = startOfDay(appliedFilters.fromDate).toISOString();
     }
 
-    if (dateFilter.toDate) {
-      params.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
+    if (appliedFilters.toDate) {
+      params.approvedDateTo = endOfDay(appliedFilters.toDate).toISOString();
     }
 
     return params;
   }, [
     patientId,
-    orderIds,
     pageIndex,
     rowsPerPage,
-    showAbnormal,
-    dateFilter,
-    isOrdersFetching
+    appliedFilters
   ]);
 
   const {
     data: response,
-    isFetching: isResultsFetching
+    isFetching: isResultsFetching,
+    refetch: refetchResults
   } = useFilterDiagnosticOrderTestResultsQuery(queryParams);
   const [getAllResultIds] = useLazyGetDiagnosticOrderTestResultIdsQuery();
     const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
@@ -341,16 +336,16 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
       return;
     }
 
-    if (!orderIds.length) return;
+    if (!patientId) return;
 
     try {
       const idsParams: any = {
-        orderIdIn: orderIds,
+        patientIdIn: [patientId],
         processingStatus: 'RESULT_APPROVED',
         reviewed: true
       };
 
-      if (showAbnormal) {
+      if (appliedFilters.showAbnormal) {
         idsParams.markerIn = [
           'UPPER_LIMIT',
           'LOWER_LIMIT',
@@ -360,12 +355,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         ];
       }
 
-      if (dateFilter.fromDate) {
-        idsParams.approvedDateFrom = startOfDay(dateFilter.fromDate).toISOString();
+      if (appliedFilters.fromDate) {
+        idsParams.approvedDateFrom = startOfDay(appliedFilters.fromDate).toISOString();
       }
 
-      if (dateFilter.toDate) {
-        idsParams.approvedDateTo = endOfDay(dateFilter.toDate).toISOString();
+      if (appliedFilters.toDate) {
+        idsParams.approvedDateTo = endOfDay(appliedFilters.toDate).toISOString();
       }
 
       const ids = await getAllResultIds(idsParams).unwrap();
@@ -503,6 +498,27 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
     }
   ];
 
+  const handleSearch = () => {
+    setPageIndex(0);
+    if (
+      dateFilter.fromDate?.valueOf() === appliedFilters.fromDate?.valueOf() &&
+      dateFilter.toDate?.valueOf() === appliedFilters.toDate?.valueOf() &&
+      showAbnormal === appliedFilters.showAbnormal
+    ) {
+      refetchResults();
+      return;
+    }
+    setAppliedFilters({ ...dateFilter, showAbnormal });
+  };
+
+  const handleClearFilters = () => {
+    const defaults = getDefaultDateFilter();
+    setDateFilter(defaults);
+    setShowAbnormal(false);
+    setAppliedFilters({ ...defaults, showAbnormal: false });
+    setPageIndex(0);
+  };
+
   const filters = (
     <Form fluid className="filter-form-disable-fix">
       <div className='diagnostics-result-filters-main-container'>
@@ -532,6 +548,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
             Show Abnormal Result
           </Checkbox>
         </div>
+        <AdvancedSearchFilters
+          showAdvancedButton={false}
+          searchOnClick={handleSearch}
+          clearOnClick={handleClearFilters}
+        />
       </div>
     </Form>
   );
@@ -542,7 +563,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
   useEffect(() => {
     setPageIndex(0);
-  }, [patientId, dateFilter, showAbnormal]);
+  }, [patientId, appliedFilters]);
 
   if (!patientId) {
     return null;
@@ -560,7 +581,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
         }}
         rowClassName={(row) => (row?.id === selectedResult?.id ? "selected-row" : "")}
         loading={
-          isOrdersFetching ||
           isResultsFetching ||
           isOrderTestsFetching ||
           isAllTestsFetching

@@ -1,10 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import dayjs from 'dayjs';
-import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import CancellationModal from '@/components/CancellationModal';
@@ -220,15 +221,15 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
 
 
     const getDefaultFilters = () => ({
-    fromDate: dayjs().startOf('day').toDate(),
-    toDate: dayjs().add(1, 'month').endOf('day').toDate(),
-    status: null,
-    showRejected: false
+        fromDate: dayjs().startOf('day').toDate(),
+        toDate: dayjs().add(1, 'month').endOf('day').toDate(),
+        status: null,
+        showRejected: false
     });
 
-
-    // filters
-const [filters, setFilters] = useState<any>(getDefaultFilters);
+    const [filters, setFilters] = useState<any>(getDefaultFilters);
+    const [appliedFilters, setAppliedFilters] = useState<any>(getDefaultFilters);
+    const [expandedPatients, setExpandedPatients] = useState<Record<string, boolean>>({});
 
     // Reject reason modal
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -238,7 +239,50 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
     // ensure modal never receives null object
     const rejectObject = pendingRejectRow ?? ({ rejectReason: '' } as any);
 
-    const filteredData = useMemo(() => applyDateStatusAndRejectedGate(data ?? [], filters), [data, filters]);
+    const filteredData = useMemo(
+        () => applyDateStatusAndRejectedGate(data ?? [], appliedFilters),
+        [data, appliedFilters]
+    );
+
+    const patientGroups = useMemo(() => {
+        const groups = new Map<string, { key: string; patientName: string; mrn: string; rows: Row[] }>();
+        filteredData.forEach(row => {
+            const patientId = row?._raw?.patientId ?? row?._raw?.patient_id;
+            const key = patientId
+                ? `id:${patientId}`
+                : row.mrn
+                  ? `mrn:${row.mrn}`
+                  : `name:${row.patientName || 'Unknown'}`;
+            const existing = groups.get(key);
+            if (existing) {
+                existing.rows.push(row);
+                return;
+            }
+            groups.set(key, {
+                key,
+                patientName: row.patientName || 'Unknown',
+                mrn: row.mrn || '',
+                rows: [row]
+            });
+        });
+        return Array.from(groups.values()).sort((a, b) => a.patientName.localeCompare(b.patientName));
+    }, [filteredData]);
+
+    const handleSearch = () => {
+        setAppliedFilters({ ...filters });
+        setExpandedPatients({});
+    };
+
+    const handleClear = () => {
+        const defaults = getDefaultFilters();
+        setFilters(defaults);
+        setAppliedFilters(defaults);
+        setExpandedPatients({});
+    };
+
+    const togglePatient = (key: string) => {
+        setExpandedPatients(current => ({ ...current, [key]: !current[key] }));
+    };
 
     const openRejectModal = (row: Row) => {
         setPendingRejectRow({ ...(row as any), rejectReason: '' });
@@ -315,6 +359,24 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
             }
         },
         {
+            key: 'recurrence',
+            title: 'Recurrence',
+            render: (row: Row) => {
+                const raw = row?._raw ?? {};
+                const recurring = raw.recurring === true;
+                if (!recurring) return '-';
+                const days = String(raw.recurrenceDays ?? raw.recurrence_days ?? '')
+                    .split(',')
+                    .filter(Boolean)
+                    .map((day: string) => day.charAt(0) + day.slice(1).toLowerCase().slice(0, 2))
+                    .join(', ');
+                const period = raw.recurrencePeriod ?? raw.recurrence_period;
+                const unit = String(raw.recurrenceUnit ?? raw.recurrence_unit ?? '').toLowerCase();
+                const repeat = period && unit ? `${period} ${unit}${Number(period) === 1 ? '' : 's'}` : '';
+                return <span>{[days, repeat].filter(Boolean).join(' · ') || 'Recurring'}</span>;
+            }
+        },
+        {
             key: 'preferredDate',
             title: 'Preferred Date',
             render: (row: Row) => {
@@ -329,6 +391,21 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
                 // Accept dates in ISO or YYYY-MM-DD format
                 const d = dayjs(String(pd));
                 return d.isValid() ? d.format('DD-MM-YYYY') : String(pd);
+            }
+        },
+        {
+            key: 'preferredTime',
+            title: 'Preferred Time',
+            render: (row: Row) => {
+                const raw = row?._raw ?? {};
+                const startRaw = raw.preferredStartTime ?? raw.preferred_start_time ?? null;
+                const endRaw = raw.preferredEndTime ?? raw.preferred_end_time ?? null;
+                const start = startRaw ? dayjs(String(startRaw)) : null;
+                const end = endRaw ? dayjs(String(endRaw)) : null;
+                if (!start?.isValid()) return '-';
+                const startText = start.format('HH:mm');
+                if (!end?.isValid()) return startText;
+                return `${startText} - ${end.format('HH:mm')}`;
             }
         },
         {
@@ -414,7 +491,7 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
     const tablefilters = (
         <div className="field-btn-div">
             <Form layout="inline" fluid>
-                <div className="information-desk-filters-handle-position-row">
+                <div className="information-desk-filters-handle-position-row view-appointment-request-filters">
                     <MyInput column fieldLabel="From Date" fieldType="date" fieldName="fromDate" record={filters} setRecord={setFilters} />
                     <MyInput column fieldLabel="To Date" fieldType="date" fieldName="toDate" record={filters} setRecord={setFilters} />
 
@@ -440,29 +517,70 @@ const [filters, setFilters] = useState<any>(getDefaultFilters);
 
                     />
 
-                    <div className="show-rejected-view-appointment-request">
-                        <Checkbox
-                            checked={!!filters.showRejected}
-                            onChange={(_, checked) => setFilters((p: any) => ({ ...p, showRejected: checked }))}
-                        >
-                            Show Rejected
-                        </Checkbox>
+                    <MyInput
+                        column
+                        fieldType="check"
+                        fieldLabel="Show Rejected"
+                        fieldName="showRejected"
+                        record={filters}
+                        setRecord={setFilters}
+                        showLabel={false}
+                    />
+                    <div className="view-appointment-request-filter-actions">
+                        <MyButton onClick={handleSearch}>Search</MyButton>
+                        <MyButton appearance="ghost" onClick={handleClear}>
+                            Clear
+                        </MyButton>
                     </div>
                 </div>
             </Form>
         </div>
     );
 
+    const requestColumns = columns.filter(column => column.key !== 'patient');
+
     return (
         <div>
-            <MyTable
-                data={filteredData}
-                columns={columns}
-                loading={false}
-                rowClassName={rowClassName}
-                onRowClick={(rowData: Row) => setSelectedRowId(safeStr(rowData.id))}
-                filters={tablefilters}
-            />
+            {tablefilters}
+            {patientGroups.length === 0 ? (
+                <p className="view-appointment-request-empty">No appointment requests for this search.</p>
+            ) : (
+                <div className="view-appointment-request-groups">
+                    {patientGroups.map(group => {
+                        const expanded = !!expandedPatients[group.key];
+                        return (
+                            <div key={group.key}>
+                                <MyButton
+                                    appearance="ghost"
+                                    color="#334155"
+                                    width="100%"
+                                    className="view-appointment-request-patient"
+                                    prefixIcon={() => (
+                                        <FontAwesomeIcon icon={expanded ? faChevronDown : faChevronRight} />
+                                    )}
+                                    onClick={() => togglePatient(group.key)}
+                                >
+                                    <span className="view-appointment-request-patient-name">{group.patientName}</span>
+                                    <span className="view-appointment-request-patient-meta">
+                                        {' '}
+                                        MRN: {group.mrn || '-'} · {group.rows.length} request
+                                        {group.rows.length === 1 ? '' : 's'}
+                                    </span>
+                                </MyButton>
+                                {expanded && (
+                                    <MyTable
+                                        data={group.rows}
+                                        columns={requestColumns}
+                                        loading={false}
+                                        rowClassName={rowClassName}
+                                        onRowClick={(rowData: Row) => setSelectedRowId(safeStr(rowData.id))}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             
 

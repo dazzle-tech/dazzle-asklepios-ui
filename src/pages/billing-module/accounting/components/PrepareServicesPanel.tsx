@@ -8,6 +8,13 @@ import { useAppDispatch } from '@/hooks';
 import { usePrepareDefaultServicesMutation } from '@/services/billing/billingTransactionService';
 import { useGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useLazyGetProceduresByDepartmentQuery } from '@/services/setup/procedure/procedureService';
+import {
+  defaultRowKey,
+  summaryItemKey,
+  toDefaultBillingRequestItems,
+  type DefaultBillingItemType
+} from '@/pages/patient/patient-profile/PatientQuickAppoinment/defaultBillingRows';
 import { notify } from '@/utils/uiReducerActions';
 import PreAuthorizationAlertModal from './PreAuthorizationAlertModal';
 import type {
@@ -98,6 +105,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   }, [specialty, practitionerResponse]);
 
   const [triggerGetServices, servicesResponse] = useLazyGetServicesByDepartmentQuery();
+  const [triggerGetProcedures, proceduresResponse] = useLazyGetProceduresByDepartmentQuery();
+  const isLoadingDefaultItems = servicesResponse.isFetching || proceduresResponse.isFetching;
   const [prepareDefaultServices, { isLoading: preparing }] = usePrepareDefaultServicesMutation();
 
   const isInsurance = coverageType === 'INSURANCE';
@@ -133,14 +142,16 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       return;
     }
 
-    triggerGetServices({
+    const defaultItemsArgs = {
       sourceId: departmentId,
       specialty: encounterSpecialty,
       page: 0,
       size: 200,
       sort: 'id,asc'
-    });
-  }, [departmentId, encounterSpecialty, triggerGetServices]);
+    };
+    triggerGetServices(defaultItemsArgs);
+    triggerGetProcedures(defaultItemsArgs);
+  }, [departmentId, encounterSpecialty, triggerGetServices, triggerGetProcedures]);
 
   useEffect(() => {
     if (!departmentId || !encounterSpecialty) {
@@ -148,26 +159,42 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       return;
     }
 
-    if (!servicesResponse.data) {
+    if (!servicesResponse.data || proceduresResponse.isFetching) {
       return;
     }
 
-    const list = extractResponseList(servicesResponse.data);
-    const billedBySourceId = new Map(
+    const defaultItems: Array<{ billingItemType: DefaultBillingItemType; source: any }> = [
+      ...extractResponseList(servicesResponse.data).map(service => ({
+        billingItemType: 'SERVICE' as const,
+        source: service
+      })),
+      ...extractResponseList(proceduresResponse.data).map(procedure => ({
+        billingItemType: 'PROCEDURE' as const,
+        source: procedure
+      }))
+    ];
+    const billedByRowKey = new Map(
       (summary.items ?? [])
         .filter(item => item.sourceId != null)
-        .map(item => [Number(item.sourceId), item])
+        .map(item => [summaryItemKey(item), item])
     );
 
-    const mapped: PrepareServiceRow[] = list.map((service: any, index: number) => {
-      const serviceId = toNumber(service?.id ?? service?.serviceId);
-      const billed = billedBySourceId.get(serviceId);
+    const mapped: PrepareServiceRow[] = defaultItems.map(({ billingItemType, source: service }, index) => {
+      const itemId = toNumber(service?.id ?? service?.serviceId);
+      const rowKey = defaultRowKey({ billingItemType, itemId });
+      const billed = billedByRowKey.get(rowKey);
+      const isProcedure = billingItemType === 'PROCEDURE';
 
       return {
-        id: serviceId,
-        serviceId,
-        serviceType: String(service?.serviceType ?? service?.type ?? service?.category ?? 'SERVICE'),
-        serviceName: String(service?.name ?? service?.serviceName ?? `Service #${serviceId}`),
+        id: rowKey,
+        billingItemType,
+        itemId,
+        serviceType: isProcedure
+          ? 'PROCEDURE'
+          : String(service?.serviceType ?? service?.type ?? service?.category ?? 'SERVICE'),
+        serviceName: String(
+          service?.name ?? service?.serviceName ?? `${isProcedure ? 'Procedure' : 'Service'} #${itemId}`
+        ),
         selected: billed != null ? true : service?.selected == null ? true : Boolean(service.selected),
         isExempted: Boolean(service?.isExempted),
         quantity: billed?.quantity != null ? Number(billed.quantity) : 1,
@@ -183,9 +210,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
     });
 
     setServiceRows(previous => {
-      const oldMap = new Map(previous.map(row => [row.serviceId, row]));
+      const oldMap = new Map(previous.map(row => [row.id, row]));
       return mapped.map(row => {
-        const old = oldMap.get(row.serviceId);
+        const old = oldMap.get(row.id);
         if (!old || servicesArePrepared) return row;
         return {
           ...row,
@@ -200,6 +227,8 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
     departmentId,
     encounterSpecialty,
     servicesResponse.data,
+    proceduresResponse.data,
+    proceduresResponse.isFetching,
     summary.items,
     servicesArePrepared
   ]);
@@ -215,9 +244,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
   const allSelected = serviceRows.length > 0 && serviceRows.every(row => row.selected);
   const someSelected = serviceRows.some(row => row.selected);
 
-  const updateServiceRow = (serviceId: number, partial: Partial<PrepareServiceRow>) => {
+  const updateServiceRow = (rowKey: string, partial: Partial<PrepareServiceRow>) => {
     setServiceRows(previous =>
-      previous.map(row => (row.serviceId === serviceId ? { ...row, ...partial } : row))
+      previous.map(row => (row.id === rowKey ? { ...row, ...partial } : row))
     );
   };
 
@@ -247,25 +276,25 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       currency,
       coverageType,
       patientInsuranceId: isInsurance ? selectedInsuranceId : null,
-      items: selectedRows.map((row, index) => ({
-        serviceId: row.serviceId,
-        quantity: row.quantity,
-        sequence: index + 1,
-        isExempted: row.isExempted
-      })),
+      ...toDefaultBillingRequestItems(selectedRows),
       requestId: makeRequestId('PREPARE-DEFAULT-SERVICES'),
       acceptUncoveredAsCash: isInsurance ? true : null
     };
 
     try {
       const result = await prepareDefaultServices({ encounterId, body }).unwrap();
-      const failed = result.items.filter(item => !item.billingResult?.processed);
+      const failed = [
+        ...result.items.map(item => ({ ...item, label: `Service ${item.serviceId}` })),
+        ...(result.procedures ?? []).map(procedure => ({
+          ...procedure,
+          label: `Procedure ${procedure.procedureId}`
+        }))
+      ].filter(item => !item.billingResult?.processed);
 
       if (failed.length) {
         const message = failed
           .map(
-            item =>
-              `Service ${item.serviceId}: ${item.billingResult?.message ?? 'Billing rule did not match'}`
+            item => `${item.label}: ${item.billingResult?.message ?? 'Billing rule did not match'}`
           )
           .join('\n');
         throw new Error(message);
@@ -276,7 +305,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         .filter(item => String(item.billingResult?.message ?? '').toLowerCase().includes('pre-authorization'))
         .map(item => ({
           patientServiceProductId: item.patientServiceProductId,
-          label: selectedRows.find(row => row.serviceId === item.serviceId)?.serviceName || `Service ${item.serviceId}`
+          label: selectedRows.find(row => row.itemId === item.serviceId)?.serviceName || `Service ${item.serviceId}`
         }));
       setResultMessage(preparedMessage);
       if (heldItems.length) {
@@ -310,7 +339,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
       render: (row: PrepareServiceRow) => (
         <Checkbox
           checked={row.selected}
-          onChange={(_, checked) => updateServiceRow(row.serviceId, { selected: checked })}
+          onChange={(_, checked) => updateServiceRow(row.id, { selected: checked })}
           disabled={servicesLocked}
         />
       )
@@ -445,9 +474,9 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         </div>
       </Form>
 
-      {servicesResponse.isFetching ? (
+      {isLoadingDefaultItems ? (
         <div className="billing-accounting__empty">
-          <Loader size="sm" content="Loading department services..." />
+          <Loader size="sm" content="Loading department services and procedures..." />
         </div>
       ) : !departmentId ? (
         <div className="billing-accounting__empty">
@@ -460,7 +489,7 @@ const PrepareServicesPanel: React.FC<PrepareServicesPanelProps> = ({
         </div>
       ) : !serviceRows.length ? (
         <div className="billing-accounting__empty">
-          No default services are configured for this department and specialty in setup.
+          No default services or procedures are configured for this department and specialty in setup.
         </div>
       ) : (
         <MyTable

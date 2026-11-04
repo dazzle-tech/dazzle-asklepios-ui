@@ -1,13 +1,14 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdMedicalServices } from 'react-icons/md';
+import { MdModeEdit, MdDelete, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditService from './AddEditService';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import LinkedItems from './LinkedItems';
 import './styles.less';
@@ -29,11 +30,14 @@ import {
   useLazyGetServicesByCategoryQuery,
   useLazyGetServicesByCodeQuery,
   useLazyGetServicesByNameQuery,
-  useLazyGetServicesByStatusQuery
+  useLazyGetServicesByStatusQuery,
+  useLazyGetServicesByAbbreviationQuery,
+  useLazyGetServicesByPriceQuery,
+  useLazyGetServicesByCurrencyQuery
 } from '@/services/setup/serviceService';
 import { newService } from '@/types/model-types-constructor-new';
 import { PolicyAssignment, Service } from '@/types/model-types-new';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -50,6 +54,7 @@ const ServiceSetup: React.FC = () => {
 
   // UI state
   const [popupOpen, setPopupOpen] = useState(false);
+  const priceListPrompt = usePriceListPrompt();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
@@ -86,10 +91,14 @@ const ServiceSetup: React.FC = () => {
   const [fetchByCode] = useLazyGetServicesByCodeQuery();
   const [fetchByName] = useLazyGetServicesByNameQuery();
   const [fetchByStatus] = useLazyGetServicesByStatusQuery();
+  const [fetchByAbbreviation] = useLazyGetServicesByAbbreviationQuery();
+  const [fetchByPrice] = useLazyGetServicesByPriceQuery();
+  const [fetchByCurrency] = useLazyGetServicesByCurrencyQuery();
   const [fetchByFacility] = useLazyGetServicesQuery(); // lazy for /by-facility/{facilityId}
 
   // Enums + Facilities
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
+  const currencyOptions = useEnumCapitalized('Currency');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
   // Main list: ALL services (no facility filter)
@@ -115,6 +124,12 @@ const ServiceSetup: React.FC = () => {
         return (svc.code || '').toLowerCase().includes(String(value).toLowerCase());
       case 'name':
         return (svc.name || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'abbreviation':
+        return (svc.abbreviation || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'price':
+        return Number(svc.price) === Number(value);
+      case 'currency':
+        return String(svc.currency || '').toUpperCase() === String(value).toUpperCase();
       case 'status':
         return Boolean(svc.isActive) === Boolean(value);
       default:
@@ -181,9 +196,12 @@ const ServiceSetup: React.FC = () => {
   // Filters available
   const filterFields = [
     { label: 'Facility', value: 'facilityId' },
-    { label: 'Category', value: 'category' },
     { label: 'Name', value: 'name' },
+    { label: 'Abbreviation', value: 'abbreviation' },
     { label: 'Code', value: 'code' },
+    { label: 'Category', value: 'category' },
+    { label: 'Price', value: 'price' },
+    { label: 'Currency', value: 'currency' },
     { label: 'Status', value: 'status' },
   ];
 
@@ -304,6 +322,16 @@ const ServiceSetup: React.FC = () => {
         setPopupOpen(false);
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'SERVICE',
+        sourceId: saved?.id ?? service.id!,
+        itemCode: payloadBody.code,
+        itemName: payloadBody.name,
+        unitPrice: payloadBody.price,
+        facilityId: effectiveFacilityId,
+        currency: payloadBody.currency
+      });
 
       if (isFiltered) {
         const { data: nextData, added } = upsertIntoFiltered(
@@ -480,6 +508,27 @@ const ServiceSetup: React.FC = () => {
         size,
         sort: effectiveSort,
       }).unwrap();
+    } else if (fieldName === 'abbreviation') {
+      return await fetchByAbbreviation({
+        abbreviation: value,
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'price') {
+      return await fetchByPrice({
+        price: Number(value),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'currency') {
+      return await fetchByCurrency({
+        currency: String(value).toUpperCase(),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
     } else if (fieldName === 'status') {
       return await fetchByStatus({
         isActive: Boolean(value),
@@ -591,6 +640,23 @@ const ServiceSetup: React.FC = () => {
           setService(rowData);
           setPopupOpen(true);
         }}
+      />
+      <MdLocalOffer
+        className="icons-style"
+        title="Price Lists"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() =>
+          priceListPrompt.view({
+            itemType: 'SERVICE',
+            sourceId: rowData.id,
+            itemCode: rowData.code,
+            itemName: rowData.name,
+            unitPrice: rowData.price,
+            facilityId: rowData.facilityId,
+            currency: rowData.currency
+          })
+        }
       />
       {rowData?.isActive ? (
         <MdDelete
@@ -710,6 +776,33 @@ const ServiceSetup: React.FC = () => {
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           searchable={false}
+        />
+      );
+    } else if (selectedFilter === 'currency') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={currencyOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          searchable={false}
+        />
+      );
+    } else if (selectedFilter === 'price') {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="number"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Price"
+          width={220}
         />
       );
     } else if (selectedFilter === 'status') {
@@ -860,6 +953,7 @@ const ServiceSetup: React.FC = () => {
         setService={setService}
         handleSave={handleSave}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
       <MyModal
         open={openPolicyAssignmentModal}
         setOpen={setOpenPolicyAssignmentModal}

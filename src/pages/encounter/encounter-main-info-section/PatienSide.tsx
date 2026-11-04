@@ -86,6 +86,7 @@ const {
     { skip: !patient?.id }
 );
 
+
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
@@ -417,7 +418,7 @@ const patientConditionItems =
 
 const getAllergenName = (allergy: any) => {
   if (allergy?.allergenType === 'OTHER') {
-    return <p>{allergy?.allergenName || '-'}</p>;
+    return <p>{allergy?.allergenName || 'Unknown'}</p>;
   }
 
   if (allergy?.allergenId && allergensListResponse?.data) {
@@ -425,7 +426,7 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.allergenId
     );
 
-    return <p>{allergen?.name ?? '-'}</p>;
+    return <p>{allergen?.name ?? 'Unknown'}</p>;
   }
 
   if (allergy?.medicationClassId && medicationClassesListResponse) {
@@ -433,10 +434,10 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.medicationClassId
     );
 
-    return <p>{medicationClass?.name ?? '-'}</p>;
+    return <p>{medicationClass?.name ?? 'Unknown'}</p>;
   }
 
-  return <p>-</p>;
+  return <p>Unknown</p>;
 };
 
   const activeAllergies =
@@ -675,6 +676,19 @@ const coverageTypeLabel =
               </Text>
               <Text className="info-value">{textOr(bloodGroupLabel, '')}</Text>
             </div>
+            <div className="info-column">
+              <Text className="info-label">
+                <Translate>Phone Number</Translate>
+              </Text>
+              <Text className="info-value">
+                <span dir="ltr">
+                  {textOr(
+                    freshPatient?.primaryMobileNumber,
+                    '-'
+                  )}
+                </span>
+              </Text>
+            </div>
           </div>
 
           <Divider className="divider-style" />
@@ -887,14 +901,22 @@ const coverageTypeLabel =
             </span>
           </Text>
           <div className="info-section">
-
-          <div className="info-column">
+            <div className="info-column coverage-full">
               <Text className="info-label">
                 <Translate>Coverage Type</Translate>
               </Text>
 
               <Text className="info-value">
-                <Translate>{coverageTypeLabel || '-'}</Translate>
+                <span className="coverage-alert">
+                  <MyBadgeStatus
+                    contant={
+                      <span style={{ fontSize: '13px', fontWeight: 600 }}>
+                        <Translate>{coverageTypeLabel}</Translate>
+                      </span>
+                    }
+                    color="#45b887"
+                  />
+                </span>
               </Text>
             </div>
           </div>
@@ -1021,8 +1043,16 @@ const coverageTypeLabel =
               <span>
                 <MyBadgeStatus
                   key={`allergy-${allergy.id || index}`}
-                  backgroundColor={getAllergySeverityColors(allergy.severity || '').bg}
-                  color={getAllergySeverityColors(allergy.severity || '').text}
+                  backgroundColor={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--light-green)'
+                      : getAllergySeverityColors(allergy.severity).bg
+                  }
+                  color={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--primary-green)'
+                      : getAllergySeverityColors(allergy.severity).text
+                  }
                   contant={
                     <div className="diagnosis-badge-content">
                       <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />

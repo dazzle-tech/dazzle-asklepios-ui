@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import MyTab from '@/components/MyTab';
 const PatientHistory = ({
   toShowData = false,
+  showFreeText = false,
   patient: patientProp,
   encounter: encounterProp,
   edit: editProp
@@ -34,6 +35,7 @@ const PatientHistory = ({
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
+          showFreeText={showFreeText}
         />
         </div>
       )
@@ -46,6 +48,7 @@ const PatientHistory = ({
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
+          showFreeText={showFreeText}
         />
         </div>
       )
@@ -58,6 +61,7 @@ const PatientHistory = ({
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
+          showFreeText={showFreeText}
         />
         </div>
       )

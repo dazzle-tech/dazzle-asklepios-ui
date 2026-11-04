@@ -161,6 +161,7 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   return (
     <>
     <SectionContainer
+      collapsible
       title={title}
       content={
         <div style={width ? { width } : {}}>

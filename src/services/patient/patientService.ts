@@ -28,6 +28,10 @@ type PagedResult<T> = {
 
 type FacilityPatientsParams = PagedParams & {
   patientName?: string;
+  mrn?: string;
+  primaryMobileNumber?: string;
+  documentNumber?: string;
+  dateOfBirth?: string;
   registrationDateFrom?: string;
   registrationDateTo?: string;
   insuranceId?: number;
@@ -87,6 +91,10 @@ export const newPatientService = createApi({
         size,
         sort = 'id,asc',
         patientName,
+        mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         registrationDateFrom,
         registrationDateTo,
         insuranceId
@@ -97,6 +105,10 @@ export const newPatientService = createApi({
           size,
           sort,
           patientName,
+          mrn,
+          primaryMobileNumber,
+          documentNumber,
+          dateOfBirth,
           registrationDateFrom,
           registrationDateTo,
           insuranceId
@@ -370,6 +382,20 @@ export const newPatientService = createApi({
         responseHandler: (response) => response.blob()
       })
     }),
+    getPatientVaccinationReportPdf: builder.query<
+      Blob,
+      { patientId: number; timezone?: string; lang?: string }
+    >({
+      query: ({ patientId, timezone, lang = 'en' }) => ({
+        url: `/api/analytics/${patientId}/vaccination-report/pdf`,
+        method: 'GET',
+        params: {
+          ...(timezone ? { timezone } : {}),
+          lang
+        },
+        responseHandler: (response) => response.blob()
+      })
+    }),
     updatePatientConditions: builder.mutation<
   any,
   UpdatePatientConditionsRequest
@@ -426,6 +452,7 @@ export const {
   useGetFacilityPatientsQuery,
   useLazyGetFacilityPatientsQuery,
   useLazyGetPatientInformationPdfQuery,
+  useLazyGetPatientVaccinationReportPdfQuery,
   useUpdatePatientConditionsMutation
 
 } = newPatientService;

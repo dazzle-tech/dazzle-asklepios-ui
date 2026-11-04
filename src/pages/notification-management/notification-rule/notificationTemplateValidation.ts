@@ -13,6 +13,7 @@ export const RECIPIENT_RULE_VALUES: RecipientRule[] = [
   'CURRENT_USER_PHONE',
   'CREATED_BY_USER',
   'CREATED_BY_USER_PHONE',
+  'TASK_USER',
   'DATA',
   'STATIC',
 ];

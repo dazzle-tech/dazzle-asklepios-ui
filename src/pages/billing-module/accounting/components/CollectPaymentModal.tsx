@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Modal, Text } from 'rsuite';
+import { Checkbox, Form, Modal, Text } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -22,14 +22,17 @@ import {
   BILLING_PAYMENT_METHOD_LABELS,
   buildBillingPaymentReceipt,
   computeRowRemainingAmount,
+  capPaymentToBalance,
   computeWalletCollectAmounts,
   formatMoney,
+  isCreditCardPaymentMethod,
   isWalletPaymentMethod,
   makeRequestId,
   mergeBillingPaymentMethodOptions,
   normalizeBillingError,
   resolveBillingPaymentCategory,
   resolvePaymentReceiptNumber,
+  roundMoney,
   type UnifiedBillingChargeRow
 } from '../utils/billingAccountingUtils';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -99,7 +102,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     });
   }, [selectedRows]);
 
-  const suggestedAmount = useMemo(
+  const rawSuggestedAmount = useMemo(
     () =>
       dedupedSelectedRows.reduce(
         (sum, row) => sum + computeRowRemainingAmount(row),
@@ -107,6 +110,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       ),
     [dedupedSelectedRows]
   );
+  const suggestedAmount = roundMoney(rawSuggestedAmount);
 
   const totalReservedOnSelection = useMemo(
     () =>
@@ -128,7 +132,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   const [form, setForm] = useState({
     amount: 0,
     paymentMethodCode: '',
-    notes: ''
+    notes: '',
+    manualCardEntry: false,
+    manualCardPanNumber: '',
+    manualCardTransactionId: ''
   });
 
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -153,7 +160,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
     setForm({
       amount: Number(suggestedAmount.toFixed(2)),
       paymentMethodCode: '',
-      notes: ''
+      notes: '',
+      manualCardEntry: false,
+      manualCardPanNumber: '',
+      manualCardTransactionId: ''
     });
   }, [open, suggestedAmount]);
 
@@ -202,7 +212,7 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       return;
     }
 
-    if (!isWalletMethod && form.amount > suggestedAmount + 0.0001) {
+    if (!isWalletMethod && roundMoney(form.amount) > suggestedAmount) {
       dispatch(
         notify({
           msg: `Amount cannot exceed the selected balance of ${formatMoney(suggestedAmount, currency)}.`,
@@ -226,9 +236,10 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       option => String(option?.value) === String(form.paymentMethodCode)
     );
 
-    const paymentAmount = isWalletMethod
+    let paymentAmount = isWalletMethod
       ? walletCollectPreview.applyAmount
       : Number(form.amount);
+    paymentAmount = capPaymentToBalance(paymentAmount, rawSuggestedAmount);
     const chargeCreditCardIfNeeded =
       async () => {
 
@@ -244,7 +255,14 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
 
               sourceReferenceId: encounterId,
 
-              facilityId
+              facilityId,
+
+              manualEntry: form.manualCardEntry
+                ? {
+                    panNumber: form.manualCardPanNumber,
+                    transactionId: form.manualCardTransactionId
+                  }
+                : null
             }
           );
 
@@ -260,16 +278,25 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
             })
           );
 
-          return false;
+          return { proceed: false as const };
         }
 
-        return true;
+        return {
+          proceed: true as const,
+          cardResult: creditCardCollect.skipped
+            ? null
+            : {
+                authorizationCode: creditCardCollect.result?.authorizationCode ?? null,
+                processorReference: creditCardCollect.result?.processorReference ?? null,
+                cardLastFour: creditCardCollect.result?.cardLastFour ?? null
+              }
+        };
       };
 
-    const creditCardCharged =
+    const creditCardCharge =
       await chargeCreditCardIfNeeded();
 
-    if (!creditCardCharged) {
+    if (!creditCardCharge.proceed) {
       return;
     }
     const request: CreateAdvancePaymentRequest = {
@@ -292,6 +319,9 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
       ),
       paymentMethodCode: form.paymentMethodCode,
       transactionStatus: 'SUCCESS',
+      authorizationCode: creditCardCharge.cardResult?.authorizationCode ?? null,
+      processorReference: creditCardCharge.cardResult?.processorReference ?? null,
+      cardLastFour: creditCardCharge.cardResult?.cardLastFour ?? null,
       notes: form.notes.trim() || 'Encounter payment collection',
       patientServiceProductIds: pspIds,
       requestId: makeRequestId('COLLECT-PAYMENT')
@@ -382,6 +412,40 @@ const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
                     {formatMoney(walletCollectPreview.applyAmount, currency)} · Remaining to pay{' '}
                     {formatMoney(walletCollectPreview.remainingAfter, currency)}
                   </Text>
+                </>
+              )}
+              {isCreditCardPaymentMethod(form.paymentMethodCode) && (
+                <>
+                  <Checkbox
+                    checked={form.manualCardEntry}
+                    onChange={(_, checked) =>
+                      setForm(previous => ({ ...previous, manualCardEntry: checked }))
+                    }
+                  >
+                    Charged manually on a separate terminal
+                  </Checkbox>
+                  {form.manualCardEntry && (
+                    <>
+                      <MyInput
+                        column
+                        required
+                        fieldLabel="Card Number"
+                        fieldName="manualCardPanNumber"
+                        record={form}
+                        setRecord={setForm}
+                        width="100%"
+                      />
+                      <MyInput
+                        column
+                        required
+                        fieldLabel="Transaction ID"
+                        fieldName="manualCardTransactionId"
+                        record={form}
+                        setRecord={setForm}
+                        width="100%"
+                      />
+                    </>
+                  )}
                 </>
               )}
               <MyInput

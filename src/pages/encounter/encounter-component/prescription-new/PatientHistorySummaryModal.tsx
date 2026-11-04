@@ -9,6 +9,8 @@ interface Props {
     encounter: any;
     edit?: boolean;
     handleSave?: any;
+    // Submit in progress: the action button shows loading and cannot be clicked again.
+    saving?: boolean;
 
     medicationValidationPayload?: any;
 }
@@ -20,6 +22,7 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
     encounter,
     edit,
     handleSave,
+    saving = false,
     medicationValidationPayload
 }) => {
 
@@ -37,6 +40,8 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
             size="70vw"
             bodyheight="75vh"
             actionButtonFunction={handleSave}
+            actionButtonLoading={saving}
+            isDisabledActionBtn={saving}
             content={() => (<div dir={dir}>
                 <PatientHistorySummary
                     title="Medication Validation"

@@ -111,7 +111,8 @@ import { useInvoicePrintLookups } from './invoices/useInvoicePrintLookups';
 import {
   computeEncounterRemainingToPay,
   formatBillingCoverageType,
-  mergeBillingChargeRows
+  mergeBillingChargeRows,
+  resolvePatientDisplayName
 } from './accounting/utils/billingAccountingUtils';
 import {
   isInsuranceClaimInvoice,
@@ -2414,7 +2415,9 @@ const Invoices: React.FC<InvoicesProps> = ({
 
               <Text muted>Patient</Text>
 
-              <Text>{encounterDetails?.patient?.fullName ?? '-'}</Text>
+              <Text>
+                {resolvePatientDisplayName(patient, encounterDetails?.patient?.fullName)}
+              </Text>
 
             </div>
 

@@ -12,6 +12,8 @@ export type EnumOptionsParams = {
   exclude?: string[];
   labelOverrides?: Record<string, string>;
   labelFormatter?: (value: string) => string;
+  /** Fetch enums without requiring a login token (public forms). */
+  allowAnonymous?: boolean;
 };
 
 /* ------------------------------- Helpers ------------------------------- */
@@ -99,11 +101,11 @@ export const { useGetAllEnumsQuery } = enumsApi;
 
 /* -------------------------------- Hooks -------------------------------- */
  // Debug log
-export function useEnumByName(name: string): string[] {
+export function useEnumByName(name: string, allowAnonymous = false): string[] {
   const token = localStorage.getItem('id_token');
 
   const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
-    skip: !token
+    skip: !allowAnonymous && !token
   });
   return allEnums[name] ?? [];
 }
@@ -116,12 +118,13 @@ export function useEnumOptions(
   name: string,
   params: EnumOptionsParams = {}
 ): { value: string; label: string }[] {
-  const values = useEnumByName(name);
   const {
     exclude = EMPTY_EXCLUDE,
     labelOverrides = EMPTY_LABEL_OVERRIDES,
-    labelFormatter
+    labelFormatter,
+    allowAnonymous = false
   } = params;
+  const values = useEnumByName(name, allowAnonymous);
 
   return useMemo(() => {
     const filtered = values.filter(v => !exclude.includes(v));

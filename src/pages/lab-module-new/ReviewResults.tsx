@@ -5,7 +5,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import Translate from '@/components/Translate';
 import UserDateCell from '@/components/UserDateCell';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -15,7 +16,10 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetNotesByResultIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import {
+  useLazyGetEncounterByIdQuery,
+  useLazyGetEncountersByIdsQuery
+} from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
@@ -47,6 +51,7 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useDispatch } from 'react-redux';
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import './ReviewResultsIcon.less';
@@ -127,7 +132,10 @@ const ReviewResults = forwardRef<any, any>(
 
     const [filtersKey, setFiltersKey] = useState(0);
     const [orderIdFilter, setOrderIdFilter] = useState('');
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
     const [departmentFilter, setDepartmentFilter] = useState<any>({
       fromDepartmentIdIn: null
     });
@@ -137,6 +145,9 @@ const ReviewResults = forwardRef<any, any>(
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
+    const [fetchEncountersByIds] = useLazyGetEncountersByIdsQuery();
+    const [encounterNumberFilter, setEncounterNumberFilter] = useState('');
+    const [encountersMap, setEncountersMap] = useState<Record<string, any>>({});
 
     const [toggleReviewDiagnosticOrderTestResult] =
       useToggleReviewDiagnosticOrderTestResultMutation();
@@ -178,8 +189,8 @@ const ReviewResults = forwardRef<any, any>(
 
       params.reviewed = showReview;
 
-      if (selectedPatient?.id) {
-        params.patientIdIn = [selectedPatient.id];
+      if (resolvedPatientIds != null) {
+        params.patientIdIn = resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1];
       }
 
       if (departmentFilter?.fromDepartmentIdIn) {
@@ -211,8 +222,12 @@ const ReviewResults = forwardRef<any, any>(
         params.orderNumber = orderIdNumber;
       }
 
+      if (encounterNumberFilter.trim()) {
+        params.encounterNumber = encounterNumberFilter.trim();
+      }
+
       if (
-        selectedPatient?.id ||
+        resolvedPatientIds != null ||
         departmentFilter?.fromDepartmentIdIn ||
         orderDate.fromDate ||
         orderDate.toDate
@@ -234,8 +249,9 @@ const ReviewResults = forwardRef<any, any>(
       orderIdIn,
       orderDate,
       orderIdFilter,
-      selectedPatient?.id,
-      departmentFilter?.fromDepartmentIdIn
+      resolvedPatientIds,
+      departmentFilter?.fromDepartmentIdIn,
+      encounterNumberFilter
     ]);
     const {
       data: resultsResponse,
@@ -265,6 +281,34 @@ const ReviewResults = forwardRef<any, any>(
         .map(String)
         .filter((id, i, arr) => arr.indexOf(id) === i);
     }, [ordersMap]);
+
+    const encounterIds = useMemo(() => {
+      return Object.values(ordersMap)
+        .map((o: any) => o?.encounterId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i);
+    }, [ordersMap]);
+
+    useEffect(() => {
+      const missingIds = encounterIds.filter(id => !encountersMap[id]);
+      if (!missingIds.length) return;
+
+      fetchEncountersByIds({ ids: missingIds.map(Number) })
+        .unwrap()
+        .then((res) => {
+          setEncountersMap((prev) => {
+            const next = { ...prev };
+            (res ?? []).forEach((encounter: any) => {
+              if (encounter?.id != null) {
+                next[String(encounter.id)] = encounter;
+              }
+            });
+            return next;
+          });
+        })
+        .catch(() => { });
+    }, [encounterIds]);
 
     useImperativeHandle(ref, () => ({ refetch }));
 
@@ -384,6 +428,8 @@ const ReviewResults = forwardRef<any, any>(
         const patient = patientsMap[String(order?.patientId)];
         const profile = profilesMap.get(r.profileTestId);
 
+        const encounter = encountersMap[String(order?.encounterId)];
+
         return {
           ...r,
           _patientName: patient
@@ -392,10 +438,12 @@ const ReviewResults = forwardRef<any, any>(
           _profile: profile,
           _testName: profile?.name ?? '-',
           _approvedDate: r.approvedDate,
+          _orderNumber: order?.orderNumber ?? null,
+          _encounterNumber: encounter?.encounterNumber ?? null,
           encounterId: order?.encounterId
         };
       });
-    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
+    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap, encountersMap]);
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row.profile;
@@ -460,15 +508,31 @@ const ReviewResults = forwardRef<any, any>(
       setShowReview(false);
       setShowAbnormal(false);
       setOrderIdIn(null);
-      setSelectedPatient(null);
+      setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+      setResolvedPatientIds(null);
 
       setDepartmentFilter({
         fromDepartmentIdIn: null
       });
       setOrderIdFilter('');
+      setEncounterNumberFilter('');
       setPage(0);
 
       setFiltersKey(prev => prev + 1);
+    };
+
+    const handleSearchFilters = async () => {
+      const raw = patientSearch?.patientName;
+      const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+      const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+      // Commit IDs and clear stale orderIdIn before refetch so results do not
+      // briefly query with the previous patient's order IDs.
+      flushSync(() => {
+        setResolvedPatientIds(ids);
+        setOrderIdIn([]);
+        setPage(0);
+      });
+      refetch();
     };
     // const handleSelectAll = (checked: boolean) => {
     //   if (checked) {
@@ -532,6 +596,16 @@ const ReviewResults = forwardRef<any, any>(
           key: 'patient',
           title: <Translate>PATIENT NAME</Translate>,
           render: (r: any) => r._patientName
+        },
+        {
+          key: 'orderNumber',
+          title: <Translate>ORDER NUMBER</Translate>,
+          render: (row: any) => row._orderNumber ?? '-'
+        },
+        {
+          key: 'encounterNumber',
+          title: <Translate>ENCOUNTER NUMBER</Translate>,
+          render: (row: any) => row._encounterNumber ?? '-'
         },
         {
           key: 'approvedAt',
@@ -742,12 +816,11 @@ const ReviewResults = forwardRef<any, any>(
           />
 
           <div className='check-box-review-results-handle'>
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatient}
-              showLabel={false}
-              width="22vw"
-              containerMinWidth={250}
+            <SearchPatientCriteria
+              record={patientSearch}
+              setRecord={setPatientSearch}
+              liveSearchMinLength={0}
+              searchMarginTop={0}
             />
 
             <MyInput
@@ -776,6 +849,19 @@ const ReviewResults = forwardRef<any, any>(
                 setPage(0);
               }}
             />
+
+            <MyInput
+              fieldType="text"
+              fieldLabel="Encounter Number"
+              fieldName="encounterNumber"
+              showLabel={false}
+              placeholder="Encounter Number"
+              record={{ encounterNumber: encounterNumberFilter }}
+              setRecord={(record: any) => {
+                setEncounterNumberFilter(record.encounterNumber ?? '');
+                setPage(0);
+              }}
+            />
           </div>
           <div className='check-box-review-results-handle'>
             <MyInput
@@ -792,8 +878,8 @@ const ReviewResults = forwardRef<any, any>(
         </div>
 
         <AdvancedSearchFilters
-          searchFilter={false}
           showAdvancedButton={false}
+          searchOnClick={handleSearchFilters}
           clearOnClick={resetFilters}
         />
         <div className="test-table-buttons-main-container">{tablebuttons}</div>
@@ -814,7 +900,7 @@ const ReviewResults = forwardRef<any, any>(
     useEffect(() => {
       const { fromDate, toDate } = orderDate;
 
-      fetchOrders({
+      const baseOrderParams: any = {
         submittedDateFrom: fromDate
           ? startOfDay(fromDate).toISOString()
           : undefined,
@@ -823,9 +909,9 @@ const ReviewResults = forwardRef<any, any>(
           ? endOfDay(toDate).toISOString()
           : undefined,
 
-        ...(selectedPatient?.id
+        ...(resolvedPatientIds != null
           ? {
-            patientIdIn: [selectedPatient.id]
+            patientIdIn: resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1]
           }
           : {}),
 
@@ -839,7 +925,9 @@ const ReviewResults = forwardRef<any, any>(
 
         page: 0,
         size: 10000
-      })
+      };
+
+      fetchOrders(baseOrderParams)
         .unwrap()
         .then((res) => {
           const ids = (res?.data ?? []).map((o: any) => o.id);
@@ -848,7 +936,7 @@ const ReviewResults = forwardRef<any, any>(
         .catch(() => setOrderIdIn([]));
     }, [
       orderDate,
-      selectedPatient?.id,
+      resolvedPatientIds,
       departmentFilter?.fromDepartmentIdIn
     ]);
 
@@ -857,8 +945,9 @@ const ReviewResults = forwardRef<any, any>(
       setPage(0);
     }, [
       orderDate,
-      selectedPatient?.id,
-      departmentFilter?.fromDepartmentIdIn
+      resolvedPatientIds,
+      departmentFilter?.fromDepartmentIdIn,
+      encounterNumberFilter
     ]);
 
     // Direction handling for RTL/LTR

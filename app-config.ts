@@ -8,6 +8,7 @@ declare global {
       stimulsoftDashboardLicenseKey?: string;
       stimulsoftProxyUrl?: string;
       stimulsoftEncryptData?: boolean;
+      liveVisitScribeUrl?: string;
     };
     Stimulsoft?: any;
   }
@@ -30,6 +31,7 @@ const config = {
    */
   stimulsoftProxyUrl: window.APP_CONFIG?.stimulsoftProxyUrl || '/proxy',
   stimulsoftEncryptData: window.APP_CONFIG?.stimulsoftEncryptData,
+  liveVisitScribeUrl: window.APP_CONFIG?.liveVisitScribeUrl
 };
 
 export default config;

@@ -22,17 +22,21 @@ import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
+import { patientActivityService } from './services/patients/patientActivityService';
 import { documentManagementService } from './services/patients/documentManagementService';
 import { patientMergeService } from './services/patients/patientMergeService';
 
 import { setupService } from '@/services/setupService';
 import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
+import { dentalChartService } from '@/services/dental/dentalChartService';
+import { dentalTreatmentPlanService } from '@/services/dental/dentalTreatmentPlanService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { pharmaceuticalService } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
@@ -85,6 +89,7 @@ import { Icd10Service } from './services/setup/icd10service';
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
+import { analyzerService } from './services/setup/analyzerService';
 
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
@@ -118,6 +123,10 @@ import { BrandMedicationSubstituteService } from '@/services/setup/brandmedicati
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+import { medFrequencySetupService } from './services/setup/med-frequency-setup/medFrequencySetupService';
+import { surveyQuestionService } from './services/setup/survey-question/surveyQuestionService';
+import { surveySectionService } from './services/setup/survey-question/surveySectionService';
+import { surveyTextService } from './services/setup/survey-question/surveyTextService';
 
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 
@@ -189,6 +198,7 @@ import { encounterAssessmentService } from './services/medicalsheetsEncounter/cl
 import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { randomBloodSugarService } from './services/medicalsheetsEncounter/observations/randomBloodSugarService';
 import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
@@ -205,10 +215,16 @@ import { patientAdministrativeWarningsService } from './services/patient/patient
 import { radiologyReportService } from './services/reports/radiologyReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
 import { notificationHeaderService } from './services/notification-management/notificationHeaderService';
 import { notificationTemplateService } from './services/notification-management/notificationTemplateService';
 import { notificationService } from './services/notification-management/notificationService';
 import { patientSatisfactionSurveyService } from './services/patient-satisfaction/patientSatisfactionSurveyService';
+import {
+  patientComplaintPublicService,
+  patientComplaintService
+} from './services/patient-complaints/patientComplaintService';
+import { surveyResponseService, surveyService } from './services/survey/surveyService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
@@ -261,6 +277,7 @@ import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfS
 import { billingTransactionService } from './services/billing/billingTransactionService';
 import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
+import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -269,6 +286,27 @@ import { dischargeReportService } from './services/ai-services/dischargeReportSe
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { refreshHl7EventsService } from './services/refreshHl7EventsService';
+import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
+import { nephrologyRenalFunctionService } from './services/dialysis/nephrologyRenalFunctionService';
+import { nephrologyTreatmentPlanService } from './services/dialysis/nephrologyTreatmentPlanService';
+import { dialysisSessionService } from './services/dialysis/dialysisSessionService';
+import { dialysisFlowReadingService } from './services/dialysis/dialysisFlowReadingService';
+import { dialysisMedicationService } from './services/dialysis/dialysisMedicationService';
+import { claimEncounterCopyService } from './services/billing/claimEncounterCopyService';
+import { claimEncounterDiagnosisService } from './services/billing/claimEncounterDiagnosisService';
+import { claimEncounterProgressNoteService } from './services/billing/claimEncounterProgressNoteService';
+import { claimEncounterCopySocialHistoryService } from './services/billing/claimEncounterCopySocialHistoryService';
+import { claimEncounterCopySurgicalHistoryService } from './services/billing/claimEncounterCopySurgicalHistoryService';
+import { claimEncounterCopyPatientProblemService } from './services/billing/claimEncounterCopyPatientProblemService';
+import { claimEncounterCopyFamilyHistoryService } from './services/billing/claimEncounterCopyFamilyHistoryService';
+import { claimEncounterCopyHospitalizationService } from './services/billing/claimEncounterCopyHospitalizationService';
+import { claimEncounterCopyCurrentMedicationService } from './services/billing/claimEncounterCopyCurrentMedicationService';
+import { claimEncounterCopyDiagnosticOrderTestResultService } from './services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
+import { claimEncounterCopyDiagnosticOrderTestReportService } from './services/billing/claimEncounterCopyDiagnosticOrderTestReportService';
+import { clinicalSummaryVoiceService } from './services/ai-services/clinicalSummaryVoiceService';
+import { ambientDraftService } from './services/ai-services/ambientDraftService';
+import { encounterAmbientService } from './services/encounters/encounterAmbientService';
+import { ambientScribeSetupService } from './services/setup/ambientScribeSetupService';
 const rtkDispatchLoopGuard: Middleware = () => {
   let inCascade = false;
   const queued: any[] = [];
@@ -316,11 +354,16 @@ export const store = configureStore({
     [patientPreferredHealthProfessionalService.reducerPath]:
       patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
+    [patientActivityService.reducerPath]: patientActivityService.reducer,
     [documentManagementService.reducerPath]: documentManagementService.reducer,
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
+    [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
+    [ambientDraftService.reducerPath]: ambientDraftService.reducer,
+    [encounterAmbientService.reducerPath]: encounterAmbientService.reducer,
+    [ambientScribeSetupService.reducerPath]: ambientScribeSetupService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -336,6 +379,7 @@ export const store = configureStore({
     // medication / active ingredients
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [pharmaceuticalService.reducerPath]: pharmaceuticalService.reducer,
     [activeIngredientSpecialPopulationService.reducerPath]:
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
@@ -357,6 +401,8 @@ export const store = configureStore({
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
+    [dentalChartService.reducerPath]: dentalChartService.reducer,
+    [dentalTreatmentPlanService.reducerPath]: dentalTreatmentPlanService.reducer,
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
@@ -379,6 +425,10 @@ export const store = configureStore({
 
     // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
+    [medFrequencySetupService.reducerPath]: medFrequencySetupService.reducer,
+    [surveyQuestionService.reducerPath]: surveyQuestionService.reducer,
+    [surveySectionService.reducerPath]: surveySectionService.reducer,
+    [surveyTextService.reducerPath]: surveyTextService.reducer,
 
     // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
@@ -397,10 +447,15 @@ export const store = configureStore({
     [emailSettingsService.reducerPath]: emailSettingsService.reducer,
     [whatsappSettingsService.reducerPath]: whatsappSettingsService.reducer,
     [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
+    [mobileAppConfigService.reducerPath]: mobileAppConfigService.reducer,
     [notificationHeaderService.reducerPath]: notificationHeaderService.reducer,
     [notificationTemplateService.reducerPath]: notificationTemplateService.reducer,
     [notificationService.reducerPath]: notificationService.reducer,
     [patientSatisfactionSurveyService.reducerPath]: patientSatisfactionSurveyService.reducer,
+    [patientComplaintPublicService.reducerPath]: patientComplaintPublicService.reducer,
+    [patientComplaintService.reducerPath]: patientComplaintService.reducer,
+    [surveyService.reducerPath]: surveyService.reducer,
+    [surveyResponseService.reducerPath]: surveyResponseService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -437,6 +492,7 @@ export const store = configureStore({
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
+    [analyzerService.reducerPath]: analyzerService.reducer,
 
     // diagnostic tests
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
@@ -463,6 +519,17 @@ export const store = configureStore({
 
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
+    [claimEncounterCopyService.reducerPath]: claimEncounterCopyService.reducer,
+    [claimEncounterDiagnosisService.reducerPath]: claimEncounterDiagnosisService.reducer,
+    [claimEncounterProgressNoteService.reducerPath]: claimEncounterProgressNoteService.reducer,
+    [claimEncounterCopySocialHistoryService.reducerPath]: claimEncounterCopySocialHistoryService.reducer,
+    [claimEncounterCopySurgicalHistoryService.reducerPath]: claimEncounterCopySurgicalHistoryService.reducer,
+    [claimEncounterCopyPatientProblemService.reducerPath]: claimEncounterCopyPatientProblemService.reducer,
+    [claimEncounterCopyFamilyHistoryService.reducerPath]: claimEncounterCopyFamilyHistoryService.reducer,
+    [claimEncounterCopyHospitalizationService.reducerPath]: claimEncounterCopyHospitalizationService.reducer,
+    [claimEncounterCopyCurrentMedicationService.reducerPath]: claimEncounterCopyCurrentMedicationService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestResultService.reducerPath]: claimEncounterCopyDiagnosticOrderTestResultService.reducer,
+    [claimEncounterCopyDiagnosticOrderTestReportService.reducerPath]: claimEncounterCopyDiagnosticOrderTestReportService.reducer,
 
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -598,6 +665,7 @@ export const store = configureStore({
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
 
     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [randomBloodSugarService.reducerPath]: randomBloodSugarService.reducer,
 
     [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
     [patientObservationsComplaintsService.reducerPath]:
@@ -658,7 +726,14 @@ export const store = configureStore({
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
     [pointOfSaleWebhookLogService.reducerPath]: pointOfSaleWebhookLogService.reducer,
-    [labInterpretationService.reducerPath]: labInterpretationService.reducer
+    [labInterpretationService.reducerPath]: labInterpretationService.reducer,
+    [nephrologyKidneyAssessmentService.reducerPath]: nephrologyKidneyAssessmentService.reducer,
+    [nephrologyRenalFunctionService.reducerPath]: nephrologyRenalFunctionService.reducer,
+    [nephrologyTreatmentPlanService.reducerPath]: nephrologyTreatmentPlanService.reducer,
+    [dialysisSessionService.reducerPath]: dialysisSessionService.reducer,
+    [dialysisFlowReadingService.reducerPath]: dialysisFlowReadingService.reducer,
+    [dialysisMedicationService.reducerPath]: dialysisMedicationService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -668,6 +743,7 @@ export const store = configureStore({
       serializableCheck: false
     })
       .prepend(rtkDispatchLoopGuard)
+      .prepend(patientBillingSidebarRefreshMiddleware.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
@@ -681,6 +757,7 @@ export const store = configureStore({
         hipaaService.middleware,
         patientPreferredHealthProfessionalService.middleware,
         patientDocumentsService.middleware,
+        patientActivityService.middleware,
         documentManagementService.middleware,
         patientMergeService.middleware,
         inventoryService.middleware,
@@ -688,6 +765,7 @@ export const store = configureStore({
         setupService.middleware,
         medicationsSetupService.middleware,
         activeIngredientSynonymsService.middleware,
+        pharmaceuticalService.middleware,
         activeIngredientAdverseEffectService.middleware,
         activeIngredientIndicationService.middleware,
         activeIngredientSpecialPopulationService.middleware,
@@ -698,6 +776,8 @@ export const store = configureStore({
         activeIngredientsService.middleware,
         dvmService.middleware,
         encounterService.middleware,
+        dentalChartService.middleware,
+        dentalTreatmentPlanService.middleware,
         dentalService.middleware,
         observationService.middleware,
         attachmentService.middleware,
@@ -723,6 +803,7 @@ export const store = configureStore({
         userBookableDepartmentService.middleware,
         MedicalsheetsService.middleware,
         vitalSignsService.middleware,
+        randomBloodSugarService.middleware,
         serviceService.middleware,
         MedicationCategoriesService.middleware,
         MedicationCategoriesClassService.middleware,
@@ -735,6 +816,7 @@ export const store = configureStore({
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,
+        analyzerService.middleware,
         diagnosticTestService.middleware,
         cdtCodeService.middleware,
         loincCodeService.middleware,
@@ -755,6 +837,10 @@ export const store = configureStore({
         BrandMedicationSubstituteService.middleware,
         BrandMedicationActiveIngredientService.middleware,
         prescriptionInstructionService.middleware,
+        medFrequencySetupService.middleware,
+        surveyQuestionService.middleware,
+        surveySectionService.middleware,
+        surveyTextService.middleware,
         uomGroupService.middleware,
         countryService.middleware,
         countryDistrictService.middleware,
@@ -839,10 +925,15 @@ export const store = configureStore({
         radiologyReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        mobileAppConfigService.middleware,
         notificationHeaderService.middleware,
         notificationTemplateService.middleware,
         notificationService.middleware,
         patientSatisfactionSurveyService.middleware,
+        patientComplaintPublicService.middleware,
+        patientComplaintService.middleware,
+        surveyService.middleware,
+        surveyResponseService.middleware,
         PolicyDefinitionService.middleware,
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,
@@ -900,7 +991,28 @@ export const store = configureStore({
         autoPopulationService.middleware,
         dischargeReportService.middleware,
          ocrParsingService.middleware,
-        labInterpretationService.middleware
+        labInterpretationService.middleware,
+        nephrologyKidneyAssessmentService.middleware,
+        nephrologyRenalFunctionService.middleware,
+        nephrologyTreatmentPlanService.middleware,
+        dialysisSessionService.middleware,
+        dialysisFlowReadingService.middleware,
+        dialysisMedicationService.middleware,
+        claimEncounterCopyService.middleware,
+        claimEncounterDiagnosisService.middleware,
+        claimEncounterProgressNoteService.middleware,
+        claimEncounterCopySocialHistoryService.middleware,
+        claimEncounterCopySurgicalHistoryService.middleware,
+        claimEncounterCopyPatientProblemService.middleware,
+        claimEncounterCopyFamilyHistoryService.middleware,
+        claimEncounterCopyHospitalizationService.middleware,
+        claimEncounterCopyCurrentMedicationService.middleware,
+        claimEncounterCopyDiagnosticOrderTestResultService.middleware,
+        claimEncounterCopyDiagnosticOrderTestReportService.middleware,
+        clinicalSummaryVoiceService.middleware,
+        ambientDraftService.middleware,
+        encounterAmbientService.middleware,
+        ambientScribeSetupService.middleware
       ) as any
 });
 

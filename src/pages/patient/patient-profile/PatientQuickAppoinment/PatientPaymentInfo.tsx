@@ -39,14 +39,18 @@ import {
 
 import {
   BILLING_PAYMENT_METHOD_LABELS,
+  capPaymentToBalance,
   isHeldForPreAuthorization,
-  mergeBillingPaymentMethodOptions
+  mergeBillingPaymentMethodOptions,
+  roundMoney
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
   getEnteredPaymentAmount,
   useCreditCardMachinePayment
 } from '@/utils/cardMachinePayment';
+import { isCreditCardPaymentMethod }
+  from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
   useGetFacilityByIdQuery
@@ -55,6 +59,10 @@ import {
 import {
   useGetServicesByDepartmentQuery
 } from '@/services/setup/serviceService';
+
+import {
+  useGetProceduresByDepartmentQuery
+} from '@/services/setup/procedure/procedureService';
 
 import {
   useGetPractitionerByIdQuery
@@ -72,6 +80,7 @@ import { extractPatientInsurancesList,
   shouldShowCheckEligibilityAction
 } from '../cchiMappers';
 import { useResolveCoverageContractQuery } from '@/services/setup/coverageManagement/coverageManagementService';
+import { patientInsuranceRecordId, pickDefaultPatientInsurance } from '../insuranceDisplayUtils';
 
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
 import CoverageContractTermsSummary from './CoverageContractTermsSummary';
@@ -94,6 +103,7 @@ import {
 } from '@/utils/followUpReviewDefaultServices';
 
 import {
+  resolvePatientDisplayName,
   resolvePatientWalletAvailable,
   resolvePatientWalletReserved,
   resolvePaymentReceiptNumber
@@ -136,15 +146,25 @@ import {
   isDefaultServicePayable,
   isEncounterFullyPaid,
   resolveBillingItemName,
+  resolvePatientTaxAmount,
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
+import {
+  defaultRowKey,
+  isBilledItemOfRow,
+  pricedResultKey,
+  summaryItemKey,
+  toDefaultBillingRequestItems,
+  type DefaultBillingItemType
+} from './defaultBillingRows';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
-  id: number;
-  serviceId: number;
+  id: string;
+  billingItemType: DefaultBillingItemType;
+  itemId: number;
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -182,6 +202,10 @@ type BillingFormState = {
   cashRegisterId: number | null;
   notes: string;
   payZeroNow: boolean;
+
+  manualCardEntry: boolean;
+  manualCardPanNumber: string;
+  manualCardTransactionId: string;
 };
 
 export type PatientPaymentInfoHandle = {
@@ -270,7 +294,16 @@ BillingFormState = {
     '',
 
   payZeroNow:
-    false
+    false,
+
+  manualCardEntry:
+    false,
+
+  manualCardPanNumber:
+    '',
+
+  manualCardTransactionId:
+    ''
 };
 
 const toBillingCoverageType = (
@@ -322,9 +355,10 @@ const resolvePaymentCategory =
       paymentMethodCode
     ) {
       case 'CASH':
+        return 'CASH';
       case 'CREDIT_CARD':
       case 'CREDIT_DEBIT_CARD':
-        return 'CASH';
+        return 'CARD';
       case 'CHEQUE':
         return 'CHEQUE';
       case 'BANK_TRANSFER':
@@ -767,6 +801,9 @@ const PatientPaymentInfo =
           null
         );
 
+      const userTouchedCoverageRef =
+        useRef(false);
+
       const [
         defaultServiceRows,
         setDefaultServiceRows
@@ -1006,15 +1043,30 @@ const PatientPaymentInfo =
           return;
         }
 
-        const storedCoverageType =
+        if (
+          encounterCoverage != null &&
+          Number(
+            encounterCoverage.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        if (
+          billingSummary != null &&
+          Number(
+            billingSummary.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        const savedCoverage =
           toBillingCoverageType(
-            encounterCoverage?.coverageType
+            localEncounter?.coverageType
           ) ??
           toBillingCoverageType(
             billingSummary?.coverageType
-          ) ??
-          toBillingCoverageType(
-            localEncounter?.coverageType
           );
 
         const storedInsuranceId =
@@ -1028,22 +1080,52 @@ const PatientPaymentInfo =
             localEncounter?.patientInsuranceId
           );
 
-        const nextCoverageType =
-          storedCoverageType ===
+        const apiCoverage =
+          toBillingCoverageType(
+            encounterCoverage?.coverageType
+          );
+
+        const paymentTypes = (
+          encounterCoverage as {
+            paymentTypes?: string | null;
+          } | null
+        )?.paymentTypes;
+
+        const savedChoice =
+          savedCoverage ===
+            'INSURANCE' ||
+          apiCoverage ===
             'INSURANCE' ||
           storedInsuranceId != null
             ? 'INSURANCE'
-            : storedCoverageType;
+            : savedCoverage ===
+                'SELF_PAY' ||
+              (paymentTypes !=
+                null &&
+                String(
+                  paymentTypes
+                ).trim() !==
+                  '')
+              ? 'SELF_PAY'
+              : null;
 
         if (
-          nextCoverageType !==
-            'INSURANCE' &&
-          storedInsuranceId == null
+          savedChoice !==
+          'INSURANCE'
         ) {
-          coverageHydratedEncounterIdRef.current =
-            encounterId;
+          if (
+            savedChoice ===
+            'SELF_PAY'
+          ) {
+            coverageHydratedEncounterIdRef.current =
+              encounterId;
+          }
+
           return;
         }
+
+        const nextCoverageType =
+          'INSURANCE';
 
         coverageHydratedEncounterIdRef.current =
           encounterId;
@@ -1272,6 +1354,34 @@ const PatientPaymentInfo =
               true
           }
         );
+
+      const proceduresResponse =
+        useGetProceduresByDepartmentQuery(
+          {
+            sourceId:
+              departmentId as number,
+            specialty:
+              encounterSpecialty,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,asc'
+          },
+          {
+            skip:
+              suppressDefaultServices ||
+              !departmentId ||
+              !encounterSpecialty,
+            refetchOnMountOrArgChange:
+              true
+          }
+        );
+
+      const isLoadingDefaultItems =
+        servicesResponse.isFetching ||
+        proceduresResponse.isFetching;
 
       const insuranceResponse =
         useGetInsurancesByPatientQuery(
@@ -1506,20 +1616,19 @@ const PatientPaymentInfo =
             servicesArePrepared
         );
 
-      const billedSourceIds =
+      const billedRowKeys =
         useMemo(
           () =>
             new Set(
               (summary.items ?? [])
                 .map(
-                  item =>
-                    item.sourceId
+                  summaryItemKey
                 )
                 .filter(
                   (
-                    id
-                  ): id is number =>
-                    id != null
+                    key
+                  ): key is string =>
+                    key != null
                 )
             ),
           [
@@ -1542,6 +1651,169 @@ const PatientPaymentInfo =
             insuranceResponse.data
           ]
         );
+
+      useEffect(() => {
+        if (
+          !encounterId ||
+          userTouchedCoverageRef.current
+        ) {
+          return;
+        }
+
+        if (
+          coverageHydratedEncounterIdRef.current ===
+          encounterId
+        ) {
+          return;
+        }
+
+        if (
+          fetchingEncounterCoverage &&
+          encounterCoverage == null &&
+          billingSummary == null
+        ) {
+          return;
+        }
+
+        if (
+          encounterCoverage != null &&
+          Number(
+            encounterCoverage.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        if (
+          billingSummary != null &&
+          Number(
+            billingSummary.encounterId
+          ) !== Number(encounterId)
+        ) {
+          return;
+        }
+
+        const savedCoverage =
+          toBillingCoverageType(
+            localEncounter?.coverageType
+          ) ??
+          toBillingCoverageType(
+            billingSummary?.coverageType
+          );
+
+        const storedInsuranceId =
+          toPositiveId(
+            encounterCoverage?.patientInsuranceId
+          ) ??
+          toPositiveId(
+            billingSummary?.patientInsuranceId
+          ) ??
+          toPositiveId(
+            localEncounter?.patientInsuranceId
+          );
+
+        const apiCoverage =
+          toBillingCoverageType(
+            encounterCoverage?.coverageType
+          );
+
+        if (
+          savedCoverage ===
+            'INSURANCE' ||
+          apiCoverage ===
+            'INSURANCE' ||
+          storedInsuranceId !=
+            null ||
+          savedCoverage ===
+            'SELF_PAY'
+        ) {
+          return;
+        }
+
+        const paymentTypes = (
+          encounterCoverage as {
+            paymentTypes?: string | null;
+          } | null
+        )?.paymentTypes;
+
+        if (
+          paymentTypes != null &&
+          String(paymentTypes).trim() !==
+            ''
+        ) {
+          return;
+        }
+
+        if (servicesArePrepared) {
+          coverageHydratedEncounterIdRef.current =
+            encounterId;
+          return;
+        }
+
+        if (
+          insuranceResponse.isLoading ||
+          insuranceResponse.isUninitialized ||
+          (insuranceResponse.isFetching &&
+            patientInsurances.length ===
+              0)
+        ) {
+          return;
+        }
+
+        const picked =
+          pickDefaultPatientInsurance(
+            patientInsurances
+          );
+
+        coverageHydratedEncounterIdRef.current =
+          encounterId;
+
+        if (!picked) {
+          return;
+        }
+
+        const insuranceId =
+          patientInsuranceRecordId(
+            picked
+          );
+
+        if (insuranceId == null) {
+          return;
+        }
+
+        setFormState(previous => {
+          if (
+            previous.coverageType ===
+              'INSURANCE' &&
+            String(
+              previous.patientInsuranceId ??
+                ''
+            ) === String(insuranceId)
+          ) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            coverageType:
+              'INSURANCE',
+            patientInsuranceId:
+              insuranceId
+          };
+        });
+      }, [
+        encounterId,
+        fetchingEncounterCoverage,
+        encounterCoverage,
+        billingSummary,
+        localEncounter?.coverageType,
+        localEncounter?.patientInsuranceId,
+        insuranceResponse.isLoading,
+        insuranceResponse.isUninitialized,
+        insuranceResponse.isFetching,
+        patientInsurances,
+        servicesArePrepared
+      ]);
 
       const filteredInsurances =
         useMemo(() => {
@@ -1749,88 +2021,115 @@ const PatientPaymentInfo =
       useEffect(() => {
         if (
           suppressDefaultServices ||
-          !servicesResponse.data
+          !servicesResponse.data ||
+          proceduresResponse.isFetching
         ) {
           return;
         }
 
-        const list =
-          extractResponseList(
+        const defaultItems: Array<{
+          billingItemType: DefaultBillingItemType;
+          source: any;
+        }> = [
+          ...extractResponseList(
             servicesResponse.data
-          );
+          ).map(service => ({
+            billingItemType:
+              'SERVICE' as const,
+            source: service
+          })),
+          ...extractResponseList(
+            proceduresResponse.data
+          ).map(procedure => ({
+            billingItemType:
+              'PROCEDURE' as const,
+            source: procedure
+          }))
+        ];
 
         const mapped:
         DefaultServiceRow[] =
-          list.map(
+          defaultItems.map(
             (
-              service: any,
+              {
+                billingItemType,
+                source: service
+              },
               index: number
-            ) => ({
-              id:
+            ) => {
+              const itemId =
                 toNumber(
                   service?.id ??
                     service?.serviceId
-                ),
+                );
 
-              serviceId:
-                toNumber(
-                  service?.id ??
-                    service?.serviceId
-                ),
+              return {
+                id:
+                  defaultRowKey({
+                    billingItemType,
+                    itemId
+                  }),
 
-              serviceType:
-                String(
-                  service?.serviceType ??
-                    service?.type ??
-                    service?.category ??
-                    'SERVICE'
-                ),
+                billingItemType,
 
-              serviceName:
-                String(
-                  service?.name ??
-                    service?.serviceName ??
-                    ''
-                ),
+                itemId,
 
-              selected:
-                service?.selected == null
-                  ? true
-                  : Boolean(
-                      service.selected
-                    ),
+                serviceType:
+                  billingItemType === 'PROCEDURE'
+                    ? 'PROCEDURE'
+                    : String(
+                        service?.serviceType ??
+                          service?.type ??
+                          service?.category ??
+                          'SERVICE'
+                      ),
 
-              isExempted:
-                Boolean(
-                  service?.isExempted
-                ),
+                serviceName:
+                  String(
+                    service?.name ??
+                      service?.serviceName ??
+                      ''
+                  ),
 
-              quantity:
-                1,
+                selected:
+                  service?.selected == null
+                    ? true
+                    : Boolean(
+                        service.selected
+                      ),
 
-              sequence:
-                index + 1,
+                isExempted:
+                  Boolean(
+                    service?.isExempted
+                  ),
 
-              setupPrice:
-                toNumber(
-                  service?.price
-                ) ?? null,
+                quantity:
+                  1,
 
-              calculatedPrice:
-                null,
+                sequence:
+                  index + 1,
 
-              priceSource:
-                null,
+                setupPrice:
+                  toNumber(
+                    service?.price
+                  ) ?? null,
 
-              priceListItemCode:
-                null,
+                calculatedPrice:
+                  null,
 
-              patientShare:
-                null,
+                priceSource:
+                  null,
 
-              insuranceShare:
-                null
-            })
+                priceListItemCode:
+                  null,
+
+                patientShare:
+                  null,
+
+                insuranceShare:
+                  null
+              };
+            }
           );
 
         setDefaultServiceRows(
@@ -1839,7 +2138,7 @@ const PatientPaymentInfo =
               new Map(
                 previous.map(
                   row => [
-                    row.serviceId,
+                    row.id,
                     row
                   ]
                 )
@@ -1849,7 +2148,7 @@ const PatientPaymentInfo =
               row => {
                 const old =
                   oldMap.get(
-                    row.serviceId
+                    row.id
                   );
 
                 return old
@@ -1871,7 +2170,9 @@ const PatientPaymentInfo =
         );
       }, [
         suppressDefaultServices,
-        servicesResponse.data
+        servicesResponse.data,
+        proceduresResponse.data,
+        proceduresResponse.isFetching
       ]);
 
       useEffect(() => {
@@ -1907,7 +2208,7 @@ const PatientPaymentInfo =
           return;
         }
 
-        const billedBySourceId =
+        const billedByRowKey =
           new Map(
             summary.items
               .filter(
@@ -1917,7 +2218,7 @@ const PatientPaymentInfo =
               )
               .map(
                 item => [
-                  item.sourceId as number,
+                  summaryItemKey(item),
                   item
                 ]
               )
@@ -1928,8 +2229,8 @@ const PatientPaymentInfo =
             previous.map(
               row => {
                 const billed =
-                  billedBySourceId.get(
-                    row.serviceId
+                  billedByRowKey.get(
+                    row.id
                   );
 
                 if (
@@ -1979,7 +2280,7 @@ const PatientPaymentInfo =
               row => {
                 if (
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 ) {
@@ -2136,8 +2437,8 @@ const PatientPaymentInfo =
               items:
                 rowsToPrice.map(
                   row => ({
-                    serviceId:
-                      row.serviceId,
+                    rowKey:
+                      row.id,
                     quantity:
                       row.quantity,
                     isExempted:
@@ -2238,6 +2539,13 @@ const PatientPaymentInfo =
       }, [
         encounterId,
         summaryRefreshKey
+      ]);
+
+      useEffect(() => {
+        userTouchedCoverageRef.current =
+          false;
+      }, [
+        encounterId
       ]);
 
       useEffect(() => {
@@ -2455,23 +2763,9 @@ const PatientPaymentInfo =
                                 previewContext.patientInsuranceId
                               )
                             : null,
-                        items:
-                          previewContext.rowsToPrice.map(
-                            (
-                              row,
-                              index
-                            ) => ({
-                              serviceId:
-                                row.serviceId,
-                              quantity:
-                                row.quantity,
-                              sequence:
-                                index +
-                                1,
-                              isExempted:
-                                row.isExempted
-                            })
-                          )
+                        ...toDefaultBillingRequestItems(
+                          previewContext.rowsToPrice
+                        )
                       }
                     }
                   ).unwrap();
@@ -2514,11 +2808,14 @@ const PatientPaymentInfo =
                   });
                 }
 
-                const pricedByServiceId =
+                const pricedByRowKey =
                   new Map(
-                    result.items.map(
+                    [
+                      ...result.items,
+                      ...(result.procedures ?? [])
+                    ].map(
                       item => [
-                        item.serviceId,
+                        pricedResultKey(item),
                         item
                       ]
                     )
@@ -2529,8 +2826,8 @@ const PatientPaymentInfo =
                     previous.map(
                       row => {
                         const priced =
-                          pricedByServiceId.get(
-                            row.serviceId
+                          pricedByRowKey.get(
+                            row.id
                           );
 
                         if (
@@ -2731,7 +3028,7 @@ const PatientPaymentInfo =
       const defaultServicesLoaded =
         skipDefaultServicesForReview ||
         (!followUpReviewDecisionPending &&
-          !servicesResponse.isFetching &&
+          !isLoadingDefaultItems &&
           departmentId != null);
 
       const hasNoDefaultServices =
@@ -2853,16 +3150,7 @@ const PatientPaymentInfo =
             facilityResponse?.data?.name ??
             'Healthcare Facility';
 
-          const patientName =
-            [
-              localPatient?.firstName,
-              localPatient?.lastName
-            ]
-              .filter(Boolean)
-              .join(' ') ||
-            localPatient?.fullName ||
-            localPatient?.name ||
-            '-';
+          const patientName = resolvePatientDisplayName(localPatient);
 
           const patientMrn =
             localPatient?.mrn ??
@@ -2957,7 +3245,12 @@ const PatientPaymentInfo =
 
                 patientShare: toNumber(
                   item.patientResponsibilityAmount
-                )
+                ),
+
+                taxAmount:
+                  resolvePatientTaxAmount(
+                    item
+                  )
               })
             ),
 
@@ -3097,8 +3390,8 @@ const PatientPaymentInfo =
               }
 
               if (
-                formState.paymentAmount >
-                previewTotals.patientOutstandingAmount
+                roundMoney(formState.paymentAmount) >
+                roundMoney(previewTotals.patientOutstandingAmount)
               ) {
                 reject(
                   'paymentAmount',
@@ -3199,7 +3492,7 @@ const PatientPaymentInfo =
           .map((item: any) => ({
             patientServiceProductId: item.patientServiceProductId ?? null,
             label:
-              defaultServiceRows.find(row => row.serviceId === item.serviceId)?.serviceName ||
+              defaultServiceRows.find(row => row.itemId === item.serviceId)?.serviceName ||
               `Service ${item.serviceId}`
           }));
         preAuthAlertPendingRef.current = true;
@@ -3329,25 +3622,9 @@ const PatientPaymentInfo =
                   ? formState.patientInsuranceId
                   : null,
 
-              items:
-                selectedRows.map(
-                  (
-                    row,
-                    index
-                  ) => ({
-                    serviceId:
-                      row.serviceId,
-
-                    quantity:
-                      row.quantity,
-
-                    sequence:
-                      index + 1,
-
-                    isExempted:
-                      row.isExempted
-                  })
-                ),
+              ...toDefaultBillingRequestItems(
+                selectedRows
+              ),
 
               requestId:
                 makeRequestId(
@@ -3449,25 +3726,9 @@ const PatientPaymentInfo =
                 ? formState.patientInsuranceId
                 : null,
 
-            items:
-              payableSelectedRows.map(
-                (
-                  row,
-                  index
-                ) => ({
-                  serviceId:
-                    row.serviceId,
-
-                  quantity:
-                    row.quantity,
-
-                  sequence:
-                    index + 1,
-
-                  isExempted:
-                    row.isExempted
-                })
-              ),
+            ...toDefaultBillingRequestItems(
+              payableSelectedRows
+            ),
 
             requestId:
               makeRequestId(
@@ -3493,8 +3754,25 @@ const PatientPaymentInfo =
               }
             ).unwrap();
 
+          const preparedItems = [
+            ...result.items.map(
+              item => ({
+                ...item,
+                label:
+                  `Service ${item.serviceId}`
+              })
+            ),
+            ...(result.procedures ?? []).map(
+              procedure => ({
+                ...procedure,
+                label:
+                  `Procedure ${procedure.procedureId}`
+              })
+            )
+          ];
+
           const successful =
-            result.items
+            preparedItems
               .filter(
                 item =>
                   item.billingResult
@@ -3511,10 +3789,10 @@ const PatientPaymentInfo =
 
           if (
             successful.length !==
-            result.items.length
+            preparedItems.length
           ) {
             const failed =
-              result.items.filter(
+              preparedItems.filter(
                 item =>
                   !item.billingResult
                     ?.processed
@@ -3524,7 +3802,7 @@ const PatientPaymentInfo =
               failed
                 .map(
                   item =>
-                    `Service ${item.serviceId}: ${
+                    `${item.label}: ${
                       item.billingResult
                         ?.message ??
                       'Not processed'
@@ -3575,7 +3853,12 @@ const PatientPaymentInfo =
       const receivePayment =
         async (
           pspIds: number[],
-          billingSummary: EncounterBillingSummary = summary
+          billingSummary: EncounterBillingSummary = summary,
+          cardPaymentResult?: {
+            authorizationCode?: string | null;
+            processorReference?: string | null;
+            cardLastFour?: string | null;
+          } | null
         ) => {
           if (
             formState.payZeroNow ||
@@ -3600,7 +3883,7 @@ const PatientPaymentInfo =
           }
 
           const paymentAmount =
-            Math.min(
+            capPaymentToBalance(
               formState.paymentAmount,
               outstanding
             );
@@ -3683,19 +3966,22 @@ const PatientPaymentInfo =
               null,
 
             authorizationCode:
-              formState.authorizationCode
+              cardPaymentResult?.authorizationCode ??
+              (formState.authorizationCode
                 .trim() ||
-              null,
+              null),
 
             processorReference:
-              formState.processorReference
+              cardPaymentResult?.processorReference ??
+              (formState.processorReference
                 .trim() ||
-              null,
+              null),
 
             cardLastFour:
-              formState.cardLastFour
+              cardPaymentResult?.cardLastFour ??
+              (formState.cardLastFour
                 .trim() ||
-              null,
+              null),
 
             bankReference:
               formState.bankReference
@@ -3747,9 +4033,19 @@ const PatientPaymentInfo =
                facilityId,
                 currency:
                   'SAR',
-              
+
                 onAmount:
-                  onCreditCardPaymentAmount
+                  onCreditCardPaymentAmount,
+
+                manualEntry:
+                  formState.manualCardEntry
+                    ? {
+                      panNumber:
+                        formState.manualCardPanNumber,
+                      transactionId:
+                        formState.manualCardTransactionId
+                    }
+                    : null
               }
             );
 
@@ -3766,10 +4062,31 @@ const PatientPaymentInfo =
               })
             );
 
-            return false;
+            return {
+              proceed: false as const
+            };
           }
 
-          return true;
+          return {
+            proceed: true as const,
+            cardResult:
+              creditCardCollect.skipped
+                ? null
+                : {
+                  authorizationCode:
+                    creditCardCollect.result
+                      ?.authorizationCode ??
+                    null,
+                  processorReference:
+                    creditCardCollect.result
+                      ?.processorReference ??
+                    null,
+                  cardLastFour:
+                    creditCardCollect.result
+                      ?.cardLastFour ??
+                    null
+                }
+          };
         };
 
       const handleConfirm =
@@ -4021,11 +4338,11 @@ const PatientPaymentInfo =
               return false;
             }
 
-            const creditCardCharged =
+            const creditCardCharge =
               await chargeCreditCardIfNeeded();
 
             if (
-              !creditCardCharged
+              !creditCardCharge.proceed
             ) {
               return false;
             }
@@ -4033,7 +4350,8 @@ const PatientPaymentInfo =
             const paymentResult =
               await receivePayment(
                 paymentTargetIds,
-                billingSummary
+                billingSummary,
+                creditCardCharge.cardResult
               );
 
             setSummaryRefreshKey(
@@ -4342,7 +4660,7 @@ const PatientPaymentInfo =
 
       const updateServiceRow =
         (
-          serviceId: number,
+          rowKey: string,
           partial:
             Partial<DefaultServiceRow>
         ) => {
@@ -4371,8 +4689,8 @@ const PatientPaymentInfo =
               previous.map(
                 row => {
                   if (
-                    row.serviceId !==
-                    serviceId
+                    row.id !==
+                    rowKey
                   ) {
                     return shouldRefreshPricing
                       ? {
@@ -4479,7 +4797,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       selected:
                         checked
@@ -4489,7 +4807,7 @@ const PatientPaymentInfo =
                 disabled={
                   areServicesLocked ||
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 }
@@ -4741,7 +5059,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       isExempted:
                         checked
@@ -4777,14 +5095,16 @@ const PatientPaymentInfo =
                 DefaultServiceRow
             ) => {
               const isPrepared =
-                billedSourceIds.has(
-                  row.serviceId
+                billedRowKeys.has(
+                  row.id
                 );
               const billedItem =
                 (summary.items ?? []).find(
                   item =>
-                    item.sourceId ===
-                    row.serviceId
+                    isBilledItemOfRow(
+                      item,
+                      row
+                    )
                 );
               const lineDue =
                 billedItem
@@ -5368,18 +5688,20 @@ const PatientPaymentInfo =
                         }
                       : await prepareServices();
 
-                  const creditCardCharged =
+                  const creditCardCharge =
                     await chargeCreditCardIfNeeded();
 
                   if (
-                    !creditCardCharged
+                    !creditCardCharge.proceed
                   ) {
                     return;
                   }
 
                   const result =
                     await receivePayment(
-                      prepared.ids
+                      prepared.ids,
+                      summary,
+                      creditCardCharge.cardResult
                     );
 
                   const refreshed =
@@ -5600,14 +5922,31 @@ const PatientPaymentInfo =
                 formState
               }
               setRecord={(updatedForm: BillingFormState) => {
+                userTouchedCoverageRef.current =
+                  true;
+                coverageHydratedEncounterIdRef.current =
+                  encounterId;
+
                 const nextCoverage =
                   updatedForm.coverageType;
+
+                const pickedInsuranceId =
+                  nextCoverage ===
+                    'INSURANCE' &&
+                  !updatedForm.patientInsuranceId
+                    ? patientInsuranceRecordId(
+                        pickDefaultPatientInsurance(
+                          patientInsurances
+                        )
+                      )
+                    : null;
 
                 setFormState({
                   ...updatedForm,
                   patientInsuranceId:
                     nextCoverage === 'INSURANCE'
-                      ? updatedForm.patientInsuranceId
+                      ? updatedForm.patientInsuranceId ??
+                        pickedInsuranceId
                       : null
                 });
               }}
@@ -5958,7 +6297,7 @@ const PatientPaymentInfo =
                 defaultServiceColumns
               }
               loading={
-                servicesResponse.isFetching ||
+                isLoadingDefaultItems ||
                 followUpReviewDecisionPending
               }
               height={
@@ -6315,6 +6654,64 @@ const PatientPaymentInfo =
             <div className="payment-info__field-note">
               Receipt, payment, and transaction numbers are generated automatically by the backend after payment is received.
             </div>
+
+            {isCreditCardPaymentMethod(
+              formState.paymentMethodCode
+            ) ? (
+              <div className="payment-info__field-grid payment-info__field-grid--compact">
+                <Checkbox
+                  checked={
+                    formState.manualCardEntry
+                  }
+                  disabled={
+                    paymentFieldsDisabled
+                  }
+                  onChange={(
+                    _,
+                    checked
+                  ) =>
+                    setFormState({
+                      ...formState,
+                      manualCardEntry: checked
+                    })
+                  }
+                >
+                  Charged manually on a separate terminal
+                </Checkbox>
+
+                {formState.manualCardEntry ? (
+                  <>
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Card Number"
+                      fieldName="manualCardPanNumber"
+                      record={
+                        formState
+                      }
+                      setRecord={setFormState}
+                      disabled={
+                        paymentFieldsDisabled
+                      }
+                    />
+
+                    <MyInput
+                      column
+                      required
+                      fieldLabel="Transaction ID"
+                      fieldName="manualCardTransactionId"
+                      record={
+                        formState
+                      }
+                      setRecord={setFormState}
+                      disabled={
+                        paymentFieldsDisabled
+                      }
+                    />
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             {showCardFields || showBankReference ? (
               <div className="payment-info__field-grid payment-info__field-grid--compact">

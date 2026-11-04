@@ -15,6 +15,8 @@ import {
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
   useLazyGetDiagnosticTestsByInternalCodeQuery,
+  useLazyGetDiagnosticTestsByShortNameQuery,
+  useLazyGetDiagnosticTestsByStatusQuery,
   useUpdateDiagnosticTestMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
@@ -27,10 +29,11 @@ import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
-import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdOutlineDescription, MdLocalOffer } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
 import { Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import Coding from './Coding';
 import DefaultProfileIndicator from './DefaultProfileIndicator';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
@@ -63,6 +66,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
+  const priceListPrompt = usePriceListPrompt();
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -94,6 +98,8 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
   const [diagnosticTestByInternalCode] = useLazyGetDiagnosticTestsByInternalCodeQuery();
+  const [diagnosticTestByShortName] = useLazyGetDiagnosticTestsByShortNameQuery();
+  const [diagnosticTestByStatus] = useLazyGetDiagnosticTestsByStatusQuery();
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
@@ -245,11 +251,21 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
-        modality: diagnosticsTest?.modality
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
 
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
       if (testRequest?.id && response?.id) {
         try {
           await setDiagnosticTestForRequest({
@@ -367,11 +383,21 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
-        modality: diagnosticsTest?.modality
+        modality: diagnosticsTest?.modality,
+        loincCodeId:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.loincCodeId ?? null : null
 
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
 
       await refetchDiagnostics();
       // Keep the filtered list (if a filter is active) in sync with the updated record
@@ -534,6 +560,22 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           sort,
           _cb: cacheBuster
         }).unwrap();
+      } else if (field === 'shortName') {
+        response = await diagnosticTestByShortName({
+          shortName: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
+      } else if (field === 'status') {
+        response = await diagnosticTestByStatus({
+          isActive: trimmedValue,
+          page,
+          size,
+          sort,
+          _cb: cacheBuster
+        }).unwrap();
       } else {
         setIsFiltered(false);
         setFilteredTotal(0);
@@ -573,7 +615,9 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const filterFields = [
     { label: 'Type', value: 'type' },
     { label: 'Name', value: 'name' },
-    { label: 'Internal Code', value: 'internalCode' }
+    { label: 'Short Name', value: 'shortName' },
+    { label: 'Internal Code', value: 'internalCode' },
+    { label: 'Status', value: 'status' }
   ];
 
   // Header page setUp
@@ -623,6 +667,22 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
             setDiagnosticsTest(rowData);
             setOpenAddEditDiagnosticTestPopup(true);
           }}
+        />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: rowData.type,
+              sourceId: rowData.id,
+              itemCode: rowData.internalCode,
+              itemName: rowData.name,
+              unitPrice: rowData.price,
+              currency: rowData.currency
+            })
+          }
         />
 
         {/* Activate / Deactivate */}
@@ -747,6 +807,20 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       key: 'internalCode',
       title: <Translate>Internal Code</Translate>
     },
+    {
+      key: 'loincCode',
+      title: <Translate>LOINC</Translate>,
+      flexGrow: 2,
+      render: (rowData: DiagnosticTest) => {
+        if (!rowData?.loincCode) return <p>—</p>;
+        return (
+          <p>
+            {rowData.loincCode}
+            {rowData.loincDescription ? ` — ${rowData.loincDescription}` : ''}
+          </p>
+        );
+      }
+    },
 
     {
       key: 'isActive',
@@ -794,7 +868,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         searchable={false}
       />
 
-      {recordOfFilter.filter !== 'type' && (
+      {recordOfFilter.filter !== 'type' && recordOfFilter.filter !== 'status' && (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -802,6 +876,24 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           setRecord={setRecordOfFilter}
           showLabel={false}
           placeholder="Search"
+        />
+      )}
+
+      {recordOfFilter.filter === 'status' && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Active', value: 'true' },
+            { label: 'Inactive', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Status"
+          searchable={false}
         />
       )}
 
@@ -1010,6 +1102,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         }
         width={width}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
 
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}

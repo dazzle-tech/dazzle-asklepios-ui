@@ -47,6 +47,7 @@ interface MyTableProps {
   loading?: boolean;
   onRowClick?: (rowData: any) => void;
   rowClassName?: (rowData: any) => string;
+  rowTestId?: (rowData: any) => string;
   sortColumn?: string;
   sortType?: 'asc' | 'desc';
   onSortChange?: (sortColumn: string, sortType: 'asc' | 'desc') => void;
@@ -68,6 +69,7 @@ const MyTable: React.FC<MyTableProps> = ({
   loading,
   onRowClick,
   rowClassName,
+  rowTestId,
   sortColumn,
   sortType,
   onSortChange,
@@ -234,6 +236,7 @@ const MyTable: React.FC<MyTableProps> = ({
                   return (
                     <React.Fragment key={index}>
                       <TableRow
+                        data-testid={rowTestId?.(row)}
                         onClick={() => onRowClick?.(row)}
                         className={clsx('main-row', rowClassName?.(row), {
                           'even-row': isEvenRow
@@ -300,7 +303,11 @@ const MyTable: React.FC<MyTableProps> = ({
                                 <TableBody>
                                   <TableRow>
                                     {expandableColumns.map(col => (
-                                      <TableCell key={col.key} align={col.align}>
+                                      <TableCell
+                                        key={col.key}
+                                        data-testid={col.key}
+                                        align={col.align}
+                                      >
                                         {col.render
                                           ? renderCellContent(col.render(row, index))
                                           : renderCellContent(row[col.dataKey || col.key])}
@@ -338,3 +345,4 @@ const MyTable: React.FC<MyTableProps> = ({
 };
 
 export default MyTable;
+

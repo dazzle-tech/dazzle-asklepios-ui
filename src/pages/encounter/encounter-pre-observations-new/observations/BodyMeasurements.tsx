@@ -24,6 +24,12 @@ type BodyMeasurementsProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  /** Keep specialty sheets limited to weight, height and BMI. */
+  showExtendedMeasurements?: boolean;
+  prefill?: Partial<BodyMeasurementsModelObject> | null;
+  onSaved?: (saved?: BodyMeasurementsModelObject) => void;
 };
 
 const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
@@ -33,7 +39,12 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Body Measurements'
+  title = 'Body Measurements',
+  showExtendedMeasurements = true,
+  collapsible = false,
+  defaultCollapsed = false,
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -46,6 +57,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
   // === Local state ===
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurementsModelObject>({
     ...newBodyMeasurements,
+    ...(prefill ?? {}),
     patientId,
     encounterId
   });
@@ -76,7 +88,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
 
   useEffect(() => {
-    if (!latestBodyMeasurementsByEncounterId) return;
+    if (prefill || !latestBodyMeasurementsByEncounterId) return;
 
     setBodyMeasurements(previousBodyMeasurements => ({
       ...previousBodyMeasurements,
@@ -89,7 +101,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
           ? (latestBodyMeasurementsByEncounterId as any).isActive
           : true
     }));
-  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId]);
+  }, [latestBodyMeasurementsByEncounterId, patientId, encounterId, prefill]);
 
   /**
    * Compute BMI & BSA based on weight/height.
@@ -113,13 +125,20 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     setBodySurfaceArea('');
   }, [bodyMeasurements?.weight, bodyMeasurements?.height]);
 
+  const toMeasurementNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    const numericValue =
+      typeof value === 'number' ? value : Number(String(value).replace(',', '.').trim());
+    return Number.isFinite(numericValue) ? numericValue : null;
+  };
+
   const bodyMeasurementsCreatePayload = useMemo(() => {
     return {
       patientId,
       encounterId,
-      weight: bodyMeasurements.weight ?? null,
-      height: bodyMeasurements.height ?? null,
-      headCircumference: bodyMeasurements.headCircumference ?? null,
+      weight: toMeasurementNumber(bodyMeasurements.weight),
+      height: toMeasurementNumber(bodyMeasurements.height),
+      headCircumference: toMeasurementNumber(bodyMeasurements.headCircumference),
       isActive: typeof bodyMeasurements.isActive === 'boolean' ? bodyMeasurements.isActive : true
     };
   }, [bodyMeasurements, patientId, encounterId]);
@@ -204,9 +223,12 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       return;
     }
 
+    const weight = toMeasurementNumber(bodyMeasurements.weight);
+    const height = toMeasurementNumber(bodyMeasurements.height);
+
     const missing: string[] = [];
-    if (bodyMeasurements.weight == null) missing.push('• Weight: must not be empty');
-    if (bodyMeasurements.height == null) missing.push('• Height: must not be empty');
+    if (weight == null) missing.push('• Weight: must not be empty');
+    if (height == null) missing.push('• Height: must not be empty');
 
     if (missing.length > 0) {
       dispatch(
@@ -229,6 +251,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
+      onSaved?.(createResponse);
     } catch (error: any) {
       showApiError(error);
     }
@@ -246,6 +269,8 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
 
   return (
     <SectionContainer
+      collapsible={collapsible}
+      defaultCollapsed={defaultCollapsed}
       title={title}
       action={
         <div style={{ display: 'flex', gap: 8 }}>
@@ -267,6 +292,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                 fieldName="weight"
                 rightAddon="Kg"
                 fieldType="number"
+                allowDecimal
                 record={bodyMeasurements}
                 setRecord={setBodyMeasurements}
                 disabled={disabled}
@@ -291,24 +317,27 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                 fieldName="height"
                 rightAddon="Cm"
                 fieldType="number"
+                allowDecimal
                 record={bodyMeasurements}
                 setRecord={setBodyMeasurements}
                 disabled={disabled}
                 required
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <div className="container-Column">
-                <MyLabel label="Body Surface Area" />
-                <div>
-                  <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
-                  <span>{bodySurfaceArea}</span>
+            {showExtendedMeasurements && (
+              <div style={{ flex: 1 }}>
+                <div className="container-Column">
+                  <MyLabel label="Body Surface Area" />
+                  <div>
+                    <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
+                    <span>{bodySurfaceArea}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
-            {showHeadCircumference && (
+            {showExtendedMeasurements && showHeadCircumference && (
               <div
                 className="rows-gap"
                 style={{ display: 'flex', gap: 12, marginTop: 10 }}
@@ -321,6 +350,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
                     rightAddon="Cm"
                     rightAddonwidth={40}
                     fieldType="number"
+                    allowDecimal
                     record={bodyMeasurements}
                     setRecord={setBodyMeasurements}
                     disabled={disabled}

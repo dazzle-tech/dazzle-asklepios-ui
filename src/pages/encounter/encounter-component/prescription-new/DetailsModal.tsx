@@ -2,7 +2,6 @@ import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
@@ -21,9 +20,9 @@ import {
   useGetActiveIngredientsByIdsMutation
 } from '@/services/setup/activeIngredients/activeIngredientsService';
 import {
-  useGetBrandMedicationByIdQuery,
-  useGetBrandMedicationsByActiveIdsMutation
-} from '@/services/setup/brandmedication/BrandMedicationService';
+  useGetPharmaceuticalByIdQuery,
+  useGetPharmaceuticalsByActiveIngredientQuery
+} from '@/services/setup/activeIngredients/pharmaceuticalService';
 import './styles.less';
 import { conjureValueBasedOnKeyFromList, extractErrorMessage } from '@/utils';
 import InfoCardList from '@/components/InfoCardList';
@@ -101,7 +100,6 @@ const DetailsModal = ({
   const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [instr, setInstruc] = useState(null);
-  const [editDuration, setEditDuration] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [capturedSourceId, setCapturedSourceId] = useState<number>(0);
 
@@ -128,20 +126,24 @@ const DetailsModal = ({
 
   const activeIngredientData = activeIngredientListResponse?.data ?? [];
 
-  const [getBrandsByActive, { data: brandMedicationByActiveResponse, isLoading }] =
-    useGetBrandMedicationsByActiveIdsMutation();
-
-  const allBrandsForSelectedActive = brandMedicationByActiveResponse ?? [];
-
-  const genericMedicationData = allBrandsForSelectedActive.filter((item: any) =>
-    item?.name?.toLowerCase().includes((searchKeyword || '').toLowerCase())
+  // The doctor prescribes a pharmaceutical (e.g. "LORNOXICAM - 8 MG VIAL") of the selected active ingredient.
+  // Brand (medicationsId) is no longer selected here; it is kept untouched on older records.
+  const { data: pharmaceuticalsForSelectedActive = [] } = useGetPharmaceuticalsByActiveIngredientQuery(
+    selectedActiveIngredient?.id,
+    { skip: !open || !selectedActiveIngredient?.id }
   );
 
-  const medIdForBrand =
-    prescriptionMedication?.medicationsId ?? prescriptionMedication?.genericMedicationsId;
+  const genericMedicationData = pharmaceuticalsForSelectedActive
+    .filter((item: any) => item?.isActive)
+    .map((item: any) => ({ ...item, name: item.pharmaceuticalName }))
+    .filter((item: any) =>
+      item?.name?.toLowerCase().includes((searchKeyword || '').toLowerCase())
+    );
 
-  const { data: Brand } = useGetBrandMedicationByIdQuery(medIdForBrand, {
-    skip: !medIdForBrand
+  const medIdForPharmaceutical = prescriptionMedication?.pharmaceuticalId;
+
+  const { data: savedPharmaceutical } = useGetPharmaceuticalByIdQuery(medIdForPharmaceutical, {
+    skip: !medIdForPharmaceutical
   });
 
   const { data: exists } = useCheckCurrentMedicationExistsQuery(
@@ -215,8 +217,7 @@ const DetailsModal = ({
     setShowMedicationDropdown(false);
     setPrescriptionMedications(prev => ({
       ...prev,
-      medicationsId: null,
-      genericMedicationsId: null
+      pharmaceuticalId: null
     }));
   };
 
@@ -274,11 +275,6 @@ if (!aiId) {
             } else {
               setOtherMedicationName('');
             }
-          try {
-            await getBrandsByActive([ai.id]).unwrap();
-          } catch (e) {
-            console.error('Error fetching brands for edit:', e);
-          }
         }
 
         editAiLoadedRef.current = loadKey;
@@ -294,13 +290,12 @@ if (!aiId) {
     open,
     prescriptionMedication?.id,
     prescriptionMedication?.activeIngredientId,
-    getActiveIngredientsByIds,
-    getBrandsByActive
+    getActiveIngredientsByIds
   ]);
 
   useEffect(() => {
-    if (!open || !prescriptionMedication?.id || !Brand || !medIdForBrand) return;
-    if (String(Brand.id) !== String(medIdForBrand)) return;
+    if (!open || !prescriptionMedication?.id || !savedPharmaceutical || !medIdForPharmaceutical) return;
+    if (String(savedPharmaceutical.id) !== String(medIdForPharmaceutical)) return;
 
     const loadKey = String(prescriptionMedication.id);
     if (
@@ -312,18 +307,19 @@ if (!aiId) {
 
     if (userClearedBrandRef.current) return;
 
-    setSelectedGeneric(Brand);
-    setSearchKeyword(Brand.name ?? '');
+    setSelectedGeneric({ ...savedPharmaceutical, name: savedPharmaceutical.pharmaceuticalName });
+    setSearchKeyword(savedPharmaceutical.pharmaceuticalName ?? '');
     editBrandLoadedRef.current = loadKey;
   }, [
     open,
     prescriptionMedication?.id,
-    Brand,
-    medIdForBrand
+    savedPharmaceutical,
+    medIdForPharmaceutical
   ]);
 
   useEffect(() => {
-    const brandId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
+    // Coverage is checked against brand pricing, so it only applies to older records that still have a brand.
+    const brandId = prescriptionMedication?.medicationsId;
     if (!open || !brandId) {
       clearUncoveredItems();
       return;
@@ -335,7 +331,6 @@ if (!aiId) {
     });
   }, [
     open,
-    selectedGeneric?.id,
     prescriptionMedication?.medicationsId,
     checkItem,
     clearUncoveredItems
@@ -518,16 +513,6 @@ if (!aiId) {
     })();
   }, [open, selectedGeneric, selectedActiveIngredient, fetchPreRequestedTests]);
 
-  const isChronicMedication = !!prescriptionMedication?.chronicMedication;
-  useEffect(() => {
-    setEditDuration(isChronicMedication);
-    setPrescriptionMedications(prev => ({
-      ...prev,
-      duration: null,
-      durationTypeLkey: null
-    }));
-  }, [isChronicMedication]);
-
   useEffect(() => {
     if (indicationsIcd.indicationIcd) {
       setindicationsDescription(prevadminInstructions => {
@@ -609,7 +594,7 @@ if (!aiId) {
     }
     if (selectedActiveIngredient?.isLookAlikeSoundAlike && !selectedGeneric) {
       dispatch(
-        notify({ msg: 'This active ingredient is LASA, please select brand', sev: 'warning' })
+        notify({ msg: 'This active ingredient is LASA, please select medication', sev: 'warning' })
       );
       return;
     }
@@ -658,8 +643,7 @@ if (!aiId) {
       administrationInstructionValue = adminInstructions.administrationInstructions.join(',');
     }
 
-    const selectedMedicationId = selectedGeneric?.id ?? null;
-    console.log("selectedMedicationId: ", selectedMedicationId);
+    const selectedPharmaceuticalId = selectedGeneric?.id ?? null;
 
     const isChronic = Boolean(prescriptionMedication?.chronicMedication);
     const durationRaw = prescriptionMedication?.duration;
@@ -732,7 +716,7 @@ if (!aiId) {
 const createPayload: any = {
   prescriptionHeaderId: preKey,
   activeIngredientId: selectedActiveIngredient?.id ?? null,
-  medicationsId: selectedMedicationId,
+  pharmaceuticalId: selectedPharmaceuticalId,
   otherMedicationName: isOtherActiveIngredient
     ? otherMedicationName.trim()
     : null,
@@ -792,7 +776,7 @@ const createPayload: any = {
           id: Number(medicationId),
           body: {
             activeIngredientId: createPayload.activeIngredientId,
-            medicationsId: createPayload.medicationsId,
+            pharmaceuticalId: createPayload.pharmaceuticalId,
             otherMedicationName: createPayload.otherMedicationName,
             instructionsType: createPayload.instructionsType,
             instructions: createPayload.instructions,
@@ -877,8 +861,7 @@ const createPayload: any = {
       setPrescriptionMedications(prev => ({
         ...prev,
         activeIngredientId: null,
-        medicationsId: null,
-        genericMedicationsId: null
+        pharmaceuticalId: null
       }));
       setSelectedGeneric(null);
       setSearchKeyword('');
@@ -910,17 +893,8 @@ const createPayload: any = {
     setPrescriptionMedications(prev => ({
       ...prev,
       activeIngredientId: activeIngredient?.id ?? null,
-      medicationsId: null,
-      genericMedicationsId: null,
+      pharmaceuticalId: null,
     }));
-
-    if (activeIngredient?.id) {
-      try {
-        await getBrandsByActive([activeIngredient.id]).unwrap();
-      } catch (e) {
-        console.error('Error fetching brands:', e);
-      }
-    }
 
     if (activeIngredient?.highAlert) {
       dispatch(
@@ -943,8 +917,7 @@ const createPayload: any = {
     editBrandLoadedRef.current = getMedicationLoadKey();
     setPrescriptionMedications(prev => ({
       ...prev,
-      medicationsId: Generic?.id ?? null,
-      genericMedicationsId: Generic?.id ?? null
+      pharmaceuticalId: Generic?.id ?? null
     }));
   };
 
@@ -1044,8 +1017,8 @@ const createPayload: any = {
         leftContent={
           <div dir={dir}>
             <ActiveIngrediantList
-              selectedGeneric={selectedGeneric}
-              selectedActiveIngredient={selectedActiveIngredient}
+              selectedGeneric={prescriptionMedication?.medicationsId ?? null}
+              activeIngredientId={selectedActiveIngredient?.id ?? null}
             />
             {!!preRequestedTestNames.length && (
               <div style={{ marginTop: 12 }}>
@@ -1065,6 +1038,7 @@ const createPayload: any = {
             <MyButton
               appearance="ghost"
               onClick={() => setOpenOrderModel(true)}
+              disabled={edit}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -1190,7 +1164,7 @@ const createPayload: any = {
                                     </Dropdown.Item>
                                   ))
                                 ) : (
-                                  <Dropdown.Item disabled>No brands found</Dropdown.Item>
+                                  <Dropdown.Item disabled>No medications found</Dropdown.Item>
                                 )}
                               </Dropdown.Menu>
                             )}
@@ -1242,19 +1216,20 @@ const createPayload: any = {
                       <div className="prescription-full-block">
                         <div className="prescription-inputs-inline">
                           <MyInput
-                            disabled={preKey != null ? editDuration : true}
-                            required={!editDuration}
-                            width={'100%'}
+                            disabled={preKey == null}
+                            required={!prescriptionMedication?.chronicMedication}
+                            width="11vw"
                             fieldType="number"
                             fieldLabel="Duration"
                             fieldName={'duration'}
+                            allowDecimal
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
                           <MyInput
-                            disabled={preKey != null ? editDuration : true}
-                            required={!editDuration}
-                            width={'100%'}
+                            disabled={preKey == null}
+                            required={!prescriptionMedication?.chronicMedication}
+                            width={160}
                             fieldType="select"
                             fieldLabel="Duration Type"
                             selectData={DurationTypeLovQueryResponse?.object ?? []}
@@ -1284,10 +1259,11 @@ const createPayload: any = {
                         <div className="prescription-inputs-inline">
                           <MyInput
                             disabled={preKey != null ? false : true}
-                            width={120}
+                            width="11vw"
                             fieldType="number"
                             fieldLabel="Maximum Dose"
                             fieldName="maximumDose"
+                            allowDecimal
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
@@ -1475,17 +1451,15 @@ const createPayload: any = {
         setSelectedGeneric={setSelectedGeneric}
       />
 
-      <MyModal
-        open={openOrderModel}
-        setOpen={setOpenOrderModel}
-        size="full"
-        title="Add Order"
-        content={
-          <div dir={dir}>
-            <DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />
-          </div>
-        }
-      />
+      {openOrderModel && (
+        <DiagnosticsOrder
+          directTestsSelection
+          edit={edit}
+          patient={patient}
+          encounter={encounter}
+          onClose={() => setOpenOrderModel(false)}
+        />
+      )}
     </div>
   );
 };

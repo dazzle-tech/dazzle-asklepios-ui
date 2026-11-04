@@ -20,6 +20,15 @@ export const normalizeAllowedServices = (raw: any): AllowedService[] => {
     .filter((s): s is AllowedService => s !== null);
 };
 
+// Default color of new templates: the system primary color from setup.
+export const FALLBACK_TEMPLATE_COLOR = '#6982F0';
+export const toTemplateColor = (primaryColor?: string | null): string => {
+  const color = (primaryColor ?? '').trim();
+  if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+  if (/^#[0-9a-f]{3}$/i.test(color)) return '#' + color.slice(1).split('').map(c => c + c).join('');
+  return FALLBACK_TEMPLATE_COLOR;
+};
+
 export const hexToRGBA = (hex: string, opacity = 0.2): string => {
   const clean = hex.replace('#', '');
   const r = parseInt(clean.substring(0, 2), 16);

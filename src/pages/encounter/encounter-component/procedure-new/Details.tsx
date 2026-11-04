@@ -1,7 +1,6 @@
 import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
 import {
@@ -167,6 +166,8 @@ const Details = ({
   proRefetch
 }) => {
   const authSlice = useAppSelector(state => state.auth);
+  const sourceFacilityId = encounter?.facilityId || authSlice?.selectedDepartment?.facilityId;
+  const sourceDepartmentId = encounter?.departmentId || authSlice?.selectedDepartment?.departmentId;
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
   const [procedurePage, setProcedurePage] = useState(0);
@@ -356,10 +357,10 @@ const Details = ({
       setProcedure(prev => ({
         ...prev,
         toDepartmentId: null,
-        toFacilityId: authSlice?.selectedDepartment?.facilityId
+        toFacilityId: sourceFacilityId
       }));
     }
-  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
+  }, [procedure.currentDepartment, sourceFacilityId]);
 
   // Reset & reload departments whenever facility changes
   useEffect(() => {
@@ -516,11 +517,11 @@ const Details = ({
         procedureId: procedure.procedureId,
         patientId: patient?.id,
         encounterId: encounter?.id,
-        fromFacilityId: authSlice?.selectedDepartment?.facilityId,
+        fromFacilityId: sourceFacilityId,
         toFacilityId: procedure.currentDepartment
-          ? authSlice?.selectedDepartment?.facilityId
+          ? sourceFacilityId
           : procedure.toFacilityId,
-        fromDepartmentId: authSlice?.selectedDepartment?.departmentId,
+        fromDepartmentId: sourceDepartmentId,
         toDepartmentId: procedure.toDepartmentId,
         indicationId: procedure.indicationId,
         procedureLevel: procedure.procedureLevel,
@@ -547,7 +548,7 @@ const Details = ({
           bodyPart: procedure.bodyPart || '',
           side: procedure.side,
           toFacilityId: procedure.currentDepartment
-            ? authSlice?.selectedDepartment?.facilityId
+            ? sourceFacilityId
             : procedure.toFacilityId,
           toDepartmentId: procedure.toDepartmentId,
           scheduledDateTime: procedure.scheduledDateTime
@@ -631,7 +632,7 @@ const Details = ({
             <MyButton
               appearance="ghost"
               onClick={() => setOpenOrderModel(true)}
-              disabled={editing}
+              disabled={editing || edit}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -907,17 +908,15 @@ const Details = ({
         }
       />
 
-      <MyModal
-        open={openOrderModel}
-        setOpen={setOpenOrderModel}
-        size="lg"
-        title="Add Order"
-        content={
-          <div dir={dir}>
-            <PatientOrder edit={edit} patient={patient} encounter={encounter} />
-          </div>
-        }
-      />
+      {openOrderModel && (
+        <PatientOrder
+          directTestsSelection
+          edit={edit}
+          patient={patient}
+          encounter={encounter}
+          onClose={() => setOpenOrderModel(false)}
+        />
+      )}
 
       <AttachmentUploadModal
         isOpen={showAttachmentModal}

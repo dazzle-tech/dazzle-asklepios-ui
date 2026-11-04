@@ -4,6 +4,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -177,6 +178,7 @@ const formatDate = (date: any) => {
 
 const MedicationRecord = () => {
   const dispatch = useAppDispatch();
+  const isAmendmentOpen = useIsAmendmentOpen();
   const user = useAppSelector((state: any) => state?.auth?.user);
 
   const [administerModalOpen, setAdministerModalOpen] = useState(false);
@@ -216,13 +218,14 @@ const MedicationRecord = () => {
     discardReason: ''
   });
 
-  const [orderedParams, setOrderedParams] = useState({
+  // Default: newest medication first, its doses in time order (first dose on top)
+  const [orderedParams, setOrderedParams] = useState<{ page: number; size: number; sort: string | string[] }>({
     page: 0,
     size: 5,
-    sort: 'createdDate,desc'
+    sort: ['orderGroupId,desc', 'doseTime,asc', 'id,asc']
   });
 
-  const [orderedSortColumn, setOrderedSortColumn] = useState('createdDate');
+  const [orderedSortColumn, setOrderedSortColumn] = useState('');
   const [orderedSortType, setOrderedSortType] = useState<'asc' | 'desc'>('desc');
 
   const [adminParams, setAdminParams] = useState({
@@ -465,7 +468,7 @@ const MedicationRecord = () => {
 
 
   const handleDiscard = async () => {
-    if (!selectedRow?.id) return;
+    if (isAmendmentOpen || !selectedRow?.id) return;
 
     try {
       await discardOrder({
@@ -497,6 +500,7 @@ const MedicationRecord = () => {
   };
 
   const handleDoubleCheck = async (row: MedicationOrderRow) => {
+    if (isAmendmentOpen) return;
     try {
       const currentUser = user?.login || user?.username;
 
@@ -677,8 +681,9 @@ const MedicationRecord = () => {
           >
             <CheckRoundIcon
             className="medication-record-order-icons-size"
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: isAmendmentOpen ? 'not-allowed' : 'pointer', opacity: isAmendmentOpen ? 0.4 : 1 }}
             onClick={() => {
+              if (isAmendmentOpen) return;
               setSelectedOrderId(row.id);
               setAdministrationModalOpen(true);
             }}
@@ -696,8 +701,9 @@ const MedicationRecord = () => {
            <FontAwesomeIcon
             icon={faXmark}
             className="medication-record-order-icons-size"
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: isAmendmentOpen ? 'not-allowed' : 'pointer', opacity: isAmendmentOpen ? 0.4 : 1 }}
             onClick={() => {
+              if (isAmendmentOpen) return;
               setSelectedRow(row);
               setCancelObject({
                 discardReason: ''
@@ -723,7 +729,8 @@ const MedicationRecord = () => {
           icon={faCheckDouble}
           className="medication-record-order-icons-size"
           style={{
-            cursor: 'pointer'
+            cursor: isAmendmentOpen ? 'not-allowed' : 'pointer',
+            opacity: isAmendmentOpen ? 0.4 : 1
           }}
           onClick={() => handleDoubleCheck(row)}
         />
@@ -746,7 +753,8 @@ const MedicationRecord = () => {
       frequencyMap,
       unitMap,
       user,
-      dispatch
+      dispatch,
+      isAmendmentOpen
     ]
   );
 

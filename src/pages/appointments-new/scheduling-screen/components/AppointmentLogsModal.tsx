@@ -33,9 +33,8 @@ const AppointmentLogsModal: React.FC<Props> = ({ open, setOpen, appointment }) =
     { appointmentId: appointmentId as number },
     { skip: !appointmentId }
   );
-  console.log('logs', logs);
 
-   const { data: users = [] } = useGetUserQuery();
+  const { data: users = [] } = useGetUserQuery();
 
   useEffect(() => {
     if (open && appointmentId) {

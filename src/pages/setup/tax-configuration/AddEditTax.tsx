@@ -1,5 +1,6 @@
 import React, {
-  useEffect
+  useEffect,
+  useMemo
 } from 'react';
 
 import {
@@ -43,6 +44,7 @@ import type {
   Tax,
   TaxApplicableOn,
   TaxCalculationType,
+  TaxCitizenCategory,
   TaxType
 } from '@/types/model-types-new';
 
@@ -118,6 +120,15 @@ Record<string, string> = {
 
   applicableOn:
     'Applicable On',
+
+  citizenCategory:
+    'Citizen Category',
+
+  applyOnPatientCopayment:
+    'Patient Copayment',
+
+  applyOnClaimShare:
+    'Claim Share',
 
   validFrom:
     'Valid From',
@@ -446,10 +457,84 @@ React.FC<Props> = ({
       'TaxCalculationType'
     );
 
-  const applicableOnOptions =
+  const billingCategoryOptions =
     useEnumOptions(
-      'TaxApplicableOn'
+      'BillingItemTypes',
+      {
+        exclude: [
+          'PATHOLOGY'
+        ]
+      }
     );
+
+  const applicableOnOptions =
+    useMemo(
+      () => [
+        {
+          value:
+            'INVOICE',
+
+          label:
+            'Invoice'
+        },
+        {
+          value:
+            'CHARGE_LINE',
+
+          label:
+            'Charge Line'
+        },
+        ...billingCategoryOptions
+      ],
+      [
+        billingCategoryOptions
+      ]
+    );
+
+  const citizenCategoryOptions =
+    useEnumOptions(
+      'TaxCitizenCategory',
+      {
+        labelOverrides: {
+          ALL:
+            'All',
+
+          CITIZEN:
+            'Citizens',
+
+          NON_CITIZEN:
+            'Non-Citizens'
+        }
+      }
+    );
+
+  const citizenCategorySelectData =
+    citizenCategoryOptions.length >
+    0
+      ? citizenCategoryOptions
+      : [
+          {
+            value:
+              'ALL',
+
+            label:
+              'All'
+          },
+          {
+            value:
+              'CITIZEN',
+
+            label:
+              'Citizens'
+          },
+          {
+            value:
+              'NON_CITIZEN',
+
+            label:
+              'Non-Citizens'
+          }
+        ];
 
   const currencyOptions =
     useEnumOptions(
@@ -510,6 +595,18 @@ React.FC<Props> = ({
         applicableOn:
           previous.applicableOn ??
           'INVOICE',
+
+        citizenCategory:
+          previous.citizenCategory ??
+          'ALL',
+
+        applyOnPatientCopayment:
+          previous.applyOnPatientCopayment ??
+          true,
+
+        applyOnClaimShare:
+          previous.applyOnClaimShare ??
+          true,
 
         validFrom:
           previous.validFrom ||
@@ -686,6 +783,10 @@ React.FC<Props> = ({
       return 'Applicable on is required.';
     }
 
+    if (!tax.citizenCategory) {
+      return 'Citizen category is required.';
+    }
+
     if (!tax.validFrom) {
       return 'Valid from date is required.';
     }
@@ -784,6 +885,18 @@ React.FC<Props> = ({
         applicableOn:
           tax.applicableOn as
             TaxApplicableOn,
+
+        citizenCategory:
+          tax.citizenCategory as
+            TaxCitizenCategory,
+
+        applyOnPatientCopayment:
+          tax.applyOnPatientCopayment ??
+          true,
+
+        applyOnClaimShare:
+          tax.applyOnClaimShare ??
+          true,
 
         validFrom:
           String(
@@ -969,6 +1082,7 @@ React.FC<Props> = ({
               width="100%"
               fieldLabel="Fixed Amount"
               fieldType="number"
+              allowDecimal
               fieldName="fixedAmount"
               record={
                 tax
@@ -1006,6 +1120,7 @@ React.FC<Props> = ({
             width="100%"
             fieldLabel="Percentage"
             fieldType="number"
+            allowDecimal
             fieldName="percentage"
             record={
               tax
@@ -1060,6 +1175,63 @@ React.FC<Props> = ({
             }
             placeholder="Select Applicable On"
             searchable={false}
+          />
+        </div>
+
+        <br />
+
+        <MyInput
+          required
+          width="100%"
+          fieldLabel="Citizen Category"
+          fieldType="select"
+          fieldName="citizenCategory"
+          selectData={
+            citizenCategorySelectData
+          }
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={
+            tax
+          }
+          setRecord={
+            setTax
+          }
+          placeholder="Select Citizen Category"
+          searchable={false}
+        />
+
+        <br />
+
+        <div className="tax-two-columns">
+          <MyInput
+            width="100%"
+            fieldLabel="Patient Copayment"
+            fieldType="checkbox"
+            fieldName="applyOnPatientCopayment"
+            checkedLabel="Taxed"
+            unCheckedLabel="Not Taxed"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
+          />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Claim Share"
+            fieldType="checkbox"
+            fieldName="applyOnClaimShare"
+            checkedLabel="Taxed"
+            unCheckedLabel="Not Taxed"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
           />
         </div>
 

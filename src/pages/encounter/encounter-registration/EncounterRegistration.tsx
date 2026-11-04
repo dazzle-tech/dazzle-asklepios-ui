@@ -138,6 +138,10 @@ const EncounterRegistration = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
+  const searchFieldName = fromCamelCaseToDBName(
+    selectedCriterion === 'documentNumber' ? 'documentNo' : selectedCriterion
+  );
+  const searchOperator = selectedCriterion === 'dob' ? 'equals' : 'containsIgnoreCase';
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
   );
@@ -150,8 +154,8 @@ const EncounterRegistration = () => {
     ...listRequest,
     filters: [
       {
-        fieldName: fromCamelCaseToDBName(selectedCriterion) || 'document_no',
-        operator: 'containsIgnoreCase',
+        fieldName: searchFieldName || 'document_no',
+        operator: searchOperator,
         value: searchKeyword || '-1'
       }
     ]
@@ -316,8 +320,8 @@ const EncounterRegistration = () => {
         ignore: false,
         filters: [
           {
-            fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
+            fieldName: searchFieldName,
+            operator: searchOperator,
             value: searchKeyword
           }
         ]

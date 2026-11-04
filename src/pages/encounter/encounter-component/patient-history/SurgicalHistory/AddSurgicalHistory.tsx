@@ -88,6 +88,8 @@ const SURGICAL_HISTORY_ERROR_MAP: Record<string, string> = {
   notfound: 'Surgical history not found.'
 };
 
+const PATIENT_IS_FREE_TEXT = 'Patient is Free';
+
 type SurgicalHistoryForm = Omit<
   SurgicalHistory,
   'dateOfSurgery' | 'adverseReactionsToAnesthesia' | 'complications'
@@ -95,8 +97,6 @@ type SurgicalHistoryForm = Omit<
   dateOfSurgery: Date | string | number | null;
   adverseReactionsToAnesthesia: string[];
   complications: string[];
-  patientIsFree: boolean;
-
 };
 
 const emptySurgicalHistoryForm: SurgicalHistoryForm = {
@@ -109,8 +109,8 @@ const emptySurgicalHistoryForm: SurgicalHistoryForm = {
   patientId: null,
   dateOfSurgery: null,
   adverseReactionsToAnesthesia: [],
-  patientIsFree: false
-
+  patientIsFree: false,
+  freeText: null
 };
 
 const toDate = (value: Date | string | number | null | undefined) => {
@@ -159,11 +159,18 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         ...emptySurgicalHistoryForm,
         ...stripUndefined(initialData),
         patientId: Number(patient?.id),
+        patientIsFree: initialData.patientIsFree === true,
+        freeText: initialData.freeText ?? null,
         dateOfSurgery: toDate(initialData.dateOfSurgery),
         adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia),
         complications: toStringArray(initialData.complications)
       });
-      setOpenImplants({ open: initialData.hasImplantsOrDevices ?? false });
+      setOpenImplants({
+        open:
+          initialData.patientIsFree === true
+            ? false
+            : initialData.hasImplantsOrDevices ?? false
+      });
     } else {
       setFormData({
         ...emptySurgicalHistoryForm,
@@ -172,27 +179,41 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       setOpenImplants({ open: false });
     }
   }, [initialData, open, patient?.id]);
+
   useEffect(() => {
-    if (formData.patientIsFree) {
-      setFormData(prev => ({
-        ...prev,
-        surgery: '',
-        anesthesiaType: null,
-        dateOfSurgery: null,
-        complications: [],
-        adverseReactionsToAnesthesia: [],
-        implantsOrDevicesDescription: ''
-      }));
+    setFormData(prev => {
+      if (prev.patientIsFree === true) {
+        setOpenImplants({ open: false });
 
-      setOpenImplants({ open: false });
-    }
+        return {
+          ...prev,
+          surgery: '',
+          facility: '',
+          anesthesiaType: null,
+          complications: [],
+          implantsOrDevicesDescription: '',
+          hasImplantsOrDevices: false,
+          dateOfSurgery: null,
+          adverseReactionsToAnesthesia: [],
+          freeText: PATIENT_IS_FREE_TEXT
+        };
+      }
+
+      if (prev.freeText === PATIENT_IS_FREE_TEXT) {
+        return {
+          ...prev,
+          freeText: null
+        };
+      }
+
+      return prev;
+    });
   }, [formData.patientIsFree]);
-  const validateBeforeSave = () => {
-    const errors: string[] = [];
 
-    if (formData.patientIsFree) {
-      return errors;
-    }
+  const validateBeforeSave = () => {
+    if (formData.patientIsFree === true) return [];
+
+    const errors: string[] = [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -232,21 +253,32 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       return;
     }
 
-    const payload: any = {
+    const isFree = formData.patientIsFree === true;
+
+    const payload: SurgicalHistory = {
       patientId: Number(patient?.id),
-      surgery: formData.surgery?.trim() || '',
-      facility: formData.facility?.trim() || '',
-      anesthesiaType: formData.anesthesiaType || null,
-      dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
-      complications: formData.complications?.length ? formData.complications.join(',') : null,
-      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia?.length
-        ? formData.adverseReactionsToAnesthesia.join(',')
-        : null,
-      hasImplantsOrDevices: openImplants.open,
-      implantsOrDevicesDescription: openImplants.open
-        ? (formData.implantsOrDevicesDescription?.trim() || null)
-        : null,
-      patientIsFree: formData.patientIsFree || false
+      surgery: isFree ? '' : formData.surgery?.trim() || '',
+      facility: isFree ? '' : formData.facility?.trim() || '',
+      anesthesiaType: isFree ? null : formData.anesthesiaType || null,
+      dateOfSurgery: isFree ? null : toNoonTimestamp(formData.dateOfSurgery),
+      complications: isFree
+        ? null
+        : formData.complications?.length
+          ? formData.complications.join(',')
+          : null,
+      adverseReactionsToAnesthesia: isFree
+        ? null
+        : formData.adverseReactionsToAnesthesia?.length
+          ? formData.adverseReactionsToAnesthesia.join(',')
+          : null,
+      hasImplantsOrDevices: isFree ? false : openImplants.open,
+      implantsOrDevicesDescription: isFree
+        ? null
+        : openImplants.open
+          ? formData.implantsOrDevicesDescription?.trim() || null
+          : null,
+      patientIsFree: isFree,
+      freeText: isFree ? PATIENT_IS_FREE_TEXT : null
     };
 
     if (formData.id) {
@@ -271,6 +303,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
 
 
 
+  const isFree = formData.patientIsFree === true;
+
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
@@ -281,34 +315,34 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldName="patientIsFree"
         record={formData}
         setRecord={setFormData}
-
       />
       <MyInput
         width={'14vw'}
         column
-        required={!formData.patientIsFree}
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Surgery"
         fieldName="surgery"
         record={formData}
         setRecord={setFormData}
-        disabled={formData.patientIsFree}
       />
       <MyInput
         width={'14vw'}
         column
-        required={!formData.patientIsFree}
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Date of surgery"
         fieldType="date"
         fieldName="dateOfSurgery"
         disableFutureDates
         record={formData}
         setRecord={setFormData}
-        disabled={formData.patientIsFree}
       />
       <MyInput
         width={'14vw'}
         column
-        required={!formData.patientIsFree}
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Facility"
         fieldName="facility"
         record={formData}
@@ -318,14 +352,14 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={'14vw'}
         column
-        required={!formData.patientIsFree}
+        required={!isFree}
+        disabled={isFree}
         fieldLabel="Anesthesia Type"
         fieldType="select"
         fieldName="anesthesiaType"
         selectData={anesthesiaLov?.object ?? []}
         selectDataLabel="lovDisplayVale"
         disableByField='isValid'
-        disabled={formData.patientIsFree}
         selectDataValue="key"
         record={formData}
         setRecord={setFormData}
@@ -345,10 +379,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         renderValue={() => ''}
-        required={!formData.patientIsFree}
-        disabled={formData.patientIsFree}
-
-
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
@@ -387,10 +419,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         renderValue={() => ''}
-        required={!formData.patientIsFree}
-        disabled={formData.patientIsFree}
-
-
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
@@ -424,8 +454,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldName="open"
         record={openImplants}
         setRecord={setOpenImplants}
-        required={!formData.patientIsFree}
-        disabled={formData.patientIsFree}
+        required={!isFree}
+        disabled={isFree}
       />
 
       <MyInput
@@ -435,8 +465,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
         fieldName="implantsOrDevicesDescription"
         record={formData}
         setRecord={setFormData}
-        disabled={!openImplants.open || formData.patientIsFree}
-        required={!formData.patientIsFree}
+        disabled={isFree || !openImplants.open}
+        required={!isFree}
       />
     </Form>
   );

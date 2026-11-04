@@ -46,6 +46,10 @@ import EncounterSettlementBanner from './accounting/components/EncounterSettleme
 import PatientFinancialDashboardTab from './accounting/financial-statement/PatientFinancialDashboardTab';
 import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
 import './accounting/financial-statement/styles.less';
+import {
+  patientInsuranceRecordId,
+  pickDefaultPatientInsurance
+} from '@/pages/patient/patient-profile/insuranceDisplayUtils';
 import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
@@ -58,6 +62,7 @@ const Accounting: React.FC = () => {
   const location = useLocation();
 
   const navigationTargetPatientIdRef = useRef<number | null>(null);
+  const navigationTargetEncounterIdRef = useRef<number | null>(null);
 
   const [patient, setPatient] = useState<any>({ ...newApPatient });
   const [expand, setExpand] = useState(false);
@@ -84,6 +89,8 @@ const Accounting: React.FC = () => {
   const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
   const [canCloseCalculation, setCanCloseCalculation] = useState(true);
   const [billingRefreshPending, setBillingRefreshPending] = useState(false);
+  const coverageManualEncounterIdRef = useRef<number | null>(null);
+  const coverageResolvedEncounterIdRef = useRef<number | null>(null);
 
   const patientId = resolvePatientId(patient);
 
@@ -92,6 +99,7 @@ const Accounting: React.FC = () => {
     facilityCurrency,
     encounters,
     loadingEncounters,
+    encountersReady,
     selectedEncounter,
     summary,
     loadingSummary,
@@ -109,7 +117,6 @@ const Accounting: React.FC = () => {
     waseelCoverageError,
     walletBalance,
     reservedBalance,
-    patientLedgerSummary,
     patientInsurances,
     loadingInsurances,
     encounterInvoiceDetails,
@@ -187,8 +194,14 @@ const Accounting: React.FC = () => {
           encounterId?: number;
       } | null;
 
+      const allowedFromPages = [
+          'BillingPendingQueue',
+          'RegistrationPendingPayment'
+      ];
+
       if (
-          navigationState?.fromPage !== 'BillingPendingQueue' ||
+          !navigationState?.fromPage ||
+          !allowedFromPages.includes(navigationState.fromPage) ||
           !navigationState.patient ||
           navigationState.encounterId == null
       ) {
@@ -196,16 +209,23 @@ const Accounting: React.FC = () => {
       }
 
       const targetPatientId = resolvePatientId(navigationState.patient);
+      const targetEncounterId = Number(navigationState.encounterId);
+
+      if (targetPatientId == null || !Number.isFinite(targetEncounterId)) {
+          return;
+      }
 
       navigationTargetPatientIdRef.current = targetPatientId;
+      navigationTargetEncounterIdRef.current = targetEncounterId;
 
       setPatient(navigationState.patient);
-      setSelectedEncounterId(Number(navigationState.encounterId));
+      setSelectedEncounterId(targetEncounterId);
   }, [location.state]);
 
   useEffect(() => {
+      const targetPatientId = navigationTargetPatientIdRef.current;
       const isNavigationPatient =
-          navigationTargetPatientIdRef.current === patientId;
+          targetPatientId != null && targetPatientId === patientId;
 
       if (isNavigationPatient) {
           navigationTargetPatientIdRef.current = null;
@@ -228,6 +248,13 @@ const Accounting: React.FC = () => {
           return;
       }
 
+      // Patient from navigation state has not flushed yet (fresh mount race).
+      // Keep the requested encounter selected until the target patient applies.
+      if (targetPatientId != null) {
+          return;
+      }
+
+      navigationTargetEncounterIdRef.current = null;
       setSelectedEncounterId(null);
       setCoverageType('SELF_PAY');
       setSelectedInsuranceId(null);
@@ -246,48 +273,162 @@ const Accounting: React.FC = () => {
   }, [patientId]);
 
   useEffect(() => {
+    const targetEncounterId = navigationTargetEncounterIdRef.current;
+
+    if (targetEncounterId == null || patientId == null || !encountersReady) {
+      return;
+    }
+
+    if (loadingEncounters) {
+      return;
+    }
+
+    const matchedEncounter = encounters.find(
+      encounter => Number(encounter.id) === Number(targetEncounterId)
+    );
+
+    if (matchedEncounter) {
+      if (selectedEncounterId !== targetEncounterId) {
+        setSelectedEncounterId(targetEncounterId);
+      }
+      navigationTargetEncounterIdRef.current = null;
+      return;
+    }
+
+    navigationTargetEncounterIdRef.current = null;
+    setSelectedEncounterId(null);
+    dispatch(
+      notify({
+        msg: 'Encounter not found',
+        sev: 'warning'
+      })
+    );
+  }, [
+    dispatch,
+    encounters,
+    encountersReady,
+    loadingEncounters,
+    patientId,
+    selectedEncounterId
+  ]);
+
+  useEffect(() => {
     setSelectedChargeRowIds([]);
     setChargeEstimatePrint({ open: false, estimate: null });
   }, [selectedEncounterId]);
 
   useEffect(() => {
     if (selectedEncounterId == null) {
+      coverageManualEncounterIdRef.current = null;
+      coverageResolvedEncounterIdRef.current = null;
       setCoverageType('SELF_PAY');
       setSelectedInsuranceId(null);
       return;
     }
 
-    if (encounterInvoiceDetails == null) {
+    if (
+      coverageManualEncounterIdRef.current === selectedEncounterId ||
+      coverageResolvedEncounterIdRef.current === selectedEncounterId
+    ) {
       return;
     }
 
-    if (Number(encounterInvoiceDetails.encounterId) !== Number(selectedEncounterId)) {
+    if (loadingEncounters || selectedEncounter == null) {
       return;
     }
 
-    const resolvedCoverage = normalizeBillingCoverageType(
-      encounterInvoiceDetails.coverageType
-    );
-    setCoverageType(resolvedCoverage);
+    const savedCoverage = String(selectedEncounter.coverageType ?? '')
+      .trim()
+      .toUpperCase();
+    const savedInsuranceId = toNumber(selectedEncounter.patientInsuranceId, 0);
 
-    const encounterInsuranceId = toNumber(
-      (selectedEncounter as { patientInsuranceId?: number } | null)?.patientInsuranceId,
-      0
-    );
+    if (savedCoverage === 'INSURANCE' || savedCoverage === 'SELF_PAY') {
+      coverageResolvedEncounterIdRef.current = selectedEncounterId;
+      setCoverageType(savedCoverage);
 
-    const insuranceId =
-      encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId ??
-      encounterInvoiceDetails.patientInsuranceId ??
-      (encounterInsuranceId > 0 ? encounterInsuranceId : null);
+      if (savedCoverage === 'INSURANCE') {
+        const invoiceInsuranceId = toNumber(
+          encounterInvoiceDetails?.patientInsuranceId ??
+            encounterInvoiceDetails?.eligibilitySnapshot?.patientInsuranceId,
+          0
+        );
+        setSelectedInsuranceId(
+          savedInsuranceId > 0
+            ? savedInsuranceId
+            : invoiceInsuranceId > 0
+              ? invoiceInsuranceId
+              : null
+        );
+      } else {
+        setSelectedInsuranceId(null);
+      }
 
-    if (resolvedCoverage === 'INSURANCE' && insuranceId != null) {
-      setSelectedInsuranceId(Number(insuranceId));
-    } else if (resolvedCoverage === 'SELF_PAY') {
+      return;
+    }
+
+    if (
+      encounterInvoiceDetails == null ||
+      Number(encounterInvoiceDetails.encounterId) !== Number(selectedEncounterId)
+    ) {
+      return;
+    }
+
+    const invoiceCoverage = String(encounterInvoiceDetails.coverageType ?? '')
+      .trim()
+      .toUpperCase();
+
+    if (invoiceCoverage === 'INSURANCE') {
+      coverageResolvedEncounterIdRef.current = selectedEncounterId;
+      const invoiceInsuranceId = toNumber(
+        encounterInvoiceDetails.patientInsuranceId ??
+          encounterInvoiceDetails.eligibilitySnapshot?.patientInsuranceId,
+        0
+      );
+      setCoverageType('INSURANCE');
+      setSelectedInsuranceId(invoiceInsuranceId > 0 ? invoiceInsuranceId : null);
+      return;
+    }
+
+    const preparedItemCount = summary?.items?.length ?? 0;
+    const insuranceRows = Array.isArray(patientInsurances) ? patientInsurances : [];
+
+    if (loadingInsurances && insuranceRows.length === 0) {
+      return;
+    }
+
+    if (preparedItemCount > 0) {
+      coverageResolvedEncounterIdRef.current = selectedEncounterId;
+      setCoverageType('SELF_PAY');
       setSelectedInsuranceId(null);
+      return;
     }
-  }, [selectedEncounterId, encounterInvoiceDetails, selectedEncounter]);
+
+    const defaultInsurance = pickDefaultPatientInsurance(insuranceRows);
+    const defaultInsuranceId = patientInsuranceRecordId(defaultInsurance);
+
+    coverageResolvedEncounterIdRef.current = selectedEncounterId;
+
+    if (defaultInsuranceId != null) {
+      setCoverageType('INSURANCE');
+      setSelectedInsuranceId(defaultInsuranceId);
+      return;
+    }
+
+    setCoverageType('SELF_PAY');
+    setSelectedInsuranceId(null);
+  }, [
+    encounterInvoiceDetails,
+    loadingEncounters,
+    loadingInsurances,
+    patientInsurances,
+    selectedEncounter,
+    selectedEncounterId,
+    summary?.items?.length
+  ]);
 
   const handleClosePatient = () => {
+    navigationTargetPatientIdRef.current = null;
+    navigationTargetEncounterIdRef.current = null;
     setPatient({ ...newApPatient });
     setSelectedEncounterId(null);
     setCoverageType('SELF_PAY');
@@ -693,16 +834,13 @@ const Accounting: React.FC = () => {
 
         <BillingSummaryCards
           summary={summary}
-          walletBalance={walletBalance}
-          reservedBalance={reservedBalance}
-          totalDebt={Number(patientLedgerSummary?.totalDebt ?? 0)}
+          walletAvailable={walletBalance}
           loading={
             selectedEncounterId == null ||
             billingWorkspaceLoading ||
             loadingInvoiceContext
           }
           currency={summary.currency ?? facilityCurrency}
-          coverageType={coverageType}
           chargeRows={chargeRows}
           invoiceAdjustments={invoiceAdjustments}
         />
@@ -758,8 +896,33 @@ const Accounting: React.FC = () => {
                 coverageType={coverageType}
                 selectedInsuranceId={selectedInsuranceId}
                 patientInsurances={displayedPatientInsurances}
-                onCoverageTypeChange={setCoverageType}
-                onInsuranceChange={setSelectedInsuranceId}
+                onCoverageTypeChange={nextCoverage => {
+                  coverageManualEncounterIdRef.current = selectedEncounterId;
+                  coverageResolvedEncounterIdRef.current = selectedEncounterId;
+                  setCoverageType(nextCoverage);
+
+                  if (nextCoverage === 'SELF_PAY') {
+                    setSelectedInsuranceId(null);
+                    return;
+                  }
+
+                  setSelectedInsuranceId(currentId => {
+                    if (currentId != null) {
+                      return currentId;
+                    }
+
+                    return patientInsuranceRecordId(
+                      pickDefaultPatientInsurance(
+                        Array.isArray(patientInsurances) ? patientInsurances : []
+                      )
+                    );
+                  });
+                }}
+                onInsuranceChange={insuranceId => {
+                  coverageManualEncounterIdRef.current = selectedEncounterId;
+                  coverageResolvedEncounterIdRef.current = selectedEncounterId;
+                  setSelectedInsuranceId(insuranceId);
+                }}
                 onPrepared={refreshAll}
                 chargeRows={chargeRows}
                 loadingBillingMetrics={billingWorkspaceLoading}
@@ -870,7 +1033,6 @@ const Accounting: React.FC = () => {
       patientId,
       patientInsurances,
       displayedPatientInsurances,
-      patientLedgerSummary?.totalDebt,
       pendingPreAuthItems.length,
       preAuthActionLoadingId,
       preAuthBlocksCheckout,

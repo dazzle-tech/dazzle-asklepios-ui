@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 import MyTab from '@/components/MyTab';
 import DetailsCard from '@/components/DetailsCard';
@@ -20,7 +21,8 @@ import {
     faRectangleList,
     faTriangleExclamation,
     faVialCircleCheck,
-    faPrint
+    faPrint,
+    faMagnifyingGlass
 } from '@fortawesome/free-solid-svg-icons';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -28,6 +30,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Orders from './Orders';
 import SampleModal from '@/pages/lab-module-new/SampleModal';
 import PrintSampleLabelAction from '@/pages/lab-module-new/PrintSampleLabelAction';
+import PrintSelectedSampleLabelsAction from '@/pages/lab-module-new/PrintSelectedSampleLabelsAction';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -42,7 +45,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import '@/pages/appointments-new/scheduling-screen/styles.less';
 import MyInput from '@/components/MyInput';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import {
@@ -56,6 +60,9 @@ import {
     PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE,
     isSampleBlockedByPreAuthorization
 } from '@/utils/preAuthorizationSampleLock';
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
 type CollectSambleModalProps = {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -142,7 +149,9 @@ const CollectSambleModal = ({
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
 
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
     const [orderNumberFilter, setOrderNumberFilter] = useState('');
     const [selectedDepartmentId, setSelectedDepartmentId] =
         useState<number | null>(null);
@@ -419,6 +428,26 @@ const CollectSambleModal = ({
 
     const totalCount = orderTests.length;
 
+    const handleSearch = async () => {
+        try {
+            const raw = patientSearch?.patientName;
+            const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+            const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+            // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+            flushSync(() => {
+                setResolvedPatientIds(ids);
+            });
+
+            await OrdersRef.current?.refetchOrders?.();
+
+            if (order?.id && selectedDepartmentId && fromDepartmentId) {
+                await refetchTests();
+            }
+        } catch (error) {
+            console.error('Failed to refresh collect sample data:', error);
+        }
+    };
+
     const tablefilters = (
         <>
             <Form fluid className="filter-form-lab-filters">
@@ -476,12 +505,11 @@ const CollectSambleModal = ({
                     showLabel={false}
                 />
 
-                <PatientSearch
-                    value={selectedPatient}
-                    onChange={setSelectedPatient}
-                    showLabel={false}
-                    width="22vw"
-                    containerMinWidth={250}
+                <SearchPatientCriteria
+                    record={patientSearch}
+                    setRecord={setPatientSearch}
+                    liveSearchMinLength={0}
+                    searchMarginTop={0}
                 />
 
                 <MyInput
@@ -495,6 +523,13 @@ const CollectSambleModal = ({
                     }
                     showLabel={false}
                 />
+
+                <MyButton
+                    prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
+                    onClick={handleSearch}
+                >
+                    <Translate>Search</Translate>
+                </MyButton>
 
             </Form>
         </>
@@ -658,7 +693,7 @@ const CollectSambleModal = ({
                                 setOrder={setOrder}
                                 dateFilter={dateFilter}
                                 orderNumberFilter={orderNumberFilter}
-                                selectedPatient={selectedPatient}
+                                patientIdIn={resolvedPatientIds}
                                 filters={tablefilters}
                                 departmentId={selectedDepartmentId}
                                 fromDepartmentId={fromDepartmentId}
@@ -687,6 +722,12 @@ const CollectSambleModal = ({
                                         >
                                             Bulk Collect Sample
                                         </MyButton>
+                                    </span>
+                                </Whisper>
+
+                                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Selected Sample Labels</Tooltip>}>
+                                    <span>
+                                        <PrintSelectedSampleLabelsAction orderTestIds={selectedRows} />
                                     </span>
                                 </Whisper>
                                 <MyTable

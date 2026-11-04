@@ -12,7 +12,10 @@ import {
   useGetAllPractitionersQuery,
   useLazyGetPractitionerByNameQuery,
   useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersByJobRoleQuery,
+  useLazyGetPractitionersByLinkedUserQuery,
   useLazyGetPractitionersBySpecialtyQuery,
+  useLazyGetPractitionersByStatusQuery,
   useTogglePractitionerActiveMutation,
   useUpdatePractitionerMutation
 } from "@/services/setup/practitioner/PractitionerService";
@@ -89,8 +92,12 @@ const Practitioners = () => {
   const [togglePractitionerActive] = useTogglePractitionerActiveMutation();
   const [getPractitionersByFacility] = useLazyGetPractitionersByFacilityQuery();
   const [getPractitionersBySpecialty] = useLazyGetPractitionersBySpecialtyQuery();
+  const [getPractitionersByJobRole] = useLazyGetPractitionersByJobRoleQuery();
   const [getPractitionerByName] = useLazyGetPractitionerByNameQuery();
+  const [getPractitionersByLinkedUser] = useLazyGetPractitionersByLinkedUserQuery();
+  const [getPractitionersByStatus] = useLazyGetPractitionersByStatusQuery();
   const specility = useEnumOptions('Specialty');
+  const jobRole = useEnumOptions('JobRole');
   const [link, setLink] = useState({})
   const totalCount = practitionerListResponse?.totalCount ?? 0;
   const links = practitionerListResponse?.links || {};
@@ -125,6 +132,9 @@ const Practitioners = () => {
     { label: "Specialty", value: "specialty" },
     { label: "Facility", value: "facility" },
     { label: "Name", value: "name" },
+    { label: "Job Role", value: "jobRole" },
+     { label: "Linked to User", value: "linkedToUser" },
+     { label: "Status", value: "status" },
   ];
   const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
     try {
@@ -147,8 +157,16 @@ const Practitioners = () => {
         response = await getPractitionersBySpecialty({ specialty: value, ...params }).unwrap();
       } else if (field === "facility") {
         response = await getPractitionersByFacility({ facilityId: value, ...params }).unwrap();
+      } else if (field === "jobRole") {
+        response = await getPractitionersByJobRole({ jobRole: value, ...params }).unwrap();
       } else if (field === "name") {
         response = await getPractitionerByName({ name: value, ...params }).unwrap();
+      }
+      else if (field === "linkedToUser") {
+        response = await getPractitionersByLinkedUser({ linked: value, ...params }).unwrap();
+      }
+      else if (field === "status") {
+        response = await getPractitionersByStatus({isActive: value, ...params, }).unwrap();
       }
 
       setFilteredList(response.data ?? []);
@@ -563,6 +581,20 @@ if (!backendKey && typeof error === "string") {
         />
       )}
 
+      {recordOfFilter.filter === "jobRole" && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={jobRole ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          showLabel={false}
+          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          placeholder="Select Job Role"
+        />
+      )}
+
       {recordOfFilter.filter === "facility" && (
         <MyInput
           fieldName="value"
@@ -587,9 +619,48 @@ if (!backendKey && typeof error === "string") {
           placeholder="Enter Name"
         />
       )}
+      {recordOfFilter.filter === "linkedToUser" && (
+       <MyInput
+        fieldName="value"
+        fieldType="select"
+        selectData={[
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+       ]}
+       selectDataLabel="label"
+       selectDataValue="value"
+       record={recordOfFilter}
+       setRecord={(u) =>
+         setRecordOfFilter({ ...recordOfFilter, value: u.value })
+       }
+       showLabel={false}
+       placeholder="Select Linked to User"
+      />
+    )}
+    {recordOfFilter.filter === "status" && (
+     <MyInput
+       fieldName="value"
+       fieldType="select"
+       selectData={[
+        { label: "Active", value: "true" },
+        { label: "Inactive", value: "false" },
+       ]}
+       selectDataLabel="label"
+       selectDataValue="value"
+       record={recordOfFilter}
+       setRecord={(u) =>
+       setRecordOfFilter({
+        ...recordOfFilter,
+        value: u.value,
+      })
+      }
+      showLabel={false}
+      placeholder="Select Status"
+    />
+   )}
 
-      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name"
-        && (
+      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name" && recordOfFilter.filter !== "jobRole"
+        && recordOfFilter.filter !== "linkedToUser" && recordOfFilter.filter !== "status" &&(
           <MyInput
             fieldName="value"
             fieldType="text"

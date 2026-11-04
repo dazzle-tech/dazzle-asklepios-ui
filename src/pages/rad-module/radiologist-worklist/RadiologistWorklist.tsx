@@ -1,14 +1,17 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import { useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncountersByIdsQuery } from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
   useLazyGetRadiologyReportPdfQuery
@@ -45,6 +48,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { MdAttachFile } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
 import { Form, Tooltip, Whisper } from 'rsuite';
@@ -126,22 +130,22 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+  const [encountersMap, setEncountersMap] = useState<Record<string, any>>({});
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+  const [fetchEncountersByIds] = useLazyGetEncountersByIdsQuery();
+  const [encounterNumberFilter, setEncounterNumberFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
 
-  const [selectedPatient, setSelectedPatient] =
-    useState<any>(null);
+  const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+  const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+  const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+  const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
 
-  const [orderIdIn, setOrderIdIn] =
-    useState<number[] | null>(null);
-
-  const [fetchOrders] =
-    useLazyFilterDiagnosticOrdersQuery();
   const [fetchStudyImageLinkByReportId] =
     useLazyGetStudyImageLinkByReportIdQuery();
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -261,9 +265,15 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             }
             : {}),
 
-          ...(orderIdIn?.length
+          ...(resolvedPatientIds != null
             ? {
-              orderIdIn
+              patientIdIn: resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1]
+            }
+            : {}),
+
+          ...(encounterNumberFilter.trim()
+            ? {
+              encounterNumber: encounterNumberFilter.trim()
             }
             : {})
         }
@@ -332,6 +342,30 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
     return uniqueNumbers(Object.values(ordersMap ?? {}).map((o: any) => o?.patientId));
   }, [ordersMap]);
 
+  const encounterIds = useMemo<number[]>(() => {
+    return uniqueNumbers(Object.values(ordersMap ?? {}).map((o: any) => o?.encounterId));
+  }, [ordersMap]);
+
+  useEffect(() => {
+    const missingIds = encounterIds.filter(id => !encountersMap[id]);
+    if (!missingIds.length) return;
+
+    fetchEncountersByIds({ ids: missingIds })
+      .unwrap()
+      .then((res: any[]) => {
+        setEncountersMap(prev => {
+          const next = { ...prev };
+          (res ?? []).forEach((encounter: any) => {
+            if (encounter?.id != null) {
+              next[encounter.id] = encounter;
+            }
+          });
+          return next;
+        });
+      })
+      .catch(() => { });
+  }, [encounterIds, fetchEncountersByIds, encountersMap]);
+
   useEffect(() => {
     if (!orderTestIds.length) return;
 
@@ -396,41 +430,42 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
       });
   }, [patientIds, getBulkPatientBasicInfo]);
 
+  const handleSearch = async () => {
+    if (attachmentsLocked) return;
+    const raw = patientSearch?.patientName;
+    const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+    const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+    // Commit IDs before refetch so queries do not reuse the previous patientIdIn.
+    flushSync(() => {
+      setResolvedPatientIds(ids);
+      setPage(0);
+    });
+    refetch();
+  };
+
+  const handleClearFilters = () => {
+    const now = new Date();
+    setPage(0);
+    setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+    setResolvedPatientIds(null);
+    setDateFilter({ fromDate: now, toDate: now });
+    setDepartmentFilter({ departmentIds: [] });
+    setEncounterNumberFilter('');
+  };
+
   useEffect(() => {
-    if (!selectedPatient?.id) {
-      setOrderIdIn(null);
-      return;
-    }
-
-    fetchOrders({
-      patientIdIn: [selectedPatient.id],
-      page: 0,
-      size: 10000
-    })
-      .unwrap()
-      .then(res => {
-        const ids = (res?.data ?? [])
-          .map((order: any) => Number(order.id))
-          .filter((id: number) => Number.isFinite(id));
-
-        setOrderIdIn(ids);
-      })
-      .catch(() => setOrderIdIn([]));
-  }, [selectedPatient?.id]);
+    setPage(0);
+  }, [encounterNumberFilter]);
 
   const FilterModel = (
     <Form fluid className="table-header-content">
       <div className="filter-radiologist-worklist-main-container">
         <div className="patient-search-container">
-          <PatientSearch
-            value={selectedPatient}
-            onChange={patient => {
-              setPage(0);
-              setSelectedPatient(patient);
-            }}
-            showLabel={false}
-            width="22vw"
-            containerMinWidth={250}
+          <SearchPatientCriteria
+            record={patientSearch}
+            setRecord={setPatientSearch}
+            liveSearchMinLength={0}
+            searchMarginTop={0}
           />
         </div>
         <MyInput
@@ -474,7 +509,25 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
             setDepartmentFilter(rec);
           }}
         />
+
+        <MyInput
+          width={160}
+          fieldType="text"
+          fieldLabel="Encounter Number"
+          fieldName="encounterNumber"
+          placeholder="Encounter Number"
+          record={{ encounterNumber: encounterNumberFilter }}
+          setRecord={(rec: any) => {
+            setPage(0);
+            setEncounterNumberFilter(rec.encounterNumber ?? '');
+          }}
+        />
       </div>
+      <AdvancedSearchFilters
+        showAdvancedButton={false}
+        searchOnClick={handleSearch}
+        clearOnClick={handleClearFilters}
+      />
     </Form>
   );
 
@@ -592,6 +645,31 @@ const handleViewImage = async (reportId: number) => {
           return patient
             ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
             : ' ';
+        }
+      },
+      {
+        key: 'orderNumber',
+        title: 'Order Number',
+        width: 140,
+        render: row => {
+          const orderTestId = Number(row?.orderTestId);
+          const ot = orderTestsMap?.[orderTestId];
+          const order = ordersMap?.[ot?.orderId];
+
+          return order?.orderNumber ?? ' ';
+        }
+      },
+      {
+        key: 'encounterNumber',
+        title: 'Encounter Number',
+        width: 140,
+        render: row => {
+          const orderTestId = Number(row?.orderTestId);
+          const ot = orderTestsMap?.[orderTestId];
+          const order = ordersMap?.[ot?.orderId];
+          const encounter = encountersMap?.[order?.encounterId];
+
+          return encounter?.encounterNumber ?? ' ';
         }
       },
       {
@@ -774,11 +852,11 @@ const handleViewImage = async (reportId: number) => {
       },
       {
         key: 'orderByAt',
-        title: 'Order By / At',
+        title: 'Reported By ',
         width: 200,
         render: row => (
           <UserDateCell
-            login={row.createdBy}
+            login={row.radiologistInformation}
             date={row.createdDate}
           />
         )
@@ -885,6 +963,7 @@ const handleViewImage = async (reportId: number) => {
       orderTestsMap,
       ordersMap,
       patientsMap,
+      encountersMap,
       departmentsMap,
       testsMap,
       localHasCommentIds,

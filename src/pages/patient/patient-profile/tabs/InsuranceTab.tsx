@@ -34,6 +34,7 @@ import {
   extractPatientInsurancesList,
   extractWaseelClassList,
   getCchiInsuranceStorageKey,
+  hasReturnedCchiDocument,
   getCchiPayorResolutionErrorMessage,
   normalizeCchiPatientInsurance,
   resolveCchiPayorFromInsurance
@@ -441,9 +442,11 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
       sessionStorage.setItem(storageKey, JSON.stringify(rawInsurance));
     }
 
+    const documentReturned = hasReturnedCchiDocument(mappedResponse.document);
+
     setLocalPatient?.({
       ...localPatient,
-      isCchiPatient: true,
+      ...(documentReturned ? { isCchiPatient: true } : {}),
       documentId: mappedResponse.patient?.documentId ?? localPatient.documentId
     });
 

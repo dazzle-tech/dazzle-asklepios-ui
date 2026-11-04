@@ -1,16 +1,18 @@
 import Translate from '@/components/Translate';
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { Panel, SelectPicker, Loader, Message, Form } from 'rsuite';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Panel, SelectPicker, Loader, Message, Form, Tabs } from 'rsuite';
 import { Link } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useSelector } from 'react-redux';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import { notify } from '@/utils/uiReducerActions';
 import {
   StimulsoftReportTemplate,
   useGetViewableStimulsoftDashboardsQuery,
   useLazyGetStimulsoftReportTemplateByIdQuery,
+  useSetStimulsoftDashboardDefaultMutation,
 } from '@/services/reports/stimulsoftReportService';
 import {
   extractReportPrintParameters,
@@ -18,6 +20,7 @@ import {
   valuesFromParameters,
 } from '@/reports/stimulsoft/reportPrintParameters';
 import './styles.less';
+import DashboardMyTasks, { TasksTabTitle } from './DashboardMyTasks';
 
 const StimulsoftViewerHost = React.lazy(
   () =>
@@ -46,6 +49,8 @@ const Dashboard = () => {
   const [appliedParams, setAppliedParams] = useState<Record<string, string>>(
     {}
   );
+  const [tab, setTab] = useState('reports');
+  const [tasksReady, setTasksReady] = useState(false);
 
   const { data: dashboards = [], isFetching } =
     useGetViewableStimulsoftDashboardsQuery(
@@ -58,11 +63,15 @@ const Dashboard = () => {
       { refetchOnMountOrArgChange: true }
     );
   const [loadTemplate] = useLazyGetStimulsoftReportTemplateByIdQuery();
+  const [setDashboardDefault, { isLoading: savingDefault }] =
+    useSetStimulsoftDashboardDefaultMutation();
 
   const activeDashboards = useMemo(
     () => dashboards.filter(item => item.isActive !== false && item.id),
     [dashboards]
   );
+  const viewContextKey = `${facilityId ?? ''}|${departmentId ?? ''}|${viewerJobRole ?? ''}|${viewerUserId ?? ''}`;
+  const viewContextRef = useRef(viewContextKey);
 
   useEffect(() => {
     dispatch(setPageCode('Dashboard'));
@@ -74,14 +83,26 @@ const Dashboard = () => {
   }, [dispatch]);
 
   useEffect(() => {
+    const contextChanged = viewContextRef.current !== viewContextKey;
+    viewContextRef.current = viewContextKey;
+
     if (!activeDashboards.length) {
       setSelectedId(null);
       return;
     }
-    if (!selectedId || !activeDashboards.some(item => item.id === selectedId)) {
-      setSelectedId(activeDashboards[0].id ?? null);
-    }
-  }, [activeDashboards, selectedId]);
+
+    setSelectedId(current => {
+      if (
+        !contextChanged &&
+        current &&
+        activeDashboards.some(item => item.id === current)
+      ) {
+        return current;
+      }
+      const preferred = activeDashboards.find(item => item.isUserDefault);
+      return preferred?.id ?? activeDashboards[0].id ?? null;
+    });
+  }, [activeDashboards, viewContextKey]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -182,16 +203,56 @@ const Dashboard = () => {
     setAppliedParams(next);
   };
 
+  const handleSetDefault = async () => {
+    if (!selectedId || viewerUserId == null || selectedDashboard?.isUserDefault) {
+      return;
+    }
+    try {
+      await setDashboardDefault({
+        userId: Number(viewerUserId),
+        templateId: selectedId,
+      }).unwrap();
+      dispatch(
+        notify({ msg: 'Default dashboard saved', sev: 'success' })
+      );
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg:
+            err?.data?.message ||
+            err?.data?.detail ||
+            err?.message ||
+            'Failed to save the default dashboard',
+          sev: 'error',
+        })
+      );
+    }
+  };
+
+  const dashboardOptions = activeDashboards.map(item => ({
+    label: item.name || item.code,
+    value: item.id,
+    isUserDefault: item.isUserDefault === true,
+  }));
+
   return (
+    <Tabs
+      activeKey={tab}
+      appearance="subtle"
+      className="dashboard-tabs"
+      onSelect={key => {
+        const next = String(key);
+        setTab(next);
+        if (next === 'tasks') setTasksReady(true);
+      }}
+    >
+    <Tabs.Tab eventKey="reports" title={<Translate>Dashboard</Translate>}>
     <Panel
       className={`stimulsoft-dashboard-page${mode === 'dark' ? ' dashboard-dark' : ''}`}
     >
       <div className="stimulsoft-dashboard-toolbar">
         <SelectPicker
-          data={activeDashboards.map(item => ({
-            label: item.name || item.code,
-            value: item.id,
-          }))}
+          data={dashboardOptions}
           value={selectedId}
           onChange={value => setSelectedId(value ? Number(value) : null)}
           placeholder="Select dashboard"
@@ -199,7 +260,38 @@ const Dashboard = () => {
           cleanable={false}
           disabled={!activeDashboards.length}
           style={{ minWidth: 280 }}
+          renderMenuItem={(label, item) => (
+            <span className="stimulsoft-dashboard-option">
+              <span>{label}</span>
+              {item.isUserDefault ? (
+                <span className="stimulsoft-dashboard-default-tag">Default</span>
+              ) : null}
+            </span>
+          )}
+          renderValue={(_value, item, selectedElement) =>
+            item?.isUserDefault ? (
+              <span className="stimulsoft-dashboard-option">
+                <span>{item.label}</span>
+                <span className="stimulsoft-dashboard-default-tag">Default</span>
+              </span>
+            ) : (
+              selectedElement
+            )
+          }
         />
+        <MyButton
+          appearance="ghost"
+          onClick={handleSetDefault}
+          loading={savingDefault}
+          disabled={
+            savingDefault ||
+            !selectedId ||
+            viewerUserId == null ||
+            selectedDashboard?.isUserDefault === true
+          }
+        >
+          Set as my default
+        </MyButton>
       </div>
 
       {dashboardParameters.length > 0 && templateJson ? (
@@ -288,6 +380,11 @@ const Dashboard = () => {
         </Message>
       )}
     </Panel>
+    </Tabs.Tab>
+    <Tabs.Tab eventKey="tasks" title={<TasksTabTitle />}>
+      {tasksReady && <DashboardMyTasks />}
+    </Tabs.Tab>
+    </Tabs>
   );
 };
 

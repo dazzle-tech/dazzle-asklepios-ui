@@ -5,6 +5,7 @@ import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import { Form, Input, Text } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetBrandMedicationByIdQuery } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetPharmaceuticalByIdQuery } from '@/services/setup/activeIngredients/pharmaceuticalService';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -25,9 +26,14 @@ const PrescriptionPreview = ({ orderMedication }) => {
   const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   // Fetch medication data
+  // The pharmaceutical is what is prescribed; brand is only a fallback for older records.
+  const pharmaceuticalId = record?.pharmaceuticalId;
+  const { data: pharmaceuticalData } = useGetPharmaceuticalByIdQuery(pharmaceuticalId, {
+    skip: !pharmaceuticalId
+  });
   const medId = record?.medicationsId ?? record?.genericMedicationsId;
   const { data: medicationData } = useGetBrandMedicationByIdQuery(medId, {
-    skip: !medId
+    skip: !medId || !!pharmaceuticalId
   });
 
   // Fetch custom instructions
@@ -212,7 +218,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 width="100%"
                 fieldType="text"
                 fieldLabel="Medication"
-                record={{ medicationName: medicationData?.name || '' }}
+                record={{ medicationName: pharmaceuticalData?.pharmaceuticalName || medicationData?.name || '' }}
                 fieldName="medicationName"
                 setRecord={noop}
               />

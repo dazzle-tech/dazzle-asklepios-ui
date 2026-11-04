@@ -435,6 +435,7 @@ const Vaccine: React.FC = () => {
       render: (row: VaccineModel) => formatEnumString(row?.roa)
     },
     { key: 'atcCode', title: <Translate>ATC Code</Translate>, flexGrow: 3 },
+    { key: 'code', title: <Translate>Code</Translate>, flexGrow: 3 },
     {
       key: 'type',
       title: <Translate>Type</Translate>,

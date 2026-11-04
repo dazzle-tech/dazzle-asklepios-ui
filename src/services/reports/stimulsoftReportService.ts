@@ -54,6 +54,8 @@ export type StimulsoftReportTemplate = {
   jobRole?: string | null;
   /** Comma-separated user ids. Empty means every user of jobRole. */
   userIds?: string | number[] | null;
+  /** True when this dashboard is the signed-in user's default. One per user, not scoped by facility or department. */
+  isUserDefault?: boolean;
 };
 
 /**
@@ -510,9 +512,40 @@ export const stimulsoftReportService = createApi({
           sort: 'name,asc',
         }),
       transformResponse: (response: unknown, meta: any) =>
-        mapPagedTemplates(response, meta).data,
+        mapPagedTemplates(response, meta).data.map(item => ({
+          ...item,
+          isUserDefault: item.isUserDefault === true,
+        })),
       providesTags: ['StimulsoftReportTemplate'],
       forceRefetch: () => true,
+    }),
+
+    /**
+     * One default dashboard per user. Facility and department stay on the
+     * viewable-list filter only; they are not part of this preference.
+     */
+    setStimulsoftDashboardDefault: builder.mutation<
+      { userId: number; templateId: number },
+      { userId: number; templateId: number }
+    >({
+      query: body => ({
+        url: '/api/analytics/reports/dashboards/default',
+        method: 'PUT',
+        body,
+      }),
+      transformResponse: (response: unknown, _meta, arg) => {
+        const body =
+          response && typeof response === 'object'
+            ? (response as Record<string, unknown>)
+            : {};
+        const templateId = Number(body.templateId ?? arg.templateId);
+        const userId = Number(body.userId ?? arg.userId);
+        return {
+          userId: Number.isFinite(userId) ? userId : arg.userId,
+          templateId: Number.isFinite(templateId) ? templateId : arg.templateId,
+        };
+      },
+      invalidatesTags: ['StimulsoftReportTemplate'],
     }),
   }),
 });
@@ -529,4 +562,5 @@ export const {
   useGetPrintableStimulsoftReportsQuery,
   useLazyGetPrintableStimulsoftReportsQuery,
   useGetViewableStimulsoftDashboardsQuery,
+  useSetStimulsoftDashboardDefaultMutation,
 } = stimulsoftReportService;

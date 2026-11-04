@@ -24,6 +24,11 @@ export const formatMoney = (value: unknown) => {
 export const getClaimItems = (row: ClaimTrackingResponse): ClaimTrackingItemResponse[] =>
   Array.isArray(row.items) ? row.items : [];
 
+const RETURNABLE_CLAIM_STATUSES = new Set(['SUBMITTING', 'SUBMITTED', 'ACCEPTED']);
+
+export const canReturnClaimForResubmit = (row: ClaimTrackingResponse) =>
+  row.id != null && RETURNABLE_CLAIM_STATUSES.has(String(row.status ?? '').toUpperCase());
+
 const contains = (value: unknown, search: unknown) =>
   String(value ?? '')
     .toLowerCase()

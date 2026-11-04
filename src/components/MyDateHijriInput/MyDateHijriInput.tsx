@@ -107,6 +107,26 @@ const GregorianCalendar = ({
     );
   };
 
+  const previousYear = () => {
+    setViewMonth(prev =>
+      new Date(
+        prev.getFullYear() - 1,
+        prev.getMonth(),
+        1
+      )
+    );
+  };
+
+  const nextYear = () => {
+    setViewMonth(prev =>
+      new Date(
+        prev.getFullYear() + 1,
+        prev.getMonth(),
+        1
+      )
+    );
+  };
+
   const isSelected = (date: Date) => {
     const selected = new Date(value);
 
@@ -136,52 +156,38 @@ const GregorianCalendar = ({
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 10
-        }}
-      >
-        <button
-          type="button"
-          onClick={previousMonth}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            fontSize: 20,
-            width: 32,
-            height: 32
-          }}
-        >
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10
+      }}
+    >
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button type="button" onClick={previousYear}>
+          «
+        </button>
+
+        <button type="button" onClick={previousMonth}>
           ‹
         </button>
+      </div>
 
-        <strong
-          style={{
-            fontSize: 14
-          }}
-        >
-          {monthName}
-        </strong>
+      <strong style={{ fontSize: 14 }}>
+        {monthName}
+      </strong>
 
-        <button
-          type="button"
-          onClick={nextMonth}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            fontSize: 20,
-            width: 32,
-            height: 32
-          }}
-        >
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button type="button" onClick={nextMonth}>
           ›
         </button>
+
+        <button type="button" onClick={nextYear}>
+          »
+        </button>
       </div>
+    </div>
 
       <div
         style={{
@@ -344,6 +350,18 @@ const HijriCalendar = ({
     );
   };
 
+  const previousYear = () => {
+  setViewMonth(prev =>
+    prev.clone().subtract(1, 'iYear')
+  );
+};
+
+const nextYear = () => {
+  setViewMonth(prev =>
+    prev.clone().add(1, 'iYear')
+  );
+};
+
   const isSelected = (date: any) => {
     return (
       date.format(
@@ -367,59 +385,36 @@ const HijriCalendar = ({
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent:
-            'space-between',
-          marginBottom: 10
-        }}
-      >
-        <button
-          type="button"
-          onClick={
-            previousMonth
-          }
-          style={{
-            border: 'none',
-            background:
-              'transparent',
-            cursor: 'pointer',
-            fontSize: 20,
-            width: 32,
-            height: 32
-          }}
-        >
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10
+      }}
+    >
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button type="button" onClick={previousYear}>
+          «
+        </button>
+        <button type="button" onClick={previousMonth}>
           ‹
         </button>
+      </div>
 
-        <strong
-          style={{
-            fontSize: 14
-          }}
-        >
-          {viewMonth.format(
-            'iMMMM iYYYY'
-          )}
-        </strong>
+      <strong style={{ fontSize: 14 }}>
+        {viewMonth.format('iMMMM iYYYY')}
+      </strong>
 
-        <button
-          type="button"
-          onClick={nextMonth}
-          style={{
-            border: 'none',
-            background:
-              'transparent',
-            cursor: 'pointer',
-            fontSize: 20,
-            width: 32,
-            height: 32
-          }}
-        >
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button type="button" onClick={nextMonth}>
           ›
         </button>
+        <button type="button" onClick={nextYear}>
+          »
+        </button>
       </div>
+    </div>
 
       <div
         style={{

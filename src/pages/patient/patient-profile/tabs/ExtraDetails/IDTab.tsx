@@ -25,6 +25,7 @@ import UserDateCell from '@/components/UserDateCell';
 
 interface IDTabProps {
   localPatient: any;
+  setLocalPatient?: (patient: any) => void;
   cchiDocument?: any;
   openCchiDocumentPopup?: boolean;
   setOpenCchiDocumentPopup?: (value: boolean) => void;
@@ -32,6 +33,7 @@ interface IDTabProps {
 
 const IDTab: React.FC<IDTabProps> = ({
   localPatient,
+  setLocalPatient,
   cchiDocument,
   openCchiDocumentPopup,
   setOpenCchiDocumentPopup
@@ -118,10 +120,12 @@ const IDTab: React.FC<IDTabProps> = ({
         handleClearDocument();
       })
       .catch(error => {
-        dispatch( notify({
+        dispatch(
+          notify({
             msg: extractErrorMessage(error) || 'Failed to delete document',
-            sev: 'warning',
-          }));
+            sev: 'warning'
+          })
+        );
       });
   };
 
@@ -295,8 +299,13 @@ const IDTab: React.FC<IDTabProps> = ({
         open={secondaryDocumentModalOpen}
         setOpen={setSecondaryDocumentModalOpen}
         localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
         secondaryDocument={secondaryDocument}
         setSecondaryDocument={setSecondaryDocument}
+        updatesCitizenFlag={
+          Boolean(secondaryDocument?.isPrimary) ||
+          (!secondaryDocument?.id && !isLoading && totalCount === 0)
+        }
         refetch={patientSecondaryDocuments}
       />
 

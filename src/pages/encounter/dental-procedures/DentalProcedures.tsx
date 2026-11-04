@@ -42,8 +42,26 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
+const resolveToothNumbers = (row: any): string[] => {
+  if (Array.isArray(row?.toothNumbers)) {
+    return row.toothNumbers.filter(Boolean);
+  }
+  if (row?.toothNumber) {
+    return [row.toothNumber];
+  }
+  return [];
+};
+
+const formatToothNumbers = (row: any, toothEnum: any[] | undefined) => {
+  const labels = resolveToothNumbers(row).map(
+    value => toothEnum?.find((tooth: any) => tooth.value === value)?.label ?? value
+  );
+  return labels.length ? labels.join(', ') : '-';
+};
+
 const FIELD_LABELS: Record<string, string> = {
   toothNumber: 'tooth number',
+  toothNumbers: 'tooth number',
   surface: 'surface',
   procedureId: 'procedure',
   serviceId: 'service',
@@ -73,7 +91,8 @@ const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
   procedureAlreadyBilled: 'Cannot modify this procedure because it has already been billed.',
   serviceAlreadyBilled: 'Cannot modify this procedure because the service has already been billed.',
   alreadyCancelled: 'This dental procedure is already cancelled.',
-  cancellationReasonRequired: 'Cancellation reason is required.'
+  cancellationReasonRequired: 'Cancellation reason is required.',
+  toothNumbersRequired: 'At least one tooth number is required.'
 };
 
 const normalizeMsg = (msg: string) => {
@@ -153,8 +172,8 @@ const handleCrudError = (error: any, dispatch: any) => {
 const buildValidationError = (form: any) => {
   const fieldErrors: { field: string; message: string }[] = [];
 
-  if (!form.toothNumber) {
-    fieldErrors.push({ field: 'toothNumber', message: 'must not be null' });
+  if (resolveToothNumbers(form).length === 0) {
+    fieldErrors.push({ field: 'toothNumbers', message: 'must not be null' });
   }
 
   if (!form.surface) {
@@ -362,6 +381,7 @@ const DentalProcedures = props => {
   const openEditModal = (row: DentalProcedureResponseVM) => {
     setForm({
       ...row,
+      toothNumbers: resolveToothNumbers(row),
       procedureId: (row as any).procedureId ?? null,
       serviceId: row.serviceId ?? null,
       anesthesiaUsed: row.anesthesiaUsed ?? '',
@@ -383,12 +403,14 @@ const DentalProcedures = props => {
       return;
     }
 
+    const toothNumbers = resolveToothNumbers(form);
+
     if (formMode === 'add') {
       try {
         const createPayload = {
           patientId: patient?.id,
           encounterId: encounter?.id,
-          toothNumber: form.toothNumber,
+          toothNumbers,
           surface: form.surface,
           anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
@@ -412,7 +434,7 @@ const DentalProcedures = props => {
       try {
         const body = {
           id: form.id,
-          toothNumber: form.toothNumber,
+          toothNumbers,
           surface: form.surface,
           anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
@@ -452,11 +474,10 @@ const DentalProcedures = props => {
   const tableColumns = useMemo(
     () => [
       {
-        key: 'toothNumber',
+        key: 'toothNumbers',
         title: <Translate>Tooth Number</Translate>,
         flexGrow: 1,
-        render: (row: DentalProcedureResponseVM) =>
-          ToothEnum?.find((t: any) => t.value === row.toothNumber)?.label ?? row.toothNumber ?? '-'
+        render: (row: DentalProcedureResponseVM) => formatToothNumbers(row, ToothEnum)
       },
       {
         key: 'surface',
@@ -695,9 +716,9 @@ const DentalProcedures = props => {
                   <MyInput
                     width="100%"
                     column
-                    fieldName="toothNumber"
+                    fieldName="toothNumbers"
                     fieldLabel="Tooth Number"
-                    fieldType="select"
+                    fieldType="checkPicker"
                     required
                     selectData={ToothEnum}
                     selectDataLabel="label"

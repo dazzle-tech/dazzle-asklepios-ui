@@ -8,11 +8,13 @@ import type {
 } from '@/types/model-types-new';
 import type { InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
+import type { DefaultBillingItemType } from '@/pages/patient/patient-profile/PatientQuickAppoinment/defaultBillingRows';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   isTechnicalBillingLabel,
   formatBillingItemType,
-  resolveBillingItemName
+  resolveBillingItemName,
+  resolvePatientTaxAmount
 } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import {
   getEncounterLifecycleStatus,
@@ -46,6 +48,8 @@ export type UnifiedBillingChargeRow = {
   unitPrice: number;
   setupUnitPrice?: number | null;
   priceSource?: string | null;
+  taxAmount?: number | null;
+  taxRate?: number | null;
   netAmount: number;
   patientAmount: number;
   insuranceAmount: number;
@@ -151,8 +155,9 @@ export const normalizeBillingError = (error: any): string => {
 };
 
 export type PrepareServiceRow = {
-  id: number;
-  serviceId: number;
+  id: string;
+  billingItemType: DefaultBillingItemType;
+  itemId: number;
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -665,6 +670,17 @@ export const formatMoney = (
   })} ${currency}`;
 };
 
+export const roundMoney = (value: number | null | undefined): number =>
+  Number(Number(value || 0).toFixed(2));
+
+export const capPaymentToBalance = (amount: number, balance: number): number => {
+  if (amount > balance) {
+    return Number(Number(balance).toFixed(4));
+  }
+
+  return amount;
+};
+
 export const resolvePaymentReceiptNumber = (paymentResult?: {
   receiptNumber?: string | null;
   paymentNumber?: string | null;
@@ -966,6 +982,51 @@ export const isRowCollectable = (
 export const isRowAwaitingBilling = (row: UnifiedBillingChargeRow): boolean =>
   row.chargeLineId == null && isRowCollectable(row);
 
+const sumUnbilledEncounterAmount = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[],
+  pick: (item: EncounterBillingItemSummary) => number | null | undefined
+): number => {
+  const awaitingIds = new Set(
+    chargeRows
+      .filter(isRowAwaitingBilling)
+      .map(row => row.patientServiceProductId)
+      .filter((id): id is number => id != null)
+  );
+
+  if (awaitingIds.size === 0) {
+    return 0;
+  }
+
+  return (summary?.items ?? [])
+    .filter(
+      item =>
+        item.chargeLineId == null &&
+        item.patientServiceProductId != null &&
+        awaitingIds.has(item.patientServiceProductId)
+    )
+    .reduce((total, item) => total + Number(pick(item) ?? 0), 0);
+};
+
+/** Charge totals for the open encounter. Wallet balances stay on the patient account. */
+export const computeEncounterLedgerAmounts = (
+  summary: EncounterBillingSummary | null | undefined,
+  chargeRows: UnifiedBillingChargeRow[] = []
+) => {
+  return {
+    grossAmount:
+      Number(summary?.grossAmount ?? 0) +
+      sumUnbilledEncounterAmount(summary, chargeRows, item => item.grossAmount),
+    netAmount:
+      Number(summary?.netAmount ?? 0) + computeUnbilledEncounterNetAmount(chargeRows),
+    discountAmount:
+      Number(summary?.discountAmount ?? 0) +
+      sumUnbilledEncounterAmount(summary, chargeRows, item => item.discountAmount),
+    copaymentAmount: computeEncounterPatientShare(summary, chargeRows),
+    collectAmount: computeEncounterRemainingToPay(summary, chargeRows)
+  };
+};
+
 export const formatBillingTimestamp = (value?: string | null): string => {
   if (!value) return '-';
   return formatDateWithoutSeconds(value);
@@ -1018,9 +1079,22 @@ export const shouldShowInsuranceSummary = (
   coverageType: BillingCoverageType = 'SELF_PAY'
 ): boolean => coverageType === 'INSURANCE' || hasEncounterInsuranceBilling(summary);
 
-export const resolvePatientDisplayName = (patient: any): string => {
-  const composed = [patient?.firstName, patient?.lastName].filter(Boolean).join(' ').trim();
-  return composed || patient?.fullName || patient?.name || '-';
+export const resolvePatientDisplayName = (patient: any, fallback?: string | null): string => {
+  const composed = [patient?.firstName, patient?.secondName, patient?.thirdName, patient?.lastName]
+    .map(part => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ');
+  const stored = String(patient?.fullName ?? patient?.name ?? '').trim();
+  const header = String(fallback ?? '').trim();
+  const candidates = [composed, stored, header].filter(Boolean);
+
+  if (candidates.length === 0) {
+    return '-';
+  }
+
+  return candidates.reduce((best, current) =>
+    current.split(/\s+/).length > best.split(/\s+/).length ? current : best
+  );
 };
 
 export const resolvePatientMrn = (patient: any): string =>
@@ -1265,13 +1339,22 @@ export const buildBillingPaymentReceipt = ({
           reservation.billingItemType ?? summaryItem?.billingItemType
         ) || 'Service';
 
+      // Patient's tax on the line, for the part of the patient share paid here
+      const patientShare = Number(summaryItem?.patientResponsibilityAmount ?? 0);
+      const taxAmount =
+        summaryItem && patientShare > 0
+          ? (resolvePatientTaxAmount(summaryItem) * Math.min(lineAmount, patientShare)) /
+            patientShare
+          : 0;
+
       return {
         name: serviceName,
         type: serviceType,
         quantity: 1,
         unitPrice: lineAmount,
         netAmount: lineAmount,
-        patientShare: lineAmount
+        patientShare: lineAmount,
+        taxAmount
       };
     })
     .filter(item => item.netAmount > 0);
@@ -1291,6 +1374,10 @@ export const buildBillingPaymentReceipt = ({
         ];
 
   const netAmount = items.reduce((sum, item) => sum + Number(item.netAmount ?? 0), 0);
+  const taxAmount = items.reduce(
+    (sum, item) => sum + Number((item as { taxAmount?: number }).taxAmount ?? 0),
+    0
+  );
 
   return {
     receiptNumber: resolvePaymentReceiptNumber(paymentResult),
@@ -1307,10 +1394,10 @@ export const buildBillingPaymentReceipt = ({
     chargeNumber: billingSummary?.chargeNumber ?? '-',
     items,
     totals: {
-      grossAmount: netAmount,
+      grossAmount: netAmount - taxAmount,
       discountAmount: 0,
       exemptionAmount: 0,
-      taxAmount: 0,
+      taxAmount,
       netAmount,
       patientResponsibilityAmount: netAmount,
       insuranceResponsibilityAmount: 0,
@@ -1416,8 +1503,11 @@ export const resolveBillingPaymentCategory = (paymentMethodCode: string): string
   if (paymentMethodCode === 'BANK_TRANSFER') return 'BANK_TRANSFER';
   if (paymentMethodCode === 'CHEQUE') return 'CHEQUE';
   if (paymentMethodCode === 'DEDUCT_FROM_FREE_BALANCE') return 'WALLET';
-  if (paymentMethodCode === 'CREDIT_CARD' || paymentMethodCode === 'CREDIT_DEBIT_CARD') {
-    return 'CREDIT_CARD';
+  if (
+    paymentMethodCode === 'CREDIT_CARD' ||
+    paymentMethodCode === 'CREDIT_DEBIT_CARD'
+  ) {
+    return 'CARD';
   }
   return 'CASH';
 };
@@ -1531,7 +1621,7 @@ export const buildTimelineEvents = (
       type: 'ENCOUNTER_REGISTERED',
       label: 'Encounter registered',
       timestamp:
-        encounterAny.createdAt ??
+        encounterAny.createdDate ??
         encounter.encounterDate?.toString() ??
         null,
       detail: [
@@ -1745,6 +1835,17 @@ export const formatEncounterTreatmentLabel = (
   encounter: PatientEncounter | null | undefined
 ): string => formatBillingEnum(getEncounterTreatmentStatus(encounter));
 
+const CANCELLED_BILLING_LINE_STATUSES = new Set([
+  'CANCELLED',
+  'CANCELED',
+  'REVERSED'
+]);
+
+export const isCancelledBillingLineStatus = (
+  status: string | null | undefined
+): boolean =>
+  CANCELLED_BILLING_LINE_STATUSES.has(String(status ?? '').trim().toUpperCase());
+
 export const formatBillingChargeStatus = (
   status: string | null | undefined
 ): string => formatBillingEnum(status);
@@ -1933,6 +2034,10 @@ export const mapSummaryItemToRow = (
     item.setupUnitPrice ??
     null,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
+  taxAmount:
+    readChargeLineNumber(item, 'taxAmount', 'tax_amount') ?? item.taxAmount ?? 0,
+  taxRate:
+    readChargeLineNumber(item, 'taxRate', 'tax_rate') ?? item.taxRate ?? null,
   netAmount: readChargeLineNumber(item, 'netAmount', 'net_amount') ?? item.netAmount ?? 0,
   patientAmount,
   insuranceAmount: item.insuranceResponsibilityAmount,
@@ -1997,6 +2102,7 @@ export const mapPspItemToRow = (
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     priceSource: rowAny.priceSource?.trim() || null,
+    taxAmount: Number(row.taxAmount ?? 0),
     netAmount,
     patientAmount,
     insuranceAmount: hasStoredSplit ? insuranceShare : 0,
@@ -2032,6 +2138,7 @@ export const mapInvoiceLineItemToRow = (item: InvoiceLineItem): UnifiedBillingCh
     itemName: item.itemDescription?.trim() || item.itemCode?.trim() || 'Service',
     quantity: Number(item.quantity ?? 1),
     unitPrice: Number(item.unitPrice ?? 0),
+    taxAmount: Number(item.taxAmount ?? 0),
     netAmount,
     patientAmount: netAmount,
     insuranceAmount: 0,

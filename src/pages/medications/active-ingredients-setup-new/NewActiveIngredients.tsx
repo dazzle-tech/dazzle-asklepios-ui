@@ -24,6 +24,7 @@ import MOAAndPharmacokinetics from './MOAAndPharmacokinetics';
 import DrugDrugAndFoodInteractions from './DrugDrugAndFoodInteractions';
 import PregnancyLactationAndSpecialPopulation from './PregnancyLactationAndSpecialPopulation';
 import Synonyms from './Synonyms';
+import Pharmaceuticals from './Pharmaceuticals';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
 import PreRequestedTests from './Pre-requestedTests';
@@ -219,6 +220,20 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
 
   const tabData = useMemo(
     () => [
+      {
+        title: 'Pharmaceuticals',
+        content: (
+          <Section
+            title="Pharmaceuticals"
+            content={<Pharmaceuticals activeIngredient={activeIngredient} />}
+            setOpen={() => { }}
+            rightLink=""
+            openedContent={null}
+            disabled={!isExisting}
+          />
+        ),
+        disabled: !isExisting
+      },
       {
         title: 'Indications',
         content: (

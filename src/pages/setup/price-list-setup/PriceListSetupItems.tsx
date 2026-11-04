@@ -95,6 +95,7 @@ import {
   newPriceListSetupItem
 } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
 
 type Props = {
   open: boolean;
@@ -252,6 +253,10 @@ const PriceListSetupItems: React.FC<Props> = ({
 
   const isSelfPayPriceList =
     priceListType === 'SELF_PAY';
+
+  const showSetupItemName =
+    isInsurancePriceList ||
+    isSelfPayPriceList;
 
   const [
     childModalOpen,
@@ -711,6 +716,26 @@ const PriceListSetupItems: React.FC<Props> = ({
     }
   );
 
+  // All active vaccine brands; the same query lists and searches (by name or code)
+  const {
+    data: vaccineBrandsResponse,
+    isFetching: isFetchingVaccineBrands
+  } = useSearchActiveVaccineBrandsQuery(
+    {
+      name: debouncedSelectSearch || undefined,
+      page: selectPage,
+      size: 20,
+      sort: 'name,asc'
+    },
+    {
+      skip:
+        !open ||
+        !childModalOpen ||
+        isInsurancePriceList ||
+        selectedItem.itemType !== 'VACCINE'
+    }
+  );
+
   const currentSelectResponse = useMemo(() => {
     switch (selectedItem.itemType) {
       case 'MEDICATION':
@@ -743,6 +768,9 @@ const PriceListSetupItems: React.FC<Props> = ({
           ? proceduresSearchResponse
           : proceduresResponse;
 
+      case 'VACCINE':
+        return vaccineBrandsResponse;
+
       default:
         return null;
     }
@@ -766,7 +794,9 @@ const PriceListSetupItems: React.FC<Props> = ({
     servicesSearchResponse,
 
     proceduresResponse,
-    proceduresSearchResponse
+    proceduresSearchResponse,
+
+    vaccineBrandsResponse
   ]);
 
 
@@ -1208,7 +1238,8 @@ const PriceListSetupItems: React.FC<Props> = ({
       isFetchingServices ||
       isFetchingServicesSearch ||
       isFetchingProcedures ||
-      isFetchingProceduresSearch
+      isFetchingProceduresSearch ||
+      isFetchingVaccineBrands
     ) {
       return;
     }
@@ -1291,6 +1322,15 @@ const PriceListSetupItems: React.FC<Props> = ({
           onFetchMore: handleFetchMore
         };
 
+      case 'VACCINE':
+        return {
+          fieldLabel: 'Vaccine Brand',
+          selectData: directSelectData,
+          loading: isFetchingVaccineBrands,
+          hasMore: hasMoreDirectItems,
+          onFetchMore: handleFetchMore
+        };
+
       default:
         return null;
     }
@@ -1315,7 +1355,9 @@ const PriceListSetupItems: React.FC<Props> = ({
     isFetchingServicesSearch,
 
     isFetchingProcedures,
-    isFetchingProceduresSearch
+    isFetchingProceduresSearch,
+
+    isFetchingVaccineBrands
   ]);
 
 
@@ -1655,6 +1697,9 @@ const PriceListSetupItems: React.FC<Props> = ({
       undefined ||
       selectedItem.unitPrice ===
       null ||
+      // allowDecimal keeps an emptied field as '' instead of null
+      String(selectedItem.unitPrice) ===
+      '' ||
       Number(
         selectedItem.unitPrice
       ) < 0
@@ -1947,6 +1992,21 @@ const PriceListSetupItems: React.FC<Props> = ({
             Item Name
           </Translate>
       },
+
+      ...(showSetupItemName
+        ? [{
+          key: 'setupItemName',
+          title:
+            <Translate>
+              Setup Item Name
+            </Translate>,
+          render: (
+            row:
+              PriceListSetupItem
+          ) =>
+            row.setupItemName || '-'
+        }]
+        : []),
 
       {
         key: 'itemType',
@@ -2284,6 +2344,7 @@ const PriceListSetupItems: React.FC<Props> = ({
         width="100%"
         fieldLabel="Price"
         fieldType="number"
+        allowDecimal
         fieldName="unitPrice"
         record={selectedItem}
         setRecord={setSelectedItem}
@@ -2294,6 +2355,7 @@ const PriceListSetupItems: React.FC<Props> = ({
         width="100%"
         fieldLabel="Discount Percentage"
         fieldType="number"
+        allowDecimal
         fieldName="discountPercentage"
         record={selectedItem}
         setRecord={setSelectedItem}

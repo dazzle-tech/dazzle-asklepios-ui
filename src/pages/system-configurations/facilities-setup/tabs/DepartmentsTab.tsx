@@ -216,14 +216,13 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
 
     const isEmpty = (val) => val === null || val === undefined || val === '';
     const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
-    if (
-      department?.parallelCapacityValue === null ||
-      department?.parallelCapacityValue === undefined ||
-      department?.parallelCapacityValue < 1
-    ) {
-      missingFields.push(
-        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
-      );
+    if (department?.appointable && department?.parallelCapacityEnabled) {
+      const capacity = Number(department?.parallelCapacityValue);
+      if (!Number.isFinite(capacity) || capacity < 1) {
+        missingFields.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
     }
     if (department?.appointable) {
       if (isEmpty(department?.defaultDurationMinutes) || department?.defaultDurationMinutes <= 0) {

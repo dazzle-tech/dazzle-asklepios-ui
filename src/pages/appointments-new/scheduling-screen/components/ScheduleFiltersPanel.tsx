@@ -2,7 +2,7 @@ import React from 'react';
 import { Form } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyInput from '@/components/MyInput';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 type Props = {
   filtersCollapsed: boolean;
@@ -22,11 +22,12 @@ type Props = {
   selectedResources: { resourceKey: string | null };
   setSelectedResources: React.Dispatch<React.SetStateAction<{ resourceKey: string | null }>>;
   mode: string;
-  schedulePatientFilter: any;
-  setSchedulePatientFilter: React.Dispatch<React.SetStateAction<any>>;
+  patientSearch: { searchByField: string; patientName: any };
+  setPatientSearch: React.Dispatch<React.SetStateAction<any>>;
+  onPatientSearchClick?: () => void;
   AppointmentStatusEnum: any[];
-  selectedAppointmentStatus: { status: string | null };
-  setSelectedAppointmentStatus: React.Dispatch<React.SetStateAction<{ status: string | null }>>;
+  selectedAppointmentStatus: { status: string[] };
+  setSelectedAppointmentStatus: React.Dispatch<React.SetStateAction<{ status: string[] }>>;
   BookingModeEnum: any[];
   selectedBookingMode: { bookingMode: string | string[] | null };
   setSelectedBookingMode: React.Dispatch<
@@ -50,8 +51,9 @@ const ScheduleFiltersPanel = ({
   selectedResources,
   setSelectedResources,
   mode,
-  schedulePatientFilter,
-  setSchedulePatientFilter,
+  patientSearch,
+  setPatientSearch,
+  onPatientSearchClick,
   AppointmentStatusEnum,
   selectedAppointmentStatus,
   setSelectedAppointmentStatus,
@@ -152,18 +154,22 @@ const ScheduleFiltersPanel = ({
                   disabled={!selectedResourceTypeValue?.value}
                   searchable
                 />
-                  <PatientSearch
-                    value={schedulePatientFilter}
-                    onChange={setSchedulePatientFilter}
-                    fieldLabel="Patient"
+                <div style={{ minWidth: 280 }}>
+                  <SearchPatientCriteria
+                    record={patientSearch}
+                    setRecord={setPatientSearch}
+                    onSearchClick={onPatientSearchClick}
+                    searchMarginTop={0}
                   />
+                </div>
                 <MyInput
                   height={35}
                   width={'11.5vw'}
                   column
                   fieldLabel="Status"
-                  fieldType="select"
+                  fieldType="checkPicker"
                   fieldName="status"
+                  placeholder="All statuses"
                   selectData={AppointmentStatusEnum ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"

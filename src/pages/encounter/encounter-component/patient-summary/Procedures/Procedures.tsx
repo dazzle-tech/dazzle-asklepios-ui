@@ -24,7 +24,7 @@ const TableLoader = () => (
   </div>
 );
 
-const Procedures = ({ patient }) => {
+const Procedures = ({ patient, loadingHeight = undefined }) => {
   const location = useLocation();
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useAppDispatch();
@@ -167,6 +167,7 @@ const Procedures = ({ patient }) => {
           columns={tableColumns}
           data={procedures}
           loading={procedureLoding}
+          loadingHeight={loadingHeight}
           page={page}
           rowsPerPage={pageSize}
           totalCount={totalCount}

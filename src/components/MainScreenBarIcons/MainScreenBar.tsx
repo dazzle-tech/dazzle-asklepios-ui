@@ -376,6 +376,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             >
               <DepartmentSwitcher placement="bottomEnd" reloadOnSelect>
                 <div
+                  data-testid="department-switcher"
                   style={{
                     display: 'flex',
                     alignItems: 'center',

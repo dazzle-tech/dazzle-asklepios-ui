@@ -365,7 +365,9 @@ const PatientQuickAppointment = ({
             ? Number(localEncounter.followUpEncounterId)
             : null,
         originType: (localEncounter as any)?.originType ?? null,
-        originName: (localEncounter as any)?.originName ?? null
+        originName: (localEncounter as any)?.originName ?? null,
+        promotionName: (localEncounter as any)?.promotionName || null,
+        promotionCode: (localEncounter as any)?.promotionCode || null
       };
 
       const saved = await createQuickAppointment(payload).unwrap();

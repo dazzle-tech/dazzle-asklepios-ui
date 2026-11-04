@@ -1,5 +1,6 @@
 import { BaseQuery } from "@/newApi";
 import { createApi } from "@reduxjs/toolkit/query/react";
+import type { BillingPaymentResult } from "@/types/model-types-new";
 
 export interface CreatePointOfSaleTransactionDTO {
   patientId: number;
@@ -9,6 +10,20 @@ export interface CreatePointOfSaleTransactionDTO {
   sourceReferenceId: number;
 
   amount: number;
+}
+
+export interface CreateManualPointOfSaleTransactionDTO {
+  patientId: number;
+
+  sourceType: "ENCOUNTER" | "WALLET_BALANCE";
+
+  sourceReferenceId: number;
+
+  amount: number;
+
+  panNumber: string;
+
+  transactionId: string;
 }
 export interface GenerateWebhookUrlRequest {
   clientId: string;
@@ -71,6 +86,10 @@ export interface PointOfSaleTransactionDTO {
 
   schemeLabel?: string;
 
+  panNumber?: string;
+
+  entryMode?: "TERMINAL" | "MANUAL";
+
   transactionDate?: string;
 
   webhookReceived?: boolean;
@@ -128,6 +147,36 @@ export const PointOfSaleTransactionService = createApi({
       ],
     }),
 
+    completePayment: builder.mutation<
+      BillingPaymentResult,
+      number
+    >({
+      query: id => ({
+        url:
+          `/api/patient/point-of-sale-transactions/transactions/${id}/complete-payment`,
+        method: "POST",
+      }),
+
+      invalidatesTags: [
+        "PointOfSaleTransaction",
+      ],
+    }),
+
+    recordManualEntry: builder.mutation<
+      PointOfSaleTransactionDTO,
+      CreateManualPointOfSaleTransactionDTO
+    >({
+      query: body => ({
+        url: "/api/patient/point-of-sale-transactions/manual",
+        method: "POST",
+        body,
+      }),
+
+      invalidatesTags: [
+        "PointOfSaleTransaction",
+      ],
+    }),
+
   }),
 });
 
@@ -136,5 +185,9 @@ export const {
   usePurchaseMutation,
 
   useRefreshTransactionStatusMutation,
+
+  useCompletePaymentMutation,
+
+  useRecordManualEntryMutation,
 
 } = PointOfSaleTransactionService;

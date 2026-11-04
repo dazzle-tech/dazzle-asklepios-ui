@@ -30,7 +30,11 @@ import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
+import { isPhoneValid } from '@/utils/phoneNumber';
 import { Patient, Address } from '@/types/model-types-new';
+import RegistrationPendingPaymentModal, {
+  RegistrationPendingPaymentFab
+} from './RegistrationPendingPayment';
 
 const { getHeight } = DOMHelper;
 
@@ -194,7 +198,6 @@ const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
 ];
 
 const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
-
 const validatePatientNameFields = (patient: Patient): string | null => {
   const errors: string[] = [];
 
@@ -218,7 +221,7 @@ const validatePatientNameFields = (patient: Patient): string | null => {
     errors.push('Date of Birth must not be null');
   }
 
-  if (!patient?.primaryMobileNumber?.trim()) {
+  if (!isPhoneValid(patient?.primaryMobileNumber)) {
     errors.push('Primary Mobile Number must not be empty');
   }
 
@@ -283,6 +286,9 @@ const PatientProfile = () => {
   const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
     useState<boolean>(false);
 
+  const [openRegistrationPendingPayment, setOpenRegistrationPendingPayment] =
+    useState<boolean>(false);
+
   const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
@@ -338,10 +344,10 @@ const PatientProfile = () => {
     }
 
       try {
-        if (localPatient?.id) {
+        if (patientToSave?.id) {
           const updated = await updatePatient({
-            id: localPatient.id,
-            data: buildPatientSavePayload(localPatient)
+            id: patientToSave.id,
+            data: buildPatientSavePayload(patientToSave)
           }).unwrap();
 
           setLocalPatient(updated);
@@ -368,14 +374,14 @@ const PatientProfile = () => {
         const duplicationResponse = await checkDuplication({
           dto: {
             ruleId: selectedFacility?.ruleId,
-            dateOfBirth: localPatient?.dateOfBirth
-              ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
+            dateOfBirth: patientToSave?.dateOfBirth
+              ? new Date(patientToSave.dateOfBirth).toISOString().split('T')[0]
               : null,
-            gender: localPatient?.sexAtBirth,
-            firstName: localPatient?.firstName,
-            lastName: localPatient?.lastName,
+            gender: patientToSave?.sexAtBirth,
+            firstName: patientToSave?.firstName,
+            lastName: patientToSave?.lastName,
             documentNo: '',
-            mobileNumber: localPatient?.primaryMobileNumber
+            mobileNumber: patientToSave?.primaryMobileNumber
           },
           page: 0,
           size: 20
@@ -387,9 +393,9 @@ const PatientProfile = () => {
           return;
         }
 
-        const patientBeforeSave = { ...localPatient };
+        const patientBeforeSave = { ...patientToSave };
 
-        const saved = await addPatient(buildPatientSavePayload(localPatient)).unwrap();
+        const saved = await addPatient(buildPatientSavePayload(patientToSave)).unwrap();
 
         setLocalPatient(saved);
         dispatch(setPatient(saved));
@@ -598,6 +604,8 @@ const PatientProfile = () => {
           setRefetchData={setRefetchData}
           searchRef={searchRef}
           showButton={true}
+          showPhoneNumberSearch={true}
+          showEncounterNumberSearch={true}
         />
       </div>
 
@@ -630,6 +638,16 @@ const PatientProfile = () => {
         setOpen={setOpenRegistrationWarningsSummary}
       />
 
+      <RegistrationPendingPaymentFab
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
+        onClick={() => setOpenRegistrationPendingPayment(true)}
+      />
+      <RegistrationPendingPaymentModal
+        open={openRegistrationPendingPayment}
+        setOpen={setOpenRegistrationPendingPayment}
+        facilityId={selectedFacilityId ? Number(selectedFacilityId) : null}
+      />
+
       <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
 
       <IncomingReferralRequestsByFacility
@@ -642,9 +660,12 @@ const PatientProfile = () => {
         setOpen={setOpenPatientsDuplicateModal}
         list={patientList}
         handleSelect={handleSelectExistingPatient}
-        handleSave={() =>
-          addPatient({
-            ...buildPatientSavePayload(localPatient),
+        handleSave={() => {
+          const patientToSave = applyPatientDefaults(localPatient);
+          setLocalPatient(patientToSave);
+
+          return addPatient({
+            ...buildPatientSavePayload(patientToSave),
             isCompletedPatient: false
           })
             .unwrap()
@@ -654,7 +675,7 @@ const PatientProfile = () => {
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
 
-              if (shouldOpenCchiDocumentAfterSave(localPatient, cchiDocument)) {
+              if (shouldOpenCchiDocumentAfterSave(patientToSave, cchiDocument)) {
                 openCchiDocumentModalAfterSave();
               }
 
@@ -676,8 +697,8 @@ const PatientProfile = () => {
               });
 
               dispatch(notify({ msg, sev: 'warning' }));
-            })
-        }
+            });
+        }}
       />
     </div>
   );

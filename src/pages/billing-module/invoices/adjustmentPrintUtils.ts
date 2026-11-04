@@ -9,6 +9,7 @@ import type {
   PatientFinancialInvoice
 } from '@/services/billing/invoiceGenerationService';
 import type { EncounterBillingItemSummary } from '@/types/model-types-new';
+import { resolvePatientDisplayName } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import {
   formatBillingItemType,
   isTechnicalBillingLabel
@@ -361,13 +362,7 @@ export const buildAdjustmentPrintData = ({
     : new Date().toLocaleString();
 
   const insuranceFields = resolveInsuranceFields(parentInvoice, eligibilitySnapshot);
-  const composedPatientName = [patient?.firstName, patient?.lastName]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  const patientName =
-    encounterDetails?.patient?.fullName ??
-    (composedPatientName || patient?.fullName || patient?.name || '-');
+  const patientName = resolvePatientDisplayName(patient, encounterDetails?.patient?.fullName);
 
   return {
     documentNumber: adjustment.documentNumber,

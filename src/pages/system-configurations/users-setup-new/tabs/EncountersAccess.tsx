@@ -20,6 +20,7 @@ type EncountersAccessRecord = {
   allowOngoingVisit: boolean;
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
+  canReturnClaimForResubmit: boolean;
 };
 
 const EncountersAccess = ({ user }: EncountersAccessProps) => {
@@ -30,6 +31,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
     allowOngoingVisit: false,
     canUnDischargeUrgentCare: false,
     canUnCompleteEncounter: false,
+    canReturnClaimForResubmit: false,
   });
 
   const {
@@ -59,6 +61,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         allowOngoingVisit: false,
         canUnDischargeUrgentCare: false,
         canUnCompleteEncounter: false,
+        canReturnClaimForResubmit: false,
       });
       return;
     }
@@ -70,6 +73,8 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
           encountersAccess.canUnDischargeUrgentCare ?? false,
         canUnCompleteEncounter:
           encountersAccess.canUnCompleteEncounter ?? false,
+        canReturnClaimForResubmit:
+          encountersAccess.canReturnClaimForResubmit ?? false,
       });
     }
   }, [userId, encountersAccess]);
@@ -148,6 +153,15 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         fieldType="checkbox"
         fieldName="canUnCompleteEncounter"
         fieldLabel="Can UnComplete Encounter"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canReturnClaimForResubmit"
+        fieldLabel="Can return claims for resubmit"
         record={record}
         setRecord={setRecord}
         disabled={isLoadingAccess}

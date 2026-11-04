@@ -138,6 +138,45 @@ export const serviceService = createApi({
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/by-abbreviation/{abbreviation}
+    getServicesByAbbreviation: builder.query<
+      PagedResult<any>,
+      { abbreviation: string } & PagedParams
+    >({
+      query: ({ abbreviation, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-abbreviation/${encodeURIComponent(String(abbreviation))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-price/{price}
+    getServicesByPrice: builder.query<
+      PagedResult<any>,
+      { price: number } & PagedParams
+    >({
+      query: ({ price, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-price/${encodeURIComponent(String(price))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-currency/{currency}
+    getServicesByCurrency: builder.query<
+      PagedResult<any>,
+      { currency: string } & PagedParams
+    >({
+      query: ({ currency, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/by-currency/${encodeURIComponent(String(currency))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
     // GET /api/setup/service/by-name/{name}
     getServicesByName: builder.query<
       PagedResult<any>,
@@ -329,6 +368,9 @@ export const {
   useLazyGetServicesByCodeQuery,
   useGetServicesByNameQuery,
   useLazyGetServicesByNameQuery,
+  useLazyGetServicesByAbbreviationQuery,
+  useLazyGetServicesByPriceQuery,
+  useLazyGetServicesByCurrencyQuery,
   useAddServiceMutation,
   useUpdateServiceMutation,
   useToggleServiceIsActiveMutation,
