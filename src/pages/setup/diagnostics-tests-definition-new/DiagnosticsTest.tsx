@@ -29,10 +29,11 @@ import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
-import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdOutlineDescription, MdLocalOffer } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
 import { Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import Coding from './Coding';
 import DefaultProfileIndicator from './DefaultProfileIndicator';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
@@ -65,6 +66,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
+  const priceListPrompt = usePriceListPrompt();
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -256,6 +258,14 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
       if (testRequest?.id && response?.id) {
         try {
           await setDiagnosticTestForRequest({
@@ -380,6 +390,14 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
+      priceListPrompt.prompt({
+        itemType: response?.type ?? diagnosticsTest.type,
+        sourceId: response?.id ?? diagnosticsTest.id,
+        itemCode: response?.internalCode ?? payload.internalCode,
+        itemName: response?.name ?? payload.name,
+        unitPrice: response?.price ?? payload.price,
+        currency: response?.currency ?? payload.currency
+      });
 
       await refetchDiagnostics();
       // Keep the filtered list (if a filter is active) in sync with the updated record
@@ -649,6 +667,22 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
             setDiagnosticsTest(rowData);
             setOpenAddEditDiagnosticTestPopup(true);
           }}
+        />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: rowData.type,
+              sourceId: rowData.id,
+              itemCode: rowData.internalCode,
+              itemName: rowData.name,
+              unitPrice: rowData.price,
+              currency: rowData.currency
+            })
+          }
         />
 
         {/* Activate / Deactivate */}
@@ -1068,6 +1102,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         }
         width={width}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
 
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}

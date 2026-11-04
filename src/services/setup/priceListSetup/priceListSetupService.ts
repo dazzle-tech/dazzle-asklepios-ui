@@ -559,6 +559,27 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    // Active items of one catalog item (item type + source id) across all price lists
+    getPriceListSetupItemsBySource: builder.query<
+      PriceListSetupItem[],
+      {
+        itemType: PriceListItemType;
+        sourceId: Id;
+      }
+    >({
+      query: ({ itemType, sourceId }) => ({
+        url: '/api/setup/price-list-setup-items/by-source',
+        params: { itemType, sourceId }
+      }),
+
+      providesTags: (_result, _error, { itemType, sourceId }) => [
+        {
+          type: 'PriceListSetupItem',
+          id: `SOURCE-${itemType}-${sourceId}`
+        }
+      ]
+    }),
+
     addPriceListSetupItem: builder.mutation<
       PriceListSetupItem,
       {
@@ -706,6 +727,9 @@ export const {
 
   useGetPriceListSetupItemByIdQuery,
   useLazyGetPriceListSetupItemByIdQuery,
+
+  useGetPriceListSetupItemsBySourceQuery,
+  useLazyGetPriceListSetupItemsBySourceQuery,
 
   useAddPriceListSetupItemMutation,
   useUpdatePriceListSetupItemMutation,
