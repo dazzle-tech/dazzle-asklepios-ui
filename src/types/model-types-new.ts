@@ -9360,3 +9360,118 @@ export interface PortalAppUpdateNotificationVM {
   notifiedCount: number;
 }
 
+// ------------------- External Results (Scan Document) -------------------
+
+export type ExternalDocumentType = 'LAB' | 'RADIOLOGY';
+
+/** invalid = not this patient, irrelevant = too old, processed = extracted */
+export type ExternalDocumentStatus = 'processed' | 'invalid' | 'irrelevant';
+
+/** Same values as our TestResultMarker enum */
+export type ExternalLabMarker =
+  | 'NORMAL_MARKER'
+  | 'UPPER_LIMIT'
+  | 'LOWER_LIMIT'
+  | 'CRITICAL_UPPER'
+  | 'CRITICAL_LOWER'
+  | 'ABNORMAL_MARKER'
+  | 'UNKNOWN';
+
+export interface ExternalLabResultEntry {
+  testName: string;
+  resultDate?: string | null;
+  resultValue?: string | null;
+  unit?: string | null;
+  normalRangeValue?: string | null;
+  marker?: ExternalLabMarker | null;
+  physicianName?: string | null;
+}
+
+export interface ExternalLabResultData {
+  documentType: 'lab_result';
+  results: ExternalLabResultEntry[];
+}
+
+export interface ExternalRadiologyReportEntry {
+  reportDate?: string | null;
+  testName?: string | null;
+  /** Simple HTML, same as our radiology report editor */
+  report?: string | null;
+  severity?: string | null;
+  radiologistInformation?: string | null;
+  criticalFindings?: string | null;
+  radiologistComments?: string | null;
+  physicianName?: string | null;
+}
+
+export interface ExternalRadiologyReportData {
+  documentType: 'radiology_report' | 'imaging_report';
+  reports: ExternalRadiologyReportEntry[];
+}
+
+export interface ExternalDocumentMismatch {
+  field: 'full_name' | 'sex' | 'date_of_birth' | 'patient_id';
+  patient_record_value?: string | null;
+  document_value?: string | null;
+}
+
+/** Keys stay snake_case: this object is passed through from the AI service as it is */
+export interface ExternalDocumentMetadata {
+  stage?: 'file_extraction' | 'patient_validation' | 'relevance_check' | 'completed';
+  mismatch_details?: ExternalDocumentMismatch[];
+  document_date?: string | null;
+  relevance_window_days?: number | null;
+}
+
+export interface ProcessExternalDocumentResponse {
+  status: ExternalDocumentStatus;
+  reason?: string | null;
+  detectedLanguage?: string | null;
+  translated?: boolean;
+  documentType?: string | null;
+  structuredData?: ExternalLabResultData | ExternalRadiologyReportData | null;
+  rawExtractedText?: string;
+  requestId?: string | null;
+  processingMetadata?: ExternalDocumentMetadata | null;
+}
+
+export interface ProcessExternalDocumentRequest {
+  file: File;
+  documentType: ExternalDocumentType;
+  patientId: number;
+  translate?: boolean;
+  targetLanguage?: string;
+}
+
+/** What the AI extracted from the uploaded file, saved with every row */
+export interface ExternalResultExtractionInfo {
+  patientId: number;
+  encounterId?: number | null;
+  rawExtractedText?: string | null;
+  detectedLanguage?: string | null;
+  translated?: boolean;
+}
+
+export interface SaveExternalLabResultsRequest extends ExternalResultExtractionInfo {
+  results: ExternalLabResultEntry[];
+}
+
+export interface SaveExternalRadiologyReportsRequest extends ExternalResultExtractionInfo {
+  reports: ExternalRadiologyReportEntry[];
+}
+
+export interface ExternalLabResult extends ExternalLabResultEntry, ExternalResultExtractionInfo {
+  id: number;
+  attachmentId?: number | null;
+  translated: boolean;
+  createdBy?: string;
+  createdDate?: string;
+}
+
+export interface ExternalRadiologyReport extends ExternalRadiologyReportEntry, ExternalResultExtractionInfo {
+  id: number;
+  attachmentId?: number | null;
+  translated: boolean;
+  createdBy?: string;
+  createdDate?: string;
+}

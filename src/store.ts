@@ -280,6 +280,8 @@ import { patientTimelineService } from './services/patients/patientTimelineServi
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { externalDocumentService } from './services/ai-services/externalDocumentService';
+import { externalResultService } from './services/patients/externalResultService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { refreshHl7EventsService } from './services/refreshHl7EventsService';
 import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
@@ -355,6 +357,8 @@ export const store = configureStore({
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [externalDocumentService.reducerPath]: externalDocumentService.reducer,
+    [externalResultService.reducerPath]: externalResultService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
     [ambientDraftService.reducerPath]: ambientDraftService.reducer,
@@ -980,6 +984,8 @@ export const store = configureStore({
         autoPopulationService.middleware,
         dischargeReportService.middleware,
          ocrParsingService.middleware,
+        externalDocumentService.middleware,
+        externalResultService.middleware,
         labInterpretationService.middleware,
         nephrologyKidneyAssessmentService.middleware,
         nephrologyRenalFunctionService.middleware,

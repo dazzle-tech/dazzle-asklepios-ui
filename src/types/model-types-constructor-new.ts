@@ -4135,3 +4135,15 @@ export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = 
   configValue: '',
   description: ''
 };
+
+// ------------------- External Results (Scan Document) -------------------
+
+export const newExternalLabResultEntry: modelTypes.ExternalLabResultEntry = {
+  testName: '',
+  resultDate: null,
+  resultValue: null,
+  unit: null,
+  normalRangeValue: null,
+  marker: 'UNKNOWN',
+  physicianName: null
+};
