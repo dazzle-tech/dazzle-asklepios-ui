@@ -1,14 +1,16 @@
 import MyButton from '@/components/MyButton/MyButton';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Form, Row, Text } from 'rsuite';
 import '../styles.less';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer/SectionsoContainer';
-import { newApPreProcedureAssessment } from '@/types/model-types-constructor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileWaveform, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
-import { useSavePreProcedureAssessmentMutation } from '@/services/procedureService';
+import {
+  useGetProcedurePreAssessmentQuery,
+  useSaveProcedurePreAssessmentMutation
+} from '@/services/patients/patientProcedureService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
@@ -16,21 +18,26 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyModal from '@/components/MyModal/MyModal';
 import DiagnosticsResult from '../../diagnostics-result/DiagnosticsResult';
 
-const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
+const PreProcedureAssessment = ({ procedure, setActiveTab, patient }) => {
   const dispatch = useAppDispatch();
-  const [procedureAssessment, setProocedureAssessment] = useState({
-    ...newApPreProcedureAssessment
-  });
+  const [procedureAssessment, setProocedureAssessment] = useState<any>({});
   const [diagnosticTestResults, setDiagnosticTestResults] = useState(false);
 
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [saveAssessment] = useSavePreProcedureAssessmentMutation();
+  const { data: savedAssessment } = useGetProcedurePreAssessmentQuery(procedure?.id, {
+    skip: !procedure?.id
+  });
+  const [saveAssessment] = useSaveProcedurePreAssessmentMutation();
   const { data: airwayLovQueryResponse } = useGetLovValuesByCodeQuery('AIRWAY_GRADES');
   const { data: asaLovQueryResponse } = useGetLovValuesByCodeQuery('ASA_SCORE');
 
+  useEffect(() => {
+    if (savedAssessment) setProocedureAssessment(savedAssessment);
+  }, [savedAssessment]);
+
   const handleSave = async () => {
     try {
-      saveAssessment({ ...procedureAssessment, procedureKey: procedure?.key }).unwrap();
+      await saveAssessment({ id: procedure.id, body: procedureAssessment }).unwrap();
       dispatch(notify({ msg: ' Saved successfully', sev: 'success' }));
     } catch (error) {
       dispatch(notify({ msg: 'Saved failed', sev: 'error' }));
@@ -38,7 +45,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
   };
 
   const handleClear = () => {
-    setProocedureAssessment({ ...newApPreProcedureAssessment });
+    setProocedureAssessment({});
   };
 
   return (
@@ -184,9 +191,9 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                          selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                        selectDataValue="key"
+                        selectDataValue="lovDisplayVale"
                         fieldType="select"
-                        fieldName="asaScoreLkey"
+                        fieldName="asaScore"
                         fieldLabel="ASA Score"
                         record={procedureAssessment}
                         setRecord={setProocedureAssessment}
@@ -200,9 +207,9 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                          selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                        selectDataValue="key"
+                        selectDataValue="lovDisplayVale"
                         fieldType="select"
-                        fieldName="airwayGradeLkey"
+                        fieldName="airwayGrade"
                         record={procedureAssessment}
                         setRecord={setProocedureAssessment}
                         searchable={false}

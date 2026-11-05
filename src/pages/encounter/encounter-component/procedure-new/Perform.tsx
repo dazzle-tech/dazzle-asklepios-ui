@@ -1,13 +1,14 @@
+import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyStepper from '@/components/MyStepper';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import {
-    useSaveProceduresMutation
-} from '@/services/procedureService';
-import { useGetLovValuesByCodeQuery, useGetProcedureListQuery } from '@/services/setupService';
+    useCancelProcdureMutation,
+    useChangeProcedureStatusMutation
+} from '@/services/patients/patientProcedureService';
+import { useGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheck, faList, faPlay, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,44 +26,48 @@ import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
 import EquipmentAndLogistics from './EquipmentAndLogistics/EquipmentAndLogistics';
 import MyTab from '@/components/MyTab';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
-    const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const categoryOptions = useEnumOptions('ProcedureCategory');
-    const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-    const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-    const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
+    const priorityOptions = useEnumOptions('Priority');
     const [activeTab, setActiveTab] = useState<string>('1');
-    const [saveProcedures] = useSaveProceduresMutation();
-
-    const [listRequestPro] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'category_lkey',
-                operator: 'match',
-                value: procedure.categoryKey
-            }
-        ]
-    });
-    const { data: procedureQueryResponse } = useGetProcedureListQuery(
-        listRequestPro,
-        { skip: procedure.categoryKey == undefined }
+    const [openCancellationModal, setOpenCancellationModal] = useState(false);
+    const [changeStatus] = useChangeProcedureStatusMutation();
+    const [cancelProcedure] = useCancelProcdureMutation();
+    const { data: procedureSetup } = useGetProcedureByIdQuery(
+        { id: procedure?.procedureId },
+        { skip: !procedure?.procedureId }
     );
-    const handleChangeStatus = async status => {
-        try {
-            await saveProcedures({
-                ...procedure,
-                statusLkey: status
-            })
-                .unwrap()
-                .then(() => {
-                    proRefetch();
-             
-                });
+    const summary = {
+        ...procedure,
+        categoryType: procedureSetup?.categoryType,
+        procedureName: procedureSetup?.name
+    };
 
-            dispatch(notify({ msg: 'Changed Status Successfully', sev: "success" }));
-        } catch (error) {
-            dispatch(notify('Changed Status Failed'));
+    const applyUpdate = (updated: any, msg: string) => {
+        setProcedure({ ...procedure, ...updated });
+        proRefetch();
+        dispatch(notify({ msg, sev: 'success' }));
+    };
+
+    const handleChangeStatus = async (status: string) => {
+        try {
+            const updated = await changeStatus({ id: procedure.id, status }).unwrap();
+            applyUpdate(updated, 'Changed Status Successfully');
+        } catch (error: any) {
+            dispatch(notify({ msg: error?.data?.title ?? 'Changed Status Failed', sev: 'error' }));
+        }
+    };
+
+    const handleCancel = async () => {
+        try {
+            const updated = await cancelProcedure({
+                id: procedure.id,
+                cancellationReason: procedure.cancellationReason || ''
+            }).unwrap();
+            setOpenCancellationModal(false);
+            applyUpdate(updated, 'Cancelled Successfully');
+        } catch (error: any) {
+            dispatch(notify({ msg: error?.data?.title ?? 'Cancel Failed', sev: 'error' }));
         }
     };
 
@@ -96,11 +101,11 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
     ];
 
     const tabData = [
-     {title: "Procedure Registration", content: <ProcedureRegistration procedure={procedure} user={authSlice.user} setActiveTab={setActiveTab} />},
-     {title: "Pre-Procedure Assessment", content: <PreProcedureAssessment procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} patient={patient}/>},
-     {title: "Procedure Performing", content: <ProcedurePerforming procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} />},
-     {title: "Post-Procedure Care and Follow-up", content: <PostProcedureCare procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>},
-     {title: "Equipment and Logistics", content: <EquipmentAndLogistics procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>},
+     {title: "Procedure Registration", content: <ProcedureRegistration procedure={procedure} setProcedure={setProcedure} setActiveTab={setActiveTab} />},
+     {title: "Pre-Procedure Assessment", content: <PreProcedureAssessment procedure={procedure} setActiveTab={setActiveTab} patient={patient}/>},
+     {title: "Procedure Performing", content: <ProcedurePerforming procedure={procedure} setActiveTab={setActiveTab} />},
+     {title: "Post-Procedure Care and Follow-up", content: <PostProcedureCare procedure={procedure} setActiveTab={setActiveTab} />},
+     {title: "Equipment and Logistics", content: <EquipmentAndLogistics procedure={procedure} setActiveTab={setActiveTab} />},
     ];
     return (<div className='container'>
         <div className='left-box'>
@@ -113,88 +118,68 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
                     selectData={categoryOptions ?? []}
                     selectDataLabel="label"
                     selectDataValue="value"
-                    fieldName={'categoryKey'}
-                    record={procedure}
-                    setRecord={setProcedure}
+                    fieldName="categoryType"
+                    record={summary}
+                    setRecord={() => undefined}
                 />
                 <MyInput
                     column
                     width={200}
-                    fieldType="select"
                     fieldLabel="Procedure Name"
-                    selectData={procedureQueryResponse?.object ?? []}
-                    selectDataLabel="name"
-                    selectDataValue="key"
-                    fieldName={'procedureNameKey'}
-                    record={procedure}
-                    setRecord={setProcedure}
+                    fieldName="procedureName"
+                    record={summary}
+                    setRecord={() => undefined}
                 />
-
                 <MyInput
                     column
                     width={200}
                     fieldType="select"
                     fieldLabel="Priority"
-                    selectData={priorityLovQueryResponse?.object ?? []}
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                    selectDataValue="key"
-                    fieldName={'priorityLkey'}
-                    record={procedure}
-                    setRecord={setProcedure}
-                />
-
-                <MyInput
-                    column
-                    width={200}
-                    fieldType="select"
-                    fieldLabel="Body Part "
-                    selectData={bodypartLovQueryResponse?.object ?? []}
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                    selectDataValue="key"
-                    fieldName={'bodyPartLkey'}
-                    record={procedure}
-                    setRecord={setProcedure}
+                    selectData={priorityOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    fieldName="priority"
+                    record={summary}
+                    setRecord={() => undefined}
                 />
                 <MyInput
                     column
                     width={200}
-                    fieldType="select"
+                    fieldLabel="Body Part"
+                    fieldName="bodyPart"
+                    record={summary}
+                    setRecord={() => undefined}
+                />
+                <MyInput
+                    column
+                    width={200}
                     fieldLabel="Side"
-                    selectData={sideLovQueryResponse?.object ?? []}
-                     selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                    selectDataValue="key"
-                    fieldName={'sideLkey'}
-                    record={procedure}
-                    setRecord={setProcedure}
+                    fieldName="side"
+                    record={summary}
+                    setRecord={() => undefined}
                 />
             </Form>
             <Divider />
             <div className='container'>
                 <MyButton
                     appearance="ghost"
-                    onClick={() => handleChangeStatus('3621794252137516')}
+                    onClick={() => handleChangeStatus('AWAITING_CONSENT')}
                     prefixIcon={() => <FontAwesomeIcon icon={faList} />}> Awaiting Consent</MyButton>
                 <MyButton
                     appearance="ghost"
-                    onClick={() => handleChangeStatus('3621681578985655')}
+                    onClick={() => handleChangeStatus('STARTED')}
                     prefixIcon={() => <FontAwesomeIcon icon={faPlay} />}
                 >Start Procedure</MyButton>
                 <MyButton
                     appearance="ghost"
                     prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-                    onClick={() => handleChangeStatus('3621707345048408')}
+                    onClick={() => handleChangeStatus('COMPLETED')}
                 >Complete Procedure</MyButton>
 
 
                 <MyButton
                     appearance="ghost"
-                    onClick={() => handleChangeStatus('3621690096636149')}
+                    onClick={() => setOpenCancellationModal(true)}
                     prefixIcon={() => <FontAwesomeIcon
                         icon={faRectangleXmark}
 
@@ -211,6 +196,17 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
              activeTab={activeTab}
              setActiveTab={setActiveTab}
              lazy
+            />
+            <CancellationModal
+                open={openCancellationModal}
+                setOpen={setOpenCancellationModal}
+                fieldName="cancellationReason"
+                fieldLabel="Cancellation Reason"
+                title="Cancellation"
+                object={procedure}
+                setObject={setProcedure}
+                handleCancle={handleCancel}
+                required
             />
         </div>
         <div className='right-box'>

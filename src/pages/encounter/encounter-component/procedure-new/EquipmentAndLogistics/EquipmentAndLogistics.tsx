@@ -1,186 +1,141 @@
-import MyButton from "@/components/MyButton/MyButton";
-import MyTable from "@/components/MyTable";
-import Translate from "@/components/Translate";
-import { useGetLovValuesByCodeQuery, useGetServicesQuery } from "@/services/setupService";
-import React, { useState } from "react";
-import { Col, Form, Row } from "rsuite";
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import {
+  useAddProcedureEquipmentMutation,
+  useDeleteProcedureEquipmentMutation,
+  useGetProcedureEquipmentQuery
+} from '@/services/patients/patientProcedureService';
+import { useGetAllServicesQuery } from '@/services/setup/serviceService';
+import { formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import React, { useState } from 'react';
+import { IoPersonRemove } from 'react-icons/io5';
+import { Col, Form, Row } from 'rsuite';
 
-import { useDeleteProcedureserviceEquipmentMutation, useGetProcedurServiceEquipmentListQuery, useSaveProcedureEquipmentServiceMutation } from "@/services/procedureService";
-import { initialListRequest } from "@/types/types";
-import MyIconInput from "@/components/MyInput/MyIconInput";
-import MyInput from "@/components/MyInput";
-import { notify } from "@/utils/uiReducerActions";
-import { useAppDispatch } from "@/hooks";
-import { newApProcedureServiceEquipment } from "@/types/model-types-constructor";
-import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
-import { IoPersonRemove } from "react-icons/io5";
+const EquipmentAndLogistics = ({ procedure, setActiveTab }) => {
+  const dispatch = useAppDispatch();
+  const [selectedServices, setSelectedServices] = useState<any>({ ids: [] });
+  const [equipmentToDelete, setEquipmentToDelete] = useState<any>(null);
 
-const EquipmentAndLogistics = ({ procedure, setActiveTab, user }) => {
-    const dispatch = useAppDispatch();
-     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-    const [selectedUserList, setSelectedUserList] = useState<any>([]);
-    const {data:serviceList}=useGetServicesQuery({...initialListRequest});
-    const [saveEquipment]=useSaveProcedureEquipmentServiceMutation();
-    const[deleteEquipment]=useDeleteProcedureserviceEquipmentMutation();;
-    const { data: equipmentList, refetch } = useGetProcedurServiceEquipmentListQuery({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: "procedure_key",
-                operator: "match",
-                value: procedure?.key
-            }
-        ]
-    }, { skip: !procedure?.key });
-    const [ProcedureServiceEquipment, setProcedureServiceEquipment] = useState({
-        ...newApProcedureServiceEquipment,
-       
-    });
+  const { data: servicesResponse } = useGetAllServicesQuery({ page: 0, size: 1000 });
+  const { data: equipmentList = [] } = useGetProcedureEquipmentQuery(procedure?.id, {
+    skip: !procedure?.id
+  });
+  const [addEquipment] = useAddProcedureEquipmentMutation();
+  const [deleteEquipment] = useDeleteProcedureEquipmentMutation();
 
-const handleSave = async () => {
-        try {
-            const selectedKeys = selectedUserList?.key;
-            if (!Array.isArray(selectedKeys)) {
-                console.error("selectedUserList.key is not an array:", selectedKeys);
-                return;
-            }
+  const services = servicesResponse?.data ?? [];
+  const serviceOf = (rowData: any) => services.find((item: any) => item.id === rowData.serviceId);
+  const availableServices = services.filter(
+    (service: any) => !equipmentList.some(row => row.serviceId === service.id)
+  );
 
-            const promises = selectedKeys.map((key) => {
-                const service = serviceList?.object?.find((item) => item.key === key);
-                if (service) {
-                    return saveEquipment({
-                        ...newApProcedureServiceEquipment,
-                        procedureKey: procedure?.key,
-                      serviceKey: service?.key
-                    });
-                }
-                return null;
-            });
+  const handleSave = async () => {
+    const ids = selectedServices?.ids;
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    try {
+      await Promise.all(
+        ids.map(serviceId => addEquipment({ id: procedure.id, body: { serviceId } }).unwrap())
+      );
+      setSelectedServices({ ids: [] });
+      dispatch(notify({ msg: 'All Services saved successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Failed to save one or more services', sev: 'error' }));
+    }
+  };
 
-            await Promise.all(promises.filter(Boolean));
-            refetch();
+  const handleDelete = async () => {
+    try {
+      await deleteEquipment({ id: procedure.id, equipmentId: equipmentToDelete.id }).unwrap();
+      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+      setEquipmentToDelete(null);
+    } catch {
+      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+    }
+  };
 
-            dispatch(notify({ msg: 'All Services saved  successfully', sev: "success" }));
-        } catch (error) {
+  const columns = [
+    {
+      key: 'Name',
+      title: <Translate>Name</Translate>,
+      render: (rowData: any) => serviceOf(rowData)?.name ?? ''
+    },
+    {
+      key: 'Category',
+      title: <Translate>Category</Translate>,
+      render: (rowData: any) => formatEnumString(serviceOf(rowData)?.category) ?? ''
+    },
+    {
+      key: 'Price',
+      title: <Translate>Price</Translate>,
+      render: (rowData: any) => serviceOf(rowData)?.price ?? ''
+    },
+    {
+      key: 'Currency',
+      title: <Translate>Currency</Translate>,
+      render: (rowData: any) => serviceOf(rowData)?.currency ?? ''
+    },
+    {
+      key: 'delete',
+      title: <Translate>Delete</Translate>,
+      render: (rowData: any) => (
+        <IoPersonRemove
+          fill="var(--primary-gray)"
+          size={22}
+          onClick={() => setEquipmentToDelete(rowData)}
+        />
+      )
+    }
+  ];
 
-            dispatch(notify({ msg: ' Faild to save one or more Service', sev: "error" }));
-        }
-    };
-
-
-
-    const columns = [
-        {
-            key: "Type",
-            title: <Translate>Type</Translate>,
-            render: (rowData: any) => {
-                return rowData?.service?.typeLvalue?.lovDisplayVale || "";
-            }
-
-        },
-        {
-            key: "Name",
-            title: <Translate>Name</Translate>,
-            render: (rowData: any) => {
-                return rowData?.service?.name || "";
-            }
-
-        },
-        {
-            key: "Category",
-            title: <Translate>Category</Translate>,
-            render: (rowData: any) => {
-                return rowData?.service?.categoryLvalue?.lovDisplayVale || "";
-            }
-
-        },
-        {
-            key: "Price",
-            title: <Translate>Price</Translate>,
-            render: (rowData: any) => {
-                return rowData?.service?.price || "";
-            }
-
-        }
-        ,
-        {
-            key: "Currency",
-            title: <Translate>Currency</Translate>,
-            render: (rowData: any) => {
-                return rowData?.service?.currency || "";
-            }
-
-        }
-        ,
-        {
-            key: "delete",
-            title: <Translate>Delete</Translate>,
-            render: (rowData: any) => {
-                return <IoPersonRemove fill="var(--primary-gray)" size={22} 
-                onClick={() => {
-                    setConfirmDeleteOpen(true) ;
-                     setProcedureServiceEquipment(rowData)
-                }} />
-
-            }
-
-        }
-    ]
-    return (<>
-
-
-        <Row>
-            <Col md={10}><Form fluid>
-                    <MyInput
-                        width="100%"
-                        menuMaxHeight='15vh'
-                        placeholder="Service"
-                        showLabel={false}
-                        selectData={serviceList?.object ?? []}
-                        fieldType="multyPicker"
-                        selectDataLabel="name"
-                        selectDataValue="key"
-                        fieldName="key"
-                        record={selectedUserList}
-                        setRecord={setSelectedUserList}
-                    />
-
-                </Form></Col>
-             <Col md={12}></Col>
-              <Col md={2}><MyButton  onClick={handleSave}>Save</MyButton></Col>
-      
-        </Row>
-        <Row>
-            <Col md={24}>
-                <MyTable
-                    data={equipmentList?.object ?? []}
-                    columns={columns} 
-                    onRowClick={(rowData)=>{
-                        setProcedureServiceEquipment
-                    }}/></Col>
-        </Row>
-       <DeletionConfirmationModal
-                  open={confirmDeleteOpen}
-                  setOpen={setConfirmDeleteOpen}
-                  itemToDelete="Service"
-                  actionButtonFunction={async () => {
-                      try {
-                          const Response=await deleteEquipment(ProcedureServiceEquipment.key).unwrap();
-                         dispatch(notify({ msg:Response.msg, sev: "success" }));
-                         refetch();
-                         setConfirmDeleteOpen(false);
-                      } catch (error) {
-                         dispatch(notify({ msg: 'Deleted  faild', sev: "error" }));
-                      }
-                  }}
-                  actionType="delete"
-              />
-        <div className='bt-div'>
-            <div className="bt-right">
-
-                <MyButton onClick={() => setActiveTab("1")}>Complete and Next</MyButton>
-            </div>
+  return (
+    <>
+      <Row>
+        <Col md={10}>
+          <Form fluid>
+            <MyInput
+              width="100%"
+              menuMaxHeight="15vh"
+              placeholder="Service"
+              showLabel={false}
+              selectData={availableServices}
+              fieldType="multyPicker"
+              selectDataLabel="name"
+              selectDataValue="id"
+              fieldName="ids"
+              record={selectedServices}
+              setRecord={setSelectedServices}
+            />
+          </Form>
+        </Col>
+        <Col md={12}></Col>
+        <Col md={2}>
+          <MyButton onClick={handleSave}>Save</MyButton>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={24}>
+          <MyTable data={equipmentList} columns={columns} />
+        </Col>
+      </Row>
+      <DeletionConfirmationModal
+        open={!!equipmentToDelete}
+        setOpen={open => !open && setEquipmentToDelete(null)}
+        itemToDelete="Service"
+        actionButtonFunction={handleDelete}
+        actionType="delete"
+      />
+      <div className="bt-div">
+        <div className="bt-right">
+          <MyButton onClick={() => setActiveTab('1')}>Complete and Next</MyButton>
         </div>
-    </>)
-}
+      </div>
+    </>
+  );
+};
+
 export default EquipmentAndLogistics;

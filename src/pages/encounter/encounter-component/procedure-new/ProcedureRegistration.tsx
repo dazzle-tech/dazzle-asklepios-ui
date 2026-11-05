@@ -1,65 +1,51 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
-import {
-  useDeleteProceduresStaffMutation,
-  useGetProceduresStaffQuery,
-  useSaveProceduresRegistrationMutation,
-  useSaveProceduresStaffMutation
-} from '@/services/procedureService';
-import {
-  useGetDepartmentsQuery,
-  useGetLovValuesByCodeQuery,
-  useGetUserRecordQuery
-} from '@/services/setupService';
+import { useSaveProcedureRegistrationMutation } from '@/services/patients/patientProcedureService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-
-import { newApProcedureRegistration, newApProcedureStaff } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Form, Panel, Row } from 'rsuite';
-import StaffMember from './StaffMember';
-const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
+import ProcedureStaff from './ProcedureStaff';
+
+const ProcedureRegistration = ({ procedure, setProcedure, setActiveTab }) => {
   const dispatch = useAppDispatch();
-
-  const { data: proUser } = useGetUserRecordQuery(procedure?.createdBy, {
-    skip: !procedure?.createdBy
-  });
-  const [proReg, setProReg] = useState({ ...newApProcedureRegistration });
+  const [proReg, setProReg] = useState<any>({});
   const { data: consentLovQueryResponse } = useGetLovValuesByCodeQuery('CONSENT_FORM');
-  const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  const { data: practitionerListResponse } = useGetAllPractitionersQuery(
-    { page: 0, size: 1000 },
-    { skip: !open }
-  );
+  const { data: departments } = useGetAllDepartmentsWithoutPaginationQuery(undefined);
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery({ page: 0, size: 1000 });
+  const [saveRegistration] = useSaveProcedureRegistrationMutation();
 
-  const [saveRegis] = useSaveProceduresRegistrationMutation();
+  useEffect(() => {
+    setProReg({
+      consentForm: procedure?.consentForm,
+      registrationDateTime: procedure?.registrationDateTime
+        ? new Date(procedure.registrationDateTime)
+        : null,
+      performingDepartmentId: procedure?.performingDepartmentId,
+      performingPractitionerId: procedure?.performingPractitionerId
+    });
+  }, [procedure]);
 
   const handleSave = async () => {
     try {
-      saveRegis({
-        ...proReg,
-        dateTime: new Date(proReg?.dateTime).getTime(),
-        requestedBy: user?.key,
-        procedureKey: procedure?.key
+      const saved = await saveRegistration({
+        id: procedure.id,
+        body: {
+          ...proReg,
+          registrationDateTime: proReg?.registrationDateTime
+            ? new Date(proReg.registrationDateTime).toISOString()
+            : null
+        }
       }).unwrap();
-      dispatch(notify({ msg: 'Saved  Successfully', sev: 'success' }));
+      setProcedure({ ...procedure, ...saved });
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
-      dispatch(notify({ msg: 'Saved  Faild', sev: 'error' }));
+      dispatch(notify({ msg: 'Save failed', sev: 'error' }));
     }
   };
-  const handleClear = () => {};
   return (
     <>
       <Panel>
@@ -73,8 +59,8 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                  selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                selectDataValue="key"
-                fieldName="consentFormLkey"
+                selectDataValue="lovDisplayVale"
+                fieldName="consentForm"
                 record={proReg}
                 setRecord={setProReg}
                 searchable={false}
@@ -84,7 +70,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
               <MyInput
                 width="100%"
                 fieldType="datetime"
-                fieldName="dateTime"
+                fieldName="registrationDateTime"
                 record={proReg}
                 setRecord={setProReg}
               />
@@ -93,11 +79,11 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
               <MyInput
                 width="100%"
                 fieldLabel="Procedure Location"
-                fieldName="departmentKey"
+                fieldName="performingDepartmentId"
                 fieldType="select"
-                selectData={departmentListResponse?.object ?? []}
+                selectData={departments ?? []}
                 selectDataLabel="name"
-                selectDataValue="key"
+                selectDataValue="id"
                 record={proReg}
                 setRecord={setProReg}
                 searchable={false}
@@ -107,17 +93,18 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
               <MyInput
                 menuMaxHeight={140}
                 width="100%"
-                fieldName="practitionersKey"
+                fieldName="performingPractitionerId"
+                fieldLabel="Practitioner"
                 fieldType="select"
                 selectData={practitionerListResponse?.data ?? []}
                 selectDataLabel="practitionerFirstName"
-                selectDataValue="key"
+                selectDataValue="id"
                 record={proReg}
                 setRecord={setProReg}
                 searchable={false}
               />
             </Col>
-            <Col md={4}>{proUser?.fullName}</Col>
+            <Col md={4}>{procedure?.createdBy}</Col>
           </Row>
           <Row>
             <Col md={22}></Col>
@@ -127,15 +114,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
           </Row>
         </Form>
       </Panel>
-      <StaffMember
-        parentKey={procedure?.key}
-        label="Procedure Staff"
-        getQuery={useGetProceduresStaffQuery}
-        saveMutation={useSaveProceduresStaffMutation}
-        deleteMutation={useDeleteProceduresStaffMutation}
-        newStaffObj={newApProcedureStaff}
-        filterFieldName="procedureKey"
-      />
+      <ProcedureStaff procedureId={procedure?.id} />
       <Panel>
         <div className="bt-div">
           <div className="bt-right">

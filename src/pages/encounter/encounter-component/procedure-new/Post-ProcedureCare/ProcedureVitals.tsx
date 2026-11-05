@@ -1,48 +1,24 @@
-import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useAppDispatch } from '@/hooks';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
-import { useSavePostProcedureVitalsMutation } from '@/services/procedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { newApPostProcedureVitals } from '@/types/model-types-constructor';
-import { notify } from '@/utils/uiReducerActions';
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { Col, Divider, Form, Row, Text } from 'rsuite';
-export type VitalRef = {
-  handleSave: () => void;
-};
+import React from 'react';
+import { Col, Form, Row, Text } from 'rsuite';
+
 type VitalProps = {
-  procedure: any;
-  user: any;
+  record: any;
+  setRecord: (record: any) => void;
 };
-const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, ref) => {
-  const dispatch = useAppDispatch();
-  const [vitals, setVitals] = useState({ ...newApPostProcedureVitals });
+
+const ProcedureVitals: React.FC<VitalProps> = ({ record, setRecord }) => {
   const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
   const { data: correctLovQueryResponse } = useGetLovValuesByCodeQuery('CORRECT_INCORRECT');
-  const [saveVitals] = useSavePostProcedureVitalsMutation();
-  const handleSave = async () => {
-    try {
-      const response = await saveVitals({
-        ...vitals,
-        procedureKey: procedure.key,
-        createdBy: user?.key
-      }).unwrap();
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-    } catch (error) {
-      dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-    }
-  };
-  useImperativeHandle(ref, () => ({
-    handleSave
-  }));
   return (
     <SectionContainer
       title={<Text>Post-Procedure Vitals</Text>}
       content={
         <>
-          <VitalSigns setObject={setVitals} object={vitals} />
+          <VitalSigns setObject={setRecord} object={record} />
           <Form fluid>
             <Row>
               <Col md={11}>
@@ -53,10 +29,10 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                    selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                  selectDataValue="key"
-                  fieldName="countStatusLkey"
-                  record={vitals}
-                  setRecord={setVitals}
+                  selectDataValue="lovDisplayVale"
+                  fieldName="countStatus"
+                  record={record}
+                  setRecord={setRecord}
                   searchable={false}
                 />
               </Col>
@@ -66,8 +42,8 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="checkbox"
                   fieldName="equipmentCountDone"
-                  record={vitals}
-                  setRecord={setVitals}
+                  record={record}
+                  setRecord={setRecord}
                 />
               </Col>
             </Row>
@@ -80,10 +56,10 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                    selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                  selectDataValue="key"
-                  fieldName="painScoreLkey"
-                  record={vitals}
-                  setRecord={setVitals}
+                  selectDataValue="lovDisplayVale"
+                  fieldName="painScore"
+                  record={record}
+                  setRecord={setRecord}
                   searchable={false}
                 />
               </Col>
@@ -93,8 +69,8 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="textarea"
                   fieldName="additionalObservations"
-                  record={vitals}
-                  setRecord={setVitals}
+                  record={record}
+                  setRecord={setRecord}
                 />
               </Col>
             </Row>
@@ -104,8 +80,8 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="textarea"
                   fieldName="painDescription"
-                  record={vitals}
-                  setRecord={setVitals}
+                  record={record}
+                  setRecord={setRecord}
                 />
               </Col>
               <Col md={2}></Col>
@@ -114,8 +90,8 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                   width="100%"
                   fieldType="textarea"
                   fieldName="recoveryNotes"
-                  record={vitals}
-                  setRecord={setVitals}
+                  record={record}
+                  setRecord={setRecord}
                 />
               </Col>
             </Row>
@@ -124,5 +100,5 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
       }
     />
   );
-});
+};
 export default ProcedureVitals;

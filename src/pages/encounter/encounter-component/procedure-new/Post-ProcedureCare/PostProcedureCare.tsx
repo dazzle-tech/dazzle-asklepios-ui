@@ -1,70 +1,68 @@
 import MyButton from '@/components/MyButton/MyButton';
-import React, { useRef } from 'react';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { useAppDispatch } from '@/hooks';
+import {
+  useGetProcedurePostCareQuery,
+  useSaveProcedurePostCareMutation
+} from '@/services/patients/patientProcedureService';
+import { notify } from '@/utils/uiReducerActions';
+import React, { useEffect, useState } from 'react';
+import { Col, Row } from 'rsuite';
+import '../styles.less';
 import Diagnosis from './Diagnosis';
-import ProcedureVitals from './ProcedureVitals';
-import AdministeredMedications from './AdministeredMedications ';
 import PostProcedureAnesthesia from './PostProcedureAnesthesia';
 import PostProcedureChecklist from './PostProcedureChecklist';
-import {
-  useGetProcedureAdministeredMedicationsQuery,
-  useSaveProcedureAdministeredMedicationsMutation
-} from '@/services/procedureService';
-import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
-import { newApProcedureAdministeredMedications } from '@/types/model-types-constructor';
-import '../styles.less';
+import ProcedureMedications from './ProcedureMedications';
+import ProcedureVitals from './ProcedureVitals';
 
-const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
-  const diagRef = useRef(null);
-  const vitalRef = useRef(null);
-  const checklistRef = useRef(null);
-  const anesthesiaRef = useRef(null);
-  // get all save function from all component use ref
-  const handleSaveDiagnosisClick = () => {
-    diagRef.current?.handleSave();
-    vitalRef.current?.handleSave();
-    checklistRef.current?.handleSave();
-    anesthesiaRef.current?.handleSave();
+const PostProcedureCare = ({ procedure, setActiveTab }) => {
+  const dispatch = useAppDispatch();
+  const [postCare, setPostCare] = useState<any>({});
+  const { data: savedPostCare } = useGetProcedurePostCareQuery(procedure?.id, {
+    skip: !procedure?.id
+  });
+  const [savePostCare] = useSaveProcedurePostCareMutation();
+
+  useEffect(() => {
+    if (savedPostCare) setPostCare(savedPostCare);
+  }, [savedPostCare]);
+
+  const handleSave = async () => {
+    try {
+      await savePostCare({ id: procedure.id, body: postCare }).unwrap();
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Save failed', sev: 'error' }));
+    }
   };
 
   return (
     <>
       <Row gutter={15} className="r">
         <Col md={12}>
-          {/* Procedure Care */}
           <Row>
             <Col md={24}>
-              <Diagnosis ref={diagRef} procedure={procedure} user={user}  />
+              <Diagnosis record={postCare} setRecord={setPostCare} />
             </Col>
           </Row>
 
-          <AdministeredMedications
-            title="Administered Medications"
-            parentKey={procedure?.key}
-            filterFieldName="procedureKey"
-            medicationService={{
-              useGetQuery: useGetProcedureAdministeredMedicationsQuery,
-              useSaveMutation: useSaveProcedureAdministeredMedicationsMutation
-            }}
-            newMedicationTemplate={newApProcedureAdministeredMedications}
-          />
+          <ProcedureMedications procedureId={procedure?.id} />
 
           <Row>
             <Col md={24}>
-              <PostProcedureAnesthesia ref={anesthesiaRef} procedure={procedure} user={user} />
+              <PostProcedureAnesthesia record={postCare} setRecord={setPostCare} />
             </Col>
           </Row>
         </Col>
         <Col md={12}>
           <Row>
             <Col md={24}>
-              <ProcedureVitals ref={vitalRef} procedure={procedure} user={user} />
+              <ProcedureVitals record={postCare} setRecord={setPostCare} />
             </Col>
           </Row>
 
           <Row>
             <Col md={24}>
-              <PostProcedureChecklist ref={checklistRef} procedure={procedure} user={user} />
+              <PostProcedureChecklist record={postCare} setRecord={setPostCare} />
             </Col>
           </Row>
         </Col>
@@ -72,7 +70,7 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
 
       <div className="bt-div">
         <div className="bt-right">
-          <MyButton onClick={handleSaveDiagnosisClick}>Save</MyButton>
+          <MyButton onClick={handleSave}>Save</MyButton>
           <MyButton>Create Follow-up</MyButton>
           <MyButton onClick={() => setActiveTab('5')}>Complete and Next</MyButton>
         </div>

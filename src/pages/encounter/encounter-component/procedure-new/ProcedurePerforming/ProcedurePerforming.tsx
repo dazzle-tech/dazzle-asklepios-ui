@@ -4,21 +4,20 @@ import SectionContainer from '@/components/SectionsoContainer/SectionsoContainer
 import { useAppDispatch } from '@/hooks';
 import {
   useGetProcedurePerformanceQuery,
-  useGetProceduresStaffQuery,
+  useGetProcedureStaffQuery,
   useSaveProcedurePerformanceMutation,
-  useSaveProceduresStaffMutation
-} from '@/services/procedureService';
-import { useGetLovValuesByCodeQuery, useGetUsersQuery } from '@/services/setupService';
-import { newApProcedurePerformance } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
+  useUpdateProcedureStaffMutation
+} from '@/services/patients/patientProcedureService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetUsersBasicQuery } from '@/services/userService';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Input, Row, Text } from 'rsuite';
 import '../styles.less';
 
-const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
+const ProcedurePerforming = ({ procedure, setActiveTab }) => {
   const dispatch = useAppDispatch();
-  const [performing, setPerforming] = useState({ ...newApProcedurePerformance });
+  const [performing, setPerforming] = useState<any>({});
   const [Duration, setDuration] = useState({ duration: null });
   const [instructionList, setInstructionList] = useState([]);
   const [instr, setInstruc] = useState(null);
@@ -30,40 +29,31 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
   const { data: ComplicationsLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
   const { data: ComplicationSeverityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const { data: HomeinstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('POST_PROC_INSTR');
-  const { data: userList } = useGetUsersQuery({ ...initialListRequest });
+  const { data: usersResponse } = useGetUsersBasicQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  const users = usersResponse?.data ?? [];
 
   const [savePerforming] = useSaveProcedurePerformanceMutation();
-  const [saveStaff] = useSaveProceduresStaffMutation();
+  const [updateStaff] = useUpdateProcedureStaffMutation();
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'procedure_key',
-        operator: 'match',
-        value: procedure?.key
-      }
-    ]
+  const { data: savedPerformance } = useGetProcedurePerformanceQuery(procedure?.id, {
+    skip: !procedure?.id
+  });
+  const { data: staffList = [] } = useGetProcedureStaffQuery(procedure?.id, {
+    skip: !procedure?.id
   });
 
-  const { data: performingList } = useGetProcedurePerformanceQuery(listRequest, {
-    skip: !procedure?.key
-  });
-
-  const [listSRequest, setListSRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'procedure_key',
-        operator: 'match',
-        value: procedure?.key
-      }
-    ]
-  });
-
-  const { data: staffList, refetch } = useGetProceduresStaffQuery(listSRequest, {
-    skip: !procedure?.key
-  });
+  useEffect(() => {
+    if (!savedPerformance) return;
+    const toDate = (value?: string | null) => (value ? new Date(value) : null);
+    setPerforming({
+      ...savedPerformance,
+      actualStartTime: toDate(savedPerformance.actualStartTime),
+      actualEndTime: toDate(savedPerformance.actualEndTime),
+      anesthesiaStartTime: toDate(savedPerformance.anesthesiaStartTime),
+      anesthesiaEndTime: toDate(savedPerformance.anesthesiaEndTime)
+    });
+    setInstruc(savedPerformance.homeInstructionNotes ?? null);
+  }, [savedPerformance]);
 
   useEffect(() => {
     if (performing.actualStartTime && performing.actualEndTime) {
@@ -125,27 +115,25 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
     return merged.getTime();
   };
 
+  const toInstant = (time?: string | Date | null) =>
+    time
+      ? new Date(
+          mergeDateAndTimeToMillis(procedure.scheduledDateTime ?? new Date(), new Date(time))
+        ).toISOString()
+      : null;
+
   const handleSave = async () => {
     try {
       await savePerforming({
-        ...performing,
-        homeInstructionNotes: instr,
-        actualStartTime: mergeDateAndTimeToMillis(
-          procedure.scheduledDateTime,
-          new Date(performing.actualStartTime)
-        ),
-        actualEndTime: mergeDateAndTimeToMillis(
-          procedure.scheduledDateTime,
-          new Date(performing.actualEndTime)
-        ),
-        anesthesiaStartTime: mergeDateAndTimeToMillis(
-          procedure.scheduledDateTime,
-          new Date(performing.anesthesiaStartTime)
-        ),
-        anesthesiaEndTime: mergeDateAndTimeToMillis(
-          procedure.scheduledDateTime,
-          new Date(performing.anesthesiaEndTime)
-        )
+        id: procedure.id,
+        body: {
+          ...performing,
+          homeInstructionNotes: instr,
+          actualStartTime: toInstant(performing.actualStartTime),
+          actualEndTime: toInstant(performing.actualEndTime),
+          anesthesiaStartTime: toInstant(performing.anesthesiaStartTime),
+          anesthesiaEndTime: toInstant(performing.anesthesiaEndTime)
+        }
       }).unwrap();
       dispatch(notify({ msg: ' Saved successfully', sev: 'success' }));
     } catch (error) {
@@ -154,16 +142,9 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
   };
 
   const handleClear = () => {
-    setPerforming({
-      ...newApProcedurePerformance,
-      anesthesiaTypeLkey: null,
-      procedureOutcomeLkey: null,
-      complicationTypeLkey: null,
-      complicationSeverityLkey: null,
-      homeInstructionLkey: null,
-      anesthesiaUsed: false,
-      timeOut: false
-    });
+    setPerforming({ anesthesiaUsed: false, timeOut: false });
+    setInstruc(null);
+    setInstructionList([]);
   };
 
   return (
@@ -223,8 +204,8 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                            selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                          selectDataValue="key"
-                          fieldName="procedureOutcomeLkey"
+                          selectDataValue="lovDisplayVale"
+                          fieldName="procedureOutcome"
                           record={performing}
                           setRecord={setPerforming}
                           searchable={false}
@@ -261,8 +242,8 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                            selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                          selectDataValue="key"
-                          fieldName="complicationTypeLkey"
+                          selectDataValue="lovDisplayVale"
+                          fieldName="complicationType"
                           record={performing}
                           setRecord={setPerforming}
                         />
@@ -275,8 +256,8 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                            selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                          selectDataValue="key"
-                          fieldName="complicationSeverityLkey"
+                          selectDataValue="lovDisplayVale"
+                          fieldName="complicationSeverity"
                           record={performing}
                           setRecord={setPerforming}
                           searchable={false}
@@ -346,8 +327,8 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                              selectDataLabel="lovDisplayVale"
  disableByField='isValid'
 
-                            selectDataValue="key"
-                            fieldName="anesthesiaTypeLkey"
+                            selectDataValue="lovDisplayVale"
+                            fieldName="anesthesiaType"
                             record={performing}
                             setRecord={setPerforming}
                           />
@@ -357,10 +338,10 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                             width="100%"
                             fieldType="select"
                             fieldLabel="Administered By"
-                            selectData={userList?.object ?? []}
-                            selectDataLabel="username"
-                            selectDataValue="key"
-                            fieldName="anesthesiaAdministeredKey"
+                            selectData={users}
+                            selectDataLabel="login"
+                            selectDataValue="id"
+                            fieldName="anesthesiaAdministeredById"
                             record={performing}
                             setRecord={setPerforming}
                             menuMaxHeight="13vh"
@@ -387,21 +368,28 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                     />
                     {performing?.timeOut && (
                       <>
-                        {staffList?.object?.map((staff, index) => (
-                          <div key={staff.key}>
+                        {staffList.map(staff => (
+                          <div key={staff.id}>
                             <MyInput
                               showLabel={false}
-                              fieldLabel={staff?.user?.username}
+                              fieldLabel={users.find(user => user.id === staff.userId)?.login}
                               fieldType="check"
                               fieldName="isPresent"
                               record={staff}
-                              setRecord={async staffWithNewValue => {
-                                const { isPresent, ...rest } = staffWithNewValue;
-
+                              setRecord={async ({ isPresent }) => {
                                 try {
-                                  await saveStaff({ ...rest, isPresent }).unwrap();
-                                  refetch();
-                                } catch (err) {}
+                                  await updateStaff({
+                                    id: procedure.id,
+                                    staffId: staff.id,
+                                    body: {
+                                      userId: staff.userId,
+                                      responsibility: staff.responsibility,
+                                      isPresent
+                                    }
+                                  }).unwrap();
+                                } catch {
+                                  dispatch(notify({ msg: 'Save failed', sev: 'error' }));
+                                }
                               }}
                             />
                           </div>
@@ -440,7 +428,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                         <Col md={24}>
                           <Input
                             as="textarea"
-                            onChange={e => setInstruc(e.target.value)}
+                            onChange={value => setInstruc(value)}
                             value={instr}
                             style={{ width: '100%' }}
                             rows={3}
@@ -472,7 +460,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
         <div className="bt-right">
           <MyButton onClick={handleClear}>Clear</MyButton>
           <MyButton onClick={handleSave}>Save</MyButton>
-          <MyButton disabled={!performing?.key}>Print</MyButton>
+          <MyButton disabled={!performing?.id}>Print</MyButton>
           <MyButton onClick={() => setActiveTab('4')}>Complete and Next</MyButton>
         </div>
       </div>

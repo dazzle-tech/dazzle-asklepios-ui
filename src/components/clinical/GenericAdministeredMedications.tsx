@@ -13,7 +13,6 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import SectionContainer from '@/components/SectionsoContainer';
 import { Tooltip, Whisper } from 'rsuite';
-import './style.less';
 const GenericAdministeredMedications = ({
   parentKey,
   filterFieldName,

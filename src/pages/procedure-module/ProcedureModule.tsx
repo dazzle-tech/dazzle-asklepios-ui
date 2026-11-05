@@ -2,24 +2,25 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
-import { useGetEncounterByIdQuery } from '@/services/encounterService';
-import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from '@/services/patientService';
-import { useGetProceduresQuery } from '@/services/procedureService';
+import { useGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+import { useSearchProceduresQuery } from '@/services/patients/patientProcedureService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
-import { newApProcedure } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds, fromCamelCaseToDBName } from '@/utils';
+import { formatDateWithoutSeconds } from '@/utils';
 import { faBarcode, faFileWaveform, faPrint } from '@fortawesome/free-solid-svg-icons'; // FontAwesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FaBedPulse, FaFileArrowDown } from 'react-icons/fa6'; // React Icons
+import { FaBedPulse } from 'react-icons/fa6'; // React Icons
 import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
+import EncounterAttachment from '../patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import Perform from '../encounter/encounter-component/procedure-new/Perform';
 import MyButton from '@/components/MyButton/MyButton';
 import ReactDOMServer from 'react-dom/server';
@@ -30,36 +31,12 @@ import Icd10Search from '../medical-component/Icd10Search';
 import './styles.less';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
-// --- Utils ---
-const handleDownload = (attachment: any) => {
-  if (!attachment?.fileContent) return;
-  const byteCharacters = atob(attachment.fileContent);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], {
-    type: attachment.contentType || 'application/octet-stream'
-  });
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = attachment.fileName || 'download';
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  a.remove();
-};
-
 const ProcedureModule: React.FC = () => {
   const dispatch = useAppDispatch();
   const { pathname } = useLocation();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [procedure, setProcedure] = useState<any>({ ...newApProcedure });
+  const [procedure, setProcedure] = useState<any>({});
   const [dateFilter, setDateFilter] = useState<{ fromDate: Date | null; toDate: Date | null }>({
     fromDate: new Date(),
     toDate: null
@@ -74,63 +51,68 @@ const ProcedureModule: React.FC = () => {
     patientName: ''
   });
 
-  const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, {
-    skip: !procedure?.patientKey
-  });
+  const { data: patient } = useGetPatientByIdQuery(
+    { id: procedure?.patientId },
+    { skip: !procedure?.patientId }
+  );
 
-  const { data: encounter } = useGetEncounterByIdQuery(procedure?.encounterKey, {
-    skip: !procedure?.encounterKey
-  });
+  const { data: encounter } = useGetEncounterByIdQuery(
+    { id: procedure?.encounterId },
+    { skip: !procedure?.encounterId }
+  );
   const [openPerformModal, setOpenPerformModal] = useState(false);
   const categoryOptions = useEnumOptions('ProcedureCategory');
 
   const isSelected = (rowData: any) =>
-    rowData && procedure && rowData.key === procedure.key ? 'selected-row' : '';
+    rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
 
   const [openEMRModal, setOpenEMRModal] = useState(false);
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'current_department', operator: 'match', value: 'false' },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3621690096636149'
-      }
-    ]
-  });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+
+  const dayBoundary = (date: Date | null, endOfDay: boolean) => {
+    if (!date) return undefined;
+    const boundary = new Date(date);
+    if (endOfDay) boundary.setHours(23, 59, 59, 999);
+    else boundary.setHours(0, 0, 0, 0);
+    return boundary.toISOString();
+  };
 
   const {
     data: procedures,
     refetch: proRefetch,
     isLoading: procedureLoding
-  } = useGetProceduresQuery(listRequest);
-
-  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
-    ]
+  } = useSearchProceduresQuery({
+    page,
+    size: rowsPerPage,
+    fromDate: dayBoundary(dateFilter.fromDate, false),
+    toDate: dayBoundary(dateFilter.toDate, true),
+    includeCancelled: !showCanceled
   });
+  const procedureRows = useMemo(() => procedures?.data ?? [], [procedures]);
 
-  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-    useGetPatientAttachmentsListQuery(attachmentsListRequest);
+  const procedureSetupIds = useMemo(
+    () => [...new Set(procedureRows.map((row: any) => row.procedureId))] as number[],
+    [procedureRows]
+  );
+  const { data: procedureSetups = [] } = useGetProceduresByIdsQuery(procedureSetupIds, {
+    skip: procedureSetupIds.length === 0
+  });
+  const { data: departments } = useGetAllDepartmentsWithoutPaginationQuery(undefined);
+  const { data: facilities } = useGetAllFacilitiesQuery(undefined);
+  const setupOf = (row: any) => procedureSetups.find(item => item.id === row?.procedureId);
 
   const [trigger] = useLazyGetPatientByIdQuery();
 
-  const { data: procedureStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_STATUS');
   const { data: procedurePrioStatusLovQueryResponse } =
     useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: procedureLevelStatusLovQueryResponse } =
     useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
-  const { data: procedureIndStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ICD-10');
 
   const filterFields = [
     { label: 'PROCEDURE ID', value: 'procedureId' },
-    { label: 'Procedure Name', value: 'procedureName' },
-    { label: 'INDICATIONS', value: 'indications' }
+    { label: 'Procedure Name', value: 'procedureName' }
   ];
 
   // Keep latest patients map in ref to avoid over-broad deps
@@ -140,126 +122,26 @@ const ProcedureModule: React.FC = () => {
     patientsRef.current = patients;
   }, [patients]);
 
-  // Refresh attachments list filters when modal closes
-  useEffect(() => {
-    if (!attachmentsModalOpen) {
-      const updatedFilters = [
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-        { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
-      ];
-      setAttachmentsListRequest(prevRequest => ({ ...prevRequest, filters: updatedFilters }));
-    }
-    attachmentRefetch();
-  }, [attachmentsModalOpen, attachmentRefetch]);
-
-  // Fetch patients for each procedure (FIX: never iterate over undefined)
+  // Fetch the patient of each listed procedure once
   useEffect(() => {
     const fetchPatients = async () => {
-      const list = Array.isArray(procedures?.object) ? procedures!.object : [];
-      if (list.length === 0) return;
+      const toFetch = [...new Set(procedureRows.map((row: any) => row.patientId))].filter(
+        (id: any) => id && !patientsRef.current[id]
+      );
 
-      const toFetch = list
-        .map((p: any) => p?.patientKey)
-        .filter((key: any) => key && !patientsRef.current[key]);
-
-      for (const key of toFetch) {
+      for (const id of toFetch as number[]) {
         try {
-          const result = await trigger(key).unwrap();
-          setPatients(prev => ({ ...prev, [key]: result }));
+          const result = await trigger({ id }).unwrap();
+          setPatients(prev => ({ ...prev, [id]: result }));
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.error('Failed to fetch patient', key, e);
+          console.error('Failed to fetch patient', id, e);
         }
       }
     };
 
     fetchPatients();
-  }, [procedures?.object, trigger]);
-
-  // Helpers
-  const addOrUpdateFilter = (filters: any[], newFilter: any) => {
-    const next = [...filters];
-    const index = next.findIndex(f => f.fieldName === newFilter.fieldName);
-    if (index > -1) next[index] = newFilter;
-    else next.push(newFilter);
-    return next;
-  };
-
-  // Update filters when showCanceled toggles
-  useEffect(() => {
-    setListRequest(prev => {
-      let updatedFilters = [...prev.filters];
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'current_department',
-        operator: 'match',
-        value: 'false'
-      });
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3621690096636149'
-      });
-      return { ...prev, filters: updatedFilters };
-    });
-  }, [showCanceled]);
-
-  // Update filters when record changes
-  useEffect(() => {
-    if (record.filter) {
-      handleFilterChange(record.filter, record.value);
-    } else {
-      setListRequest(prev => ({
-        ...prev,
-        filters: addOrUpdateFilter(prev.filters, {
-          fieldName: 'current_department',
-          operator: 'match',
-          value: 'false'
-        })
-      }));
-      setListRequest(prev => ({
-        ...prev,
-        filters: addOrUpdateFilter(prev.filters, {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3621690096636149'
-        })
-      }));
-    }
-  }, [record]);
-
-  // Date filter logic (clone dates to avoid mutating state refs)
-  useEffect(() => {
-    let updatedFilters = [...listRequest.filters];
-
-    const from = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
-    const to = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
-
-    if (from && to) {
-      from.setHours(0, 0, 0, 0);
-      to.setHours(23, 59, 59, 999);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'between',
-        value: `${from.getTime()}-${to.getTime()}`
-      });
-    } else if (from) {
-      from.setHours(0, 0, 0, 0);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'gte',
-        value: from.getTime()
-      });
-    } else if (to) {
-      to.setHours(23, 59, 59, 999);
-      updatedFilters = addOrUpdateFilter(updatedFilters, {
-        fieldName: 'scheduled_date_time',
-        operator: 'lte',
-        value: to.getTime()
-      });
-    }
-
-    setListRequest(prev => ({ ...prev, filters: updatedFilters }));
-  }, [dateFilter]);
+  }, [procedureRows, trigger]);
 
   useEffect(() => {
     const divContent = (
@@ -276,304 +158,243 @@ const ProcedureModule: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
-  const handleFilterChange = (fieldName: string, value: string) => {
-    if (!fieldName) return;
-    if (value) {
-      const newFilter = {
-        fieldName: fromCamelCaseToDBName(fieldName),
-        operator: 'containsIgnoreCase',
-        value
-      };
-      setListRequest(prev => ({ ...prev, filters: addOrUpdateFilter(prev.filters, newFilter) }));
-    }
-  };
-
   const OpenPerformModel = () => setOpenPerformModal(true);
 
-  // Columns memo to avoid re-renders
-  const tableColumns = useMemo(
-    () => [
-      {
-        key: 'patientKey',
-        title: <Translate>Patient</Translate>,
-        render: (rowData: any) => (
-          <Whisper
-            placement="top"
-            speaker={<Tooltip>{patients[rowData.patientKey]?.patientMrn}</Tooltip>}
-          >
-            {patients[rowData.patientKey]?.fullName}
-          </Whisper>
-        )
-      },
-      {
-        key: 'procedureId',
-        dataKey: 'procedureId',
-        title: <Translate>PROCEDURE ID</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData.procedureId
-      },
-      {
-        key: 'procedureName',
-        dataKey: 'procedureName',
-        title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1
-      },
-      {
-        key: 'scheduledDateTime',
-        dataKey: 'scheduledDateTime',
-        title: <Translate>SCHEDULED DATE TIME</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
-      },
-      {
-        key: 'categoryKey',
-        dataKey: 'categoryKey',
-        title: <Translate>CATEGORY</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          return formatEnumString(rowData.categoryKey) || ' ';
-        }
-      },
-      {
-        key: 'priorityLkey',
-        dataKey: 'priorityLkey',
-        title: <Translate>PRIORITY</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
-      },
-      {
-        key: 'procedureLevelLkey',
-        dataKey: 'procedureLevelLkey',
-        title: <Translate>LEVEL</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData.procedureLevelLkey
-            ? rowData.procedureLevelLvalue?.lovDisplayVale
-            : rowData.procedureLevelLkey
-      },
-      {
-        key: 'indications',
-        dataKey: 'indications',
-        title: <Translate>INDICATIONS</Translate>,
-        flexGrow: 1
-      },
-      {
-        key: 'statusLkey',
-        dataKey: 'statusLkey',
-        title: <Translate>STATUS</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale ?? null
-      },
-      {
-        key: 'attachment',
-        dataKey: 'attachment',
-        title: <Translate>ATTACHED FILE</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const list = fetchPatintAttachmentsResponce?.object || [];
-          const matchingAttachments = list.filter(
-            (item: any) => item.referenceObjectKey === rowData.key
-          );
-          const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
-          return (
-            <HStack spacing={2}>
-              {lastAttachment && (
-                <FaFileArrowDown
-                  size={20}
-                  onClick={() => handleDownload(lastAttachment)}
-                  style={{ cursor: 'pointer' }}
-                />
-              )}
-              <MdAttachFile
-                size={20}
-                onClick={() => setAttachmentsModalOpen(true)}
-                style={{ cursor: 'pointer' }}
-              />
-            </HStack>
-          );
-        }
-      },
-      {
-        key: 'perform',
-        title: <Translate>PERFORM</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const isDisabled = rowData.currentDepartment;
-          return (
-            <HStack spacing={10}>
-              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
-                <div>
-                  <FaBedPulse
-                    size={22}
-                    fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
-                    style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
-                    onClick={!isDisabled ? OpenPerformModel : undefined}
-                  />
-                </div>
-              </Whisper>
-            </HStack>
-          );
-        }
-      },
-      {
-        key: 'print',
-        title: <Translate>Print</Translate>,
-        render: (_rowData: any) => (
-          <HStack spacing={10}>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="light-blue"
-                  onClick={() => {
-                    /* TODO: implement print */
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPrint} />
-                </MyButton>
-              </div>
-            </Whisper>
-          </HStack>
-        )
-      },
-      {
-        key: 'action',
-        title: <Translate>Action</Translate>,
-        render: (_rowData: any) => (
-          <HStack spacing={10}>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
-              <div>
-                <MyButton size="small" backgroundColor="black">
-                  <FontAwesomeIcon icon={faBarcode} />
-                </MyButton>
-              </div>
-            </Whisper>
-
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>EMR</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="violet"
-                  onClick={() => setOpenEMRModal(true)}
-                >
-                  <FontAwesomeIcon icon={faFileWaveform} />
-                </MyButton>
-              </div>
-            </Whisper>
-          </HStack>
-        )
-      },
-      {
-        key: 'facilityKey',
-        dataKey: 'facilityKey',
-        title: <Translate>FACILITY</Translate>,
-        flexGrow: 1,
-        expandable: true,
-        render: (rowData: any) => (rowData.facilityKey ? rowData.facility?.facilityName : '')
-      },
-      {
-        key: 'departmentTypeLkey',
-        dataKey: 'departmentTypeLkey',
-        title: <Translate>DEPARTMENT</Translate>,
-        flexGrow: 1,
-        expandable: true,
-        render: (rowData: any) =>
-          rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ''
-      },
-      {
-        key: 'bodyPartLkey',
-        dataKey: 'bodyPartLkey',
-        title: <Translate>BODY PART</Translate>,
-        flexGrow: 1,
-        expandable: true,
-        render: (rowData: any) =>
-          rowData.bodyPartLkey ? rowData.bodyPartLvalue?.lovDisplayVale : rowData.bodyPartLkey
-      },
-      {
-        key: 'sideLkey',
-        dataKey: 'sideLkey',
-        title: <Translate>SIDE</Translate>,
-        flexGrow: 1,
-        expandable: true,
-        render: (rowData: any) =>
-          rowData.sideLkey ? rowData.sideLvalue?.lovDisplayVale : rowData.sideLkey
-      },
-      {
-        key: 'notes',
-        dataKey: 'notes',
-        title: <Translate>NOTE</Translate>,
-        flexGrow: 1,
-        expandable: true
-      },
-      {
-        key: 'createdMeta',
-        title: <Translate>CREATED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.createdBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
-            </span>
-          </>
-        )
-      },
-      {
-        key: 'updatedMeta',
-        title: <Translate>UPDATED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.updatedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}
-            </span>
-          </>
-        )
-      },
-      {
-        key: 'cancelledMeta',
-        title: <Translate>CANCELLED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.deletedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
-            </span>
-          </>
-        )
-      },
-      {
-        key: 'cancellationReason',
-        dataKey: 'cancellationReason',
-        title: <Translate>CANCELLITON REASON</Translate>,
-        flexGrow: 1,
-        expandable: true
-      }
-    ],
-    [patients]
+  const metaCell = (by?: string | null, date?: string | null) => (
+    <>
+      <span>{by}</span>
+      <br />
+      <span className="date-table-style">{date ? formatDateWithoutSeconds(date) : ''}</span>
+    </>
   );
 
-  const pageIndex = (listRequest.pageNumber || 1) - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = procedures?.extraNumeric ?? 0;
+  const tableColumns = [
+    {
+      key: 'patientId',
+      title: <Translate>Patient</Translate>,
+      render: (rowData: any) => (
+        <Whisper
+          placement="top"
+          speaker={<Tooltip>{patients[rowData.patientId]?.patientMrn}</Tooltip>}
+        >
+          {patients[rowData.patientId]?.fullName}
+        </Whisper>
+      )
+    },
+    {
+      key: 'procedureId',
+      dataKey: 'procedureId',
+      title: <Translate>PROCEDURE ID</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => rowData.id
+    },
+    {
+      key: 'procedureName',
+      title: <Translate>Procedure Name</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => setupOf(rowData)?.name ?? ''
+    },
+    {
+      key: 'scheduledDateTime',
+      dataKey: 'scheduledDateTime',
+      title: <Translate>SCHEDULED DATE TIME</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) =>
+        rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
+    },
+    {
+      key: 'categoryType',
+      title: <Translate>CATEGORY</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => formatEnumString(setupOf(rowData)?.categoryType) || ' '
+    },
+    {
+      key: 'priority',
+      dataKey: 'priority',
+      title: <Translate>PRIORITY</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => formatEnumString(rowData.priority)
+    },
+    {
+      key: 'procedureLevel',
+      dataKey: 'procedureLevel',
+      title: <Translate>LEVEL</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => formatEnumString(rowData.procedureLevel)
+    },
+    {
+      key: 'status',
+      dataKey: 'status',
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => formatEnumString(rowData.status)
+    },
+    {
+      key: 'attachment',
+      title: <Translate>ATTACHED FILE</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <MdAttachFile
+          size={20}
+          onClick={() => {
+            setProcedure(rowData);
+            setAttachmentsModalOpen(true);
+          }}
+          style={{ cursor: 'pointer' }}
+        />
+      )
+    },
+    {
+      key: 'perform',
+      title: <Translate>PERFORM</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const isDisabled = rowData.status === 'CANCELLED';
+        return (
+          <HStack spacing={10}>
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
+              <div>
+                <FaBedPulse
+                  size={22}
+                  fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+                  style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+                  onClick={
+                    isDisabled
+                      ? undefined
+                      : () => {
+                          setProcedure(rowData);
+                          OpenPerformModel();
+                        }
+                  }
+                />
+              </div>
+            </Whisper>
+          </HStack>
+        );
+      }
+    },
+    {
+      key: 'print',
+      title: <Translate>Print</Translate>,
+      render: (_rowData: any) => (
+        <HStack spacing={10}>
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
+            <div>
+              <MyButton
+                size="small"
+                backgroundColor="light-blue"
+                onClick={() => {
+                  /* TODO: implement print */
+                }}
+              >
+                <FontAwesomeIcon icon={faPrint} />
+              </MyButton>
+            </div>
+          </Whisper>
+        </HStack>
+      )
+    },
+    {
+      key: 'action',
+      title: <Translate>Action</Translate>,
+      render: (_rowData: any) => (
+        <HStack spacing={10}>
+          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
+            <div>
+              <MyButton size="small" backgroundColor="black">
+                <FontAwesomeIcon icon={faBarcode} />
+              </MyButton>
+            </div>
+          </Whisper>
 
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest(prev => ({ ...prev, pageNumber: newPage + 1 }));
-  };
+          <Whisper placement="top" trigger="hover" speaker={<Tooltip>EMR</Tooltip>}>
+            <div>
+              <MyButton size="small" backgroundColor="violet" onClick={() => setOpenEMRModal(true)}>
+                <FontAwesomeIcon icon={faFileWaveform} />
+              </MyButton>
+            </div>
+          </Whisper>
+        </HStack>
+      )
+    },
+    {
+      key: 'toFacilityId',
+      title: <Translate>FACILITY</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      render: (rowData: any) =>
+        (facilities ?? []).find((item: any) => item.id === rowData.toFacilityId)?.name ?? ''
+    },
+    {
+      key: 'toDepartmentId',
+      title: <Translate>DEPARTMENT</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      render: (rowData: any) =>
+        (departments ?? []).find((item: any) => item.id === rowData.toDepartmentId)?.name ?? ''
+    },
+    {
+      key: 'bodyPart',
+      dataKey: 'bodyPart',
+      title: <Translate>BODY PART</Translate>,
+      flexGrow: 1,
+      expandable: true
+    },
+    {
+      key: 'side',
+      dataKey: 'side',
+      title: <Translate>SIDE</Translate>,
+      flexGrow: 1,
+      expandable: true
+    },
+    {
+      key: 'notes',
+      dataKey: 'notes',
+      title: <Translate>NOTE</Translate>,
+      flexGrow: 1,
+      expandable: true
+    },
+    {
+      key: 'createdMeta',
+      title: <Translate>CREATED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => metaCell(rowData.createdBy, rowData.createdDate)
+    },
+    {
+      key: 'updatedMeta',
+      title: <Translate>UPDATED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => metaCell(rowData.lastModifiedBy, rowData.lastModifiedDate)
+    },
+    {
+      key: 'cancelledMeta',
+      title: <Translate>CANCELLED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => metaCell(rowData.cancelledBy, rowData.cancelledDate)
+    },
+    {
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
+      title: <Translate>CANCELLITON REASON</Translate>,
+      flexGrow: 1,
+      expandable: true
+    }
+  ];
+
+  const totalCount = procedures?.totalCount ?? 0;
+
+  const handlePageChange = (_: unknown, newPage: number) => setPage(newPage);
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest(prev => ({
-      ...prev,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    }));
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const matchesRecordFilter = (row: any) => {
+    const raw = String(record?.value ?? '').trim().toLowerCase();
+    if (!record?.filter || !raw) return true;
+    const value = record.filter === 'procedureName' ? setupOf(row)?.name : row.id;
+    return String(value ?? '').toLowerCase().includes(raw);
   };
 
   const contents = (
@@ -683,7 +504,7 @@ const ProcedureModule: React.FC = () => {
               searchByField: (record as any)?.searchByField ?? 'fullName',
               patientName: (record as any)?.patientName ?? ''
             });
-            setListRequest(prev => ({ ...prev, pageNumber: 1 }));
+            setPage(0);
           }}
         />
 
@@ -708,11 +529,11 @@ const ProcedureModule: React.FC = () => {
       <MyTable
         filters={filters()}
         columns={tableColumns}
-        data={(procedures?.object ?? []).filter((row: any) => {
+        data={procedureRows.filter(matchesRecordFilter).filter((row: any) => {
           const field = String(appliedPatientSearch?.searchByField ?? 'fullName');
           const raw = String(appliedPatientSearch?.patientName ?? '').trim().toLowerCase();
           if (!raw) return true;
-          const patient = patients[row?.patientKey] ?? {};
+          const patient = patients[row?.patientId] ?? {};
           if (field === 'patientMrn') {
             return String(patient?.patientMrn ?? '').toLowerCase().includes(raw);
           }
@@ -737,12 +558,7 @@ const ProcedureModule: React.FC = () => {
         }}
         loading={procedureLoding}
         rowClassName={isSelected}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy: any, sortType: any) => {
-          setListRequest(prev => ({ ...prev, sortBy, sortType }));
-        }}
-        page={pageIndex}
+        page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
@@ -764,6 +580,26 @@ const ProcedureModule: React.FC = () => {
             setProcedure={setProcedure}
             edit={false}
           />
+          </div>
+        }
+      />
+
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title="Attachments"
+        size="lg"
+        hideActionBtn
+        content={
+          <div dir={dir}>
+            <EncounterAttachment
+              localEncounter={encounter}
+              source="PROCEDURE_REQUEST_ATTACHMENT"
+              sourceId={procedure?.id ? Number(procedure.id) : undefined}
+              patientId={procedure?.patientId}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => {}}
+            />
           </div>
         }
       />
