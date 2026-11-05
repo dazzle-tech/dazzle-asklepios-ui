@@ -19,6 +19,7 @@ import SystemLoader from './components/Loaders/SystemLoader';
 import MyToast from './components/MyToast/MyToast';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
+import IdleTimeoutManager from './components/IdleTimeoutManager/IdleTimeoutManager';
 import Translate from './components/Translate';
 import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
@@ -650,6 +651,7 @@ const App = () => {
 
       <MyToast />
       <SessionExpiredBackdrop />
+      <IdleTimeoutManager />
 
       <CustomProvider locale={enGB}>
       <Suspense fallback={<SystemLoader open />}>

@@ -9,6 +9,8 @@ declare global {
       stimulsoftProxyUrl?: string;
       stimulsoftEncryptData?: boolean;
       liveVisitScribeUrl?: string;
+      idleTimeoutMinutes?: number;
+      idleWarningSeconds?: number;
     };
     Stimulsoft?: any;
   }
@@ -31,7 +33,11 @@ const config = {
    */
   stimulsoftProxyUrl: window.APP_CONFIG?.stimulsoftProxyUrl || '/proxy',
   stimulsoftEncryptData: window.APP_CONFIG?.stimulsoftEncryptData,
-  liveVisitScribeUrl: window.APP_CONFIG?.liveVisitScribeUrl
+  liveVisitScribeUrl: window.APP_CONFIG?.liveVisitScribeUrl,
+  /** Minutes without user activity before automatic logout (0 disables). */
+  idleTimeoutMinutes: window.APP_CONFIG?.idleTimeoutMinutes ?? 10,
+  /** Seconds before logout to show the "still there?" warning. */
+  idleWarningSeconds: window.APP_CONFIG?.idleWarningSeconds ?? 60
 };
 
 export default config;
