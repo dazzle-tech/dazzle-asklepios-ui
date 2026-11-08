@@ -56,18 +56,20 @@ import {
 import {
   useChangeDiscountActivationStatusMutation,
   useDeleteDiscountMutation,
-  useGetDiscountsByApplicableOnQuery,
-  useGetDiscountsByCodeQuery,
   useGetDiscountsByFacilityQuery,
-  useGetDiscountsByNameQuery,
-  useGetDiscountsByTypeQuery,
+  useLazyGetDiscountsByActiveQuery,
+  useLazyGetDiscountsByApplicableOnQuery,
+  useLazyGetDiscountsByCodeQuery,
+  useLazyGetDiscountsByDefaultQuery,
+  useLazyGetDiscountsByNameQuery,
+  useLazyGetDiscountsByRequiresApprovalQuery,
+  useLazyGetDiscountsByTypeQuery,
+  useLazyGetDiscountsByValueQuery,
   useSetDefaultDiscountMutation
 } from '@/services/billing/discountService';
 
 import type {
-  Discount,
-  DiscountApplicableOn,
-  DiscountType
+  Discount
 } from '@/types/model-types-new';
 
 import {
@@ -82,72 +84,34 @@ import {
 
 import './styles.less';
 
-type FilterCriteria =
-  | ''
-  | 'code'
-  | 'name'
-  | 'discountType'
-  | 'applicableOn';
-
-type DiscountFilter = {
-  criteria:
-    FilterCriteria;
-
-  textValue:
-    string;
-
-  discountType:
-    DiscountType | '';
-
-  applicableOn:
-    DiscountApplicableOn | '';
+type FilterState = {
+  filter: string;
+  value: any;
 };
 
-const filterCriteriaOptions = [
-  {
-    label:
-      'Code',
+const initialFilterState: FilterState = {
+  filter: '',
+  value: ''
+};
 
-    value:
-      'code'
-  },
-  {
-    label:
-      'Name',
-
-    value:
-      'name'
-  },
-  {
-    label:
-      'Discount Type',
-
-    value:
-      'discountType'
-  },
-  {
-    label:
-      'Applicable On',
-
-    value:
-      'applicableOn'
-  }
+const filterFields = [
+  { label: 'Code', value: 'code' },
+  { label: 'Name', value: 'name' },
+  { label: 'Discount Type', value: 'discountType' },
+  { label: 'Discount Value', value: 'value' },
+  { label: 'Applicable On', value: 'applicableOn' },
+  { label: 'Approval', value: 'requiresApproval' },
+  { label: 'Default', value: 'isDefault' },
+  { label: 'Active', value: 'active' }
 ];
 
-const initialDiscountFilter:
-DiscountFilter = {
-  criteria:
-    '',
+const isEmptyFilterValue = (value: unknown) =>
+  value === null ||
+  value === undefined ||
+  (typeof value === 'string' && value.trim() === '');
 
-  textValue:
-    '',
-
-  discountType:
-    '',
-
-  applicableOn:
-    ''
-};
+const toBoolean = (value: unknown) =>
+  value === true || value === 'true';
 
 const DiscountSetup:
 React.FC = () => {
@@ -250,62 +214,33 @@ React.FC = () => {
       'desc'
     );
 
-  const [
-    discountFilter,
-    setDiscountFilter
-  ] =
-    useState<DiscountFilter>({
-      ...initialDiscountFilter
-    });
+  // Filter being edited in the filter bar, and the one the table currently shows
+  const [recordOfFilter, setRecordOfFilter] =
+    useState<FilterState>(initialFilterState);
+  const [activeFilter, setActiveFilter] =
+    useState<FilterState>(initialFilterState);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredData, setFilteredData] = useState<Discount[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
 
-  const [
-    appliedDiscountFilter,
-    setAppliedDiscountFilter
-  ] =
-    useState<DiscountFilter>({
-      ...initialDiscountFilter
-    });
+  // Filtered pagination (independent state)
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc'
+  });
 
-  const hasCodeFilter =
-    appliedDiscountFilter.criteria ===
-      'code' &&
-    Boolean(
-      appliedDiscountFilter
-        .textValue
-        .trim()
-    );
+  const [fetchByCode] = useLazyGetDiscountsByCodeQuery();
+  const [fetchByName] = useLazyGetDiscountsByNameQuery();
+  const [fetchByType] = useLazyGetDiscountsByTypeQuery();
+  const [fetchByValue] = useLazyGetDiscountsByValueQuery();
+  const [fetchByApplicableOn] = useLazyGetDiscountsByApplicableOnQuery();
+  const [fetchByRequiresApproval] = useLazyGetDiscountsByRequiresApprovalQuery();
+  const [fetchByDefault] = useLazyGetDiscountsByDefaultQuery();
+  const [fetchByActive] = useLazyGetDiscountsByActiveQuery();
 
-  const hasNameFilter =
-    appliedDiscountFilter.criteria ===
-      'name' &&
-    Boolean(
-      appliedDiscountFilter
-        .textValue
-        .trim()
-    );
-
-  const hasTypeFilter =
-    appliedDiscountFilter.criteria ===
-      'discountType' &&
-    Boolean(
-      appliedDiscountFilter
-        .discountType
-    );
-
-  const hasApplicableOnFilter =
-    appliedDiscountFilter.criteria ===
-      'applicableOn' &&
-    Boolean(
-      appliedDiscountFilter
-        .applicableOn
-    );
-
-  const hasAnyFilter =
-    hasCodeFilter ||
-    hasNameFilter ||
-    hasTypeFilter ||
-    hasApplicableOnFilter;
-
+  // Main list: all discounts of the facility
   const allDiscountsQuery =
     useGetDiscountsByFacilityQuery(
       {
@@ -326,126 +261,7 @@ React.FC = () => {
       },
       {
         skip:
-          !facilityId ||
-          hasAnyFilter
-      }
-    );
-
-  const discountsByCodeQuery =
-    useGetDiscountsByCodeQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        value:
-          appliedDiscountFilter
-            .textValue,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasCodeFilter
-      }
-    );
-
-  const discountsByNameQuery =
-    useGetDiscountsByNameQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        value:
-          appliedDiscountFilter
-            .textValue,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasNameFilter
-      }
-    );
-
-  const discountsByTypeQuery =
-    useGetDiscountsByTypeQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        discountType:
-          appliedDiscountFilter
-            .discountType as
-            DiscountType,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasTypeFilter
-      }
-    );
-
-  const discountsByApplicableOnQuery =
-    useGetDiscountsByApplicableOnQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        applicableOn:
-          appliedDiscountFilter
-            .applicableOn as
-            DiscountApplicableOn,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasApplicableOnFilter
+          !facilityId
       }
     );
 
@@ -482,158 +298,110 @@ React.FC = () => {
   ] =
     useSetDefaultDiscountMutation();
 
-  const activeResponse =
-    useMemo(() => {
-      if (
-        hasCodeFilter
-      ) {
-        return {
-          data:
-            discountsByCodeQuery
-              .data?.data ??
-            [],
+  const activeResponse = useMemo(
+    () =>
+      isFiltered
+        ? { data: filteredData, totalCount: filteredTotal }
+        : {
+            data: allDiscountsQuery.data?.data ?? [],
+            totalCount: allDiscountsQuery.data?.totalCount ?? 0
+          },
+    [isFiltered, filteredData, filteredTotal, allDiscountsQuery.data]
+  );
 
-          totalCount:
-            discountsByCodeQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  const isFetching = isFiltered
+    ? isFilterLoading
+    : allDiscountsQuery.isFetching;
 
-      if (
-        hasNameFilter
-      ) {
-        return {
-          data:
-            discountsByNameQuery
-              .data?.data ??
-            [],
+  const activeQueryError = allDiscountsQuery.error;
 
-          totalCount:
-            discountsByNameQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  // ===== Filtering =====
+  const runFilterQuery = async (
+    fieldName: string,
+    value: any,
+    page: number,
+    size: number,
+    sort: string
+  ) => {
+    const params = { facilityId: facilityId as number, page, size, sort };
 
-      if (
-        hasTypeFilter
-      ) {
-        return {
-          data:
-            discountsByTypeQuery
-              .data?.data ??
-            [],
+    if (fieldName === 'code') {
+      return await fetchByCode({ ...params, value: String(value).trim() }).unwrap();
+    } else if (fieldName === 'name') {
+      return await fetchByName({ ...params, value: String(value).trim() }).unwrap();
+    } else if (fieldName === 'discountType') {
+      return await fetchByType({ ...params, discountType: value }).unwrap();
+    } else if (fieldName === 'value') {
+      return await fetchByValue({ ...params, value: Number(value) }).unwrap();
+    } else if (fieldName === 'applicableOn') {
+      return await fetchByApplicableOn({ ...params, applicableOn: value }).unwrap();
+    } else if (fieldName === 'requiresApproval') {
+      return await fetchByRequiresApproval({ ...params, value: toBoolean(value) }).unwrap();
+    } else if (fieldName === 'isDefault') {
+      return await fetchByDefault({ ...params, value: toBoolean(value) }).unwrap();
+    } else if (fieldName === 'active') {
+      return await fetchByActive({ ...params, value: toBoolean(value) }).unwrap();
+    }
 
-          totalCount:
-            discountsByTypeQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+    return undefined;
+  };
 
-      if (
-        hasApplicableOnFilter
-      ) {
-        return {
-          data:
-            discountsByApplicableOnQuery
-              .data?.data ??
-            [],
+  // Reset to main list
+  const resetToUnfiltered = () => {
+    setIsFiltered(false);
+    setActiveFilter(initialFilterState);
+    setFilteredData([]);
+    setFilteredTotal(0);
+    setFilterPagination(previous => ({ ...previous, page: 0 }));
+    setPaginationParams(previous => ({ ...previous, page: 0, timestamp: Date.now() }));
+  };
 
-          totalCount:
-            discountsByApplicableOnQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  // Apply/Clear filters
+  const handleFilterChange = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!facilityId) {
+      return;
+    }
 
-      return {
-        data:
-          allDiscountsQuery
-            .data?.data ??
-          [],
+    if (!fieldName || isEmptyFilterValue(value)) {
+      resetToUnfiltered();
+      return;
+    }
 
-        totalCount:
-          allDiscountsQuery
-            .data
-            ?.totalCount ??
-          0
-      };
-    }, [
-      hasCodeFilter,
-      hasNameFilter,
-      hasTypeFilter,
-      hasApplicableOnFilter,
-      discountsByCodeQuery.data,
-      discountsByNameQuery.data,
-      discountsByTypeQuery.data,
-      discountsByApplicableOnQuery.data,
-      allDiscountsQuery.data
-    ]);
+    setIsFilterLoading(true);
+    try {
+      const resp = await runFilterQuery(fieldName, value, page, size, sort);
+      setFilteredData(resp?.data ?? []);
+      setFilteredTotal(resp?.totalCount ?? 0);
+      setActiveFilter({ filter: fieldName, value });
+      setIsFiltered(true);
+      setFilterPagination(previous => ({ ...previous, page, size, sort }));
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: extractDiscountErrorMessage(error, 'Failed to load discounts.'),
+          sev: 'error'
+        })
+      );
+    } finally {
+      setIsFilterLoading(false);
+    }
+  };
 
-  const isFetching =
-    allDiscountsQuery
-      .isFetching ||
-    discountsByCodeQuery
-      .isFetching ||
-    discountsByNameQuery
-      .isFetching ||
-    discountsByTypeQuery
-      .isFetching ||
-    discountsByApplicableOnQuery
-      .isFetching;
-
-  const activeQueryError =
-    hasCodeFilter
-      ? discountsByCodeQuery.error
-      : hasNameFilter
-        ? discountsByNameQuery.error
-        : hasTypeFilter
-          ? discountsByTypeQuery.error
-          : hasApplicableOnFilter
-            ? discountsByApplicableOnQuery.error
-            : allDiscountsQuery.error;
-
+  // Reload whatever the table shows after add/edit/delete/default/activation changes
   const refetchActiveQuery =
     async () => {
-      if (
-        hasCodeFilter
-      ) {
-        await discountsByCodeQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasNameFilter
-      ) {
-        await discountsByNameQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasTypeFilter
-      ) {
-        await discountsByTypeQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasApplicableOnFilter
-      ) {
-        await discountsByApplicableOnQuery
-          .refetch();
-
+      if (isFiltered) {
+        await handleFilterChange(
+          activeFilter.filter,
+          activeFilter.value,
+          filterPagination.page
+        );
         return;
       }
 
@@ -689,13 +457,11 @@ React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setDiscountFilter({
-      ...initialDiscountFilter
-    });
-
-    setAppliedDiscountFilter({
-      ...initialDiscountFilter
-    });
+    setRecordOfFilter(initialFilterState);
+    setActiveFilter(initialFilterState);
+    setIsFiltered(false);
+    setFilteredData([]);
+    setFilteredTotal(0);
 
     setSelectedDiscount({
       ...newDiscount
@@ -740,103 +506,12 @@ React.FC = () => {
     dispatch
   ]);
 
-  const handleResetFilter =
-    () => {
-      setDiscountFilter({
-        ...initialDiscountFilter
-      });
-
-      setAppliedDiscountFilter({
-        ...initialDiscountFilter
-      });
-
-      setPaginationParams(
-        previous => ({
-          ...previous,
-
-          page:
-            0,
-
-          timestamp:
-            Date.now()
-        })
-      );
-    };
-
-  const handleSearch =
-    () => {
-      const {
-        criteria,
-        textValue,
-        discountType,
-        applicableOn
-      } =
-        discountFilter;
-
-      const valid =
-        (
-          (
-            criteria ===
-              'code' ||
-            criteria ===
-              'name'
-          ) &&
-          Boolean(
-            textValue.trim()
-          )
-        ) ||
-        (
-          criteria ===
-            'discountType' &&
-          Boolean(
-            discountType
-          )
-        ) ||
-        (
-          criteria ===
-            'applicableOn' &&
-          Boolean(
-            applicableOn
-          )
-        );
-
-      if (!valid) {
-        dispatch(
-          notify({
-            msg:
-              'Please complete the selected filter.',
-
-            sev:
-              'warning'
-          })
-        );
-
-        return;
-      }
-
-      setAppliedDiscountFilter({
-        criteria,
-
-        textValue:
-          textValue.trim(),
-
-        discountType,
-
-        applicableOn
-      });
-
-      setPaginationParams(
-        previous => ({
-          ...previous,
-
-          page:
-            0,
-
-          timestamp:
-            Date.now()
-        })
-      );
-    };
+  const handleSearch = () => {
+    handleFilterChange(
+      recordOfFilter.filter,
+      recordOfFilter.value
+    );
+  };
 
   const handleNew =
     () => {
@@ -1107,6 +782,15 @@ React.FC = () => {
     newPage:
       number
   ) => {
+    if (isFiltered) {
+      handleFilterChange(
+        activeFilter.filter,
+        activeFilter.value,
+        newPage
+      );
+      return;
+    }
+
     setPaginationParams(
       previous => ({
         ...previous,
@@ -1128,6 +812,16 @@ React.FC = () => {
       Number(
         event.target.value
       );
+
+    if (isFiltered) {
+      handleFilterChange(
+        activeFilter.filter,
+        activeFilter.value,
+        0,
+        newSize
+      );
+      return;
+    }
 
     setPaginationParams(
       previous => ({
@@ -1159,6 +853,17 @@ React.FC = () => {
     setSortType(
       type
     );
+
+    if (isFiltered) {
+      handleFilterChange(
+        activeFilter.filter,
+        activeFilter.value,
+        0,
+        filterPagination.size,
+        `${column},${type}`
+      );
+      return;
+    }
 
     setPaginationParams(
       previous => ({
@@ -1519,153 +1224,104 @@ React.FC = () => {
     }
   ];
 
-  const filters =
-    () => (
-      <Form
-        fluid
-        className="form-of-filters-set-up"
-      >
-        <MyInput
-          width="190px"
-          fieldName="criteria"
-          fieldType="select"
-          selectData={
-            filterCriteriaOptions
-          }
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={
-            discountFilter
-          }
-          setRecord={(
-            updated:
-              any
-          ) => {
-            const next =
-              typeof updated ===
-              'function'
-                ? updated(
-                    discountFilter
-                  )
-                : updated;
-
-            const nextCriteria =
-              (
-                next?.criteria ??
-                ''
-              ) as
-                FilterCriteria;
-
-            if (!nextCriteria) {
-              handleResetFilter();
-
-              return;
-            }
-
-            setDiscountFilter({
-              ...initialDiscountFilter,
-
-              criteria:
-                nextCriteria
-            });
-          }}
-          showLabel={false}
-          placeholder="Select Criteria"
-          searchable={false}
-        />
-
-        {(
-          discountFilter.criteria ===
-            'code' ||
-          discountFilter.criteria ===
-            'name'
-        ) && (
-          <MyInput
-            width="240px"
-            fieldName="textValue"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder={
-              discountFilter.criteria ===
-                'code'
-                ? 'Enter Discount Code'
-                : 'Enter Discount Name'
-            }
-          />
-        )}
-
-        {discountFilter.criteria ===
-          'discountType' && (
-          <MyInput
-            width="220px"
-            fieldName="discountType"
-            fieldType="select"
-            selectData={
-              discountTypeOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder="Select Discount Type"
-            searchable={false}
-          />
-        )}
-
-        {discountFilter.criteria ===
-          'applicableOn' && (
-          <MyInput
-            width="220px"
-            fieldName="applicableOn"
-            fieldType="select"
-            selectData={
-              applicableOnOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder="Select Applicable On"
-            searchable={false}
-          />
-        )}
-
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={
-            handleSearch
-          }
-          width="80px"
-        >
-          Search
-        </MyButton>
-
-        <MyButton
-          color="var(--primary-gray)"
-          onClick={
-            handleResetFilter
-          }
-          width="80px"
-        >
-          Clear
-        </MyButton>
-      </Form>
+  const renderFilterValueInput = () => {
+    const selectInput = (
+      options: { label: string; value: any }[]
+    ) => (
+      <MyInput
+        width={220}
+        fieldName="value"
+        fieldLabel=""
+        fieldType="select"
+        selectData={options}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        searchable={false}
+      />
     );
+
+    switch (recordOfFilter.filter) {
+      case 'discountType':
+        return selectInput(discountTypeOptions ?? []);
+      case 'applicableOn':
+        return selectInput(applicableOnOptions ?? []);
+      case 'requiresApproval':
+        return selectInput([
+          { label: 'Required', value: true },
+          { label: 'No', value: false }
+        ]);
+      case 'isDefault':
+        return selectInput([
+          { label: 'Default', value: true },
+          { label: 'No', value: false }
+        ]);
+      case 'active':
+        return selectInput([
+          { label: 'Active', value: true },
+          { label: 'Inactive', value: false }
+        ]);
+      case 'value':
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="number"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            showLabel={false}
+            placeholder="Enter Value"
+            width={220}
+          />
+        );
+      default:
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="text"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            showLabel={false}
+            placeholder="Enter Value"
+            width={220}
+            enterClick={handleSearch}
+          />
+        );
+    }
+  };
+
+  const filters = () => (
+    <Form fluid className="form-of-filters-set-up">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={(updated: FilterState) =>
+          setRecordOfFilter({
+            filter: updated.filter,
+            value: ''
+          })
+        }
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+        width="170px"
+      />
+
+      {renderFilterValueInput()}
+
+      <MyButton
+        color="var(--deep-blue)"
+        onClick={handleSearch}
+        width="80px"
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
 
   const selectedRowClass = (
     row:
@@ -1718,10 +1374,14 @@ React.FC = () => {
           filters()
         }
         page={
-          paginationParams.page
+          isFiltered
+            ? filterPagination.page
+            : paginationParams.page
         }
         rowsPerPage={
-          paginationParams.size
+          isFiltered
+            ? filterPagination.size
+            : paginationParams.size
         }
         onPageChange={
           handlePageChange
