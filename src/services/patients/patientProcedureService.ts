@@ -19,6 +19,8 @@ type ProcedureSearchParams = {
   fromDate?: string;
   toDate?: string;
   status?: string;
+  priority?: string;
+  procedureLevel?: string;
   patientId?: number;
   procedureId?: number;
   includeCancelled?: boolean;
@@ -261,6 +263,62 @@ export const patientProcedureService = createApi({
       invalidatesTags: ['ProcedureWorkflow']
     }),
 
+    getProcedureComplications: builder.query<any[], number>({
+      query: id => `/api/patient/procedure/${id}/complications`,
+      providesTags: ['ProcedureWorkflow']
+    }),
+
+    addProcedureComplication: builder.mutation<any, { id: number; body: any }>({
+      query: ({ id, body }) => ({
+        url: `/api/patient/procedure/${id}/complications`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['ProcedureWorkflow']
+    }),
+
+    updateProcedureComplication: builder.mutation<
+      any,
+      { id: number; complicationId: number; body: any }
+    >({
+      query: ({ id, complicationId, body }) => ({
+        url: `/api/patient/procedure/${id}/complications/${complicationId}`,
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['ProcedureWorkflow']
+    }),
+
+    deleteProcedureComplication: builder.mutation<void, { id: number; complicationId: number }>({
+      query: ({ id, complicationId }) => ({
+        url: `/api/patient/procedure/${id}/complications/${complicationId}`,
+        method: 'DELETE'
+      }),
+      invalidatesTags: ['ProcedureWorkflow']
+    }),
+
+    getProcedureVitalMonitoring: builder.query<any[], number>({
+      query: id => `/api/patient/procedure/${id}/vital-monitoring`,
+      providesTags: ['ProcedureWorkflow']
+    }),
+
+    addProcedureVitalMonitoring: builder.mutation<any, { id: number; body: any }>({
+      query: ({ id, body }) => ({
+        url: `/api/patient/procedure/${id}/vital-monitoring`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['ProcedureWorkflow']
+    }),
+
+    deleteProcedureVitalMonitoring: builder.mutation<void, { id: number; readingId: number }>({
+      query: ({ id, readingId }) => ({
+        url: `/api/patient/procedure/${id}/vital-monitoring/${readingId}`,
+        method: 'DELETE'
+      }),
+      invalidatesTags: ['ProcedureWorkflow']
+    }),
+
     getProcedureEquipment: builder.query<any[], number>({
       query: id => `/api/patient/procedure/${id}/service-equipment`,
       providesTags: ['ProcedureWorkflow']
@@ -308,6 +366,13 @@ export const {
   useAddProcedureMedicationMutation,
   useUpdateProcedureMedicationMutation,
   useDeleteProcedureMedicationMutation,
+  useGetProcedureComplicationsQuery,
+  useAddProcedureComplicationMutation,
+  useUpdateProcedureComplicationMutation,
+  useDeleteProcedureComplicationMutation,
+  useGetProcedureVitalMonitoringQuery,
+  useAddProcedureVitalMonitoringMutation,
+  useDeleteProcedureVitalMonitoringMutation,
   useGetProcedureEquipmentQuery,
   useAddProcedureEquipmentMutation,
   useDeleteProcedureEquipmentMutation

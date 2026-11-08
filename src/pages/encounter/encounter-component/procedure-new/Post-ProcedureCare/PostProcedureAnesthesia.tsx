@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSortedLovQuery } from '../useSortedLovQuery';
 import React, { useEffect } from 'react';
 import { Col, Form, Row, Text } from 'rsuite';
 
@@ -13,11 +13,11 @@ const scoreOf = (response: any, value: string) =>
   response?.object?.find((item: any) => item.lovDisplayVale === value)?.score || 0;
 
 const PostProcedureAnesthesia: React.FC<AnesthesiaProps> = ({ record, setRecord }) => {
-  const { data: oxsatQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_OXSAT');
-  const { data: conscLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_CONSC');
-  const { data: circuLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_CIRCU');
-  const { data: respirLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_RESPIR');
-  const { data: activityLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_ACTIVITY');
+  const { data: oxsatQueryResponse } = useSortedLovQuery('ALDRETE_OXSAT');
+  const { data: conscLovQueryResponse } = useSortedLovQuery('ALDRETE_CONSC');
+  const { data: circuLovQueryResponse } = useSortedLovQuery('ALDRETE_CIRCU');
+  const { data: respirLovQueryResponse } = useSortedLovQuery('ALDRETE_RESPIR');
+  const { data: activityLovQueryResponse } = useSortedLovQuery('ALDRETE_ACTIVITY');
 
   useEffect(() => {
     const aldreteScore =

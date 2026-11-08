@@ -37,7 +37,7 @@ export interface ColumnConfig {
 interface MyTableProps {
   data: any[];
   columns: ColumnConfig[];
-  height?: number;
+  height?: number | string;
   loadingHeight?: number | string;
   loading?: boolean;
   onRowClick?: (rowData: any) => void;

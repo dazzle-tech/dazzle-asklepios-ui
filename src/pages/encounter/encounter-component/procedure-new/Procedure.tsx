@@ -8,7 +8,6 @@ import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
-import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
@@ -20,12 +19,11 @@ import { useLocation } from 'react-router-dom';
 import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import Details from './Details';
 import Perform from './Perform';
+import { getStatusColor } from './procedureHelpers';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetProceduresQuery as useGetAllProceduresQuery } from '@/services/setup/procedure/procedureService';
 import {
   useFindProcdureByEncounterQuery,
-  useCreateProcdureMutation,
-  useUpdateProcdureMutation,
   useCancelProcdureMutation
 } from '@/services/patients/patientProcedureService';
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
@@ -38,24 +36,6 @@ import './styles.less';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import ProcedureAssignedDocumentsModal from './ProcedureAssignedDocumentsModal';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'REQUESTED':
-      return '#E6A100';
-    case 'CONFIRMED':
-    case 'COMPLETED':
-      return '#0DAA41';
-    case 'CANCELLED':
-      return '#D64545';
-    case 'IN_PROGRESS':
-      return '#0B5ED7';
-    case 'READY':
-      return '#17A2B8';
-    default:
-      return '#6c757d';
-  }
-};
 
 const TableLoader = () => (
   <div className="table-loader">
@@ -87,7 +67,6 @@ const Referrals = (props: any) => {
   } | null>(null);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
-  const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
 
@@ -104,8 +83,6 @@ const Referrals = (props: any) => {
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
 
-  const [createProcedure] = useCreateProcdureMutation();
-  const [updateProcedure] = useUpdateProcdureMutation();
   const [cancelProcedure] = useCancelProcdureMutation();
   const [getProcedureById] = useLazyGetProcedureByIdQuery();
   const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
@@ -213,32 +190,6 @@ const Referrals = (props: any) => {
   }, [handleClear]);
 
   const OpenPerformModel = () => setOpenPerformModal(true);
-
-  const handleSave = async () => {
-    try {
-      const procedureData = {
-        ...procedure,
-        indications: indicationsDescription,
-        encounterId: encounter?.id,
-        patientId: patient?.id
-      };
-
-      if (procedure?.id) {
-        await updateProcedure({ id: procedure.id, ...procedureData }).unwrap();
-      } else {
-        await createProcedure(procedureData).unwrap();
-      }
-
-      proRefetch();
-      handleClear();
-      dispatch(notify('Saved successfully'));
-    } catch (error) {
-      if (isUncoveredCashCancelled(error)) {
-        return;
-      }
-      dispatch(notify('Save failed'));
-    }
-  };
 
   const CloseCancellationReasonModel = () => setOpenCancellationReasonModel(false);
 
@@ -689,7 +640,7 @@ const Referrals = (props: any) => {
                 </Checkbox>
               </div>
               <div className="bt-right-2">
-                <MyButton disabled={edit || isNurse} onClick={handelAddNew}>
+                <MyButton disabled={edit} onClick={handelAddNew}>
                   Add Procedure
                 </MyButton>
               </div>
@@ -708,7 +659,9 @@ const Referrals = (props: any) => {
         open={openPerformModal}
         setOpen={setOpenPerformModal}
         title="Perform Details"
-        actionButtonFunction={handleSave}
+        hideActionBtn
+        hideCancel
+        customClassName="perform-modal"
         size="full"
         content={
           <div dir={dir}>
@@ -759,6 +712,7 @@ const Referrals = (props: any) => {
               localEncounter={encounter}
               source="PROCEDURE_REQUEST_ATTACHMENT"
               sourceId={procedure?.id ? Number(procedure.id) : undefined}
+              patientId={procedure?.patientId ?? patient?.id}
               refetchAttachmentList={false}
               setRefetchAttachmentList={() => {}}
             />

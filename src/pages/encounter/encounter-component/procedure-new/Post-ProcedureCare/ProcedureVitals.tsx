@@ -1,9 +1,9 @@
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSortedLovQuery } from '../useSortedLovQuery';
 import React from 'react';
 import { Col, Form, Row, Text } from 'rsuite';
+import ProcedureVitalsFields from '../ProcedureVitalsFields';
 
 type VitalProps = {
   record: any;
@@ -11,14 +11,18 @@ type VitalProps = {
 };
 
 const ProcedureVitals: React.FC<VitalProps> = ({ record, setRecord }) => {
-  const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-  const { data: correctLovQueryResponse } = useGetLovValuesByCodeQuery('CORRECT_INCORRECT');
+  const { data: correctLovQueryResponse } = useSortedLovQuery('CORRECT_INCORRECT');
   return (
+    <>
+    <ProcedureVitalsFields
+      title="Post-Procedure Vitals"
+      record={record}
+      setRecord={setRecord}
+    />
     <SectionContainer
-      title={<Text>Post-Procedure Vitals</Text>}
+      title={<Text>Recovery Assessment</Text>}
       content={
         <>
-          <VitalSigns setObject={setRecord} object={record} />
           <Form fluid>
             <Row>
               <Col md={11}>
@@ -51,35 +55,8 @@ const ProcedureVitals: React.FC<VitalProps> = ({ record, setRecord }) => {
               <Col md={11}>
                 <MyInput
                   width="100%"
-                  fieldType="select"
-                  selectData={numbersLovQueryResponse?.object ?? []}
-                   selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-                  selectDataValue="lovDisplayVale"
-                  fieldName="painScore"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                />
-              </Col>
-              <Col md={2}></Col>
-              <Col md={11}>
-                <MyInput
-                  width="100%"
                   fieldType="textarea"
                   fieldName="additionalObservations"
-                  record={record}
-                  setRecord={setRecord}
-                />
-              </Col>
-            </Row>
-            <Row>
-              <Col md={11}>
-                <MyInput
-                  width="100%"
-                  fieldType="textarea"
-                  fieldName="painDescription"
                   record={record}
                   setRecord={setRecord}
                 />
@@ -99,6 +76,7 @@ const ProcedureVitals: React.FC<VitalProps> = ({ record, setRecord }) => {
         </>
       }
     />
+    </>
   );
 };
 export default ProcedureVitals;

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import CloseIcon from "@rsuite/icons/Close";
-import { Col, Dropdown, Input, InputGroup, Row, Text } from "rsuite";
+import { Col, Input, InputGroup, Row, Text } from "rsuite";
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
 import {
   type ICDDiagnosisDTO,
@@ -10,6 +10,8 @@ import {
 } from "@/services/setup/icdTreeService";
 import "./styles.less";
 
+const SEARCH_DELAY_MS = 400;
+
 type Props = {
   diagnosisId?: number | null;
   setDiagnosisId: (id: number | null) => void;
@@ -18,6 +20,9 @@ type Props = {
   disabled?: boolean;
 
   pageSize?: number;
+
+  /** For callers that show the picked diagnoses themselves. */
+  hideSelected?: boolean;
 };
 
 const Icd10DiagnosisSearch: React.FC<Props> = ({
@@ -26,6 +31,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   label = "Diagnosis",
   disabled = false,
   pageSize = 15,
+  hideSelected = false,
 }) => {
   // --- search UI ---
   const [keyword, setKeyword] = useState("");
@@ -46,12 +52,15 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
     useLazyGetIcdDiagnosisByIdQuery();
 
   const lastKeywordRef = useRef<string>("");
+  const latestSearchRef = useRef(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleClear = () => {
     setDiagnosisId(null);
     setDisplay({ code: "", desc: "" });
 
+    latestSearchRef.current += 1;
+    lastKeywordRef.current = "";
     setKeyword("");
     setOpen(false);
 
@@ -75,7 +84,10 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
   const loadFirstPage = async (kw: string) => {
     const trimmed = (kw || "").trim();
+    if (isSearching && trimmed === lastKeywordRef.current) return;
     lastKeywordRef.current = trimmed;
+    latestSearchRef.current += 1;
+    const searchId = latestSearchRef.current;
 
     setPage(0);
     setLinks({});
@@ -87,6 +99,9 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
       return;
     }
 
+    // Open now so the list shows "Loading..." while the server answers
+    setOpen(true);
+
     try {
       const resp = await searchDiagnoses({
         keyword: trimmed,
@@ -95,6 +110,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         sort: "icdCode,asc",
         timestamp: Date.now(),
       }).unwrap();
+      if (searchId !== latestSearchRef.current) return;
 
       const pr = resp as unknown as PagedResult<ICDDiagnosisDTO>;
       const data = pr.data ?? [];
@@ -108,10 +124,39 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
       setAccum(obj);
       setLinks({ next: pr.links?.next ?? null });
-      setOpen(true);
     } catch {
-      setOpen(false);
+      if (searchId === latestSearchRef.current) setOpen(false);
     }
+  };
+
+  // Search while typing; Enter still searches straight away
+  useEffect(() => {
+    const trimmed = keyword.trim();
+    if (trimmed.length < 3) {
+      lastKeywordRef.current = "";
+      latestSearchRef.current += 1;
+      setOpen(false);
+      return;
+    }
+    if (trimmed === lastKeywordRef.current) return;
+    const timer = setTimeout(() => loadFirstPage(keyword), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyword]);
+
+  const handleSelect = (item: ICDDiagnosisDTO) => {
+    const idVal = (item as any)?.id ?? null;
+    setDiagnosisId(typeof idVal === "number" ? idVal : null);
+
+    setDisplay({
+      code: item.icdCode ?? "",
+      // "default description" -> short if available, else full
+      desc: item.icdShortDescription ?? item.icdFullDescription ?? "",
+    });
+
+    // close dropdown when done
+    setKeyword("");
+    setOpen(false);
   };
 
   const handleLoadMore = async () => {
@@ -206,12 +251,9 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
             <InputGroup inside className="icd10-search__inputGroup">
               <Input
                 required
-                placeholder="Search ICD-10 (min 3 chars) - Press Enter"
+                placeholder="Search ICD-10 (min 3 chars)"
                 value={keyword}
-                onChange={(v) => {
-                  setKeyword(v);
-                  if (!v) setOpen(false);
-                }}
+                onChange={setKeyword}
                 onKeyDown={handleKeyDown}
                 disabled={disabled}
                 onFocus={() => {
@@ -244,68 +286,44 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
             {/* Dropdown results + Load more */}
             {open && keyword.trim().length >= 3 && (
               <div className="icd10-search__dropdown">
-                <Dropdown.Menu className="icd10-search__menu">
+                <ul className="icd10-search__menu">
                   {isSearching && Object.keys(accum).length === 0 ? (
-                    <Dropdown.Item disabled>Loading...</Dropdown.Item>
+                    <li className="icd10-search__status">Loading...</li>
                   ) : null}
 
                   {!isSearching && Object.keys(accum).length === 0 ? (
-                    <Dropdown.Item disabled>No results</Dropdown.Item>
+                    <li className="icd10-search__status">No results</li>
                   ) : null}
 
-                  {Object.keys(accum).length > 0 &&
-                    Object.entries(accum).map(([key, item]) => (
-                      <Dropdown.Item
-                        key={key}
-                        eventKey={key}
-                        className="icd10-search__item"
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // keep dropdown open until click handled
-                        }}
-                        onClick={() => {
-                          const idVal = (item as any)?.id ?? null;
-                          setDiagnosisId(typeof idVal === "number" ? idVal : null);
-
-                          setDisplay({
-                            code: item.icdCode ?? "",
-                            // "default description" -> short if available, else full
-                            desc:
-                              item.icdShortDescription ??
-                              item.icdFullDescription ??
-                              "",
-                          });
-
-                          // close dropdown when done
-                          setKeyword("");
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="icd10-search__code">{item.icdCode}</span>
-                        <span className="icd10-search__desc">
-                          {item.icdShortDescription ??
-                            item.icdFullDescription ??
-                            ""}
-                        </span>
-                      </Dropdown.Item>
-                    ))}
+                  {Object.entries(accum).map(([key, item]) => (
+                    <li
+                      key={key}
+                      className="icd10-search__item"
+                      onMouseDown={(e) => {
+                        // selecting on press keeps focus in the input and cannot be lost on release
+                        e.preventDefault();
+                        handleSelect(item);
+                      }}
+                    >
+                      <span className="icd10-search__code">{item.icdCode}</span>
+                      <span className="icd10-search__desc">
+                        {item.icdShortDescription ?? item.icdFullDescription ?? ""}
+                      </span>
+                    </li>
+                  ))}
 
                   {canLoadMore ? (
-                    <Dropdown.Item
+                    <li
                       className="icd10-search__loadMore"
                       onMouseDown={(e) => {
-                        e.preventDefault(); // prevent dropdown close
-                      }}
-                      onClick={(e) => {
                         e.preventDefault();
-                        e.stopPropagation();
-                        if (isAppending) return;
-                        handleLoadMore();
+                        if (!isAppending) handleLoadMore();
                       }}
                     >
                       {isAppending ? "Loading..." : "Load more..."}
-                    </Dropdown.Item>
+                    </li>
                   ) : null}
-                </Dropdown.Menu>
+                </ul>
               </div>
             )}
           </div>
@@ -313,23 +331,25 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
       </Row>
 
       {/* Selected details as disabled textarea */}
-      <Row className="icd10-search__selectedRow">
-        <Col md={24}>
-          <Input
-            as="textarea"
-            rows={4}
-            disabled
-            value={
-              isByIdLoading
-                ? "Loading..."
-                : display.code
-                ? `${display.code}${display.desc ? " - " + display.desc : ""}`
-                : ""
-            }
-            className="icd10-search__selected"
-          />
-        </Col>
-      </Row>
+      {!hideSelected && (
+        <Row className="icd10-search__selectedRow">
+          <Col md={24}>
+            <Input
+              as="textarea"
+              rows={4}
+              disabled
+              value={
+                isByIdLoading
+                  ? "Loading..."
+                  : display.code
+                  ? `${display.code}${display.desc ? " - " + display.desc : ""}`
+                  : ""
+              }
+              className="icd10-search__selected"
+            />
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };

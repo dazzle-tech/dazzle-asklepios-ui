@@ -108,10 +108,18 @@
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     background: #fff;
+    margin: 0;
     padding: 6px 0;
+    list-style: none;
+  }
+
+  &__status {
+    padding: 8px 12px;
+    color: #888;
   }
 
   &__item {
+    cursor: pointer;
     display: flex;
     gap: 12px; 
     align-items: center;
@@ -141,6 +149,7 @@
   }
 
   &__loadMore {
+    cursor: pointer;
     font-weight: 700;
     padding: 10px 12px !important;
   }

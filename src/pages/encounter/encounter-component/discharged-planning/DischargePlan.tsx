@@ -141,9 +141,9 @@ const DischargePlanning = () => {
     { encounterId: encounter?.id, page: 0, size: 1000 },
     { skip: !encounter?.id }
   );
-  const procedureSetupIds = [
-    ...new Set((proceduresResponse?.data ?? []).map((proc: any) => proc.procedureId))
-  ] as number[];
+  const procedureSetupIds = Array.from(
+    new Set((proceduresResponse?.data ?? []).map((proc: any) => Number(proc.procedureId)))
+  );
   const { data: procedureSetups = [] } = useGetProceduresByIdsQuery(procedureSetupIds, {
     skip: procedureSetupIds.length === 0
   });

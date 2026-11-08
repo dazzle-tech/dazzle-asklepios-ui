@@ -13,11 +13,11 @@ import {
 } from '@/services/patients/patientProcedureService';
 import { useGetUsersBasicQuery } from '@/services/userService';
 import { notify } from '@/utils/uiReducerActions';
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useMemo, useState } from 'react';
 import { IoPersonRemove } from 'react-icons/io5';
 import { Col, Form, Input, Row, Text } from 'rsuite';
+
+const STAFF_JOB_ROLES = ['ANESTHESIOLOGIST', 'NURSE', 'PHYSICIAN'];
 
 type ProcedureStaffProps = {
   procedureId?: number;
@@ -30,8 +30,6 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [selectedUsers, setSelectedUsers] = useState<any>({ ids: [] });
-  const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
-  const [responsibility, setResponsibility] = useState('');
   const [staffToDelete, setStaffToDelete] = useState<any>(null);
 
   const { data: usersResponse } = useGetUsersBasicQuery({ page: 0, size: 1000, sort: 'id,asc' });
@@ -45,7 +43,9 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
   const users = usersResponse?.data ?? [];
   const usersById = useMemo(() => new Map(users.map((user: any) => [user.id, user])), [users]);
   const availableUsers = users.filter(
-    (user: any) => !staffList.some(staff => staff.userId === user.id)
+    (user: any) =>
+      STAFF_JOB_ROLES.includes(user.jobRole) &&
+      !staffList.some(staff => staff.userId === user.id)
   );
 
   const handleAdd = async () => {
@@ -64,7 +64,8 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
     }
   };
 
-  const handleSaveResponsibility = async (staff: any) => {
+  const handleSaveResponsibility = async (staff: any, responsibility: string) => {
+    if (responsibility === (staff.responsibility ?? '')) return;
     try {
       await updateStaff({
         id: procedureId as number,
@@ -72,7 +73,6 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
         body: { userId: staff.userId, responsibility, isPresent: staff.isPresent }
       }).unwrap();
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setEditingStaffId(null);
     } catch {
       dispatch(notify({ msg: 'Save failed', sev: 'error' }));
     }
@@ -97,28 +97,15 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
     {
       key: 'responsibility',
       title: <Translate>Responsibility</Translate>,
-      width: 420,
-      render: (rowData: any) =>
-        editingStaffId === rowData.id ? (
-          <Input
-            style={{ width: '200px' }}
-            value={responsibility}
-            onChange={setResponsibility}
-            onPressEnter={() => handleSaveResponsibility(rowData)}
-          />
-        ) : (
-          <>
-            <FontAwesomeIcon
-              icon={faPenToSquare}
-              onClick={() => {
-                setEditingStaffId(rowData.id);
-                setResponsibility(rowData.responsibility ?? '');
-              }}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            {rowData.responsibility}
-          </>
-        )
+      render: (rowData: any) => (
+        <Input
+          style={{ width: '100%' }}
+          placeholder="Responsibility"
+          defaultValue={rowData.responsibility ?? ''}
+          onPressEnter={event => event.currentTarget.blur()}
+          onBlur={event => handleSaveResponsibility(rowData, event.target.value)}
+        />
+      )
     },
     {
       key: 'delete',
@@ -139,7 +126,7 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
               <Form fluid>
                 <MyInput
                   width="100%"
-                  menuMaxHeight={200}
+                  menuMaxHeight="25vh"
                   placeholder="Staff"
                   showLabel={false}
                   selectData={availableUsers}
@@ -154,14 +141,14 @@ const ProcedureStaff: React.FC<ProcedureStaffProps> = ({
               </Form>
             </Col>
             <Col md={2}>
-              <MyButton onClick={handleAdd} disabled={!procedureId}>
-                Save
+              <MyButton appearance="ghost" onClick={handleAdd} disabled={!procedureId}>
+                Add
               </MyButton>
             </Col>
           </Row>
           <Row>
             <Col md={24}>
-              <MyTable data={staffList} columns={columns} height={280} />
+              <MyTable data={staffList} columns={columns} height="35vh" />
             </Col>
           </Row>
           <DeletionConfirmationModal

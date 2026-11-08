@@ -1,4 +1,3 @@
-import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -10,25 +9,45 @@ import {
   useGetProcedureMedicationsQuery,
   useUpdateProcedureMedicationMutation
 } from '@/services/patients/patientProcedureService';
-import { useGetAllActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  useGetActiveIngredientsActiveByNameQuery,
+  useGetActiveIngredientsByIdsMutation
+} from '@/services/setup/activeIngredients/activeIngredientsService';
+import { useSortedLovQuery } from '../useSortedLovQuery';
 import { notify } from '@/utils/uiReducerActions';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
-import { Col, Form, Input, Row, Text, Tooltip, Whisper } from 'rsuite';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { Form, Text, Tooltip, Whisper } from 'rsuite';
+import type { ProcedureStepHandle } from '../useStepForm';
+
+const INGREDIENTS_PAGE_SIZE = 20;
+// MyInput hides Load more while a search term is set, so a search asks for more at once
+const INGREDIENTS_SEARCH_SIZE = 100;
 
 type ProcedureMedicationsProps = {
   procedureId?: number;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
-const ProcedureMedications: React.FC<ProcedureMedicationsProps> = ({ procedureId }) => {
+const ProcedureMedications = forwardRef<ProcedureStepHandle, ProcedureMedicationsProps>(
+  ({ procedureId, onDirtyChange }, ref) => {
   const dispatch = useAppDispatch();
-  const [selectedIngredients, setSelectedIngredients] = useState<any>({ ids: [] });
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [options, setOptions] = useState<any[]>([]);
+  const [ingredientNames, setIngredientNames] = useState<Record<number, string>>({});
   const [rows, setRows] = useState<any[]>([]);
 
-  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
-  const { data: ingredientsResponse } = useGetAllActiveIngredientsQuery({ page: 0, size: 1000 });
+  const { data: unitLovQueryResponse } = useSortedLovQuery('UOM');
+  const { data: ingredientPage, isFetching: isLoadingIngredients } =
+    useGetActiveIngredientsActiveByNameQuery({
+      name: search,
+      page,
+      size: search ? INGREDIENTS_SEARCH_SIZE : INGREDIENTS_PAGE_SIZE,
+      sort: 'name,asc'
+    });
+  const [getIngredientsByIds] = useGetActiveIngredientsByIdsMutation();
   const { data: savedMedications } = useGetProcedureMedicationsQuery(procedureId as number, {
     skip: !procedureId
   });
@@ -36,13 +55,38 @@ const ProcedureMedications: React.FC<ProcedureMedicationsProps> = ({ procedureId
   const [updateMedication] = useUpdateProcedureMedicationMutation();
   const [deleteMedication] = useDeleteProcedureMedicationMutation();
 
-  const ingredients = ingredientsResponse?.data ?? [];
+  useEffect(() => {
+    if (!ingredientPage) return;
+    setOptions(prev => {
+      const loaded = ingredientPage.data ?? [];
+      if (page === 0) return loaded;
+      return [...prev, ...loaded.filter(item => !prev.some(option => option.id === item.id))];
+    });
+  }, [ingredientPage]);
 
   useEffect(() => {
-    setRows(savedMedications ?? []);
+    setRows((savedMedications ?? []).slice().reverse());
+    const missingIds = (savedMedications ?? [])
+      .map(row => row.activeIngredientId)
+      .filter(id => !ingredientNames[id]);
+    if (!missingIds.length) return;
+    getIngredientsByIds(missingIds)
+      .unwrap()
+      .then(found =>
+        setIngredientNames(prev => ({
+          ...prev,
+          ...Object.fromEntries(found.map(item => [item.id, item.name]))
+        }))
+      )
+      .catch(() => dispatch(notify({ msg: 'Failed to load ingredient names', sev: 'error' })));
   }, [savedMedications]);
 
   const changedRows = rows.filter(row => row.isDirty);
+  const hasChanges = changedRows.length > 0;
+
+  useEffect(() => {
+    onDirtyChange?.(hasChanges);
+  }, [hasChanges, onDirtyChange]);
 
   const handleRowChange = (index: number, field: string, value: any) => {
     setRows(prev =>
@@ -50,31 +94,39 @@ const ProcedureMedications: React.FC<ProcedureMedicationsProps> = ({ procedureId
     );
   };
 
-  const handleAddIngredients = () => {
-    const ids = selectedIngredients?.ids;
-    if (!Array.isArray(ids)) return;
-    setRows(prev => [
-      ...prev,
-      ...ids.map(activeIngredientId => ({ activeIngredientId, isDirty: true }))
-    ]);
-    setSelectedIngredients({ ids: [] });
+  const availableOptions = options.filter(
+    option => !rows.some(row => row.activeIngredientId === option.id)
+  );
+
+  const handleSearch = (keyword: string) => {
+    setPage(0);
+    setSearch(keyword);
   };
 
-  const handleSaveChanges = async () => {
-    try {
-      await Promise.all(
-        changedRows.map(({ id, activeIngredientId, dose, unit }) => {
-          const body = { activeIngredientId, dose, unit };
-          return id
-            ? updateMedication({ id: procedureId as number, medicationId: id, body }).unwrap()
-            : addMedication({ id: procedureId as number, body }).unwrap();
-        })
-      );
-      dispatch(notify({ msg: 'Changes saved successfully', sev: 'success' }));
-    } catch {
-      dispatch(notify({ msg: 'Failed to save changes', sev: 'error' }));
-    }
+  const handlePickIngredient = (item: any) => {
+    if (!item) return;
+    setIngredientNames(prev => ({ ...prev, [item.id]: item.name }));
+    setRows(prev => [{ activeIngredientId: item.id, isDirty: true }, ...prev]);
   };
+
+  useImperativeHandle(ref, () => ({
+    save: async () => {
+      try {
+        await Promise.all(
+          changedRows.map(({ id, activeIngredientId, dose, unit }) => {
+            const body = { activeIngredientId, dose: dose === '' ? null : dose, unit };
+            return id
+              ? updateMedication({ id: procedureId as number, medicationId: id, body }).unwrap()
+              : addMedication({ id: procedureId as number, body }).unwrap();
+          })
+        );
+        return true;
+      } catch {
+        dispatch(notify({ msg: 'Failed to save medications', sev: 'error' }));
+        return false;
+      }
+    }
+  }));
 
   const handleDelete = async (row: any, index: number) => {
     if (!row.id) {
@@ -92,26 +144,30 @@ const ProcedureMedications: React.FC<ProcedureMedicationsProps> = ({ procedureId
     {
       key: 'name',
       title: <Translate>Active Ingredient</Translate>,
-      render: (rowData: any) =>
-        ingredients.find((item: any) => item.id === rowData.activeIngredientId)?.name
+      render: (rowData: any) => ingredientNames[rowData.activeIngredientId]
     },
     {
       key: 'dose',
       title: <Translate>Dose</Translate>,
-      width: 150,
       render: (rowData: any, index: number) => (
-        <Input
-          type="number"
-          value={rowData.dose ?? ''}
-          onChange={value => handleRowChange(index, 'dose', Number(value))}
-          style={{ width: '100%' }}
-        />
+        <Form fluid>
+          <MyInput
+            width="100%"
+            fieldType="number"
+            allowDecimal
+            fieldName="dose"
+            record={rowData}
+            setRecord={(record: any) => {
+              if (record.dose !== rowData.dose) handleRowChange(index, 'dose', record.dose);
+            }}
+            showLabel={false}
+          />
+        </Form>
       )
     },
     {
       key: 'unit',
       title: <Translate>Unit</Translate>,
-      width: 200,
       render: (rowData: any, index: number) => (
         <Form fluid>
           <MyInput
@@ -150,44 +206,39 @@ const ProcedureMedications: React.FC<ProcedureMedicationsProps> = ({ procedureId
     <SectionContainer
       title={<Text>Administered Medications</Text>}
       content={
-        <Row>
-          <Col md={24}>
-            <Row className="rows-gap">
-              <Col md={10}>
-                <Form fluid>
-                  <MyInput
-                    width="100%"
-                    placeholder="Select Ingredient"
-                    showLabel={false}
-                    selectData={ingredients}
-                    fieldType="multyPicker"
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                    fieldName="ids"
-                    record={selectedIngredients}
-                    setRecord={setSelectedIngredients}
-                  />
-                </Form>
-              </Col>
-              <Col md={4}>
-                <MyButton onClick={handleAddIngredients}>Add</MyButton>
-              </Col>
-              <Col md={4}>
-                <MyButton
-                  appearance="primary"
-                  disabled={!changedRows.length}
-                  onClick={handleSaveChanges}
-                >
-                  Save Changes
-                </MyButton>
-              </Col>
-            </Row>
-            <MyTable height={200} data={rows} columns={columns} />
-          </Col>
-        </Row>
+        <>
+          <Form fluid className="procedure-picker-row">
+            <MyInput
+              width="100%"
+              placeholder="Search Ingredient"
+              showLabel={false}
+              fieldType="selectPagination"
+              selectData={availableOptions}
+              selectDataLabel="name"
+              selectDataValue="id"
+              fieldName="ingredientId"
+              record={{ ingredientId: null }}
+              setRecord={() => undefined}
+              onSelectItem={handlePickIngredient}
+              searchable
+              searchKeyWard={search}
+              setSearchKeyWard={handleSearch}
+              hasMore={options.length < (ingredientPage?.totalCount ?? 0)}
+              onFetchMore={() => setPage(current => current + 1)}
+              loading={isLoadingIngredients}
+              cleanable={false}
+            />
+          </Form>
+          {rows.length > 0 && (
+            <div className="procedure-compact-table">
+              <MyTable height="25vh" data={rows} columns={columns} />
+            </div>
+          )}
+        </>
       }
     />
   );
-};
+  }
+);
 
 export default ProcedureMedications;

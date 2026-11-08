@@ -8,33 +8,43 @@ import { useSearchProceduresQuery } from '@/services/patients/patientProcedureSe
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 import { formatDateWithoutSeconds } from '@/utils';
-import { faBarcode, faFileWaveform, faPrint } from '@fortawesome/free-solid-svg-icons'; // FontAwesome
+import { faFileWaveform } from '@fortawesome/free-solid-svg-icons'; // FontAwesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6'; // React Icons
 import { MdAttachFile } from 'react-icons/md';
-import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
+import { Checkbox, Form, HStack, Loader, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import EncounterAttachment from '../patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import Perform from '../encounter/encounter-component/procedure-new/Perform';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
+import PatientWritBandPrintLabelButton from '../encounter/urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import { useLocation } from 'react-router-dom';
-import Icd10Search from '../medical-component/Icd10Search';
+import {
+  getStatusColor,
+  PROCEDURE_STATUSES
+} from '../encounter/encounter-component/procedure-new/procedureHelpers';
 import './styles.less';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+
+const patientNameOf = (patient?: any) =>
+  [patient?.firstName, patient?.secondName, patient?.thirdName, patient?.lastName]
+    .filter(Boolean)
+    .join(' ');
 
 const ProcedureModule: React.FC = () => {
   const dispatch = useAppDispatch();
   const { pathname } = useLocation();
-  const [showCanceled, setShowCanceled] = useState(true);
+  const [showCanceled, setShowCanceled] = useState(false);
+  const [advanced, setAdvanced] = useState<any>({});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [procedure, setProcedure] = useState<any>({});
   const [dateFilter, setDateFilter] = useState<{ fromDate: Date | null; toDate: Date | null }>({
@@ -61,7 +71,12 @@ const ProcedureModule: React.FC = () => {
     { skip: !procedure?.encounterId }
   );
   const [openPerformModal, setOpenPerformModal] = useState(false);
-  const categoryOptions = useEnumOptions('ProcedureCategory');
+  const priorityOptions = useEnumOptions('Priority');
+  const levelOptions = useEnumOptions('ProcedureLevel');
+  const statusOptions = PROCEDURE_STATUSES.map(value => ({
+    value,
+    label: formatEnumString(value)
+  }));
 
   const isSelected = (rowData: any) =>
     rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
@@ -88,12 +103,27 @@ const ProcedureModule: React.FC = () => {
     size: rowsPerPage,
     fromDate: dayBoundary(dateFilter.fromDate, false),
     toDate: dayBoundary(dateFilter.toDate, true),
-    includeCancelled: !showCanceled
+    includeCancelled: showCanceled,
+    status: advanced.status || undefined,
+    priority: advanced.priority || undefined,
+    procedureLevel: advanced.procedureLevel || undefined
   });
   const procedureRows = useMemo(() => procedures?.data ?? [], [procedures]);
 
+  // A row opened just before the list refreshed must not keep its old status
+  useEffect(() => {
+    const fresh = procedureRows.find((row: any) => row.id === procedure?.id);
+    if (fresh && fresh.status !== procedure?.status) {
+      setProcedure((current: any) => ({ ...current, status: fresh.status }));
+    }
+  }, [procedureRows]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [dateFilter, showCanceled, advanced]);
+
   const procedureSetupIds = useMemo(
-    () => [...new Set(procedureRows.map((row: any) => row.procedureId))] as number[],
+    () => Array.from(new Set(procedureRows.map((row: any) => Number(row.procedureId)))),
     [procedureRows]
   );
   const { data: procedureSetups = [] } = useGetProceduresByIdsQuery(procedureSetupIds, {
@@ -105,10 +135,6 @@ const ProcedureModule: React.FC = () => {
 
   const [trigger] = useLazyGetPatientByIdQuery();
 
-  const { data: procedurePrioStatusLovQueryResponse } =
-    useGetLovValuesByCodeQuery('ORDER_PRIORITY');
-  const { data: procedureLevelStatusLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
 
   const filterFields = [
     { label: 'PROCEDURE ID', value: 'procedureId' },
@@ -125,7 +151,7 @@ const ProcedureModule: React.FC = () => {
   // Fetch the patient of each listed procedure once
   useEffect(() => {
     const fetchPatients = async () => {
-      const toFetch = [...new Set(procedureRows.map((row: any) => row.patientId))].filter(
+      const toFetch = Array.from(new Set(procedureRows.map((row: any) => row.patientId))).filter(
         (id: any) => id && !patientsRef.current[id]
       );
 
@@ -175,9 +201,9 @@ const ProcedureModule: React.FC = () => {
       render: (rowData: any) => (
         <Whisper
           placement="top"
-          speaker={<Tooltip>{patients[rowData.patientId]?.patientMrn}</Tooltip>}
+          speaker={<Tooltip>{patients[rowData.patientId]?.medicalRecordNumber}</Tooltip>}
         >
-          {patients[rowData.patientId]?.fullName}
+          {patientNameOf(patients[rowData.patientId])}
         </Whisper>
       )
     },
@@ -227,7 +253,12 @@ const ProcedureModule: React.FC = () => {
       dataKey: 'status',
       title: <Translate>STATUS</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => formatEnumString(rowData.status)
+      render: (rowData: any) => (
+        <MyBadgeStatus
+          contant={formatEnumString(rowData.status)}
+          color={getStatusColor(rowData.status)}
+        />
+      )
     },
     {
       key: 'attachment',
@@ -274,39 +305,14 @@ const ProcedureModule: React.FC = () => {
       }
     },
     {
-      key: 'print',
-      title: <Translate>Print</Translate>,
-      render: (_rowData: any) => (
-        <HStack spacing={10}>
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
-            <div>
-              <MyButton
-                size="small"
-                backgroundColor="light-blue"
-                onClick={() => {
-                  /* TODO: implement print */
-                }}
-              >
-                <FontAwesomeIcon icon={faPrint} />
-              </MyButton>
-            </div>
-          </Whisper>
-        </HStack>
-      )
-    },
-    {
       key: 'action',
       title: <Translate>Action</Translate>,
-      render: (_rowData: any) => (
+      render: (rowData: any) => (
         <HStack spacing={10}>
-          <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
-            <div>
-              <MyButton size="small" backgroundColor="black">
-                <FontAwesomeIcon icon={faBarcode} />
-              </MyButton>
-            </div>
-          </Whisper>
-
+          <PatientWritBandPrintLabelButton
+            patientId={rowData.patientId}
+            disabled={!rowData.patientId}
+          />
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>EMR</Tooltip>}>
             <div>
               <MyButton size="small" backgroundColor="violet" onClick={() => setOpenEMRModal(true)}>
@@ -402,51 +408,40 @@ const ProcedureModule: React.FC = () => {
       <Form fluid className="dissss">
         <MyInput
           fieldType="select"
-          fieldName="Category"
-          selectData={categoryOptions ?? []}
+          fieldName="status"
+          placeholder="Status"
+          selectData={statusOptions}
           selectDataLabel="label"
           selectDataValue="value"
-          record={record}
-          setRecord={setRecord}
+          record={advanced}
+          setRecord={setAdvanced}
           showLabel={false}
           searchable={false}
         />
-
         <MyInput
           fieldType="select"
-          fieldName="Priority"
-          selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
-           selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
+          fieldName="priority"
+          placeholder="Priority"
+          selectData={priorityOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={advanced}
+          setRecord={setAdvanced}
           showLabel={false}
           searchable={false}
         />
-
         <MyInput
           fieldType="select"
-          fieldName="Level"
-          selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
-           selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
+          fieldName="procedureLevel"
+          placeholder="Level"
+          selectData={levelOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={advanced}
+          setRecord={setAdvanced}
           showLabel={false}
           searchable={false}
         />
-        <div className="indication-procedure-handle-position">
-          <Icd10Search
-            object={record}
-            setOpject={setRecord}
-            fieldName="indication"
-            fieldLabel={<Translate>Indication</Translate>}
-          />
-        </div>
       </Form>
     </div>
   );
@@ -508,7 +503,7 @@ const ProcedureModule: React.FC = () => {
           }}
         />
 
-        <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+        <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>
@@ -535,7 +530,7 @@ const ProcedureModule: React.FC = () => {
           if (!raw) return true;
           const patient = patients[row?.patientId] ?? {};
           if (field === 'patientMrn') {
-            return String(patient?.patientMrn ?? '').toLowerCase().includes(raw);
+            return String(patient?.medicalRecordNumber ?? '').toLowerCase().includes(raw);
           }
           if (field === 'phoneNumber') {
             return String(patient?.phoneNumber ?? patient?.primaryMobileNumber ?? '')
@@ -551,7 +546,7 @@ const ProcedureModule: React.FC = () => {
             return String(patient?.dob ?? patient?.dateOfBirth ?? '').slice(0, 10) ===
               String(appliedPatientSearch?.patientName ?? '').trim();
           }
-          return String(patient?.fullName ?? '').toLowerCase().includes(raw);
+          return patientNameOf(patient).toLowerCase().includes(raw);
         })}
         onRowClick={(rowData: any) => {
           setProcedure(rowData);
@@ -570,17 +565,24 @@ const ProcedureModule: React.FC = () => {
         setOpen={setOpenPerformModal}
         title="Perform Details"
         hideActionBtn
+        hideCancel
+        customClassName="perform-modal"
         size="full"
-        content={<div dir={dir}>
-          <Perform
-            proRefetch={proRefetch}
-            encounter={encounter}
-            patient={patient}
-            procedure={procedure}
-            setProcedure={setProcedure}
-            edit={false}
-          />
-          </div>
+        content={
+          patient && encounter ? (
+            <div dir={dir}>
+              <Perform
+                proRefetch={proRefetch}
+                encounter={encounter}
+                patient={patient}
+                procedure={procedure}
+                setProcedure={setProcedure}
+                edit={false}
+              />
+            </div>
+          ) : (
+            <Loader center content="Loading..." />
+          )
         }
       />
 
