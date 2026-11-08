@@ -1571,6 +1571,7 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
 export const newTpaDefinition: modelTypes.TpaDefinition = {
   id: undefined,
   tpaCode: '',
+  nphiesId: null,
   name: '',
   guarantorType: 'TPA',
   activationDate: null,
@@ -1939,6 +1940,8 @@ export const newPatientInsurance: modelTypes.PatientInsurance = {
 
   payerName: null,
   payerNphiesId: null,
+  tpaNphiesId: null,
+  tpaName: null,
 
   policyHolderId: null,
 

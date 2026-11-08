@@ -23,6 +23,7 @@ import {
   type CoverageContractedInsurance
 } from '@/services/setup/coverageManagement/coverageManagementService';
 import { useGetNphiesPayerByIdQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { useResolveTpaQuery } from '@/services/setup/payer/TpaDefinitionSetupService';
 import {
   useGetInsuranceCompanyPoliciesQuery,
   useGetPolicyCoverageClassesQuery
@@ -617,6 +618,7 @@ const InsuranceModal = ({
       priceListName: null,
       payorId: null,
       payerNphiesId: item?.nphiesId ?? null,
+      tpaNphiesId: null,
       payerName: item?.payorName || item?.name || null,
       policyNumber: '',
       issueDate: null,
@@ -669,6 +671,25 @@ const InsuranceModal = ({
     }));
   };
 
+  const selectedPayor = (payorResponse?.data ?? []).find(
+    item => Number(item?.id) === Number(patientInsurance?.payorId)
+  );
+  const tpaPayerNphiesId = String(
+    patientInsurance?.payerNphiesId || selectedPayor?.nphiesId || ''
+  ).trim();
+  const policyNumberForTpa = String(patientInsurance?.policyNumber ?? '').trim();
+  const { data: tpaResolution } = useResolveTpaQuery(
+    {
+      payerNphiesId: tpaPayerNphiesId,
+      ...(policyNumberForTpa ? { policyNumber: policyNumberForTpa } : {})
+    },
+    { skip: !open || !tpaPayerNphiesId }
+  );
+  const tpaCandidates = tpaResolution?.candidates ?? [];
+  const selectedTpaNphiesId =
+    patientInsurance?.tpaNphiesId || tpaResolution?.tpaNphiesId || null;
+  const tpaSelectionMissing = tpaCandidates.length > 1 && !selectedTpaNphiesId;
+
   useEffect(() => {
     setPayorPage(0);
   }, [payorSearchKeyword]);
@@ -689,7 +710,8 @@ const InsuranceModal = ({
 
     setPatientInsurance(prev => ({
       ...prev,
-      planId: null
+      planId: null,
+      tpaNphiesId: null
     }));
   }, [patientInsurance?.payorId]);
 
@@ -900,9 +922,20 @@ const InsuranceModal = ({
       }
     }
 
+    if (tpaSelectionMissing) {
+      dispatch(
+        notify({
+          msg: 'This insurance company works with more than one TPA. Select the TPA for this policy.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     const insuranceBody: PatientInsurance = {
       ...stripUiOnlyInsuranceFields(patientInsurance),
       patientId: resolvedPatientId,
+      tpaNphiesId: selectedTpaNphiesId,
       ...(isContractedCreate
         ? {
             payorId: null,
@@ -1015,6 +1048,26 @@ const InsuranceModal = ({
       })),
     [contractsForSelectedPolicy]
   );
+
+  const renderTpaPicker = () =>
+    tpaCandidates.length > 1 ? (
+      <ContractedPicker
+        fieldLabel="TPA"
+        required
+        data={tpaCandidates
+          .filter(tpa => tpa.nphiesId)
+          .map(tpa => ({ label: tpa.name, value: tpa.nphiesId as string }))}
+        value={selectedTpaNphiesId}
+        onChange={value =>
+          setPatientInsurance(prev => ({
+            ...prev,
+            tpaNphiesId: value == null ? null : String(value)
+          }))
+        }
+        disabled={insuranceBrowsing}
+        placeholder="Select TPA..."
+      />
+    ) : null;
 
   const renderContractedPolicySection = () => (
     <>
@@ -1190,6 +1243,7 @@ const InsuranceModal = ({
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
       />
+      {renderTpaPicker()}
     </>
   );
 
@@ -1300,6 +1354,7 @@ const InsuranceModal = ({
         setRecord={setPatientInsurance}
         disabled={insuranceBrowsing}
       />
+      {renderTpaPicker()}
     </>
     );
   };

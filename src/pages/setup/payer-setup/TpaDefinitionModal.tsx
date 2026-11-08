@@ -145,6 +145,12 @@ const TpaDefinitionModal: React.FC<TpaDefinitionModalProps> = ({
                   />
                   <MyInput
                     {...fieldProps}
+                    fieldName="nphiesId"
+                    fieldType="text"
+                    fieldLabel="TPA NPHIES ID"
+                  />
+                  <MyInput
+                    {...fieldProps}
                     fieldName="name"
                     fieldType="text"
                     fieldLabel="Name"

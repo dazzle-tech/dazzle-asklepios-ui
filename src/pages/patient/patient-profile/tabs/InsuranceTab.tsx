@@ -17,7 +17,7 @@ import { Patient, PatientInsurance } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheckDouble, faLayerGroup, faTrash, faUserPen, faRotate, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Form, Message, SelectPicker, Tooltip, Whisper } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
@@ -36,6 +36,7 @@ import {
   getCchiInsuranceStorageKey,
   hasReturnedCchiDocument,
   getCchiPayorResolutionErrorMessage,
+  nextCchiInsuranceDraft,
   normalizeCchiPatientInsurance,
   resolveCchiPayorFromInsurance
 } from '../cchiMappers';
@@ -194,17 +195,31 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
     return normalizedCchiInsurance;
   }, [normalizedCchiInsurance, cchiMatchesSavedInsurance]);
 
-  useEffect(() => {
-    if (!cchiMatchesSavedInsurance || !setCchiInsurance) {
+  const moveToNextCchiDraft = useCallback(() => {
+    const next = nextCchiInsuranceDraft(cchiInsurance as Record<string, any> | null);
+
+    setCchiInsurance?.(
+      next
+        ? ({ ...next, id: undefined, patientId: cchiInsurance?.patientId } as PatientInsurance)
+        : null
+    );
+
+    if (!cchiStorageKey) {
       return;
     }
 
-    setCchiInsurance(null);
-
-    if (cchiStorageKey) {
+    if (next) {
+      sessionStorage.setItem(cchiStorageKey, JSON.stringify(next));
+    } else {
       sessionStorage.removeItem(cchiStorageKey);
     }
-  }, [cchiMatchesSavedInsurance, cchiStorageKey, setCchiInsurance]);
+  }, [cchiInsurance, cchiStorageKey, setCchiInsurance]);
+
+  useEffect(() => {
+    if (cchiMatchesSavedInsurance) {
+      moveToNextCchiDraft();
+    }
+  }, [cchiMatchesSavedInsurance, moveToNextCchiDraft]);
 
   useEffect(() => {
     if (!localPatient?.id || !cchiInsurance || cchiInsurance.patientId) {
@@ -407,11 +422,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
   };
 
   const handleDiscardCchiInsurance = () => {
-    setCchiInsurance?.(null);
-
-    if (cchiStorageKey) {
-      sessionStorage.removeItem(cchiStorageKey);
-    }
+    moveToNextCchiDraft();
   };
 
   const applyCchiInsuranceFetchResult = (mappedResponse: CchiMappedPatientResponse) => {
@@ -630,11 +641,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({
 
       await addPatientInsurance(payload).unwrap();
 
-      setCchiInsurance?.(null);
-
-      if (cchiStorageKey) {
-        sessionStorage.removeItem(cchiStorageKey);
-      }
+      moveToNextCchiDraft();
 
       dispatch(
         notify({

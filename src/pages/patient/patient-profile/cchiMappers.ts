@@ -530,41 +530,77 @@ export const flattenCchiInsuranceSource = (raw: Record<string, any>): Record<str
   return flat;
 };
 
-export const extractCchiInsurance = (mappedResponse: any): Record<string, any> | null => {
-  if (!mappedResponse) return null;
+const isInsuranceObject = (item: unknown): item is Record<string, any> =>
+  Boolean(item) && typeof item === 'object' && !Array.isArray(item);
 
-  const insurancePlans = collectInsurancePlanCandidates(mappedResponse);
-  const primaryInsurancePlan = insurancePlans[0] ?? null;
+const withResolvedPayer = (insurance: Record<string, any>): Record<string, any> => {
+  const payerNphiesId = extractPayerNphiesIdFromSource(insurance);
+  const payerName = extractPayerNameFromSource(insurance);
 
-  const candidates = [
+  return {
+    ...insurance,
+    ...(payerNphiesId ? { payerNphiesId } : {}),
+    ...(payerName ? { payerName } : {})
+  };
+};
+
+const cchiPlanKey = (plan: Record<string, any>): string =>
+  [plan.payerNphiesId, plan.policyNumber, plan.memberCardId]
+    .map(value => String(value ?? '').trim().toLowerCase())
+    .join('|');
+
+/** Every insurance plan CCHI returned, primary first. Plans are never merged into one another. */
+export const extractCchiInsurances = (mappedResponse: any): Record<string, any>[] => {
+  if (!mappedResponse) return [];
+
+  const shared = [
     mappedResponse.insurance,
     mappedResponse.patientInsurance,
-    primaryInsurancePlan,
+    mappedResponse.patient?.insurance
+  ]
+    .filter(isInsuranceObject)
+    .reduce<Record<string, any>>(
+      (acc, item) => ({ ...acc, ...flattenCchiInsuranceSource(item) }),
+      {}
+    );
+
+  const plans = [
     ...(Array.isArray(mappedResponse.insurances) ? mappedResponse.insurances : []),
-    mappedResponse.patient?.insurance,
     ...(Array.isArray(mappedResponse.patient?.insurances) ? mappedResponse.patient.insurances : []),
-    ...insurancePlans
-  ].filter(item => item && typeof item === 'object' && !Array.isArray(item));
+    ...collectInsurancePlanCandidates(mappedResponse)
+  ].filter(isInsuranceObject);
 
-  if (!candidates.length) return null;
+  const sources = plans.length ? plans : Object.keys(shared).length ? [{}] : [];
+  const seen = new Set<string>();
 
-  const merged = candidates.reduce<Record<string, any>>(
-    (acc, item) => flattenCchiInsuranceSource({ ...acc, ...flattenCchiInsuranceSource(item) }),
-    {}
-  );
+  return sources
+    .map(plan => withResolvedPayer({ ...shared, ...flattenCchiInsuranceSource(plan) }))
+    .filter(plan => {
+      const key = cchiPlanKey(plan);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => Number(right.isPrimary === true) - Number(left.isPrimary === true));
+};
 
-  const payerNphiesId = extractPayerNphiesIdFromSource(merged);
-  const payerName = extractPayerNameFromSource(merged);
+/** The plan to review first; any other plans wait in `_cchiQueue` until this one is handled. */
+export const extractCchiInsurance = (mappedResponse: any): Record<string, any> | null => {
+  const [first, ...rest] = extractCchiInsurances(mappedResponse);
 
-  if (payerNphiesId) {
-    merged.payerNphiesId = payerNphiesId;
-  }
+  if (!first) return null;
 
-  if (payerName) {
-    merged.payerName = payerName;
-  }
+  return rest.length ? { ...first, _cchiQueue: rest } : first;
+};
 
-  return Object.keys(merged).length ? merged : null;
+export const nextCchiInsuranceDraft = (
+  current?: Record<string, any> | null
+): Record<string, any> | null => {
+  const [next, ...rest] = Array.isArray(current?._cchiQueue) ? current._cchiQueue : [];
+
+  if (!next) return null;
+
+  return rest.length ? { ...next, _cchiQueue: rest } : next;
 };
 
 export const mapCchiInsuranceFieldAliases = (raw: Record<string, any>): Record<string, any> => {

@@ -34,7 +34,7 @@ import PreAuthorizationCommunicationModal, {
 import PreAuthorizationCommunicationsDrawer from './PreAuthorizationCommunicationsDrawer';
 import { getPreAuthorizationColumns } from './preAuthorizationColumns';
 import { initialFilters, type Filters } from './types';
-import { filterPreAuthorizationRows } from './utils';
+import { filterPreAuthorizationRows, hasRejectedService } from './utils';
 import { useAppDispatch } from '@/hooks';
 import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils';
@@ -269,11 +269,20 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       }
 
       try {
-        await searchFromWaseel({
+        const decision = await searchFromWaseel({
           preAuthorizationId: row.id != null ? Number(row.id) : undefined,
           requestId: row.approvalRequestId
         }).unwrap();
-        dispatch(notify({ msg: 'Pre-authorization refreshed successfully', sev: 'success' }));
+        dispatch(
+          notify(
+            hasRejectedService(decision)
+              ? {
+                  msg: 'Rejected by the payer. In the patient account the patient can pay the rejected service in full as cash, or the service can be cancelled.',
+                  sev: 'warning'
+                }
+              : { msg: 'Pre-authorization refreshed successfully', sev: 'success' }
+          )
+        );
         await refetch();
       } catch {
         dispatch(notify({ msg: 'Failed to refresh pre-authorization', sev: 'error' }));

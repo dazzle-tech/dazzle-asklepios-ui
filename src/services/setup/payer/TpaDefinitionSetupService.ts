@@ -1,7 +1,11 @@
 import { BaseQuery } from '@/newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import { createApi } from '@reduxjs/toolkit/dist/query/react';
-import type { TpaDefinition, TpaLinkedInsuranceCompany } from '@/types/model-types-new';
+import type {
+  TpaDefinition,
+  TpaLinkedInsuranceCompany,
+  TpaResolution
+} from '@/types/model-types-new';
 
 type PagedParams = {
   page: number;
@@ -86,6 +90,15 @@ export const TpaDefinitionService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'TpaDefinition', id }]
     }),
 
+    resolveTpa: builder.query<TpaResolution, { payerNphiesId: string; policyNumber?: string }>({
+      query: params => ({
+        url: '/api/setup/tpa-definitions/resolve',
+        method: 'GET',
+        params
+      }),
+      providesTags: ['TpaDefinition', 'NphiesPayer']
+    }),
+
     getTpaLinkedInsuranceCompanies: builder.query<TpaLinkedInsuranceCompany[], number | string>({
       query: id => ({
         url: `/api/setup/tpa-definitions/${id}/insurance-companies`,
@@ -138,6 +151,7 @@ export const {
   useGetTpaDefinitionsByCodeQuery,
   useGetTpaDefinitionsByNameQuery,
   useGetTpaDefinitionByIdQuery,
+  useResolveTpaQuery,
   useGetTpaLinkedInsuranceCompaniesQuery,
   useGetLinkableInsuranceCompaniesQuery,
   useCreateTpaDefinitionMutation,

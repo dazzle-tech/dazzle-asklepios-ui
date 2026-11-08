@@ -85,6 +85,24 @@ export const filterPreAuthorizationRows = (
     return true;
   });
 
+type WaseelSearchDecision = {
+  status?: string | null;
+  item?: { itemDecision?: { status?: string | null } | null }[] | null;
+} | null;
+
+const isRejectedText = (value?: string | null) => String(value ?? '').toLowerCase() === 'rejected';
+
+/**
+ * Waseel search result: the whole request or one of its services was rejected.
+ */
+export const hasRejectedService = (decision: unknown) => {
+  const result = decision as WaseelSearchDecision;
+  return (
+    isRejectedText(result?.status) ||
+    (result?.item ?? []).some(item => isRejectedText(item?.itemDecision?.status))
+  );
+};
+
 /**
  * Local requests (NPHIES contract) have no Waseel request id; the user records the payer decision.
  */

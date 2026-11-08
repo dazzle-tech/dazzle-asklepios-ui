@@ -2558,6 +2558,7 @@ export interface NphiesPayer {
 export interface LinkedTpa {
   id: number;
   tpaCode: string;
+  nphiesId?: string | null;
   name: string;
   isActive: boolean;
 }
@@ -2574,9 +2575,23 @@ export interface InsuranceCompanyPolicy {
   inactiveReason?: string | null;
 }
 
+export type TpaResolutionStatus =
+  | 'NO_TPA'
+  | 'RESOLVED'
+  | 'SELECTION_REQUIRED'
+  | 'NPHIES_ID_MISSING';
+
+export interface TpaResolution {
+  status: TpaResolutionStatus;
+  tpaNphiesId?: string | null;
+  tpaName?: string | null;
+  candidates: { id: number; name: string; nphiesId?: string | null }[];
+}
+
 export interface TpaDefinition {
   id?: number;
   tpaCode: string;
+  nphiesId?: string | null;
   name: string;
   guarantorType: string;
   activationDate: string | null;
@@ -2971,6 +2986,8 @@ export interface PatientInsurance {
 
   payerName?: string | null;
   payerNphiesId?: string | null;
+  tpaNphiesId?: string | null;
+  tpaName?: string | null;
 
   policyHolderId?: number | null;
 
