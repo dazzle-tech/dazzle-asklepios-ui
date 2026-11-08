@@ -6,6 +6,7 @@ import {
   Configuration,
   ConfigurationCreateVM,
   ConfigurationUpdateVM,
+  ConfigurationUser,
 } from '@/types/model-types-new';
 
 type PagedParams = { page: number; size: number; sort?: string };
@@ -51,16 +52,59 @@ export const systemConfigurationService = createApi({
       providesTags: ['Configuration'],
     }),
 
-    // GET /api/setup/configuration/effective/{key}?facilityId=
-    getEffectiveConfiguration: builder.query<
-      Configuration,
-      { key: string; facilityId?: number }
+    // GET /api/setup/configuration/resolve/{key}?userId=&facilityId=
+    resolveConfiguration: builder.query<
+      { key: string; value: string; valueType: string; scope?: string | null; configurationId?: number | null },
+      { key: string; userId?: number; facilityId?: number }
     >({
-      query: ({ key, facilityId }) => ({
-        url: `/api/setup/configuration/effective/${key}`,
-        params: facilityId ? { facilityId } : undefined,
+      query: ({ key, userId, facilityId }) => ({
+        url: `/api/setup/configuration/resolve/${key}`,
+        params: {
+          ...(facilityId ? { facilityId } : {}),
+          ...(userId ? { userId } : {}),
+        },
       }),
       providesTags: ['Configuration'],
+    }),
+
+    // GET /api/setup/configuration/effective/{key}?facilityId=&userId=
+    getEffectiveConfiguration: builder.query<
+      Configuration,
+      { key: string; facilityId?: number; userId?: number }
+    >({
+      query: ({ key, facilityId, userId }) => ({
+        url: `/api/setup/configuration/effective/${key}`,
+        params: {
+          ...(facilityId ? { facilityId } : {}),
+          ...(userId ? { userId } : {}),
+        },
+      }),
+      providesTags: ['Configuration'],
+    }),
+
+    // GET /api/setup/configuration/users/search?searchText=&facilityId=
+    searchConfigurationUsers: builder.query<
+      PagedResult<ConfigurationUser>,
+      { searchText?: string; facilityId?: number; page: number; size: number; sort?: string }
+    >({
+      query: ({ searchText, facilityId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/configuration/users/search',
+        params: {
+          page,
+          size,
+          sort,
+          ...(searchText ? { searchText } : {}),
+          ...(facilityId ? { facilityId } : {}),
+        },
+      }),
+      transformResponse: (response: ConfigurationUser[], meta): PagedResult<ConfigurationUser> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
     }),
 
     // POST /api/setup/configuration
@@ -145,6 +189,7 @@ export const {
   useLazyGetConfigurationsQuery,
   useGetConfigurationByIdQuery,
   useGetEffectiveConfigurationQuery,
+  useResolveConfigurationQuery,
   useAddConfigurationMutation,
   useUpdateConfigurationMutation,
   useQuickSearchConfigurationsQuery,
@@ -152,6 +197,6 @@ export const {
   useFilterByReferenceTypeQuery,
   useLazyFilterByValueTypeQuery,
   useLazyFilterByReferenceTypeQuery,
-  useLazyQuickSearchConfigurationsQuery
-  // useLazyGetConfigurationByKeyQuery
+  useLazyQuickSearchConfigurationsQuery,
+  useSearchConfigurationUsersQuery
 } = systemConfigurationService;

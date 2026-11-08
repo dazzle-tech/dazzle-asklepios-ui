@@ -3112,6 +3112,8 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
 
 export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
   facilityId: undefined,
+  userId: undefined,
+  userIds: [],
   key: '',
   value: '',
   valueType: '',
@@ -3123,6 +3125,8 @@ export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
 export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
   id: undefined,
   facilityId: undefined,
+  userId: undefined,
+  userIds: [],
   key: '',
   value: '',
   valueType: '',
@@ -3133,7 +3137,9 @@ export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
 
 export const newConfiguration: modelTypes.Configuration = {
   id: undefined,
+  scopeType: undefined,
   facility: undefined,
+  users: [],
   key: '',
   value: '',
   valueType: '',

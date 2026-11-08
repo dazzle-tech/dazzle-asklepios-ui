@@ -5253,8 +5253,20 @@ export interface ReferralRequest {
   acceptedBy?: string | null;
 }
 
+export interface ConfigurationUser {
+  id: number;
+  login?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  jobRole?: string;
+}
+
 export interface ConfigurationCreateVM {
   facilityId?: number;
+  /** Form-only. Sent to the API as userIds. */
+  userId?: number;
+  userIds?: number[];
   key: string;
   value: string;
   valueType: string;
@@ -5266,6 +5278,9 @@ export interface ConfigurationCreateVM {
 export interface ConfigurationUpdateVM {
   id: number;
   facilityId?: number;
+  /** Form-only. Sent to the API as userIds. */
+  userId?: number;
+  userIds?: number[];
   key: string;
   value: string;
   valueType: string;
@@ -5276,7 +5291,9 @@ export interface ConfigurationUpdateVM {
 
 export interface Configuration {
   id: number;
+  scopeType?: string;
   facility?: Facility;
+  users?: ConfigurationUser[];
   key: string;
   value: string;
   valueType: string;

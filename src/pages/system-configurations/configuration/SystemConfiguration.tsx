@@ -16,7 +16,7 @@ import {
   useLazyFilterByReferenceTypeQuery,
   useLazyQuickSearchConfigurationsQuery,
 } from '@/services/setup/systemConfiguration/systemConfigurationService';
-import { Configuration } from '@/types/model-types-new';
+import { Configuration, ConfigurationUser } from '@/types/model-types-new';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { formatEnumString } from '@/utils';
@@ -101,8 +101,29 @@ const SystemConfiguration = () => {
     </div>
   );
 
+  const userLabel = (user?: ConfigurationUser) => {
+    if (!user) return '';
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return name || user.login || '';
+  };
+
+  const levelOf = (rowData: Configuration) => {
+    if (rowData.scopeType) return formatEnumString(rowData.scopeType);
+    if (rowData.users?.length) return 'User';
+    if (rowData.facility) return 'Facility';
+    return 'Organization';
+  };
+
   const tableColumns = [
+    { key: 'scopeType', title: 'Level', render: (rowData: Configuration) => <p>{levelOf(rowData)}</p> },
     { key: 'facilityId', title: 'Facility', render: (rowData: Configuration) => <p>{rowData?.facility?.name}</p> },
+    {
+      key: 'user',
+      title: 'User',
+      render: (rowData: Configuration) => (
+        <p>{(rowData.users ?? []).map(userLabel).filter(Boolean).join(', ')}</p>
+      )
+    },
     { key: 'key', title: 'Key', render: (rowData: Configuration) => formatEnumString(rowData.key) },
     { key: 'valueType', title: 'Value Type', render: (rowData: Configuration) => formatEnumString(rowData.valueType) },
     { key: 'value', title: 'Value' },
@@ -249,7 +270,8 @@ const SystemConfiguration = () => {
       valueType: selectedConfig.valueType,
       referenceType: selectedConfig.referenceType,
       description: selectedConfig.description,
-      facilityId: Number(selectedConfig?.facility?.id),
+      facilityId: selectedConfig.facility?.id,
+      userIds: (selectedConfig.users ?? []).map(user => user.id),
       isActive: stateOfDeleteModal === 'reactivate'
     };
 

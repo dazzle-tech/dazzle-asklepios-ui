@@ -22,6 +22,7 @@ import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, fromCamelCaseToDBName, conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
+import { useGetConfig } from '@/utils/getConfig';
 import { DAYS, DayValue, mapJsDayToCustom } from '@/utils/dayMapping';
 import { notify } from '@/utils/uiReducerActions';
 import { faBan, faBolt, faListCheck, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -48,7 +49,6 @@ import RecurringFollowUpSection, {
 } from './RecurringFollowUpSection';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
-const ENABLE_RECURRING_FOLLOW_UP = false;
 const normalizeResourceTypeKey = (value: any) => String(value ?? '').trim().toUpperCase();
 const isPractitionerResourceType = (value: any) =>
   normalizeResourceTypeKey(value) === 'PRACTITIONER' || normalizeResourceTypeKey(value) === '2039534205961578';
@@ -242,6 +242,13 @@ const FollowupAppointmentModal = ({
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
+  const recurringFacilityId = Number(appointment?.facilityKey);
+  const { enabled: recurringFollowUpEnabled } = useGetConfig({
+    key: 'ENABLE_APPOINTMENT_RECURRING',
+    userId: currentUserId,
+    facilityId: Number.isFinite(recurringFacilityId) ? recurringFacilityId : null,
+    skip: !isOpen
+  });
 
   const dispatch = useAppDispatch();
 
@@ -1169,7 +1176,7 @@ const FollowupAppointmentModal = ({
       );
     };
 
-    if (ENABLE_RECURRING_FOLLOW_UP && recurringEnabled) {
+    if (recurringFollowUpEnabled && recurringEnabled) {
       const rowsWithSlots = recurringRows.filter(row => row.slot);
       if (!recurringConfig?.startDate || recurringConfig.daysOfWeek.length === 0 || rowsWithSlots.length === 0) {
         dispatch(
@@ -1371,6 +1378,12 @@ const FollowupAppointmentModal = ({
 
   const [modalKey, setModalKey] = useState(0);
   const [recurringEnabled, setRecurringEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!recurringFollowUpEnabled) {
+      setRecurringEnabled(false);
+    }
+  }, [recurringFollowUpEnabled]);
   const [recurringRows, setRecurringRows] = useState<RecurringMappingRow[]>([]);
   const [recurringConfig, setRecurringConfig] = useState<RecurringFollowUpConfig | null>(null);
   const [isSavingRequests, setIsSavingRequests] = useState(false);
@@ -1641,7 +1654,7 @@ const FollowupAppointmentModal = ({
                                 required
                               />
                             </div>
-                            {(!ENABLE_RECURRING_FOLLOW_UP || !recurringEnabled) && (
+                            {(!recurringFollowUpEnabled || !recurringEnabled) && (
                               <div className="input-wrapper" style={{ flex: 3 }}>
                                 <MyInput
                                   width={'15vw'}
@@ -1672,7 +1685,7 @@ const FollowupAppointmentModal = ({
                     }
                   />
 
-                  {ENABLE_RECURRING_FOLLOW_UP && (
+                  {recurringFollowUpEnabled && (
                   <RecurringFollowUpSection
                     disabled={Boolean(showOnly) || isSavingRequests}
                     facilityId={

@@ -2,6 +2,8 @@ import { store } from '@/store';
 import { ListRequest } from '@/types/types';
 
 export { extractErrorMessage } from './extractErrorMessage';
+export { getConfig, useGetConfig, isConfigEnabled } from './getConfig';
+export type { GetConfigArgs, ResolvedConfiguration } from './getConfig';
 export {
   extractApiErrorMessage,
   extractEligibilityErrorMessage,
