@@ -3546,6 +3546,12 @@ export type WaseelSbsSearchParams = {
   search?: string;
   sort?: string;
   activeOnly?: boolean;
+  waseelItemType?: string;
+  sbsCode?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  updateType?: string;
+  isActive?: string;
 };
 
 export type WaseelItemMappingSearchParams = {
@@ -3556,6 +3562,8 @@ export type WaseelItemMappingSearchParams = {
   itemName?: string;
   itemCode?: string;
   sbsCode?: string;
+  sbsDescription?: string;
+  isActive?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };

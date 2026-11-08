@@ -390,6 +390,9 @@ const PriceListSetupItems: React.FC<Props> = ({
         selectedItem.itemType ||
         undefined,
 
+      // Only active mappings can be linked to a price list item
+      isActive: 'true',
+
       refreshToken:
         mappingRefreshToken
     },
