@@ -110,7 +110,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
             dispatch(notify({ msg: 'Select a facility before assigning a user', sev: 'warning' }));
             return;
         }
-        if (!record.facilityId) {
+        if (!configuration?.id && !record.facilityId) {
             setOpenConfirmationMessage(true);
             return;
         }
@@ -212,7 +212,13 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                                         selectDataLabel="displayName"
                                         selectDataValue="id"
                                         record={activeRecord}
-                                        setRecord={setActiveRecord}
+                                        setRecord={(updated: any) => {
+                                            if (!updated?.userId) {
+                                                setActiveRecord({ ...updated, userId: undefined, userIds: [] });
+                                                return;
+                                            }
+                                            setActiveRecord({ ...updated, userIds: [Number(updated.userId)] });
+                                        }}
                                         searchable
                                         searchKeyWard={userSearch}
                                         setSearchKeyWard={(keyword: string) => {
