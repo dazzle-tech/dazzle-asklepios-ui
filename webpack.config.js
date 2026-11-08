@@ -11,6 +11,73 @@ const HtmlwebpackPlugin = require('html-webpack-plugin');
 const isProduction = process.env.NODE_ENV === 'production';
 
 /**
+ * All CSS is merged into one "styles" chunk (see optimization.splitChunks). By default the plugin
+ * orders it by merging every lazy page's own order, which puts rsuite's base styles before most
+ * page/component styles. Order it instead the way it was when everything was in one bundle: walk
+ * the imports from the entry in source order, going into lazy import() pages where they appear.
+ */
+class OrderedCssExtractPlugin extends MiniCssExtractPlugin {
+  sortModules(compilation, chunk, modules, requestShortener) {
+    if (chunk.name !== 'styles' || !modules) {
+      return super.sortModules(compilation, chunk, modules, requestShortener);
+    }
+    const cached = this._sortedModulesCache.get(chunk);
+    if (cached) return cached;
+
+    const { moduleGraph } = compilation;
+    const cssModules = new Set(modules);
+    // Production concatenates modules; walk the original modules so source order is kept
+    const originalModule = module => (module && module.rootModule) || module;
+    const position = loc => {
+      const start = loc && loc.start;
+      return start ? start.line * 1e6 + start.column : Number.MAX_SAFE_INTEGER;
+    };
+    const bySourceOrder = deps =>
+      deps
+        .map((item, index) => ({ ...item, index }))
+        .sort((a, b) => a.pos - b.pos || a.index - b.index)
+        .map(({ dep }) => originalModule(moduleGraph.getResolvedModule(dep) || moduleGraph.getModule(dep)));
+    // Static imports run first (they are hoisted, wherever they are written), then lazy import()s
+    const childrenOf = module => {
+      const staticDeps = module.dependencies.map(dep => ({ dep, pos: position(dep.loc) }));
+      const lazyDeps = (module.blocks || []).flatMap(block =>
+        block.dependencies.map(dep => ({ dep, pos: position(dep.loc || block.loc) }))
+      );
+      return [...bySourceOrder(staticDeps), ...bySourceOrder(lazyDeps)].filter(Boolean);
+    };
+
+    const ordered = new Set();
+    const visited = new Set();
+    const entryDeps = [...compilation.entries.values()].flatMap(entry => entry.dependencies);
+    for (const entryModule of entryDeps.map(dep => originalModule(moduleGraph.getResolvedModule(dep))).filter(Boolean)) {
+      if (visited.has(entryModule)) continue;
+      visited.add(entryModule);
+      // Iterative post-order walk (the import graph is too deep for recursion)
+      const stack = [{ module: entryModule, children: childrenOf(entryModule), next: 0 }];
+      while (stack.length) {
+        const top = stack[stack.length - 1];
+        if (top.next < top.children.length) {
+          const child = top.children[top.next++];
+          if (!visited.has(child)) {
+            visited.add(child);
+            stack.push({ module: child, children: childrenOf(child), next: 0 });
+          }
+        } else {
+          stack.pop();
+          if (cssModules.has(top.module)) ordered.add(top.module);
+        }
+      }
+    }
+    // Anything the walk did not reach keeps the plugin's default order, after the rest
+    for (const module of super.sortModules(compilation, chunk, modules, requestShortener)) {
+      ordered.add(module);
+    }
+    this._sortedModulesCache.set(chunk, ordered);
+    return ordered;
+  }
+}
+
+/**
  * Copy Stimulsoft designer/viewer scripts into public/ so they are served as
  * static files and never enter the webpack application bundle.
  * Missing files are skipped (e.g. if the npm package is not installed).
@@ -218,13 +285,24 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'assets'),
     filename: 'bundle.js',
-    chunkFilename: '[name].chunk.js',
+    // Content hash so browsers fetch the new page chunks after a deploy instead of cached old ones
+    chunkFilename: '[name].[contenthash].chunk.js',
     publicPath: isProduction ? './' : '/',
     clean: true,
   },
   optimization: {
     splitChunks: {
       chunks: 'async',
+      cacheGroups: {
+        // Many component/page .less files style shared rsuite elements app-wide, so keep all CSS
+        // in one stylesheet loaded up front (as before) while the JS stays split per page
+        styles: {
+          name: 'styles',
+          type: 'css/mini-extract',
+          chunks: 'all',
+          enforce: true,
+        },
+      },
     },
   },
  
@@ -309,9 +387,11 @@ module.exports = {
       publicPath: isProduction ? './' : '/',
       favicon: './public/default-favicon.png',
     }),
-    new MiniCssExtractPlugin({
+    new OrderedCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',
+      // Lazy pages import shared .less files in different orders; the styles don't depend on that order
+      ignoreOrder: true,
     }),
   ],
 };

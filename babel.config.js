@@ -1,7 +1,10 @@
 module.exports = (api, options) => {
   const { NODE_ENV } = options || process.env;
   const dev = NODE_ENV === 'development';
-  const modules = NODE_ENV === 'esm' ? false : 'commonjs';
+  // Keep ES modules when the caller (webpack's babel-loader) understands them, so webpack can
+  // tree-shake unused exports and split lazy() pages into their own chunks
+  const callerSupportsEsm = Boolean(api?.caller?.(caller => caller?.supportsStaticESM));
+  const modules = NODE_ENV === 'esm' || callerSupportsEsm ? false : 'commonjs';
 
   if (api) {
     api.cache(() => NODE_ENV);
