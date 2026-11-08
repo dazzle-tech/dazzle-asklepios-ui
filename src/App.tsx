@@ -280,7 +280,6 @@ const CountrySetup = React.lazy(() =>
 const CountryDistrictPage = lazy (() => import ( './pages/setup/country-setup/district-country/CountryDistrictPage'));
 const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
-const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
 const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
 const SkillDefinitions = lazy (() => import ( './pages/setup/skill-definition'));
@@ -305,6 +304,7 @@ import SystemConfiguration from './pages/system-configurations/system-configurat
 import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import { PriceListItemDashboardPage } from './pages/setup/price-list-setup/PriceListItemDashboard';
 import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
@@ -843,6 +843,10 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="discount-setup" element={<DiscountSetup />} />
+              <Route
+                path="coverage-management"
+                element={<Navigate to="/nphies-payers?tab=coverage" replace />}
+              />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
@@ -1006,6 +1010,7 @@ const App = () => {
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
               <Route path="/price-list-setup" element={<PriceListSetup />} />
+              <Route path="/price-list-item-dashboard" element={<PriceListItemDashboardPage />} />
               <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
                <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
                <Route path="/financial-document-numbering" element={<FinancialDocumentNumberingSetup />} />
@@ -1027,7 +1032,10 @@ const App = () => {
               <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
-              <Route path="payor-setup" element={<PayerSetup />} />
+              <Route
+                path="payor-setup"
+                element={<Navigate to="/nphies-payers?tab=insurance" replace />}
+              />
               <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"

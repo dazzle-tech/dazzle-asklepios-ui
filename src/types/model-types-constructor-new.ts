@@ -1533,10 +1533,64 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
   nphiesId: '',
   nameEn: '',
   nameAr: null,
+  shortName: null,
+
+  facilityId: null,
+  facilityName: null,
+
+  insuranceAuthorityLicenseNo: null,
+  commercialRegistrationNo: null,
+  vatRegistrationNo: null,
+  unifiedNationalNo: null,
+
+  headOfficeAddress: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  postalCode: null,
+  contactPerson: null,
+  phone: null,
+  mobile: null,
+  email: null,
+  website: null,
 
   isActive: true,
 
+  approvalCoverageCompany: null,
+  validFrom: null,
+  validTo: null,
+
+  tpaIds: [],
+  tpas: [],
+
   createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newTpaDefinition: modelTypes.TpaDefinition = {
+  id: undefined,
+  tpaCode: '',
+  nphiesId: null,
+  name: '',
+  guarantorType: 'TPA',
+  activationDate: null,
+  isActive: true,
+  approvalCoverageCompany: null,
+  taxRegistrationNo: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  address: null,
+  phone: null,
+  email: null,
+  insuranceCompanyIds: [],
+  insuranceCompanies: [],
+  linkedInsuranceCount: 0,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
   lastModifiedDate: null
 };
 
@@ -1886,6 +1940,8 @@ export const newPatientInsurance: modelTypes.PatientInsurance = {
 
   payerName: null,
   payerNphiesId: null,
+  tpaNphiesId: null,
+  tpaName: null,
 
   policyHolderId: null,
 
@@ -3570,8 +3626,11 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
 
   payerId: undefined,
   payerName: undefined,
+  nphiesPayerId: undefined,
+  nphiesPayerName: undefined,
 
   name: undefined,
+  shortName: undefined,
   description: undefined,
 
   versionNumber: 1,
@@ -3882,9 +3941,10 @@ export const newBillingCancellationRequest: modelTypes.BillingCancellationReques
 export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
   patientId: 0,
   encounterId: null,
+  facilityId: null,
   originalPaymentId: null,
   originalPaymentTransactionId: null,
-  refundSourceType: 'AVAILABLE_WALLET',
+  refundSourceType: 'WALLET_AVAILABLE',
   requestedAmount: 0,
   refundMethodCode: '',
   refundMethodId: 0,

@@ -2517,11 +2517,191 @@ export interface NphiesPayer {
   nphiesId: string;
   nameEn: string;
   nameAr?: string | null;
+  shortName?: string | null;
+
+  facilityId?: number | null;
+  facilityName?: string | null;
+
+  insuranceAuthorityLicenseNo?: string | null;
+  commercialRegistrationNo?: string | null;
+  vatRegistrationNo?: string | null;
+  unifiedNationalNo?: string | null;
+
+  headOfficeAddress?: string | null;
+  countryId?: number | null;
+  countryName?: string | null;
+  cityId?: number | null;
+  cityName?: string | null;
+  postalCode?: string | null;
+  contactPerson?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  website?: string | null;
 
   isActive: boolean;
 
+  approvalCoverageCompany?: string | null;
+
+  inactiveReason?: string | null;
+
+  validFrom?: string | null;
+  validTo?: string | null;
+
+  tpaIds?: number[];
+  tpas?: LinkedTpa[];
+
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
+}
+
+export interface LinkedTpa {
+  id: number;
+  tpaCode: string;
+  nphiesId?: string | null;
+  name: string;
+  isActive: boolean;
+}
+
+export interface InsuranceCompanyPolicy {
+  id: number;
+  insuranceCompanyId: number;
+  policyName: string;
+  policyNumber?: string | null;
+  policyCode: string;
+  validFrom: string;
+  validTo?: string | null;
+  isActive?: boolean;
+  inactiveReason?: string | null;
+}
+
+export type TpaResolutionStatus =
+  | 'NO_TPA'
+  | 'RESOLVED'
+  | 'SELECTION_REQUIRED'
+  | 'NPHIES_ID_MISSING';
+
+export interface TpaResolution {
+  status: TpaResolutionStatus;
+  tpaNphiesId?: string | null;
+  tpaName?: string | null;
+  candidates: { id: number; name: string; nphiesId?: string | null }[];
+}
+
+export interface TpaDefinition {
+  id?: number;
+  tpaCode: string;
+  nphiesId?: string | null;
+  name: string;
+  guarantorType: string;
+  activationDate: string | null;
+  isActive: boolean;
+  approvalCoverageCompany?: string | null;
+  taxRegistrationNo?: string | null;
+  countryId?: number | null;
+  countryName?: string | null;
+  cityId?: number | null;
+  cityName?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  insuranceCompanyIds?: number[];
+  insuranceCompanies?: TpaLinkedInsuranceCompany[];
+  linkedInsuranceCount?: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface TpaLinkedInsuranceCompany {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
+}
+
+export interface PayerDashboardSummary {
+  insuranceCount: number;
+  tpaCount: number;
+  insurancesWithContracts: number;
+  insurancesWithPriceLists: number;
+  tpasWithContracts: number;
+}
+
+export interface PayerDashboardLinkedParty {
+  id: number;
+  code?: string | null;
+  name?: string | null;
+  isActive?: boolean | null;
+}
+
+export interface PayerDashboardPriceList {
+  id: number;
+  name: string;
+  status?: string | null;
+  type?: string | null;
+  isActive?: boolean | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+}
+
+export interface PayerDashboardContract {
+  id: number;
+  policyNumber?: string | null;
+  guarantorType?: string | null;
+  className?: string | null;
+  isActive?: boolean | null;
+  insurancePayerId?: number | null;
+  insurancePayerName?: string | null;
+  parentPayerName?: string | null;
+  priceListSetupId?: number | null;
+  priceListName?: string | null;
+}
+
+export interface PayerDashboardInsuranceListItem {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
+}
+
+export interface PayerDashboardTpaListItem {
+  id: number;
+  tpaCode: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface PayerDashboardInsuranceCard {
+  id: number;
+  nphiesId: string;
+  nameEn: string;
+  nameAr?: string | null;
+  isActive: boolean;
+  approvalCoverageCompany?: string | null;
+  facilityName?: string | null;
+  tpas: PayerDashboardLinkedParty[];
+  priceLists: PayerDashboardPriceList[];
+  contracts: PayerDashboardContract[];
+}
+
+export interface PayerDashboardTpaCard {
+  id: number;
+  tpaCode: string;
+  name: string;
+  isActive: boolean;
+  approvalCoverageCompany?: string | null;
+  insuranceCompanies: PayerDashboardLinkedParty[];
+  contracts: PayerDashboardContract[];
+}
+
+export interface PayerRelationshipDashboard {
+  summary: PayerDashboardSummary | null;
+  insurances: PayerDashboardInsuranceListItem[];
+  tpas: PayerDashboardTpaListItem[];
 }
 
 export interface PayorPlanItem {
@@ -2806,6 +2986,8 @@ export interface PatientInsurance {
 
   payerName?: string | null;
   payerNphiesId?: string | null;
+  tpaNphiesId?: string | null;
+  tpaName?: string | null;
 
   policyHolderId?: number | null;
 
@@ -4242,6 +4424,7 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   /* ===== Status & lifecycle ===== */
 
   status?: DiagnosticOrderTestStatus;
+  coveragePreApprovalPending?: boolean | null;
 
   acceptedDate?: string;
   rejectedDate?: string;
@@ -4266,6 +4449,11 @@ export interface DiagnosticOrderTest extends AuditingEntity {
 
   confirmedBy?: string;
   confirmedAt?: string;
+
+  /** Status of the test's billing line; null when no pre-authorization applies. */
+  preAuthorizationStatus?: string | null;
+  /** True when sample collection waits on pre-authorization (NPHIES contracts). */
+  preAuthorizationBlocked?: boolean | null;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -4678,12 +4866,15 @@ export type PatientServiceAndProduct = {
   preAuthorizationStatus?: string | null;
   preAuthorizationReferenceNo?: string | null;
   preAuthorizationRequired?: boolean | null;
+  /** Local (NPHIES) pre-approval reason, e.g. "Coverage limit exceeded". List responses only. */
+  preAuthorizationReason?: string | null;
   itemName?: string | null;
   itemCode?: string | null;
   priceSource?: string | null;
   netAmount?: number | null;
   patientShareAmount?: number | null;
   insuranceShareAmount?: number | null;
+  clinicalStatus?: string | null;
   // MEDICATION: UOM unit the quantity is charged in (null = the brand's price base unit)
   uomGroupUnitId?: number | null;
 };
@@ -6110,6 +6301,22 @@ export type CancelReason =
   | 'WRONG_INFORMATION'
   | 'TRANSACTION_ALREADY_SUBMITTED';
 
+export type LocalPreAuthorizationDecision = 'APPROVED' | 'PARTIAL' | 'REJECTED';
+
+export type LocalPreAuthorizationDecisionRequest = {
+  decision: LocalPreAuthorizationDecision;
+  note?: string | null;
+  /** Insurance amount approved on a PARTIAL decision. */
+  approvedAmount?: number | null;
+};
+
+/** Contract split of a local pre-approval request line. */
+export type LocalPreAuthorizationCoverageResponse = {
+  netAmount: number;
+  patientShare: number;
+  insuranceShare: number;
+};
+
 export type PreAuthorizationCancelRequest = {
   preAuthorizationId?: number;
   approvalRequestId?: number;
@@ -6298,8 +6505,11 @@ export type PricingMethod =
 
   payerId?: number;
   payerName?: string;
+  nphiesPayerId?: number;
+  nphiesPayerName?: string;
 
   name?: string;
+  shortName?: string;
   description?: string;
 
   versionNumber?: number;
@@ -6310,6 +6520,13 @@ export type PricingMethod =
   status?: PriceListSetupStatus;
 
   currency?: string;
+  taxId?: number;
+  appliesToAllFacilities?: boolean;
+
+  createdDate?: string;
+  lastModifiedDate?: string;
+  createdBy?: string;
+  lastModifiedBy?: string;
 
   isActive?: boolean;
 };
@@ -6358,14 +6575,145 @@ export type SavePriceListSetupRequest = {
   facilityId: number;
   type: PriceListSetupType;
   payerId?: number | null;
+  nphiesPayerId?: number | null;
   name: string;
+  shortName?: string | null;
   description?: string | null;
   versionNumber: number;
-  effectiveFrom: string;
+  effectiveFrom: string | null;
   effectiveTo?: string | null;
   currency: string;
   status?: PriceListSetupStatus;
+  appliesToAllFacilities?: boolean;
+  taxId?: number | null;
 };
+
+export type ClonePriceListSetupRequest =
+  SavePriceListSetupRequest & {
+    cloneItems: boolean;
+  };
+
+export type PriceListSetupItemImportError = {
+  rowNumber: number;
+  itemCode?: string;
+  message: string;
+};
+
+export type PriceListSetupItemImportResult = {
+  totalRows: number;
+  inserted: number;
+  updated: number;
+  failed: number;
+  errors: PriceListSetupItemImportError[];
+};
+
+export type PriceListItemCoverageStatus = 'COMPLETE' | 'PARTIAL' | string;
+export type PriceListItemPresence = 'PRESENT' | 'MISSING' | 'INACTIVE' | string;
+
+export interface PriceListItemDashboardSummary {
+  priceListCount: number;
+  uniqueItemCount: number;
+  completeItemCount: number;
+  partialItemCount: number;
+  byItemType: PriceListItemDashboardTypeCount[];
+}
+
+export interface PriceListItemDashboardTypeCount {
+  itemType: PriceListItemType;
+  itemCount: number;
+}
+
+export interface PriceListItemDashboardPage {
+  content: PriceListItemDashboardCatalogItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PriceListItemDashboardCatalogItem {
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  nonStandardCode?: string | null;
+  presentInCount: number;
+  missingFromCount: number;
+  coverageStatus: PriceListItemCoverageStatus;
+  coveragePercent: number;
+  minUnitPrice?: number | string | null;
+  maxUnitPrice?: number | string | null;
+  hasPriceVariance: boolean;
+}
+
+export interface PriceListItemDashboardColumn {
+  id: number;
+  name: string;
+  shortName?: string | null;
+  description?: string | null;
+  type?: PriceListSetupType | string | null;
+  status?: PriceListSetupStatus | string | null;
+  isActive?: boolean | null;
+  currency?: string | null;
+  versionNumber?: number | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  facilityId?: number | null;
+  facilityName?: string | null;
+  appliesToAllFacilities?: boolean | null;
+  payerId?: number | null;
+  payerName?: string | null;
+  nphiesPayerId?: number | null;
+  nphiesPayerName?: string | null;
+}
+
+export interface PriceListItemDashboardEntry {
+  id: number;
+  priceListSetupId: number;
+  waseelItemMappingId?: number | null;
+  sbsCatalogId?: number | null;
+  itemCode?: string | null;
+  nonStandardCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  unitPrice?: number | string | null;
+  discountPercentage?: number | string | null;
+  netPrice?: number | string | null;
+  isActive?: boolean | null;
+  requiresPreAuthorization?: boolean | null;
+  createdDate?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PriceListItemDashboardCoverage {
+  priceList: PriceListItemDashboardColumn;
+  present: boolean;
+  presence: PriceListItemPresence;
+  entries: PriceListItemDashboardEntry[];
+}
+
+export interface PriceListItemDashboardCard {
+  itemType: PriceListItemType;
+  sourceId: number;
+  itemCode?: string | null;
+  itemName?: string | null;
+  category?: string | null;
+  nonStandardCode?: string | null;
+  presentInCount: number;
+  missingFromCount: number;
+  coverageStatus: PriceListItemCoverageStatus;
+  coveragePercent: number;
+  hasPriceVariance: boolean;
+  minUnitPrice?: number | string | null;
+  maxUnitPrice?: number | string | null;
+  priceLists: PriceListItemDashboardCoverage[];
+}
+
+export interface PriceListItemDashboard {
+  summary: PriceListItemDashboardSummary | null;
+  priceLists: PriceListItemDashboardColumn[];
+}
 
 export enum BillingTrigger {
   ENCOUNTER_CREATED = 'ENCOUNTER_CREATED',
@@ -6966,7 +7314,9 @@ export type BillingRefundStatus =
 
 export type BillingRefundSourceType =
   | 'ORIGINAL_PAYMENT'
-  | 'AVAILABLE_WALLET'
+  | 'WALLET_AVAILABLE'
+  | 'OVERPAYMENT'
+  | 'MANUAL_ADJUSTMENT'
   | string;
 
 export type BillingCancellationReason =
@@ -7043,6 +7393,7 @@ export type EncounterBillingItemSummary = {
   status: BillingChargeLineStatus;
   chargedAt?: string | null;
   responsibilities: BillingResponsibilitySummary[];
+  clinicalStatus?: string | null;
   patientTaxAmount?: number | null;
   insuranceTaxAmount?: number | null;
 };
@@ -7267,6 +7618,7 @@ export type BillingCancellationResult = {
 export type BillingRefundRequest = {
   patientId: number;
   encounterId?: number | null;
+  facilityId?: number | null;
   originalPaymentId?: number | null;
   originalPaymentTransactionId?: number | null;
   refundSourceType: BillingRefundSourceType;
@@ -7303,6 +7655,8 @@ export type BillingRefundResult = {
   currency: Currency;
   refundSourceType: BillingRefundSourceType;
   status: BillingRefundStatus;
+  financialDocumentId?: number | null;
+  documentNumber?: string | null;
 };
 
 export type BillingRefundReversalRequest = {
@@ -7417,6 +7771,9 @@ export type PreviewDefaultServicePricingResult = {
   requiresCashConfirmation?: boolean;
   notCoveredReason?: string | null;
   cashUnitPrice?: number | null;
+  /** The coverage contract holds this service for pre-approval; shares are zero until the decision. */
+  preAuthorizationRequired?: boolean;
+  contractCashReason?: string | null;
 };
 
 export type PreviewDefaultServicesPricingResult = {

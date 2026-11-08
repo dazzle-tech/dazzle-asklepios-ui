@@ -1,12 +1,16 @@
 import React, { useMemo, useState } from 'react';
 
-import { Checkbox, Loader, Tag } from 'rsuite';
+import { Checkbox, Loader, Tag, Tooltip, Whisper } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBan, faClone, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 
 
 
 import MyButton from '@/components/MyButton/MyButton';
 
 import MyTable from '@/components/MyTable';
+
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
 
 import type { EncounterBillingSummary } from '@/types/model-types-new';
 import type { UnifiedBillingChargeRow } from '../utils/billingAccountingUtils';
@@ -33,7 +37,11 @@ import {
 
   isPreAuthApproved,
 
+  isPreAuthPending,
+
   isPreAuthRequiredRow,
+
+  isAwaitingPatientChoice,
 
   shouldShowPreAuthRowActions,
 
@@ -51,7 +59,67 @@ import {
 
 import { formatBillingItemType } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 
+const PROCESSING_STATUS_LABELS: Record<string, string> = {
+  NEW: 'New',
+  SUBMITTED: 'Submitted',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Rejected',
+  SAMPLE_COLLECTED: 'Sample collected',
+  SAMPLE_REPEAT: 'Sample repeat',
+  PATIENT_ARRIVED: 'Patient arrived',
+  EXAM_DONE: 'Exam done',
+  RESULT_READY: 'Result ready',
+  RESULT_APPROVED: 'Result approved',
+  RESULT_REJECTED: 'Result rejected',
+  PARTIALLY: 'Partial',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled'
+};
 
+const formatProcessingStatus = (status?: string | null) => {
+  const normalized = String(status ?? '').trim().toUpperCase();
+  if (!normalized) {
+    return '-';
+  }
+  return PROCESSING_STATUS_LABELS[normalized] ?? formatBillingChargeStatus(normalized);
+};
+
+const clinicalStatusColor = (
+  status?: string | null
+): 'green' | 'blue' | 'orange' | 'red' | undefined => {
+  switch (String(status ?? '').toUpperCase()) {
+    case 'COMPLETED':
+    case 'RESULT_APPROVED':
+    case 'RESULT_READY':
+    case 'EXAM_DONE':
+    case 'CONFIRMED':
+    case 'READY':
+    case 'SENT':
+      return 'green';
+    case 'CANCELLED':
+    case 'REJECTED':
+    case 'RESULT_REJECTED':
+    case 'ALL_REJECTED':
+      return 'red';
+    case 'SAMPLE_COLLECTED':
+    case 'SAMPLE_REPEAT':
+    case 'ACCEPTED':
+    case 'ALL_ACCEPTED':
+    case 'IN_PROGRESS':
+    case 'STARTED':
+    case 'PATIENT_ARRIVED':
+    case 'PARTIALLY':
+      return 'orange';
+    case 'NEW':
+    case 'REQUESTED':
+    case 'DRAFT':
+    case 'SUBMITTED':
+    case 'WAITING_PRE_AUTHORIZATION':
+      return 'blue';
+    default:
+      return undefined;
+  }
+};
 
 type BillingChargesTableProps = {
   rows: UnifiedBillingChargeRow[];
@@ -67,6 +135,7 @@ type BillingChargesTableProps = {
   preAuthActionLoadingId?: number | null;
   onPayRejectedAsCash?: (patientServiceProductId: number) => void;
   onClonePreAuthorization?: (patientServiceProductId: number) => void;
+  onCancelService?: (patientServiceProductId: number) => void;
 };
 
 
@@ -97,7 +166,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   onPayRejectedAsCash,
 
-  onClonePreAuthorization
+  onClonePreAuthorization,
+
+  onCancelService
 
 }) => {
 
@@ -195,6 +266,68 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
 
 
+  /**
+   * Pre-auth actions as icons (tooltip = action name): pay cash / cancel service after a
+   * rejection, clone the request. A Waseel partial approval shows "Communication required".
+   */
+  const renderPreAuthActions = (row: UnifiedBillingChargeRow) => {
+    if (!shouldShowPreAuthRowActions(row, billingSummary)) {
+      return null;
+    }
+
+    const awaitingPatientChoice = isAwaitingPatientChoice(row);
+
+    if (!awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus)) {
+      return (
+        <Tag color="yellow" size="sm">
+          Communication required
+        </Tag>
+      );
+    }
+
+    const pspId = row.patientServiceProductId;
+
+    if (pspId == null || (!awaitingPatientChoice && !isPreAuthRejected(row.preAuthorizationStatus))) {
+      return null;
+    }
+
+    const actionsDisabled = disabled || preAuthActionLoadingId === pspId;
+
+    const actions = [
+      { key: 'pay-cash', label: 'Pay cash', icon: faMoneyBillWave, onClick: onPayRejectedAsCash },
+      ...(awaitingPatientChoice && onCancelService
+        ? [{ key: 'cancel-service', label: 'Cancel service', icon: faBan, onClick: onCancelService }]
+        : []),
+      { key: 'clone', label: 'Clone pre-auth', icon: faClone, onClick: onClonePreAuthorization }
+    ];
+
+    return (
+      <div className="billing-accounting__preauth-row-actions">
+        {actions.map(action => (
+          <Whisper
+            key={action.key}
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>{action.label}</Tooltip>}
+          >
+            <span
+              role="button"
+              aria-label={action.label}
+              className={`billing-accounting__preauth-action${
+                actionsDisabled ? ' billing-accounting__preauth-action--disabled' : ''
+              }`}
+              onClick={() => {
+                if (!actionsDisabled) action.onClick?.(pspId);
+              }}
+            >
+              <FontAwesomeIcon icon={action.icon} />
+            </span>
+          </Whisper>
+        ))}
+      </div>
+    );
+  };
+
   const columns = [
 
     ...(selectable
@@ -275,6 +408,32 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
     },
 
+    ...(showPreAuthActions
+      ? [
+          {
+            key: 'preAuthorizationStatus',
+            title: 'Pre-auth status',
+            width: 140,
+            render: (row: UnifiedBillingChargeRow) => (
+              <>
+                <PreAuthorizationStatusBadge status={row.preAuthorizationStatus} />
+                {row.preAuthorizationReason && (
+                  <div className="billing-accounting__preauth-reason">
+                    {row.preAuthorizationReason}
+                  </div>
+                )}
+              </>
+            )
+          },
+          {
+            key: 'preAuthActions',
+            title: 'Pre-auth actions',
+            width: 120,
+            render: renderPreAuthActions
+          }
+        ]
+      : []),
+
     {
 
       key: 'chargedAt',
@@ -335,6 +494,28 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 220,
 
       render: (row: UnifiedBillingChargeRow) => row.itemName
+
+    },
+
+    {
+
+      key: 'clinicalStatus',
+
+      title: 'Processing status',
+
+      width: 140,
+
+      render: (row: UnifiedBillingChargeRow) => {
+        if (!row.clinicalStatus) {
+          return '-';
+        }
+
+        return (
+          <Tag size="sm" color={clinicalStatusColor(row.clinicalStatus)}>
+            {formatProcessingStatus(row.clinicalStatus)}
+          </Tag>
+        );
+      }
 
     },
 
@@ -537,6 +718,14 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
       width: 120,
 
       render: (row: UnifiedBillingChargeRow) => {
+        if (isAwaitingPatientChoice(row)) {
+          return (
+            <Tag color="orange" size="sm">
+              Pre-auth rejected
+            </Tag>
+          );
+        }
+
         if (!isPreAuthRequiredRow(row)) {
           return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
         }
@@ -565,78 +754,18 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
           );
         }
 
+        if (isPreAuthPending(row.preAuthorizationStatus)) {
+          return (
+            <Tag color="blue" size="sm">
+              Pending pre-authorization
+            </Tag>
+          );
+        }
+
         return <Tag size="sm">{formatBillingChargeStatus(row.status)}</Tag>;
       }
 
-    },
-
-    ...(showPreAuthActions
-
-      ? [
-
-          {
-
-            key: 'preAuthActions',
-
-            title: 'Pre-auth',
-
-            width: 220,
-
-            render: (row: UnifiedBillingChargeRow) => {
-              if (!shouldShowPreAuthRowActions(row, billingSummary)) {
-                return null;
-              }
-
-              if (isPreAuthPartial(row.preAuthorizationStatus)) {
-                return (
-                  <Tag color="yellow" size="sm">
-                    Communication required
-                  </Tag>
-                );
-              }
-
-              if (!isPreAuthRejected(row.preAuthorizationStatus)) {
-                return null;
-              }
-
-              const pspId = row.patientServiceProductId;
-
-              if (pspId == null) {
-                return null;
-              }
-
-              const loading = preAuthActionLoadingId === pspId;
-
-              return (
-                <div className="billing-accounting__preauth-row-actions">
-                  <MyButton
-                    size="xs"
-                    appearance="primary"
-                    loading={loading}
-                    disabled={disabled || loading}
-                    onClick={() => onPayRejectedAsCash?.(pspId)}
-                  >
-                    Pay cash
-                  </MyButton>
-
-                  <MyButton
-                    size="xs"
-                    appearance="default"
-                    loading={loading}
-                    disabled={disabled || loading}
-                    onClick={() => onClonePreAuthorization?.(pspId)}
-                  >
-                    Clone pre-auth
-                  </MyButton>
-                </div>
-              );
-            }
-
-          }
-
-        ]
-
-      : [])
+    }
 
   ];
 

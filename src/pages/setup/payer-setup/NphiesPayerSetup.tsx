@@ -1,27 +1,53 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './styles.less';
 import { Panel, Form } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import MyTab from '@/components/MyTab';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { MdAssignment, MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import DeactivationReasonModal from '@/components/DeactivationReasonModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import { NphiesPayer } from '@/types/model-types-new';
+import { newNphiesPayer, newPayor } from '@/types/model-types-constructor-new';
+import { approvalCoverageCompanyLabel } from '@/pages/setup/coverage-management/coverageHelpers';
 
 import {
   useGetAllNphiesPayersQuery,
   useGetNphiesPayersByNphiesIdQuery,
   useGetNphiesPayersByNameEnQuery,
   useGetNphiesPayersByNameArQuery,
+  useCreateNphiesPayerMutation,
+  useUpdateNphiesPayerMutation,
+  useToggleNphiesPayerActiveMutation,
   useGetNphiesPayersByStatusQuery
 } from '@/services/setup/payer/NphiesPayerSetupService';
+import {
+  useCreatePayorMutation,
+  useLazyGetAllPayorsQuery,
+  useUpdatePayorMutation
+} from '@/services/setup/payer/PayorService';
+import NphiesPayerModal from './NphiesPayerModal';
+import PayerLinkTpasModal from './PayerLinkTpasModal';
+import TpaDefinitionSection from './TpaDefinitionSection';
+import PayerRelationshipDashboard from './PayerRelationshipDashboard';
+import CoverageManagement from '@/pages/setup/coverage-management/CoverageManagement';
+import InsuranceCompanyPolicyModal from './InsuranceCompanyPolicyModal';
+import InsuranceCompanyPoliciesPanel from './InsuranceCompanyPoliciesPanel';
+import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
 
 type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr' | 'isActive';
 
 const filterCriteriaOptions = [
-  { label: 'NPHIES ID', value: 'nphiesId' },
+  { label: 'Payer Company Code', value: 'nphiesId' },
   { label: 'English Name', value: 'nameEn' },
   { label: 'Arabic Name', value: 'nameAr' },
   { label: 'Active', value: 'isActive' }
@@ -40,10 +66,40 @@ const initialNphiesPayerFilter = {
   isActive: ''
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WEBSITE_PATTERN = /^https?:\/\/.+$/i;
+
+const localToday = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
 const NphiesPayerSetup = () => {
   const dispatch = useAppDispatch();
 
-  const [selectedPayer, setSelectedPayer] = useState<NphiesPayer | null>(null);
+  const [selectedPayer, setSelectedPayer] = useState<NphiesPayer>({ ...newNphiesPayer });
+  const [openModal, setOpenModal] = useState(false);
+  const [openLinkTpas, setOpenLinkTpas] = useState(false);
+  const [openPolicyModal, setOpenPolicyModal] = useState(false);
+  const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
+  const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
+    'deactivate'
+  );
+  const [searchParams] = useSearchParams();
+  const tabFromQuery = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabFromQuery === 'coverage' ? '3' : tabFromQuery === 'insurance' ? '2' : '1'
+  );
+
+  useEffect(() => {
+    if (tabFromQuery === 'coverage') {
+      setActiveTab('3');
+    } else if (tabFromQuery === 'insurance') {
+      setActiveTab('2');
+    }
+  }, [tabFromQuery]);
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -129,6 +185,56 @@ const NphiesPayerSetup = () => {
     }
   );
 
+  const [createNphiesPayer] = useCreateNphiesPayerMutation();
+  const [updateNphiesPayer] = useUpdateNphiesPayerMutation();
+  const [toggleNphiesPayerActive] = useToggleNphiesPayerActiveMutation();
+  const [fetchPayors] = useLazyGetAllPayorsQuery();
+  const [createPayor] = useCreatePayorMutation();
+  const [updatePayor] = useUpdatePayorMutation();
+
+  const syncLinkedPayor = async (company: NphiesPayer) => {
+    const code = company.nphiesId?.trim();
+    const name = company.nameEn?.trim();
+    if (!code || !name) {
+      return;
+    }
+
+    const payors = await fetchPayors({
+      page: 0,
+      size: 500,
+      sort: 'id,asc'
+    }).unwrap();
+
+    const linked = (payors.data ?? []).find((payor: { nphiesId?: string; code?: string }) => {
+      const nphiesId = String(payor.nphiesId ?? '').trim().toLowerCase();
+      const payorCode = String(payor.code ?? '').trim().toLowerCase();
+      return nphiesId === code.toLowerCase() || payorCode === code.toLowerCase();
+    });
+
+    const { createdDate, lastModifiedDate, ...base } = {
+      ...newPayor,
+      ...(linked ?? {}),
+      code: linked?.code || code,
+      name,
+      category: linked?.category || 'INSURANCE',
+      phone: company.phone?.trim() || linked?.phone || 'N/A',
+      email: company.email?.trim() || linked?.email || '',
+      address: company.headOfficeAddress?.trim() || linked?.address || '',
+      contractManagerContact:
+        company.contactPerson?.trim() || linked?.contractManagerContact || 'N/A',
+      startDate: linked?.startDate || localToday(),
+      nphiesId: code,
+      isActive: company.isActive !== false
+    };
+
+    if (linked?.id) {
+      await updatePayor({ ...base, id: linked.id }).unwrap();
+      return;
+    }
+
+    await createPayor(base).unwrap();
+  };
+
   const payersByStatusQuery = useGetNphiesPayersByStatusQuery(
     {
       isActive: appliedPayerFilter.isActive,
@@ -160,7 +266,7 @@ const NphiesPayerSetup = () => {
 
   useEffect(() => {
     dispatch(setPageCode('NPHIES_PAYER'));
-    dispatch(setDivContent('NPHIES Payers'));
+    dispatch(setDivContent('TPA & Insurance Companies'));
 
     return () => {
       dispatch(setPageCode(''));
@@ -213,24 +319,24 @@ const NphiesPayerSetup = () => {
     }));
   };
 
-  const handleSearch = () => {
+  const handleSearch = (nextFilter = payerFilter) => {
     if (
-      !payerFilter.criteria ||
-      (payerFilter.criteria === 'nphiesId' && !payerFilter.nphiesId.trim()) ||
-      (payerFilter.criteria === 'nameEn' && !payerFilter.nameEn.trim()) ||
-      (payerFilter.criteria === 'nameAr' && !payerFilter.nameAr.trim()) ||
-      (payerFilter.criteria === 'isActive' && !payerFilter.isActive)
+      !nextFilter.criteria ||
+      (nextFilter.criteria === 'nphiesId' && !nextFilter.nphiesId.trim()) ||
+      (nextFilter.criteria === 'nameEn' && !nextFilter.nameEn.trim()) ||
+      (nextFilter.criteria === 'nameAr' && !nextFilter.nameAr.trim()) ||
+      (nextFilter.criteria === 'isActive' && !nextFilter.isActive)
     ) {
       handleResetFilter();
       return;
     }
 
     setAppliedPayerFilter({
-      criteria: payerFilter.criteria,
-      nphiesId: payerFilter.nphiesId,
-      nameEn: payerFilter.nameEn,
-      nameAr: payerFilter.nameAr,
-      isActive: payerFilter.isActive
+      criteria: nextFilter.criteria,
+      nphiesId: nextFilter.nphiesId,
+      nameEn: nextFilter.nameEn,
+      nameAr: nextFilter.nameAr,
+      isActive: nextFilter.isActive
     });
 
     setPaginationParams(prev => ({
@@ -239,27 +345,358 @@ const NphiesPayerSetup = () => {
     }));
   };
 
+  const applyHeaderSearch = (criteria: FilterCriteria, value: string) => {
+    const next = {
+      criteria,
+      nphiesId: criteria === 'nphiesId' ? value : '',
+      nameEn: criteria === 'nameEn' ? value : '',
+      nameAr: criteria === 'nameAr' ? value : '',
+      isActive: criteria === 'isActive' ? value : ''
+    };
+    setPayerFilter(next);
+    handleSearch(next);
+  };
+
+  const handleNew = () => {
+    setSelectedPayer({ ...newNphiesPayer, tpaIds: [] });
+    setOpenModal(true);
+  };
+
+  const handleSave = async () => {
+    const errors: string[] = [];
+    if (!selectedPayer.nphiesId?.trim()) errors.push('Payer Company Code is required');
+    if (!selectedPayer.nameEn?.trim()) errors.push('Payer Company Name is required');
+    if (!selectedPayer.facilityId) errors.push('Facility Name is required');
+    if (selectedPayer.isActive === undefined || selectedPayer.isActive === null) {
+      errors.push('Status is required');
+    }
+    if (!selectedPayer.insuranceAuthorityLicenseNo?.trim()) {
+      errors.push('Insurance Authority License No. is required');
+    }
+    if (!selectedPayer.commercialRegistrationNo?.trim()) {
+      errors.push('Commercial Registration No. is required');
+    }
+    if (!selectedPayer.vatRegistrationNo?.trim()) {
+      errors.push('VAT Registration No. is required');
+    }
+    if (!selectedPayer.phone?.trim()) errors.push('Phone is required');
+    if (!selectedPayer.email?.trim()) {
+      errors.push('Email is required');
+    } else if (!EMAIL_PATTERN.test(selectedPayer.email.trim())) {
+      errors.push('Email must be valid');
+    }
+    if (selectedPayer.website?.trim() && !WEBSITE_PATTERN.test(selectedPayer.website.trim())) {
+      errors.push('Website must be a valid URL');
+    }
+    if (selectedPayer.validFrom && selectedPayer.validTo && selectedPayer.validTo < selectedPayer.validFrom) {
+      errors.push('Valid To must be on or after Valid From');
+    }
+
+    if (errors.length > 0) {
+      dispatch(
+        notify({
+          msg: (
+            <>
+              {errors.map((err, i) => (
+                <div key={i}>• {err}</div>
+              ))}
+            </>
+          ),
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      const toId = (value: unknown): number | null => {
+        if (value == null || value === '') {
+          return null;
+        }
+        if (typeof value === 'object') {
+          const nested = Number(
+            (value as { id?: unknown; value?: unknown }).id ??
+              (value as { value?: unknown }).value
+          );
+          return Number.isFinite(nested) ? nested : null;
+        }
+        const id = Number(value);
+        return Number.isFinite(id) ? id : null;
+      };
+
+      const toIdList = (values?: unknown[]) =>
+        [...new Set((values ?? []).map(toId).filter((id): id is number => id != null))];
+
+      const blankToNull = (value?: string | null) => {
+        const text = value?.trim();
+        return text ? text : null;
+      };
+
+      const tpaIds = toIdList(
+        selectedPayer.tpaIds?.length
+          ? selectedPayer.tpaIds
+          : selectedPayer.tpas?.map(tpa => tpa.id)
+      );
+
+      const payload = {
+        nphiesId: selectedPayer.nphiesId.trim(),
+        nameEn: selectedPayer.nameEn.trim(),
+        nameAr: blankToNull(selectedPayer.nameAr),
+        shortName: blankToNull(selectedPayer.shortName),
+        facilityId: toId(selectedPayer.facilityId),
+        insuranceAuthorityLicenseNo: selectedPayer.insuranceAuthorityLicenseNo?.trim(),
+        commercialRegistrationNo: selectedPayer.commercialRegistrationNo?.trim(),
+        vatRegistrationNo: selectedPayer.vatRegistrationNo?.trim(),
+        unifiedNationalNo: blankToNull(selectedPayer.unifiedNationalNo),
+        headOfficeAddress: blankToNull(selectedPayer.headOfficeAddress),
+        countryId: toId(selectedPayer.countryId),
+        cityId: toId(selectedPayer.cityId),
+        postalCode: blankToNull(selectedPayer.postalCode),
+        contactPerson: blankToNull(selectedPayer.contactPerson),
+        phone: selectedPayer.phone.trim(),
+        mobile: blankToNull(selectedPayer.mobile),
+        email: selectedPayer.email.trim(),
+        website: blankToNull(selectedPayer.website),
+        isActive: selectedPayer.isActive,
+        approvalCoverageCompany: blankToNull(selectedPayer.approvalCoverageCompany),
+        validFrom: blankToNull(selectedPayer.validFrom),
+        validTo: blankToNull(selectedPayer.validTo),
+        tpaIds
+      };
+
+      if (selectedPayer.id) {
+        await updateNphiesPayer({
+          ...payload,
+          id: selectedPayer.id
+        }).unwrap();
+        dispatch(notify({ msg: 'Insurance company updated successfully', sev: 'success' }));
+      } else {
+        await createNphiesPayer(payload).unwrap();
+        dispatch(notify({ msg: 'Insurance company created successfully', sev: 'success' }));
+      }
+
+      try {
+        await syncLinkedPayor(selectedPayer);
+      } catch {
+        dispatch(
+          notify({
+            msg: 'Insurance company saved, but the linked payor record could not be updated.',
+            sev: 'warning'
+          })
+        );
+      }
+
+      dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
+      setOpenModal(false);
+    } catch (err: any) {
+      let serverMessage =
+        err?.data?.properties?.message ||
+        err?.data?.message ||
+        err?.data?.detail ||
+        err?.data?.title ||
+        'Failed to save payer company';
+
+      serverMessage = String(serverMessage).replace(/^error\./i, '');
+
+      dispatch(
+        notify({
+          msg: serverMessage,
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleToggleActive = async (reason?: string) => {
+    if (!selectedPayer?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      await toggleNphiesPayerActive({ id: selectedPayer.id, reason }).unwrap();
+      dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
+      dispatch(
+        notify({
+          msg:
+            toggleActionType === 'deactivate'
+              ? 'Payer company deactivated successfully'
+              : 'Payer company reactivated successfully',
+          sev: 'success'
+        })
+      );
+      setOpenConfirmToggle(false);
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Action failed, please try again',
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const iconsForActions = (rowData: NphiesPayer) => (
+    <div className="container-of-icons nphies-payer-row-actions">
+      <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={event => {
+          event.stopPropagation();
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? [])]
+          });
+          setOpenModal(true);
+        }}
+      />
+      <MdAssignment
+        className="icons-style"
+        title="Define Policy"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={event => {
+          event.stopPropagation();
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? [])]
+          });
+          setOpenPolicyModal(true);
+        }}
+      />
+      <MdLink
+        className="icons-style"
+        title="Link TPAs"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={event => {
+          event.stopPropagation();
+          setSelectedPayer({
+            ...rowData,
+            tpaIds: [...new Set(rowData.tpaIds ?? rowData.tpas?.map(tpa => tpa.id) ?? [])]
+          });
+          setOpenLinkTpas(true);
+        }}
+      />
+      {rowData.isActive ? (
+        <MdDelete
+          className="icons-style"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={event => {
+            event.stopPropagation();
+            setSelectedPayer(rowData);
+            setToggleActionType('deactivate');
+            setOpenConfirmToggle(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={event => {
+            event.stopPropagation();
+            setSelectedPayer(rowData);
+            setToggleActionType('reactivate');
+            setOpenConfirmToggle(true);
+          }}
+        />
+      )}
+    </div>
+  );
+
   const tableColumns = [
     {
       key: 'nphiesId',
-      title: <Translate>NPHIES ID</Translate>,
-      flexGrow: 2
+      title: <Translate>Payer Company Code</Translate>,
+      flexGrow: 2,
+      searchable: true,
+      searchPlaceholder: 'Search code',
+      searchValue: payerFilter.nphiesId,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nphiesId',
+          nphiesId: value,
+          nameEn: '',
+          nameAr: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nphiesId', value ?? payerFilter.nphiesId)
     },
     {
       key: 'nameEn',
       title: <Translate>Name English</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+      searchable: true,
+      searchPlaceholder: 'Search English name',
+      searchValue: payerFilter.nameEn,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nameEn',
+          nameEn: value,
+          nphiesId: '',
+          nameAr: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nameEn', value ?? payerFilter.nameEn)
     },
     {
       key: 'nameAr',
       title: <Translate>Name Arabic</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+      searchable: true,
+      searchPlaceholder: 'Search Arabic name',
+      searchValue: payerFilter.nameAr,
+      onSearchChange: (value: string) =>
+        setPayerFilter(prev => ({
+          ...prev,
+          criteria: 'nameAr',
+          nameAr: value,
+          nphiesId: '',
+          nameEn: ''
+        })),
+      onSearchSubmit: (value?: string) => applyHeaderSearch('nameAr', value ?? payerFilter.nameAr)
+    },
+    {
+      key: 'facilityName',
+      title: <Translate>Facility</Translate>,
+      flexGrow: 2
+    },
+    {
+      key: 'approvalCoverageCompany',
+      title: <Translate>Approval Coverage Co.</Translate>,
+      flexGrow: 2,
+      render: (rowData: NphiesPayer) => (
+        <span>{approvalCoverageCompanyLabel(rowData.approvalCoverageCompany)}</span>
+      )
     },
     {
       key: 'isActive',
-      title: <Translate>Active</Translate>,
+      title: <Translate>Status</Translate>,
       flexGrow: 1,
-      render: (rowData: NphiesPayer) => <span>{rowData.isActive ? 'Yes' : 'No'}</span>
+      render: (rowData: NphiesPayer) =>
+        rowData.isActive ? (
+          <span>Active</span>
+        ) : (
+          <span title={rowData.inactiveReason ?? undefined}>
+            Inactive{rowData.inactiveReason ? ` — ${rowData.inactiveReason}` : ''}
+          </span>
+        )
+    },
+    {
+      key: 'actions',
+      title: <Translate></Translate>,
+      width: 190,
+      flexGrow: 3.4,
+      render: (rowData: NphiesPayer) => iconsForActions(rowData)
     }
   ];
 
@@ -316,7 +753,7 @@ const NphiesPayerSetup = () => {
             }));
           }}
           showLabel={false}
-          placeholder="Search NPHIES ID"
+          placeholder="Search Payer Company Code"
         />
       )}
 
@@ -392,7 +829,7 @@ const NphiesPayerSetup = () => {
         />
       )}
 
-      <MyButton color="var(--deep-blue)" onClick={handleSearch} width="80px">
+      <MyButton color="var(--deep-blue)" onClick={() => handleSearch()} width="80px">
         Search
       </MyButton>
 
@@ -408,21 +845,104 @@ const NphiesPayerSetup = () => {
 
   return (
     <Panel>
-      <MyTable
-        data={activePayersResponse?.data ?? []}
-        totalCount={totalCount}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => setSelectedPayer(rowData)}
-        filters={filters()}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortColumn={sortColumn}
-        sortType={sortType}
-        onSortChange={handleSortChange}
+      <MyTab
+        className="payer-setup-tabs"
+        activeTab={activeTab}
+        setActiveTab={key => setActiveTab(String(key))}
+        data={[
+          {
+            title: 'TPA Definitions',
+            content: <TpaDefinitionSection hideTitle />
+          },
+          {
+            title: 'Insurance Companies',
+            content: (
+              <div className="payer-setup-section">
+                <MyTable
+                  data={activePayersResponse?.data ?? []}
+                  totalCount={totalCount}
+                  loading={isFetching}
+                  columns={tableColumns}
+                  height={420}
+                  rowClassName={isSelected}
+                  onRowClick={rowData =>
+                    setSelectedPayer({
+                      ...rowData,
+                      tpaIds: rowData.tpaIds ?? []
+                    })
+                  }
+                  filters={filters()}
+                  page={pageIndex}
+                  rowsPerPage={rowsPerPage}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortColumn={sortColumn}
+                  sortType={sortType}
+                  onSortChange={handleSortChange}
+                  tableButtons={
+                    <div className="container-of-add-new-button">
+                      <MyButton
+                        prefixIcon={() => <AddOutlineIcon />}
+                        color="var(--deep-blue)"
+                        onClick={handleNew}
+                        width="109px"
+                      >
+                        Add New
+                      </MyButton>
+                    </div>
+                  }
+                />
+                <InsuranceCompanyPoliciesPanel
+                  insuranceCompany={selectedPayer?.id ? selectedPayer : null}
+                />
+              </div>
+            )
+          },
+          {
+            title: 'Coverage Management',
+            content: activeTab === '3' ? <CoverageManagement embedded /> : null
+          },
+          {
+            title: 'Relationships Dashboard',
+            content: <PayerRelationshipDashboard active={activeTab === '4'} />
+          }
+        ]}
+      />
+
+      <DeactivationReasonModal
+        open={openConfirmToggle && toggleActionType === 'deactivate'}
+        setOpen={setOpenConfirmToggle}
+        itemLabel="Payer Company"
+        itemName={selectedPayer?.nameEn}
+        onConfirm={handleToggleActive}
+      />
+
+      <DeletionConfirmationModal
+        open={openConfirmToggle && toggleActionType === 'reactivate'}
+        setOpen={setOpenConfirmToggle}
+        itemToDelete="Payer Company"
+        actionButtonFunction={() => handleToggleActive()}
+        actionType={toggleActionType}
+      />
+
+      <NphiesPayerModal
+        open={openModal}
+        setOpen={setOpenModal}
+        payer={selectedPayer}
+        setPayer={setSelectedPayer}
+        onSave={handleSave}
+      />
+
+      <PayerLinkTpasModal
+        open={openLinkTpas}
+        setOpen={setOpenLinkTpas}
+        payer={selectedPayer}
+      />
+
+      <InsuranceCompanyPolicyModal
+        open={openPolicyModal}
+        setOpen={setOpenPolicyModal}
+        insuranceCompany={selectedPayer?.id ? selectedPayer : null}
       />
     </Panel>
   );

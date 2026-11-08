@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getHeight } from 'rsuite/esm/DOMHelper';
 import { Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet } from '@fortawesome/free-solid-svg-icons';
+import { faPrint, faWallet } from '@fortawesome/free-solid-svg-icons';
 
 import { newApPatient } from '@/types/model-types-constructor';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 
@@ -23,33 +23,41 @@ import {
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useRefreshEncounterPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
+import { useDeletePatientServiceOrProductMutation } from '@/services/encounters/patientServicesAndProductsService';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
 import BillingTimeline from './accounting/components/BillingTimeline';
 import BillingChargesTable from './accounting/components/BillingChargesTable';
+import ChargeEstimatePrintModal from './accounting/components/ChargeEstimatePrintModal';
+import { buildChargeEstimatePrintData } from './accounting/utils/chargeEstimatePrintUtils';
+import type { ChargeEstimatePrintData } from './accounting/utils/chargeEstimatePrintUtils';
 import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
+import WalletRefundModal from './accounting/components/WalletRefundModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
 import PaymentReceiptModal from '@/pages/patient/patient-profile/PatientQuickAppoinment/PaymentReceiptModal';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import BillingCheckoutPanel from './accounting/components/BillingCheckoutPanel';
 import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
+import PatientFinancialDashboardTab from './accounting/financial-statement/PatientFinancialDashboardTab';
 import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
+import './accounting/financial-statement/styles.less';
 import {
   patientInsuranceRecordId,
   pickDefaultPatientInsurance
 } from '@/pages/patient/patient-profile/insuranceDisplayUtils';
-import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 import BillingPendingQueueModal from './BillingPendingQueueModal';
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
+  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
 
   const location = useLocation();
 
@@ -65,6 +73,7 @@ const Accounting: React.FC = () => {
   const [coverageType, setCoverageType] = useState<'SELF_PAY' | 'INSURANCE'>('SELF_PAY');
   const [selectedInsuranceId, setSelectedInsuranceId] = useState<number | null>(null);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [billingPendingQueueModalOpen, setBillingPendingQueueModalOpen] = useState(false);
   const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
   const [selectedChargeRowIds, setSelectedChargeRowIds] = useState<string[]>([]);
@@ -73,6 +82,10 @@ const Accounting: React.FC = () => {
     receipt: PaymentReceiptData | null;
     autoPrint?: boolean;
   }>({ open: false, receipt: null, autoPrint: false });
+  const [chargeEstimatePrint, setChargeEstimatePrint] = useState<{
+    open: boolean;
+    estimate: ChargeEstimatePrintData | null;
+  }>({ open: false, estimate: null });
   const [preAuthActionLoadingId, setPreAuthActionLoadingId] = useState<number | null>(null);
   const [canCloseCalculation, setCanCloseCalculation] = useState(true);
   const [billingRefreshPending, setBillingRefreshPending] = useState(false);
@@ -122,6 +135,28 @@ const Accounting: React.FC = () => {
     usePayRejectedPreAuthorizationItemAsCashMutation();
   const [cloneRejectedPreAuthorizationItem] =
     useCloneRejectedPreAuthorizationItemMutation();
+  const [cancelPatientService] = useDeletePatientServiceOrProductMutation();
+
+  const facilityPrintInfo = useMemo(
+    () => ({
+      name:
+        selectedFacility?.name ??
+        selectedFacility?.facilityName ??
+        'Healthcare Facility',
+      address:
+        selectedFacility?.facilityAddress ??
+        selectedFacility?.address ??
+        undefined,
+      vatRegistrationNumber:
+        selectedFacility?.vatRegistrationNumber ??
+        selectedFacility?.vatNumber ??
+        undefined,
+      providerId:
+        selectedFacility?.providerId ??
+        (selectedFacility?.id != null ? String(selectedFacility.id) : undefined)
+    }),
+    [selectedFacility]
+  );
 
   const displayedPatientInsurances = useMemo(
     () =>
@@ -205,6 +240,7 @@ const Accounting: React.FC = () => {
               receipt: null,
               autoPrint: false
           });
+          setChargeEstimatePrint({ open: false, estimate: null });
           setPreAuthActionLoadingId(null);
           setCanCloseCalculation(true);
           setBillingRefreshPending(false);
@@ -230,6 +266,7 @@ const Accounting: React.FC = () => {
           receipt: null,
           autoPrint: false
       });
+      setChargeEstimatePrint({ open: false, estimate: null });
       setPreAuthActionLoadingId(null);
       setCanCloseCalculation(true);
       setBillingRefreshPending(false);
@@ -277,6 +314,7 @@ const Accounting: React.FC = () => {
 
   useEffect(() => {
     setSelectedChargeRowIds([]);
+    setChargeEstimatePrint({ open: false, estimate: null });
   }, [selectedEncounterId]);
 
   useEffect(() => {
@@ -399,6 +437,7 @@ const Accounting: React.FC = () => {
     setDepositModalOpen(false);
     setCollectPaymentModalOpen(false);
     setPaymentReceiptModal({ open: false, receipt: null, autoPrint: false });
+    setChargeEstimatePrint({ open: false, estimate: null });
     setPreAuthActionLoadingId(null);
     setCanCloseCalculation(true);
     setBillingRefreshPending(false);
@@ -499,7 +538,7 @@ const Accounting: React.FC = () => {
         notify({
           msg:
             result.message ??
-            'Pre-authorization statuses refreshed from Waseel.',
+            'Pre-authorization statuses refreshed.',
           sev: result.canCloseCalculation === false ? 'warning' : 'success'
         })
       );
@@ -509,7 +548,7 @@ const Accounting: React.FC = () => {
           msg:
             error?.data?.message ??
             error?.message ??
-            'Unable to refresh pre-authorization status from Waseel.',
+            'Unable to refresh pre-authorization status.',
           sev: 'error'
         })
       );
@@ -572,7 +611,7 @@ const Accounting: React.FC = () => {
 
       dispatch(
         notify({
-          msg: 'A new pre-authorization request was submitted to Waseel.',
+          msg: 'A new pre-authorization request was created.',
           sev: 'success'
         })
       );
@@ -591,10 +630,89 @@ const Accounting: React.FC = () => {
     }
   };
 
+  /**
+   * The patient declines a rejected / partially approved service: the line is cancelled
+   * (soft cancel, nothing is charged).
+   */
+  const handleCancelPreAuthService = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await cancelPatientService({
+        id: patientServiceProductId,
+        encounterId: selectedEncounterId
+      }).unwrap();
+
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Service cancelled. Nothing was charged to the patient.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message ?? error?.message ?? 'Unable to cancel this service.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
   const selectedChargeRows = useMemo(
     () => chargeRows.filter(row => selectedChargeRowIds.includes(row.id)),
     [chargeRows, selectedChargeRowIds]
   );
+
+  const selectedInsurance = useMemo(
+    () =>
+      displayedPatientInsurances.find(insurance => {
+        const insuranceId = Number(
+          insurance?.id ?? (insurance as { patientInsuranceId?: number })?.patientInsuranceId
+        );
+        return (
+          selectedInsuranceId != null &&
+          Number.isFinite(insuranceId) &&
+          insuranceId === Number(selectedInsuranceId)
+        );
+      }) ?? null,
+    [displayedPatientInsurances, selectedInsuranceId]
+  );
+
+  const handlePrintChargeEstimate = () => {
+    if (!chargeRows.length) {
+      dispatch(
+        notify({
+          msg: 'No services or products to print for this encounter.',
+          sev: 'info'
+        })
+      );
+      return;
+    }
+
+    setChargeEstimatePrint({
+      open: true,
+      estimate: buildChargeEstimatePrintData({
+        rows: chargeRows,
+        patient,
+        encounter: selectedEncounter,
+        encounterDetails: encounterInvoiceDetails,
+        facility: facilityPrintInfo,
+        coverageType,
+        insurance: selectedInsurance,
+        encounterId: selectedEncounterId,
+        currency: summary.currency ?? facilityCurrency
+      })
+    });
+  };
 
   const departmentId = useMemo(
     () =>
@@ -814,10 +932,20 @@ const Accounting: React.FC = () => {
 
             <div className="billing-accounting__panel">
               <div className="billing-accounting__panel-title">
-                All services & products
-                <span className="billing-accounting__badge">
-                  Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
-                </span>
+                <div className="billing-accounting__panel-title-main">
+                  All services & products
+                  <span className="billing-accounting__badge">
+                    Step 2 · {billingWorkspaceLoading ? '…' : `${chargeRows.length} lines`}
+                  </span>
+                </div>
+                <MyButton
+                  appearance="ghost"
+                  prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+                  disabled={billingWorkspaceLoading || chargeRows.length === 0}
+                  onClick={handlePrintChargeEstimate}
+                >
+                  Print unofficial estimate
+                </MyButton>
               </div>
               <PreAuthorizationBillingControls
                 visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
@@ -841,6 +969,7 @@ const Accounting: React.FC = () => {
                 preAuthActionLoadingId={preAuthActionLoadingId}
                 onPayRejectedAsCash={handlePayRejectedAsCash}
                 onClonePreAuthorization={handleClonePreAuthorization}
+                onCancelService={handleCancelPreAuthService}
               />
             </div>
 
@@ -895,6 +1024,7 @@ const Accounting: React.FC = () => {
       handleClonePreAuthorization,
       handleConvertRejectedToCash,
       handlePayRejectedAsCash,
+      handlePrintChargeEstimate,
       handleRefreshPreAuthorization,
       loadingEncounters,
       loadingPsp,
@@ -948,6 +1078,15 @@ const Accounting: React.FC = () => {
     {
       title: 'Issued Documents',
       content: <Receipt patient={patient} />
+    },
+    {
+      title: 'Accounting Dashboard',
+      content: (
+        <PatientFinancialDashboardTab
+          patient={patient}
+          currency={summary.currency ?? facilityCurrency}
+        />
+      )
     }
   ];
 
@@ -976,6 +1115,7 @@ const Accounting: React.FC = () => {
           <PatientBillingSide
             patient={patient}
             onDeposit={() => setDepositModalOpen(true)}
+            onRefund={() => setRefundModalOpen(true)}
             onClearPatient={handleClosePatient}
           />
           <div className="billing-accounting billing-accounting__sidebar-timeline">
@@ -1028,6 +1168,26 @@ const Accounting: React.FC = () => {
               })
             }
           />
+          <WalletRefundModal
+            open={refundModalOpen}
+            onClose={() => setRefundModalOpen(false)}
+            patientId={patientId}
+            patient={patient}
+            encounter={selectedEncounter}
+            encounterId={selectedEncounterId}
+            facilityId={facilityId != null ? Number(facilityId) : null}
+            currency={summary.currency ?? facilityCurrency}
+            walletAvailable={walletBalance}
+            walletReserved={reservedBalance}
+            onRefunded={refreshAll}
+            onReceiptReady={receipt =>
+              setPaymentReceiptModal({
+                open: true,
+                receipt,
+                autoPrint: true
+              })
+            }
+          />
           <CollectPaymentModal
             open={collectPaymentModalOpen}
             onClose={() => setCollectPaymentModalOpen(false)}
@@ -1057,6 +1217,11 @@ const Accounting: React.FC = () => {
                 autoPrint: false
               })
             }
+          />
+          <ChargeEstimatePrintModal
+            open={chargeEstimatePrint.open}
+            estimate={chargeEstimatePrint.estimate}
+            onClose={() => setChargeEstimatePrint({ open: false, estimate: null })}
           />
 
 

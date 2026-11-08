@@ -4,6 +4,8 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   EligibilityCheckResponse,
   EncounterPreAuthorizationRefreshResponse,
+  LocalPreAuthorizationCoverageResponse,
+  LocalPreAuthorizationDecisionRequest,
   PreAuthorizationCancelRequest,
   PreAuthorizationCommunicationHistoryResponse,
   PreAuthorizationCommunicationRequest,
@@ -272,6 +274,29 @@ export const preAuthorizationApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    getLocalPreAuthorizationCoverage: builder.query<LocalPreAuthorizationCoverageResponse, number>({
+      query: preAuthorizationId => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/local-coverage`,
+        method: 'GET'
+      }),
+      keepUnusedDataFor: 0
+    }),
+
+    decideLocalPreAuthorization: builder.mutation<
+      EncounterPreAuthorizationRefreshResponse,
+      { preAuthorizationId: number; body: LocalPreAuthorizationDecisionRequest }
+    >({
+      query: ({ preAuthorizationId, body }) => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/local-decision`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -291,5 +316,7 @@ export const {
   useRefreshEncounterPreAuthorizationLocalMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useCloneRejectedPreAuthorizationItemMutation,
-  useResubmitPreAuthorizationMutation
+  useResubmitPreAuthorizationMutation,
+  useGetLocalPreAuthorizationCoverageQuery,
+  useDecideLocalPreAuthorizationMutation
 } = preAuthorizationApi;
