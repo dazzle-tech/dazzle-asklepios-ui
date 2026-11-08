@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './styles.less';
 
 import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdCheckCircle, MdDelete, MdEdit } from 'react-icons/md';
+import { MdCheckCircle, MdDelete, MdEdit, MdUploadFile } from 'react-icons/md';
 
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -60,6 +60,41 @@ const itemTypeOptions = [
   { label: 'Procedure', value: 'PROCEDURE' }
 ];
 
+const YES_NO_OPTIONS = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' }
+];
+
+const initialFilter = { filter: '', value: '' };
+
+// Same order as the table columns; the value is sent as the param with the same name
+const sbsFilterFields = [
+  { label: 'Waseel Type', value: 'waseelItemType' },
+  { label: 'SBS Code', value: 'sbsCode' },
+  { label: 'Short Description', value: 'shortDescription' },
+  { label: 'Long Description', value: 'longDescription' },
+  { label: 'Update Type', value: 'updateType' },
+  { label: 'Active', value: 'isActive' }
+];
+
+const initialMappingFilters = {
+  itemType: '',
+  itemName: '',
+  itemCode: '',
+  sbsCode: '',
+  sbsDescription: '',
+  // Active mappings are shown first; clearing the filter shows all of them
+  isActive: 'true'
+};
+
+// Criteria picked from a list instead of typing the value
+const filterSelectOptions: Record<string, { label: string; value: string }[]> = {
+  isActive: YES_NO_OPTIONS
+};
+
+const filterParams = (applied: { filter: string; value: string }) =>
+  applied.filter && applied.value ? { [applied.filter]: applied.value } : {};
+
 const normalizePageData = (response: any) => {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.data)) return response.data;
@@ -105,22 +140,12 @@ const WaseelSbsSetup = () => {
   const [activeTab, setActiveTab] = useState<'SBS' | 'MAPPING'>('SBS');
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [searchFilters, setSearchFilters] = useState({ search: '' });
-  const [appliedSearch, setAppliedSearch] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [sbsFilter, setSbsFilter] = useState(initialFilter);
+  const [appliedSbsFilter, setAppliedSbsFilter] = useState(initialFilter);
 
-  const [mappingFilters, setMappingFilters] = useState({
-    itemType: '',
-    itemName: '',
-    itemCode: '',
-    sbsCode: ''
-  });
-
-  const [appliedMappingFilters, setAppliedMappingFilters] = useState({
-    itemType: '',
-    itemName: '',
-    itemCode: '',
-    sbsCode: ''
-  });
+  const [mappingFilters, setMappingFilters] = useState(initialMappingFilters);
+  const [appliedMappingFilters, setAppliedMappingFilters] = useState(initialMappingFilters);
 
   const [openMappingModal, setOpenMappingModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -168,7 +193,7 @@ const WaseelSbsSetup = () => {
       page: paginationParams.page,
       size: paginationParams.size,
       sort: paginationParams.sort,
-      search: appliedSearch
+      ...filterParams(appliedSbsFilter)
     });
 
   const { data: mappingResponse, isFetching: isMappingFetching } =
@@ -179,7 +204,9 @@ const WaseelSbsSetup = () => {
       itemType: appliedMappingFilters.itemType || undefined,
       itemName: appliedMappingFilters.itemName || undefined,
       itemCode: appliedMappingFilters.itemCode || undefined,
-      sbsCode: appliedMappingFilters.sbsCode || undefined
+      sbsCode: appliedMappingFilters.sbsCode || undefined,
+      sbsDescription: appliedMappingFilters.sbsDescription || undefined,
+      isActive: appliedMappingFilters.isActive || undefined
     });
 
   const { data: sbsDropdownResponse, isFetching: isFetchingSbsDropdown } =
@@ -370,15 +397,6 @@ const WaseelSbsSetup = () => {
 
   useEffect(() => {
     const delay = setTimeout(() => {
-      setAppliedSearch(searchFilters.search.trim());
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [searchFilters.search]);
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
       setAppliedSbsDropdownSearch(sbsDropdownSearch.trim());
       setSbsDropdownPage(0);
       setSbsDropdownCache([]);
@@ -507,6 +525,7 @@ const WaseelSbsSetup = () => {
       );
 
       setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       refetchSbs();
     } catch (error: any) {
       dispatch(
@@ -771,39 +790,90 @@ const WaseelSbsSetup = () => {
     }
   ];
 
+  // Criteria + value inputs and the Search button, shared by both tabs
+  const criteriaFilterInputs = (
+    record: { filter: string; value: string },
+    setRecord: (next: { filter: string; value: string }) => void,
+    fields: { label: string; value: string }[],
+    onSearch: () => void
+  ) => (
+    <>
+      <MyInput
+        fieldName="filter"
+        fieldType="select"
+        selectData={fields}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={record}
+        setRecord={(u: any) => setRecord({ filter: u.filter, value: '' })}
+        placeholder="Select Filter"
+        showLabel={false}
+        width="180px"
+        searchable={false}
+      />
+
+      {filterSelectOptions[record.filter] ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={filterSelectOptions[record.filter]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={record}
+          setRecord={(u: any) => setRecord({ ...record, value: u.value ?? '' })}
+          showLabel={false}
+          placeholder="Select Value"
+          width="180px"
+          searchable={false}
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={record}
+          setRecord={(u: any) => setRecord({ ...record, value: u.value ?? '' })}
+          showLabel={false}
+          placeholder="Enter Value"
+          width="180px"
+        />
+      )}
+
+      <MyButton color="var(--deep-blue)" width="80px" onClick={onSearch}>
+        Search
+      </MyButton>
+    </>
+  );
+
   const sbsFilters = () => (
     <Form fluid className="form-of-filters-set-up waseel-sbs-filters">
-      <MyInput
-        width="18vw"
-        fieldName="search"
-        fieldType="text"
-        record={searchFilters}
-        setRecord={setSearchFilters}
-        showLabel={false}
-        placeholder="Search SBS Code / Description"
-      />
+      {criteriaFilterInputs(sbsFilter, setSbsFilter, sbsFilterFields, () => {
+        setAppliedSbsFilter({ filter: sbsFilter.filter, value: sbsFilter.value.trim() });
+        setPaginationParams(prev => ({ ...prev, page: 0 }));
+      })}
 
-      <AdvancedSearchFilters
-        clearOnClick={() => {
-          setSearchFilters({ search: '' });
-          setAppliedSearch('');
-        }}
-      />
-
-      <input
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
-      />
-
-      <MyButton
-        onClick={handleImport}
-        loading={importing}
-        disabled={!selectedFile}
-        color="var(--deep-blue)"
-      >
-        Import SBS
-      </MyButton>
+      <div className="waseel-sbs-import">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          hidden
+          onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+        />
+        <span className="waseel-sbs-file-name" title={selectedFile?.name}>
+          {selectedFile ? selectedFile.name : <Translate>No file chosen</Translate>}
+        </span>
+        <MyButton appearance="ghost" prefixIcon={MdUploadFile} onClick={() => fileInputRef.current?.click()}>
+          Choose File
+        </MyButton>
+        <MyButton
+          onClick={handleImport}
+          loading={importing}
+          disabled={!selectedFile}
+          color="var(--deep-blue)"
+        >
+          Import SBS
+        </MyButton>
+      </div>
     </Form>
   );
 
@@ -937,7 +1007,7 @@ const WaseelSbsSetup = () => {
 
 
   const mappingFiltersContent = () => (
-    <Form fluid className="form-of-filters-set-up waseel-sbs-filters">
+    <Form fluid className="form-of-filters-set-up waseel-sbs-filters waseel-mapping-filters">
       <MyInput
         fieldName="itemType"
         fieldLabel="Category"
@@ -947,7 +1017,7 @@ const WaseelSbsSetup = () => {
         selectDataValue="value"
         record={mappingFilters}
         setRecord={setMappingFilters}
-        width="18vw"
+        width="15vw"
         showLabel={false}
         placeholder="Search Category"
         searchable={false}
@@ -959,7 +1029,7 @@ const WaseelSbsSetup = () => {
         fieldType="text"
         record={mappingFilters}
         setRecord={setMappingFilters}
-        width="18vw"
+        width="15vw"
         showLabel={false}
         placeholder="Search Item Name"
       />
@@ -970,7 +1040,7 @@ const WaseelSbsSetup = () => {
         fieldType="text"
         record={mappingFilters}
         setRecord={setMappingFilters}
-        width="18vw"
+        width="15vw"
         showLabel={false}
         placeholder="Search Item Code"
       />
@@ -981,19 +1051,20 @@ const WaseelSbsSetup = () => {
         fieldType="text"
         record={mappingFilters}
         setRecord={setMappingFilters}
-        width="18vw"
+        width="15vw"
         showLabel={false}
         placeholder="Search SBS Code"
       />
 
       <AdvancedSearchFilters
-        showAdvancedButton={false}
         searchOnClick={() => {
           setAppliedMappingFilters({
             itemType: mappingFilters.itemType,
             itemName: mappingFilters.itemName.trim(),
             itemCode: mappingFilters.itemCode.trim(),
-            sbsCode: mappingFilters.sbsCode.trim()
+            sbsCode: mappingFilters.sbsCode.trim(),
+            sbsDescription: mappingFilters.sbsDescription.trim(),
+            isActive: mappingFilters.isActive ?? ''
           });
 
           setMappingPaginationParams(prev => ({
@@ -1002,25 +1073,43 @@ const WaseelSbsSetup = () => {
           }));
         }}
         clearOnClick={() => {
-          setMappingFilters({
-            itemType: '',
-            itemName: '',
-            itemCode: '',
-            sbsCode: ''
-          });
+          setMappingFilters(initialMappingFilters);
 
-          setAppliedMappingFilters({
-            itemType: '',
-            itemName: '',
-            itemCode: '',
-            sbsCode: ''
-          });
+          setAppliedMappingFilters(initialMappingFilters);
 
           setMappingPaginationParams(prev => ({
             ...prev,
             page: 0
           }));
         }}
+        content={
+          <div className="advanced-filters">
+            <div className="dissss">
+              <MyInput
+                width="15vw"
+                fieldName="sbsDescription"
+                fieldType="text"
+                record={mappingFilters}
+                setRecord={setMappingFilters}
+                showLabel={false}
+                placeholder="Search SBS Description"
+              />
+              <MyInput
+                width="15vw"
+                fieldName="isActive"
+                fieldType="select"
+                selectData={YES_NO_OPTIONS}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={mappingFilters}
+                setRecord={setMappingFilters}
+                showLabel={false}
+                placeholder="Search Active"
+                searchable={false}
+              />
+            </div>
+          </div>
+        }
       />
     </Form>
   );
