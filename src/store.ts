@@ -245,6 +245,8 @@ import { encounterAssignToBedService } from './services/patients/emergency/encou
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
+import { dentalHistoryService } from '@/services/dentalHistoryService';
+import { patientFamilyEducationService } from '@/services/patientFamilyEducationService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
@@ -692,6 +694,8 @@ export const store = configureStore({
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [dentalHistoryService.reducerPath]: dentalHistoryService.reducer,
+    [patientFamilyEducationService.reducerPath]: patientFamilyEducationService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
     [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
@@ -951,6 +955,8 @@ export const store = configureStore({
         currentMedicationService.middleware,
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
+        dentalHistoryService.middleware,
+        patientFamilyEducationService.middleware,
         laboratoryReportsService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
