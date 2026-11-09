@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import CloseIcon from "@rsuite/icons/Close";
-import { Col, Dropdown, Input, InputGroup, Row, Text } from "rsuite";
+import { Col, Input, InputGroup, Row, Text } from "rsuite";
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
 import {
   type ICDDiagnosisDTO,
@@ -9,6 +9,8 @@ import {
   useLazyGetIcdDiagnosisByIdQuery,
 } from "@/services/setup/icdTreeService";
 import "./styles.less";
+
+const SEARCH_DELAY_MS = 400;
 
 type SelectedDiagnosis = {
   id: number;
@@ -27,6 +29,8 @@ type Props = {
   required?: boolean;
   compact?: boolean;
   pageSize?: number;
+  /** For callers that show the picked diagnoses themselves. */
+  hideSelected?: boolean;
 };
 
 const toSelected = (item: ICDDiagnosisDTO | null | undefined, fallbackId?: number | null): SelectedDiagnosis | null => {
@@ -52,6 +56,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   required = false,
   compact = false,
   pageSize = 15,
+  hideSelected = false,
 }) => {
   const selectedIds = multiple
     ? (diagnosisIds ?? []).filter((id): id is number => typeof id === "number")
@@ -72,6 +77,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   const [getById, { isFetching: isByIdLoading }] = useLazyGetIcdDiagnosisByIdQuery();
 
   const lastKeywordRef = useRef<string>("");
+  const latestSearchRef = useRef(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const selectedMapRef = useRef(selectedMap);
   selectedMapRef.current = selectedMap;
@@ -91,6 +97,8 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   const handleClear = () => {
     applySelection([]);
     setSelectedMap({});
+    latestSearchRef.current += 1;
+    lastKeywordRef.current = "";
     setKeyword("");
     setOpen(false);
     setPage(0);
@@ -112,7 +120,10 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
   const loadFirstPage = async (kw: string) => {
     const trimmed = (kw || "").trim();
+    if (isSearching && trimmed === lastKeywordRef.current) return;
     lastKeywordRef.current = trimmed;
+    latestSearchRef.current += 1;
+    const searchId = latestSearchRef.current;
 
     setPage(0);
     setLinks({});
@@ -124,6 +135,9 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
       return;
     }
 
+    // Open now so the list shows "Loading..." while the server answers
+    setOpen(true);
+
     try {
       const resp = await searchDiagnoses({
         keyword: trimmed,
@@ -132,6 +146,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         sort: "icdCode,asc",
         timestamp: Date.now(),
       }).unwrap();
+      if (searchId !== latestSearchRef.current) return;
 
       const pr = resp as unknown as PagedResult<ICDDiagnosisDTO>;
       const data = pr.data ?? [];
@@ -143,11 +158,25 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
       }
       setAccum(obj);
       setLinks({ next: pr.links?.next ?? null });
-      setOpen(true);
     } catch {
-      setOpen(false);
+      if (searchId === latestSearchRef.current) setOpen(false);
     }
   };
+
+  // Search while typing; Enter still searches straight away
+  useEffect(() => {
+    const trimmed = keyword.trim();
+    if (trimmed.length < 3) {
+      lastKeywordRef.current = "";
+      latestSearchRef.current += 1;
+      setOpen(false);
+      return;
+    }
+    if (trimmed === lastKeywordRef.current) return;
+    const timer = setTimeout(() => loadFirstPage(keyword), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyword]);
 
   const handleLoadMore = async () => {
     const nextLink = links?.next;
@@ -256,8 +285,8 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
               <Input
                 placeholder={
                   multiple
-                    ? "Search and add ICD-10 codes (min 3 chars) - Press Enter"
-                    : "Search ICD-10 (min 3 chars) - Press Enter"
+                    ? "Search and add ICD-10 codes (min 3 chars)"
+                    : "Search ICD-10 (min 3 chars)"
                 }
                 value={keyword}
                 onChange={(v) => {
@@ -291,115 +320,111 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
             {open && keyword.trim().length >= 3 && (
               <div className="icd10-search__dropdown">
-                <Dropdown.Menu className="icd10-search__menu">
+                <ul className="icd10-search__menu">
                   {isSearching && Object.keys(accum).length === 0 ? (
-                    <Dropdown.Item disabled>Loading...</Dropdown.Item>
+                    <li className="icd10-search__status">Loading...</li>
                   ) : null}
                   {!isSearching && Object.keys(accum).length === 0 ? (
-                    <Dropdown.Item disabled>No results</Dropdown.Item>
+                    <li className="icd10-search__status">No results</li>
                   ) : null}
-                  {Object.keys(accum).length > 0 &&
-                    Object.entries(accum).map(([key, item]) => {
-                      const idVal = (item as any)?.id;
-                      const isPicked = typeof idVal === "number" && selectedIds.includes(idVal);
-                      return (
-                        <Dropdown.Item
-                          key={key}
-                          eventKey={key}
-                          className={`icd10-search__item${isPicked ? " icd10-search__item--selected" : ""}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                          }}
-                          onClick={() => selectItem(item)}
-                        >
-                          <span className="icd10-search__code">{item.icdCode}</span>
-                          <span className="icd10-search__desc">
-                            {item.icdShortDescription ?? item.icdFullDescription ?? ""}
-                          </span>
-                          {isPicked ? <span className="icd10-search__picked">Added</span> : null}
-                        </Dropdown.Item>
-                      );
-                    })}
+                  {Object.entries(accum).map(([key, item]) => {
+                    const idVal = (item as any)?.id;
+                    const isPicked = typeof idVal === "number" && selectedIds.includes(idVal);
+                    return (
+                      <li
+                        key={key}
+                        className={`icd10-search__item${isPicked ? " icd10-search__item--selected" : ""}`}
+                        onMouseDown={(e) => {
+                          // selecting on press keeps focus in the input and cannot be lost on release
+                          e.preventDefault();
+                          selectItem(item);
+                        }}
+                      >
+                        <span className="icd10-search__code">{item.icdCode}</span>
+                        <span className="icd10-search__desc">
+                          {item.icdShortDescription ?? item.icdFullDescription ?? ""}
+                        </span>
+                        {isPicked ? <span className="icd10-search__picked">Added</span> : null}
+                      </li>
+                    );
+                  })}
                   {canLoadMore ? (
-                    <Dropdown.Item
+                    <li
                       className="icd10-search__loadMore"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (isAppending) return;
-                        handleLoadMore();
+                        if (!isAppending) handleLoadMore();
                       }}
                     >
                       {isAppending ? "Loading..." : "Load more..."}
-                    </Dropdown.Item>
+                    </li>
                   ) : null}
-                </Dropdown.Menu>
+                </ul>
               </div>
             )}
           </div>
         </Col>
       </Row>
 
-      <Row className="icd10-search__selectedRow">
-        <Col md={24}>
-          {multiple ? (
-            <div className={`icd10-search__chips${selectedItems.length ? " icd10-search__chips--selected" : ""}`}>
-              {isByIdLoading && !selectedItems.length ? (
-                "Loading..."
-              ) : selectedItems.length ? (
-                selectedItems.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="icd10-search__chip"
-                    disabled={disabled}
-                    onClick={() => applySelection(selectedIds.filter(id => id !== item.id))}
-                    title="Remove"
-                  >
-                    <strong>{item.code}</strong>
-                    {item.desc ? <span> — {item.desc}</span> : null}
-                    <CloseIcon />
-                  </button>
-                ))
-              ) : (
-                "No diagnoses selected"
-              )}
-            </div>
-          ) : compact ? (
-            <div
-              className={`icd10-search__summary${selectedItems[0]?.code ? " icd10-search__summary--selected" : ""}`}
-            >
-              {isByIdLoading ? (
-                "Loading..."
-              ) : selectedItems[0]?.code ? (
-                <>
-                  <strong>{selectedItems[0].code}</strong>
-                  {selectedItems[0].desc ? ` — ${selectedItems[0].desc}` : ""}
-                </>
-              ) : (
-                "No diagnosis selected"
-              )}
-            </div>
-          ) : (
-            <Input
-              as="textarea"
-              rows={4}
-              disabled
-              value={
-                isByIdLoading
-                  ? "Loading..."
-                  : selectedItems[0]?.code
-                    ? `${selectedItems[0].code}${selectedItems[0].desc ? " - " + selectedItems[0].desc : ""}`
-                    : ""
-              }
-              className="icd10-search__selected"
-            />
-          )}
-        </Col>
-      </Row>
+      {!hideSelected && (
+        <Row className="icd10-search__selectedRow">
+          <Col md={24}>
+            {multiple ? (
+              <div className={`icd10-search__chips${selectedItems.length ? " icd10-search__chips--selected" : ""}`}>
+                {isByIdLoading && !selectedItems.length ? (
+                  "Loading..."
+                ) : selectedItems.length ? (
+                  selectedItems.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="icd10-search__chip"
+                      disabled={disabled}
+                      onClick={() => applySelection(selectedIds.filter(id => id !== item.id))}
+                      title="Remove"
+                    >
+                      <strong>{item.code}</strong>
+                      {item.desc ? <span> — {item.desc}</span> : null}
+                      <CloseIcon />
+                    </button>
+                  ))
+                ) : (
+                  "No diagnoses selected"
+                )}
+              </div>
+            ) : compact ? (
+              <div
+                className={`icd10-search__summary${selectedItems[0]?.code ? " icd10-search__summary--selected" : ""}`}
+              >
+                {isByIdLoading ? (
+                  "Loading..."
+                ) : selectedItems[0]?.code ? (
+                  <>
+                    <strong>{selectedItems[0].code}</strong>
+                    {selectedItems[0].desc ? ` — ${selectedItems[0].desc}` : ""}
+                  </>
+                ) : (
+                  "No diagnosis selected"
+                )}
+              </div>
+            ) : (
+              <Input
+                as="textarea"
+                rows={4}
+                disabled
+                value={
+                  isByIdLoading
+                    ? "Loading..."
+                    : selectedItems[0]?.code
+                      ? `${selectedItems[0].code}${selectedItems[0].desc ? " - " + selectedItems[0].desc : ""}`
+                      : ""
+                }
+                className="icd10-search__selected"
+              />
+            )}
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };

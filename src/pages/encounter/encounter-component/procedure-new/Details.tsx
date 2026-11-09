@@ -7,7 +7,7 @@ import {
   useCreateProcdureMutation,
   useUpdateProcdureMutation
 } from '@/services/patients/patientProcedureService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSortedLovQuery } from './useSortedLovQuery';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
@@ -189,8 +189,8 @@ const Details = ({
   const [createProcedure] = useCreateProcdureMutation();
   const [updateProcedure] = useUpdateProcdureMutation();
 
-  const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-  const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
+  const { data: bodypartLovQueryResponse } = useSortedLovQuery('BODY_PARTS');
+  const { data: sideLovQueryResponse } = useSortedLovQuery('SIDES');
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');

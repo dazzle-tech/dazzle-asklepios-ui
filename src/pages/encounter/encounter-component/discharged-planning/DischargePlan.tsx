@@ -33,7 +33,8 @@ import {
   useGetPrescriptionMedicationsQuery,
 } from '@/services/encounterService';
 
-import { useGetProceduresQuery } from '@/services/procedureService';
+import { useFindProcdureByEncounterQuery } from '@/services/patients/patientProcedureService';
+import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 
 import { calculateAgeFormat } from '@/utils';
 import { newDischargePlanning } from '@/types/model-types-constructor-new';
@@ -133,17 +134,19 @@ const DischargePlanning = () => {
   //   isFetching: isReviewSystemsFetching
   // } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
-  const [proceduresListRequest] = useState({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
-    ]
-  });
-
   const {
     data: proceduresResponse,
     isFetching: isProceduresFetching
-  } = useGetProceduresQuery(proceduresListRequest);
+  } = useFindProcdureByEncounterQuery(
+    { encounterId: encounter?.id, page: 0, size: 1000 },
+    { skip: !encounter?.id }
+  );
+  const procedureSetupIds = Array.from(
+    new Set((proceduresResponse?.data ?? []).map((proc: any) => Number(proc.procedureId)))
+  );
+  const { data: procedureSetups = [] } = useGetProceduresByIdsQuery(procedureSetupIds, {
+    skip: procedureSetupIds.length === 0
+  });
 
   const [listOrdersTestRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -371,9 +374,9 @@ const DischargePlanning = () => {
         .join(', ');
 
     const proceduresData = [
-      ...(proceduresResponse?.object?.map((proc: any) => ({
-        procedureName: proc?.procedureName || '',
-        procedureId: proc?.procedureId || ''
+      ...(proceduresResponse?.data?.map((proc: any) => ({
+        procedureName: procedureSetups.find(item => item.id === proc?.procedureId)?.name || '',
+        procedureId: proc?.id || ''
       })) || []),
       ...(orderTestList?.object?.map((row: any) => ({
         procedureName: row?.test?.testName || '',

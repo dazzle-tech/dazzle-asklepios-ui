@@ -275,3 +275,498 @@
     padding: 6px;
   }
 }
+
+/* ====== Perform workflow ====== */
+.perform-modal {
+  width: 100% !important;
+  height: 100dvh;
+  margin: 0 !important;
+
+  .rs-modal-dialog {
+    height: 100%;
+    margin: 0 !important;
+  }
+
+  .rs-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .rs-modal-body {
+    flex: 1;
+    min-height: 0;
+    height: auto !important;
+    padding: 0.4rem 0.6rem !important;
+    overflow: hidden;
+
+    > div {
+      height: 100%;
+    }
+  }
+
+  .divider-line {
+    margin: 0 !important;
+  }
+
+  .rs-modal-footer {
+    display: none;
+  }
+}
+
+.perform-shell {
+  --perform-surface: #fff;
+  --perform-soft: #f7f8fa;
+  --perform-border: #e6e9ef;
+  --perform-text: #1f2a37;
+  --perform-success: #0daa41;
+
+  display: flex;
+  gap: 0.625rem;
+  height: 100%;
+  color: var(--perform-text);
+
+  &.dark {
+    --perform-surface: var(--dark-black);
+    --perform-soft: rgba(255, 255, 255, 0.05);
+    --perform-border: rgba(255, 255, 255, 0.14);
+    --perform-text: #fff;
+  }
+}
+
+.perform-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0.0625rem solid var(--perform-border);
+  border-radius: 0.5rem;
+  background: var(--perform-surface);
+  overflow: hidden;
+}
+
+.perform-patient {
+  display: flex;
+  flex: 0 0 3rem;
+  flex-direction: column;
+  min-width: 0;
+  border: 0.0625rem solid var(--perform-border);
+  border-radius: 0.5rem;
+  background: var(--perform-surface);
+  overflow: hidden;
+  transition: flex-basis 0.2s ease;
+
+  &.is-open {
+    flex-basis: clamp(15rem, 22vw, 20rem);
+  }
+}
+
+.perform-patient-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0.4rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--perform-soft);
+  color: var(--primary-blue);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--perform-border);
+  }
+
+  .is-open > & {
+    align-self: flex-end;
+  }
+
+  [dir='rtl'] & svg {
+    transform: scaleX(-1);
+  }
+}
+
+.perform-patient-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.perform-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  padding: 0.5rem 0.875rem;
+}
+
+.perform-title {
+  min-width: 0;
+}
+
+.perform-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+
+  h5 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--perform-text);
+    overflow-wrap: anywhere;
+  }
+}
+
+.perform-meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.0625rem;
+  font-size: 0.75rem;
+  color: var(--primary-gray);
+
+  strong {
+    color: var(--perform-text);
+  }
+
+  > * + *::before {
+    content: '\00B7';
+    margin: 0 0.375rem;
+  }
+}
+
+.perform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.perform-notice {
+  padding: 0.25rem 0.875rem;
+  background: rgba(230, 161, 0, 0.12);
+  font-size: 0.75rem;
+}
+
+.perform-steps {
+  display: flex;
+  border-top: 0.0625rem solid var(--perform-border);
+  border-bottom: 0.0625rem solid var(--perform-border);
+  overflow-x: auto;
+}
+
+.perform-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
+  min-width: 6.5rem;
+  padding: 0.4375rem 0.5rem 0.3125rem;
+  border: 0;
+  border-bottom: 0.125rem solid transparent;
+  background: transparent;
+  color: var(--primary-gray);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--perform-text);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &.is-active {
+    border-bottom-color: var(--primary-blue);
+    color: var(--primary-blue);
+  }
+
+  &:disabled {
+    color: var(--primary-gray);
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.perform-step-marker {
+  display: inline-flex;
+  font-size: 0.75rem;
+
+  .is-done & {
+    color: var(--perform-success);
+  }
+
+  .is-active & {
+    color: var(--primary-blue);
+  }
+}
+
+.perform-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0.625rem;
+  background: var(--perform-soft);
+  overflow-y: auto;
+
+  .container-form-section {
+    border: 0.0625rem solid var(--perform-border);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    box-shadow: none;
+  }
+
+  .rs-divider-horizontal {
+    margin: 0.375rem 0;
+  }
+}
+
+.perform-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 0.625rem;
+  align-items: start;
+
+  &.is-three {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: stretch;
+
+    .container-form-section {
+      height: 100%;
+    }
+  }
+}
+
+.perform-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.perform-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.375rem 0.875rem;
+  border-top: 0.0625rem solid var(--perform-border);
+  background: var(--perform-surface);
+}
+
+.perform-footer-actions {
+  display: flex;
+  gap: 0.375rem;
+  margin-inline-start: auto;
+}
+
+.perform-save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--primary-gray);
+  font-size: 0.75rem;
+
+  &.is-dirty {
+    color: #b7791f;
+    font-weight: 600;
+  }
+}
+
+.perform-save-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--perform-success);
+
+  .is-dirty & {
+    background: currentColor;
+  }
+}
+
+.procedure-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+  margin-bottom: 0.5rem;
+
+  &.is-compact {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  }
+
+  &.is-wide {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  }
+
+  // At most three per row: the minimum width is never below a third of the grid
+  &.is-vitals {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(100%, max(8.5rem, calc((100% - 1.5rem) / 3))), 1fr)
+    );
+  }
+
+  .rs-form-group {
+    margin-bottom: 0 !important;
+  }
+
+  // MyInput pins the control to the full width, which pushes the unit addon out
+  .rs-input-group > div:not(.rs-input-group-addon) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
+
+.procedure-diagnosis-tags {
+  margin-top: 0.5rem;
+
+  .rs-tag {
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
+  }
+}
+
+.procedure-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  .rs-form {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rs-form-group {
+    margin-bottom: 0 !important;
+  }
+}
+
+.procedure-picker-row {
+  margin-bottom: 0.5rem;
+
+  .rs-form-group {
+    margin-bottom: 0 !important;
+  }
+}
+
+.procedure-compact-table table {
+  min-width: 0 !important;
+}
+
+.procedure-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.3rem;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.procedure-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--primary-blue);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.procedure-section-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+}
+
+.procedure-view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.5rem 0;
+}
+
+.procedure-vital-charts {
+  --vital-series-1: #2a78d6;
+  --vital-series-2: #eb6834;
+  --vital-series-3: #1baf7a;
+  --vital-surface: #fcfcfb;
+  --vital-grid: #e4e3df;
+  --vital-axis: #52514e;
+  --vital-text: #0b0b0b;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 0.75rem;
+
+  &.dark {
+    --vital-series-1: #3987e5;
+    --vital-series-2: #d95926;
+    --vital-series-3: #199e70;
+    --vital-surface: #1a1a19;
+    --vital-grid: #3a3a37;
+    --vital-axis: #c3c2b7;
+    --vital-text: #f0efec;
+  }
+}
+
+.procedure-vital-chart {
+  padding: 0.5rem;
+  border: 0.0625rem solid var(--vital-grid);
+  border-radius: 0.5rem;
+  background: var(--vital-surface);
+}
+
+.procedure-vital-chart-title {
+  margin-bottom: 0.25rem;
+  color: var(--vital-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  span {
+    color: var(--vital-axis);
+    font-weight: 400;
+  }
+}
+
+.procedure-hint {
+  font-size: 0.75rem;
+  color: var(--primary-gray);
+}
+
+@media (max-width: 62.5em) {
+  .perform-modal .rs-modal-body {
+    overflow-y: auto;
+  }
+
+  .perform-shell {
+    height: auto;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .perform-main {
+    min-height: 85dvh;
+  }
+
+  .perform-patient,
+  .perform-patient.is-open {
+    flex-basis: auto;
+  }
+}

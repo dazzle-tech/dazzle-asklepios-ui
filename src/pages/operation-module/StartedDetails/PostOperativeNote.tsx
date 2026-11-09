@@ -1,7 +1,7 @@
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
-import StaffAssignment from "@/pages/encounter/encounter-component/procedure/StaffMember";
+import StaffAssignment from '@/components/clinical/StaffAssignment';
 import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationStaffListQuery, useGetPostOpHandoverByOperationQuery, useSaveOperationRequestsMutation, useSaveOperationStaffMutation, useSavePostOpNotesHandoverMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationPostOpNotesHandover, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";

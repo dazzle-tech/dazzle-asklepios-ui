@@ -54,7 +54,6 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 
 import { userService } from '@/services/userService';
 
-import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
 import { inventoryService } from './services/inventoryTransactionService';
@@ -416,7 +415,6 @@ export const store = configureStore({
 
     // lab / rad / operation / procedures
     [operationService.reducerPath]: operationService.reducer,
-    [procedureService.reducerPath]: procedureService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
     // refetch flags
@@ -785,7 +783,6 @@ export const store = configureStore({
         encounterAttachmentsService.middleware,
         inventoryTransferAttachmentService.middleware,
         inventoryTransactionAttachmentService.middleware,
-        procedureService.middleware,
         operationService.middleware,
         recoveryService.middleware,
         userService.middleware,

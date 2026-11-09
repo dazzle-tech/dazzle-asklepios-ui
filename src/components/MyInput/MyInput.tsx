@@ -119,7 +119,7 @@ type MyInputProps = {
   loading?: boolean;
   defaultSelectValue?: any;
   virtualized?: boolean;
-  menuMaxHeight?: number;
+  menuMaxHeight?: number | string;
   menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
@@ -573,7 +573,8 @@ const MyInput = ({
 
   // Keeps long option labels from stretching the dropdown past the screen edge.
   const getPickerMenuStyle = (): React.CSSProperties => ({
-    minWidth: props?.width ?? '12vw',
+    // A percentage would resolve against the page, since the menu is portaled to the body
+    minWidth: String(props?.width).endsWith('%') ? undefined : props?.width ?? '12vw',
     width: 'auto',
     maxWidth: 'min(420px, calc(100vw - 32px))'
   });
@@ -2145,10 +2146,11 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               searchBy={pickerSearchBy}
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => (
+                wrapMenuItem((label: any, item: any) => (
                   <Translate>{String(item?.[props?.selectDataLabel ?? ''] ?? '')}</Translate>
                 ))
               }
+              menuStyle={{ maxWidth: 'min(26.25rem, calc(100vw - 2rem))' }}
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               onKeyDown={focusNextField}
               open={isMultyPickerOpen}

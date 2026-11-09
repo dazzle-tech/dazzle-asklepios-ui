@@ -9,7 +9,7 @@ import {
   useSaveDoctorRoundStaffMutation
 } from '@/services/encounterService';
 import { newApDoctorRound, newApDoctorRoundStaff } from '@/types/model-types-constructor';
-import StaffAssignment from '../../procedure/StaffMember';
+import StaffAssignment from '@/components/clinical/StaffAssignment';
 import { ApDoctorRound } from '@/types/model-types';
 import MyButton from '@/components/MyButton/MyButton';
 import { useAppSelector, useAppDispatch } from '@/hooks';

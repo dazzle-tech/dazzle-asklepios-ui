@@ -99,6 +99,7 @@ const PatientWritBandPrintLabelButton = ({ patientId ,disabled}: Props) => {
                 title="Print Label"
                 size="xs"
                 actionButtonLabel='Print'
+                actionButtonLoading={loading}
                 actionButtonFunction={handlePrintVisitReport}
                 bodyheight={'30vh'}
                 content={

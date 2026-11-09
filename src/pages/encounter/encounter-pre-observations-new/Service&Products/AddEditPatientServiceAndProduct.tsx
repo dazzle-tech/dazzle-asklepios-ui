@@ -61,12 +61,20 @@ const AddEditPatientServiceAndProduct = ({
   open,
   setOpen,
   patientServiceAndProduct,
-  setPatientServiceAndProduct
+  setPatientServiceAndProduct,
+  patient: patientProp,
+  encounter: encounterProp,
+  createItem
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   patientServiceAndProduct: PatientServiceAndProduct;
   setPatientServiceAndProduct: (patientServiceAndProduct: PatientServiceAndProduct) => void;
+  /** Screens outside the encounter page pass these instead of the route state. */
+  patient?: any;
+  encounter?: any;
+  /** Replaces the default create call, e.g. to add the item from a procedure. */
+  createItem?: (dto: PatientServiceProductCreateDTO) => Promise<unknown>;
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -75,8 +83,8 @@ const AddEditPatientServiceAndProduct = ({
   >(null);
   const location = useLocation();
 
-  const patient = location.state?.patient;
-  const encounter = location.state?.encounter;
+  const patient = patientProp ?? location.state?.patient;
+  const encounter = encounterProp ?? location.state?.encounter;
 
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
@@ -965,7 +973,10 @@ const AddEditPatientServiceAndProduct = ({
           uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null
         };
 
-        const created = await createPatientServiceAndProduct(createDTO).unwrap();
+        // A procedure adds the item through its own endpoint, which returns the same row
+        const created = await (createItem
+          ? createItem(createDTO)
+          : createPatientServiceAndProduct(createDTO).unwrap());
         const createdRow = ((created as any)?.object ?? created) as PatientServiceAndProduct;
 
         if (isHeldForPreAuthorization(createdRow)) {

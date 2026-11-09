@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSortedLovQuery } from './useSortedLovQuery';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
@@ -17,8 +17,8 @@ interface PreviewProcedureProps {
 
 const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose }) => {
   // LOV Queries
-  const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-  const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
+  const { data: bodypartLovQueryResponse } = useSortedLovQuery('BODY_PARTS');
+  const { data: sideLovQueryResponse } = useSortedLovQuery('SIDES');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
   // Enums
