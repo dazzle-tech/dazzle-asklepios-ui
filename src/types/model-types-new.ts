@@ -5446,6 +5446,55 @@ export interface ReferralRequest {
   acceptedBy?: string | null;
 }
 
+export interface ConfigurationUser {
+  id: number;
+  login?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  jobRole?: string;
+}
+
+export interface ConfigurationCreateVM {
+  facilityId?: number;
+  /** Form-only. Sent to the API as userIds. */
+  userId?: number;
+  userIds?: number[];
+  key: string;
+  value: string;
+  valueType: string;
+  referenceType: string;
+  description: string;
+  isActive?: boolean;
+}
+
+export interface ConfigurationUpdateVM {
+  id: number;
+  facilityId?: number;
+  /** Form-only. Sent to the API as userIds. */
+  userId?: number;
+  userIds?: number[];
+  key: string;
+  value: string;
+  valueType: string;
+  referenceType: string;
+  description: string;
+  isActive?: boolean;
+}
+
+export interface Configuration {
+  id: number;
+  scopeType?: string;
+  facility?: Facility;
+  users?: ConfigurationUser[];
+  key: string;
+  value: string;
+  valueType: string;
+  referenceType: string;
+  description: string;
+  isActive?: boolean;
+}
+
 export type PatientInformationReportVM = {
   patientId: number
   fullName: string
