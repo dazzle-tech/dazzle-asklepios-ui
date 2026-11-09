@@ -200,6 +200,7 @@ export const MODULES: Module[] =
       viewOrder: 0.5,
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
+        { name: "Configurations", code: "CONFIGURATIONS", description: "", icon: "FaSliders", viewOrder: 2, navPath: "configurations" },
         { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
         { name: "WhatsApp Settings", code: "WHATSAPP_SETTINGS", description: "", icon: "FaWhatsapp", viewOrder: 0.6, navPath: "whatsapp-settings" },
         { name: "Mobile App Configuration", code: "MOBILE_APP_CONFIG", description: "Keys and values used by the mobile application", icon: "FaMobileScreen", viewOrder: 0.7, navPath: "mobile-app-configuration" },

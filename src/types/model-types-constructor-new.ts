@@ -3166,6 +3166,44 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
   acceptedBy: null
 };
 
+export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: true
+};
+
+export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
+  id: undefined,
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+};
+
+export const newConfiguration: modelTypes.Configuration = {
+  id: undefined,
+  scopeType: undefined,
+  facility: undefined,
+  users: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+};
+
 export const newPolicyDefinition: modelTypes.PolicyDefinition = {
   id: undefined,
   facilityId: undefined,
