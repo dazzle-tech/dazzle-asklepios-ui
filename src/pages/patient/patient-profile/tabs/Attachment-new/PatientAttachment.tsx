@@ -186,7 +186,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 (v: any) => v.key === attachment.type
             )?.valueCode || '';
 
-        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN', 'DENTIST'];
 
         if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
             dispatch(
@@ -239,7 +239,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 (v: any) => v.key === attachment.type
             )?.valueCode || '';
 
-        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN', 'DENTIST'];
 
         if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
             dispatch(

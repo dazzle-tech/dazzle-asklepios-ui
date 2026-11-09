@@ -6,11 +6,19 @@ interface OcclusalBadgeProps {
   // e.g. { MESIAL: 'condition', DISTAL: 'treatment' } -- one entry per
   // surface that has an active (non-cancelled) action on this tooth.
   surfaceStates: Record<string, 'condition' | 'treatment'>;
+  /**
+   * When true, normal (no-state) zones are transparent so this badge can
+   * sit on top of Color occlusal artwork without hiding it. Condition /
+   * treatment fills still paint opaque.
+   */
+  overlay?: boolean;
 }
 
 const COLORS = {
   normalFill: '#F5F0E8',
   normalStroke: '#C9C2B5',
+  normalFillOverlay: 'transparent',
+  normalStrokeOverlay: 'rgba(180,180,180,0.35)',
   conditionFill: '#F44336',
   conditionStroke: '#C62828',
   treatmentFill: '#45B887',
@@ -30,13 +38,16 @@ const ZONE_SURFACES: Record<Zone, string[]> = {
 };
 const WHOLE_SURFACES = ['OCCLUSAL', 'INCISAL', 'WHOLE_TOOTH'];
 
-const stateColor = (state?: 'condition' | 'treatment') => {
+const stateColor = (state: 'condition' | 'treatment' | undefined, overlay: boolean) => {
   if (state === 'condition') return { fill: COLORS.conditionFill, stroke: COLORS.conditionStroke };
   if (state === 'treatment') return { fill: COLORS.treatmentFill, stroke: COLORS.treatmentStroke };
-  return { fill: COLORS.normalFill, stroke: COLORS.normalStroke };
+  return {
+    fill: overlay ? COLORS.normalFillOverlay : COLORS.normalFill,
+    stroke: overlay ? COLORS.normalStrokeOverlay : COLORS.normalStroke
+  };
 };
 
-const OcclusalBadge: React.FC<OcclusalBadgeProps> = ({ shapeType, surfaceStates }) => {
+const OcclusalBadge: React.FC<OcclusalBadgeProps> = ({ shapeType, surfaceStates, overlay = false }) => {
   const wholeState = useMemo(() => {
     if (WHOLE_SURFACES.some(s => surfaceStates[s] === 'condition')) return 'condition' as const;
     if (WHOLE_SURFACES.some(s => surfaceStates[s] === 'treatment')) return 'treatment' as const;
@@ -51,8 +62,8 @@ const OcclusalBadge: React.FC<OcclusalBadgeProps> = ({ shapeType, surfaceStates 
     return undefined;
   };
 
-  const mesial = stateColor(zoneState('mesial'));
-  const distal = stateColor(zoneState('distal'));
+  const mesial = stateColor(zoneState('mesial'), overlay);
+  const distal = stateColor(zoneState('distal'), overlay);
 
   // Anterior teeth (incisor/canine): flat edge or single pointed cusp --
   // only mesial/distal halves are meaningful.
@@ -66,20 +77,21 @@ const OcclusalBadge: React.FC<OcclusalBadgeProps> = ({ shapeType, surfaceStates 
       : 'M 17,6 C 22,8 26,13 26,17 C 26,21 22,26 17,28 Z';
     const [topY, bottomY] = isIncisor ? [11, 23] : [6, 28];
 
+    const guide = overlay ? COLORS.normalStrokeOverlay : COLORS.normalStroke;
     return (
       <svg viewBox="0 0 34 34" width="100%" style={{ display: 'block' }}>
         <path d={left} fill={mesial.fill} stroke={mesial.stroke} strokeWidth={1} />
         <path d={right} fill={distal.fill} stroke={distal.stroke} strokeWidth={1} />
-        <line x1={17} y1={topY} x2={17} y2={bottomY} stroke={COLORS.normalStroke} strokeWidth={1} />
-        <circle cx={17} cy={17} r={2} fill={COLORS.normalStroke} />
+        {!overlay && <line x1={17} y1={topY} x2={17} y2={bottomY} stroke={guide} strokeWidth={1} />}
+        {!overlay && <circle cx={17} cy={17} r={2} fill={guide} />}
       </svg>
     );
   }
 
   // Posterior teeth (premolar/molar): four cusp zones. Premolar uses a
   // narrower/oval footprint, molar a broader/squarer one.
-  const buccal = stateColor(zoneState('buccal'));
-  const lingual = stateColor(zoneState('lingual'));
+  const buccal = stateColor(zoneState('buccal'), overlay);
+  const lingual = stateColor(zoneState('lingual'), overlay);
   const petals =
     shapeType === 'premolar'
       ? {
@@ -101,7 +113,7 @@ const OcclusalBadge: React.FC<OcclusalBadgeProps> = ({ shapeType, surfaceStates 
       <path d={petals.distal} fill={distal.fill} stroke={distal.stroke} strokeWidth={1} />
       <path d={petals.lingual} fill={lingual.fill} stroke={lingual.stroke} strokeWidth={1} />
       <path d={petals.mesial} fill={mesial.fill} stroke={mesial.stroke} strokeWidth={1} />
-      <circle cx={17} cy={17} r={2} fill={COLORS.normalStroke} />
+      {!overlay && <circle cx={17} cy={17} r={2} fill={COLORS.normalStroke} />}
     </svg>
   );
 };

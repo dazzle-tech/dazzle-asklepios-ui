@@ -18,6 +18,14 @@ export const dentalChartService = createApi({
   tagTypes: ['DentalChart', 'ProgressNote'],
 
   endpoints: builder => ({
+    getExistingChartByEncounter: builder.query<DentalChartResponseDTO | null, number>({
+      query: (encounterId: number) => ({
+        url: `/api/patient/dental/charts/by-encounter/${encounterId}/existing`
+      }),
+      transformResponse: (response: DentalChartResponseDTO | null) =>
+        response && response.id ? response : null
+    }),
+
     getOrCreateChartForEncounter: builder.query<DentalChartResponseDTO, number>({
       query: (encounterId: number) => ({
         url: `/api/patient/dental/charts/by-encounter/${encounterId}`
@@ -135,6 +143,7 @@ export const dentalChartService = createApi({
 });
 
 export const {
+  useGetExistingChartByEncounterQuery,
   useGetOrCreateChartForEncounterQuery,
   useGetChartByIdQuery,
   useUpdateChartMutation,

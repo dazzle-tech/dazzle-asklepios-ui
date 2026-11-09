@@ -1,15 +1,24 @@
-import React, { useMemo } from 'react';
-import { useGetByDentalActionQuery } from '@/services/setup/dental-action/CdtDentalActionService';
-import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
-import { Button, Form, IconButton, Panel } from 'rsuite';
-import { Box, Typography } from '@mui/material';
-import Trash from '@rsuite/icons/Trash';
-import Translate from '../../Translate';
+import React, { useMemo, useState } from 'react';
+import { Form, Panel } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faPlus,
+  faTrash,
+  faEraser
+} from '@fortawesome/free-solid-svg-icons';
+
+import Translate from '@/components/Translate';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import CancellationModal from '@/components/CancellationModal/CancellationModal';
+
 import FullTooth from '../../DentalChart/Tooth/Tooth';
 import ToothActionCard from '../ToothActionCard/ToothActionCard';
-import MyInput from '@/components/MyInput';
-import CancellationModal from '@/components/CancellationModal/CancellationModal';
-import { useState } from 'react';
+
+import { toothDisplayLabel } from '@/utils/toothNumber';
+import { useGetByDentalActionQuery } from '@/services/setup/dental-action/CdtDentalActionService';
+import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
+
 import './ToothStateTab.less';
 
 interface ToothStateTabProps {
@@ -22,6 +31,9 @@ interface ToothStateTabProps {
   dentalActionsMap: any;
   removeToothAction: any;
   clearCurrentAction: () => void;
+  eligiblePlans?: any[];
+  planSessions?: any[];
+  onCreatePlan?: () => void;
 }
 
 const SURFACE_OPTIONS = [
@@ -35,10 +47,13 @@ const SURFACE_OPTIONS = [
   { key: 'WHOLE_TOOTH', lovDisplayVale: 'Whole Tooth' }
 ];
 
-const SURFACE_LABELS: Record<string, string> = SURFACE_OPTIONS.reduce((acc, item) => {
-  acc[item.key] = item.lovDisplayVale;
-  return acc;
-}, {} as Record<string, string>);
+const SURFACE_LABELS = SURFACE_OPTIONS.reduce<Record<string, string>>(
+  (result, option) => {
+    result[option.key] = option.lovDisplayVale;
+    return result;
+  },
+  {}
+);
 
 const ToothStateTab: React.FC<ToothStateTabProps> = ({
   selectedTooth,
@@ -49,245 +64,502 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   dentalActionsList,
   dentalActionsMap,
   removeToothAction,
-  clearCurrentAction
+  clearCurrentAction,
+  eligiblePlans = [],
+  planSessions = [],
+  onCreatePlan
 }) => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
+  const [cancelForm, setCancelForm] = useState<any>({
+    cancellationReason: ''
+  });
 
-  // Conditions first, then treatments; alphabetical within each group
+  const selectedAction =
+    dentalActionsMap[currentToothAction.dentalActionId];
+
+  const isTreatment = selectedAction?.type === 'TREATMENT';
+  const isSavedAction = Boolean(currentToothAction.id);
+  const requiresPlan = isTreatment && !currentToothAction.existing;
+
+  const appliedActions = selectedTooth?.actions ?? [];
+
+  const toothLabel = selectedTooth?.toothNumber
+    ? toothDisplayLabel(selectedTooth.toothNumber)
+    : '—';
+
   const sortedDentalActions = useMemo(
     () =>
       [...(dentalActionsList ?? [])].sort((a, b) => {
-        const typeDiff = (a.type === 'TREATMENT' ? 1 : 0) - (b.type === 'TREATMENT' ? 1 : 0);
-        if (typeDiff !== 0) return typeDiff;
-        return (a.description ?? '').localeCompare(b.description ?? '');
+        const typeDifference =
+          Number(a.type === 'TREATMENT') -
+          Number(b.type === 'TREATMENT');
+
+        return (
+          typeDifference ||
+          (a.description ?? '').localeCompare(b.description ?? '')
+        );
       }),
     [dentalActionsList]
   );
 
-  const { data: cdtDentalActionRows } = useGetByDentalActionQuery(
-    currentToothAction.dentalActionId,
-    { skip: !currentToothAction.dentalActionId }
-  );
+  const { currentData: cdtDentalActionRows } =
+    useGetByDentalActionQuery(currentToothAction.dentalActionId, {
+      skip: !currentToothAction.dentalActionId
+    });
 
   const treatmentCdtIds = useMemo(
-    // The setup-service mapping endpoint nests the full CdtCode object under `cdtId`
-    // (CdtDentalActionResponseVM.cdtId: CdtCode, not a plain id) — unwrap it.
-    () => (cdtDentalActionRows ?? []).map(row => row.cdtId?.id).filter((id): id is number => Boolean(id)),
+    () =>
+      (cdtDentalActionRows ?? [])
+        .map(row => row.cdtId?.id)
+        .filter((id): id is number => id != null),
     [cdtDentalActionRows]
   );
 
-  const { data: treatmentCdtListQueryResponse, isLoading: treatmentCdtListIsLoading } =
-    useGetCdtByIdsQuery(treatmentCdtIds, { skip: treatmentCdtIds.length === 0 });
+  const {
+    currentData: treatmentCdtList,
+    isFetching: treatmentCdtListIsLoading
+  } = useGetCdtByIdsQuery(treatmentCdtIds, {
+    skip: treatmentCdtIds.length === 0
+  });
+
+  const planOptions = useMemo(
+    () =>
+      eligiblePlans.map(plan => ({
+        ...plan,
+        label: `${plan.planNumber} · ${plan.title}`
+      })),
+    [eligiblePlans]
+  );
+
+  const sessionOptions = useMemo(
+    () => [
+      { id: 'NEW', label: 'New Session' },
+      ...[...planSessions]
+        .sort((a, b) => a.sessionNumber - b.sessionNumber)
+        .map(session => ({
+          id: session.id,
+          label: `Session ${session.sessionNumber}`
+        }))
+    ],
+    [planSessions]
+  );
 
   const handleCancelAction = async () => {
     try {
       await removeToothAction({
         id: currentToothAction.id,
-        body: { cancellationReason: cancelForm.cancellationReason || '' }
+        body: {
+          cancellationReason: cancelForm.cancellationReason || ''
+        }
       }).unwrap();
+
       setCancelModalOpen(false);
       setCancelForm({ cancellationReason: '' });
-    } catch (error) {
+    } catch {
       setCancelModalOpen(false);
     }
   };
 
+  const selectAppliedAction = (action: any) => {
+    setCurrentToothAction({
+      ...action,
+      id: action.id,
+      dentalActionId: action.dentalActionId,
+      surface: action.surface,
+      note: action.note,
+      existing: action.existing,
+      anesthesiaUsed: action.anesthesiaUsed,
+      dose: action.dose
+    });
+  };
+
   return (
-    <div>
-      <Box className="tooth-status-tab-form">
-        <Form>
-          <Box className="tooth-status-form-row">
-            <MyInput
-              fieldName="dentalActionId"
-              fieldType="select"
-              required
-              record={currentToothAction}
-              setRecord={setCurrentToothAction}
-              placeholder={<Translate>Select Action From List</Translate>}
-              disabled={!!currentToothAction.id}
-              selectData={sortedDentalActions}
-              selectDataLabel="description"
-              selectDataValue="id"
-              renderMenuItem={(label, action) => (
-                <div style={{ color: action.type === 'TREATMENT' ? 'green' : 'red' }}>
-                  {action.description}
+    <div className="tst-page">
+      <Panel bordered className="tst-form-panel">
+        <div className="tst-header">
+          <div>
+            <h4>
+              <Translate>Tooth Action</Translate>
+              <span className="tst-tooth-label">#{toothLabel}</span>
+            </h4>
+
+            <p>
+              <Translate>
+                Select an action and enter its clinical details.
+              </Translate>
+            </p>
+          </div>
+
+          <span className="tst-mode-label">
+            <Translate>
+              {isSavedAction ? 'Selected Action' : 'New Action'}
+            </Translate>
+          </span>
+        </div>
+
+        <Form fluid className="tst-form">
+          <section className="tst-form-section">
+            <div className="tst-section-title">
+              <Translate>Action Details</Translate>
+            </div>
+
+            <div className="tst-fields-grid">
+              <div className="tst-field">
+                <MyInput
+                  fieldLabel="Action"
+                  fieldName="dentalActionId"
+                  fieldType="select"
+                  required
+                  record={currentToothAction}
+                  setRecord={setCurrentToothAction}
+                  placeholder={
+                    <Translate>Select Action From List</Translate>
+                  }
+                  disabled={isSavedAction}
+                  selectData={sortedDentalActions}
+                  selectDataLabel="description"
+                  selectDataValue="id"
+                  renderMenuItem={(_, action) => (
+                    <div className="tst-action-option">
+                      <span>{action.description}</span>
+
+                      <span
+                        className={
+                          action.type === 'TREATMENT'
+                            ? 'tst-action-type tst-action-type--treatment'
+                            : 'tst-action-type tst-action-type--condition'
+                        }
+                      >
+                        <Translate>
+                          {action.type === 'TREATMENT'
+                            ? 'Treatment'
+                            : 'Condition'}
+                        </Translate>
+                      </span>
+                    </div>
+                  )}
+                />
+              </div>
+
+              <div className="tst-field">
+                <MyInput
+                  fieldLabel="Surface"
+                  fieldName="surface"
+                  fieldType="select"
+                  required
+                  record={currentToothAction}
+                  setRecord={setCurrentToothAction}
+                  disabled={isSavedAction}
+                  placeholder={<Translate>Select Surface</Translate>}
+                  selectData={SURFACE_OPTIONS}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                />
+              </div>
+
+              <div className="tst-field tst-field--full">
+                <MyInput
+                  fieldLabel="CDT / Procedure"
+                  fieldName="cdtCodeId"
+                  fieldType="select"
+                  required={requiresPlan}
+                  record={{ cdtCodeId: selectedCdt }}
+                  setRecord={record =>
+                    setSelectedCdt(record.cdtCodeId)
+                  }
+                  disabled={
+                    !isTreatment || currentToothAction.existing
+                  }
+                  placeholder={
+                    <Translate>
+                      {isSavedAction
+                        ? '(+) Add new CDT to this treatment'
+                        : 'Select CDT (Treatment Only)'}
+                    </Translate>
+                  }
+                  selectData={
+                    treatmentCdtIds.length > 0
+                      ? treatmentCdtList ?? []
+                      : []
+                  }
+                  loading={treatmentCdtListIsLoading}
+                  selectDataLabel="description"
+                  selectDataValue="id"
+                  renderMenuItem={(_, item) => (
+                    <span>
+                      {item.code} / {item.description}
+                    </span>
+                  )}
+                  searchBy={(keyword, _, item) => {
+                    const search = keyword.toLowerCase();
+
+                    return (
+                      String(item.code ?? '')
+                        .toLowerCase()
+                        .includes(search) ||
+                      String(item.description ?? '')
+                        .toLowerCase()
+                        .includes(search)
+                    );
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="tst-existing">
+              <MyInput
+                fieldName="existing"
+                fieldType="check"
+                record={currentToothAction}
+                setRecord={record => {
+                  setCurrentToothAction(record);
+
+                  if (record.existing) {
+                    setSelectedCdt(null);
+                  }
+                }}
+                disabled={!isTreatment || isSavedAction}
+                label={<Translate>Existing Treatment</Translate>}
+              />
+            </div>
+          </section>
+
+          {requiresPlan && (
+            <section className="tst-form-section">
+              <div className="tst-section-heading">
+                <div className="tst-section-title">
+                  <Translate>Treatment Plan & Session</Translate>
                 </div>
+
+                {eligiblePlans.length === 0 && onCreatePlan && (
+                  <MyButton
+                    appearance="link"
+                    prefixIcon={() => (
+                      <FontAwesomeIcon icon={faPlus} />
+                    )}
+                    onClick={onCreatePlan}
+                  >
+                    <Translate>New Treatment Plan</Translate>
+                  </MyButton>
+                )}
+              </div>
+
+              <div className="tst-fields-grid">
+                <div className="tst-field">
+                  <MyInput
+                    fieldName="treatmentPlanId"
+                    fieldLabel="Treatment Plan"
+                    fieldType="select"
+                    required
+                    record={currentToothAction}
+                    setRecord={next =>
+                      setCurrentToothAction({
+                        ...next,
+                        treatmentSessionId:
+                          String(next.treatmentPlanId) ===
+                          String(currentToothAction.treatmentPlanId)
+                            ? next.treatmentSessionId
+                            : null
+                      })
+                    }
+                    selectData={planOptions}
+                    selectDataLabel="label"
+                    selectDataValue="id"
+                    placeholder={
+                      <Translate>Select a treatment plan</Translate>
+                    }
+                  />
+                </div>
+
+                <div className="tst-field">
+                  <MyInput
+                    fieldName="treatmentSessionId"
+                    fieldLabel="Session"
+                    fieldType="select"
+                    record={{
+                      ...currentToothAction,
+                      treatmentSessionId:
+                        currentToothAction.treatmentSessionId ?? 'NEW'
+                    }}
+                    setRecord={next =>
+                      setCurrentToothAction({
+                        ...currentToothAction,
+                        treatmentSessionId:
+                          next.treatmentSessionId === 'NEW'
+                            ? null
+                            : next.treatmentSessionId
+                      })
+                    }
+                    selectData={sessionOptions}
+                    selectDataLabel="label"
+                    selectDataValue="id"
+                    disabled={!currentToothAction.treatmentPlanId}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="tst-form-section">
+            <div className="tst-section-title">
+              <Translate>Clinical Details</Translate>
+            </div>
+
+            <div className="tst-fields-grid">
+              <div className="tst-field">
+                <MyInput
+                  fieldName="anesthesiaUsed"
+                  fieldLabel="Anesthesia Used"
+                  fieldType="text"
+                  record={currentToothAction}
+                  setRecord={setCurrentToothAction}
+                  placeholder="Anesthesia"
+                />
+              </div>
+
+              <div className="tst-field">
+                <MyInput
+                  fieldName="dose"
+                  fieldLabel="Dose"
+                  fieldType="text"
+                  record={currentToothAction}
+                  setRecord={setCurrentToothAction}
+                  placeholder="Dose"
+                />
+              </div>
+
+              <div className="tst-field tst-field--full">
+                <MyInput
+                  fieldLabel="Notes"
+                  fieldName="note"
+                  fieldType="text"
+                  record={currentToothAction}
+                  setRecord={setCurrentToothAction}
+                  placeholder="Notes"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div className="tst-form-actions">
+            <MyButton
+              appearance="ghost"
+              prefixIcon={() => (
+                <FontAwesomeIcon icon={faEraser} />
               )}
-            />
+              onClick={clearCurrentAction}
+            >
+              <Translate>Clear</Translate>
+            </MyButton>
 
-            <MyInput
-              fieldName="existing"
-              fieldType="check"
-              record={currentToothAction}
-              setRecord={r => {
-                setCurrentToothAction(r);
-                if (r.existing) setSelectedCdt(null);
-              }}
-              disabled={
-                !dentalActionsMap[currentToothAction.dentalActionId] ||
-                dentalActionsMap[currentToothAction.dentalActionId].type !== 'TREATMENT' ||
-                !!currentToothAction.id
-              }
-              label={<Translate>Existing?</Translate>}
-              className="existing-checkbox"
-            />
-
-            <MyInput
-            fieldLabel='CDT Code ID'
-              fieldName="cdtCodeId"
-              fieldType="select"
-              required={
-                dentalActionsMap[currentToothAction.dentalActionId]?.type === 'TREATMENT' &&
-                !currentToothAction.existing
-              }
-              record={{ cdtCodeId: selectedCdt }}
-              setRecord={r => setSelectedCdt(r.cdtCodeId)}
-              disabled={
-                !dentalActionsMap[currentToothAction.dentalActionId] ||
-                dentalActionsMap[currentToothAction.dentalActionId].type !== 'TREATMENT' ||
-                currentToothAction.existing
-              }
-              placeholder={
-                <Translate>
-                  {currentToothAction.id
-                    ? '(+) Add new CDT to this treatment'
-                    : 'Select CDT (Treatment Only)'}
-                </Translate>
-              }
-              selectData={treatmentCdtListQueryResponse ?? []}
-              loading={treatmentCdtListIsLoading}
-              selectDataLabel="description"
-              selectDataValue="id"
-              renderMenuItem={(label, item) => (
-                <span>
-                  {item.code} / {item.description}
-                </span>
-              )}
-              searchBy={(keyword, label, item) =>
-                item.code.toLowerCase().includes(keyword.toLowerCase()) ||
-                item.description.toLowerCase().includes(keyword.toLowerCase())
-              }
-            />
-
-            <MyInput
-              fieldName="surface"
-              fieldType="select"
-              required
-              record={currentToothAction}
-              setRecord={setCurrentToothAction}
-              disabled={!!currentToothAction.id}
-              placeholder={<Translate>Select Surface</Translate>}
-              selectData={SURFACE_OPTIONS}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-            />
-          </Box>
-          <Box className="tooth-status-form-row">
-            <MyInput
-              fieldName="anesthesiaUsed"
-              fieldLabel="Anesthesia"
-              fieldType="text"
-              record={currentToothAction}
-              setRecord={setCurrentToothAction}
-              placeholder="Anesthesia"
-            />
-            <MyInput
-              fieldName="dose"
-              fieldLabel="Dose"
-              fieldType="text"
-              record={currentToothAction}
-              setRecord={setCurrentToothAction}
-              placeholder="Dose"
-            />
-            <MyInput
-              fieldName="note"
-              fieldType="text"
-              record={currentToothAction}
-              setRecord={setCurrentToothAction}
-              placeholder="Notes"
-              className="note-field"
-            />
-            <Box className="tooth-status-tab-actions">
-              <IconButton
-                appearance="primary"
-                color="red"
-                style={{ marginRight: '10px' }}
-                disabled={!currentToothAction.id}
+            <span className="tst-remove-action">
+              <MyButton
+                appearance="ghost"
+                prefixIcon={() => (
+                  <FontAwesomeIcon icon={faTrash} />
+                )}
+                disabled={!isSavedAction}
                 onClick={() => {
                   setCancelForm({ cancellationReason: '' });
                   setCancelModalOpen(true);
                 }}
-                icon={<Trash />}
               >
                 <Translate>Remove</Translate>
-              </IconButton>
-
-              <Button appearance="default" onClick={clearCurrentAction}>
-                <Translate>Clear</Translate>
-              </Button>
-            </Box>
-          </Box>
+              </MyButton>
+            </span>
+          </div>
         </Form>
-      </Box>
+      </Panel>
 
-      <Panel bordered className="applied-actions-container">
-        <Box className="actions-chart">
-          <FullTooth chartTooth={selectedTooth} key={selectedTooth.id} />
-          {selectedTooth.actions && selectedTooth.actions.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="body2" color="text.secondary">
-                No actions applied to this tooth
-              </Typography>
-            </Box>
-          )}
-        </Box>
+      <Panel bordered className="tst-applied-panel">
+        <div className="tst-header">
+          <div>
+            <h4>
+              <Translate>Applied Actions</Translate>
+              <span className="tst-count">
+                {appliedActions.length}
+              </span>
+            </h4>
 
-        {selectedTooth.actions && selectedTooth.actions.length > 0 && (
-          <Box className="tooth-state-tab-content">
-            <Typography variant="h6">
-              <Translate>Applied Actions on Tooth</Translate> <b># {selectedTooth.toothNumber}</b>
-            </Typography>
-            <Box className="tooth-status-applied-actions-cards">
-              {selectedTooth.actions.map((action: any) => (
-                <Box
+            <p>
+              <Translate>
+                Select a card to display its details in the form.
+              </Translate>
+            </p>
+          </div>
+        </div>
+
+        <div className="tst-applied-layout">
+          <div className="tst-tooth-preview">
+            {selectedTooth?.id && (
+              <FullTooth
+                key={selectedTooth.id}
+                chartTooth={selectedTooth}
+              />
+            )}
+
+            <span className="tst-preview-label">
+              <Translate>Tooth</Translate> #{toothLabel}
+            </span>
+          </div>
+
+          <div className="tst-action-list">
+            {appliedActions.length === 0 ? (
+              <div className="tst-empty">
+                <Translate>
+                  No actions applied to this tooth.
+                </Translate>
+              </div>
+            ) : (
+              appliedActions.map((action: any) => (
+                <div
                   key={action.id}
-                  onClick={() => {
-                    setCurrentToothAction({
-                      id: action.id,
-                      dentalActionId: action.dentalActionId,
-                      surface: action.surface,
-                      note: action.note,
-                      existing: action.existing,
-                      anesthesiaUsed: action.anesthesiaUsed,
-                      dose: action.dose
-                    });
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    opacity: currentToothAction.id === action.id ? 0.8 : 1,
-                    transform: currentToothAction.id === action.id ? 'scale(1.01)' : 'scale(1)',
-                    border:
-                      currentToothAction.id === action.id && '1px solid var(--primary-blue)',
-                    borderRadius: 10,
-                    transition: 'all 0.2s ease'
+                  className={`tst-action-item ${
+                    currentToothAction.id === action.id
+                      ? 'selected-row'
+                      : ''
+                  }`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Select tooth action"
+                  onClick={() => selectAppliedAction(action)}
+                  onKeyDown={event => {
+                    if (
+                      event.key !== 'Enter' &&
+                      event.key !== ' '
+                    ) {
+                      return;
+                    }
+
+                    event.preventDefault();
+                    selectAppliedAction(action);
                   }}
                 >
                   <ToothActionCard
-                    date={Date.now()}
-                    action={dentalActionsMap[action.dentalActionId]?.description || 'Unknown Action'}
-                    type={dentalActionsMap[action.dentalActionId]?.type || 'Unknown'}
-                    surface={SURFACE_LABELS[action.surface] || action.surface || 'N/A'}
-                    note={action.note || 'No notes'}
+                    date={action.createdDate ?? null}
+                    action={
+                      dentalActionsMap[action.dentalActionId]
+                        ?.description || 'Unknown Action'
+                    }
+                    type={
+                      dentalActionsMap[action.dentalActionId]
+                        ?.type || 'Unknown'
+                    }
+                    surface={
+                      SURFACE_LABELS[action.surface] ||
+                      action.surface ||
+                      '—'
+                    }
+                    note={action.note}
                     existing={action.existing}
                     anesthesiaUsed={action.anesthesiaUsed}
                     dose={action.dose}
                   />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </Panel>
 
       <CancellationModal

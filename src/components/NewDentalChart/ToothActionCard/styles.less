@@ -1,93 +1,141 @@
 .tooth-action-card {
-  display: flex;
-  border: 1px solid var(--rs-border-primary);
-  border-radius: 10px;
-  padding: 16px;
-  gap: 20px;
-  background: white;
-  &:not(:last-child) {
-    margin-bottom: 20px;
-  }
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-border-primary, #e3e9f0);
+  border-radius: 8px;
+  background: var(--rs-bg-card, #fff);
+  color: var(--rs-text-primary, #27364b);
 
   .tooth-action-date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 8px;
+    border-inline-end: 1px solid var(--rs-border-primary, #e3e9f0);
+    background: var(--rs-bg-well, #f7f9fc);
     text-align: center;
-    width: 80px;
 
-    .tooth-action-month {
-      color: var(--primary-gray);
-      font-size: 12px;
-      font-weight: 700;
+    time {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
     }
-    .tooth-action-day {
-      font-weight: 700;
-      font-size: 23px;
-    }
+  }
+
+  .tooth-action-month,
+  .tooth-action-year {
+    color: var(--rs-text-secondary, #78869a);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .tooth-action-day {
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tooth-action-no-date {
+    color: var(--rs-text-secondary, #78869a);
   }
 
   .tooth-action-content {
-    width: 100%;
-    .tooth-info {
-      display: flex;
-      // gap: 45px;
-      justify-content: space-between;
+    min-width: 0;
+    padding: 14px;
+  }
 
-      .tooth-action-info-label {
-        color: var(--primary-gray);
-        text-transform: uppercase;
-        font-size: 11px;
-        font-weight: 700;
-      }
+  .tooth-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 14px 18px;
+    align-items: start;
+  }
 
-      .tooth-action-info-value {
-        font-size: 14px;
-        color: black;
-        font-weight: 600;
-        &.treatment {
-          color: var(--primary-green);
-        }
+  .tooth-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
 
-        &.condition {
-          color: var(--rs-color-red);
-        }
-      }
-    }
-
-    .tooth-action-note {
-      background: var(--table-header-bg);
-      margin-top: 15px;
-      border-radius: 5px;
-      display: flex;
-      padding: 10px;
-      gap: 10px;
-      svg {
-        opacity: 0.5;
-      }
-
-      .tooth-action-note-value {
-        font-size: 14px;
-        font-weight: 500;
-      }
+    &--action {
+      grid-column: span 2;
     }
   }
-}
 
+  .tooth-action-info-label {
+    color: var(--rs-text-secondary, #78869a);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
 
-.dark{
-  .tooth-action-card{
-    background-color: var(--dark-black) !important;
-     .tooth-action-info-value {
-        color: var(--white) !important;
-         &.treatment {
-          color: var(--primary-green) !important;
-        }
+  .tooth-action-info-value {
+    color: var(--rs-text-primary, #27364b);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.7;
+    white-space: normal;
+    overflow-wrap: anywhere;
 
-        &.condition {
-          color: var(--rs-color-red) !important;
-        }
-     }
-     .tooth-action-note {
-      background-color: var(--extra-dark-black) !important;
-      box-shadow: var(--dark-mode-box-shadow) !important;
-     }
+    &.treatment {
+      color: #309064;
+    }
+
+    &.condition {
+      color: #bd7a46;
+    }
+  }
+
+  .tooth-action-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-block-start: 14px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--rs-bg-well, #f7f9fc);
+
+    > .svg-inline--fa {
+      flex-shrink: 0;
+      margin-block-start: 4px;
+      color: var(--rs-text-secondary, #78869a);
+      font-size: 14px;
+    }
+  }
+
+  .tooth-action-note-content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .tooth-action-note-value {
+    margin: 3px 0 0;
+    color: var(--rs-text-primary, #27364b);
+    font-size: 12px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 52px minmax(0, 1fr);
+
+    .tooth-action-content {
+      padding: 11px;
+    }
+
+    .tooth-info {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tooth-info-item--action {
+      grid-column: 1 / -1;
+    }
   }
 }

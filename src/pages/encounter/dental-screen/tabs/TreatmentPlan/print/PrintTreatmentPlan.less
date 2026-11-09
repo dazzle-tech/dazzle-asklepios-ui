@@ -1,0 +1,56 @@
+.plan-report-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-report-note {
+  margin: 0;
+  color: #475467;
+  font-size: 13px;
+}
+
+.plan-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #e4e7ec;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.plan-report-choice {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.plan-report-choice img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  background: #f8fafc;
+  border: 1px solid #e4e7ec;
+}
+
+.plan-report-choice-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.plan-report-choice-copy strong,
+.plan-report-choice-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-report-empty {
+  color: #667085;
+  padding: 8px;
+}
