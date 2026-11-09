@@ -94,6 +94,7 @@ export const newFacility: modelTypes.Facility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -116,6 +117,7 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Role -------------------

@@ -1012,7 +1012,6 @@ const SubmitPatientComplaintPage: React.FC = () => {
                           record={formRecord}
                           setRecord={handleRecordChange}
                           required
-                          defaultCountry="sa"
                           width="100%"
                           resetKey={phoneResetKey}
                         />

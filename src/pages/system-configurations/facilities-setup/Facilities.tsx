@@ -3,7 +3,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { setTenant } from '@/reducers/authSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useAddFacilityMutation,
@@ -34,6 +35,7 @@ import TranslationModal from '@/components/TranslationModal';
 import ConfigurationTab from './tabs/FacilityConfigration';
 const Facilities = () => {
   const dispatch = useAppDispatch();
+  const tenant = useAppSelector(state => state.auth?.tenant);
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
   const [createFacility, setCreateFacility] = useState<CreateFacility>({ ...newCreateFacility });
   const [departments, setDepartments] = useState<ApDepartment[]>([]);
@@ -269,7 +271,19 @@ const handleSave = async () => {
 
   try {
     const workingDaysPayload = buildWorkingDaysPayload(facility.workingDays);
-    await updateFacility({ ...facility, workingDays: workingDaysPayload }).unwrap();
+    const updated = await updateFacility({ ...facility, workingDays: workingDaysPayload }).unwrap();
+    if (
+      updated?.id != null &&
+      tenant?.selectedFacility &&
+      String(tenant.selectedFacility.id) === String(updated.id)
+    ) {
+      dispatch(
+        setTenant({
+          ...tenant,
+          selectedFacility: { ...tenant.selectedFacility, ...updated }
+        })
+      );
+    }
       setPopupOpen(false);
     dispatch(
       notify({
