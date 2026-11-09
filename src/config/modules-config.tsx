@@ -262,7 +262,7 @@ export const MODULES: Module[] =
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
         { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
-        { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
+        { name: "Payor Setup", code: "PAYER", description: "Insurance companies", icon: "FaGlobe", viewOrder: 21, navPath: "nphies-payers?tab=insurance" },
         {
           name: "Price Lists",
           code: "PRICE_LISTS",
@@ -289,9 +289,9 @@ export const MODULES: Module[] =
           navPath: 'patient-merge-config'
         },
         {
-          name: "NPHIES Payers",
+          name: "Payer Companies",
           code: "NPHIES_PAYER",
-          description: "NPHIES Payers",
+          description: "Payer Companies",
           icon: "FaBuilding",
           viewOrder: 24,
           navPath: "nphies-payers"
@@ -311,6 +311,14 @@ export const MODULES: Module[] =
           icon: "FaListAlt",
           viewOrder: 26,
           navPath: "price-list-setup"
+        },
+        {
+          name: "Item Price Dashboard",
+          code: "PRICE_LIST_SETUP",
+          description: "Compare item prices across facility price lists",
+          icon: "FaListAlt",
+          viewOrder: 26.5,
+          navPath: "price-list-item-dashboard"
         },
         {
           name: "Billing Rule Setup",

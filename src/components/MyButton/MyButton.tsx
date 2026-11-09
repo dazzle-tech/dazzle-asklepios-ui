@@ -43,7 +43,6 @@ const MyButton: React.FC<MyButtonProps> = ({
     <Button
       className={`bt ${size} ${mode}`}
       appearance={appearance}
-      disabled={props.disabled}
       style={{
         color:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
@@ -61,6 +60,7 @@ const MyButton: React.FC<MyButtonProps> = ({
       {...props}
       onClick={onClick}
       loading={loading}
+      disabled={props.disabled || loading}
     >
       {Prefix && <Prefix style={{ marginRight: '8px', color: 'inherit' }} />}
       {children && <Translate>{children}</Translate>}

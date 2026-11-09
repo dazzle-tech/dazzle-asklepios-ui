@@ -1,0 +1,18 @@
+// Darker than a normal modal backdrop: the session is over, nothing behind is usable.
+.session-expired-backdrop.rs-modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(3px);
+}
+
+.session-expired-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 0 24px;
+
+  h5 {
+    margin: 0;
+  }
+}

@@ -848,7 +848,7 @@ const SubmitPatientComplaintPage: React.FC = () => {
       <header className="patient-complaint-public-header">
         <div className="patient-complaint-header-content">
           <div className="patient-complaint-logo">
-            <img src={branding?.logoUrl || Logo} alt="Asklepios" />
+            <img src={branding.logo || Logo} alt="Asklepios" />
           </div>
           <div className="patient-complaint-lang-toggle">
             <MyButton

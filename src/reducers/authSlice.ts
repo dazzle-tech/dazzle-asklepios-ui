@@ -42,6 +42,7 @@ interface AuthState {
   menu: any[] | null;
   menuLoading: boolean; // tenant (organization) info
   sessionExpiredBackdrop: boolean; // flag for showing session expired modal/backdrop
+  sessionExpiredReason: string | null; // message shown on the session expired screen
   selectedDepartment: any | null;
 }
 
@@ -54,6 +55,7 @@ const initialState: AuthState = {
   menu: JSON.parse(localStorage.getItem('menu') || 'null'),
   menuLoading: false,
   sessionExpiredBackdrop: false,
+  sessionExpiredReason: null,
   selectedDepartment: JSON.parse(localStorage.getItem('selectedDepartment') || 'null')
 };
 
@@ -67,6 +69,13 @@ const authSlice = createSlice({
     // Set or clear session expired backdrop flag
     setSessionExpiredBackdrop: (state, action: PayloadAction<boolean>) => {
       state.sessionExpiredBackdrop = action.payload;
+      if (!action.payload) state.sessionExpiredReason = null;
+    },
+
+    // Show the session expired screen with the reason (inactivity / token expired)
+    setSessionExpired: (state, action: PayloadAction<string>) => {
+      state.sessionExpiredBackdrop = true;
+      state.sessionExpiredReason = action.payload;
     },
 
     // Save user object to state and localStorage
@@ -117,6 +126,9 @@ const authSlice = createSlice({
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
       if (action.payload) {
+        // A fresh login always clears a previous "session expired" screen.
+        state.sessionExpiredBackdrop = false;
+        state.sessionExpiredReason = null;
         localStorage.setItem('id_token', action.payload);
       } else {
         localStorage.removeItem('id_token');
@@ -151,7 +163,7 @@ const authSlice = createSlice({
       localStorage.removeItem('direction');
       localStorage.removeItem('lang');
       localStorage.removeItem('selectedDepartment');
-
+      localStorage.removeItem('lastActivity');
     },
 
     // Check token validity and clear state if expired
@@ -181,6 +193,7 @@ const authSlice = createSlice({
 // Export actions for use in components
 export const {
   setSessionExpiredBackdrop,
+  setSessionExpired,
   setUser,
   setToken,
   setTenant,

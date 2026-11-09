@@ -7,7 +7,8 @@ export type { GetConfigArgs, ResolvedConfiguration } from './getConfig';
 export {
   extractApiErrorMessage,
   extractEligibilityErrorMessage,
-  WASEEL_ELIGIBILITY_ERROR_MAP
+  WASEEL_ELIGIBILITY_ERROR_MAP,
+  WALLET_REFUND_ERROR_MAP
 } from './apiErrorMessage';
 export { default as toThousands } from './toThousands';
 export { default as highlightValue } from './highlightValue';

@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react';
 
@@ -8,13 +9,15 @@ import { Form } from 'rsuite';
 
 import {
   MdDelete,
-  MdModeEdit,
-  MdPriceChange
+  MdModeEdit
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import FileUploadIcon from '@rsuite/icons/FileUpload';
 
-import ChildModal from '@/components/ChildModal';
+import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 
@@ -49,6 +52,9 @@ import {
   useAddPriceListSetupItemMutation,
   useDeletePriceListSetupItemMutation,
   useGetPriceListSetupItemsQuery,
+  useImportPriceListSetupItemsMutation,
+  useLazyDownloadPriceListSetupItemsTemplateQuery,
+  useLazyExportPriceListSetupItemsQuery,
   useUpdatePriceListSetupItemMutation
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
@@ -148,7 +154,11 @@ const normalizeServiceProductOptions = (
   rows: any[]
 ): ServiceProductOption[] => {
   return rows
-    .filter(row => row?.id !== undefined)
+    .filter(row =>
+      row?.id !== undefined &&
+      row?.isActive !== false &&
+      row?.active !== false
+    )
     .map(row => {
       const name =
         row?.name ??
@@ -241,9 +251,12 @@ const PriceListSetupItems: React.FC<Props> = ({
   const isInsurancePriceList =
     priceListType === 'INSURANCE';
 
+  const isSelfPayPriceList =
+    priceListType === 'SELF_PAY';
+
   const showSetupItemName =
     isInsurancePriceList ||
-    priceListType === 'SELF_PAY';
+    isSelfPayPriceList;
 
   const [
     childModalOpen,
@@ -257,6 +270,8 @@ const PriceListSetupItems: React.FC<Props> = ({
     ...newPriceListSetupItem
   });
 
+  const isEditItem = Boolean(selectedItem.id);
+
   const [
     selectedMapping,
     setSelectedMapping
@@ -268,6 +283,18 @@ const PriceListSetupItems: React.FC<Props> = ({
     deleteConfirmationOpen,
     setDeleteConfirmationOpen
   ] = useState(false);
+
+  const [
+    importModalOpen,
+    setImportModalOpen
+  ] = useState(false);
+
+  const [
+    tableHeight,
+    setTableHeight
+  ] = useState(560);
+
+  const itemsPageRef = useRef<HTMLDivElement>(null);
 
   const [
     paginationParams,
@@ -342,6 +369,48 @@ const PriceListSetupItems: React.FC<Props> = ({
 
     return () => clearTimeout(timer);
   }, [selectSearch]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let frame = 0;
+    let observer: ResizeObserver | undefined;
+
+    const measure = (node: HTMLDivElement) => {
+      const header = node.querySelector('.price-list-items-header');
+      const filters = node.querySelector('.my-table-filters');
+      const pagination = node.querySelector('.MuiTablePagination-root');
+      const used =
+        (header instanceof HTMLElement ? header.offsetHeight : 0) +
+        (filters instanceof HTMLElement ? filters.offsetHeight : 0) +
+        (pagination instanceof HTMLElement ? pagination.offsetHeight : 56) +
+        8;
+
+      setTableHeight(Math.max(360, node.clientHeight - used));
+    };
+
+    const attach = () => {
+      const node = itemsPageRef.current;
+
+      if (!node) {
+        frame = window.requestAnimationFrame(attach);
+        return;
+      }
+
+      measure(node);
+      observer = new ResizeObserver(() => measure(node));
+      observer.observe(node);
+    };
+
+    attach();
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [open]);
 
   /*
    * Existing price-list items.
@@ -785,9 +854,157 @@ const PriceListSetupItems: React.FC<Props> = ({
   ] =
     useDeletePriceListSetupItemMutation();
 
+  const [
+    downloadItemsTemplate
+  ] =
+    useLazyDownloadPriceListSetupItemsTemplateQuery();
+
+  const [
+    exportItems
+  ] =
+    useLazyExportPriceListSetupItemsQuery();
+
+  const [
+    importItems
+  ] =
+    useImportPriceListSetupItemsMutation();
+
   const actionLoading =
     isAdding ||
     isUpdating;
+
+  const downloadBlob = (
+    blob: Blob,
+    fileName: string
+  ) => {
+    const url =
+      window.URL.createObjectURL(blob);
+    const link =
+      document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadTemplate =
+    async () => {
+      if (!priceListSetupId) {
+        return;
+      }
+
+      try {
+        const blob =
+          await downloadItemsTemplate({
+            priceListSetupId
+          }).unwrap();
+
+        downloadBlob(
+          blob,
+          'price-list-items-template.xlsx'
+        );
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              extractApiErrorMessage(
+                error,
+                PRICE_LIST_SETUP_ERROR_MAP
+              ) ||
+              'Failed to download the template',
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+  const handleExportItems =
+    async () => {
+      if (!priceListSetupId) {
+        return;
+      }
+
+      try {
+        const blob =
+          await exportItems({
+            priceListSetupId
+          }).unwrap();
+
+        downloadBlob(
+          blob,
+          `price-list-items-${priceListSetupId}.xlsx`
+        );
+      } catch (error: any) {
+        dispatch(
+          notify({
+            msg:
+              extractApiErrorMessage(
+                error,
+                PRICE_LIST_SETUP_ERROR_MAP
+              ) ||
+              'Failed to export price-list items',
+            sev: 'error'
+          })
+        );
+      }
+    };
+
+  const handleImportItems = async (
+    file: File
+  ) => {
+    try {
+    const result =
+      await importItems({
+        priceListSetupId,
+        file
+      }).unwrap();
+
+    const failureSummary =
+      result.errors
+        ?.slice(0, 3)
+        .map(error =>
+          `Row ${error.rowNumber}${
+            error.itemCode
+              ? ` (${error.itemCode})`
+              : ''
+          }: ${error.message}`
+        )
+        .join(' | ');
+
+    dispatch(
+      notify({
+        msg:
+          result.failed > 0
+            ? `Imported ${result.inserted} new and ${result.updated} updated items. ${result.failed} row(s) failed.${
+                failureSummary
+                  ? ` ${failureSummary}`
+                  : ''
+              }`
+            : `Imported successfully. Added ${result.inserted}, updated ${result.updated}.`,
+        sev:
+          result.failed > 0
+            ? 'warning'
+            : 'success'
+      })
+    );
+
+    await refetch();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            extractApiErrorMessage(
+              error,
+              PRICE_LIST_SETUP_ERROR_MAP
+            ) ||
+            'Failed to import price-list items',
+          sev: 'error'
+        })
+      );
+
+      throw error;
+    }
+  };
 
   const tableData = useMemo(
     () => itemPage?.data ?? [],
@@ -1475,7 +1692,6 @@ const PriceListSetupItems: React.FC<Props> = ({
       return 'Item name is required.';
     }
 
-
     if (
       selectedItem.unitPrice ===
       undefined ||
@@ -1573,8 +1789,9 @@ const PriceListSetupItems: React.FC<Props> = ({
         ).trim(),
 
       nonStandardCode:
-        selectedItem.nonStandardCode == null
-          || String(selectedItem.nonStandardCode).trim() === ''
+        isSelfPayPriceList ||
+        selectedItem.nonStandardCode == null ||
+        String(selectedItem.nonStandardCode).trim() === ''
           ? null
           : String(selectedItem.nonStandardCode).trim(),
 
@@ -1582,7 +1799,6 @@ const PriceListSetupItems: React.FC<Props> = ({
         String(
           selectedItem.itemName
         ).trim(),
-
 
       unitPrice:
         Number(
@@ -1752,18 +1968,22 @@ const PriceListSetupItems: React.FC<Props> = ({
           </Translate>
       },
 
-      {
-        key: 'nonStandardCode',
-        title:
-          <Translate>
-            Non Standard Code
-          </Translate>,
-        render: (
-          row:
-            PriceListSetupItem
-        ) =>
-          row.nonStandardCode || '-'
-      },
+      ...(isSelfPayPriceList
+        ? []
+        : [
+            {
+              key: 'nonStandardCode',
+              title:
+                <Translate>
+                  Non Standard Code
+                </Translate>,
+              render: (
+                row:
+                  PriceListSetupItem
+              ) =>
+                row.nonStandardCode || '-'
+            }
+          ]),
 
       {
         key: 'itemName',
@@ -1810,7 +2030,7 @@ const PriceListSetupItems: React.FC<Props> = ({
         key: 'unitPrice',
         title:
           <Translate>
-            Unit Price
+            Price
           </Translate>,
         align: 'center'
       },
@@ -1859,6 +2079,38 @@ const PriceListSetupItems: React.FC<Props> = ({
         : []),
 
       {
+        key: 'isActive',
+        title: <Translate>Status</Translate>,
+        align: 'center' as const,
+        render: (row: PriceListSetupItem) =>
+          row.isActive === false ? 'Inactive' : 'Active'
+      },
+
+      {
+        key: 'createdBy',
+        title: <Translate>Created By</Translate>,
+        render: (row: PriceListSetupItem) => row.createdBy || '-'
+      },
+
+      {
+        key: 'createdDate',
+        title: <Translate>Created Date</Translate>,
+        render: (row: PriceListSetupItem) => row.createdDate || '-'
+      },
+
+      {
+        key: 'lastModifiedBy',
+        title: <Translate>Updated By</Translate>,
+        render: (row: PriceListSetupItem) => row.lastModifiedBy || '-'
+      },
+
+      {
+        key: 'lastModifiedDate',
+        title: <Translate>Updated Date</Translate>,
+        render: (row: PriceListSetupItem) => row.lastModifiedDate || '-'
+      },
+
+      {
         key: 'actions',
         title:
           <Translate>
@@ -1901,152 +2153,137 @@ const PriceListSetupItems: React.FC<Props> = ({
     ];
 
   const childForm = () => (
-    <Form fluid>
-      <div className="price-list-two-columns">
+    <Form fluid className="price-list-item-form">
+      <MyInput
+        required
+        disabled={isEditItem}
+        width="100%"
+        fieldLabel="Item Type"
+        fieldType="select"
+        fieldName="itemType"
+        selectData={typeOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={selectedItem}
+        setRecord={
+          handleItemTypeChange
+        }
+        searchable={false}
+      />
+
+      {isInsurancePriceList ? (
         <MyInput
-          required
-          width="100%"
-          fieldLabel="Item Type"
-          fieldType="select"
-          fieldName="itemType"
-          selectData={typeOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={selectedItem}
-          setRecord={
-            handleItemTypeChange
+          key={
+            selectedItem.itemType ||
+            'no-item-type'
           }
-          searchable={false}
+          required
+          width="100%"
+          fieldLabel="Waseel Item Mapping"
+          fieldType="selectPagination"
+          fieldName="waseelItemMappingId"
+          selectData={mappingSelectData}
+          selectDataLabel="displayName"
+          selectDataValue="id"
+          record={selectedItem}
+          setRecord={updatedItem => {
+            setSelectedItem(updatedItem);
+          }}
+          searchable
+          searchKeyWard={mappingSearch}
+          setSearchKeyWard={setMappingSearch}
+          loading={loadingMappings}
+          hasMore={hasMoreMappings}
+          onFetchMore={handleFetchMoreMappings}
+          onSelectItem={handleMappingSelected}
+          disabled={!selectedItem.itemType}
+          placeholder={
+            !selectedItem.itemType
+              ? 'Select item type first'
+              : 'Select Waseel mapping'
+          }
+          menuMaxHeight={380}
         />
+      ) : (
+        directItemSelectConfig && (
+          <MyInput
+            key={
+              selectedItem.itemType ||
+              'no-item-type'
+            }
+            required
+            width="100%"
+            fieldLabel={
+              directItemSelectConfig.fieldLabel
+            }
+            fieldType="selectPagination"
+            fieldName="sourceId"
+            selectData={directSelectData}
+            selectDataLabel="displayName"
+            selectDataValue="id"
+            record={selectedItem}
+            setRecord={updatedItem => {
+              setSelectedItem(updatedItem);
 
-        {isInsurancePriceList ? (
-          <div className="price-list-mapping-field">
-            <MyInput
-              key={
-                selectedItem.itemType ||
-                'no-item-type'
-              }
-              required
-              width="100%"
-              fieldLabel="Waseel Item Mapping"
-              fieldType="selectPagination"
-              fieldName="waseelItemMappingId"
-              selectData={mappingSelectData}
-              selectDataLabel="displayName"
-              selectDataValue="id"
-              record={selectedItem}
-              setRecord={updatedItem => {
-                setSelectedItem(updatedItem);
-              }}
-              searchable
-              searchKeyWard={mappingSearch}
-              setSearchKeyWard={setMappingSearch}
-              loading={loadingMappings}
-              hasMore={hasMoreMappings}
-              onFetchMore={handleFetchMoreMappings}
-              onSelectItem={handleMappingSelected}
-              disabled={!selectedItem.itemType}
-              placeholder={
-                !selectedItem.itemType
-                  ? 'Select item type first'
-                  : 'Select Waseel mapping'
-              }
-              menuMaxHeight={380}
-            />
-          </div>
-        ) : (
-          directItemSelectConfig && (
-            <MyInput
-              key={
-                selectedItem.itemType ||
-                'no-item-type'
-              }
-              required
-              width="100%"
-              fieldLabel={
-                directItemSelectConfig.fieldLabel
-              }
-              fieldType="selectPagination"
-              fieldName="sourceId"
-              selectData={directSelectData}
-              selectDataLabel="displayName"
-              selectDataValue="id"
-              record={selectedItem}
-              setRecord={updatedItem => {
-                setSelectedItem(updatedItem);
-
-                const selected =
-                  directItemSelectConfig.selectData.find(
-                    item =>
-                      Number(item.id) ===
-                      Number(updatedItem.sourceId)
-                  );
-
-                handleDirectItemSelected(
-                  selected || null
+              const selected =
+                directItemSelectConfig.selectData.find(
+                  item =>
+                    Number(item.id) ===
+                    Number(updatedItem.sourceId)
                 );
-              }}
-              searchable
 
-              searchKeyWard={selectSearch}
-              setSearchKeyWard={handleSelectSearch}
+              handleDirectItemSelected(
+                selected || null
+              );
+            }}
+            searchable
+            searchKeyWard={selectSearch}
+            setSearchKeyWard={handleSelectSearch}
+            loading={
+              directItemSelectConfig.loading
+            }
+            hasMore={
+              directItemSelectConfig.hasMore
+            }
+            onFetchMore={
+              directItemSelectConfig.onFetchMore
+            }
+            onSelectItem={selected => {
+              setSelectedDirectItem(selected);
+              handleDirectItemSelected(selected);
+            }}
+            disabled={!selectedItem.itemType}
+            placeholder={
+              !selectedItem.itemType
+                ? 'Select item type first'
+                : `Select ${directItemSelectConfig.fieldLabel}`
+            }
+            menuMaxHeight={380}
+          />
+        )
+      )}
 
-              loading={
-                directItemSelectConfig.loading
-              }
-              hasMore={
-                directItemSelectConfig.hasMore
-              }
-              onFetchMore={
-                directItemSelectConfig.onFetchMore
-              }
+      <MyInput
+        required
+        disabled
+        width="100%"
+        fieldLabel="Item Code"
+        fieldName="itemCode"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
 
-              onSelectItem={selected => {
-                setSelectedDirectItem(selected);
-                handleDirectItemSelected(selected);
-              }}
+      <MyInput
+        required
+        disabled
+        width="100%"
+        fieldLabel="Item Name"
+        fieldName="itemName"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
 
-              disabled={!selectedItem.itemType}
-
-              placeholder={
-                !selectedItem.itemType
-                  ? 'Select item type first'
-                  : `Select ${directItemSelectConfig.fieldLabel}`
-              }
-
-              menuMaxHeight={380}
-            />
-          )
-        )}
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        <MyInput
-          required
-          disabled
-          width="100%"
-          fieldLabel="Item Code"
-          fieldName="itemCode"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-
-        <MyInput
-          required
-          disabled
-          width="100%"
-          fieldLabel="Item Name"
-          fieldName="itemName"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
+      {!isSelfPayPriceList && (
         <MyInput
           width="100%"
           fieldLabel="Non Standard Code"
@@ -2054,109 +2291,95 @@ const PriceListSetupItems: React.FC<Props> = ({
           record={selectedItem}
           setRecord={setSelectedItem}
         />
-      </div>
+      )}
 
       {isInsurancePriceList && (
         <>
-          <br />
-
-          <div className="price-list-two-columns">
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="Source ID"
-              fieldType="number"
-              fieldName="sourceId"
-              record={selectedItem}
-              setRecord={setSelectedItem}
-            />
-
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Catalog ID"
-              fieldType="number"
-              fieldName="sbsCatalogId"
-              record={selectedItem}
-              setRecord={setSelectedItem}
-            />
-          </div>
-
-          <br />
-
-          <div className="price-list-two-columns">
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Code"
-              fieldName="sbsCode"
-              record={
-                selectedMapping ?? {}
-              }
-              setRecord={() => { }}
-            />
-
-            <MyInput
-              disabled
-              width="100%"
-              fieldLabel="SBS Description"
-              fieldName="sbsDescription"
-              record={
-                selectedMapping ?? {}
-              }
-              setRecord={() => { }}
-            />
-          </div>
-        </>
-      )}
-
-      <div className="price-list-two-columns">
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Unit Price"
-          fieldType="number"
-          allowDecimal
-          fieldName="unitPrice"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-
-        <MyInput
-          required
-          width="100%"
-          fieldLabel="Discount Percentage"
-          fieldType="number"
-          allowDecimal
-          fieldName="discountPercentage"
-          record={selectedItem}
-          setRecord={setSelectedItem}
-        />
-      </div>
-
-      <br />
-
-      <div className="price-list-two-columns">
-        {isInsurancePriceList && (
           <MyInput
+            disabled
             width="100%"
-            fieldLabel="Requires PreAuthorization"
-            fieldType="checkbox"
-            fieldName="requiresPreAuthorization"
+            fieldLabel="Source ID"
+            fieldType="number"
+            fieldName="sourceId"
             record={selectedItem}
             setRecord={setSelectedItem}
           />
-        )}
 
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Catalog ID"
+            fieldType="number"
+            fieldName="sbsCatalogId"
+            record={selectedItem}
+            setRecord={setSelectedItem}
+          />
+
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Code"
+            fieldName="sbsCode"
+            record={
+              selectedMapping ?? {}
+            }
+            setRecord={() => { }}
+          />
+
+          <MyInput
+            disabled
+            width="100%"
+            fieldLabel="SBS Description"
+            fieldName="sbsDescription"
+            record={
+              selectedMapping ?? {}
+            }
+            setRecord={() => { }}
+          />
+        </>
+      )}
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Price"
+        fieldType="number"
+        allowDecimal
+        fieldName="unitPrice"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
+
+      <MyInput
+        required
+        width="100%"
+        fieldLabel="Discount Percentage"
+        fieldType="number"
+        allowDecimal
+        fieldName="discountPercentage"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
+
+      {isInsurancePriceList && (
         <MyInput
           width="100%"
-          fieldLabel="Active"
+          fieldLabel="Requires PreAuthorization"
           fieldType="checkbox"
-          fieldName="isActive"
+          fieldName="requiresPreAuthorization"
           record={selectedItem}
           setRecord={setSelectedItem}
         />
-      </div>
+      )}
+
+      <MyInput
+        width="100%"
+        fieldLabel="Active"
+        fieldType="checkbox"
+        fieldName="isActive"
+        record={selectedItem}
+        setRecord={setSelectedItem}
+      />
     </Form>
   );
 
@@ -2208,7 +2431,7 @@ const PriceListSetupItems: React.FC<Props> = ({
   );
 
   const mainContent = () => (
-    <div>
+    <div className="price-list-items-page" ref={itemsPageRef}>
       <div className="price-list-items-header">
         <div>
           <strong>
@@ -2216,21 +2439,51 @@ const PriceListSetupItems: React.FC<Props> = ({
           </strong>
         </div>
 
-        <MyButton
-          prefixIcon={() => (
-            <AddOutlineIcon />
-          )}
-          color="var(--deep-blue)"
-          onClick={openCreate}
-          width="135px"
-          disabled={!priceListSetupId}
-        >
-          Add Item
-        </MyButton>
+        <div className="container-of-add-new-button price-list-items-actions">
+          <MyButton
+            prefixIcon={() => (
+              <FileDownloadIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={() => {
+              void handleExportItems();
+            }}
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Export
+          </MyButton>
+
+          <MyButton
+            prefixIcon={() => (
+              <FileUploadIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={() =>
+              setImportModalOpen(true)
+            }
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Import
+          </MyButton>
+
+          <MyButton
+            prefixIcon={() => (
+              <AddOutlineIcon />
+            )}
+            color="var(--deep-blue)"
+            onClick={openCreate}
+            width="125px"
+            disabled={!priceListSetupId}
+          >
+            Add Item
+          </MyButton>
+        </div>
       </div>
 
       <MyTable
-        height={470}
+        height={tableHeight}
         loading={isFetching}
         data={tableData}
         totalCount={
@@ -2285,80 +2538,67 @@ const PriceListSetupItems: React.FC<Props> = ({
       ? 'rtl'
       : 'ltr';
 
+  const closeItemsPage = (value: boolean) => {
+    setOpen(value);
+
+    if (!value) {
+      setChildModalOpen(false);
+      setSearchFilters({
+        search: '',
+        itemType: null
+      });
+      setAppliedFilters({});
+
+      setSelectedItem({
+        ...newPriceListSetupItem
+      });
+
+      resetAllDropdowns();
+    }
+  };
+
   return (
     <>
-      <ChildModal
+      <MyModal
         open={open}
-        setOpen={value => {
-          setOpen(value);
-
-          if (!value) {
-            setChildModalOpen(false);
-            setSearchFilters({
-              search: '',
-              itemType: null
-            });
-            setAppliedFilters({});
-
-            setSelectedItem({
-              ...newPriceListSetupItem
-            });
-
-            resetAllDropdowns();
-          }
-        }}
-        showChild={
-          childModalOpen
-        }
-        setShowChild={
-          setChildModalOpen
-        }
+        setOpen={closeItemsPage}
         title="Price List Items"
-        mainContent={
+        size="full"
+        bodyheight="auto"
+        hideActionBtn
+        hideBack
+        customClassName="price-list-items-page-modal"
+        content={
           <div dir={dir}>
             {mainContent()}
           </div>
         }
-        actionChildButtonFunction={
-          handleSave
-        }
-        hideActionBtn
-        childTitle={
+      />
+
+      <MyModal
+        open={childModalOpen}
+        setOpen={setChildModalOpen}
+        title={
           selectedItem.id
             ? 'Edit Price List Item'
             : 'Add Price List Item'
         }
-        childContent={
-          <div dir={dir}>
-            {childForm()}
-          </div>
-        }
-        mainSize="lg"
-        childSize="xs"
+        size="lg"
+        bodyheight="auto"
+        hideBack
+        customClassName="price-list-item-form-modal"
+        actionButtonFunction={handleSave}
         actionButtonLabel={
           selectedItem.id
             ? 'Save'
             : 'Add'
         }
-        isDisabledActionChildBtn={
-          actionLoading
+        isDisabledActionBtn={actionLoading}
+        content={
+          <div dir={dir}>
+            {childForm()}
+          </div>
         }
-        mainStep={[
-          {
-            title:
-              'Price List Items',
-            icon:
-              <MdPriceChange />
-          }
-        ]}
-        childStep={[
-          {
-            title:
-              'Item Details',
-            icon:
-              <MdPriceChange />
-          }
-        ]}
       />
 
       <DeletionConfirmationModal
@@ -2375,6 +2615,17 @@ const PriceListSetupItems: React.FC<Props> = ({
           handleDelete
         }
         actionType="delete"
+      />
+
+      <CodesExcelCsvImportModal
+        open={importModalOpen}
+        setOpen={setImportModalOpen}
+        title="Price List Items Import"
+        excelTemplateFileName="price-list-items-template.xlsx"
+        onDownloadTemplate={
+          handleDownloadTemplate
+        }
+        onImport={handleImportItems}
       />
     </>
   );

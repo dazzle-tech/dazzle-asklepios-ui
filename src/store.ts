@@ -54,7 +54,6 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 
 import { userService } from '@/services/userService';
 
-import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
 import { inventoryService } from './services/inventoryTransactionService';
@@ -262,12 +261,16 @@ import { systemConfigService } from '@/services/systemConfigService';
 import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
+import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
+import { InsuranceCompanyPolicyService } from '@/services/setup/payer/InsuranceCompanyPolicyService';
+import { coverageManagementService } from '@/services/setup/coverageManagement/coverageManagementService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
 import { billingConfigurationService } from './services/billing/billingConfigurationService';
 import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
+import { patientFinancialStatementService } from './services/billing/patientFinancialStatementService';
 import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
 import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
 import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
@@ -414,7 +417,6 @@ export const store = configureStore({
 
     // lab / rad / operation / procedures
     [operationService.reducerPath]: operationService.reducer,
-    [procedureService.reducerPath]: procedureService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
     // refetch flags
@@ -706,6 +708,9 @@ export const store = configureStore({
 
     [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
+    [TpaDefinitionService.reducerPath]: TpaDefinitionService.reducer,
+    [InsuranceCompanyPolicyService.reducerPath]: InsuranceCompanyPolicyService.reducer,
+    [coverageManagementService.reducerPath]: coverageManagementService.reducer,
 
     [priceListSetupService.reducerPath]: priceListSetupService.reducer,
     [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
@@ -713,10 +718,10 @@ export const store = configureStore({
     [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
     [taxService.reducerPath]: taxService.reducer,
     [discountService.reducerPath]: discountService.reducer,
-
     [billingTransactionService.reducerPath]: billingTransactionService.reducer,
     [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
     [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [patientFinancialStatementService.reducerPath]: patientFinancialStatementService.reducer,
     [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
@@ -780,7 +785,6 @@ export const store = configureStore({
         encounterAttachmentsService.middleware,
         inventoryTransferAttachmentService.middleware,
         inventoryTransactionAttachmentService.middleware,
-        procedureService.middleware,
         operationService.middleware,
         recoveryService.middleware,
         userService.middleware,
@@ -964,6 +968,9 @@ export const store = configureStore({
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
         NphiesPayerService.middleware,
+        TpaDefinitionService.middleware,
+        InsuranceCompanyPolicyService.middleware,
+        coverageManagementService.middleware,
         priceListSetupService.middleware,
         billingRuleSetupService.middleware,
         billingConfigurationService.middleware,
@@ -973,6 +980,7 @@ export const store = configureStore({
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
         financialDocumentAdjustmentService.middleware,
+        patientFinancialStatementService.middleware,
         flaccPainSacoreService.middleware,
         PointOfSaleCheckInService.middleware,
         PointOfSaleConfigurationService.middleware,

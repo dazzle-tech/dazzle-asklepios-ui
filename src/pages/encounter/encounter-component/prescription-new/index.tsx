@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Divider } from 'rsuite';
 
@@ -66,6 +66,7 @@ const Prescription = (props: Props) => {
 
   const [currentPrescription, setCurrentPrescription] = useState<PatientPrescription | null>(null);
   const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: number | null }>({ preKey: null });
+  const suppressAutoSelectRef = useRef(false);
 
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedRows, setSelectedRows] = useState<PatientPrescriptionMedication[]>([]);
@@ -187,7 +188,15 @@ const Prescription = (props: Props) => {
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
 
   useEffect(() => {
-    if (preKeyRecord.preKey !== null) return;
+    if (preKeyRecord.preKey !== null) {
+      suppressAutoSelectRef.current = false;
+      return;
+    }
+
+    if (suppressAutoSelectRef.current) {
+      setCurrentPrescription(null);
+      return;
+    }
 
     const draft = patientPrescriptions.find(
       p => String(p.status ?? '').toUpperCase() === 'DRAFT'
@@ -202,7 +211,6 @@ const Prescription = (props: Props) => {
     setCurrentPrescription(null);
   }, [patientPrescriptions, preKeyRecord.preKey]);
 
-
   useEffect(() => {
     if (!preKeyRecord.preKey) {
       setCurrentPrescription(null);
@@ -215,6 +223,20 @@ const Prescription = (props: Props) => {
       setCurrentPrescription(selected);
     }
   }, [preKeyRecord.preKey, patientPrescriptions]);
+
+  const handleClearSelection = useCallback(() => {
+    suppressAutoSelectRef.current = true;
+    setPreKeyRecord({ preKey: null });
+    setCurrentPrescription(null);
+    setSelectedRows([]);
+    setSelectedPreviewMedication(null);
+    setOpenDetailsModal(false);
+    setOpenToAdd(true);
+    setPatientPrescriptionMedicationObject({
+      ...newPatientPrescriptionMedication,
+      prescriptionHeaderId: null as any
+    });
+  }, []);
 
   const {
     data: patientPrescriptionMedicationsRaw,
@@ -604,6 +626,7 @@ const Prescription = (props: Props) => {
       setOpenCancellation={setOpenCancellation}
       setSummaryModalOpen={setSummaryModalOpen}
       handleNewPrescriptionAndAddMedication={handleNewPrescriptionAndAddMedication}
+      handleClearSelection={handleClearSelection}
     />
   );
 

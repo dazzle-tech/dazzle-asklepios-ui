@@ -5,7 +5,7 @@ import './styles.less';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import GenericAdministeredMedications from "@/pages/encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
+import GenericAdministeredMedications from '@/components/clinical/GenericAdministeredMedications';
 import { ApPreOperationAssessment } from '@/types/model-types';
 import { newApPreOperationAdministeredMedications, newApPreOperationAssessment } from '@/types/model-types-constructor';
 import { useGetPreOperationMedicationsListQuery, useSavePreOperationMedicationsMutation } from '@/services/encounterService';

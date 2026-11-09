@@ -54,6 +54,12 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 import BulkCollectSampleModal from '@/pages/lab-module-new/BulkCollectSampleModal';
 import MyButton from '@/components/MyButton/MyButton';
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
+import { notify } from '@/utils/uiReducerActions';
+import {
+    PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE,
+    isSampleBlockedByPreAuthorization
+} from '@/utils/preAuthorizationSampleLock';
 
 const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
 
@@ -578,16 +584,28 @@ const CollectSambleModal = ({
                 rowData.processingStatus ?? '—'
         },
         {
+            key: 'preAuthorizationStatus',
+            title: <Translate>PRE-AUTH</Translate>,
+            width: 120,
+            align: 'center',
+            render: (rowData: any) => (
+                <PreAuthorizationStatusBadge status={rowData.preAuthorizationStatus} />
+            )
+        },
+        {
             key: 'collectSample',
             title: <Translate>COLLECT SAMPLE</Translate>,
             width: 110,
             align: 'center',
             render: (rowData: any) => {
+                const blockedByPreAuthorization =
+                    isSampleBlockedByPreAuthorization(rowData);
                 const canCollect =
                     rowData.status ===
                     DiagnosticOrderTestStatus.SUBMITTED &&
                     rowData.processingStatus !==
-                    DiagnosticOrderTestStatus.REJECTED;
+                    DiagnosticOrderTestStatus.REJECTED &&
+                    !blockedByPreAuthorization;
 
                 return (
                     <CollectSampleIcon
@@ -595,6 +613,11 @@ const CollectSambleModal = ({
                         canCollect={canCollect}
                         onClick={e => {
                             e.stopPropagation();
+
+                            if (blockedByPreAuthorization) {
+                                dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
+                                return;
+                            }
 
                             if (!canCollect) return;
 
@@ -684,7 +707,18 @@ const CollectSambleModal = ({
                                         <MyButton
                                             prefixIcon={() => <FontAwesomeIcon icon={faVialCircleCheck} />}
                                             disabled={!selectedRows.length}
-                                            onClick={() => setOpenBulkSampleModal(true)}
+                                            onClick={() => {
+                                                const blocked = collectableTests.some(
+                                                    (t: any) =>
+                                                        selectedRows.includes(t.id) &&
+                                                        isSampleBlockedByPreAuthorization(t)
+                                                );
+                                                if (blocked) {
+                                                    dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
+                                                    return;
+                                                }
+                                                setOpenBulkSampleModal(true);
+                                            }}
                                         >
                                             Bulk Collect Sample
                                         </MyButton>

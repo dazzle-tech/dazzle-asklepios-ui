@@ -49,8 +49,10 @@ import {
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
   useStartEncounterMutation,
+  useLazyGetEncounterPreAuthorizationLockQuery,
   useCancelEncounterMutation
 } from '@/services/encounters/patientEncounterService';
+import { PRE_AUTHORIZATION_VISIT_LOCK_MESSAGE } from '@/utils/preAuthorizationVisitLock';
 
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -330,6 +332,7 @@ const EncounterList = () => {
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
 
   const [startEncounter] = useStartEncounterMutation();
+  const [getPreAuthorizationLock] = useLazyGetEncounterPreAuthorizationLockQuery();
   const [cancelEncounter] = useCancelEncounterMutation();
 
 
@@ -647,6 +650,27 @@ const EncounterList = () => {
     });
   }, [tableData, patientMap, practitionerMap]);
   const getEncounterId = (row: any) => row?.id ?? null;
+
+  /**
+   * The nurse station opens without a start endpoint, so the pre-authorization lock is
+   * checked here. Start triage / start visit are also enforced by the backend.
+   */
+  const isVisitLockedByPreAuthorization = async (row: any): Promise<boolean> => {
+    const encounterId = getEncounterId(row);
+    if (!encounterId) return false;
+    try {
+      const lock = await getPreAuthorizationLock(encounterId).unwrap();
+      if (lock?.locked) {
+        dispatch(
+          notify({ msg: lock.message ?? PRE_AUTHORIZATION_VISIT_LOCK_MESSAGE, sev: 'warning' })
+        );
+        return true;
+      }
+    } catch {
+      // A failed lock check does not block the nurse station.
+    }
+    return false;
+  };
 
   const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
@@ -1721,6 +1745,10 @@ const EncounterList = () => {
             open={openNurseAssessment}
             setOpen={setOpenNurseAssessment}
             actionButtonFunction={async () => {
+              if (await isVisitLockedByPreAuthorization(encounter)) {
+                setOpenNurseAssessment(false);
+                return;
+              }
               await handleGoToPreVisitObservations(encounter);
             }}
             actionType="confirm"

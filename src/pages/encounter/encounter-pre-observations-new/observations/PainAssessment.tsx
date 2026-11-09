@@ -19,6 +19,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import './styles.less';
 import NumericSlider from '@/components/NumericSlider';
+import { getPainTrackColor } from '@/components/NumericSlider/getPainTrackColor';
 import FacesSlider from '@/components/FacesSlider';
 import FlaccComponent from '@/components/PatientFlaccComponent';
 import { useGetLatestActiveFLACCPainScaleByEncounterQuery } from '@/services/encounters/flaccPainSacoreService';
@@ -123,13 +124,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     const m = String(painLevel).match(/LEVEL_(\d+)/);
     return m ? Number(m[1]) : minLevel;
   }, [(record as any)?.painLevel, painLevelSteps, minLevel]);
-
-  const getTrackColor = (value: number): string => {
-    if (value === 0) return 'transparent';
-    if (value >= 1 && value <= 3) return '#28a745';
-    if (value >= 4 && value <= 7) return 'orange';
-    return 'red';
-  };
 
   const getSeverityFromPainLevel = (painLevel: string | null | undefined): string | null => {
     if (!painLevel) return null;
@@ -428,7 +422,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   max={maxLevel}
                   required
                   disabled={disabled}
-                  getTrackColor={getTrackColor}
+                  getTrackColor={getPainTrackColor}
                   onChange={value => {
                     const enumItem = painLevelSteps.find(x => x.n === value);
                     const enumValue = enumItem?.value ?? `LEVEL_${value}`;
@@ -448,7 +442,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   title={`Pain Level (${painLevelValue}-${maxLevel})`}
                   value={painLevelValue}
                   disabled={disabled}
-                  getTrackColor={getTrackColor}
+                  getTrackColor={getPainTrackColor}
                   onChange={value => {
                     const enumItem = painLevelSteps.find(x => x.n === value);
                     const enumValue = enumItem?.value ?? `LEVEL_${value}`;

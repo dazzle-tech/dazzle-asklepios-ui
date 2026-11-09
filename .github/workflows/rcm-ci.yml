@@ -1,0 +1,51 @@
+name: Build and Deploy RCM/Prod
+on:
+  push:
+    branches:
+      - ASK-2017-Master
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:rcm.${{ github.sha }} .
+
+      - name: Log in to Huawei SWR
+        env:
+          SWR_USERNAME: ${{ secrets.SWR_USERNAME }}
+          SWR_TOKEN: ${{ secrets.SWR_TOKEN }}
+        run: |
+          echo "$SWR_TOKEN" | docker login swr.me-east-1.myhuaweicloud.com -u "$SWR_USERNAME" --password-stdin
+
+      - name: Tag Docker Image for SWR
+        run: |
+          docker tag ${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:rcm.${{ github.sha }} swr.me-east-1.myhuaweicloud.com/cos/asklepios-ui:rcm.${{ github.sha }}
+
+      - name: Push Docker Image to SWR
+        run: |
+          docker push swr.me-east-1.myhuaweicloud.com/cos/asklepios-ui:rcm.${{ github.sha }}
+
+      - name: Logout of Huawei SWR
+        run: docker logout swr.me-east-1.myhuaweicloud.com
+        
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Write kubeconfig for selected environment
+        run: |
+          echo "${{ secrets.OH_HA_K8S_PROD_KUBECONFIG }}" | base64 -d > kubeconfig.yaml
+          echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> "$GITHUB_ENV"
+
+      - name: Verify cluster connectivity
+        run: kubectl get nodes -n cms-emr
+
+      - name: Deploy to RCM Prod
+        run: |
+          kubectl set image deployment/asklepios-ui asklepios-ui=swr.me-east-1.myhuaweicloud.com/cos/asklepios-ui:rcm.${{ github.sha }} -n cms-emr
+          kubectl rollout status deployment/asklepios-ui -n cms-emr --timeout=120s
