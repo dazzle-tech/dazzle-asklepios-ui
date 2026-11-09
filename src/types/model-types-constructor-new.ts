@@ -3414,6 +3414,8 @@ export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   serviceId: undefined,
   cdtCodeId: null,
   notes: null,
+  informedConsentObtained: false,
+  treatmentOutcome: null
 };
 export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
   id: undefined,
