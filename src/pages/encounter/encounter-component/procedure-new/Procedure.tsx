@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6';
 import { MdAttachFile, MdDescription, MdModeEdit } from 'react-icons/md';
-import { Checkbox, Loader } from 'rsuite';
+import { Checkbox, Loader, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -19,7 +19,11 @@ import { useLocation } from 'react-router-dom';
 import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
 import Details from './Details';
 import Perform from './Perform';
-import { getStatusColor } from './procedureHelpers';
+import {
+  PROCEDURE_MODULE_IN_USE,
+  canPerformFromVisit,
+  getStatusColor
+} from './procedureHelpers';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetProceduresQuery as useGetAllProceduresQuery } from '@/services/setup/procedure/procedureService';
 import {
@@ -27,7 +31,10 @@ import {
   useCancelProcdureMutation
 } from '@/services/patients/patientProcedureService';
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import {
+  useGetAllDepartmentsWithoutPaginationQuery,
+  useLazyGetActiveDepartmentByFacilityListQuery
+} from '@/services/security/departmentService';
 import { cond } from 'lodash';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
@@ -86,6 +93,11 @@ const Referrals = (props: any) => {
   const [cancelProcedure] = useCancelProcdureMutation();
   const [getProcedureById] = useLazyGetProcedureByIdQuery();
   const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
+  const { data: departments } = useGetAllDepartmentsWithoutPaginationQuery(undefined);
+  const departmentNames = useMemo(
+    () => new Map<number, string>((departments ?? []).map((item: any) => [item.id, item.name])),
+    [departments]
+  );
 
   const {
     data: proceduresData,
@@ -271,11 +283,12 @@ const Referrals = (props: any) => {
   const tableColumns = useMemo(
     () => [
       {
-        key: 'procedureId',
-        dataKey: 'procedureId',
-        title: <Translate>PROCEDURE ID</Translate>,
+        key: 'department',
+        title: <Translate>DEPARTMENT</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData?.procedureId ?? ''
+        // A procedure for the visit's own department has no target department
+        render: (rowData: any) =>
+          departmentNames.get(Number(rowData?.toDepartmentId ?? rowData?.fromDepartmentId)) ?? ''
       },
       {
         key: 'procedureName',
@@ -502,6 +515,39 @@ const Referrals = (props: any) => {
         }
       },
       {
+        key: 'perform',
+        dataKey: '',
+        title: <Translate>PERFORM</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const isCancelled = rowData?.status === 'CANCELLED';
+          const atVisit = canPerformFromVisit(rowData);
+          const isDisabled = isCancelled || !atVisit;
+          const hint = !atVisit
+            ? 'Performed by the target department from the Procedure module'
+            : isCancelled
+            ? 'Cancelled procedure'
+            : 'Perform Details';
+          return (
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>{hint}</Tooltip>}>
+              <div>
+                <FaBedPulse
+                  size={22}
+                  fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+                  style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (isDisabled) return;
+                    setProcedure(rowData);
+                    OpenPerformModel();
+                  }}
+                />
+              </div>
+            </Whisper>
+          );
+        }
+      },
+      {
         key: 'created',
         title: <Translate>CREATED AT/BY</Translate>,
         expandable: true,
@@ -544,6 +590,7 @@ const Referrals = (props: any) => {
     ],
     [
       proceduresMap,
+      departmentNames,
       dispatch,
       getProcedureById,
       icdMap,
@@ -579,7 +626,11 @@ const Referrals = (props: any) => {
     <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
-          columns={tableColumns}
+          columns={
+            PROCEDURE_MODULE_IN_USE
+              ? tableColumns
+              : tableColumns.filter(column => column.key !== 'perform')
+          }
           data={procedures}
           onRowClick={async rowData => {
             try {

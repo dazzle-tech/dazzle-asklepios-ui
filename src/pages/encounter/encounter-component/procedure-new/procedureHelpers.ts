@@ -45,6 +45,24 @@ const REGISTRATION_REQUIRED_FIELDS = [
 export const isRegistrationComplete = (record: any): boolean =>
   REGISTRATION_REQUIRED_FIELDS.every(field => Boolean(record?.[field]));
 
+/**
+ * Ordered for the visit's own department (no other target department), so it is
+ * performed from the patient visit rather than from the procedure module.
+ */
+export const isCurrentDepartment = (record: any): boolean =>
+  !record?.toDepartmentId || record.toDepartmentId === record.fromDepartmentId;
+
+/**
+ * Performing procedures is not rolled out yet: the procedure module is closed by
+ * permissions and the visit's Procedure tab hides its Perform column. Set to true
+ * to bring Perform back (current department from the visit, the rest from the module).
+ */
+export const PROCEDURE_MODULE_IN_USE = true;
+
+/** Whether the visit's Procedure tab may open Perform for this procedure. */
+export const canPerformFromVisit = (record: any): boolean =>
+  PROCEDURE_MODULE_IN_USE && isCurrentDepartment(record);
+
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** A stored instant as the HH:mm:ss value the time input works with. */

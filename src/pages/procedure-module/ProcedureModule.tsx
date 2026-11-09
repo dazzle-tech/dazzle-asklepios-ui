@@ -21,6 +21,7 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import EncounterAttachment from '../patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import Perform from '../encounter/encounter-component/procedure-new/Perform';
+import { isCurrentDepartment } from '../encounter/encounter-component/procedure-new/procedureHelpers';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import PatientWritBandPrintLabelButton from '../encounter/urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
@@ -137,9 +138,15 @@ const ProcedureModule: React.FC = () => {
 
 
   const filterFields = [
-    { label: 'PROCEDURE ID', value: 'procedureId' },
+    { label: 'Department', value: 'department' },
     { label: 'Procedure Name', value: 'procedureName' }
   ];
+
+  // A procedure for the visit's own department has no target department
+  const departmentNameOf = (row: any) => {
+    const departmentId = row?.toDepartmentId ?? row?.fromDepartmentId;
+    return (departments ?? []).find((item: any) => item.id === departmentId)?.name ?? '';
+  };
 
   // Keep latest patients map in ref to avoid over-broad deps
   const [patients, setPatients] = useState<Record<string, any>>({});
@@ -208,11 +215,10 @@ const ProcedureModule: React.FC = () => {
       )
     },
     {
-      key: 'procedureId',
-      dataKey: 'procedureId',
-      title: <Translate>PROCEDURE ID</Translate>,
+      key: 'toDepartmentId',
+      title: <Translate>DEPARTMENT</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => rowData.id
+      render: (rowData: any) => departmentNameOf(rowData)
     },
     {
       key: 'procedureName',
@@ -280,10 +286,12 @@ const ProcedureModule: React.FC = () => {
       title: <Translate>PERFORM</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        const isDisabled = rowData.status === 'CANCELLED';
+        const atVisit = isCurrentDepartment(rowData);
+        const isDisabled = rowData.status === 'CANCELLED' || atVisit;
+        const hint = atVisit ? 'Performed from the patient visit' : 'Perform Details';
         return (
           <HStack spacing={10}>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>{hint}</Tooltip>}>
               <div>
                 <FaBedPulse
                   size={22}
@@ -330,14 +338,6 @@ const ProcedureModule: React.FC = () => {
       expandable: true,
       render: (rowData: any) =>
         (facilities ?? []).find((item: any) => item.id === rowData.toFacilityId)?.name ?? ''
-    },
-    {
-      key: 'toDepartmentId',
-      title: <Translate>DEPARTMENT</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) =>
-        (departments ?? []).find((item: any) => item.id === rowData.toDepartmentId)?.name ?? ''
     },
     {
       key: 'bodyPart',
@@ -399,7 +399,8 @@ const ProcedureModule: React.FC = () => {
   const matchesRecordFilter = (row: any) => {
     const raw = String(record?.value ?? '').trim().toLowerCase();
     if (!record?.filter || !raw) return true;
-    const value = record.filter === 'procedureName' ? setupOf(row)?.name : row.id;
+    const value =
+      record.filter === 'procedureName' ? setupOf(row)?.name : departmentNameOf(row);
     return String(value ?? '').toLowerCase().includes(raw);
   };
 
@@ -447,8 +448,8 @@ const ProcedureModule: React.FC = () => {
   );
 
   const filters = () => (
-    <>
-      <Form fluid className='procedure-module-table-filters-handle-position'>
+    <div className="procedure-module-filters">
+      <Form fluid className="procedure-module-table-filters-handle-position">
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -503,12 +504,16 @@ const ProcedureModule: React.FC = () => {
           }}
         />
 
-        <Checkbox className="show-cancelled" style={{marginTop:'1.2vw'}} checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+        <Checkbox
+          className="show-cancelled"
+          checked={showCanceled}
+          onChange={() => setShowCanceled(!showCanceled)}
+        >
           <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>
       <AdvancedSearchFilters searchFilter={true} content={contents} />
-    </>
+    </div>
   );
 
 

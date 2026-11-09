@@ -1,8 +1,51 @@
+// Every filter on one line: the inputs differ in label space and spacers, so
+// they line up on their bottom edge, and the buttons stay on the same line
+.procedure-module-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  .bt-right-group {
+    gap: 0.5rem;
+  }
+
+  // The Advanced fields open on their own line under the filters
+  .advanced-filters {
+    flex-basis: 100%;
+    margin-top: 0;
+  }
+
+  .dissss {
+    align-items: flex-end;
+  }
+
+  .rs-form-group {
+    margin-bottom: 0 !important;
+  }
+
+  .rs-form-control-label:empty {
+    display: none;
+  }
+}
+
 .procedure-module-table-filters-handle-position {
   display: flex;
   flex-direction: row;
-  gap: 1vw;
-flex-wrap: wrap;}
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  .search-patient-criteria-handle-position-row {
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+
+  .show-cancelled {
+    margin: 0;
+  }
+}
 
 .indication-procedure-handle-position {
   display: flex;
