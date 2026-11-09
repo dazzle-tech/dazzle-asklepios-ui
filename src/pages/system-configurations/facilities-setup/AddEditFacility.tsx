@@ -13,6 +13,8 @@ import Translate from '@/components/Translate';
 import { useGetCountriesQuery } from '@/services/setup/country/countryService';
 import { useGetDistrictsByCountryQuery } from '@/services/setup/country/countryDistrictService';
 import { PhoneNumberInput } from '@/components';
+import { isPhoneValid } from '@/utils/phoneNumber';
+import { facilityPhoneCountryIso2, phoneCountryOptions } from '@/utils/facilityPhoneCountry';
 
 const AddEditFacility = ({
   open,
@@ -151,6 +153,21 @@ const AddEditFacility = ({
     facility?.defaultRadDepartmentId,
     facility?.defaultRadDepartmentName
   ]);
+
+  const phoneCountry = facilityPhoneCountryIso2(facility);
+
+  const applyDefaultPhoneCountry = (next: any) => {
+    const iso2 = String(next?.defaultPhoneCountry ?? '').trim().toLowerCase();
+    const known = phoneCountryOptions.some(country => country.iso2 === iso2);
+    const keepNumber = (phone?: string | null) => (phone && isPhoneValid(phone) ? phone : '');
+
+    setFacility({
+      ...next,
+      defaultPhoneCountry: known ? iso2 : null,
+      phone1: keepNumber(next?.phone1),
+      phone2: keepNumber(next?.phone2)
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -360,6 +377,18 @@ const AddEditFacility = ({
       case 2:
         return (
           <Form fluid>
+            <MyInput
+              width="26vw"
+              fieldLabel="Default Phone Country"
+              fieldType="select"
+              fieldName="defaultPhoneCountry"
+              selectData={phoneCountryOptions}
+              selectDataLabel="label"
+              selectDataValue="iso2"
+              record={facility}
+              setRecord={applyDefaultPhoneCountry}
+              searchable
+            />
             <div
               className={clsx('', {
                 'container-of-two-fields-facility': width > 600
@@ -370,6 +399,8 @@ const AddEditFacility = ({
                 fieldLabel="Primary Phone Number"
                 record={facility}
                 setRecord={setFacility}
+                defaultCountry={phoneCountry}
+                resetKey={`${facility?.id ?? 'new'}-${phoneCountry}`}
                 width="13vw"
               />
 
@@ -378,6 +409,8 @@ const AddEditFacility = ({
                 fieldLabel="Secondary Phone Number"
                 record={facility}
                 setRecord={setFacility}
+                defaultCountry={phoneCountry}
+                resetKey={`${facility?.id ?? 'new'}-${phoneCountry}`}
                 width="13vw"
               />
             </div>

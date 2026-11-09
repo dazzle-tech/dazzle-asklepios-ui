@@ -135,6 +135,7 @@ export interface Facility {
   districtName?: string | null;
   streetAddress?: string | null;
   postalCode?: string | null;
+  defaultPhoneCountry?: string | null;
   facilityAddress?: string | null;
 }
 
@@ -158,6 +159,7 @@ export interface CreateFacility {
   districtId?: number | null;
   streetAddress?: string | null;
   postalCode?: string | null;
+  defaultPhoneCountry?: string | null;
 }
 
 export interface Role {
