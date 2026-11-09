@@ -156,6 +156,7 @@ export type EncounterExecutedServiceLine = {
   taxAmount: number | null;
   taxRate: number | null;
   coverageStatus: string | null;
+  priceListName?: string | null;
 };
 
 export type EncounterListVM = {

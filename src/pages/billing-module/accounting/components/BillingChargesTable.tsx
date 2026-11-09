@@ -67,6 +67,9 @@ type BillingChargesTableProps = {
   preAuthActionLoadingId?: number | null;
   onPayRejectedAsCash?: (patientServiceProductId: number) => void;
   onClonePreAuthorization?: (patientServiceProductId: number) => void;
+  canCancelServices?: boolean;
+  cancelServiceLoadingId?: number | null;
+  onCancelService?: (row: UnifiedBillingChargeRow) => void;
 };
 
 
@@ -97,7 +100,13 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
   onPayRejectedAsCash,
 
-  onClonePreAuthorization
+  onClonePreAuthorization,
+
+  canCancelServices = false,
+
+  cancelServiceLoadingId = null,
+
+  onCancelService
 
 }) => {
 
@@ -359,10 +368,12 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
       title: 'Price source',
 
-      width: 110,
+      width: 170,
 
       render: (row: UnifiedBillingChargeRow) => (
-        <Tag size="sm">{formatBillingPriceSource(row.priceSource)}</Tag>
+        <Tag size="sm" title={row.priceListName ?? undefined}>
+          {formatBillingPriceSource(row.priceSource, row.priceListName)}
+        </Tag>
       )
 
     },
@@ -629,6 +640,49 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
                     Clone pre-auth
                   </MyButton>
                 </div>
+              );
+            }
+
+          }
+
+        ]
+
+      : []),
+
+    ...(canCancelServices && onCancelService
+
+      ? [
+
+          {
+
+            key: 'cancelService',
+
+            title: '',
+
+            width: 90,
+
+            render: (row: UnifiedBillingChargeRow) => {
+              const pspId = row.patientServiceProductId;
+
+              if (pspId == null || isCancelledBillingLineStatus(row.status)) {
+                return null;
+              }
+
+              const cancelling = cancelServiceLoadingId === pspId;
+
+              return (
+                <span className="billing-accounting__row-cancel">
+                  <MyButton
+                    size="xs"
+                    appearance="ghost"
+                    color="var(--primary-pink)"
+                    loading={cancelling}
+                    disabled={cancelServiceLoadingId != null}
+                    onClick={() => onCancelService(row)}
+                  >
+                    Cancel
+                  </MyButton>
+                </span>
               );
             }
 

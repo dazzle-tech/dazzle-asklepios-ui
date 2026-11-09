@@ -30,6 +30,7 @@ export const newApUser: modelTypes.ApUser = {
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
   canReturnClaimForResubmit: false,
+  canCancelServiceBeforeInvoice: false,
 };
 
 // ------------------- Candidate -------------------

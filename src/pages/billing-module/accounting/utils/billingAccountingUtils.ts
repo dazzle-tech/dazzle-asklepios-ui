@@ -47,6 +47,7 @@ export type UnifiedBillingChargeRow = {
   unitPrice: number;
   setupUnitPrice?: number | null;
   priceSource?: string | null;
+  priceListName?: string | null;
   taxAmount?: number | null;
   taxRate?: number | null;
   netAmount: number;
@@ -1782,10 +1783,18 @@ export const formatBillingSource = (source: string | null | undefined): string =
   formatBillingEnum(source);
 
 export const formatBillingPriceSource = (
-  priceSource: string | null | undefined
+  priceSource: string | null | undefined,
+  priceListName?: string | null
 ): string => {
   const normalized = String(priceSource ?? '').trim();
-  return normalized ? formatBillingEnum(normalized) : '-';
+  if (!normalized) {
+    return '-';
+  }
+
+  const listName = String(priceListName ?? '').trim();
+  return normalized.toUpperCase() === 'PRICE_LIST' && listName
+    ? `${formatBillingEnum(normalized)}: ${listName}`
+    : formatBillingEnum(normalized);
 };
 
 const resolveChargeRowPriceSource = (
@@ -1848,6 +1857,7 @@ export const mapSummaryItemToRow = (
     item.setupUnitPrice ??
     null,
   priceSource: resolveChargeRowPriceSource(item, linkedPsp),
+  priceListName: readChargeLineText(item, 'priceListName', 'price_list_name'),
   taxAmount:
     readChargeLineNumber(item, 'taxAmount', 'tax_amount') ?? item.taxAmount ?? 0,
   taxRate:
