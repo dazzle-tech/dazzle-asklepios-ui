@@ -257,6 +257,36 @@ export const ADJUSTMENT_ERROR_MAP: Record<string, string> = {
     'This adjustment request was already processed. Refresh the adjustments list.'
 };
 
+export const WALLET_REFUND_ERROR_MAP: Record<string, string> = {
+  'refund.exceedsAvailable':
+    'Requested refund exceeds the available wallet balance. Reserved funds cannot be refunded.',
+  'wallet.refund.exceedsAvailable':
+    'Requested refund exceeds the available wallet balance. Reserved funds cannot be refunded.',
+  'wallet.notfound': 'No billing wallet was found for this patient.',
+  'wallet.notActive': 'The patient wallet is not active.',
+  'wallet.balance.invalid': 'The patient wallet balance is inconsistent. Refresh and try again.',
+  'amount.invalid': 'Refund amount must be greater than zero.',
+  'reason.required': 'A refund reason is required.',
+  'refundMethodCode.required': 'Select how the refund should be returned.',
+  'refundMethodId.required': 'Select how the refund should be returned.',
+  'patient.notfound': 'Patient not found.',
+  'patientId.required': 'Patient is required to issue a refund.',
+  'requestId.required': 'Refund request id is missing. Refresh and try again.',
+  'sourceChannel.required': 'Refund source channel is required.',
+  'refundSourceType.required': 'Refund source type is required.',
+  'refund.exceedsRefundable': 'Requested refund exceeds the currently refundable amount.',
+  'payment.refundable.zero': 'No refundable amount remains for this payment.',
+  'numbering.configuration.inactive':
+    'Refund numbering is inactive. Activate REFUND numbering in Financial Document Numbering first.',
+  'numbering.configuration.notfound':
+    'Refund numbering is not configured for this facility. Set it up in Financial Document Numbering like invoices.',
+  'numbering.assign.failed':
+    'Unable to allocate the next refund document number from setup. Try again.',
+  'numbering.facility.required': 'Facility is required to assign a refund document number.',
+  'encounter.required': 'Select a visit to issue a numbered refund document.',
+  'refund.document.create.failed': 'Unable to save the refund financial document.'
+};
+
 export const CHECKOUT_ERROR_MAP: Record<string, string> = {
   'responsibility.unsettled':
     'Checkout could not settle the full patient balance. Enable patient debit or collect the remaining amount first.',
@@ -294,19 +324,57 @@ export const ENCOUNTER_START_ERROR_MAP: Record<string, string> = {
 
 export const PRICE_LIST_SETUP_ERROR_MAP: Record<string, string> = {
   'interval.type.duplicate':
-    'An active price list already exists for this type in the selected date range. Change the dates or deactivate the existing list.',
+    'A cash price list already exists in the selected date range.',
   'interval.payer.duplicate':
-    'An active insurance price list already exists for this payer in the selected date range. Change the dates or deactivate the existing list.',
+    'An insurance price list already exists for this company in the selected date range.',
+  'active.cash.duplicate':
+    'Only one active Cash Price List is allowed.',
+  'active.payer.duplicate':
+    'An active price list already exists for this insurance company.',
   'payer.required':
-    'Payer is required for insurance price lists.',
+    'Insurance company is required for insurance price lists.',
+  'payer.notNphies':
+    'The insurance company must be selected from NPHIES. An internal payor cannot be saved on a price list.',
+  'payer.fk':
+    'The selected company could not be saved because an old database link still allows only NPHIES ids. Apply the latest database update and try again.',
+  'version.duplicate':
+    'A price list with this facility, type, company, and version already exists.',
+  'item.catalogMissing':
+    'Some items point at a catalog record that no longer exists. Turn off Also clone items, or fix the source price list.',
   'effectiveDate.invalidRange':
-    'Effective To must be on or after Effective From.',
+    'The end date must be later than the start date.',
+  'effectiveDate.startInPast':
+    'The start date cannot be in the past.',
+  'effectiveDate.required':
+    'Effective start date is required for an active price list.',
+  'tax.notFound':
+    'The selected tax was not found.',
+  'item.duplicate':
+    'This service is already configured on this price list.',
   'item.duplicateInPriceList':
-    'This catalog item is already on the selected price list. Use a different price list header to price the same service separately.',
+    'This catalog item is already on the selected price list.',
+  'catalog.inactive':
+    'Only active services from Service Definition can be added to a price list.',
   'itemCode.duplicate':
     'This item code already exists on the selected price list.',
   'item.idSequenceOutOfSync':
-    'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.'
+    'Unable to allocate a new price-list item ID. Contact support to fix the database sequence.',
+  'clone.constraint':
+    'Unable to clone the price list because of a data constraint. Change the name or dates and try again.',
+  'item.import.fileRequired':
+    'Please choose an Excel or CSV file to import.',
+  'item.import.badFileType':
+    'Unsupported file type. Upload .xlsx, .xls, or .csv.',
+  'item.import.catalogNotFound':
+    'A catalog item was not found for one or more rows. Use a valid item code or source ID.',
+  'item.import.mappingRequired':
+    'A Waseel item mapping is required for insurance price-list items.',
+  'item.import.missingHeader':
+    'The file is missing required columns. Download the template and try again.',
+  'item.import.empty':
+    'The file has no data rows.',
+  'requiresPreAuthorization.insuranceOnly':
+    'Requires Pre-Authorization is only allowed on insurance price list items.'
 };
 
 export const WASEEL_ELIGIBILITY_ERROR_MAP: Record<string, string> = {

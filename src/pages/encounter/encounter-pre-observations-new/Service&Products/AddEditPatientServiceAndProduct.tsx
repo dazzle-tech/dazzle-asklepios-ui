@@ -13,6 +13,8 @@ import {
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
+import { isHeldForPreAuthorization } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import { formatEnumString } from '@/utils';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
@@ -76,6 +78,9 @@ const AddEditPatientServiceAndProduct = ({
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<
+    { patientServiceProductId?: number | null; label: string }[] | null
+  >(null);
   const location = useLocation();
 
   const patient = patientProp ?? location.state?.patient;
@@ -968,16 +973,26 @@ const AddEditPatientServiceAndProduct = ({
           uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null
         };
 
-        await (createItem
+        // A procedure adds the item through its own endpoint, which returns the same row
+        const created = await (createItem
           ? createItem(createDTO)
           : createPatientServiceAndProduct(createDTO).unwrap());
+        const createdRow = ((created as any)?.object ?? created) as PatientServiceAndProduct;
 
-        dispatch(
-          notify({
-            msg: 'Billing Item Added Successfully',
-            sev: 'success'
-          })
-        );
+        if (isHeldForPreAuthorization(createdRow)) {
+          setPreAuthAlert([
+            {
+              patientServiceProductId: createdRow?.id ?? null,
+              label:
+                (createdRow as any)?.serviceName ||
+                (createdRow as any)?.name ||
+                (selectedSelectItem as any)?.name ||
+                'Service'
+            }
+          ]);
+        } else {
+          dispatch(notify({ msg: 'Billing Item Added Successfully', sev: 'success' }));
+        }
       } else {
         const updateDTO: PatientServiceProductUpdateDTO = {
           ...newPatientServiceProductUpdateDTO,
@@ -1182,18 +1197,26 @@ const AddEditPatientServiceAndProduct = ({
   );
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
-      actionButtonLabel="Save"
-      actionButtonFunction={handleSave}
-      actionButtonLoading={isCreating || isUpdating}
-      position="right"
-      size="30vw"
-      bodyheight="80vh"
-      content={modalContent}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
+        actionButtonLabel="Save"
+        actionButtonFunction={handleSave}
+        actionButtonLoading={isCreating || isUpdating}
+        position="right"
+        size="30vw"
+        bodyheight="80vh"
+        content={modalContent}
+      />
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
+      />
+    </>
   );
 };
 

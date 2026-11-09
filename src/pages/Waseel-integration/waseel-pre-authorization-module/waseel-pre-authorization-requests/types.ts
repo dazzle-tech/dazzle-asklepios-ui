@@ -1,4 +1,7 @@
-import type { PreAuthorizationTrackingResponse } from '@/types/model-types-new';
+import type {
+  LocalPreAuthorizationDecision,
+  PreAuthorizationTrackingResponse
+} from '@/types/model-types-new';
 
 export type Filters = {
   preAuthId: string;
@@ -26,9 +29,11 @@ export const initialFilters: Filters = {
 
 export const statusOptions = [
   { label: 'Draft', value: 'DRAFT' },
+  { label: 'Pending Approval', value: 'Pending Approval' },
   { label: 'Submitting', value: 'SUBMITTING' },
   { label: 'Submitted', value: 'SUBMITTED' },
   { label: 'Approved', value: 'APPROVED' },
+  { label: 'Partial', value: 'Partial' },
   { label: 'Rejected', value: 'REJECTED' },
   { label: 'Failed', value: 'FAILED' },
   { label: 'Cancelled', value: 'CANCELLED' }
@@ -63,4 +68,5 @@ export type PreAuthorizationRowHandlers = {
   onCommunication: (row: PreAuthorizationTrackingResponse) => void;
   onViewCommunications: (row: PreAuthorizationTrackingResponse) => void;
   onCancel: (row: PreAuthorizationTrackingResponse) => void;
+  onDecide: (row: PreAuthorizationTrackingResponse, decision: LocalPreAuthorizationDecision) => void;
 };

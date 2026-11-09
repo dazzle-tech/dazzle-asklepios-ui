@@ -29,13 +29,13 @@ const PreAuthorizationBillingControls: React.FC<PreAuthorizationBillingControlsP
   return (
     <div className="billing-accounting__preauth-toolbar">
       <div className="billing-accounting__preauth-toolbar-copy">
-        <Text weight="semibold">Waseel pre-authorization</Text>
+        <Text weight="semibold">Pre-authorization</Text>
         <Text muted size="sm">
           {pendingCount > 0
-            ? `${pendingCount} item(s) still pending payer approval. Refresh status from Waseel before closing the calculation.`
+            ? `${pendingCount} item(s) still pending payer approval. Refresh the status before closing the calculation.`
             : canCloseCalculation
               ? 'Statuses are up to date. You can continue billing and checkout.'
-              : 'Refresh payer decisions from Waseel before closing the calculation.'}
+              : 'Refresh payer decisions before closing the calculation.'}
         </Text>
       </div>
       <MyButton

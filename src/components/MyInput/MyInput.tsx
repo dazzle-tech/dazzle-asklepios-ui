@@ -3175,8 +3175,9 @@ const inputControl = props.allowDecimal ? (
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const rawValue = record ? record[fieldName] : '';
-        const displayValue =
+        const formattedValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
+        const displayValue = formattedValue ?? '';
 
         const isPassword = fieldType === 'password';
 

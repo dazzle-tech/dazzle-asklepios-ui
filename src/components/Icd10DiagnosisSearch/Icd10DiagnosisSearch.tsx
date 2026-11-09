@@ -12,65 +12,101 @@ import "./styles.less";
 
 const SEARCH_DELAY_MS = 400;
 
+type SelectedDiagnosis = {
+  id: number;
+  code: string;
+  desc: string;
+};
+
 type Props = {
   diagnosisId?: number | null;
-  setDiagnosisId: (id: number | null) => void;
-
+  setDiagnosisId?: (id: number | null) => void;
+  diagnosisIds?: number[];
+  setDiagnosisIds?: (ids: number[]) => void;
+  multiple?: boolean;
   label?: string;
   disabled?: boolean;
-
+  required?: boolean;
+  compact?: boolean;
   pageSize?: number;
-
   /** For callers that show the picked diagnoses themselves. */
   hideSelected?: boolean;
+};
+
+const toSelected = (item: ICDDiagnosisDTO | null | undefined, fallbackId?: number | null): SelectedDiagnosis | null => {
+  const idVal = (item as any)?.id ?? fallbackId ?? null;
+  if (typeof idVal !== "number") {
+    return null;
+  }
+  return {
+    id: idVal,
+    code: item?.icdCode ?? "",
+    desc: item?.icdShortDescription ?? item?.icdFullDescription ?? "",
+  };
 };
 
 const Icd10DiagnosisSearch: React.FC<Props> = ({
   diagnosisId = null,
   setDiagnosisId,
+  diagnosisIds,
+  setDiagnosisIds,
+  multiple = false,
   label = "Diagnosis",
   disabled = false,
+  required = false,
+  compact = false,
   pageSize = 15,
   hideSelected = false,
 }) => {
-  // --- search UI ---
+  const selectedIds = multiple
+    ? (diagnosisIds ?? []).filter((id): id is number => typeof id === "number")
+    : diagnosisId
+      ? [diagnosisId]
+      : [];
+  const selectedKey = selectedIds.join(",");
+
   const [keyword, setKeyword] = useState("");
   const [open, setOpen] = useState(false);
-
-  // --- server paging accumulation (Load more) ---
   const [page, setPage] = useState(0);
   const [links, setLinks] = useState<{ next?: string | null }>({});
   const [accum, setAccum] = useState<Record<string, ICDDiagnosisDTO>>({});
   const [isAppending, setIsAppending] = useState(false);
+  const [selectedMap, setSelectedMap] = useState<Record<number, SelectedDiagnosis>>({});
 
-  // --- selected diagnosis record (code + default description) ---
-  const [display, setDisplay] = useState({ code: "", desc: "" });
-
-  const [searchDiagnoses, { isFetching: isSearching }] =
-    useLazySearchIcdDiagnosesQuery();
-  const [getById, { isFetching: isByIdLoading }] =
-    useLazyGetIcdDiagnosisByIdQuery();
+  const [searchDiagnoses, { isFetching: isSearching }] = useLazySearchIcdDiagnosesQuery();
+  const [getById, { isFetching: isByIdLoading }] = useLazyGetIcdDiagnosisByIdQuery();
 
   const lastKeywordRef = useRef<string>("");
   const latestSearchRef = useRef(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const selectedMapRef = useRef(selectedMap);
+  selectedMapRef.current = selectedMap;
+
+  const applySelection = (nextIds: number[], extra?: SelectedDiagnosis) => {
+    const unique = Array.from(new Set(nextIds));
+    if (extra) {
+      setSelectedMap(prev => ({ ...prev, [extra.id]: extra }));
+    }
+    if (multiple) {
+      setDiagnosisIds?.(unique);
+      return;
+    }
+    setDiagnosisId?.(unique[0] ?? null);
+  };
 
   const handleClear = () => {
-    setDiagnosisId(null);
-    setDisplay({ code: "", desc: "" });
-
+    applySelection([]);
+    setSelectedMap({});
     latestSearchRef.current += 1;
     lastKeywordRef.current = "";
     setKeyword("");
     setOpen(false);
-
     setPage(0);
     setLinks({});
     setAccum({});
     setIsAppending(false);
   };
 
-  // close list when clicking outside
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {
       if (!open) return;
@@ -114,14 +150,12 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
       const pr = resp as unknown as PagedResult<ICDDiagnosisDTO>;
       const data = pr.data ?? [];
-
       const obj: Record<string, ICDDiagnosisDTO> = {};
       for (let i = 0; i < data.length; i++) {
         const item = data[i];
         const key = String(item.id ?? item.icdDiagnosisUid);
         obj[key] = item;
       }
-
       setAccum(obj);
       setLinks({ next: pr.links?.next ?? null });
     } catch {
@@ -144,27 +178,10 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
-  const handleSelect = (item: ICDDiagnosisDTO) => {
-    const idVal = (item as any)?.id ?? null;
-    setDiagnosisId(typeof idVal === "number" ? idVal : null);
-
-    setDisplay({
-      code: item.icdCode ?? "",
-      // "default description" -> short if available, else full
-      desc: item.icdShortDescription ?? item.icdFullDescription ?? "",
-    });
-
-    // close dropdown when done
-    setKeyword("");
-    setOpen(false);
-  };
-
   const handleLoadMore = async () => {
     const nextLink = links?.next;
     if (!nextLink) return;
-
     const { page: nextPage, size } = extractPaginationFromLink(nextLink);
-
     setIsAppending(true);
     try {
       const resp = await searchDiagnoses({
@@ -174,12 +191,9 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         sort: "icdCode,asc",
         timestamp: Date.now(),
       }).unwrap();
-
       const pr = resp as unknown as PagedResult<ICDDiagnosisDTO>;
       const newItems = pr.data ?? [];
-      const nextNext = pr.links?.next ?? null;
-
-      setAccum((prev) => {
+      setAccum(prev => {
         const updated = { ...prev };
         for (let i = 0; i < newItems.length; i++) {
           const item = newItems[i];
@@ -188,8 +202,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         }
         return updated;
       });
-
-      setLinks({ next: nextNext });
+      setLinks({ next: pr.links?.next ?? null });
       setPage(nextPage);
     } finally {
       setIsAppending(false);
@@ -207,53 +220,79 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
     }
   };
 
-  // if diagnosisId comes from parent -> fetch by id + show loading until loaded
   useEffect(() => {
-    if (!diagnosisId) {
-      setDisplay({ code: "", desc: "" });
+    const missing = selectedIds.filter(id => !selectedMapRef.current[id]);
+    if (!missing.length) {
       return;
     }
-
     let cancelled = false;
-
     (async () => {
-      try {
-        const dx = await getById({ id: diagnosisId, timestamp: Date.now() }).unwrap();
-        if (cancelled) return;
-
-        setDisplay({
-          code: dx?.icdCode ?? "",
-          // "default description" -> short if available, else full
-          desc: dx?.icdShortDescription ?? dx?.icdFullDescription ?? "",
-        });
-      } catch {
-        if (cancelled) return;
-        setDisplay({ code: "", desc: "" });
+      const next: Record<number, SelectedDiagnosis> = {};
+      for (const id of missing) {
+        try {
+          const dx = await getById({ id, timestamp: Date.now() }).unwrap();
+          const selected = toSelected(dx, id);
+          if (selected) {
+            next[id] = selected;
+          }
+        } catch {
+          next[id] = { id, code: String(id), desc: "" };
+        }
+      }
+      if (!cancelled) {
+        setSelectedMap(prev => ({ ...prev, ...next }));
       }
     })();
-
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagnosisId]);
+  }, [getById, selectedKey]);
+
+  const selectItem = (item: ICDDiagnosisDTO) => {
+    const selected = toSelected(item);
+    if (!selected) {
+      return;
+    }
+    if (multiple) {
+      const exists = selectedIds.includes(selected.id);
+      applySelection(
+        exists ? selectedIds.filter(id => id !== selected.id) : [...selectedIds, selected.id],
+        selected
+      );
+      return;
+    }
+    applySelection([selected.id], selected);
+    setKeyword("");
+    setOpen(false);
+  };
 
   const canLoadMore = Boolean(links?.next);
+  const selectedItems = selectedIds
+    .map(id => selectedMap[id])
+    .filter((item): item is SelectedDiagnosis => Boolean(item));
 
   return (
     <div className="icd10-search">
-      {/* Search input */}
       <Row className="icd10-search__row">
-        <Text className="icd10-search__label">{label}</Text>
+        <Text className="icd10-search__label">
+          {label}
+          {required ? <span className="icd10-search__required"> *</span> : null}
+        </Text>
 
         <Col md={24}>
           <div className="icd10-search__field" ref={dropdownRef}>
             <InputGroup inside className="icd10-search__inputGroup">
               <Input
-                required
-                placeholder="Search ICD-10 (min 3 chars)"
+                placeholder={
+                  multiple
+                    ? "Search and add ICD-10 codes (min 3 chars)"
+                    : "Search ICD-10 (min 3 chars)"
+                }
                 value={keyword}
-                onChange={setKeyword}
+                onChange={(v) => {
+                  setKeyword(v);
+                  if (!v) setOpen(false);
+                }}
                 onKeyDown={handleKeyDown}
                 disabled={disabled}
                 onFocus={() => {
@@ -261,8 +300,6 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
                 }}
                 className="icd10-search__input"
               />
-
-              {/* X — closes list only */}
               <InputGroup.Button
                 className="icd10-search__btn icd10-search__btn--icon"
                 onClick={() => setOpen(false)}
@@ -271,47 +308,46 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
               >
                 <CloseIcon />
               </InputGroup.Button>
-
-              {/* Clear — clears selection + input + list */}
               <InputGroup.Button
                 className="icd10-search__btn icd10-search__btn--clear"
                 onClick={handleClear}
-                disabled={disabled || (!diagnosisId && !display.code && !keyword)}
+                disabled={disabled || (!selectedIds.length && !keyword)}
                 title="Clear"
               >
                 Clear
               </InputGroup.Button>
             </InputGroup>
 
-            {/* Dropdown results + Load more */}
             {open && keyword.trim().length >= 3 && (
               <div className="icd10-search__dropdown">
                 <ul className="icd10-search__menu">
                   {isSearching && Object.keys(accum).length === 0 ? (
                     <li className="icd10-search__status">Loading...</li>
                   ) : null}
-
                   {!isSearching && Object.keys(accum).length === 0 ? (
                     <li className="icd10-search__status">No results</li>
                   ) : null}
-
-                  {Object.entries(accum).map(([key, item]) => (
-                    <li
-                      key={key}
-                      className="icd10-search__item"
-                      onMouseDown={(e) => {
-                        // selecting on press keeps focus in the input and cannot be lost on release
-                        e.preventDefault();
-                        handleSelect(item);
-                      }}
-                    >
-                      <span className="icd10-search__code">{item.icdCode}</span>
-                      <span className="icd10-search__desc">
-                        {item.icdShortDescription ?? item.icdFullDescription ?? ""}
-                      </span>
-                    </li>
-                  ))}
-
+                  {Object.entries(accum).map(([key, item]) => {
+                    const idVal = (item as any)?.id;
+                    const isPicked = typeof idVal === "number" && selectedIds.includes(idVal);
+                    return (
+                      <li
+                        key={key}
+                        className={`icd10-search__item${isPicked ? " icd10-search__item--selected" : ""}`}
+                        onMouseDown={(e) => {
+                          // selecting on press keeps focus in the input and cannot be lost on release
+                          e.preventDefault();
+                          selectItem(item);
+                        }}
+                      >
+                        <span className="icd10-search__code">{item.icdCode}</span>
+                        <span className="icd10-search__desc">
+                          {item.icdShortDescription ?? item.icdFullDescription ?? ""}
+                        </span>
+                        {isPicked ? <span className="icd10-search__picked">Added</span> : null}
+                      </li>
+                    );
+                  })}
                   {canLoadMore ? (
                     <li
                       className="icd10-search__loadMore"
@@ -330,23 +366,62 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         </Col>
       </Row>
 
-      {/* Selected details as disabled textarea */}
       {!hideSelected && (
         <Row className="icd10-search__selectedRow">
           <Col md={24}>
-            <Input
-              as="textarea"
-              rows={4}
-              disabled
-              value={
-                isByIdLoading
-                  ? "Loading..."
-                  : display.code
-                  ? `${display.code}${display.desc ? " - " + display.desc : ""}`
-                  : ""
-              }
-              className="icd10-search__selected"
-            />
+            {multiple ? (
+              <div className={`icd10-search__chips${selectedItems.length ? " icd10-search__chips--selected" : ""}`}>
+                {isByIdLoading && !selectedItems.length ? (
+                  "Loading..."
+                ) : selectedItems.length ? (
+                  selectedItems.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="icd10-search__chip"
+                      disabled={disabled}
+                      onClick={() => applySelection(selectedIds.filter(id => id !== item.id))}
+                      title="Remove"
+                    >
+                      <strong>{item.code}</strong>
+                      {item.desc ? <span> — {item.desc}</span> : null}
+                      <CloseIcon />
+                    </button>
+                  ))
+                ) : (
+                  "No diagnoses selected"
+                )}
+              </div>
+            ) : compact ? (
+              <div
+                className={`icd10-search__summary${selectedItems[0]?.code ? " icd10-search__summary--selected" : ""}`}
+              >
+                {isByIdLoading ? (
+                  "Loading..."
+                ) : selectedItems[0]?.code ? (
+                  <>
+                    <strong>{selectedItems[0].code}</strong>
+                    {selectedItems[0].desc ? ` — ${selectedItems[0].desc}` : ""}
+                  </>
+                ) : (
+                  "No diagnosis selected"
+                )}
+              </div>
+            ) : (
+              <Input
+                as="textarea"
+                rows={4}
+                disabled
+                value={
+                  isByIdLoading
+                    ? "Loading..."
+                    : selectedItems[0]?.code
+                      ? `${selectedItems[0].code}${selectedItems[0].desc ? " - " + selectedItems[0].desc : ""}`
+                      : ""
+                }
+                className="icd10-search__selected"
+              />
+            )}
           </Col>
         </Row>
       )}
