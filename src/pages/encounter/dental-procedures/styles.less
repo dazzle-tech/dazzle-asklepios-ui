@@ -10,6 +10,35 @@
   flex-direction: column;
   gap: 16px;
 
+  &__tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  &__sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+
+    > * {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .pd-grid {
+      flex-direction: column;
+    }
+
+    .pd-card:first-child,
+    .pd-card:last-child {
+      flex: 1 1 auto;
+      max-width: 100%;
+    }
+  }
+
   .dental-procedure-sheet__actions {
     display: flex;
     justify-content: flex-end;
