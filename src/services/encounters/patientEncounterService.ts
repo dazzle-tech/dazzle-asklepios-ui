@@ -46,7 +46,6 @@ export type PatientEncounterCompletionValidation = {
   surgicalHistory: boolean;
   socialHistory: boolean;
 
-  progressNotes: boolean;
   vitalSigns: boolean;
   bodyMeasurements: boolean;
   canComplete: boolean;
