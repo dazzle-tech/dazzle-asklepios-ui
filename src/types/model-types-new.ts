@@ -9767,7 +9767,8 @@ export interface MobileAppConfigResponseVM {
   id?: number;
   configKey: string;
   configType: string;
-  configValue: string;
+  configValue: string | null;
+  configValues?: string[] | null;
   description?: string | null;
   createdBy?: string | null;
   createdDate?: string | null;

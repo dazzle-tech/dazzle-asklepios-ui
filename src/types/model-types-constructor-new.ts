@@ -4228,6 +4228,7 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
   configKey: '',
   configType: '',
   configValue: '',
+  configValues: [],
   description: ''
 };
 

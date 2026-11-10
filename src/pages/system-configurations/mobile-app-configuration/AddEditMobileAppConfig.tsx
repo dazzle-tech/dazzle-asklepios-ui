@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { MdPhoneAndroid } from 'react-icons/md';
+import { MdClose, MdPhoneAndroid } from 'react-icons/md';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractErrorMessage } from '@/utils';
@@ -27,6 +27,16 @@ type AddEditMobileAppConfigProps = {
   refetch: () => void;
 };
 
+const existingImageUrls = (config: MobileAppConfigResponseVM): string[] => {
+  if (config?.configValues?.length) {
+    return config.configValues.filter(Boolean);
+  }
+  if (config?.configValue) {
+    return [config.configValue];
+  }
+  return [];
+};
+
 const AddEditMobileAppConfig = ({
   open,
   setOpen,
@@ -37,8 +47,9 @@ const AddEditMobileAppConfig = ({
   const enumOptions = useEnumOptions('MobileAppConfigKey');
   const typeOptions = useEnumOptions('MobileAppConfigType');
   const [record, setRecord] = useState({ ...newMobileAppConfigCreateDTO });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [keptUrls, setKeptUrls] = useState<string[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [createConfig, { isLoading: isCreating }] = useCreateMobileAppConfigMutation();
   const [updateConfig, { isLoading: isUpdating }] = useUpdateMobileAppConfigMutation();
   const [createImage, { isLoading: isCreatingImage }] = useCreateMobileAppConfigImageMutation();
@@ -50,8 +61,7 @@ const AddEditMobileAppConfig = ({
 
   useEffect(() => {
     if (!open) return;
-    setImageFile(null);
-    setImagePreview('');
+    setImageFiles([]);
     if (config?.id) {
       setRecord({
         configKey: config.configKey,
@@ -59,20 +69,18 @@ const AddEditMobileAppConfig = ({
         configValue: config.configValue ?? '',
         description: config.description ?? '',
       });
+      setKeptUrls(existingImageUrls(config));
     } else {
       setRecord({ ...newMobileAppConfigCreateDTO });
+      setKeptUrls([]);
     }
   }, [open, config]);
 
   useEffect(() => {
-    if (!imageFile) {
-      setImagePreview('');
-      return;
-    }
-    const previewUrl = URL.createObjectURL(imageFile);
-    setImagePreview(previewUrl);
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [imageFile]);
+    const urls = imageFiles.map(file => URL.createObjectURL(file));
+    setNewPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [imageFiles]);
 
   const handleSubmit = async () => {
     const configKey = String(record.configKey ?? '').trim();
@@ -98,9 +106,8 @@ const AddEditMobileAppConfig = ({
       return;
     }
     if (isImageType) {
-      const hasCurrentImage = isEdit && config.configType === 'IMAGE' && config.configValue;
-      if (!imageFile && !hasCurrentImage) {
-        dispatch(notify({ msg: 'Image is required', sev: 'warning' }));
+      if (keptUrls.length + imageFiles.length === 0) {
+        dispatch(notify({ msg: 'At least one image is required', sev: 'warning' }));
         return;
       }
     } else {
@@ -124,13 +131,14 @@ const AddEditMobileAppConfig = ({
         if (isEdit && config.id) {
           await updateImage({
             id: config.id,
-            file: imageFile,
+            files: imageFiles,
+            keptValues: keptUrls,
             description: description || '',
           }).unwrap();
         } else {
           await createImage({
             configKey,
-            file: imageFile as File,
+            files: imageFiles,
             description: description || '',
           }).unwrap();
         }
@@ -177,6 +185,7 @@ const AddEditMobileAppConfig = ({
     <MyModal
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSubmit}
+      actionButtonLoading={isSaving}
       open={open}
       setOpen={setOpen}
       position="right"
@@ -212,19 +221,61 @@ const AddEditMobileAppConfig = ({
                 disabled={isSaving}
               />
               {isImageType ? (
-                <div>
-                  {(imagePreview || (isEdit && config.configValue)) && (
-                    <img
-                      className="mobile-app-config-image-preview"
-                      src={imagePreview || config.configValue}
-                      alt={record.configKey}
-                    />
+                <div className="mobile-app-config-images-editor">
+                  {(keptUrls.length > 0 || newPreviews.length > 0) && (
+                    <div className="mobile-app-config-images-grid">
+                      {keptUrls.map(url => (
+                        <div key={url} className="mobile-app-config-image-item">
+                          <img
+                            className="mobile-app-config-image-preview"
+                            src={url}
+                            alt={record.configKey}
+                          />
+                          <button
+                            type="button"
+                            className="mobile-app-config-image-remove"
+                            disabled={isSaving}
+                            onClick={() => setKeptUrls(prev => prev.filter(item => item !== url))}
+                            title="Remove"
+                          >
+                            <MdClose size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      {newPreviews.map((url, index) => (
+                        <div key={url} className="mobile-app-config-image-item">
+                          <img
+                            className="mobile-app-config-image-preview"
+                            src={url}
+                            alt={`${record.configKey}-${index + 1}`}
+                          />
+                          <button
+                            type="button"
+                            className="mobile-app-config-image-remove"
+                            disabled={isSaving}
+                            onClick={() =>
+                              setImageFiles(prev => prev.filter((_, i) => i !== index))
+                            }
+                            title="Remove"
+                          >
+                            <MdClose size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     disabled={isSaving}
-                    onChange={event => setImageFile(event.target.files?.[0] ?? null)}
+                    onChange={event => {
+                      const selected = Array.from(event.target.files ?? []);
+                      if (selected.length) {
+                        setImageFiles(prev => [...prev, ...selected]);
+                      }
+                      event.target.value = '';
+                    }}
                   />
                 </div>
               ) : (
