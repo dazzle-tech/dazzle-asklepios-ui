@@ -2211,7 +2211,13 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               disabled={props.disabled}
               accepter={CheckPicker}
               searchable={isPickerSearchable}
-              searchBy={pickerSearchBy}
+              searchBy={props.setSearchKeyWard ? () => true : pickerSearchBy}
+              onSearch={
+                props.setSearchKeyWard
+                  ? (keyword: string) => props.setSearchKeyWard?.(keyword)
+                  : undefined
+              }
+              loading={props.loading ?? false}
               name={fieldName}
               data={dataList}
               labelKey={primaryLabelKey}

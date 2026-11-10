@@ -9,6 +9,7 @@ import { MdAttachFile } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTab from '@/components/MyTab/MyTab';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
@@ -729,58 +730,18 @@ const DentalProcedures = props => {
         open={formModalOpen}
         setOpen={setFormModalOpen}
         title={formMode === 'add' ? 'Add Dental Procedure' : 'Edit Dental Procedure'}
-        size="72vw"
+        size="92vw"
         bodyheight="82vh"
         position="right"
-        steps={[{ title: 'Procedure Details' }]}
         hideActionBtn
         content={() => (
           <div className="dental-procedure-modal">
-            <ChiefComplaintSection encounter={encounter} disabled={edit} />
-
-            <SectionContainer
-              collapsible
-              title={<Translate>Medical History</Translate>}
-              content={
-                <MedicalHistory
-                  patient={patient}
-                  encounter={encounter}
-                  edit={edit}
-                  toShowData={false}
-                  showFreeText
-                />
-              }
-            />
-
-            <DentalHistorySection patient={patient} encounter={encounter} disabled={edit} />
-
-            {patientId && encounterId ? (
-              <Form fluid>
-                <PainAssessment
-                  patientId={patientId}
-                  encounterId={encounterId}
-                  encounter={encounter}
-                  disabled={edit}
-                  title="Pain Assessment"
-                />
-              </Form>
-            ) : null}
-
-            <PatientDiagnosis
-              patient={patient}
-              encounter={encounter}
-              disabled={edit}
-              title="Patient Diagnosis"
-              hidePreviousVisits
-            />
-
-            <PatientPlan
-              patient={patient}
-              localEncounter={encounter}
-              disabled={edit}
-              title="Plan of Care"
-            />
-
+            <MyTab
+              data={[
+                {
+                  title: 'Treatment Plan',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
             <SectionContainer
               collapsible
               title={<Translate>Dental Procedure</Translate>}
@@ -923,8 +884,70 @@ const DentalProcedures = props => {
             />
 
             <PatientFamilyEducationSection patient={patient} encounter={encounter} disabled={edit} />
+                    </div>
+                  )
+                },
+                {
+                  title: 'Clinical Documentation',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
+                      <DentalSheetActions patient={patient} encounter={encounter} disabled={edit} />
 
-            <DentalSheetActions patient={patient} encounter={encounter} disabled={edit} />
+                      <div className="dental-procedure-modal__sections">
+                        <ChiefComplaintSection encounter={encounter} disabled={edit} />
+
+                        <div>
+                          <DentalHistorySection patient={patient} encounter={encounter} disabled={edit} />
+                        </div>
+
+                        <PatientPlan
+                          patient={patient}
+                          localEncounter={encounter}
+                          disabled={edit}
+                          title="Plan of Care"
+                        />
+
+                        {patientId && encounterId ? (
+                          <Form fluid>
+                            <PainAssessment
+                              patientId={patientId}
+                              encounterId={encounterId}
+                              encounter={encounter}
+                              disabled={edit}
+                              title="Pain Assessment"
+                            />
+                          </Form>
+                        ) : (
+                          <div />
+                        )}
+
+                        <SectionContainer
+                          collapsible
+                          title={<Translate>Medical History</Translate>}
+                          content={
+                            <MedicalHistory
+                              patient={patient}
+                              encounter={encounter}
+                              edit={edit}
+                              toShowData={false}
+                              showFreeText
+                            />
+                          }
+                        />
+
+                        <PatientDiagnosis
+                          patient={patient}
+                          encounter={encounter}
+                          disabled={edit}
+                          title="Patient Diagnosis"
+                          hidePreviousVisits
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+              ]}
+            />
           </div>
         )}
       />
