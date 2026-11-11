@@ -8,21 +8,83 @@
 
   &__badge {
     position: absolute;
-    top: -7px;
-    inset-inline-end: -7px;
+    // Kept close to the button so the parent toolbar does not clip the circle
+    top: -5px;
+    inset-inline-end: -5px;
     z-index: 1;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     display: grid;
     place-items: center;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: 7px;
     font-weight: 700;
     line-height: 1;
     pointer-events: none;
     color: var(--primary-blue);
     background: var(--rs-bg-card);
     border: 1.5px solid var(--primary-blue);
+  }
+}
+
+.scan-ai-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+
+  &__spark {
+    position: absolute;
+    fill: currentColor;
+  }
+}
+
+// Tooltip styled like the Scan Document template: tinted header, body text and chips
+.scan-ai-tip {
+  width: 280px;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    // Follows the theme color, so it adapts to theme and dark mode
+    color: var(--primary-blue);
+    background: color-mix(in srgb, var(--primary-blue) 10%, var(--rs-bg-card));
+  }
+
+  &__body {
+    padding: 10px 12px;
+    color: var(--rs-text-primary);
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+
+    span {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      border: 1px solid var(--rs-border-primary);
+      color: var(--rs-text-secondary);
+      background: var(--rs-bg-well);
+    }
+  }
+
+  &__note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--rs-text-secondary);
   }
 }
 
