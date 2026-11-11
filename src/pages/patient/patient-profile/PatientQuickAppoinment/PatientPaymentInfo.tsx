@@ -33,6 +33,7 @@ import {
   useAppDispatch,
   useAppSelector
 } from '@/hooks';
+import { useGetConfig } from '@/utils/getConfig';
 
 import {
   useEnumOptions
@@ -670,6 +671,18 @@ const PatientPaymentInfo =
             authSlice?.tenant
               ?.selectedFacility?.id
         );
+
+      const currentUserId = useMemo(() => {
+        const rawUser = authSlice?.user;
+        const id = Number(rawUser?.id ?? rawUser?.userId ?? rawUser?.key);
+        return Number.isFinite(id) && id > 0 ? id : null;
+      }, [authSlice?.user]);
+
+      const { enabled: discountCodeEnabled } = useGetConfig({
+        key: 'ENABLE_DEFAULT_SERVICE_DISCOUNT_CODE',
+        userId: currentUserId,
+        facilityId: facilityId > 0 ? facilityId : null
+      });
 
       const departmentId =
         toNumber(
@@ -6416,7 +6429,8 @@ const PatientPaymentInfo =
                       )}
                     </Tag>
                   ) : null}
-                  {!isViewOnlyMode &&
+                  {discountCodeEnabled &&
+                  !isViewOnlyMode &&
                   !servicesArePrepared &&
                   !skipDefaultServicesForReview ? (
                     <Button
@@ -6435,7 +6449,8 @@ const PatientPaymentInfo =
                         : 'Discount Code'}
                     </Button>
                   ) : null}
-                  {appliedDiscount &&
+                  {discountCodeEnabled &&
+                  appliedDiscount &&
                   !servicesArePrepared &&
                   !isViewOnlyMode ? (
                     <Button
