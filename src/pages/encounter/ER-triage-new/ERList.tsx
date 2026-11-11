@@ -1035,12 +1035,7 @@ const ERList = () => {
         const tooltipViewVisit = <Tooltip>View Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
-        const isPaymentSettled = !!row?.hasSettledPayment;
-        const tooltipCancel = isPaymentSettled ? (
-          <Tooltip>Cannot cancel after payment settlement</Tooltip>
-        ) : (
-          <Tooltip>Cancel Visit</Tooltip>
-        );
+        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
@@ -1125,7 +1120,6 @@ const ERList = () => {
                 <div>
                   <MyButton
                     size="small"
-                    disabled={isPaymentSettled}
                     onClick={() => {
                       setLocalEncounter(row);
                       setOpen(true);
