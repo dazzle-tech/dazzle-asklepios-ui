@@ -18,6 +18,7 @@ interface ToothActionCardProps {
   existing: boolean;
   anesthesiaUsed?: string | null;
   dose?: string | number | null;
+  numberingSystem?: string | null;
 }
 
 const ToothActionCard = ({
@@ -29,7 +30,8 @@ const ToothActionCard = ({
   note,
   existing,
   anesthesiaUsed,
-  dose
+  dose,
+  numberingSystem = 'UNIVERSAL'
 }: ToothActionCardProps) => {
   const parsedDate =
     date == null || date === ''
@@ -61,7 +63,7 @@ const ToothActionCard = ({
           label: 'Tooth #',
           value:
             typeof toothNumber === 'string'
-              ? toothDisplayLabel(toothNumber)
+              ? toothDisplayLabel(toothNumber, numberingSystem)
               : toothNumber
         }]
       : []),

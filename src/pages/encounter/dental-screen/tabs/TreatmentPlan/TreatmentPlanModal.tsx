@@ -137,25 +137,42 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const multiSelect = !isEdit && !viewOnly && !isGroupedScope;
 
   const chartTeeth = originalChart?.teeth ?? [];
+  const numberingSystem = originalChart?.numberingSystem || 'UNIVERSAL';
 
   const scopeTeeth = isGroupedScope
     ? teethForTreatmentScope(chartTeeth, treatmentScope)
     : [];
 
+  const resolveSelectedTooth = (tooth: any) => {
+    if (!tooth) return null;
+
+    const byId = chartTeeth.find(
+      (item: any) => tooth?.id != null && String(item.id) === String(tooth.id)
+    );
+    if (byId) return byId;
+
+    if (tooth?.toothNumber != null) {
+      return (
+        chartTeeth.find(
+          (item: any) =>
+            String(item.toothNumber) === String(tooth.toothNumber)
+        ) || null
+      );
+    }
+
+    return null;
+  };
+
   const validSelectedTeeth = isGroupedScope
     ? scopeTeeth
     : multiSelect
-      ? (selectedTeeth ?? []).filter((tooth: any) =>
-          chartTeeth.some(
-            (item: any) => String(item.id) === String(tooth?.id)
-          )
-        )
-      : selectedTooth?.id &&
-          chartTeeth.some(
-            (item: any) => String(item.id) === String(selectedTooth.id)
-          )
-        ? [selectedTooth]
-        : [];
+      ? (selectedTeeth ?? [])
+          .map((tooth: any) => resolveSelectedTooth(tooth))
+          .filter(Boolean)
+      : (() => {
+          const resolved = resolveSelectedTooth(selectedTooth);
+          return resolved ? [resolved] : [];
+        })();
 
   const hasValidArea = validSelectedTeeth.length > 0;
 
@@ -169,7 +186,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const surfaceDisabled = inputsDisabled || isGroupedScope;
 
   const selectedToothLabels = validSelectedTeeth
-    .map((tooth: any) => toothDisplayLabel(tooth.toothNumber))
+    .map((tooth: any) => toothDisplayLabel(tooth.toothNumber, numberingSystem))
     .filter(Boolean);
 
   const selectedToothSummary = isGroupedScope
@@ -182,7 +199,9 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const coveredToothLabels = (form?.coveredToothIds ?? [])
     .map((id: any) => {
       const tooth = chartTeeth.find((item: any) => String(item.id) === String(id));
-      return tooth?.toothNumber ? toothDisplayLabel(tooth.toothNumber) : null;
+      return tooth?.toothNumber
+        ? toothDisplayLabel(tooth.toothNumber, numberingSystem)
+        : null;
     })
     .filter(Boolean);
 
@@ -320,10 +339,12 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
             ? 'Edit Planned Treatment'
             : 'Add Planned Treatment')
       }
-      steps={[{ title: 'Treatment Details', icon: <AssignmentIcon /> }]}
+      // steps={[{ title: 'Treatment Details', icon: <AssignmentIcon /> }]}
       size="90vw"
       position="right"
-      customClassName="dental-chart-modal treatment-plan-modal"
+      customClassName={`dental-chart-modal treatment-plan-modal${
+        footerButtons ? ' treatment-plan-modal--plan-actions' : ''
+      }`}
       actionButtonFunction={viewOnly ? undefined : handleSave}
       actionButtonLabel={isSaving ? 'Saving...' : 'Save'}
       actionButtonLoading={isSaving}
@@ -500,7 +521,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                   <div className="tpm-tooth-chips" dir="ltr">
                     {validSelectedTeeth.map((tooth: any) => (
                       <span className="tpm-tooth-chip" key={tooth.id}>
-                        {toothDisplayLabel(tooth.toothNumber)}
+                        {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
                       </span>
                     ))}
                   </div>
@@ -774,6 +795,90 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                 </section>
 
                 <section className="tpm-section">
+                  {renderSectionHeading('04', 'Clinical Details')}
+
+                  <div className="tpm-fields-grid">
+                    <div className="tpm-field">
+                      <MyInput
+                        width="100%"
+                        fieldName="anesthesiaUsed"
+                        fieldLabel="Anesthesia Used"
+                        fieldType="text"
+                        record={
+                          viewOnly
+                            ? { anesthesiaUsed: dash(form?.anesthesiaUsed) }
+                            : form
+                        }
+                        setRecord={handleClinicalChange}
+                        disabled={inputsDisabled}
+                      />
+                    </div>
+
+                    <div className="tpm-field">
+                      <MyInput
+                        width="100%"
+                        fieldName="fillingMaterial"
+                        fieldLabel="Filling Material"
+                        fieldType="text"
+                        record={
+                          viewOnly
+                            ? { fillingMaterial: dash(form?.fillingMaterial) }
+                            : form
+                        }
+                        setRecord={handleClinicalChange}
+                        disabled={inputsDisabled}
+                      />
+                    </div>
+
+                    <div className="tpm-field">
+                      <MyInput
+                        width="100%"
+                        fieldName="dose"
+                        fieldLabel="Dose"
+                        fieldType={viewOnly ? 'text' : 'number'}
+                        allowDecimal
+                        showZero
+                        record={
+                          viewOnly
+                            ? { dose: form?.dose === 0 ? '0' : dash(form?.dose) }
+                            : form
+                        }
+                        setRecord={handleClinicalChange}
+                        disabled={inputsDisabled}
+                      />
+                    </div>
+
+                    <div className="tpm-field">
+                      {viewOnly ? (
+                        <MyInput
+                          width="100%"
+                          fieldName="unitLabel"
+                          fieldLabel="Unit"
+                          fieldType="text"
+                          record={{ unitLabel: dash(unitLabel || form?.unit) }}
+                          setRecord={() => {}}
+                          disabled
+                        />
+                      ) : (
+                        <MyInput
+                          width="100%"
+                          fieldName="unit"
+                          fieldLabel="Unit"
+                          fieldType="select"
+                          selectData={valueUnitData?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          record={form}
+                          setRecord={handleClinicalChange}
+                          disabled={inputsDisabled}
+                          disableByField="isValid"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="tpm-section">
                   {renderSectionHeading('03', 'Price & Quantity')}
 
                   <div className="tpm-fields-grid tpm-fields-grid--pricing">
@@ -863,89 +968,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                   )}
                 </section>
 
-                <section className="tpm-section">
-                  {renderSectionHeading('04', 'Clinical Details')}
 
-                  <div className="tpm-fields-grid">
-                    <div className="tpm-field">
-                      <MyInput
-                        width="100%"
-                        fieldName="anesthesiaUsed"
-                        fieldLabel="Anesthesia Used"
-                        fieldType="text"
-                        record={
-                          viewOnly
-                            ? { anesthesiaUsed: dash(form?.anesthesiaUsed) }
-                            : form
-                        }
-                        setRecord={handleClinicalChange}
-                        disabled={inputsDisabled}
-                      />
-                    </div>
-
-                    <div className="tpm-field">
-                      <MyInput
-                        width="100%"
-                        fieldName="fillingMaterial"
-                        fieldLabel="Filling Material"
-                        fieldType="text"
-                        record={
-                          viewOnly
-                            ? { fillingMaterial: dash(form?.fillingMaterial) }
-                            : form
-                        }
-                        setRecord={handleClinicalChange}
-                        disabled={inputsDisabled}
-                      />
-                    </div>
-
-                    <div className="tpm-field">
-                      <MyInput
-                        width="100%"
-                        fieldName="dose"
-                        fieldLabel="Dose"
-                        fieldType={viewOnly ? 'text' : 'number'}
-                        allowDecimal
-                        showZero
-                        record={
-                          viewOnly
-                            ? { dose: form?.dose === 0 ? '0' : dash(form?.dose) }
-                            : form
-                        }
-                        setRecord={handleClinicalChange}
-                        disabled={inputsDisabled}
-                      />
-                    </div>
-
-                    <div className="tpm-field">
-                      {viewOnly ? (
-                        <MyInput
-                          width="100%"
-                          fieldName="unitLabel"
-                          fieldLabel="Unit"
-                          fieldType="text"
-                          record={{ unitLabel: dash(unitLabel || form?.unit) }}
-                          setRecord={() => {}}
-                          disabled
-                        />
-                      ) : (
-                        <MyInput
-                          width="100%"
-                          fieldName="unit"
-                          fieldLabel="Unit"
-                          fieldType="select"
-                          selectData={valueUnitData?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={form}
-                          setRecord={handleClinicalChange}
-                          disabled={inputsDisabled}
-                          disableByField="isValid"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </section>
 
                 <section className="tpm-section">
                   {renderSectionHeading('05', 'Notes')}

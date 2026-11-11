@@ -288,8 +288,10 @@ const ChartTab = ({
     cancelPreviousChartView();
   };
 
+  const numberingSystem = currentChart?.numberingSystem || 'UNIVERSAL';
+
   const selectedToothLabel = selectedTooth?.toothNumber
-    ? toothDisplayLabel(selectedTooth.toothNumber)
+    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem)
     : EMPTY_VALUE;
 
   const actionColumns = useMemo(
@@ -305,7 +307,7 @@ const ChartTab = ({
 
           return (
             <span className="dct-tooth-number">
-              {number ? toothDisplayLabel(number) : EMPTY_VALUE}
+              {number ? toothDisplayLabel(number, numberingSystem) : EMPTY_VALUE}
             </span>
           );
         }
@@ -386,7 +388,7 @@ const ChartTab = ({
         )
       }
     ],
-    [dentalActionsMap, teethById]
+    [dentalActionsMap, teethById, numberingSystem]
   );
 
   const direction =

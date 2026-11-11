@@ -34,6 +34,7 @@ interface ToothStateTabProps {
   eligiblePlans?: any[];
   planSessions?: any[];
   onCreatePlan?: () => void;
+  numberingSystem?: string | null;
 }
 
 const SURFACE_OPTIONS = [
@@ -67,7 +68,8 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   clearCurrentAction,
   eligiblePlans = [],
   planSessions = [],
-  onCreatePlan
+  onCreatePlan,
+  numberingSystem = 'UNIVERSAL'
 }) => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({
@@ -84,7 +86,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   const appliedActions = selectedTooth?.actions ?? [];
 
   const toothLabel = selectedTooth?.toothNumber
-    ? toothDisplayLabel(selectedTooth.toothNumber)
+    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem)
     : '—';
 
   const sortedDentalActions = useMemo(
@@ -554,6 +556,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     existing={action.existing}
                     anesthesiaUsed={action.anesthesiaUsed}
                     dose={action.dose}
+                    numberingSystem={numberingSystem}
                   />
                 </div>
               ))

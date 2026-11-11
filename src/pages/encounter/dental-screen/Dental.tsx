@@ -8,8 +8,22 @@ import TreatmentPlanTab from './tabs/TreatmentPlan/TreatmentPlanTab';
 import ClinicalDocumentationTab from './tabs/ClinicalDocumentationTab';
 import DentalAttachmentsTab from './tabs/DentalAttachmentsTab';
 import { useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Alert, Box, Button } from '@mui/material';
 import MyTab from '@/components/MyTab';
+import { extractErrorMessage } from '@/utils/extractErrorMessage';
+
+const isSetupResolveError = (err: any): boolean => {
+  const key = err?.data?.errorKey || err?.data?.message || '';
+  const detail = err?.data?.detail || err?.data?.title || '';
+  const blob = `${key} ${detail} ${extractErrorMessage(err) || ''}`.toLowerCase();
+  return (
+    blob.includes('setup.unresolved') ||
+    blob.includes('setup.unavailable') ||
+    blob.includes('setup.emptyteeth') ||
+    blob.includes('dental chart setup') ||
+    blob.includes('setup could not')
+  );
+};
 
 const Dental = () => {
   const location = useLocation();
@@ -39,6 +53,22 @@ const Dental = () => {
   const cancelPreviousChartView = () => {
     setCurrentChart(originalChart);
     setSelectedPreviousChartId(null);
+  };
+
+  const setupError =
+    dentalChartResponse.isError && isSetupResolveError(dentalChartResponse.error)
+      ? extractErrorMessage(dentalChartResponse.error) ||
+        'Dental chart setup could not be resolved for this encounter.'
+      : null;
+
+  const chartLoadError =
+    dentalChartResponse.isError && !setupError
+      ? extractErrorMessage(dentalChartResponse.error) ||
+        'Failed to load the dental chart for this encounter.'
+      : null;
+
+  const retryChartLoad = () => {
+    dentalChartResponse.refetch();
   };
 
   const tabData = [
@@ -74,7 +104,7 @@ const Dental = () => {
           cancelPreviousChartView={cancelPreviousChartView}
           treatmentPlanTrigger={treatmentPlanTrigger}
           setTreatmentPlanTrigger={setTreatmentPlanTrigger}
-          isLoading={dentalChartResponse.isLoading}
+          isLoading={dentalChartResponse.isLoading || dentalChartResponse.isFetching}
           patient={patient}
           encounter={encounter}
         />
@@ -92,7 +122,20 @@ const Dental = () => {
 
   return (
     <Box>
-      <MyTab data={tabData} lazy/>
+      {(setupError || chartLoadError) && (
+        <Alert
+          severity="warning"
+          sx={{ m: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={retryChartLoad}>
+              Retry
+            </Button>
+          }
+        >
+          {setupError || chartLoadError}
+        </Alert>
+      )}
+      <MyTab data={tabData} lazy />
     </Box>
   );
 };

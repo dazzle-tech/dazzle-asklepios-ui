@@ -149,27 +149,38 @@
     }
   }
 
-  .ap-plan-details {
-    padding: 15px 18px 0;
-    border-block-end: 1px solid var(--ap-border);
+  .ap-treatments-header {
+    align-items: center;
+    gap: 10px 14px;
+    padding: 10px 16px;
   }
 
-  .ap-plan-details-header {
+  .ap-treatments-title-line {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ap-treatments-actions {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-inline-start: auto;
+    min-width: 0;
+  }
+
+  .ap-plan-details {
+    padding: 10px 16px;
+    border-block-end: 1px solid var(--ap-border);
   }
 
   .ap-plan-identity {
     display: flex;
     align-items: center;
-    flex: 1;
     flex-wrap: wrap;
-    gap: 8px 12px;
+    gap: 6px 10px;
     min-width: 0;
-    padding-block: 5px;
 
     > .ap-plan-number {
       color: var(--ap-primary);
@@ -178,9 +189,9 @@
 
   .ap-details-title {
     color: var(--ap-text);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    line-height: 1.6;
+    line-height: 1.4;
     overflow-wrap: anywhere;
   }
 
@@ -188,7 +199,6 @@
     display: flex;
     align-items: flex-start;
     gap: 14px;
-    margin-block-start: 12px;
     padding: 10px 12px;
     border: 1px solid var(--ap-border);
     border-radius: 6px;
@@ -213,11 +223,15 @@
     line-height: 1.9;
   }
 
+  .ap-plan-details .ap-hold-notice,
+  .ap-plan-details .ap-note + .ap-hold-notice {
+    margin-block-start: 10px;
+  }
+
   .ap-hold-notice {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    margin-block-start: 12px;
     padding: 11px 12px;
     border: 1px solid #efdfba;
     border-radius: 6px;
@@ -536,6 +550,15 @@
     .ap-plan-actions {
       justify-content: flex-start;
     }
+
+    .ap-treatments-header {
+      align-items: flex-start;
+    }
+
+    .ap-treatments-actions {
+      justify-content: flex-start;
+      margin-inline-start: 0;
+    }
   }
 
   @media (max-width: 700px) {
@@ -546,16 +569,21 @@
       padding: 14px;
     }
 
+    .ap-treatments-header {
+      padding: 10px 14px;
+    }
+
     .ap-section-heading {
       flex-basis: 100%;
     }
 
-    .ap-plan-details {
-      padding: 14px 14px 0;
+    .ap-treatments-title-line,
+    .ap-treatments-actions {
+      flex-basis: 100%;
     }
 
-    .ap-plan-identity {
-      flex-basis: 100%;
+    .ap-plan-details {
+      padding: 10px 14px;
     }
 
     .ap-note {

@@ -104,6 +104,7 @@ import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
+import { dentalChartAgeRuleService } from '@/services/setup/dental-chart-age-rule/dentalChartAgeRuleService';
 import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDentalActionService';
 
 import { procedureSetupService } from './services/setup/procedure/procedureService';
@@ -508,6 +509,7 @@ export const store = configureStore({
     // dental actions
     [dentalActionService.reducerPath]: dentalActionService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
+    [dentalChartAgeRuleService.reducerPath]: dentalChartAgeRuleService.reducer,
 
     // procedures
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
@@ -824,6 +826,7 @@ export const store = configureStore({
         diagnosticTestCodingService.middleware,
         dentalActionService.middleware,
         CdtDentalActionService.middleware,
+        dentalChartAgeRuleService.middleware,
         vaccineService.middleware,
         vaccineBrandsService.middleware,
         vaccineDosesService.middleware,

@@ -49,6 +49,7 @@ export type ActivePlansProps = {
   practitioners: any[];
   onViewPlan: (plan: any) => void;
   onOpenChart: () => void;
+  onPropose: () => void;
   onCloseDetails: () => void;
   onNewPlan: () => void;
   newPlanDisabled: boolean;
@@ -63,6 +64,7 @@ export type ActivePlansProps = {
   canExecute: boolean;
   completingId: number | null;
   teethById: Record<number, any>;
+  numberingSystem?: string | null;
   cdtMap: Record<number, any>;
   dentalServicesMap: Record<number, any>;
   dentalProceduresMap: Record<number, any>;
@@ -121,6 +123,7 @@ const ActivePlans = ({
   practitioners,
   onViewPlan,
   onOpenChart,
+  onPropose,
   onCloseDetails,
   onNewPlan,
   newPlanDisabled,
@@ -135,6 +138,7 @@ const ActivePlans = ({
   canExecute,
   completingId,
   teethById,
+  numberingSystem = 'UNIVERSAL',
   cdtMap,
   dentalServicesMap,
   dentalProceduresMap,
@@ -296,7 +300,7 @@ const ActivePlans = ({
           return (
             <span className="ap-tooth-number">
               {toothNumber
-                ? toothDisplayLabel(toothNumber)
+                ? toothDisplayLabel(toothNumber, numberingSystem)
                 : row.toothId ?? EMPTY_VALUE}
             </span>
           );
@@ -527,7 +531,8 @@ const ActivePlans = ({
       onEditTreatment,
       onStartTreatment,
       onViewTreatment,
-      teethById
+      teethById,
+      numberingSystem
     ]
   );
 
@@ -592,55 +597,31 @@ const ActivePlans = ({
       </section>
 
       <section className="ap-treatments-section">
-        <div className="ap-section-header">
-          <div className="ap-section-heading">
-            <div className="ap-title-line">
-              <h4>
-                <Translate>Treatments</Translate>
-              </h4>
+        <div className="ap-section-header ap-treatments-header">
+          <div className="ap-title-line ap-treatments-title-line">
+            <h4>
+              <Translate>Treatments</Translate>
+            </h4>
 
-              {selectedPlan && (
-                <span className="ap-count-label">
-                  <Translate>Planned</Translate>
-                  <span className="ap-count">
-                    {visiblePlanTreatments.length}
-                  </span>
+            {selectedPlan && (
+              <span className="ap-count-label">
+                <Translate>Planned</Translate>
+                <span className="ap-count">
+                  {visiblePlanTreatments.length}
                 </span>
-              )}
+              </span>
+            )}
 
-              {existingDocumentation.length > 0 && (
-                <span className="ap-count-label">
-                  <Translate>Existing</Translate>
-                  <span className="ap-count">
-                    {existingDocumentation.length}
-                  </span>
+            {existingDocumentation.length > 0 && (
+              <span className="ap-count-label">
+                <Translate>Existing</Translate>
+                <span className="ap-count">
+                  {existingDocumentation.length}
                 </span>
-              )}
-            </div>
+              </span>
+            )}
 
-            <p>
-              <Translate>
-                {selectedPlan
-                  ? 'Click a treatment to view its details.'
-                  : 'Choose a plan above to view its planned treatments.'}
-              </Translate>
-            </p>
-          </div>
-
-          {selectedPlan && (
-            <MyButton
-              prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-              onClick={onAddTreatment}
-              disabled={actionsDisabled || !canAddTreatment}
-            >
-              <Translate>Add Treatment</Translate>
-            </MyButton>
-          )}
-        </div>
-
-        {selectedPlan ? (
-          <div className="ap-plan-details">
-            <div className="ap-plan-details-header">
+            {selectedPlan && (
               <div className="ap-plan-identity">
                 <span className="ap-plan-number">
                   {selectedPlan.planNumber || EMPTY_VALUE}
@@ -652,48 +633,74 @@ const ActivePlans = ({
 
                 <PlanStatus status={selectedPlan.status} />
               </div>
+            )}
+          </div>
 
-              <MyButton appearance="link" onClick={onCloseDetails}>
-                <Translate>Clear Selection</Translate>
+          {selectedPlan && (
+            <div className="ap-treatments-actions">
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+                onClick={onAddTreatment}
+                disabled={actionsDisabled || !canAddTreatment}
+              >
+                <Translate>Add Treatment</Translate>
               </MyButton>
-            </div>
 
-            {selectedPlan.notes && (
-              <div className="ap-note">
-                <span className="ap-note-label">
-                  <Translate>Plan Notes</Translate>
-                </span>
-                <p>{selectedPlan.notes}</p>
-              </div>
-            )}
-
-            {planOnHold && (
-              <div className="ap-hold-notice">
-                <FontAwesomeIcon icon={faCircleInfo} />
-
-                <div>
-                  <strong>
-                    <Translate>This plan is on hold.</Translate>
-                  </strong>
-
-                  {selectedPlan.holdReason && (
-                    <p>{selectedPlan.holdReason}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="ap-plan-toolbar">
-              <div className="ap-document-actions">
+              {selectedPlan.status === 'DRAFT' ? (
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faTooth} />}
+                  onClick={onPropose}
+                  disabled={
+                    actionsDisabled || visiblePlanTreatments.length < 1
+                  }
+                >
+                  <Translate>Propose</Translate>
+                </MyButton>
+              ) : (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faTooth} />}
                   onClick={onOpenChart}
                 >
                   <Translate>View Chart</Translate>
                 </MyButton>
-              </div>
+              )}
+
+              <MyButton appearance="link" onClick={onCloseDetails}>
+                <Translate>Clear Selection</Translate>
+              </MyButton>
             </div>
-          </div>
+          )}
+        </div>
+
+        {selectedPlan ? (
+          (selectedPlan.notes || planOnHold) && (
+            <div className="ap-plan-details">
+              {selectedPlan.notes && (
+                <div className="ap-note">
+                  <span className="ap-note-label">
+                    <Translate>Plan Notes</Translate>
+                  </span>
+                  <p>{selectedPlan.notes}</p>
+                </div>
+              )}
+
+              {planOnHold && (
+                <div className="ap-hold-notice">
+                  <FontAwesomeIcon icon={faCircleInfo} />
+
+                  <div>
+                    <strong>
+                      <Translate>This plan is on hold.</Translate>
+                    </strong>
+
+                    {selectedPlan.holdReason && (
+                      <p>{selectedPlan.holdReason}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <div className="ap-selection-message">
             <FontAwesomeIcon icon={faCircleInfo} />

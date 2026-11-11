@@ -8,7 +8,12 @@ import {
 } from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
-import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix, isPrimaryTooth } from '@/utils/toothNumber';
+import {
+  toothDisplayLabel,
+  toothCssClassSuffix,
+  isPrimaryTooth,
+  splitChartTeethByArch
+} from '@/utils/toothNumber';
 import { useEffect, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { Button } from 'rsuite';
@@ -122,22 +127,17 @@ const DentalChart = ({
   const [addToothService, addToothServiceMutation] = useSaveToothServiceMutation();
   const [removeToothAction, removeToothActionMutation] = useCancelToothActionMutation();
 
+  const numberingSystem = chartObject?.numberingSystem || 'UNIVERSAL';
+
   useEffect(() => {
     if (!chartObject?.teeth?.length) {
       setUpperTeeth([]);
       setLowerTeeth([]);
       return;
     }
-    // Half-based split (16/32 permanent, 10/20 primary). Sort explicitly so
-    // display order is Upper 1→16 / A→J and Lower 32→17 / T→K regardless of
-    // API array order.
-    const upperCutoff = chartObject.teeth.length / 2;
-    const upper = chartObject.teeth
-      .filter((t: any) => toothIndexFromEnum(t.toothNumber) <= upperCutoff)
-      .sort((a: any, b: any) => toothIndexFromEnum(a.toothNumber) - toothIndexFromEnum(b.toothNumber));
-    const lower = chartObject.teeth
-      .filter((t: any) => toothIndexFromEnum(t.toothNumber) > upperCutoff)
-      .sort((a: any, b: any) => toothIndexFromEnum(b.toothNumber) - toothIndexFromEnum(a.toothNumber));
+    // Scheme-aware arches: permanent 1–16 / primary A–J upper; permanent 17–32 /
+    // primary K–T lower. Safe for MIXED inventories (never length/2).
+    const { upper, lower } = splitChartTeethByArch(chartObject.teeth);
     setUpperTeeth(upper);
     setLowerTeeth(lower);
   }, [chartObject]);
@@ -453,7 +453,9 @@ const DentalChart = ({
       return (
         <div key={tooth.id} className={colClass}>
           {arch === 'upper' && (
-            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
+            <div className="tooth-number">
+              {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+            </div>
           )}
 
           {arch === 'upper' ? (
@@ -532,11 +534,19 @@ const DentalChart = ({
           )}
 
           {arch === 'lower' && (
-            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
+            <div className="tooth-number">
+              {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+            </div>
           )}
         </div>
       );
     });
+
+  const hasPrimary = upperTeeth.some((t: any) => isPrimaryTooth(t.toothNumber))
+    || lowerTeeth.some((t: any) => isPrimaryTooth(t.toothNumber));
+  const hasPermanent = upperTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber))
+    || lowerTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber));
+  const pediatricLayout = hasPrimary && !hasPermanent;
 
   return (
     <>
@@ -549,7 +559,7 @@ const DentalChart = ({
         <div className="chart-side-label chart-side-r" aria-hidden>
           R
         </div>
-        <div className={clsx('dental-chart-grid', { pediatric: upperTeeth.length > 0 && upperTeeth.length <= 10 })}>
+        <div className={clsx('dental-chart-grid', { pediatric: pediatricLayout })}>
           <div className="chart-arch upper">{renderToothColumns(upperTeeth, 'upper')}</div>
           <div className="chart-midline" aria-hidden />
           <div className="chart-arch lower">{renderToothColumns(lowerTeeth, 'lower')}</div>
@@ -569,7 +579,7 @@ const DentalChart = ({
             clearCurrentAction();
             clearCurrentService();
           }}
-          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '')}`}
+          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '', numberingSystem)}`}
           actionButtonFunction={() => addAction()}
           customClassName="dental-chart-modal"
           content={
@@ -598,6 +608,7 @@ const DentalChart = ({
                   dentalActionsMap={dentalActionsMap}
                   removeToothAction={removeToothAction}
                   clearCurrentAction={clearCurrentAction}
+                  numberingSystem={numberingSystem}
                 />
               </TabPanel>
 

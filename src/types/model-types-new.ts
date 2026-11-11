@@ -1288,6 +1288,23 @@ export interface DentalAction {
   isActive?: boolean; // Defaults true
 }
 
+/** Dental Chart Setup age-range configuration (setup-service). */
+export interface DentalChartAgeRule {
+  id?: number | null;
+  name: string;
+  /** Inclusive lower bound in completed years. */
+  ageFrom: number | null;
+  /** Exclusive upper bound in completed years; null/empty = open-ended. */
+  ageTo?: number | null;
+  /** Persisted as ADULT, CHILD, or MIXED. */
+  chartType: 'ADULT' | 'CHILD' | 'MIXED' | string | null;
+  /** Display numbering only; selection uses stable Tooth1–32 / ToothA–T ids. */
+  numberingSystem?: 'UNIVERSAL' | 'FDI' | 'PALMER' | string | null;
+  /** Stable internal tooth identifiers for this rule's inventory. */
+  toothNumbers?: string[] | null;
+  isActive?: boolean;
+}
+
 export interface DiagnosticTestNormalRange {
   id?: number;
   testId: number;
@@ -9080,6 +9097,10 @@ export interface DentalChartResponseDTO {
   chartType?: DentalChartType | null;
   status?: DentalChartStatus | null;
   treatmentPlan?: string | null;
+  /** Snapshot from Setup at chart creation; display labels use this. */
+  numberingSystem?: 'UNIVERSAL' | 'FDI' | 'PALMER' | string | null;
+  /** Snapshot of the age rule that seeded this chart. */
+  ageRuleId?: number | null;
   teeth: DentalChartToothDTO[];
   chartActions: ToothActionDTO[];
   historyCharts: DentalChartSummaryDTO[];

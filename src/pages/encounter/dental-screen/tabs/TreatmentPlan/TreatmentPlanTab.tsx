@@ -438,6 +438,22 @@ const TreatmentPlanTab = ({
     setViewOnly(false);
   };
 
+  const resolvePlanTooth = (toothId: any, tooth?: any) => {
+    if (toothId != null && teethById[toothId]) {
+      return teethById[toothId];
+    }
+
+    const toothNumber = tooth?.toothNumber;
+    if (toothNumber != null) {
+      const byNumber = (originalChart?.teeth ?? []).find(
+        (item: any) => String(item.toothNumber) === String(toothNumber)
+      );
+      if (byNumber) return byNumber;
+    }
+
+    return null;
+  };
+
   const getRowTeeth = (row: any) => {
     const scope: TreatmentAreaScope =
       row.treatmentScope || 'SPECIFIC_TOOTH';
@@ -447,15 +463,22 @@ const TreatmentPlanTab = ({
       : [];
 
     if (isGroupedScope(scope)) {
-      return coveredIds.length
-        ? coveredIds.map(id => teethById[id]).filter(Boolean)
+      if (!coveredIds.length) {
+        return teethForTreatmentScope(originalChart?.teeth, scope);
+      }
+
+      const resolved = coveredIds
+        .map(id => resolvePlanTooth(id))
+        .filter(Boolean);
+
+      return resolved.length
+        ? resolved
         : teethForTreatmentScope(originalChart?.teeth, scope);
     }
 
     const toothId = row.toothId ?? row.tooth?.id;
-    return toothId != null && teethById[toothId]
-      ? [teethById[toothId]]
-      : [];
+    const resolved = resolvePlanTooth(toothId, row.tooth);
+    return resolved ? [resolved] : [];
   };
 
   const openAddModal = () => {
@@ -1529,6 +1552,14 @@ const TreatmentPlanTab = ({
                 practitioners={practitioners}
                 onViewPlan={openPlan}
                 onOpenChart={() => setProposeChartOpen(true)}
+                onPropose={() => {
+                  if (!selectedPlan) return;
+
+                  return runPlanAction(
+                    () => proposeTreatmentPlan(selectedPlan.id).unwrap(),
+                    'Plan proposed'
+                  );
+                }}
                 onCloseDetails={closeDetails}
                 onNewPlan={openNewPlan}
                 newPlanDisabled={
@@ -1547,6 +1578,7 @@ const TreatmentPlanTab = ({
                 canExecute={planExecutable}
                 completingId={completingId}
                 teethById={teethById}
+                numberingSystem={originalChart?.numberingSystem}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}
@@ -1575,6 +1607,14 @@ const TreatmentPlanTab = ({
                 practitioners={practitioners}
                 onViewPlan={openPlan}
                 onOpenChart={() => setProposeChartOpen(true)}
+                onPropose={() => {
+                  if (!selectedPlan) return;
+
+                  return runPlanAction(
+                    () => proposeTreatmentPlan(selectedPlan.id).unwrap(),
+                    'Plan proposed'
+                  );
+                }}
                 historyStatus={historyStatus}
                 onHistoryStatusChange={setHistoryStatus}
                 onCloseDetails={closeDetails}
@@ -1593,6 +1633,7 @@ const TreatmentPlanTab = ({
                 canExecute={planExecutable}
                 completingId={completingId}
                 teethById={teethById}
+                numberingSystem={originalChart?.numberingSystem}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}

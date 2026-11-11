@@ -7,6 +7,14 @@
  * the UI needs to know which chart type is active.
  */
 
+import {
+  PERMANENT_LOWER_IDS,
+  PERMANENT_UPPER_IDS,
+  PRIMARY_LOWER_IDS,
+  PRIMARY_UPPER_IDS,
+  toothDisplayLabelForSystem
+} from '@/utils/toothNumberingSystems';
+
 const isPrimaryToothLetter = (remainder: string): boolean => /^[A-T]$/.test(remainder);
 
 /** 1-based position within the tooth set (1-32 for permanent, 1-20 for primary). */
@@ -32,12 +40,25 @@ export const isPrimaryTooth = (toothNumber: string): boolean =>
 export const toothImageCodeFromEnum = (toothNumber: string): string =>
   toothIndexFromEnum(toothNumber).toString().padStart(2, '0');
 
-/** Short label dentists actually use: the number (permanent) or the letter (primary). */
-export const toothDisplayLabel = (toothNumber: string): string => toothNumber.replace('Tooth', '');
+/**
+ * Short label dentists actually use. When a chart numbering system is provided,
+ * use Universal / FDI / Palmer labels; otherwise fall back to Universal remnant.
+ */
+export const toothDisplayLabel = (
+  toothNumber: string,
+  numberingSystem?: string | null
+): string => {
+  if (numberingSystem) {
+    return toothDisplayLabelForSystem(toothNumber, numberingSystem);
+  }
+  return toothNumber.replace('Tooth', '');
+};
 
 /** CSS class suffix matching styles.less's per-tooth width overrides (zero-padded, permanent only). */
 export const toothCssClassSuffix = (toothNumber: string): string =>
-  isPrimaryTooth(toothNumber) ? toothDisplayLabel(toothNumber) : toothImageCodeFromEnum(toothNumber);
+  isPrimaryTooth(toothNumber)
+    ? toothNumber.replace('Tooth', '')
+    : toothImageCodeFromEnum(toothNumber);
 
 export type TreatmentAreaScope =
   | 'SPECIFIC_TOOTH'
@@ -45,8 +66,31 @@ export type TreatmentAreaScope =
   | 'LOWER_ARCH'
   | 'FULL_MOUTH';
 
+const UPPER_ARCH_ORDER = [...PERMANENT_UPPER_IDS, ...PRIMARY_UPPER_IDS];
+const LOWER_ARCH_ORDER = [...PERMANENT_LOWER_IDS, ...PRIMARY_LOWER_IDS];
+const UPPER_ARCH_SET = new Set(UPPER_ARCH_ORDER);
+const LOWER_ARCH_SET = new Set(LOWER_ARCH_ORDER);
+
+/** Scheme-aware upper-arch membership (permanent 1–16 / primary A–J). */
+export const isUpperArchTooth = (toothNumber?: string | null): boolean => {
+  if (!toothNumber) return false;
+  if (UPPER_ARCH_SET.has(toothNumber)) return true;
+  if (LOWER_ARCH_SET.has(toothNumber)) return false;
+  // Fallback for unexpected ids: permanent index ≤16 or primary index ≤10.
+  if (isPrimaryTooth(toothNumber)) {
+    return toothIndexFromEnum(toothNumber) <= 10;
+  }
+  return toothIndexFromEnum(toothNumber) <= 16;
+};
+
+const orderIndex = (toothNumber: string, order: string[]): number => {
+  const idx = order.indexOf(toothNumber);
+  return idx >= 0 ? idx : 9999;
+};
+
 /**
- * Split chart teeth into upper/lower halves by sorted tooth index (chart layout).
+ * Split chart teeth into upper/lower by dentition scheme (not length/2).
+ * Safe for MIXED inventories that mix primary and permanent ids.
  */
 export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>(
   teeth: T[] | null | undefined
@@ -56,19 +100,23 @@ export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>
     return { upper: [], lower: [], all: [] };
   }
 
-  const sorted = [...list]
-    .filter(t => t?.toothNumber)
+  const withNumbers = list.filter(t => t?.toothNumber);
+  const upper = withNumbers
+    .filter(t => isUpperArchTooth(String(t.toothNumber)))
     .sort(
       (a, b) =>
-        toothIndexFromEnum(String(a.toothNumber)) -
-        toothIndexFromEnum(String(b.toothNumber))
+        orderIndex(String(a.toothNumber), UPPER_ARCH_ORDER) -
+        orderIndex(String(b.toothNumber), UPPER_ARCH_ORDER)
+    );
+  const lower = withNumbers
+    .filter(t => !isUpperArchTooth(String(t.toothNumber)))
+    .sort(
+      (a, b) =>
+        orderIndex(String(a.toothNumber), LOWER_ARCH_ORDER) -
+        orderIndex(String(b.toothNumber), LOWER_ARCH_ORDER)
     );
 
-  const mid = Math.floor(sorted.length / 2);
-  const upper = sorted.slice(0, mid);
-  const lower = sorted.slice(mid);
-
-  return { upper, lower, all: sorted };
+  return { upper, lower, all: [...upper, ...lower] };
 };
 
 export const teethForTreatmentScope = <T extends { toothNumber?: string | null }>(

@@ -237,8 +237,9 @@ const ProposeTreatmentChartModal: React.FC<ProposeTreatmentChartModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, highlightToothIds.join('|')]);
 
+  const numberingSystem = originalChart?.numberingSystem || 'UNIVERSAL';
   const detailsToothLabel = selectedTooth?.toothNumber
-    ? `Tooth ${toothDisplayLabel(selectedTooth.toothNumber)}`
+    ? `Tooth ${toothDisplayLabel(selectedTooth.toothNumber, numberingSystem)}`
     : null;
 
   const modalTitle = plan

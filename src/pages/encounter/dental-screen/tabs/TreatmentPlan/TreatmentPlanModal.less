@@ -604,7 +604,8 @@
 }
 
 .treatment-plan-modal {
-  .footer-modal-content {
+  /* Keep Cancel/Save right-aligned for Add/Edit; only expand when plan actions are present. */
+  &.treatment-plan-modal--plan-actions .footer-modal-content {
     width: 100%;
     margin-left: 0;
     flex-wrap: wrap;
