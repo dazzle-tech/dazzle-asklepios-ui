@@ -246,8 +246,9 @@ const AddEncounterVaccine = ({
 
   const activeVaccineId = vaccine?.id as number | undefined;
 
+  // Inactive brands cannot be given
   const { data: vaccineBrandsPage, refetch: refetchBrands } = useGetVaccineBrandsByVaccineQuery(
-    { vaccineId: activeVaccineId, page: brandPage, size: PAGE_SIZE, sort: 'id,asc' },
+    { vaccineId: activeVaccineId, isActive: true, page: brandPage, size: PAGE_SIZE, sort: 'id,asc' },
     { skip: !activeVaccineId }
   );
   const { data: vaccineDosesPage, refetch: refetchDoses } = useGetVaccineDosesByVaccineIdQuery(
@@ -446,6 +447,16 @@ const AddEncounterVaccine = ({
       return merged;
     });
   }, [vaccineBrandsPage?.data, brandPage]);
+
+  // Only active brands are loaded; a brand saved on the vaccination that was deactivated
+  // later is added back so editing it does not show an empty brand
+  const selectableBrands = useMemo(
+    () =>
+      vaccineBrand?.id && !allBrands.some(brand => brand.id === vaccineBrand.id)
+        ? [vaccineBrand, ...allBrands]
+        : allBrands,
+    [allBrands, vaccineBrand]
+  );
 
   useEffect(() => {
     const pageData = (vaccineDosesPage?.data ?? []) as VaccineDose[];
@@ -702,7 +713,7 @@ const AddEncounterVaccine = ({
               fieldLabel="Used Brand"
               fieldType="selectPagination"
               fieldName="vaccineBrandId"
-              selectData={allBrands}
+              selectData={selectableBrands}
               selectDataLabel="name"
               selectDataValue="id"
               record={brandPicker}
@@ -955,7 +966,7 @@ const AddEncounterVaccine = ({
               <Translate>Vaccine Brands</Translate>
             </h6>
             <InfoCardList
-              list={vaccine?.id ? allBrands : []}
+              list={vaccine?.id ? selectableBrands : []}
               fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}
               fieldLabels={{
                 manufacture: 'Manufacturer',

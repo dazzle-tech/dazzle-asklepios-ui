@@ -56,6 +56,14 @@ import AddReportModal from './AddReportModal';
 import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
 import StudyImageViewerModal from './StudyImageViewrModal';
+import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
+
+// Backend error keys (DiagnosticOrderTestReportService) mapped to readable messages
+const RADIOLOGY_REPORT_ERROR_MAP: Record<string, string> = {
+  same_user_not_allowed: 'Second approval must be done by another radiologist',
+  first_approve_required: 'The report must be approved before the second approval',
+  already_second_approved: 'This report is already second approved'
+};
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -64,7 +72,8 @@ type Props = {
 const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
   const status = e?.status || e?.originalStatus || e?.data?.status;
 
-  const message = e?.data?.message || e?.data?.detail || e?.error || fallbackMsg;
+  const message =
+    extractApiErrorMessage(e, RADIOLOGY_REPORT_ERROR_MAP) || fallbackMsg;
 
   if (status === 400 || status === 409 || status === 422) {
     dispatch(
@@ -567,19 +576,6 @@ const [studies, setStudies] = useState<PacsStudyDTO[]>([]);
       await refetchAllRadData();
       await refetch();
     } catch (e: any) {
-      const backendMsg = e?.data?.message || e?.data?.detail || '';
-      if (
-        backendMsg.includes('different user') ||
-        backendMsg.includes('Second approve must be performed')
-      ) {
-        dispatch(
-          notify({
-            msg: 'Second approval must be done by another radiologist',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
       notifyFromApiError(dispatch, e, 'Second Approve Failed');
     }
   };

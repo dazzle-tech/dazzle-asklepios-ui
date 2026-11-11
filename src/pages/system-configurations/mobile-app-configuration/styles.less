@@ -70,6 +70,38 @@
   padding: 0;
 }
 
+.mobile-app-config-text-values {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-app-config-text-values-label {
+  font-weight: 600;
+}
+
+.mobile-app-config-text-value-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.mobile-app-config-text-value-remove {
+  border: none;
+  background: transparent;
+  color: var(--primary-pink);
+  cursor: pointer;
+  padding: 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-app-config-text-value-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .mobile-app-config-notify-loading {
   display: flex;
   justify-content: center;

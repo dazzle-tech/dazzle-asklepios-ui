@@ -4235,7 +4235,7 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
 export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
   configKey: '',
   configType: '',
-  configValue: '',
+  configValues: [''],
   description: ''
 };
 

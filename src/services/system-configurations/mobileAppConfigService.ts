@@ -47,10 +47,10 @@ export const mobileAppConfigService = createApi({
     }),
 
     updateMobileAppConfig: builder.mutation<MobileAppConfigResponseVM, MobileAppConfigUpdateDTO>({
-      query: ({ id, configType, configValue, description }) => ({
+      query: ({ id, configType, configValues, description }) => ({
         url: `/api/setup/mobile-app-config/${id}`,
         method: 'PUT',
-        body: { configType, configValue, description },
+        body: { configType, configValues, description },
       }),
       invalidatesTags: ['MobileAppConfig'],
     }),
