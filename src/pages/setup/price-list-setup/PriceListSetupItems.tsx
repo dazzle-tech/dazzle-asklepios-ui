@@ -41,6 +41,7 @@ import {
 } from '@/utils/apiErrorMessage';
 
 import {
+  formatDateWithoutSeconds,
   formatEnumString
 } from '@/utils';
 
@@ -2095,7 +2096,7 @@ const PriceListSetupItems: React.FC<Props> = ({
       {
         key: 'createdDate',
         title: <Translate>Created Date</Translate>,
-        render: (row: PriceListSetupItem) => row.createdDate || '-'
+        render: (row: PriceListSetupItem) => formatDateWithoutSeconds(row.createdDate) || '-'
       },
 
       {
@@ -2107,7 +2108,7 @@ const PriceListSetupItems: React.FC<Props> = ({
       {
         key: 'lastModifiedDate',
         title: <Translate>Updated Date</Translate>,
-        render: (row: PriceListSetupItem) => row.lastModifiedDate || '-'
+        render: (row: PriceListSetupItem) => formatDateWithoutSeconds(row.lastModifiedDate) || '-'
       },
 
       {
