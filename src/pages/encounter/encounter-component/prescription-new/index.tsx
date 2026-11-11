@@ -17,6 +17,7 @@ import {
   useCreateOrGetPatientPrescriptionMutation,
   useGetPatientPrescriptionQuery,
   useGetNahdiSyncStatusQuery,
+  useGetPrescriptionEditAfterSubmitAccessQuery,
   useRefreshNahdiDispensingStatusMutation,
   useResendPrescriptionToNahdiMutation,
   useSubmitPatientPrescriptionMutation
@@ -282,6 +283,14 @@ const Prescription = (props: Props) => {
   // Changes on a submitted prescription that were not sent to Nahdi yet (highlights the resend button).
   const isCurrentPrescriptionSubmitted =
     String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+
+  // A submitted prescription can be changed and resent only by users the backend allows
+  // (SubmittedPrescriptionEditPolicy), also on a read-only (closed) visit opened from the EMR.
+  // Drafts and the rest of the visit follow the visit's own read-only state.
+  const { data: editAfterSubmitAccess } = useGetPrescriptionEditAfterSubmitAccessQuery();
+  const canEditSubmitted = editAfterSubmitAccess?.allowed === true;
+  const prescriptionEdit = isCurrentPrescriptionSubmitted ? !canEditSubmitted : edit;
+
   const { data: nahdiSyncStatus, refetch: refetchNahdiSyncStatus } = useGetNahdiSyncStatusQuery(
     Number(currentPrescription?.id),
     { skip: !currentPrescription?.id || !isCurrentPrescriptionSubmitted }
@@ -679,7 +688,7 @@ const Prescription = (props: Props) => {
 
   const prescriptionHeader = (
     <PrescriptionToolbar
-      edit={edit}
+      edit={prescriptionEdit}
       isNurse={isNurse}
       isLoadingPrescriptions={isLoadingPrescriptions}
       isLoadingCreateOrGet={isLoadingCreateOrGet}
@@ -713,7 +722,7 @@ const Prescription = (props: Props) => {
 
       <div ref={tableContainerRef}>
         <PrescriptionTable
-          edit={edit}
+          edit={prescriptionEdit}
           currentPrescription={currentPrescription}
           medications={visiblePatientPrescriptionMedications}
           loading={isLoadingPrescriptionMedications}

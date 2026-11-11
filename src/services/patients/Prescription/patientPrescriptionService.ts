@@ -133,6 +133,14 @@ export const patientPrescriptionService = createApi({
       transformResponse: (response: any) => response
     }),
 
+    // GET /api/patient/patient-prescriptions/edit-after-submit-access : may the current user change a submitted prescription
+    getPrescriptionEditAfterSubmitAccess: builder.query<{ allowed: boolean }, void>({
+      query: () => ({
+        url: `/api/patient/patient-prescriptions/edit-after-submit-access`
+      }),
+      transformResponse: (response: any) => response
+    }),
+
     // GET /api/patient/nahdi/prescriptions/{id}/sync-status : changes made after the last successful send to Nahdi
     getNahdiSyncStatus: builder.query<
       { hasUnsentChanges: boolean; lastSentAt?: string | null; lastAttemptStatus?: 'SUCCESS' | 'FAILED' | null },
@@ -216,6 +224,7 @@ export const {
   useSubmitPatientPrescriptionMutation,
   useResendPrescriptionToNahdiMutation,
   useGetNahdiSyncStatusQuery,
+  useGetPrescriptionEditAfterSubmitAccessQuery,
   useRefreshNahdiDispensingStatusMutation,
   useCancelPatientPrescriptionMutation,
   useGetPrescriptionPdfQuery,
