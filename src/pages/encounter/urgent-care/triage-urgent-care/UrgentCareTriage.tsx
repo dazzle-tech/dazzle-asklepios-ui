@@ -1451,13 +1451,8 @@ const handleCancelEncounter = async () => {
         );
 
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        // Cancel is allowed only before payment; after the payment step the
-        // encounter moves out of PENDING_PAYMENT (e.g. to WAITING_TRIAGE).
-        const canCancel = isPendingPayment;
-        const tooltipCancel = canCancel ? (
-          <Tooltip>Cancel Visit</Tooltip>
-        ) : (
-          <Tooltip>Cannot cancel after payment settlement</Tooltip>
+        const tooltipCancel = (
+          <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
         );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
@@ -1636,7 +1631,7 @@ const handleCancelEncounter = async () => {
                 <div>
                   <MyButton
                     size="small"
-                    disabled={isReceptionist || !canCancel}
+                    disabled={isReceptionist}
                     onClick={() => {
                       setLocalEncounter(rowData);
                       setOpen(true);

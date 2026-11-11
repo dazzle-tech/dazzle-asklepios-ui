@@ -1215,14 +1215,7 @@ const ERTriage = () => {
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipSendTo = <Tooltip>Send to</Tooltip>;
-        // Cancel is allowed only before payment; after the payment step the
-        // encounter moves out of PENDING_PAYMENT (e.g. to WAITING_TRIAGE).
-        const canCancel = isPendingPayment;
-        const tooltipCancel = canCancel ? (
-          <Tooltip>Cancel Visit</Tooltip>
-        ) : (
-          <Tooltip>Cannot cancel after payment settlement</Tooltip>
-        );
+        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1419,7 +1412,7 @@ const ERTriage = () => {
                         setLocalEncounter(rowData);
                         setOpen(true);
                       }}
-                      disabled={isReceptionist || !canCancel}
+                      disabled={isReceptionist}
                     >
                       <FontAwesomeIcon icon={faRectangleXmark} />
                     </MyButton>
