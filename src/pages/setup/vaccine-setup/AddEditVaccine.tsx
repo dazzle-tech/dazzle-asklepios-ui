@@ -32,6 +32,11 @@ import { MdDelete, MdMedication, MdModeEdit, MdVaccines, MdLocalOffer } from 're
 import { Form } from 'rsuite';
 import './styles.less';
 
+const BRAND_STATUS_FILTER_OPTIONS = [
+  { label: 'Active', value: 'true' },
+  { label: 'Inactive', value: 'false' }
+];
+
 /** ===================== Helpers ===================== */
 const toNullIfEmpty = (v: any) => (v === '' ? null : v);
 const toNumberOrNull = (v: any) => (v === '' || v === undefined || v === null ? null : Number(v));
@@ -162,13 +167,29 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [size, setSize] = useState(5);
   const [sortBy, setSortBy] = useState<'id' | 'name'>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  // Empty status = all brands
+  const [brandStatusFilter, setBrandStatusFilter] = useState<{ status: string | null }>({
+    status: null
+  });
+  const brandIsActiveFilter =
+    brandStatusFilter.status === 'true'
+      ? true
+      : brandStatusFilter.status === 'false'
+        ? false
+        : undefined;
 
   const {
     data: brandsPage,
     refetch: refetchVaccineBrand,
     isFetching
   } = useGetVaccineBrandsByVaccineQuery(
-    { vaccineId: vaccine?.id as number, page, size, sort: `${sortBy},${sortType}` },
+    {
+      vaccineId: vaccine?.id as number,
+      isActive: brandIsActiveFilter,
+      page,
+      size,
+      sort: `${sortBy},${sortType}`
+    },
     { skip: !vaccine?.id }
   );
 
@@ -786,19 +807,44 @@ const vaccineType = useEnumOptions('VaccineType', {
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button">
-              <MyButton
-                prefixIcon={() => <AddOutlineIcon />}
-                color="var(--deep-blue)"
-                onClick={() => {
-                  setVaccineBrand({ ...newVaccineBrand, vaccineId: vaccine?.id });
-                  setEditBrand(true);
-                  setOpenChildModal(true);
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end',
+                gap: 12
+              }}
+            >
+              <MyInput
+                width={180}
+                fieldLabel="Status"
+                fieldType="select"
+                fieldName="status"
+                selectData={BRAND_STATUS_FILTER_OPTIONS}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={brandStatusFilter}
+                setRecord={(updated: { status: string | null }) => {
+                  setBrandStatusFilter({ status: updated?.status ?? null });
+                  setPage(0);
                 }}
-                width="109px"
-              >
-                Add New
-              </MyButton>
+                searchable={false}
+                placeholder="All"
+              />
+              <div className="container-of-add-new-button">
+                <MyButton
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={() => {
+                    setVaccineBrand({ ...newVaccineBrand, vaccineId: vaccine?.id });
+                    setEditBrand(true);
+                    setOpenChildModal(true);
+                  }}
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>
             </div>
 
             <MyTable
