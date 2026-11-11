@@ -11,25 +11,23 @@ import { useAppDispatch } from '@/hooks';
 import {
   useGetPublicActiveDepartmentsByFacilityQuery,
   useGetPublicActiveFacilitiesQuery,
+  useGetPublicFormLookupsQuery,
   useLookupPatientComplaintByDocumentMutation,
   useRequestPatientPortalOtpMutation,
   useSubmitPatientComplaintMutation,
   useVerifyPatientPortalLoginOtpMutation,
   type PatientComplaintPublicLookupResult
 } from '@/services/patient-complaints/patientComplaintService';
-import { useEnumOptions } from '@/services/enumsApi';
 import { extractErrorMessage } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   ON_BEHALF_OPTIONS,
-  PATIENT_COMPLAINT_FEEDBACK_TYPE_ENUM,
   PATIENT_COMPLAINT_FEEDBACK_TYPE_LABEL_OVERRIDES,
-  PATIENT_COMPLAINT_PREFERRED_CONTACT_METHOD_ENUM,
-  PATIENT_COMPLAINT_TYPE_ENUM,
   PATIENT_COMPLAINT_TYPE_LABEL_OVERRIDES,
   isValidComplaintEmail,
   isValidComplaintPhone,
   todayLocalDateInput,
+  toComplaintEnumOptions,
   toDateInputValue,
   type ComplaintIdentityMode
 } from './constants';
@@ -161,6 +159,8 @@ const COPY = {
     departmentsLoading: 'Loading departments…',
     departmentsEmpty: 'No departments available for this facility.',
     departmentsFailed: 'Unable to load departments. Please select another facility or try again.',
+    lookupsLoading: 'Loading form options…',
+    lookupsFailed: 'Unable to load form options. Please refresh and try again.',
     confirmationTitle: 'Feedback Submitted',
     confirmationMessage: 'Thank you. Your feedback has been received successfully.',
     referenceLabel: 'Reference',
@@ -237,6 +237,8 @@ const COPY = {
     departmentsLoading: 'جاري تحميل الأقسام…',
     departmentsEmpty: 'لا توجد أقسام متاحة لهذه المنشأة.',
     departmentsFailed: 'تعذر تحميل الأقسام. يرجى اختيار منشأة أخرى أو المحاولة مرة أخرى.',
+    lookupsLoading: 'جاري تحميل خيارات النموذج…',
+    lookupsFailed: 'تعذر تحميل خيارات النموذج. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
     confirmationTitle: 'تم إرسال الملاحظة',
     confirmationMessage: 'شكراً لك. تم استلام ملاحظتك بنجاح.',
     referenceLabel: 'الرقم المرجعي',
@@ -278,6 +280,12 @@ const SubmitPatientComplaintPage: React.FC = () => {
     isLoading: facilitiesLoading,
     isError: facilitiesError
   } = useGetPublicActiveFacilitiesQuery();
+
+  const {
+    data: formLookups,
+    isLoading: formLookupsLoading,
+    isError: formLookupsError
+  } = useGetPublicFormLookupsQuery();
 
   const selectedFacilityId =
     formRecord.facilityId != null && formRecord.facilityId !== ''
@@ -345,23 +353,27 @@ const SubmitPatientComplaintPage: React.FC = () => {
     []
   );
 
-  const feedbackTypeOptions = useEnumOptions(PATIENT_COMPLAINT_FEEDBACK_TYPE_ENUM, {
-    allowAnonymous: true,
-    labelOverrides: PATIENT_COMPLAINT_FEEDBACK_TYPE_LABEL_OVERRIDES
-  });
-  const complaintTypeOptions = useEnumOptions(PATIENT_COMPLAINT_TYPE_ENUM, {
-    allowAnonymous: true,
-    labelOverrides: PATIENT_COMPLAINT_TYPE_LABEL_OVERRIDES
-  });
-  const preferredContactOptions = useEnumOptions(
-    PATIENT_COMPLAINT_PREFERRED_CONTACT_METHOD_ENUM,
-    { allowAnonymous: true }
+  const feedbackTypeOptions = useMemo(
+    () =>
+      toComplaintEnumOptions(
+        formLookups?.feedbackTypes,
+        PATIENT_COMPLAINT_FEEDBACK_TYPE_LABEL_OVERRIDES
+      ),
+    [formLookups?.feedbackTypes]
   );
-  // Same DocumentType source as CreateNewPatient / Extra Details.
-  const documentTypeOptions = useEnumOptions('DocumentType', {
-    allowAnonymous: true,
-    exclude: ['NO_DOCUMENT', 'DRIVING_LICENSE', 'SOCIAL_CARD']
-  });
+  const complaintTypeOptions = useMemo(
+    () =>
+      toComplaintEnumOptions(formLookups?.complaintTypes, PATIENT_COMPLAINT_TYPE_LABEL_OVERRIDES),
+    [formLookups?.complaintTypes]
+  );
+  const preferredContactOptions = useMemo(
+    () => toComplaintEnumOptions(formLookups?.preferredContactMethods),
+    [formLookups?.preferredContactMethods]
+  );
+  const documentTypeOptions = useMemo(
+    () => toComplaintEnumOptions(formLookups?.documentTypes),
+    [formLookups?.documentTypes]
+  );
 
   const copy = COPY[language];
   const isRtl = language === 'ar';
@@ -1292,6 +1304,18 @@ const SubmitPatientComplaintPage: React.FC = () => {
               </section>
             </Form>
 
+            {formLookupsLoading ? (
+              <div className="patient-complaint-field-hint" role="status">
+                {copy.lookupsLoading}
+              </div>
+            ) : null}
+
+            {formLookupsError ? (
+              <div className="patient-complaint-form-error" role="alert">
+                {copy.lookupsFailed}
+              </div>
+            ) : null}
+
             {facilitiesError ? (
               <div className="patient-complaint-form-error" role="alert">
                 {copy.facilitiesFailed}
@@ -1315,7 +1339,12 @@ const SubmitPatientComplaintPage: React.FC = () => {
                 {copy.clear}
               </MyButton>
 
-              <MyButton onClick={handleSubmit} disabled={isSubmitting || facilitiesLoading}>
+              <MyButton
+                onClick={handleSubmit}
+                disabled={
+                  isSubmitting || facilitiesLoading || formLookupsLoading || formLookupsError
+                }
+              >
                 {isSubmitting ? copy.submitting : copy.submit}
               </MyButton>
             </div>
