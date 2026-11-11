@@ -595,7 +595,12 @@ const ERWaitingList = () => {
         const tooltipAssignBed = <Tooltip>Assign Bed</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipQuickVisit = <Tooltip>Quick Visit</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const isPaymentSettled = !!rowData?.hasSettledPayment;
+        const tooltipCancel = isPaymentSettled ? (
+          <Tooltip>Cannot cancel after payment settlement</Tooltip>
+        ) : (
+          <Tooltip>Cancel Visit</Tooltip>
+        );
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
@@ -660,6 +665,7 @@ const ERWaitingList = () => {
               <div>
                 <MyButton
                   size="small"
+                  disabled={isPaymentSettled}
                   onClick={() => {
                     setLocalEncounter(rowData);
                     setOpen(true);

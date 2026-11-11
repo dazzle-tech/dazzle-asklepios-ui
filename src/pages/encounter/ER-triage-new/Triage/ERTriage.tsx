@@ -1200,7 +1200,12 @@ const ERTriage = () => {
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipSendTo = <Tooltip>Send to</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const isPaymentSettled = !!rowData?.hasSettledPayment;
+        const tooltipCancel = isPaymentSettled ? (
+          <Tooltip>Cannot cancel after payment settlement</Tooltip>
+        ) : (
+          <Tooltip>Cancel Visit</Tooltip>
+        );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1397,7 +1402,7 @@ const ERTriage = () => {
                         setLocalEncounter(rowData);
                         setOpen(true);
                       }}
-                      disabled={isReceptionist}
+                      disabled={isReceptionist || isPaymentSettled}
                     >
                       <FontAwesomeIcon icon={faRectangleXmark} />
                     </MyButton>
