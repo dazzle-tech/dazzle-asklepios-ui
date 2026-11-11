@@ -3,6 +3,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import { createApi } from '@reduxjs/toolkit/dist/query/react';
 import type {
   DiscountCode,
+  DiscountCodeAllowedUser,
   DiscountCodeCreateDTO,
   DiscountCodeUpdateDTO,
   DiscountType
@@ -35,7 +36,7 @@ const toPagedResult = (response: DiscountCode[], meta: { response?: Response } |
 export const discountCodeService = createApi({
   reducerPath: 'discountCodeApi',
   baseQuery: BaseQuery,
-  tagTypes: ['DiscountCode'],
+  tagTypes: ['DiscountCode', 'DiscountCodeAllowedUser'],
   endpoints: builder => ({
     getDiscountCodes: builder.query<PagedResult<DiscountCode>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
@@ -111,6 +112,30 @@ export const discountCodeService = createApi({
       invalidatesTags: ['DiscountCode']
     }),
 
+    getDiscountCodeAllowedUsers: builder.query<DiscountCodeAllowedUser[], number>({
+      query: discountCodeId => ({
+        url: `/api/setup/discount-code/${discountCodeId}/allowed-users`,
+        method: 'GET'
+      }),
+      providesTags: (_result, _error, discountCodeId) => [
+        { type: 'DiscountCodeAllowedUser', id: discountCodeId }
+      ]
+    }),
+
+    replaceDiscountCodeAllowedUsers: builder.mutation<
+      DiscountCodeAllowedUser[],
+      { discountCodeId: number; userIds: number[] }
+    >({
+      query: ({ discountCodeId, userIds }) => ({
+        url: `/api/setup/discount-code/${discountCodeId}/allowed-users`,
+        method: 'PUT',
+        body: { userIds }
+      }),
+      invalidatesTags: (_result, _error, { discountCodeId }) => [
+        { type: 'DiscountCodeAllowedUser', id: discountCodeId }
+      ]
+    }),
+
     toggleDiscountCodeActive: builder.mutation<DiscountCode, number>({
       query: id => ({
         url: `/api/setup/discount-code/${id}/toggle-active`,
@@ -129,5 +154,7 @@ export const {
   useLazyGetDiscountCodesByTypeQuery,
   useCreateDiscountCodeMutation,
   useUpdateDiscountCodeMutation,
+  useGetDiscountCodeAllowedUsersQuery,
+  useReplaceDiscountCodeAllowedUsersMutation,
   useToggleDiscountCodeActiveMutation
 } = discountCodeService;

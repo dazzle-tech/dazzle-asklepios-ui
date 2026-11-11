@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Panel } from 'rsuite';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdPeople } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import Translate from '@/components/Translate';
@@ -27,6 +27,7 @@ import {
 import type { DiscountCode, DiscountType } from '@/types/model-types-new';
 import { newDiscountCode } from '@/types/model-types-constructor-new';
 import AddEditDiscountCode from './AddEditDiscountCode';
+import DiscountCodeAllowedUsers from './DiscountCodeAllowedUsers';
 import './styles.less';
 
 const filterFields = [
@@ -63,6 +64,7 @@ const DiscountCodeDefinition = () => {
   const discountTypeOptions = useEnumOptions('DiscountType');
   const [discountCode, setDiscountCode] = useState<DiscountCode>({ ...newDiscountCode });
   const [openAddEdit, setOpenAddEdit] = useState(false);
+  const [openAllowedUsers, setOpenAllowedUsers] = useState(false);
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [paginationParams, setPaginationParams] = useState({
@@ -239,6 +241,16 @@ const DiscountCodeDefinition = () => {
           setOpenAddEdit(true);
         }}
       />
+      <MdPeople
+        className="icons-style"
+        title="Allowed Users"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setDiscountCode(rowData);
+          setOpenAllowedUsers(true);
+        }}
+      />
       {rowData.isActive ? (
         <MdDelete
           className="icons-style"
@@ -407,6 +419,12 @@ const DiscountCodeDefinition = () => {
         setOpen={setOpenAddEdit}
         discountCode={discountCode}
         onSaved={handleAfterSave}
+      />
+
+      <DiscountCodeAllowedUsers
+        open={openAllowedUsers}
+        setOpen={setOpenAllowedUsers}
+        discountCode={discountCode}
       />
     </Panel>
   );

@@ -7332,6 +7332,15 @@ export type DiscountCodeUpdateDTO = DiscountCodeCreateDTO & {
   id: number;
 };
 
+export type DiscountCodeAllowedUser = {
+  id?: number;
+  userId: number;
+  login?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+};
+
 export type BillingWalletStatus =
   | 'ACTIVE'
   | 'INACTIVE'
