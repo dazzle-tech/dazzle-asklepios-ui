@@ -1,5 +1,5 @@
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -54,6 +54,19 @@ import '../styles.less';
 import AddPaymentModal from './component/AddPaymentModal';
 import PatientWritBandPrintLabelButton from './PatientWritBandPrintLabelButton';
 import UserDateCell from '@/components/UserDateCell';
+
+const CANCEL_ENCOUNTER_ERRORS: Record<string, string> = {
+  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW, WAITING TRIAGE, or PENDING PAYMENT.',
+  'cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations.'
+};
+
+const getCancelEncounterErrorMessage = (error: any): string => {
+  const message = error?.data?.message;
+  if (typeof message === 'string' && message.trim()) {
+    return CANCEL_ENCOUNTER_ERRORS[message] ?? message;
+  }
+  return 'An error occurred while canceling the encounter';
+};
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -533,6 +546,7 @@ const UrgentCareTriage = () => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openBedAssignmentModal, setOpenBedAssignmentModal] = useState(false);
   const [open, setOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>(() => ({
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
@@ -867,25 +881,18 @@ const UrgentCareTriage = () => {
   };
 
 const handleCancelEncounter = async () => {
+  const id = encounter?.id ?? encounter?.key;
+  const reason = cancelReason.trim();
+  if (!id || !reason) return;
   try {
-    const id = encounter?.id ?? encounter?.key;
-
-    if (id) {
-      await cancelEncounter({ id }).unwrap();
-
-      await refetchEncounter();
-
-      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-      setOpen(false);
-    }
+    await cancelEncounter({ id, cancellationReason: reason }).unwrap();
+    await refetchEncounter();
+    dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+    setOpen(false);
+    setCancelReason('');
   } catch (error) {
-    console.error('Encounter completion error:', error);
-    dispatch(
-      notify({
-        msg: 'An error occurred while canceling the encounter',
-        sev: 'error'
-      })
-    );
+    console.error('Encounter cancel error:', error);
+    dispatch(notify({ msg: getCancelEncounterErrorMessage(error), sev: 'error' }));
   }
 };
 
@@ -1444,8 +1451,13 @@ const handleCancelEncounter = async () => {
         );
 
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        const tooltipCancel = (
-          <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>
+        // Cancel is allowed only before payment; after the payment step the
+        // encounter moves out of PENDING_PAYMENT (e.g. to WAITING_TRIAGE).
+        const canCancel = isPendingPayment;
+        const tooltipCancel = canCancel ? (
+          <Tooltip>Cancel Visit</Tooltip>
+        ) : (
+          <Tooltip>Cannot cancel after payment settlement</Tooltip>
         );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
@@ -1624,7 +1636,7 @@ const handleCancelEncounter = async () => {
                 <div>
                   <MyButton
                     size="small"
-                    disabled={isReceptionist}
+                    disabled={isReceptionist || !canCancel}
                     onClick={() => {
                       setLocalEncounter(rowData);
                       setOpen(true);
@@ -1797,14 +1809,19 @@ const handleCancelEncounter = async () => {
           departmentId={String(encounter?.departmentId ?? departmentId)}
         />
 
-        <DeletionConfirmationModal
+        <CancellationModal
+          title="Cancel Encounter"
+          fieldLabel="Cancellation Reason"
           open={open}
-          setOpen={setOpen}
-          actionButtonFunction={handleCancelEncounter}
-          actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter ?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
+          setOpen={(value: boolean) => {
+            setOpen(value);
+            if (!value) setCancelReason('');
+          }}
+          object={{ cancellationReason: cancelReason }}
+          setObject={(object: any) => setCancelReason(object?.cancellationReason || '')}
+          handleCancle={handleCancelEncounter}
+          fieldName="cancellationReason"
+          required
         />
 
         <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />

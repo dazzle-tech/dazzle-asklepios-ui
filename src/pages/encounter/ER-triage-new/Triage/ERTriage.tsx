@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Badge, Form, Modal, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -48,6 +48,19 @@ import 'react-tabs/style/react-tabs.css';
 import PatientWritBandPrintLabelButton from '../../urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
 import '../styles.less';
 import SendToModal from './component/SendToModal';
+
+const CANCEL_ENCOUNTER_ERRORS: Record<string, string> = {
+  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW, WAITING TRIAGE, or PENDING PAYMENT.',
+  'cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations.'
+};
+
+const getCancelEncounterErrorMessage = (error: any): string => {
+  const message = error?.data?.message;
+  if (typeof message === 'string' && message.trim()) {
+    return CANCEL_ENCOUNTER_ERRORS[message] ?? message;
+  }
+  return 'An error occurred while canceling the encounter';
+};
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -315,6 +328,7 @@ const ERTriage = () => {
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
   const [open, setOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>(() => ({
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
@@ -652,17 +666,18 @@ const ERTriage = () => {
   };
 
   const handleCancelEncounter = async () => {
+    const id = encounter?.id ?? encounter?.key;
+    const reason = cancelReason.trim();
+    if (!id || !reason) return;
     try {
-      const id = encounter?.id ?? encounter?.key;
-      if (id) {
-        await cancelEncounter({ id }).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
+      await cancelEncounter({ id, cancellationReason: reason }).unwrap();
+      refetchEncounter();
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      setOpen(false);
+      setCancelReason('');
     } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+      console.error('Encounter cancel error:', error);
+      dispatch(notify({ msg: getCancelEncounterErrorMessage(error), sev: 'error' }));
     }
   };
 
@@ -1200,7 +1215,14 @@ const ERTriage = () => {
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipSendTo = <Tooltip>Send to</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        // Cancel is allowed only before payment; after the payment step the
+        // encounter moves out of PENDING_PAYMENT (e.g. to WAITING_TRIAGE).
+        const canCancel = isPendingPayment;
+        const tooltipCancel = canCancel ? (
+          <Tooltip>Cancel Visit</Tooltip>
+        ) : (
+          <Tooltip>Cannot cancel after payment settlement</Tooltip>
+        );
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1397,7 +1419,7 @@ const ERTriage = () => {
                         setLocalEncounter(rowData);
                         setOpen(true);
                       }}
-                      disabled={isReceptionist}
+                      disabled={isReceptionist || !canCancel}
                     >
                       <FontAwesomeIcon icon={faRectangleXmark} />
                     </MyButton>
@@ -1552,14 +1574,19 @@ const ERTriage = () => {
           triage={sendToEmergencyTriageNew}
           refetch={refetchEncounter}
         />
-        <DeletionConfirmationModal
+        <CancellationModal
+          title="Cancel Encounter"
+          fieldLabel="Cancellation Reason"
           open={open}
-          setOpen={setOpen}
-          actionButtonFunction={handleCancelEncounter}
-          actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter ?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
+          setOpen={(value: boolean) => {
+            setOpen(value);
+            if (!value) setCancelReason('');
+          }}
+          object={{ cancellationReason: cancelReason }}
+          setObject={(object: any) => setCancelReason(object?.cancellationReason || '')}
+          handleCancle={handleCancelEncounter}
+          fieldName="cancellationReason"
+          required
         />
         <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
