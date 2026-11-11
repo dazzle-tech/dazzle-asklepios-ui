@@ -26,6 +26,7 @@ import {
 import { useDeletePatientServiceOrProductMutation } from '@/services/encounters/patientServicesAndProductsService';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
+import EncounterDiscountLogModal from './accounting/components/EncounterDiscountLogModal';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
 import BillingTimeline from './accounting/components/BillingTimeline';
 import BillingChargesTable from './accounting/components/BillingChargesTable';
@@ -45,6 +46,7 @@ import PrepareServicesPanel from './accounting/components/PrepareServicesPanel';
 import EncounterSettlementBanner from './accounting/components/EncounterSettlementBanner';
 import PatientFinancialDashboardTab from './accounting/financial-statement/PatientFinancialDashboardTab';
 import { overlayPatientInsuranceWithWaseelCoverage } from '@/utils/waseelCoverageDisplay';
+import type { PatientEncounter } from '@/types/model-types-new';
 import './accounting/financial-statement/styles.less';
 import {
   patientInsuranceRecordId,
@@ -73,6 +75,7 @@ const Accounting: React.FC = () => {
   const [coverageType, setCoverageType] = useState<'SELF_PAY' | 'INSURANCE'>('SELF_PAY');
   const [selectedInsuranceId, setSelectedInsuranceId] = useState<number | null>(null);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [discountLogEncounter, setDiscountLogEncounter] = useState<PatientEncounter | null>(null);
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [billingPendingQueueModalOpen, setBillingPendingQueueModalOpen] = useState(false);
   const [collectPaymentModalOpen, setCollectPaymentModalOpen] = useState(false);
@@ -866,6 +869,7 @@ const Accounting: React.FC = () => {
               selectedEncounterId={selectedEncounterId}
               loading={loadingEncounters}
               onSelect={setSelectedEncounterId}
+              onViewDiscountLog={setDiscountLogEncounter}
               remainingToPay={encounterRemainingToPay ?? 0}
               remainingLoading={selectedEncounterId == null || billingWorkspaceLoading}
               currency={summary.currency ?? facilityCurrency}
@@ -1150,6 +1154,11 @@ const Accounting: React.FC = () => {
 
       {patientId != null && (
         <>
+          <EncounterDiscountLogModal
+            open={discountLogEncounter != null}
+            encounter={discountLogEncounter}
+            onClose={() => setDiscountLogEncounter(null)}
+          />
           <WalletDepositModal
             open={depositModalOpen}
             onClose={() => setDepositModalOpen(false)}

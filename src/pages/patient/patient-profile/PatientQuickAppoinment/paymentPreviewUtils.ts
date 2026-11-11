@@ -24,6 +24,32 @@ export type PreviewServiceRow = DefaultBillingRowIdentity & {
   previewNetAmount?: number | null;
 };
 
+export type PaymentDiscountCode = {
+  discountType?: string | null;
+  percentage?: number | null;
+  fixedAmount?: number | null;
+} | null;
+
+export const discountCodeAmount = (
+  gross: number,
+  discount: PaymentDiscountCode
+): number => {
+  if (!discount || gross <= 0) {
+    return 0;
+  }
+  if (discount.discountType === 'FIXED_AMOUNT') {
+    return Math.min(gross, Math.max(0, toAmount(discount.fixedAmount)));
+  }
+  const rate = Math.min(100, Math.max(0, toAmount(discount.percentage)));
+  return Math.min(gross, (gross * rate) / 100);
+};
+
+const extraDiscount = (
+  gross: number,
+  serverDiscount: number,
+  discount: PaymentDiscountCode
+): number => Math.max(0, discountCodeAmount(gross, discount) - serverDiscount);
+
 export type PreviewBillingTotals = {
   grossAmount: number;
   discountAmount: number;
@@ -278,7 +304,8 @@ export const filterPayableServiceRows = <T extends PreviewServiceRow>(
 export const computePreviewBillingTotals = (
   summary: EncounterBillingSummary,
   selectedRows: PreviewServiceRow[],
-  isInsurance: boolean
+  isInsurance: boolean,
+  discount: PaymentDiscountCode = null
 ): PreviewBillingTotals => {
   const hasInsurancePreviewPricing =
     isInsurance &&
@@ -293,19 +320,32 @@ export const computePreviewBillingTotals = (
     !hasInsurancePreviewPricing &&
     !isInsurance
   ) {
-    const outstandingAmount =
-      resolvePatientOutstandingAmount(summary);
+    const extra = selectedRows.reduce((sum, row) => {
+      if (row.isExempted) {
+        return sum;
+      }
+      const gross =
+        toAmount(row.calculatedPrice ?? row.setupPrice) * Math.max(1, toAmount(row.quantity));
+      return sum + extraDiscount(gross, toAmount(row.previewDiscountAmount), discount);
+    }, 0);
+    const outstandingAmount = Math.max(
+      0,
+      resolvePatientOutstandingAmount(summary) - extra
+    );
 
     return {
       grossAmount: toAmount(summary.grossAmount),
-      discountAmount: toAmount(summary.discountAmount),
+      discountAmount: toAmount(summary.discountAmount) + extra,
       exemptionAmount: toAmount(summary.exemptionAmount),
       taxAmount: toAmount(summary.taxAmount),
-      netAmount: toAmount(summary.netAmount),
-      patientResponsibilityAmount: toAmount(summary.patientResponsibilityAmount),
+      netAmount: Math.max(0, toAmount(summary.netAmount) - extra),
+      patientResponsibilityAmount: Math.max(
+        0,
+        toAmount(summary.patientResponsibilityAmount) - extra
+      ),
       insuranceResponsibilityAmount: toAmount(summary.insuranceResponsibilityAmount),
       patientOutstandingAmount: outstandingAmount,
-      isPreview: false
+      isPreview: extra > 0
     };
   }
 
@@ -319,18 +359,20 @@ export const computePreviewBillingTotals = (
 
   selectedRows.forEach(row => {
     if (row.previewNetAmount != null) {
-      grossAmount += toAmount(row.previewGrossAmount);
-      discountAmount += toAmount(row.previewDiscountAmount);
+      const lineGross = toAmount(row.previewGrossAmount);
+      const addedDiscount = row.isExempted
+        ? 0
+        : extraDiscount(lineGross, toAmount(row.previewDiscountAmount), discount);
+      grossAmount += lineGross;
+      discountAmount += toAmount(row.previewDiscountAmount) + addedDiscount;
       taxAmount += toAmount(row.previewTaxAmount);
-      exemptionAmount += row.isExempted
-        ? toAmount(row.previewGrossAmount)
-        : 0;
+      exemptionAmount += row.isExempted ? lineGross : 0;
 
       if (row.isExempted) {
         return;
       }
 
-      const lineNet = toAmount(row.previewNetAmount);
+      const lineNet = Math.max(0, toAmount(row.previewNetAmount) - addedDiscount);
       netAmount += lineNet;
 
       if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
@@ -344,16 +386,20 @@ export const computePreviewBillingTotals = (
     }
 
     const unitPrice = toAmount(row.calculatedPrice ?? row.setupPrice);
-    const lineGross = unitPrice * toAmount(row.quantity);
+    const lineGross = unitPrice * Math.max(1, toAmount(row.quantity));
+    const addedDiscount = row.isExempted
+      ? 0
+      : extraDiscount(lineGross, 0, discount);
 
     grossAmount += lineGross;
+    discountAmount += addedDiscount;
 
     if (row.isExempted) {
       exemptionAmount += lineGross;
       return;
     }
 
-    netAmount += lineGross;
+    netAmount += Math.max(0, lineGross - addedDiscount);
 
     if (isInsurance && (row.patientShare != null || row.insuranceShare != null)) {
       patientResponsibilityAmount += toAmount(row.patientShare);
@@ -361,7 +407,7 @@ export const computePreviewBillingTotals = (
       return;
     }
 
-    patientResponsibilityAmount += lineGross;
+    patientResponsibilityAmount += Math.max(0, lineGross - addedDiscount);
   });
 
   netAmount = Math.max(0, netAmount);
@@ -379,11 +425,49 @@ export const computePreviewBillingTotals = (
   };
 };
 
+const applyLineDiscount = (
+  grossAmount: number,
+  serverDiscount: number,
+  serverNet: number,
+  discount: PaymentDiscountCode,
+  exempted: boolean
+) => {
+  if (exempted) {
+    return { discountAmount: serverDiscount, netAmount: 0 };
+  }
+  const added = extraDiscount(grossAmount, serverDiscount, discount);
+  return {
+    discountAmount: serverDiscount + added,
+    netAmount: Math.max(0, serverNet - added)
+  };
+};
+
+export const linePriceAfterDiscount = (
+  row: Pick<PreviewServiceRow, 'quantity' | 'setupPrice' | 'calculatedPrice' | 'previewDiscountAmount' | 'isExempted'>,
+  discount: PaymentDiscountCode
+): number | null => {
+  const unit = row.calculatedPrice ?? row.setupPrice;
+  if (unit == null || row.isExempted) {
+    return unit ?? null;
+  }
+  const quantity = Math.max(1, toAmount(row.quantity));
+  const gross = toAmount(unit) * quantity;
+  const priced = applyLineDiscount(
+    gross,
+    toAmount(row.previewDiscountAmount),
+    gross - toAmount(row.previewDiscountAmount),
+    discount,
+    false
+  );
+  return priced.netAmount / quantity;
+};
+
 export const buildPreviewChargeLines = (
   summary: EncounterBillingSummary,
   selectedRows: PreviewServiceRow[],
   currency: string,
-  isInsurance: boolean
+  isInsurance: boolean,
+  discount: PaymentDiscountCode = null
 ): EncounterBillingItemSummary[] => {
   const hasInsurancePreviewPricing =
     isInsurance &&
@@ -394,7 +478,34 @@ export const buildPreviewChargeLines = (
     );
 
   if ((summary.items ?? []).length > 0 && !hasInsurancePreviewPricing) {
-    return summary.items;
+    return summary.items.map(item => {
+      const row = selectedRows.find(
+        candidate =>
+          isBilledItemOfRow(item, candidate) ||
+          (item.sourceId != null && item.sourceId === candidate.itemId)
+      );
+      if (!row) {
+        return item;
+      }
+      const grossAmount = toAmount(item.grossAmount ?? toAmount(item.unitPrice) * toAmount(item.quantity));
+      const priced = applyLineDiscount(
+        grossAmount,
+        toAmount(item.discountAmount),
+        toAmount(item.netAmount),
+        discount,
+        Boolean(row.isExempted || item.exempted)
+      );
+      const patientResponsibilityAmount = row.isExempted
+        ? 0
+        : Math.max(0, toAmount(item.patientResponsibilityAmount) - Math.max(0, priced.discountAmount - toAmount(item.discountAmount)));
+      return {
+        ...item,
+        discountAmount: priced.discountAmount,
+        netAmount: priced.netAmount,
+        patientResponsibilityAmount,
+        outstandingAmount: patientResponsibilityAmount
+      };
+    });
   }
 
   return selectedRows.map((row, index) => {
@@ -407,14 +518,17 @@ export const buildPreviewChargeLines = (
       : toAmount(row.calculatedPrice ?? row.setupPrice);
     const grossAmount = hasPreview
       ? toAmount(row.previewGrossAmount)
-      : unitPrice * quantity;
-    const discountAmount = hasPreview ? toAmount(row.previewDiscountAmount) : 0;
+      : unitPrice * Math.max(1, quantity);
+    const priced = applyLineDiscount(
+      grossAmount,
+      hasPreview ? toAmount(row.previewDiscountAmount) : 0,
+      exempted ? 0 : hasPreview ? toAmount(row.previewNetAmount) : grossAmount,
+      discount,
+      exempted
+    );
+    const discountAmount = priced.discountAmount;
     const taxAmount = hasPreview ? toAmount(row.previewTaxAmount) : 0;
-    const netAmount = exempted
-      ? 0
-      : hasPreview
-        ? toAmount(row.previewNetAmount)
-        : grossAmount;
+    const netAmount = priced.netAmount;
 
     const patientResponsibilityAmount =
       isInsurance && row.patientShare != null

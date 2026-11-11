@@ -6,6 +6,8 @@ import type {
   DiscountCodeAllowedUser,
   DiscountCodeCreateDTO,
   DiscountCodeUpdateDTO,
+  DiscountCodeValidateRequest,
+  DiscountCodeVerifiedUser,
   DiscountType
 } from '@/types/model-types-new';
 
@@ -136,6 +138,25 @@ export const discountCodeService = createApi({
       ]
     }),
 
+    verifyDiscountCodeUser: builder.mutation<
+      DiscountCodeVerifiedUser,
+      { login: string; password: string }
+    >({
+      query: body => ({
+        url: '/api/setup/discount-code/verify-user',
+        method: 'POST',
+        body
+      })
+    }),
+
+    validateDiscountCode: builder.mutation<DiscountCode, DiscountCodeValidateRequest>({
+      query: body => ({
+        url: '/api/setup/discount-code/validate',
+        method: 'POST',
+        body
+      })
+    }),
+
     toggleDiscountCodeActive: builder.mutation<DiscountCode, number>({
       query: id => ({
         url: `/api/setup/discount-code/${id}/toggle-active`,
@@ -156,5 +177,7 @@ export const {
   useUpdateDiscountCodeMutation,
   useGetDiscountCodeAllowedUsersQuery,
   useReplaceDiscountCodeAllowedUsersMutation,
+  useVerifyDiscountCodeUserMutation,
+  useValidateDiscountCodeMutation,
   useToggleDiscountCodeActiveMutation
 } = discountCodeService;

@@ -475,8 +475,43 @@
     border: 1px solid var(--rs-border-primary, #e5e5ea);
     border-radius: 8px;
     padding: 10px 12px;
-    cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  &__encounter-select {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: start;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+
+  &__encounter-discount-log {
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--rs-primary-700, #1675e0);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  &__encounter-discount-log:hover {
+    text-decoration: underline;
+  }
+
+  &__discount-log {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   &__encounter-item:hover {

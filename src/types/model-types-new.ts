@@ -7341,6 +7341,21 @@ export type DiscountCodeAllowedUser = {
   email?: string | null;
 };
 
+export type DiscountCodeVerifiedUser = {
+  userId: number;
+  login: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  authorizationToken: string;
+};
+
+export type DiscountCodeValidateRequest = {
+  facilityId: number;
+  code: string;
+  userId: number;
+  authorizationToken: string;
+};
+
 export type BillingWalletStatus =
   | 'ACTIVE'
   | 'INACTIVE'
@@ -7829,6 +7844,9 @@ export type PrepareDefaultServicesRequest = {
   requestId: string;
   payZeroNow?: boolean | null;
   acceptUncoveredAsCash?: boolean | null;
+  discountCode?: string | null;
+  authorizedUserId?: number | null;
+  discountAuthorizationToken?: string | null;
 };
 
 export type PreparedDefaultServiceResult = {
@@ -7866,6 +7884,9 @@ export type PreviewDefaultServicesPricingRequest = {
   patientInsuranceId: number | null;
   items: PrepareDefaultServiceItem[];
   procedures?: PrepareDefaultProcedureItem[];
+  discountCode?: string | null;
+  authorizedUserId?: number | null;
+  discountAuthorizationToken?: string | null;
 };
 
 export type PreviewDefaultServicePricingResult = {

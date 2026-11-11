@@ -110,6 +110,26 @@ export type RegistrationPendingPaymentEncounter = {
   items: RegistrationPendingPaymentItem[];
 };
 
+export type DiscountCodeUsageRow = {
+  id: number;
+  encounterId: number;
+  patientServiceProductId?: number | null;
+  chargeLineId?: number | null;
+  itemDescription?: string | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  authorizedUserId?: number | null;
+  code?: string | null;
+  discountName?: string | null;
+  discountType?: string | null;
+  percentage?: number | null;
+  fixedAmount?: number | null;
+  currency?: string | null;
+  grossAmount?: number | null;
+  discountAmount?: number | null;
+  appliedAt?: string | null;
+};
+
 export type InsurancePriceListCoverageCheckResult = {
   insuranceVisit: boolean;
   coveredByInsurance: boolean;
@@ -148,6 +168,13 @@ export const billingTransactionService =
 
     endpoints:
       builder => ({
+        getEncounterDiscountCodeUsages: builder.query<DiscountCodeUsageRow[], BillingId>({
+          query: encounterId => ({
+            url: `/api/patient/billing/encounters/${encodeURIComponent(String(encounterId))}/discount-code-usages`,
+            method: 'GET'
+          })
+        }),
+
         getEncounterBillingSummary:
           builder.query<
             EncounterBillingSummary,
@@ -713,6 +740,7 @@ export const billingTransactionService =
   });
 
 export const {
+  useGetEncounterDiscountCodeUsagesQuery,
   useGetEncounterBillingSummaryQuery,
   useLazyGetEncounterBillingSummaryQuery,
   useGetWaseelCoverageQuery,

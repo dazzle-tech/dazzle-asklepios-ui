@@ -98,8 +98,8 @@ const DiscountCodeDefinition = () => {
   const [toggleActive] = useToggleDiscountCodeActiveMutation();
 
   useEffect(() => {
-    dispatch(setPageCode('Discount_Code_Definition'));
-    dispatch(setDivContent('Discount Code Definition'));
+    dispatch(setPageCode('Default_Service_Discount_Codes'));
+    dispatch(setDivContent('Default Service Discount Codes'));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -422,6 +422,7 @@ const DiscountCodeDefinition = () => {
       />
 
       <DiscountCodeAllowedUsers
+        key={discountCode?.id ?? 'allowed-users'}
         open={openAllowedUsers}
         setOpen={setOpenAllowedUsers}
         discountCode={discountCode}

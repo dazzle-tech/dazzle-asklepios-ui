@@ -6,7 +6,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetUsersByFacilityQuery } from '@/services/security/UserRoleService';
+import { useGetActiveUsersByFacilityQuery } from '@/services/security/UserRoleService';
 import {
   useGetDiscountCodeAllowedUsersQuery,
   useReplaceDiscountCodeAllowedUsersMutation
@@ -20,12 +20,23 @@ type FacilityUser = {
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
+  activated?: boolean;
 };
 
 type AllowedUsersProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   discountCode: DiscountCode;
+};
+
+const userName = (user: {
+  firstName?: string | null;
+  lastName?: string | null;
+  login?: string | null;
+  id?: number;
+}) => {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  return name || user.login || (user.id != null ? `User ${user.id}` : 'User');
 };
 
 const userLabel = (user: {
@@ -35,7 +46,10 @@ const userLabel = (user: {
   id?: number;
 }) => {
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-  return name || user.login || (user.id != null ? `User ${user.id}` : 'User');
+  if (name && user.login) {
+    return `${name} (${user.login})`;
+  }
+  return userName(user);
 };
 
 const extractErrorMessage = (error: any): string => {
@@ -58,23 +72,26 @@ const DiscountCodeAllowedUsers = ({ open, setOpen, discountCode }: AllowedUsersP
   const facilityId = discountCode?.facilityId;
   const [userIds, setUserIds] = useState<number[]>([]);
   const loadedFor = useRef<number | null>(null);
-  const { data: facilityUsers = [], isFetching: isLoadingUsers } = useGetUsersByFacilityQuery(
+  const { data: facilityUsers = [], isFetching: isLoadingUsers } = useGetActiveUsersByFacilityQuery(
     facilityId,
     { skip: !open || facilityId == null }
   );
-  const { data: allowedUsers, isFetching: isLoadingAllowed } = useGetDiscountCodeAllowedUsersQuery(
+  const { currentData: allowedUsers, isFetching: isLoadingAllowed } = useGetDiscountCodeAllowedUsersQuery(
     discountCodeId as number,
     { skip: !open || discountCodeId == null }
   );
   const [replaceAllowedUsers, { isLoading: isSaving }] = useReplaceDiscountCodeAllowedUsersMutation();
 
   useEffect(() => {
-    if (!open) {
+    if (!open || discountCodeId == null) {
       loadedFor.current = null;
       setUserIds([]);
       return;
     }
-    if (!allowedUsers || discountCodeId == null || loadedFor.current === discountCodeId) {
+    if (loadedFor.current !== discountCodeId) {
+      setUserIds([]);
+    }
+    if (!allowedUsers || loadedFor.current === discountCodeId) {
       return;
     }
     loadedFor.current = discountCodeId;
@@ -83,7 +100,9 @@ const DiscountCodeAllowedUsers = ({ open, setOpen, discountCode }: AllowedUsersP
 
   const usersById = useMemo(() => {
     const users = new Map<number, FacilityUser | DiscountCodeAllowedUser>();
-    (facilityUsers as FacilityUser[]).forEach(user => {
+    (facilityUsers as FacilityUser[])
+      .filter(user => user?.activated !== false)
+      .forEach(user => {
       if (user?.id != null) {
         users.set(user.id, user);
       }
@@ -137,9 +156,10 @@ const DiscountCodeAllowedUsers = ({ open, setOpen, discountCode }: AllowedUsersP
   const content = () => (
     <Form fluid>
       <p className="discount-code-allowed-hint">
-        Choose the users who can apply {discountCode?.code || 'this discount code'}.
+        Choose the active users of this facility who can apply {discountCode?.code || 'this discount code'}.
       </p>
       <MyInput
+        key={discountCodeId ?? 'discount-code-users'}
         width="100%"
         column
         fieldName="userIds"
@@ -162,7 +182,7 @@ const DiscountCodeAllowedUsers = ({ open, setOpen, discountCode }: AllowedUsersP
             <div className="discount-code-allowed-row" key={id}>
               <div className="discount-code-allowed-name">
                 <span>
-                  {userLabel({
+                  {userName({
                     id,
                     firstName: user.firstName,
                     lastName: user.lastName,

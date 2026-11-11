@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 
 import {
+  Button,
   Checkbox,
   Form,
   Loader,
@@ -138,6 +139,7 @@ import './style.less';
 import {
   buildPreviewChargeLines,
   computePreviewBillingTotals,
+  linePriceAfterDiscount,
   filterPayableServiceRows,
   formatBillingItemType,
   getUnpaidSummaryItems,
@@ -160,6 +162,10 @@ import {
 } from './defaultBillingRows';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
+import DefaultServiceDiscountCodeModal, {
+  formatDiscountCodeValue,
+  type AppliedDefaultServiceDiscount
+} from './DefaultServiceDiscountCodeModal';
 
 type DefaultServiceRow = {
   id: string;
@@ -818,6 +824,20 @@ const PatientPaymentInfo =
         setPreparedPspIds
       ] =
         useState<number[]>([]);
+
+      const [
+        appliedDiscount,
+        setAppliedDiscount
+      ] =
+        useState<AppliedDefaultServiceDiscount | null>(
+          null
+        );
+
+      const [
+        discountModalOpen,
+        setDiscountModalOpen
+      ] =
+        useState(false);
 
       const [
         validationResult,
@@ -2457,7 +2477,13 @@ const PatientPaymentInfo =
                     selected:
                       row.selected
                   })
-                )
+                ),
+              discountCode:
+                appliedDiscount?.code ??
+                '',
+              authorizedUserId:
+                appliedDiscount?.userId ??
+                ''
             }
           );
         }, [
@@ -2468,7 +2494,8 @@ const PatientPaymentInfo =
           summary.currency,
           facilityCurrency,
           payableSelectedRows,
-          selectedRows
+          selectedRows,
+          appliedDiscount
         ]);
 
       const pricingPreviewContextRef =
@@ -2484,7 +2511,13 @@ const PatientPaymentInfo =
           isInsurance,
           encounterId,
           patientId,
-          facilityId
+          facilityId,
+          discountCode:
+            null as string | null,
+          authorizedUserId:
+            null as number | null,
+          discountAuthorizationToken:
+            null as string | null
         });
 
       pricingPreviewContextRef.current =
@@ -2503,7 +2536,16 @@ const PatientPaymentInfo =
           isInsurance,
           encounterId,
           patientId,
-          facilityId
+          facilityId,
+          discountCode:
+            appliedDiscount?.code ??
+            null,
+          authorizedUserId:
+            appliedDiscount?.userId ??
+            null,
+          discountAuthorizationToken:
+            appliedDiscount?.authorizationToken ??
+            null
         };
 
       const lastPricingPreviewKeyRef =
@@ -2555,6 +2597,8 @@ const PatientPaymentInfo =
       useEffect(() => {
         userTouchedCoverageRef.current =
           false;
+        setAppliedDiscount(null);
+        setDiscountModalOpen(false);
       }, [
         encounterId
       ]);
@@ -2776,7 +2820,13 @@ const PatientPaymentInfo =
                             : null,
                         ...toDefaultBillingRequestItems(
                           previewContext.rowsToPrice
-                        )
+                        ),
+                        discountCode:
+                          previewContext.discountCode,
+                        authorizedUserId:
+                          previewContext.authorizedUserId,
+                        discountAuthorizationToken:
+                          previewContext.discountAuthorizationToken
                       }
                     }
                   ).unwrap();
@@ -2929,9 +2979,15 @@ const PatientPaymentInfo =
                 // Keep setup prices when price-list preview is unavailable, and say so:
                 // without a preview the whole amount shows on the patient.
                 setPricingPreviewError(
-                  error?.data?.detail ??
-                    error?.data?.message ??
+                  (typeof error?.data?.message ===
+                    'string' &&
+                  error.data.message.startsWith(
+                    'error.'
+                  )
+                    ? null
+                    : error?.data?.message) ??
                     error?.data?.title ??
+                    error?.data?.detail ??
                     'Pricing preview failed.'
                 );
               } finally {
@@ -2976,13 +3032,15 @@ const PatientPaymentInfo =
                 0
                 ? payableSelectedRows
                 : selectedRows,
-              isInsurance
+              isInsurance,
+              appliedDiscount
             ),
           [
             summary,
             payableSelectedRows,
             selectedRows,
-            isInsurance
+            isInsurance,
+            appliedDiscount
           ]
         );
 
@@ -3017,14 +3075,16 @@ const PatientPaymentInfo =
                 ? payableSelectedRows
                 : selectedRows,
               activeCurrency,
-              isInsurance
+              isInsurance,
+              appliedDiscount
             ),
           [
             summary,
             payableSelectedRows,
             selectedRows,
             activeCurrency,
-            isInsurance
+            isInsurance,
+            appliedDiscount
           ]
         );
 
@@ -3283,7 +3343,8 @@ const PatientPaymentInfo =
               computePreviewBillingTotals(
                 billingSummary,
                 selectedRows,
-                isInsurance
+                isInsurance,
+                appliedDiscount
               ),
 
             notes:
@@ -3578,6 +3639,18 @@ const PatientPaymentInfo =
 
                 items: [],
 
+                discountCode:
+                  appliedDiscount?.code ??
+                  null,
+
+                authorizedUserId:
+                  appliedDiscount?.userId ??
+                  null,
+
+                discountAuthorizationToken:
+                  appliedDiscount?.authorizationToken ??
+                  null,
+
                 requestId:
                   makeRequestId(
                     'PREPARE-DEFAULT-SERVICES'
@@ -3650,6 +3723,18 @@ const PatientPaymentInfo =
               ...toDefaultBillingRequestItems(
                 selectedRows
               ),
+
+              discountCode:
+                appliedDiscount?.code ??
+                null,
+
+              authorizedUserId:
+                appliedDiscount?.userId ??
+                null,
+
+              discountAuthorizationToken:
+                appliedDiscount?.authorizationToken ??
+                null,
 
               requestId:
                 makeRequestId(
@@ -3754,6 +3839,18 @@ const PatientPaymentInfo =
             ...toDefaultBillingRequestItems(
               payableSelectedRows
             ),
+
+            discountCode:
+              appliedDiscount?.code ??
+              null,
+
+            authorizedUserId:
+              appliedDiscount?.userId ??
+              null,
+
+            discountAuthorizationToken:
+              appliedDiscount?.authorizationToken ??
+              null,
 
             requestId:
               makeRequestId(
@@ -4473,6 +4570,14 @@ const PatientPaymentInfo =
             []
           );
 
+          setAppliedDiscount(
+            null
+          );
+
+          setDiscountModalOpen(
+            false
+          );
+
           setValidationResult(
             {}
           );
@@ -4961,11 +5066,16 @@ const PatientPaymentInfo =
             ) =>
               amountsLoading
                 ? '—'
-                : row.calculatedPrice ==
-                    null
+                : linePriceAfterDiscount(
+                    row,
+                    appliedDiscount
+                  ) == null
                   ? '-'
                   : formatMoney(
-                      row.calculatedPrice,
+                      linePriceAfterDiscount(
+                        row,
+                        appliedDiscount
+                      ),
                       activeCurrency
                     )
         },
@@ -6294,6 +6404,54 @@ const PatientPaymentInfo =
                   Default Services
                 </Translate>
                 <div className="payment-info__panel-status">
+                  {appliedDiscount ? (
+                    <Tag
+                      size="sm"
+                      color="orange"
+                    >
+                      {appliedDiscount.code}
+                      {' · '}
+                      {formatDiscountCodeValue(
+                        appliedDiscount
+                      )}
+                    </Tag>
+                  ) : null}
+                  {!isViewOnlyMode &&
+                  !servicesArePrepared &&
+                  !skipDefaultServicesForReview ? (
+                    <Button
+                      size="sm"
+                      appearance="ghost"
+                      disabled={isLocked}
+                      onClick={event => {
+                        event.stopPropagation();
+                        setDiscountModalOpen(
+                          true
+                        );
+                      }}
+                    >
+                      {appliedDiscount
+                        ? 'Change Discount Code'
+                        : 'Discount Code'}
+                    </Button>
+                  ) : null}
+                  {appliedDiscount &&
+                  !servicesArePrepared &&
+                  !isViewOnlyMode ? (
+                    <Button
+                      size="sm"
+                      appearance="subtle"
+                      disabled={isLocked}
+                      onClick={event => {
+                        event.stopPropagation();
+                        setAppliedDiscount(
+                          null
+                        );
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
                   {servicesArePrepared ? (
                     <Tag
                       size="sm"
@@ -6880,6 +7038,16 @@ const PatientPaymentInfo =
               autoPrint
             />
           ) : null}
+          <DefaultServiceDiscountCodeModal
+            open={discountModalOpen}
+            setOpen={setDiscountModalOpen}
+            facilityId={facilityId}
+            facilityCurrency={
+              (summary.currency ??
+                facilityCurrency) as string
+            }
+            onApplied={setAppliedDiscount}
+          />
           <PreAuthorizationAlertModal
             open={Boolean(preAuthAlert?.length)}
             encounterId={encounterId}

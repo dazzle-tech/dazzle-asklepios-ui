@@ -19,6 +19,7 @@ type EncounterSelectorProps = {
   selectedEncounterId: number | null;
   loading?: boolean;
   onSelect: (encounterId: number) => void;
+  onViewDiscountLog: (encounter: PatientEncounter) => void;
   remainingToPay?: number;
   remainingLoading?: boolean;
   currency?: string;
@@ -81,6 +82,7 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
   selectedEncounterId,
   loading = false,
   onSelect,
+  onViewDiscountLog,
   remainingToPay = 0,
   remainingLoading = false,
   currency = 'SAR'
@@ -153,42 +155,53 @@ const EncounterSelector: React.FC<EncounterSelectorProps> = ({
         const isActive = encounter.id === selectedEncounterId;
 
         return (
-          <button
+          <div
             key={encounter.id}
-            type="button"
             className={`billing-accounting__encounter-item${
               isActive ? ' billing-accounting__encounter-item--active' : ''
             }`}
-            onClick={() => onSelect(encounter.id)}
           >
-            <Text weight="semibold">
-              {formatEncounterDisplayLabel(encounter) ??
-                'Encounter'}
-            </Text>
-            <div className="billing-accounting__encounter-meta">
-              <span>{formatBillingEnum(encounter.encounterType)}</span>
-              <span>{formatBillingTimestamp(encounter.createdDate?.toString())}</span>
-              <Tag size="sm">{formatEncounterLifecycleLabel(encounter)}</Tag>
-              {shouldShowEncounterTreatmentStatus(encounter) && (
-                <Tag size="sm" color="blue">
-                  {formatEncounterTreatmentLabel(encounter)}
-                </Tag>
-              )}
-              {isActive && (
-                <Tag
-                  size="sm"
-                  color={remainingLoading ? 'cyan' : remainingToPay > 0 ? 'orange' : 'green'}
-                >
-                  Remaining{' '}
-                  {remainingLoading ? '—' : formatMoney(remainingToPay, currency)}
-                </Tag>
-              )}
-              {encounter.startedDate && (
-                <span>Started {formatBillingTimestamp(encounter.startedDate)}</span>
-              )}
-            </div>
-            <EncounterPerson encounter={encounter} practitionersById={practitionersById} />
-          </button>
+            <button
+              type="button"
+              className="billing-accounting__encounter-select"
+              onClick={() => onSelect(encounter.id)}
+            >
+              <Text weight="semibold">
+                {formatEncounterDisplayLabel(encounter) ??
+                  'Encounter'}
+              </Text>
+              <div className="billing-accounting__encounter-meta">
+                <span>{formatBillingEnum(encounter.encounterType)}</span>
+                <span>{formatBillingTimestamp(encounter.createdDate?.toString())}</span>
+                <Tag size="sm">{formatEncounterLifecycleLabel(encounter)}</Tag>
+                {shouldShowEncounterTreatmentStatus(encounter) && (
+                  <Tag size="sm" color="blue">
+                    {formatEncounterTreatmentLabel(encounter)}
+                  </Tag>
+                )}
+                {isActive && (
+                  <Tag
+                    size="sm"
+                    color={remainingLoading ? 'cyan' : remainingToPay > 0 ? 'orange' : 'green'}
+                  >
+                    Remaining{' '}
+                    {remainingLoading ? '—' : formatMoney(remainingToPay, currency)}
+                  </Tag>
+                )}
+                {encounter.startedDate && (
+                  <span>Started {formatBillingTimestamp(encounter.startedDate)}</span>
+                )}
+              </div>
+              <EncounterPerson encounter={encounter} practitionersById={practitionersById} />
+            </button>
+            <button
+              type="button"
+              className="billing-accounting__encounter-discount-log"
+              onClick={() => onViewDiscountLog(encounter)}
+            >
+              Discount log
+            </button>
+          </div>
         );
       })}
     </div>

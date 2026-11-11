@@ -361,7 +361,7 @@ export const MODULES: Module[] =
           navPath: "discount-setup"
         },
         {
-          name: "Discount Code Definition",
+          name: "Default Service Discount Codes",
           code: "DISCOUNT_CODE_DEFINITION",
           description: "Discount codes that reduce the default service price by a percentage or a fixed amount",
           icon: "FaTags",
