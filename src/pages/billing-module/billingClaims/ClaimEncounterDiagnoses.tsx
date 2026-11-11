@@ -10,6 +10,8 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch/Icd10DiagnosisSearch';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -340,6 +342,33 @@ const ClaimEncounterDiagnoses: React.FC<ClaimEncounterDiagnosesProps> = ({
                 flexGrow: 2,
                 render: (row: ClaimEncounterDiagnosis) =>
                     row?.major ? 'Yes' : 'No'
+            },
+            {
+                key: 'originalCreatedDate',
+                title: <Translate>ORIGINAL CREATED BY / AT</Translate>,
+                render: (row: ClaimEncounterDiagnosis) => (
+                    <UserDateCell
+                        login={row?.originalCreatedBy}
+                        date={row?.originalCreatedDate}
+                    />
+                )
+            },
+            {
+                key: 'createdDate',
+                title: <Translate>COPIED BY / AT</Translate>,
+                render: (row: ClaimEncounterDiagnosis) => (
+                    <CopiedAuditCell row={row} />
+                )
+            },
+            {
+                key: 'lastModifiedDate',
+                title: <Translate>COPY UPDATED BY / AT</Translate>,
+                render: (row: ClaimEncounterDiagnosis) => (
+                    <UserDateCell
+                        login={row?.lastModifiedBy}
+                        date={row?.lastModifiedDate}
+                    />
+                )
             },
             {
                 key: 'actions',
