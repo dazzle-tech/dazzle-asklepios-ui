@@ -3,6 +3,7 @@ import { MdModeEdit, MdAddCircleOutline } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
 
 import { useGetPatientServicesAndProductsByEncounterQuery } from '@/services/encounters/patientServicesAndProductsService';
 import { useGetAllActiveDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
@@ -137,6 +138,42 @@ const ClaimEncounterCopyServiceProductTests = ({
           color={row.isCopied ? '#28a745' : '#6c757d'}
         />
       )
+    },
+    {
+      key: 'originalCreatedDate',
+      title: <Translate>ORIGINAL CREATED AT / BY</Translate>,
+      render: (row: any) =>
+        row.copy ? (
+          <UserDateCell
+            login={row.copy.originalCreatedBy}
+            date={row.copy.originalCreatedDate}
+          />
+        ) : (
+          '-'
+        )
+    },
+    {
+      key: 'copyCreatedDate',
+      title: <Translate>CREATED AT / BY</Translate>,
+      render: (row: any) =>
+        row.copy ? (
+          <UserDateCell
+            login={row.copy.createdBy}
+            date={row.copy.createdDate}
+          />
+        ) : (
+          '-'
+        )
+    },
+    {
+      key: 'copyLastModifiedDate',
+      title: <Translate>UPDATED AT / BY</Translate>,
+      render: (row: any) =>
+        row.copy ? (
+          <UserDateCell login={row.copy.lastModifiedBy} date={row.copy.lastModifiedDate} />
+        ) : (
+          '-'
+        )
     },
     {
       key: 'actions',

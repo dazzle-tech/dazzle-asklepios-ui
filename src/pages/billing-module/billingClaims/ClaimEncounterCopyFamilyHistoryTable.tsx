@@ -9,6 +9,7 @@ import MyTable from '@/components/MyTable';
 import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 import Translate from '@/components/Translate';
 
 import { useAppDispatch } from '@/hooks';
@@ -230,19 +231,27 @@ const ClaimEncounterCopyFamilyHistoryTable = ({
             )
         },
         {
-            key: 'created',
-            title: <Translate>Created By / Date</Translate>,
+            key: 'originalCreatedDate',
+            title: <Translate>ORIGINAL CREATED BY / AT</Translate>,
             flexGrow: 1.5,
             render: (row: ClaimEncounterCopyFamilyHistory) => (
                 <UserDateCell
-                    login={row.createdBy}
-                    date={row.createdDate}
+                    login={row.originalCreatedBy}
+                    date={row.originalCreatedDate}
                 />
             )
         },
         {
+            key: 'created',
+            title: <Translate>COPIED BY / AT</Translate>,
+            flexGrow: 1.5,
+            render: (row: ClaimEncounterCopyFamilyHistory) => (
+                <CopiedAuditCell row={row} />
+            )
+        },
+        {
             key: 'lastModified',
-            title: <Translate>Last Modified By / Date</Translate>,
+            title: <Translate>COPY UPDATED BY / AT</Translate>,
             flexGrow: 1.5,
             render: (row: ClaimEncounterCopyFamilyHistory) => (
                 <UserDateCell

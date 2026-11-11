@@ -9018,6 +9018,13 @@ export interface ClaimEncounterDiagnosis {
   type: string | null;
   suspected: boolean;
   major: boolean;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface UpdateClaimEncounterDiagnosesRequest {
@@ -9044,6 +9051,9 @@ export interface ClaimEncounterProgressNote {
   createdDate: string | null;
   lastModifiedBy: string | null;
   lastModifiedDate: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopySocialHistory {
@@ -9079,6 +9089,9 @@ export interface ClaimEncounterCopySocialHistory {
   cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopySurgicalHistory {
@@ -9107,6 +9120,9 @@ export interface ClaimEncounterCopySurgicalHistory {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface DialysisFlowReadingCreateDTO {
@@ -9166,6 +9182,9 @@ export interface ClaimEncounterCopyPatientProblem {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface DialysisMedicationCreateDTO {
@@ -9211,6 +9230,9 @@ export interface ClaimEncounterCopyFamilyHistory {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyHospitalization {
@@ -9234,6 +9256,9 @@ export interface ClaimEncounterCopyHospitalization {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyHospitalizationCreateDTO {
@@ -9275,6 +9300,13 @@ export interface ClaimEncounterCopyCurrentMedication {
   cancelledBy?: string;
   cancelledDate?: string;
   cancellationReason?: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyCurrentMedicationCreateDTO {
@@ -9323,6 +9355,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
@@ -9363,6 +9398,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO {
