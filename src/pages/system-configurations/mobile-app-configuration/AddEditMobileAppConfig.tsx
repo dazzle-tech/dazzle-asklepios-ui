@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
+import { Form, Input } from 'rsuite';
 import { MdClose, MdPhoneAndroid } from 'react-icons/md';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractErrorMessage } from '@/utils';
@@ -14,7 +16,6 @@ import {
   useUpdateMobileAppConfigMutation,
 } from '@/services/system-configurations/mobileAppConfigService';
 import { MobileAppConfigResponseVM } from '@/types/model-types-new';
-import { newMobileAppConfigCreateDTO } from '@/types/model-types-constructor-new';
 import './styles.less';
 
 const VALUE_MAX_LENGTH = 4000;
@@ -27,7 +28,7 @@ type AddEditMobileAppConfigProps = {
   refetch: () => void;
 };
 
-const existingImageUrls = (config: MobileAppConfigResponseVM): string[] => {
+const existingValues = (config: MobileAppConfigResponseVM): string[] => {
   if (config?.configValues?.length) {
     return config.configValues.filter(Boolean);
   }
@@ -46,7 +47,12 @@ const AddEditMobileAppConfig = ({
   const dispatch = useAppDispatch();
   const enumOptions = useEnumOptions('MobileAppConfigKey');
   const typeOptions = useEnumOptions('MobileAppConfigType');
-  const [record, setRecord] = useState({ ...newMobileAppConfigCreateDTO });
+  const [record, setRecord] = useState({
+    configKey: '',
+    configType: '',
+    description: '',
+  });
+  const [textValues, setTextValues] = useState<string[]>(['']);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [keptUrls, setKeptUrls] = useState<string[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
@@ -63,15 +69,22 @@ const AddEditMobileAppConfig = ({
     if (!open) return;
     setImageFiles([]);
     if (config?.id) {
+      const values = existingValues(config);
       setRecord({
         configKey: config.configKey,
         configType: config.configType ?? '',
-        configValue: config.configValue ?? '',
         description: config.description ?? '',
       });
-      setKeptUrls(existingImageUrls(config));
+      if (config.configType === 'IMAGE') {
+        setKeptUrls(values);
+        setTextValues(['']);
+      } else {
+        setKeptUrls([]);
+        setTextValues(values.length ? values : ['']);
+      }
     } else {
-      setRecord({ ...newMobileAppConfigCreateDTO });
+      setRecord({ configKey: '', configType: '', description: '' });
+      setTextValues(['']);
       setKeptUrls([]);
     }
   }, [open, config]);
@@ -85,8 +98,8 @@ const AddEditMobileAppConfig = ({
   const handleSubmit = async () => {
     const configKey = String(record.configKey ?? '').trim();
     const configType = String(record.configType ?? '').trim();
-    const configValue = String(record.configValue ?? '').trim();
     const description = String(record.description ?? '').trim();
+    const cleanedTextValues = textValues.map(value => value.trim()).filter(Boolean);
 
     if (!configKey) {
       dispatch(notify({ msg: 'Key is required', sev: 'warning' }));
@@ -111,14 +124,14 @@ const AddEditMobileAppConfig = ({
         return;
       }
     } else {
-      if (!configValue) {
-        dispatch(notify({ msg: 'Value is required', sev: 'warning' }));
+      if (!cleanedTextValues.length) {
+        dispatch(notify({ msg: 'At least one value is required', sev: 'warning' }));
         return;
       }
-      if (configValue.length > VALUE_MAX_LENGTH) {
+      if (cleanedTextValues.some(value => value.length > VALUE_MAX_LENGTH)) {
         dispatch(
           notify({
-            msg: `Value must be at most ${VALUE_MAX_LENGTH} characters`,
+            msg: `Each value must be at most ${VALUE_MAX_LENGTH} characters`,
             sev: 'warning',
           })
         );
@@ -146,14 +159,14 @@ const AddEditMobileAppConfig = ({
         await updateConfig({
           id: config.id,
           configType,
-          configValue,
+          configValues: cleanedTextValues,
           description: description || null,
         }).unwrap();
       } else {
         await createConfig({
           configKey,
           configType,
-          configValue,
+          configValues: cleanedTextValues,
           description: description || null,
         }).unwrap();
       }
@@ -279,16 +292,44 @@ const AddEditMobileAppConfig = ({
                   />
                 </div>
               ) : (
-                <MyInput
-                  fieldName="configValue"
-                  fieldLabel="Value"
-                  fieldType="textarea"
-                  record={record}
-                  setRecord={setRecord}
-                  width="100%"
-                  required
-                  disabled={isSaving}
-                />
+                <div className="mobile-app-config-text-values">
+                  <div className="mobile-app-config-text-values-label">Values</div>
+                  {textValues.map((value, index) => (
+                    <div key={index} className="mobile-app-config-text-value-row">
+                      <Input
+                        as="textarea"
+                        rows={2}
+                        value={value}
+                        disabled={isSaving}
+                        placeholder={`Value ${index + 1}`}
+                        onChange={next =>
+                          setTextValues(prev =>
+                            prev.map((item, i) => (i === index ? String(next ?? '') : item))
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="mobile-app-config-text-value-remove"
+                        disabled={isSaving || textValues.length === 1}
+                        onClick={() =>
+                          setTextValues(prev => prev.filter((_, i) => i !== index))
+                        }
+                        title="Remove"
+                      >
+                        <MdClose size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  <MyButton
+                    appearance="ghost"
+                    disabled={isSaving}
+                    prefixIcon={() => <AddOutlineIcon />}
+                    onClick={() => setTextValues(prev => [...prev, ''])}
+                  >
+                    Add Value
+                  </MyButton>
+                </div>
               )}
               <MyInput
                 fieldName="description"

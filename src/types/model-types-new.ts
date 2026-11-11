@@ -9779,14 +9779,14 @@ export interface MobileAppConfigResponseVM {
 export interface MobileAppConfigCreateDTO {
   configKey: string;
   configType: string;
-  configValue: string;
+  configValues: string[];
   description?: string | null;
 }
 
 export interface MobileAppConfigUpdateDTO {
   id: number;
   configType: string;
-  configValue: string;
+  configValues: string[];
   description?: string | null;
 }
 
