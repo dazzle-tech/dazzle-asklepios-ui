@@ -1,0 +1,47 @@
+// Colors follow the theme, so the card adapts to theme changes and dark mode
+.ai-tooltip {
+  width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-blue);
+    background: color-mix(in srgb, var(--primary-blue) 10%, var(--rs-bg-card));
+  }
+
+  &__body {
+    padding: 10px 12px;
+    color: var(--rs-text-primary);
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0;
+  }
+
+  // Own class, because Translate renders a span inside the chip that a plain span selector would also style
+  &__chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    border: 1px solid var(--rs-border-primary);
+    color: var(--rs-text-secondary);
+    background: var(--rs-bg-well);
+  }
+
+  &__foot {
+    font-size: 11px;
+    color: var(--rs-text-secondary);
+  }
+}
