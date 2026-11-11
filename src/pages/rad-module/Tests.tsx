@@ -892,6 +892,15 @@ const Tests = forwardRef<any, Props>(
           const isRescheduled = String(rowData?.status ?? '')
             .toUpperCase()
             .includes('RESCHEDULE');
+          // Accept requires an arrived patient, so later statuses also mean arrived
+          const isPatientArrived = [
+            DiagnosticOrderTestStatus.PATIENT_ARRIVED,
+            DiagnosticOrderTestStatus.ACCEPTED,
+            DiagnosticOrderTestStatus.EXAM_DONE,
+            DiagnosticOrderTestStatus.RESULT_READY,
+            DiagnosticOrderTestStatus.RESULT_APPROVED,
+            DiagnosticOrderTestStatus.RESULT_REJECTED
+          ].includes(rowData.processingStatus);
 
           return (
             <HStack spacing={10}>
@@ -906,7 +915,8 @@ const Tests = forwardRef<any, Props>(
                 color={isRescheduled ? '#bdbdbd' : undefined}
                 style={{
                   cursor: isRescheduled ? 'not-allowed' : 'pointer',
-                  opacity: isRescheduled ? 0.5 : 1
+                  opacity: isRescheduled ? 0.5 : 1,
+                  ...(!isRescheduled && isPatientArrived && { color: 'var(--primary-blue)' })
                 }}
               />
             </HStack>
