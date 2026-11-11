@@ -40,6 +40,7 @@ import {
 
 import {
   conjureValueBasedOnIDFromList,
+  formatDateWithoutSeconds,
   formatEnumString
 } from '@/utils';
 
@@ -822,7 +823,7 @@ const PriceListSetup: React.FC = () => {
       key: 'createdDate',
       title: <Translate>Created Date</Translate>,
       flexGrow: 2,
-      render: (row: PriceListSetupModel) => row.createdDate || '-'
+      render: (row: PriceListSetupModel) => formatDateWithoutSeconds(row.createdDate) || '-'
     },
 
     {
