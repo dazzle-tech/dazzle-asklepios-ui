@@ -7,6 +7,8 @@ import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
+import ExternalResultModal from './external-results/ExternalResultModal';
+import ScanDocumentButton from './external-results/ScanDocumentButton';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
@@ -149,6 +151,7 @@ const Encounter = ({
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [openExternalResultModal, setOpenExternalResultModal] = useState(false);
   const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
@@ -1021,6 +1024,8 @@ const handleGoBack = () => {
                       Create Follow-up
                     </MyButton>
 
+                    <ScanDocumentButton disabled={edit} onClick={() => setOpenExternalResultModal(true)} />
+
                     <MyButton
                       prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
                       onClick={() => {
@@ -1258,6 +1263,13 @@ const handleGoBack = () => {
         onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
+      />
+
+      <ExternalResultModal
+        open={openExternalResultModal}
+        setOpen={setOpenExternalResultModal}
+        patient={patientToSend}
+        encounter={propsData?.encounter}
       />
 
       <MyModal

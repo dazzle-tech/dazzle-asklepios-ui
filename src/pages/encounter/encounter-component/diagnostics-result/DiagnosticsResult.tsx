@@ -4,6 +4,7 @@ import Result from './Result';
 import Reports from './Reports';
 import ResultsAndReports from './ResultsAndReports';
 import LaboratoryResultComparison from './LaboratoryResultComparison';
+import { ExternalLabResults, ExternalRadiologyReports } from './ExternalResults';
 import { useAppSelector } from '@/hooks';
 import MyTab from '@/components/MyTab';
 const DiagnosticsResult = props => {
@@ -38,6 +39,18 @@ const tabData = [
     title: 'Laboratory Result Comparison',
     content: (
         <LaboratoryResultComparison patient={patient} />
+    )
+  },
+  {
+    title: 'External Lab Results',
+    content: (
+        <ExternalLabResults patient={patient} />
+    )
+  },
+  {
+    title: 'External Radiology Reports',
+    content: (
+        <ExternalRadiologyReports patient={patient} />
     )
   }
 ];

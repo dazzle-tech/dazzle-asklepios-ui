@@ -13,6 +13,10 @@ import {
   useGetLatestBodyMeasurementsByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import {
+  useGetLatestRandomBloodSugarByEncounterIdQuery,
+  useLazyGetLatestRandomBloodSugarByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/observations/randomBloodSugarService';
+import {
   useLazyExistsPatientDiagnosisByEncounterIdQuery,
   useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
@@ -160,6 +164,12 @@ const {
     );
 
   const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
+  const { data: latestRandomBloodSugar, refetch: refetchLatestRandomBloodSugar } =
+    useGetLatestRandomBloodSugarByEncounterIdQuery(
+      { encounterId: encounter?.id },
+      { skip: !encounter?.id }
+    );
+  const [triggerGetLatestRandomBloodSugar] = useLazyGetLatestRandomBloodSugarByEncounterIdQuery();
   const {
     data: latestBodyMeasurements,
     refetch: refetchLatestBodyMeasurements
@@ -338,6 +348,7 @@ const patientConditionItems =
 
       if (encounter?.id) {
         triggerGetLatestVitalSigns({ encounterId: encounter?.id });
+        triggerGetLatestRandomBloodSugar({ encounterId: encounter?.id });
         triggerGetLatestPatientObservationsComplaints({ encounterId: encounter?.id });
         loadPrimaryDiagnosis(Number(encounter.id));
       }
@@ -346,6 +357,7 @@ const patientConditionItems =
     refetchList,
     triggerGetPrimaryDocument,
     triggerGetLatestVitalSigns,
+    triggerGetLatestRandomBloodSugar,
     triggerGetLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id
@@ -359,6 +371,7 @@ const patientConditionItems =
 
       if (encounter?.id) {
         refetchLatestVitalSigns();
+        refetchLatestRandomBloodSugar();
         refetchLatestPatientObservationsComplaints();
         loadPrimaryDiagnosis(Number(encounter.id));
       }
@@ -372,6 +385,7 @@ const patientConditionItems =
     refetchPatientSide,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
+    refetchLatestRandomBloodSugar,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -388,6 +402,7 @@ const patientConditionItems =
           refetchAllergies(),
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
+          encounter?.id ? refetchLatestRandomBloodSugar() : Promise.resolve(),
           patient?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
           encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
           encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
@@ -406,6 +421,7 @@ const patientConditionItems =
     refetchAllergies,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
+    refetchLatestRandomBloodSugar,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -490,6 +506,7 @@ const getAllergenName = (allergy: any) => {
   const oxygenSaturation = toNumber(latestVitalSigns?.oxygenSaturation);
   const bloodPressureSystolic = toNumber(latestVitalSigns?.bloodPressureSystolic);
   const bloodPressureDiastolic = toNumber(latestVitalSigns?.bloodPressureDiastolic);
+  const randomBloodGlucose = toNumber(latestRandomBloodSugar?.randomBloodGlucose);
 
   const weight = toNumber(latestBodyMeasurements?.weight);
   const height = toNumber(latestBodyMeasurements?.height);
@@ -832,7 +849,14 @@ const coverageTypeLabel =
                 </Text>
               </div>
 
-              <div className="info-column" />
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Random Blood Sugar</Translate>
+                </Text>
+                <Text className="info-value">
+                  {randomBloodGlucose != null ? `${fmt(randomBloodGlucose, 2, '')} mg/dL` : ''}
+                </Text>
+              </div>
             </div>
           </div>
 

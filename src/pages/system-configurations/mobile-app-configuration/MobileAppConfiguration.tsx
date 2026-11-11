@@ -111,7 +111,18 @@ const MobileAppConfiguration = () => {
       flexGrow: 3,
       render: (row: MobileAppConfigResponseVM) =>
         row.configType === 'IMAGE' ? (
-          <img className="mobile-app-config-image" src={row.configValue} alt={row.configKey} />
+          <div className="mobile-app-config-images-cell">
+            {(row.configValues?.length ? row.configValues : row.configValue ? [row.configValue] : []).map(
+              url => (
+                <img
+                  key={url}
+                  className="mobile-app-config-image"
+                  src={url}
+                  alt={row.configKey}
+                />
+              )
+            )}
+          </div>
         ) : (
           <Whisper placement="top" speaker={<Tooltip>{row.configValue}</Tooltip>}>
             <span>
