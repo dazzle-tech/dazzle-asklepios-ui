@@ -5,6 +5,7 @@ import { FaFilePrescription } from 'react-icons/fa6';
 import PlusIcon from '@rsuite/icons/Plus';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
+import ReloadIcon from '@rsuite/icons/Reload';
 
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
@@ -27,6 +28,14 @@ type Props = {
   setSummaryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleNewPrescriptionAndAddMedication: () => void;
   handleClearSelection: () => void;
+  // Sends the edited (submitted) prescription to Nahdi again.
+  handleResendToNahdi: () => void;
+  isResending: boolean;
+  // The submitted prescription changed after its last send.
+  hasUnsentChanges: boolean;
+  // Re-checks the pharmacy dispensing status.
+  handleRefreshDispensingStatus: () => void;
+  isRefreshingDispensing: boolean;
 };
 
 const isDraftStatus = (status: any) => {
@@ -48,7 +57,12 @@ const PrescriptionToolbar = ({
   setOpenCancellation,
   setSummaryModalOpen,
   handleNewPrescriptionAndAddMedication,
-  handleClearSelection
+  handleClearSelection,
+  handleResendToNahdi,
+  isResending,
+  hasUnsentChanges,
+  handleRefreshDispensingStatus,
+  isRefreshingDispensing
 }: Props) => {
   const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
   const hasSelection = currentPrescription?.id != null;
@@ -159,7 +173,7 @@ const PrescriptionToolbar = ({
               onClick={handleNewPrescriptionAndAddMedication}
               prefixIcon={() => <PlusIcon />}
               loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-              disabled={edit || isNurse || (hasSelection && isSubmitted)}
+              disabled={edit || isNurse}
             >
               Add Medication
             </MyButton>
@@ -172,11 +186,7 @@ const PrescriptionToolbar = ({
                 }
                 setOpenCancellation(true);
               }}
-              disabled={
-                (!selectedRows.length && !patientPrescriptionMedicationObject?.id) ||
-                edit ||
-                isSubmitted
-              }
+              disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
             >
               Cancel
             </MyButton>
@@ -189,6 +199,37 @@ const PrescriptionToolbar = ({
             >
               Sign & Submit Order
             </MyButton>
+
+            {isSubmitted && (
+              <>
+                {/* Lights up only when the prescription changed after it was last sent to the pharmacy. */}
+                <MyButton
+                  prefixIcon={() => <ReloadIcon />}
+                  onClick={handleResendToNahdi}
+                  loading={isResending}
+                  disabled={edit || isResending || !hasUnsentChanges}
+                  appearance={hasUnsentChanges ? 'primary' : 'ghost'}
+                  backgroundColor={hasUnsentChanges ? 'var(--primary-orange)' : undefined}
+                  color={hasUnsentChanges ? undefined : 'var(--primary-gray)'}
+                >
+                  <Translate>Resend to Pharmacy</Translate>
+                </MyButton>
+                {hasUnsentChanges && (
+                  <span style={{ color: 'var(--primary-orange)', fontWeight: 600, alignSelf: 'center' }}>
+                    ● <Translate>Unsent changes</Translate>
+                  </span>
+                )}
+                {/* Re-checks which medications the pharmacy dispensed (also checked automatically on open). */}
+                <MyButton
+                  appearance="ghost"
+                  onClick={handleRefreshDispensingStatus}
+                  loading={isRefreshingDispensing}
+                  disabled={isRefreshingDispensing}
+                >
+                  <Translate>Refresh Status</Translate>
+                </MyButton>
+              </>
+            )}
 
             <PrescriptionReportButton
               prescriptionId={currentPrescription?.id}

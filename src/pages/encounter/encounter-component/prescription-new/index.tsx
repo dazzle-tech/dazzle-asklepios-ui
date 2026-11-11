@@ -16,8 +16,12 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   useCreateOrGetPatientPrescriptionMutation,
   useGetPatientPrescriptionQuery,
+  useGetNahdiSyncStatusQuery,
+  useRefreshNahdiDispensingStatusMutation,
+  useResendPrescriptionToNahdiMutation,
   useSubmitPatientPrescriptionMutation
 } from '@/services/patients/Prescription/patientPrescriptionService';
+import { notify } from '@/utils/uiReducerActions';
 
 import {
   useDeletePatientPrescriptionMedicationMutation,
@@ -186,6 +190,25 @@ const Prescription = (props: Props) => {
 
   const [deleteMedication] = useDeletePatientPrescriptionMedicationMutation();
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
+  const [resendPrescriptionToNahdi, { isLoading: isResending }] = useResendPrescriptionToNahdiMutation();
+
+  // The doctor finishes editing a submitted prescription, then sends its full current state to Nahdi again.
+  const handleResendToNahdi = async () => {
+    if (!currentPrescription?.id) return;
+    try {
+      const result = await resendPrescriptionToNahdi(Number(currentPrescription.id)).unwrap();
+      refetchNahdiSyncStatus();
+      if (result?.status === 'SUCCESS') {
+        dispatch(notify({ msg: `Sent to Nahdi${result.orderNumber ? ` (order ${result.orderNumber})` : ''}`, sev: 'success' }));
+      } else if (result?.status === 'SKIPPED') {
+        dispatch(notify({ msg: result.message || 'Nahdi integration is not enabled', sev: 'warning' }));
+      } else {
+        dispatch(notify({ msg: `Nahdi did not accept the prescription: ${result?.message || 'unknown error'}`, sev: 'error' }));
+      }
+    } catch {
+      dispatch(notify({ msg: 'Resend to Nahdi failed', sev: 'error' }));
+    }
+  };
 
   useEffect(() => {
     if (preKeyRecord.preKey !== null) {
@@ -255,6 +278,49 @@ const Prescription = (props: Props) => {
   const visiblePatientPrescriptionMedications = patientPrescriptionMedications.filter(m =>
     showCanceled ? true : !isCanceledStatus((m as any)?.status)
   );
+
+  // Changes on a submitted prescription that were not sent to Nahdi yet (highlights the resend button).
+  const isCurrentPrescriptionSubmitted =
+    String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+  const { data: nahdiSyncStatus, refetch: refetchNahdiSyncStatus } = useGetNahdiSyncStatusQuery(
+    Number(currentPrescription?.id),
+    { skip: !currentPrescription?.id || !isCurrentPrescriptionSubmitted }
+  );
+
+  // Medications reload after every add / edit / cancel, so the sync status is refreshed with them.
+  useEffect(() => {
+    if (currentPrescription?.id && isCurrentPrescriptionSubmitted) {
+      refetchNahdiSyncStatus();
+    }
+  }, [patientPrescriptionMedicationsRaw]);
+
+  // Which medications the pharmacy already dispensed (those cannot be edited or cancelled).
+  const [refreshNahdiDispensingStatus, { isLoading: isRefreshingDispensing }] =
+    useRefreshNahdiDispensingStatusMutation();
+
+  const refreshDispensingStatus = async (manual: boolean) => {
+    if (!currentPrescription?.id || !isCurrentPrescriptionSubmitted) return;
+    try {
+      const result = await refreshNahdiDispensingStatus(Number(currentPrescription.id)).unwrap();
+      await medicRefetch();
+      if (manual) {
+        dispatch(
+          notify(
+            result?.refreshed
+              ? { msg: 'Dispensing status updated', sev: 'success' }
+              : { msg: result?.message || 'Dispensing status is not available', sev: 'warning' }
+          )
+        );
+      }
+    } catch {
+      if (manual) dispatch(notify({ msg: 'Failed to refresh dispensing status', sev: 'error' }));
+    }
+  };
+
+  // Checked automatically whenever a submitted prescription is opened.
+  useEffect(() => {
+    refreshDispensingStatus(false);
+  }, [currentPrescription?.id, isCurrentPrescriptionSubmitted]);
 
   // Medications are prescribed as pharmaceuticals; brand names remain only for older records.
   const pharmaceuticalIds = useMemo(
@@ -627,6 +693,11 @@ const Prescription = (props: Props) => {
       setSummaryModalOpen={setSummaryModalOpen}
       handleNewPrescriptionAndAddMedication={handleNewPrescriptionAndAddMedication}
       handleClearSelection={handleClearSelection}
+      handleResendToNahdi={handleResendToNahdi}
+      isResending={isResending}
+      hasUnsentChanges={Boolean(nahdiSyncStatus?.hasUnsentChanges)}
+      handleRefreshDispensingStatus={() => refreshDispensingStatus(true)}
+      isRefreshingDispensing={isRefreshingDispensing}
     />
   );
 

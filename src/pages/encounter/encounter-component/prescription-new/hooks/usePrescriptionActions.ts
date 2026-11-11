@@ -71,6 +71,12 @@ export const usePrescriptionActions = ({
             return;
         }
 
+        // Medications the pharmacy already dispensed cannot be cancelled.
+        if (rowsToCancel.some((r: any) => r?.dispensed)) {
+            dispatch(notify({ msg: 'Dispensed medications cannot be cancelled', type: 'warning' } as any));
+            return;
+        }
+
         try {
             await Promise.all(
                 rowsToCancel
@@ -215,16 +221,7 @@ export const usePrescriptionActions = ({
             }
         }
 
-        if (String(prescription?.status ?? '').toUpperCase() === 'SUBMITTED') {
-            dispatch(
-                notify({
-                    msg: 'Cannot add medication to submitted prescription',
-                    type: 'warning'
-                } as any)
-            );
-            return;
-        }
-
+        // Medications can be added to a submitted prescription too; they are sent on the next resend.
         setPatientPrescriptionMedicationObject({
             ...newPatientPrescriptionMedication,
             prescriptionHeaderId: prescription.id
