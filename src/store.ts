@@ -228,6 +228,7 @@ import { surveyResponseService, surveyService } from './services/survey/surveySe
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { PolicyAssignmentService } from './services/setup/policyAssignment/policyAssignmentService';
 import { SkillDefinitionService } from './services/setup/skillDefinition/skillDefinitionService';
+import { discountCodeService } from './services/setup/discountCode/discountCodeService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
@@ -374,6 +375,7 @@ export const store = configureStore({
     [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
     [appointmentPolicyAssignmentService.reducerPath]: appointmentPolicyAssignmentService.reducer,
     [SkillDefinitionService.reducerPath]: SkillDefinitionService.reducer,
+    [discountCodeService.reducerPath]: discountCodeService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -942,6 +944,7 @@ export const store = configureStore({
         PolicyAssignmentService.middleware,
         appointmentPolicyAssignmentService.middleware,
         SkillDefinitionService.middleware,
+        discountCodeService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,

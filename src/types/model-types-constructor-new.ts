@@ -3881,7 +3881,19 @@ modelTypes.Discount= {
     null
 };
 
-
+export const newDiscountCode: modelTypes.DiscountCode = {
+  id: undefined,
+  facilityId: undefined,
+  facilityName: '',
+  code: '',
+  name: '',
+  description: '',
+  discountType: 'PERCENTAGE',
+  percentage: null,
+  fixedAmount: null,
+  currency: null,
+  isActive: true
+};
 
 export const newBillingWalletSummary: modelTypes.BillingWalletSummary = {
   walletId: null,

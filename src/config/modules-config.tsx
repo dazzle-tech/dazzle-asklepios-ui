@@ -359,6 +359,14 @@ export const MODULES: Module[] =
           icon: "FaTags",
           viewOrder: 31,
           navPath: "discount-setup"
+        },
+        {
+          name: "Discount Code Definition",
+          code: "DISCOUNT_CODE_DEFINITION",
+          description: "Discount codes that reduce the default service price by a percentage or a fixed amount",
+          icon: "FaTags",
+          viewOrder: 32,
+          navPath: "discount-code-definition"
         }
         // { name: "Skill Definition", code: "SKILL_DEFINITION", description: "Skill Definition", icon: "FaGlobe", viewOrder: 24, navPath: "skill-definition" },
 

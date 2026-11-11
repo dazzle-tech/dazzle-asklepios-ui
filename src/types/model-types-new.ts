@@ -7302,6 +7302,36 @@ export type SaveDiscountRequest = {
   description?:
     string | null;
 };
+
+export type DiscountCode = {
+  id?: number;
+  facilityId?: number;
+  facilityName?: string | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  discountType?: DiscountType;
+  percentage?: number | null;
+  fixedAmount?: number | null;
+  currency?: string | null;
+  isActive?: boolean;
+};
+
+export type DiscountCodeCreateDTO = {
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  discountType: DiscountType;
+  percentage?: number | null;
+  fixedAmount?: number | null;
+  currency?: string | null;
+};
+
+export type DiscountCodeUpdateDTO = DiscountCodeCreateDTO & {
+  id: number;
+};
+
 export type BillingWalletStatus =
   | 'ACTIVE'
   | 'INACTIVE'

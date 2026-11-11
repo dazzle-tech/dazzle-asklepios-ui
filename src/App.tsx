@@ -312,6 +312,7 @@ import BillingConfigurationSetup from './pages/setup/billing-configuration/Billi
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
 import TaxSetup from './pages/setup/tax-configuration/TaxSetup';
 import DiscountSetup from './pages/setup/discount/DiscountSetup';
+import DiscountCodeDefinition from './pages/setup/discount-code';
 import { PUBLIC_PERMISSION_BYPASS_PATHS } from './config/publicRoutes';
 import PatientsLists from './pages/billing-module/patientList/PatientsLists';
 const OpdVisitList= lazy(()=>import ('./pages/encounter/opd-encounter-list/OpdVisitList'));
@@ -847,6 +848,7 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="discount-setup" element={<DiscountSetup />} />
+              <Route path="discount-code-definition" element={<DiscountCodeDefinition />} />
               <Route
                 path="coverage-management"
                 element={<Navigate to="/nphies-payers?tab=coverage" replace />}
