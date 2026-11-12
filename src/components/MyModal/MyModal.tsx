@@ -140,6 +140,7 @@ const MyModal = ({
         <Form className="footer-modal-content">
           {!hideCancel && (
             <MyButton
+              type="button"
               appearance={'subtle'}
               onClick={() => {
                 handleCancel();
@@ -150,18 +151,23 @@ const MyModal = ({
             </MyButton>
           )}
           {!hideBack && activeStep > 0 && (
-            <MyButton appearance={'subtle'} onClick={handlePrev}>
+            <MyButton type="button" appearance={'subtle'} onClick={handlePrev}>
               Back
             </MyButton>
           )}
           {!(activeStep === computedPagesCount - 1) && (
-            <MyButton onClick={handleNext} disabled={steps[activeStep]?.disabledNext}>
+            <MyButton
+              type="button"
+              onClick={handleNext}
+              disabled={steps[activeStep]?.disabledNext}
+            >
               Next
             </MyButton>
           )}{' '}
           {steps[activeStep]?.footer}
           {activeStep === computedPagesCount - 1 && !hideActionBtn && (
             <MyButton
+              type="button"
               onClick={async () => {
                 try {
                   await Promise.resolve(actionButtonFunction());

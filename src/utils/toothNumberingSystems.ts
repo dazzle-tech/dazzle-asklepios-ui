@@ -236,6 +236,94 @@ export const PRIMARY_LOWER_IDS = [...PRIMARY_TOOTH_IDS.slice(10)].reverse();
 
 export type DentitionGroup = 'permanent' | 'primary';
 
+/**
+ * Mixed-chart slot geometry (patient-facing, screen-left = patient right).
+ * Permanent arches use 16 slots. Primary arches use 10 slots aligned under
+ * permanent positions 4–13 (0-based 3–12); outer molar slots have no primary.
+ */
+export const MIXED_ARCH_SLOT_COUNT = 16;
+export const MIXED_PRIMARY_SLOT_OFFSET = 3;
+
+export type MixedArchSubrow = {
+  dentition: DentitionGroup;
+  /** Full anatomical slot ids for this subrow (display order). */
+  slotIds: string[];
+  /** CSS grid column start (1-based) within the 16-column arch. */
+  gridColumnStart: number;
+};
+
+export type MixedArchLayout = {
+  arch: 'upper' | 'lower';
+  permanent: MixedArchSubrow;
+  primary: MixedArchSubrow;
+};
+
+export const MIXED_UPPER_LAYOUT: MixedArchLayout = {
+  arch: 'upper',
+  permanent: {
+    dentition: 'permanent',
+    slotIds: PERMANENT_UPPER_IDS,
+    gridColumnStart: 1
+  },
+  primary: {
+    dentition: 'primary',
+    slotIds: PRIMARY_UPPER_IDS,
+    gridColumnStart: MIXED_PRIMARY_SLOT_OFFSET + 1
+  }
+};
+
+export const MIXED_LOWER_LAYOUT: MixedArchLayout = {
+  arch: 'lower',
+  permanent: {
+    dentition: 'permanent',
+    slotIds: PERMANENT_LOWER_IDS,
+    gridColumnStart: 1
+  },
+  primary: {
+    dentition: 'primary',
+    slotIds: PRIMARY_LOWER_IDS,
+    gridColumnStart: MIXED_PRIMARY_SLOT_OFFSET + 1
+  }
+};
+
+/** @deprecated Prefer MIXED_*_LAYOUT subrows; kept for callers that need a flat filter list. */
+export const MIXED_UPPER_ORDER = [...PERMANENT_UPPER_IDS, ...PRIMARY_UPPER_IDS];
+/** @deprecated Prefer MIXED_*_LAYOUT subrows. */
+export const MIXED_LOWER_ORDER = [...PERMANENT_LOWER_IDS, ...PRIMARY_LOWER_IDS];
+
+/**
+ * Split selected tooth ids into upper/lower using scheme membership only.
+ * Display placement must use MIXED_*_LAYOUT subrows, not this flat concat order.
+ */
+export const selectedToothIdsByArch = (
+  toothIds: string[] | null | undefined
+): { upper: string[]; lower: string[] } => {
+  const upperSet = new Set([...PERMANENT_UPPER_IDS, ...PRIMARY_UPPER_IDS]);
+  const upper: string[] = [];
+  const lower: string[] = [];
+  for (const id of toothIds ?? []) {
+    if (upperSet.has(id)) upper.push(id);
+    else lower.push(id);
+  }
+  return { upper, lower };
+};
+
+/**
+ * Deterministic save order by anatomical quadrant/slot — not selection order.
+ * Upper permanent → upper primary → lower permanent → lower primary.
+ */
+export const orderMixedToothIds = (
+  toothIds: string[] | null | undefined
+): string[] => {
+  const selected = new Set(toothIds ?? []);
+  return [
+    ...PERMANENT_UPPER_IDS.filter(id => selected.has(id)),
+    ...PRIMARY_UPPER_IDS.filter(id => selected.has(id)),
+    ...PERMANENT_LOWER_IDS.filter(id => selected.has(id)),
+    ...PRIMARY_LOWER_IDS.filter(id => selected.has(id))
+  ];
+};
+
 /** Arch rows for the setup visual selector — groups stay separate (no shared index). */
 export const dentitionGroupsForChartType = (
   chartType?: string | null

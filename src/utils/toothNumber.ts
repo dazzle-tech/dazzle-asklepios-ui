@@ -8,6 +8,8 @@
  */
 
 import {
+  MIXED_ARCH_SLOT_COUNT,
+  MIXED_PRIMARY_SLOT_OFFSET,
   PERMANENT_LOWER_IDS,
   PERMANENT_UPPER_IDS,
   PRIMARY_LOWER_IDS,
@@ -118,6 +120,56 @@ export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>
 
   return { upper, lower, all: [...upper, ...lower] };
 };
+
+export type MixedArchSlots<T> = {
+  permanent: Array<T | null>;
+  primary: Array<T | null>;
+};
+
+/**
+ * Map an arch's saved teeth onto stable anatomical permanent/primary slots.
+ * Missing ids become null placeholders so siblings do not shift.
+ */
+export const buildMixedArchSlots = <T extends { toothNumber?: string | null }>(
+  archTeeth: T[] | null | undefined,
+  arch: 'upper' | 'lower'
+): MixedArchSlots<T> => {
+  const permanentIds = arch === 'upper' ? PERMANENT_UPPER_IDS : PERMANENT_LOWER_IDS;
+  const primaryIds = arch === 'upper' ? PRIMARY_UPPER_IDS : PRIMARY_LOWER_IDS;
+  const byNumber = new Map<string, T>();
+  (archTeeth ?? []).forEach(tooth => {
+    if (tooth?.toothNumber) {
+      byNumber.set(String(tooth.toothNumber), tooth);
+    }
+  });
+  return {
+    permanent: permanentIds.map(id => byNumber.get(id) ?? null),
+    primary: primaryIds.map(id => byNumber.get(id) ?? null)
+  };
+};
+
+/**
+ * Pad primary slots into the shared 16-column arch so they align under
+ * permanent positions 4–13 (outer molar columns stay empty).
+ */
+export const padPrimarySlotsToArch = <T>(
+  primarySlots: Array<T | null>
+): Array<T | null> => {
+  const leading = Array.from({ length: MIXED_PRIMARY_SLOT_OFFSET }, () => null);
+  const trailing = Array.from(
+    {
+      length: Math.max(
+        0,
+        MIXED_ARCH_SLOT_COUNT - MIXED_PRIMARY_SLOT_OFFSET - primarySlots.length
+      )
+    },
+    () => null
+  );
+  return [...leading, ...primarySlots, ...trailing];
+};
+
+/** Fixed midline index for the 16-column mixed/adult arch (after UR/LR 8). */
+export const MIXED_ARCH_MIDLINE_INDEX = 8;
 
 export const teethForTreatmentScope = <T extends { toothNumber?: string | null }>(
   teeth: T[] | null | undefined,

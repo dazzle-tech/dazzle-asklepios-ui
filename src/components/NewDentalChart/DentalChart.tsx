@@ -12,7 +12,10 @@ import {
   toothDisplayLabel,
   toothCssClassSuffix,
   isPrimaryTooth,
-  splitChartTeethByArch
+  splitChartTeethByArch,
+  buildMixedArchSlots,
+  padPrimarySlotsToArch,
+  MIXED_ARCH_MIDLINE_INDEX
 } from '@/utils/toothNumber';
 import { useEffect, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
@@ -351,8 +354,6 @@ const DentalChart = ({
     });
   };
 
-  const midGapAfter = Math.floor(upperTeeth.length / 2);
-
   const toothIdAllowed = (tooth: any) => {
     if (!allowedToothIds || allowedToothIds.length === 0) return true;
     if (tooth?.id == null) return false;
@@ -431,122 +432,198 @@ const DentalChart = ({
     if (!selectionOnly) setActionModalOpen(true);
   };
 
-  const renderToothColumns = (teeth: any[], arch: 'upper' | 'lower') =>
-    teeth.map((tooth: any, idx: number) => {
-      const { selected, highlighted, hasCondition, hasTreatment, surfaceStates } =
-        toothMeta(tooth);
-      const primary = isPrimaryTooth(tooth.toothNumber);
-      const allowed = toothIdAllowed(tooth);
-      const toothDisabled = props.disabled || !allowed;
-      const dimmed =
-        Array.isArray(allowedToothIds) &&
-        allowedToothIds.length > 0 &&
-        !allowed;
-      const showNestedSelection = selected && !planReviewMode;
-      const colClass = clsx('tooth-col', {
-        selected,
-        'has-plan-treatment': highlighted && !planReviewMode,
-        dimmed,
-        'midline-gap': idx === midGapAfter
-      });
-
-      return (
-        <div key={tooth.id} className={colClass}>
-          {arch === 'upper' && (
-            <div className="tooth-number">
-              {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
-            </div>
-          )}
-
-          {arch === 'upper' ? (
-            <>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
-              >
-                <Tooth
-                  chartTooth={tooth}
-                  selected={showNestedSelection}
-                  hasCondition={hasCondition}
-                  hasTreatment={hasTreatment}
-                  flipVertical={primary}
-                />
-              </Button>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn occlusal-btn', {
-                  selected: showNestedSelection
-                })}
-              >
-                {primary ? (
-                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-                ) : (
-                  <AdultOcclusal
-                    toothNumber={tooth.toothNumber}
-                    surfaceStates={surfaceStates}
-                    selected={showNestedSelection}
-                  />
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn occlusal-btn', {
-                  selected: showNestedSelection
-                })}
-              >
-                {primary ? (
-                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-                ) : (
-                  <AdultOcclusal
-                    toothNumber={tooth.toothNumber}
-                    surfaceStates={surfaceStates}
-                    selected={showNestedSelection}
-                  />
-                )}
-              </Button>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
-              >
-                <Tooth
-                  chartTooth={tooth}
-                  selected={showNestedSelection}
-                  hasCondition={hasCondition}
-                  hasTreatment={hasTreatment}
-                />
-              </Button>
-            </>
-          )}
-
-          {arch === 'lower' && (
-            <div className="tooth-number">
-              {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
-            </div>
-          )}
-        </div>
-      );
+  const renderToothColumn = (
+    tooth: any,
+    arch: 'upper' | 'lower',
+    idx: number,
+    midGapIndex: number
+  ) => {
+    const { selected, highlighted, hasCondition, hasTreatment, surfaceStates } =
+      toothMeta(tooth);
+    const primary = isPrimaryTooth(tooth.toothNumber);
+    const allowed = toothIdAllowed(tooth);
+    const toothDisabled = props.disabled || !allowed;
+    const dimmed =
+      Array.isArray(allowedToothIds) &&
+      allowedToothIds.length > 0 &&
+      !allowed;
+    const showNestedSelection = selected && !planReviewMode;
+    const colClass = clsx('tooth-col', {
+      selected,
+      'has-plan-treatment': highlighted && !planReviewMode,
+      dimmed,
+      'midline-gap': idx === midGapIndex
     });
+
+    return (
+      <div key={tooth.id ?? `${arch}-${tooth.toothNumber}`} className={colClass}>
+        {arch === 'upper' && (
+          <div className="tooth-number">
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+          </div>
+        )}
+
+        {arch === 'upper' ? (
+          <>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+            >
+              <Tooth
+                chartTooth={tooth}
+                selected={showNestedSelection}
+                hasCondition={hasCondition}
+                hasTreatment={hasTreatment}
+                flipVertical={primary}
+              />
+            </Button>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn occlusal-btn', {
+                selected: showNestedSelection
+              })}
+            >
+              {primary ? (
+                <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
+              ) : (
+                <AdultOcclusal
+                  toothNumber={tooth.toothNumber}
+                  surfaceStates={surfaceStates}
+                  selected={showNestedSelection}
+                />
+              )}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn occlusal-btn', {
+                selected: showNestedSelection
+              })}
+            >
+              {primary ? (
+                <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
+              ) : (
+                <AdultOcclusal
+                  toothNumber={tooth.toothNumber}
+                  surfaceStates={surfaceStates}
+                  selected={showNestedSelection}
+                />
+              )}
+            </Button>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+            >
+              <Tooth
+                chartTooth={tooth}
+                selected={showNestedSelection}
+                hasCondition={hasCondition}
+                hasTreatment={hasTreatment}
+              />
+            </Button>
+          </>
+        )}
+
+        {arch === 'lower' && (
+          <div className="tooth-number">
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderToothColumns = (
+    teeth: any[],
+    arch: 'upper' | 'lower',
+    midGapIndex = Math.floor(teeth.length / 2)
+  ) =>
+    teeth.map((tooth: any, idx: number) =>
+      renderToothColumn(tooth, arch, idx, midGapIndex)
+    );
+
+  const renderSlotColumns = (
+    slots: Array<any | null>,
+    arch: 'upper' | 'lower',
+    midGapIndex: number,
+    keyPrefix: string
+  ) =>
+    slots.map((tooth, idx) => {
+      if (!tooth) {
+        return (
+          <div
+            key={`${keyPrefix}-empty-${idx}`}
+            className={clsx('tooth-col', 'tooth-col-empty', {
+              'midline-gap': idx === midGapIndex
+            })}
+            aria-hidden
+          />
+        );
+      }
+      return renderToothColumn(tooth, arch, idx, midGapIndex);
+    });
+
+  const renderMixedArch = (teeth: any[], arch: 'upper' | 'lower') => {
+    const slots = buildMixedArchSlots(teeth, arch);
+    const primaryPadded = padPrimarySlotsToArch(slots.primary);
+    const permanentRow = (
+      <div className="chart-subrow chart-subrow--permanent">
+        {renderSlotColumns(
+          slots.permanent,
+          arch,
+          MIXED_ARCH_MIDLINE_INDEX,
+          `${arch}-perm`
+        )}
+      </div>
+    );
+    const primaryRow = (
+      <div className="chart-subrow chart-subrow--primary">
+        {renderSlotColumns(
+          primaryPadded,
+          arch,
+          MIXED_ARCH_MIDLINE_INDEX,
+          `${arch}-prim`
+        )}
+      </div>
+    );
+
+    return (
+      <div className={clsx('chart-arch', 'mixed', arch)}>
+        {arch === 'upper' ? (
+          <>
+            {permanentRow}
+            {primaryRow}
+          </>
+        ) : (
+          <>
+            {primaryRow}
+            {permanentRow}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const hasPrimary = upperTeeth.some((t: any) => isPrimaryTooth(t.toothNumber))
     || lowerTeeth.some((t: any) => isPrimaryTooth(t.toothNumber));
   const hasPermanent = upperTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber))
     || lowerTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber));
   const pediatricLayout = hasPrimary && !hasPermanent;
+  const mixedLayout = hasPrimary && hasPermanent;
 
   return (
     <>
@@ -559,10 +636,27 @@ const DentalChart = ({
         <div className="chart-side-label chart-side-r" aria-hidden>
           R
         </div>
-        <div className={clsx('dental-chart-grid', { pediatric: pediatricLayout })}>
-          <div className="chart-arch upper">{renderToothColumns(upperTeeth, 'upper')}</div>
+        <div
+          className={clsx('dental-chart-grid', {
+            pediatric: pediatricLayout,
+            mixed: mixedLayout
+          })}
+        >
+          {mixedLayout ? (
+            renderMixedArch(upperTeeth, 'upper')
+          ) : (
+            <div className="chart-arch upper">
+              {renderToothColumns(upperTeeth, 'upper')}
+            </div>
+          )}
           <div className="chart-midline" aria-hidden />
-          <div className="chart-arch lower">{renderToothColumns(lowerTeeth, 'lower')}</div>
+          {mixedLayout ? (
+            renderMixedArch(lowerTeeth, 'lower')
+          ) : (
+            <div className="chart-arch lower">
+              {renderToothColumns(lowerTeeth, 'lower')}
+            </div>
+          )}
         </div>
         <div className="chart-side-label chart-side-l" aria-hidden>
           L

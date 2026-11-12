@@ -21,6 +21,7 @@ type MyButtonProps = {
   disabled?: boolean;
   style?: React.CSSProperties;
   className?: string;
+  type?: 'button' | 'submit' | 'reset';
 };
 
 const MyButton: React.FC<MyButtonProps> = ({
@@ -35,6 +36,7 @@ const MyButton: React.FC<MyButtonProps> = ({
   backgroundColor,
   width,
   radius,
+  type = 'button',
   ...props
 }: MyButtonProps) => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -43,6 +45,7 @@ const MyButton: React.FC<MyButtonProps> = ({
     <Button
       className={`bt ${size} ${mode}`}
       appearance={appearance}
+      type={type}
       style={{
         color:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'

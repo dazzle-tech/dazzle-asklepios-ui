@@ -1,6 +1,6 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Form } from 'rsuite';
 import { FaTeeth } from 'react-icons/fa6';
 import {
@@ -28,17 +28,54 @@ const AddEditDentalChartAgeRule = ({
     ? rule.toothNumbers
     : [];
 
+  const [addToothOpen, setAddToothOpen] = useState(false);
+  const ignoreParentCloseRef = useRef(false);
+
+  const handleRuleModalOpen = (
+    next: boolean | ((prev: boolean) => boolean)
+  ) => {
+    const resolved = typeof next === 'function' ? next(open) : next;
+    if (!resolved) {
+      // Esc / backdrop on the nested picker must not dismiss the parent rule modal.
+      if (addToothOpen) {
+        setAddToothOpen(false);
+        ignoreParentCloseRef.current = true;
+        window.setTimeout(() => {
+          ignoreParentCloseRef.current = false;
+        }, 50);
+        return;
+      }
+      if (ignoreParentCloseRef.current) {
+        return;
+      }
+      setAddToothOpen(false);
+    }
+    setOpen(resolved);
+  };
+
   const handleChartTypeChange = (updated: any) => {
     const nextType = updated.chartType;
     const prevType = rule?.chartType;
     if (nextType && nextType !== prevType) {
-      setRule({
+      setRule((prev: any) => ({
+        ...prev,
         ...updated,
         toothNumbers: defaultToothIdsForChartType(nextType)
-      });
+      }));
       return;
     }
-    setRule(updated);
+    setRule((prev: any) => ({ ...prev, ...updated }));
+  };
+
+  const handleToothNumbersChange = (
+    updater: string[] | ((prev: string[]) => string[])
+  ) => {
+    setRule((prev: any) => {
+      const current = Array.isArray(prev?.toothNumbers) ? prev.toothNumbers : [];
+      const next =
+        typeof updater === 'function' ? updater(current) : updater;
+      return { ...prev, toothNumbers: next };
+    });
   };
 
   const conjureFormContent = (stepNumber = 0) => {
@@ -48,7 +85,10 @@ const AddEditDentalChartAgeRule = ({
           <Form fluid>
             <p className="dental-chart-setup-hint">
               Ages are in completed years. Age From is inclusive; Age To is exclusive.
-              Leave Age To empty for an open-ended range. Click teeth to select them;
+              Leave Age To empty for an open-ended range.
+              {rule?.chartType === 'MIXED'
+                ? ' For Mixed, use + Add Tooth and × to configure the inventory;'
+                : ' Click teeth to select them;'}{' '}
               changing the numbering system only updates labels.
             </p>
             <MyInput width="100%" fieldName="name" fieldLabel="Name" record={rule} setRecord={setRule} />
@@ -97,7 +137,9 @@ const AddEditDentalChartAgeRule = ({
                 chartType={rule.chartType}
                 numberingSystem={rule.numberingSystem}
                 selectedToothIds={selectedIds}
-                onChange={toothNumbers => setRule({ ...rule, toothNumbers })}
+                onChange={handleToothNumbersChange}
+                addModalOpen={addToothOpen}
+                onAddModalOpenChange={setAddToothOpen}
               />
             )}
             <MyInput
@@ -122,7 +164,7 @@ const AddEditDentalChartAgeRule = ({
   return (
     <MyModal
       open={open}
-      setOpen={setOpen}
+      setOpen={handleRuleModalOpen}
       title={rule?.id ? 'Edit Dental Chart Rule' : 'New Dental Chart Rule'}
       position="right"
       content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
