@@ -72,6 +72,7 @@ export interface Department {
   requirePractitioner: boolean,
   requireBilling: boolean,
   requirePreAssessment: boolean,
+  assignPractitionerOnVisitStart: boolean,
   ageSpecific: boolean;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
@@ -101,6 +102,7 @@ export interface DepartmentResponseVM {
   requirePractitioner?: boolean | null;
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
+  assignPractitionerOnVisitStart?: boolean | null;
   ageSpecific?: boolean | null;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
