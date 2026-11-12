@@ -42,6 +42,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 import './styles.less';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
 import ProcedureAssignedDocumentsModal from './ProcedureAssignedDocumentsModal';
+import ProcedureReportButton from './ProcedureReportButton';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
 const TableLoader = () => (
@@ -546,6 +547,13 @@ const Referrals = (props: any) => {
             </Whisper>
           );
         }
+      },
+      {
+        key: 'report',
+        dataKey: '',
+        title: <Translate>REPORT</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => <ProcedureReportButton procedureRequestId={rowData?.id} />
       },
       {
         key: 'created',

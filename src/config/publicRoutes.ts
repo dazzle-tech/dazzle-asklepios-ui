@@ -4,7 +4,8 @@ export const PUBLIC_AUTH_FREE_PATHS = [
   '/create-password',
   '/create-patient-password',
   '/patient-satisfaction-survey',
-  '/submit-patient-complaint'
+  '/submit-patient-complaint',
+  '/verify-report'
 ] as const;
 
 export const PUBLIC_PERMISSION_BYPASS_PATHS = new Set<string>([

@@ -339,6 +339,27 @@ export const patientProcedureService = createApi({
         method: 'DELETE'
       }),
       invalidatesTags: ['ProcedureWorkflow']
+    }),
+
+    // ------------------
+    // REPORT (analytics-service renders the PDF)
+    // ------------------
+    getProcedureReportPdf: builder.query<
+      Blob,
+      { procedureRequestId: number; lang?: string; timezone?: string }
+    >({
+      query: ({ procedureRequestId, lang = 'en', timezone }) => ({
+        url: `/api/analytics/procedures/${procedureRequestId}/report/pdf`,
+        method: 'GET',
+        params: {
+          lang,
+          ...(timezone ? { timezone } : {}),
+          // The report QR code links back to this UI's public verification page
+          verifyBaseUrl: window.location.origin
+        },
+        responseHandler: response => response.blob()
+      }),
+      keepUnusedDataFor: 0
     })
   })
 });
@@ -375,5 +396,6 @@ export const {
   useDeleteProcedureVitalMonitoringMutation,
   useGetProcedureEquipmentQuery,
   useAddProcedureEquipmentMutation,
-  useDeleteProcedureEquipmentMutation
+  useDeleteProcedureEquipmentMutation,
+  useLazyGetProcedureReportPdfQuery
 } = patientProcedureService;
