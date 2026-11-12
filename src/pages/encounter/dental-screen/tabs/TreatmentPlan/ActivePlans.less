@@ -1,0 +1,602 @@
+.treatment-plan-tab .ap-page {
+  --ap-text: var(--rs-text-primary, #27364b);
+  --ap-muted: var(--rs-text-secondary, #78869a);
+  --ap-border: var(--rs-border-primary, #e3e9f0);
+  --ap-card: var(--rs-bg-card, #fff);
+  --ap-soft: var(--rs-bg-well, #f7f9fc);
+  --ap-primary: var(--rs-primary-600, #249ed2);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  padding-block: 12px;
+  color: var(--ap-text);
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .ap-plans-section,
+  .ap-treatments-section {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--ap-border);
+    border-radius: 8px;
+    background: var(--ap-card);
+  }
+
+  .ap-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 16px 18px;
+    border-block-end: 1px solid var(--ap-border);
+  }
+
+  .ap-section-heading {
+    min-width: 0;
+    flex: 1;
+
+    > p {
+      margin: 5px 0 0;
+      color: var(--ap-muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+  }
+
+  .ap-title-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    h4 {
+      margin: 0;
+      color: var(--ap-text);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+  }
+
+  .ap-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 23px;
+    height: 22px;
+    padding-inline: 6px;
+    border: 1px solid var(--ap-border);
+    border-radius: 5px;
+    background: var(--ap-soft);
+    color: var(--ap-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ap-count-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-inline-start: 5px;
+    color: var(--ap-muted);
+    font-size: 11px;
+  }
+
+  // Keep MyTable's system header, hover, and selected-row styles.
+  .ap-table-container {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .ap-clickable-cell {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 32px;
+    padding-block: 3px;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--ap-primary);
+      outline-offset: -2px;
+      border-radius: 3px;
+    }
+  }
+
+  .ap-plan-number {
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .ap-plan-title {
+    color: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .ap-meta-value {
+    color: inherit;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .ap-plan-progress {
+    width: 100%;
+    min-width: 0;
+
+    .tp-progress {
+      min-width: 0;
+      max-width: 135px;
+    }
+  }
+
+  .ap-plan-details {
+    padding: 15px 18px 0;
+    border-block-end: 1px solid var(--ap-border);
+  }
+
+  .ap-plan-details-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ap-plan-identity {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    min-width: 0;
+    padding-block: 5px;
+
+    > .ap-plan-number {
+      color: var(--ap-primary);
+    }
+  }
+
+  .ap-details-title {
+    color: var(--ap-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .ap-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-block-start: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--ap-border);
+    border-radius: 6px;
+    background: var(--ap-soft);
+
+    p {
+      min-width: 0;
+      margin: 0;
+      color: var(--ap-text);
+      font-size: 12px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .ap-note-label {
+    flex-shrink: 0;
+    color: var(--ap-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.9;
+  }
+
+  .ap-hold-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-block-start: 12px;
+    padding: 11px 12px;
+    border: 1px solid #efdfba;
+    border-radius: 6px;
+    background: #fff9ec;
+    color: #a77c27;
+    font-size: 12px;
+    line-height: 1.7;
+
+    > .MuiSvgIcon-root {
+      flex-shrink: 0;
+      margin-block-start: 2px;
+      font-size: 17px;
+    }
+
+    > div {
+      min-width: 0;
+    }
+
+    strong {
+      font-weight: 600;
+    }
+
+    p {
+      margin: 3px 0 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .ap-plan-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    margin-block-start: 14px;
+    padding-block: 12px;
+    border-block-start: 1px solid var(--ap-border);
+  }
+
+  .ap-document-actions,
+  .ap-plan-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+
+    .MuiSvgIcon-root {
+      font-size: 17px;
+    }
+  }
+
+  .ap-plan-actions {
+    justify-content: flex-end;
+  }
+
+  .ap-cancel-plan {
+    display: inline-flex;
+
+    button:not(:disabled) {
+      color: #bd5c74;
+      border-color: #efd7de;
+    }
+  }
+
+  .ap-selection-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 16px 18px;
+    padding: 13px 14px;
+    border: 1px solid var(--ap-border);
+    border-radius: 6px;
+    background: var(--ap-soft);
+    color: var(--ap-muted);
+
+    > .MuiSvgIcon-root {
+      flex-shrink: 0;
+      margin-block-start: 2px;
+      color: var(--ap-primary);
+      font-size: 18px;
+    }
+
+    strong {
+      color: var(--ap-text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.7;
+    }
+
+    p {
+      margin: 3px 0 0;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+  }
+
+  .ap-session-row .rs-table-cell {
+    background: var(--ap-soft);
+  }
+
+  .ap-session-label {
+    color: var(--ap-primary);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ap-tooth-number {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ap-area-tag {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 7px;
+    border: 1px solid var(--ap-border);
+    border-radius: 5px;
+    background: var(--ap-soft);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .ap-procedure {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .ap-procedure-code {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .ap-procedure-description,
+  .ap-service-name {
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .ap-muted {
+    color: var(--ap-muted);
+  }
+
+  .ap-number {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .ap-status-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .ap-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 25px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+
+    &--pending {
+      background: #fff8e9;
+      color: #ae8129;
+    }
+
+    &--in-progress {
+      background: #edf7fd;
+      color: #287eaf;
+    }
+
+    &--completed {
+      background: #eef9f2;
+      color: #309064;
+    }
+
+    &--cancelled {
+      background: #fdf1f4;
+      color: #bd5c74;
+    }
+
+    &--existing {
+      background: var(--ap-soft);
+      color: var(--ap-muted);
+    }
+  }
+
+  .ap-status-dot {
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .ap-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 3px;
+    width: max-content;
+    min-height: 32px;
+  }
+
+  .ap-action.MuiIconButton-root {
+    width: 28px;
+    height: 28px;
+    padding: 5px;
+    border-radius: 5px;
+
+    .MuiSvgIcon-root {
+      font-size: 18px;
+    }
+
+    &.ap-action--view {
+      color: #4389b3;
+    }
+
+    &.ap-action--edit {
+      color: #74849b;
+    }
+
+    &.ap-action--start {
+      color: #319eae;
+    }
+
+    &.ap-action--complete {
+      color: #38a476;
+    }
+
+    &.ap-action--cancel {
+      color: #c76b82;
+    }
+
+    &.Mui-disabled {
+      color: var(--ap-muted);
+      opacity: 0.3;
+    }
+  }
+
+  .ap-cancelled-row {
+    .ap-procedure-description,
+    .ap-service-name,
+    .ap-tooth-number,
+    .ap-number {
+      color: var(--ap-muted);
+    }
+  }
+
+  .ap-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 110px;
+    padding: 18px;
+    color: var(--ap-muted);
+    font-size: 12px;
+    line-height: 1.7;
+    text-align: center;
+
+    &--inline {
+      justify-content: flex-start;
+      min-height: 52px;
+      padding-block: 10px;
+      border-block-end: 1px solid var(--ap-border);
+    }
+  }
+
+  .ap-table-note {
+    padding: 11px 18px;
+    color: var(--ap-muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .ap-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 38px;
+    padding: 10px 16px;
+    border-block-start: 1px solid var(--ap-border);
+    color: var(--ap-muted);
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 1000px) {
+    .ap-plan-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .ap-plan-actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 700px) {
+    gap: 15px;
+
+    .ap-section-header {
+      align-items: flex-start;
+      padding: 14px;
+    }
+
+    .ap-section-heading {
+      flex-basis: 100%;
+    }
+
+    .ap-plan-details {
+      padding: 14px 14px 0;
+    }
+
+    .ap-plan-identity {
+      flex-basis: 100%;
+    }
+
+    .ap-note {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ap-selection-message {
+      margin: 14px;
+    }
+
+    .ap-table-note,
+    .ap-table-footer {
+      padding-inline: 14px;
+    }
+  }
+}
+
+.treatment-plan-tab .ap-page {
+  .ap-action .svg-inline--fa {
+    width: 15px;
+    height: 15px;
+  }
+
+  .ap-document-actions,
+  .ap-plan-actions {
+    .svg-inline--fa {
+      font-size: 14px;
+    }
+  }
+
+  .ap-selection-message,
+  .ap-hold-notice {
+    > .svg-inline--fa {
+      flex-shrink: 0;
+      margin-block-start: 3px;
+      font-size: 16px;
+    }
+  }
+
+  .ap-selection-message > .svg-inline--fa {
+    color: var(--ap-primary);
+  }
+}

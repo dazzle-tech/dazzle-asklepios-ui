@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { getToothShapeType } from './toothShape';
+import { getAdultOuterSrc } from './colorAssets';
+import { isPrimaryTooth } from '@/utils/toothNumber';
 
 interface ToothProps {
   chartTooth: any;
@@ -7,17 +9,10 @@ interface ToothProps {
   type?: 'condition' | 'treatment';
   hasCondition?: boolean;
   hasTreatment?: boolean;
+  /** Flip schematic upper-arch orientation (roots toward gumline). */
+  flipVertical?: boolean;
 }
 
-// Schematic (vector) tooth rendering -- replaces the old per-tooth photographic
-// PNG set. Reuses the app's existing condition/treatment/selected color
-// language (same hues the old canvas overlay used) so the visual meaning is
-// unchanged. Crown shape varies by tooth type (incisor/canine/premolar/molar)
-// and carries the clinical-state color; the root is a separate shape with its
-// own fixed tone (conditions/treatments are marked on the visible crown, not
-// the root) plus a thin nerve-line running through both for a more natural
-// read. The old image-based components/assets are left in place, unused, as
-// a fallback.
 const COLORS = {
   normalFill: '#F5F0E8',
   normalStroke: '#C9C2B5',
@@ -33,9 +28,6 @@ const COLORS = {
   nerveStroke: '#E0665C'
 };
 
-// Crown only (ends at the neck, ~y=70); the root is a separate shared shape
-// appended below. Incisor keeps a central ridge, canine a sharp asymmetric
-// point, premolar a visible notch between its two cusps, molar four cusps.
 const CROWN_PATHS: Record<'incisor' | 'canine' | 'premolar' | 'molar', string> = {
   incisor: 'M 20,16 C 14,16 12,20 12,26 L 11,60 C 11,66 14,70 20,70 L 24,70 C 30,70 33,66 33,60 L 32,26 C 32,20 26,16 20,16 Z',
   canine: 'M 23,4 C 28,5 32,13 32,20 L 31,56 C 31,63 27,70 22,70 C 17,70 13,63 13,56 L 12,20 C 12,13 17,5 23,4 Z',
@@ -50,42 +42,40 @@ const ROOT_PATH =
 
 const NERVE_PATH = 'M 22,22 C 21,40 21,58 22,94';
 
-const Tooth = ({
+/** Primary / fallback schematic tooth (root below crown in local coords). */
+const SchematicTooth = ({
   chartTooth,
-  selected = false,
-  hasCondition = false,
-  hasTreatment = false
+  selected,
+  hasCondition,
+  hasTreatment,
+  flipVertical
 }: ToothProps) => {
-  const hasImplant = useMemo(() => {
-    return chartTooth?.actions?.some((action: any) => action.imageName === 'Implant');
-  }, [chartTooth?.actions]);
+  const hasImplant = useMemo(
+    () => chartTooth?.actions?.some((action: any) => action.imageName === 'Implant'),
+    [chartTooth?.actions]
+  );
 
   const missing = Boolean(chartTooth?.missing);
   const shapeType = chartTooth?.toothNumber ? getToothShapeType(chartTooth.toothNumber) : 'incisor';
-
   const crownFill = hasCondition ? COLORS.conditionFill : hasTreatment ? COLORS.treatmentFill : COLORS.normalFill;
   const crownStroke = hasCondition ? COLORS.conditionStroke : hasTreatment ? COLORS.treatmentStroke : COLORS.normalStroke;
   const showSecondaryTreatmentDot = hasCondition && hasTreatment;
 
-  if (missing) {
-    return (
-      <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
-        <rect
-          x={4}
-          y={10}
-          width={36}
-          height={84}
-          rx={9}
-          fill="none"
-          stroke={COLORS.missingStroke}
-          strokeWidth={2}
-          strokeDasharray="4,3"
-        />
-      </svg>
-    );
-  }
-
-  return (
+  const body = missing ? (
+    <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
+      <rect
+        x={4}
+        y={10}
+        width={36}
+        height={84}
+        rx={9}
+        fill="none"
+        stroke={COLORS.missingStroke}
+        strokeWidth={2}
+        strokeDasharray="4,3"
+      />
+    </svg>
+  ) : (
     <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
       {selected && (
         <rect
@@ -105,9 +95,80 @@ const Tooth = ({
       <path d={NERVE_PATH} fill="none" stroke={COLORS.nerveStroke} strokeWidth={1.2} opacity={0.7} />
       {shapeType === 'molar' && !hasImplant && <circle cx={22} cy={40} r={2} fill={crownStroke} opacity={0.6} />}
       {hasImplant && <circle cx={22} cy={66} r={5} fill={COLORS.implantDot} />}
-      {showSecondaryTreatmentDot && <circle cx={34} cy={20} r={5} fill={COLORS.treatmentFill} stroke={COLORS.treatmentStroke} strokeWidth={1} />}
+      {showSecondaryTreatmentDot && (
+        <circle cx={34} cy={20} r={5} fill={COLORS.treatmentFill} stroke={COLORS.treatmentStroke} strokeWidth={1} />
+      )}
     </svg>
   );
+
+  return <div style={flipVertical ? { transform: 'scaleY(-1)' } : undefined}>{body}</div>;
+};
+
+/** Permanent tooth outer view from ColorNN.outer.svg with clinical state chrome. */
+const AdultOuterTooth = ({
+  chartTooth,
+  selected,
+  hasCondition,
+  hasTreatment
+}: ToothProps) => {
+  const src = getAdultOuterSrc(chartTooth?.toothNumber);
+  const hasImplant = useMemo(
+    () => chartTooth?.actions?.some((action: any) => action.imageName === 'Implant'),
+    [chartTooth?.actions]
+  );
+  const missing = Boolean(chartTooth?.missing);
+
+  if (!src) {
+    return (
+      <SchematicTooth
+        chartTooth={chartTooth}
+        selected={selected}
+        hasCondition={hasCondition}
+        hasTreatment={hasTreatment}
+      />
+    );
+  }
+
+  if (missing) {
+    return (
+      <div className="adult-outer missing">
+        <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
+          <rect
+            x={4}
+            y={10}
+            width={36}
+            height={84}
+            rx={9}
+            fill="none"
+            stroke={COLORS.missingStroke}
+            strokeWidth={2}
+            strokeDasharray="4,3"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  const stateClass = hasCondition ? 'condition' : hasTreatment ? 'treatment' : 'normal';
+
+  return (
+    <div className={`adult-outer ${stateClass}${selected ? ' selected' : ''}`}>
+      <img src={src} alt="" draggable={false} className="adult-outer-img" />
+      {hasImplant && <span className="adult-outer-implant" aria-hidden />}
+      {hasCondition && hasTreatment && <span className="adult-outer-treatment-dot" aria-hidden />}
+    </div>
+  );
+};
+
+const Tooth = (props: ToothProps) => {
+  const toothNumber = props.chartTooth?.toothNumber;
+  const useAdultArt = toothNumber && !isPrimaryTooth(toothNumber) && getAdultOuterSrc(toothNumber);
+
+  if (useAdultArt) {
+    return <AdultOuterTooth {...props} />;
+  }
+
+  return <SchematicTooth {...props} />;
 };
 
 export default React.memo(Tooth);

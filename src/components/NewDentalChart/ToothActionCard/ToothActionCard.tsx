@@ -1,18 +1,23 @@
 import React from 'react';
 import clsx from 'clsx';
-import { Box, Typography } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faNoteSticky } from '@fortawesome/free-solid-svg-icons';
+
+import Translate from '@/components/Translate';
+import { toothDisplayLabel } from '@/utils/toothNumber';
+
 import './styles.less';
-import StickyNote2OutlinedIcon from '@mui/icons-material/StickyNote2Outlined';
+
 interface ToothActionCardProps {
-  date: number;
-  toothNumber?: number;
+  date?: number | string | Date | null;
+  toothNumber?: number | string | null;
   action: string;
   type: string;
   surface: string;
-  note: string;
+  note?: string | null;
   existing: boolean;
-  anesthesiaUsed?: string;
-  dose?: string;
+  anesthesiaUsed?: string | null;
+  dose?: string | number | null;
 }
 
 const ToothActionCard = ({
@@ -26,67 +31,148 @@ const ToothActionCard = ({
   anesthesiaUsed,
   dose
 }: ToothActionCardProps) => {
-  const formattedDate = new Date(date);
+  const parsedDate =
+    date == null || date === ''
+      ? null
+      : date instanceof Date
+        ? date
+        : new Date(date);
 
-  const monthName = formattedDate.toLocaleString('default', { month: 'long' }); // e.g., "May"
-  const dayNumber = formattedDate.getDate();
+  const validDate =
+    parsedDate && !Number.isNaN(parsedDate.getTime())
+      ? parsedDate
+      : null;
+
+  const normalizedType = String(type || '').toLowerCase();
+
+  const typeLabel =
+    normalizedType === 'treatment'
+      ? 'Treatment'
+      : normalizedType === 'condition'
+        ? 'Condition'
+        : type || '—';
+
+  const hasDose = dose !== null && dose !== undefined && dose !== '';
+
+  const fields = [
+    ...(toothNumber != null && toothNumber !== ''
+      ? [{
+          key: 'tooth',
+          label: 'Tooth #',
+          value:
+            typeof toothNumber === 'string'
+              ? toothDisplayLabel(toothNumber)
+              : toothNumber
+        }]
+      : []),
+    {
+      key: 'action',
+      label: 'Action',
+      value: action || '—'
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      value: typeLabel
+    },
+    {
+      key: 'surface',
+      label: 'Surface',
+      value: surface || '—'
+    },
+    {
+      key: 'existing',
+      label: 'Existing',
+      value: existing ? 'Yes' : 'No'
+    },
+    ...(anesthesiaUsed
+      ? [{
+          key: 'anesthesia',
+          label: 'Anesthesia',
+          value: anesthesiaUsed
+        }]
+      : []),
+    ...(hasDose
+      ? [{
+          key: 'dose',
+          label: 'Dose',
+          value: dose
+        }]
+      : [])
+  ];
 
   return (
-    <Box className="tooth-action-card">
-      <Box className="tooth-action-date">
-        <Typography className="tooth-action-month">{monthName}</Typography>
-        <Typography className="tooth-action-day">{dayNumber}</Typography>
-      </Box>
-      <Box className="tooth-action-content">
-        <Box className="tooth-info">
-          {toothNumber && (
-            <Box className="tooth-info-item">
-              <Typography className="tooth-action-info-label">Tooth #</Typography>
-              <Typography className="tooth-action-info-value">{toothNumber}</Typography>
-            </Box>
-          )}
-          <Box className="tooth-info-item">
-            <Typography className="tooth-action-info-label">Action</Typography>
-            <Typography className="tooth-action-info-value">{action}</Typography>
-          </Box>
-          <Box className="tooth-info-item">
-            <Typography className="tooth-action-info-label">Type</Typography>
-            <Typography
-              className={clsx('tooth-action-info-value', {
-                treatment: type.toLowerCase() === 'treatment',
-                condition: type.toLowerCase() === 'condition'
+    <div className="tooth-action-card">
+      <div className="tooth-action-date">
+        {validDate ? (
+          <time dateTime={validDate.toISOString()}>
+            <span className="tooth-action-month">
+              {validDate.toLocaleString(undefined, {
+                month: 'short'
+              })}
+            </span>
+
+            <strong className="tooth-action-day">
+              {validDate.getDate()}
+            </strong>
+
+            <span className="tooth-action-year">
+              {validDate.getFullYear()}
+            </span>
+          </time>
+        ) : (
+          <span className="tooth-action-no-date">—</span>
+        )}
+      </div>
+
+      <div className="tooth-action-content">
+        <div className="tooth-info">
+          {fields.map(field => (
+            <div
+              key={field.key}
+              className={clsx('tooth-info-item', {
+                'tooth-info-item--action': field.key === 'action'
               })}
             >
-              {type}
-            </Typography>
-          </Box>
-          <Box className="tooth-info-item">
-            <Typography className="tooth-action-info-label">Surface</Typography>
-            <Typography className="tooth-action-info-value">{surface}</Typography>
-          </Box>
-          <Box className="tooth-info-item">
-            <Typography className="tooth-action-info-label">Existing</Typography>
-            <Typography className="tooth-action-info-value">{existing ? 'Yes' : 'No'}</Typography>
-          </Box>
-          {anesthesiaUsed && (
-            <Box className="tooth-info-item">
-              <Typography className="tooth-action-info-label">Anesthesia</Typography>
-              <Typography className="tooth-action-info-value">{anesthesiaUsed}</Typography>
-            </Box>
-          )}
-          {dose && (
-            <Box className="tooth-info-item">
-              <Typography className="tooth-action-info-label">Dose</Typography>
-              <Typography className="tooth-action-info-value">{dose}</Typography>
-            </Box>
-          )}
-        </Box>
-        <Box className="tooth-action-note">
-          <StickyNote2OutlinedIcon />
-          <Typography className="tooth-action-note-value">{note}</Typography>
-        </Box>
-      </Box>
-    </Box>
+              <span className="tooth-action-info-label">
+                <Translate>{field.label}</Translate>
+              </span>
+
+              <span
+                className={clsx('tooth-action-info-value', {
+                  treatment:
+                    field.key === 'type' &&
+                    normalizedType === 'treatment',
+                  condition:
+                    field.key === 'type' &&
+                    normalizedType === 'condition'
+                })}
+              >
+                {field.key === 'type' || field.key === 'existing' ? (
+                  <Translate>{String(field.value)}</Translate>
+                ) : (
+                  field.value
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {note?.trim() && (
+          <div className="tooth-action-note">
+            <FontAwesomeIcon icon={faNoteSticky} />
+
+            <div className="tooth-action-note-content">
+              <span className="tooth-action-info-label">
+                <Translate>Notes</Translate>
+              </span>
+
+              <p className="tooth-action-note-value">{note}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

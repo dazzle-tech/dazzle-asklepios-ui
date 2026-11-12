@@ -38,3 +38,65 @@ export const toothDisplayLabel = (toothNumber: string): string => toothNumber.re
 /** CSS class suffix matching styles.less's per-tooth width overrides (zero-padded, permanent only). */
 export const toothCssClassSuffix = (toothNumber: string): string =>
   isPrimaryTooth(toothNumber) ? toothDisplayLabel(toothNumber) : toothImageCodeFromEnum(toothNumber);
+
+export type TreatmentAreaScope =
+  | 'SPECIFIC_TOOTH'
+  | 'UPPER_ARCH'
+  | 'LOWER_ARCH'
+  | 'FULL_MOUTH';
+
+/**
+ * Split chart teeth into upper/lower halves by sorted tooth index (chart layout).
+ */
+export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>(
+  teeth: T[] | null | undefined
+): { upper: T[]; lower: T[]; all: T[] } => {
+  const list = Array.isArray(teeth) ? [...teeth] : [];
+  if (!list.length) {
+    return { upper: [], lower: [], all: [] };
+  }
+
+  const sorted = [...list]
+    .filter(t => t?.toothNumber)
+    .sort(
+      (a, b) =>
+        toothIndexFromEnum(String(a.toothNumber)) -
+        toothIndexFromEnum(String(b.toothNumber))
+    );
+
+  const mid = Math.floor(sorted.length / 2);
+  const upper = sorted.slice(0, mid);
+  const lower = sorted.slice(mid);
+
+  return { upper, lower, all: sorted };
+};
+
+export const teethForTreatmentScope = <T extends { toothNumber?: string | null }>(
+  teeth: T[] | null | undefined,
+  scope: TreatmentAreaScope
+): T[] => {
+  const { upper, lower, all } = splitChartTeethByArch(teeth);
+  switch (scope) {
+    case 'UPPER_ARCH':
+      return upper;
+    case 'LOWER_ARCH':
+      return lower;
+    case 'FULL_MOUTH':
+      return all;
+    default:
+      return [];
+  }
+};
+
+export const treatmentScopeLabel = (scope?: string | null): string => {
+  switch (scope) {
+    case 'UPPER_ARCH':
+      return 'Upper Arch';
+    case 'LOWER_ARCH':
+      return 'Lower Arch';
+    case 'FULL_MOUTH':
+      return 'Full Mouth';
+    default:
+      return 'Specific Teeth';
+  }
+};

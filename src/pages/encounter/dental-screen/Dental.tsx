@@ -4,7 +4,9 @@ import { useGetOrCreateChartForEncounterQuery } from '@/services/dental/dentalCh
 import { newApDentalChart, newApDentalChartTooth } from '@/types/model-types-constructor';
 import ChartTab from './tabs/DentalChartTab';
 import ProgressNotesTab from './tabs/ProgressNotesTab';
-import TreatmentPlanTab from './tabs/TreatmentPlanTab';
+import TreatmentPlanTab from './tabs/TreatmentPlan/TreatmentPlanTab';
+import ClinicalDocumentationTab from './tabs/ClinicalDocumentationTab';
+import DentalAttachmentsTab from './tabs/DentalAttachmentsTab';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import MyTab from '@/components/MyTab';
@@ -41,6 +43,23 @@ const Dental = () => {
 
   const tabData = [
     {
+      title: 'Treatment Plan',
+      content: (
+        <TreatmentPlanTab
+          encounter={encounter}
+          patient={patient}
+          treatmentPlanTrigger={treatmentPlanTrigger}
+          setTreatmentPlanTrigger={setTreatmentPlanTrigger}
+          originalChart={originalChart}
+          dispatch={dispatch}
+        />
+      )
+    },
+    {
+      title: 'Clinical Documentation',
+      content: <ClinicalDocumentationTab patient={patient} encounter={encounter} />
+    },
+    {
       title: 'Chart',
       content: (
         <ChartTab
@@ -56,6 +75,8 @@ const Dental = () => {
           treatmentPlanTrigger={treatmentPlanTrigger}
           setTreatmentPlanTrigger={setTreatmentPlanTrigger}
           isLoading={dentalChartResponse.isLoading}
+          patient={patient}
+          encounter={encounter}
         />
       )
     },
@@ -64,17 +85,8 @@ const Dental = () => {
       content: <ProgressNotesTab chartId={currentChart?.id} dispatch={dispatch} />
     },
     {
-      title: 'Treatment Plan',
-      content: (
-        <TreatmentPlanTab
-          encounter={encounter}
-          patient={patient}
-          treatmentPlanTrigger={treatmentPlanTrigger}
-          setTreatmentPlanTrigger={setTreatmentPlanTrigger}
-          originalChart={originalChart}
-          dispatch={dispatch}
-        />
-      )
+      title: 'Attachments',
+      content: <DentalAttachmentsTab patient={patient} encounter={encounter} />
     }
   ];
 
