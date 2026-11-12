@@ -264,6 +264,7 @@ const SubmitPatientComplaintPage = lazy(
 );
 const PatientComplaintsPage = lazy(() => import('./pages/patient-complaints/PatientComplaintsPage'));
 const SurveyPage = lazy(() => import('./pages/survey/SurveyPage'));
+const VerifyReportPage = lazy(() => import('./pages/verify-report/VerifyReportPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -1091,6 +1092,7 @@ const App = () => {
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="patient-satisfaction-survey" element={<SurveyPage />} />
           <Route path="submit-patient-complaint" element={<SubmitPatientComplaintPage />} />
+          <Route path="verify-report" element={<VerifyReportPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
