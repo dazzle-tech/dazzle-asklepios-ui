@@ -24,6 +24,7 @@ import ToothStateTab from './tabs/ToothStateTab';
 import ToothHistoryTab from './tabs/ToothHistoryTab';
 import ToothServicesTab from './tabs/ToothServicesTab';
 import ToothCdtTab from './tabs/ToothCdtTab';
+import { readMissingFields } from '@/reducers/preAuthorizationMissingFieldsSlice';
 
 // One entry per surface that has an active (non-cancelled) action on the
 // tooth; condition takes priority over treatment if both exist on the same
@@ -158,7 +159,9 @@ const DentalChart = ({
       dispatch(hideLoading());
     } else if (addToothActionMutation.status === 'rejected') {
       dispatch(hideLoading());
-      dispatch(notify({ msg: extractApiErrorMessage(addToothActionMutation.error) || 'Add action error', sev: 'error' }));
+      if (!readMissingFields(addToothActionMutation.error)) {
+        dispatch(notify({ msg: extractApiErrorMessage(addToothActionMutation.error) || 'Add action error', sev: 'error' }));
+      }
     } else if (addToothActionMutation.status === 'pending') {
       dispatch(showLoading());
     }
@@ -189,7 +192,9 @@ const DentalChart = ({
       dispatch(hideLoading());
     } else if (addToothServiceMutation.status === 'rejected') {
       dispatch(hideLoading());
-      dispatch(notify({ msg: extractApiErrorMessage(addToothServiceMutation.error) || 'Add service error', sev: 'error' }));
+      if (!readMissingFields(addToothServiceMutation.error)) {
+        dispatch(notify({ msg: extractApiErrorMessage(addToothServiceMutation.error) || 'Add service error', sev: 'error' }));
+      }
     } else if (addToothServiceMutation.status === 'pending') {
       dispatch(showLoading());
     }
