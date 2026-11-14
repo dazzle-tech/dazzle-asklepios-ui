@@ -295,6 +295,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       requirePractitioner: true,
       requireBilling: department?.requireBilling,
       requirePreAssessment: department?.requirePreAssessment,
+      assignPractitionerOnVisitStart: Boolean(department?.assignPractitionerOnVisitStart),
       ageSpecific: Boolean(department?.ageSpecific),
       fromAge: department?.fromAge,
       fromAgeUnit: department?.fromAgeUnit,

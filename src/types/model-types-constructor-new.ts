@@ -65,6 +65,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,
@@ -4235,7 +4236,7 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
 export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
   configKey: '',
   configType: '',
-  configValue: '',
+  configValues: [''],
   description: ''
 };
 

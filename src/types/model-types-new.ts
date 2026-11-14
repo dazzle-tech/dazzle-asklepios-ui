@@ -72,6 +72,7 @@ export interface Department {
   requirePractitioner: boolean,
   requireBilling: boolean,
   requirePreAssessment: boolean,
+  assignPractitionerOnVisitStart: boolean,
   ageSpecific: boolean;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
@@ -101,6 +102,7 @@ export interface DepartmentResponseVM {
   requirePractitioner?: boolean | null;
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
+  assignPractitionerOnVisitStart?: boolean | null;
   ageSpecific?: boolean | null;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
@@ -9033,6 +9035,13 @@ export interface ClaimEncounterDiagnosis {
   type: string | null;
   suspected: boolean;
   major: boolean;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface UpdateClaimEncounterDiagnosesRequest {
@@ -9059,6 +9068,9 @@ export interface ClaimEncounterProgressNote {
   createdDate: string | null;
   lastModifiedBy: string | null;
   lastModifiedDate: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopySocialHistory {
@@ -9094,6 +9106,9 @@ export interface ClaimEncounterCopySocialHistory {
   cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopySurgicalHistory {
@@ -9122,6 +9137,9 @@ export interface ClaimEncounterCopySurgicalHistory {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface DialysisFlowReadingCreateDTO {
@@ -9181,6 +9199,9 @@ export interface ClaimEncounterCopyPatientProblem {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface DialysisMedicationCreateDTO {
@@ -9226,6 +9247,9 @@ export interface ClaimEncounterCopyFamilyHistory {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyHospitalization {
@@ -9249,6 +9273,9 @@ export interface ClaimEncounterCopyHospitalization {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyHospitalizationCreateDTO {
@@ -9290,6 +9317,13 @@ export interface ClaimEncounterCopyCurrentMedication {
   cancelledBy?: string;
   cancelledDate?: string;
   cancellationReason?: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyCurrentMedicationCreateDTO {
@@ -9338,6 +9372,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestResult {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestResultCreateDTO {
@@ -9378,6 +9415,9 @@ export interface ClaimEncounterCopyDiagnosticOrderTestReport {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  // Who wrote the original record (createdBy/createdDate are the copy's own)
+  originalCreatedBy?: string | null;
+  originalCreatedDate?: string | null;
 }
 
 export interface ClaimEncounterCopyDiagnosticOrderTestReportCreateDTO {
@@ -9424,6 +9464,14 @@ export type DentalChartStatus = string;
 
 export type PlannedTreatmentType = 'DRAFT' | 'CURRENT';
 
+export type PlannedTreatmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+
+export type TreatmentScope =
+  | 'SPECIFIC_TOOTH'
+  | 'UPPER_ARCH'
+  | 'LOWER_ARCH'
+  | 'FULL_MOUTH';
+
 export type ToothActionOrServiceSource =
   | 'DENTAL_CHART_CDT_TREATMENT'
   | 'DENTAL_CHART_MANUAL_SERVICE'
@@ -9436,6 +9484,8 @@ export interface ToothActionDTO {
   note?: string | null;
   surface?: ToothSurface | null;
   existing?: boolean | null;
+  /** Patient-scoped Session Number (API property visitNumber) for Existing chart treatments. */
+  visitNumber?: number | null;
   imageName?: string | null;
   // Plain string, not the strict ToothNumber union: holds either a permanent
   // ("Tooth5") or primary/child ("ToothC") tooth identifier.
@@ -9570,22 +9620,47 @@ export interface ProgressNoteSaveDTO {
 }
 
 export interface PlannedTreatmentDTO {
-  id: number;
+  /** Persisted plan id; null for chart-only Existing documentation rows. */
+  id?: number | null;
   patientId: number;
   encounterId: number;
   type: PlannedTreatmentType;
+  /** Session Number (label); stored/API property remains visitNumber. */
   visitNumber?: number | null;
   cdtCodeId?: number | null;
   toothId?: number | null;
+  treatmentScope?: TreatmentScope | null;
+  coveredToothIds?: number[] | null;
   note?: string | null;
   surface?: ToothSurface | null;
   insurance?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  price?: number | null;
+  quantity?: number | null;
+  discount?: number | null;
+  status?: PlannedTreatmentStatus | null;
+  patientServiceAndProductId?: number | null;
   source?: ToothActionOrServiceSource | null;
   toothActionId?: number | null;
   cancelled?: boolean | null;
   cancelledBy?: string | null;
   cancellationReason?: string | null;
   tooth?: DentalChartToothSummaryDTO | null;
+  /** True when row is a chart Existing treatment projected for documentation (not billable). */
+  existing?: boolean | null;
+  dentalActionDescription?: string | null;
+  /** Clinical snapshot (persisted in clinical_details JSON, not four columns). */
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  /** Authenticated login recorded at completion. Absent on older rows. */
+  completedBy?: string | null;
+  completedAt?: string | null;
+  treatmentPlanId?: number | null;
+  treatmentSessionId?: number | null;
+  executionEncounterId?: number | null;
 }
 
 export interface PlannedTreatmentSaveDTO {
@@ -9595,9 +9670,117 @@ export interface PlannedTreatmentSaveDTO {
   visitNumber?: number | null;
   cdtCodeId?: number | null;
   toothId?: number | null;
+  treatmentScope?: TreatmentScope | null;
+  coveredToothIds?: number[] | null;
   note?: string | null;
   surface?: ToothSurface | null;
   insurance?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  price?: number | null;
+  quantity?: number | null;
+  discount?: number | null;
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  treatmentPlanId?: number | null;
+  treatmentSessionId?: number | null;
+  revisionReason?: string | null;
+}
+
+export interface PlannedTreatmentBatchSaveDTO {
+  patientId: number;
+  encounterId: number;
+  type: PlannedTreatmentType;
+  visitNumber?: number | null;
+  cdtCodeId: number;
+  toothIds: number[];
+  note?: string | null;
+  surface?: ToothSurface | null;
+  insurance?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+  price?: number | null;
+  quantity?: number | null;
+  discount?: number | null;
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  treatmentPlanId?: number | null;
+  treatmentSessionId?: number | null;
+  revisionReason?: string | null;
+}
+
+export type DentalTreatmentPlanStatus =
+  | 'DRAFT'
+  | 'PROPOSED'
+  | 'ACCEPTED'
+  | 'IN_PROGRESS'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface DentalTreatmentPlanSummaryDTO {
+  id: number;
+  planNumber: string;
+  patientId: number;
+  originEncounterId: number;
+  originEncounterNumber?: string | null;
+  title: string;
+  notes?: string | null;
+  practitionerId?: number | null;
+  status: DentalTreatmentPlanStatus;
+  resumeStatus?: DentalTreatmentPlanStatus | null;
+  holdReason?: string | null;
+  cancellationReason?: string | null;
+  createdDate?: string | null;
+  completedAt?: string | null;
+  completedBy?: string | null;
+  completedTreatments: number;
+  activeTreatments: number;
+}
+
+export interface DentalTreatmentPlanSaveDTO {
+  patientId: number;
+  originEncounterId: number;
+  title: string;
+  notes?: string | null;
+  practitionerId?: number | null;
+}
+
+export interface DentalTreatmentSessionDTO {
+  id: number;
+  treatmentPlanId: number;
+  sessionNumber: number;
+}
+
+export interface DentalTreatmentPlanStatusLogDTO {
+  id: number;
+  treatmentPlanId: number;
+  previousStatus?: DentalTreatmentPlanStatus | null;
+  newStatus: DentalTreatmentPlanStatus;
+  reason?: string | null;
+  changedBy: string;
+  changedAt: string;
+}
+
+export type PlannedTreatmentHistoryAction =
+  | 'CREATED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface DentalPlannedTreatmentStatusLogDTO {
+  id: number;
+  plannedTreatmentId: number;
+  treatmentPlanId: number;
+  toothId?: number | null;
+  toothLabel?: string | null;
+  action: PlannedTreatmentHistoryAction;
+  changedBy: string;
+  changedAt: string;
 }
 
 export interface PlannedTreatmentCancelDTO {
@@ -9794,14 +9977,14 @@ export interface MobileAppConfigResponseVM {
 export interface MobileAppConfigCreateDTO {
   configKey: string;
   configType: string;
-  configValue: string;
+  configValues: string[];
   description?: string | null;
 }
 
 export interface MobileAppConfigUpdateDTO {
   id: number;
   configType: string;
-  configValue: string;
+  configValues: string[];
   description?: string | null;
 }
 

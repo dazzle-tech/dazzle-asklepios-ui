@@ -24,7 +24,10 @@ import {
 import {
   useCreateQuickAppointmentMutation
 } from '@/services/appointment/appointmentService';
-import { useLazyIsPatientAgeAllowedQuery } from '@/services/security/departmentService';
+import {
+  useGetDepartmentByIdQuery,
+  useLazyIsPatientAgeAllowedQuery
+} from '@/services/security/departmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
@@ -50,6 +53,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
+  'practitioner.required': 'Practitioner is required for this department.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
@@ -162,6 +166,10 @@ const PatientQuickAppointment = ({
   const [checkPatientAgeAllowed] = useLazyIsPatientAgeAllowedQuery();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
   const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
+  const selectedDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const { data: selectedDepartment } = useGetDepartmentByIdQuery(selectedDepartmentId, {
+    skip: !selectedDepartmentId
+  });
 
   const didAcceptReferralRef = useRef(false);
 
@@ -280,10 +288,10 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
-    if (
-      localEncounter?.encounterType !== 'EMERGENCY' &&
-      !localEncounter?.practitionerId
-    ) {
+    const allowsNullPractitionerAtRegistration =
+      localEncounter?.encounterType === 'EMERGENCY' ||
+      Boolean(selectedDepartment?.assignPractitionerOnVisitStart);
+    if (!allowsNullPractitionerAtRegistration && !localEncounter?.practitionerId) {
       missingFields.push('Practitioner');
     }
     if (!localEncounter?.encounterReason) missingFields.push('Reason');

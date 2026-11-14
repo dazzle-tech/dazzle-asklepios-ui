@@ -22,6 +22,7 @@ import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import EncounterAttachment from '../patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import Perform from '../encounter/encounter-component/procedure-new/Perform';
 import { isCurrentDepartment } from '../encounter/encounter-component/procedure-new/procedureHelpers';
+import ProcedureReportButton from '../encounter/encounter-component/procedure-new/ProcedureReportButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import PatientWritBandPrintLabelButton from '../encounter/urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
@@ -321,6 +322,7 @@ const ProcedureModule: React.FC = () => {
             patientId={rowData.patientId}
             disabled={!rowData.patientId}
           />
+          <ProcedureReportButton procedureRequestId={rowData.id} variant="button" />
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>EMR</Tooltip>}>
             <div>
               <MyButton size="small" backgroundColor="violet" onClick={() => setOpenEMRModal(true)}>

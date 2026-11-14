@@ -8,8 +8,8 @@ import {
 } from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
-import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix } from '@/utils/toothNumber';
-import { useEffect, useState } from 'react';
+import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix, isPrimaryTooth } from '@/utils/toothNumber';
+import { useEffect, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { Button } from 'rsuite';
 import { Box } from '@mui/material';
@@ -19,12 +19,23 @@ import './styles.less';
 import MyModal from '../MyModal/MyModal';
 import Tooth from './Tooth/Tooth';
 import OcclusalBadge from './Tooth/OcclusalBadge';
+import AdultOcclusal from './Tooth/AdultOcclusal';
 import { getToothShapeType } from './Tooth/toothShape';
 import ToothStateTab from './tabs/ToothStateTab';
 import ToothHistoryTab from './tabs/ToothHistoryTab';
 import ToothServicesTab from './tabs/ToothServicesTab';
 import ToothCdtTab from './tabs/ToothCdtTab';
 import { readMissingFields } from '@/reducers/preAuthorizationMissingFieldsSlice';
+import {
+  dentalTreatmentPlanService,
+  useCreateTreatmentPlanMutation,
+  useGetTreatmentPlansByPatientQuery,
+  useGetTreatmentPlanSessionsQuery
+} from '@/services/dental/dentalTreatmentPlanService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import TreatmentPlanHeaderModal, {
+  toPractitionerOptions
+} from '@/pages/encounter/dental-screen/tabs/TreatmentPlan/TreatmentPlanHeaderModal';
 
 // One entry per surface that has an active (non-cancelled) action on the
 // tooth; condition takes priority over treatment if both exist on the same
@@ -50,8 +61,17 @@ const DentalChart = ({
   cdtMap,
   selectedTooth,
   setSelectedTooth,
+  selectedTeeth,
+  setSelectedTeeth,
   treatmentPlanTrigger,
   setTreatmentPlanTrigger,
+  patientId,
+  encounterId,
+  selectionOnly = false,
+  multiSelect = false,
+  highlightToothIds = null,
+  allowedToothIds = null,
+  planReviewMode = false,
   ...props
 }) => {
   const dispatch = useAppDispatch();
@@ -67,7 +87,26 @@ const DentalChart = ({
     note: '',
     existing: false,
     anesthesiaUsed: '',
-    dose: ''
+    dose: '',
+    treatmentPlanId: null,
+    treatmentSessionId: null
+  });
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [captureNewSession, setCaptureNewSession] = useState(false);
+  const sessionSnapshot = useRef<number | null>(null);
+  const [planForm, setPlanForm] = useState<any>({ title: '', notes: '', practitionerId: null });
+
+  const plansQuery = useGetTreatmentPlansByPatientQuery(patientId, { skip: !patientId || selectionOnly });
+  const practitionersQuery = useGetAllPractitionersQuery(
+    { page: 0, size: 1000 },
+    { skip: selectionOnly }
+  );
+  const [createTreatmentPlan, createPlanMutation] = useCreateTreatmentPlanMutation();
+  const eligiblePlans = (plansQuery.data ?? []).filter((plan: any) =>
+    ['DRAFT', 'PROPOSED', 'ACCEPTED', 'IN_PROGRESS'].includes(plan.status)
+  );
+  const planSessionsQuery = useGetTreatmentPlanSessionsQuery(currentToothAction.treatmentPlanId, {
+    skip: !currentToothAction.treatmentPlanId || selectionOnly
   });
 
   const [currentToothService, setCurrentToothService] = useState({
@@ -85,24 +124,23 @@ const DentalChart = ({
   const [removeToothAction, removeToothActionMutation] = useCancelToothActionMutation();
 
   useEffect(() => {
-    if (chartObject?.teeth) {
-      const upper = [];
-      const lower = [];
-      // Half-based split (16/32 permanent, 10/20 primary) instead of a
-      // hardcoded "< 17" so this works for both tooth sets automatically.
-      const upperCutoff = chartObject.teeth.length / 2;
-
-      chartObject.teeth.map((tooth: any) => {
-        if (toothIndexFromEnum(tooth.toothNumber) <= upperCutoff) {
-          upper.push(tooth);
-        } else {
-          lower.unshift(tooth);
-        }
-      });
-
-      setUpperTeeth(upper);
-      setLowerTeeth(lower);
+    if (!chartObject?.teeth?.length) {
+      setUpperTeeth([]);
+      setLowerTeeth([]);
+      return;
     }
+    // Half-based split (16/32 permanent, 10/20 primary). Sort explicitly so
+    // display order is Upper 1→16 / A→J and Lower 32→17 / T→K regardless of
+    // API array order.
+    const upperCutoff = chartObject.teeth.length / 2;
+    const upper = chartObject.teeth
+      .filter((t: any) => toothIndexFromEnum(t.toothNumber) <= upperCutoff)
+      .sort((a: any, b: any) => toothIndexFromEnum(a.toothNumber) - toothIndexFromEnum(b.toothNumber));
+    const lower = chartObject.teeth
+      .filter((t: any) => toothIndexFromEnum(t.toothNumber) > upperCutoff)
+      .sort((a: any, b: any) => toothIndexFromEnum(b.toothNumber) - toothIndexFromEnum(a.toothNumber));
+    setUpperTeeth(upper);
+    setLowerTeeth(lower);
   }, [chartObject]);
 
   const handleErrorMessage = (missingFields: string[]) => {
@@ -119,8 +157,28 @@ const DentalChart = ({
     if (action?.type === 'TREATMENT' && !currentToothAction.existing && !selectedCdt) {
       missingFields.push('CDT Code');
     }
+    if (
+      action?.type === 'TREATMENT' &&
+      !currentToothAction.existing &&
+      selectedCdt &&
+      !currentToothAction.treatmentPlanId
+    ) {
+      missingFields.push('Treatment Plan');
+    }
     if (handleErrorMessage(missingFields)) return;
 
+    const creatingSession =
+      action?.type === 'TREATMENT' &&
+      !currentToothAction.existing &&
+      !currentToothAction.treatmentSessionId;
+    if (creatingSession) {
+      const currentMax = (planSessionsQuery.data ?? []).reduce(
+        (max, session) => Math.max(max, session.id),
+        0
+      );
+      sessionSnapshot.current = currentMax;
+    }
+    setCaptureNewSession(creatingSession);
     addToothAction({
       id: currentToothAction.id,
       toothId: selectedTooth.id,
@@ -130,8 +188,39 @@ const DentalChart = ({
       existing: currentToothAction.existing,
       cdtCodeId: selectedCdt,
       anesthesiaUsed: currentToothAction.anesthesiaUsed,
-      dose: currentToothAction.dose
+      dose: currentToothAction.dose,
+      treatmentPlanId: currentToothAction.existing ? null : currentToothAction.treatmentPlanId,
+      treatmentSessionId: currentToothAction.existing ? null : currentToothAction.treatmentSessionId
     });
+  };
+
+  const saveChartPlan = async () => {
+    const title = planForm.title?.trim?.() || '';
+    if (!title || !patientId || !encounterId) {
+      dispatch(notify({ msg: 'Title is required', sev: 'error' }));
+      return;
+    }
+    try {
+      const saved = await createTreatmentPlan({
+        patientId,
+        originEncounterId: encounterId,
+        title,
+        notes: planForm.notes?.trim?.() || null,
+        practitionerId: planForm.practitionerId || null
+      }).unwrap();
+      setCurrentToothAction(prev => ({
+        ...prev,
+        treatmentPlanId: saved.id,
+        treatmentSessionId: null
+      }));
+      setPlanModalOpen(false);
+      dispatch(notify({ msg: 'Treatment plan created', sev: 'success' }));
+    } catch (error: any) {
+      dispatch(notify({
+        msg: extractApiErrorMessage(error) || 'Could not create the treatment plan',
+        sev: 'error'
+      }));
+    }
   };
 
   useEffect(() => {
@@ -143,7 +232,9 @@ const DentalChart = ({
         note: '',
         existing: false,
         anesthesiaUsed: '',
-        dose: ''
+        dose: '',
+        treatmentPlanId: currentToothAction.treatmentPlanId,
+        treatmentSessionId: currentToothAction.treatmentSessionId
       });
       setSelectedCdt(null);
 
@@ -156,6 +247,7 @@ const DentalChart = ({
         }
       }
       setTreatmentPlanTrigger(treatmentPlanTrigger * -1);
+      dispatch(dentalTreatmentPlanService.util.invalidateTags(['DentalTreatmentPlan']));
       dispatch(hideLoading());
     } else if (addToothActionMutation.status === 'rejected') {
       dispatch(hideLoading());
@@ -166,6 +258,19 @@ const DentalChart = ({
       dispatch(showLoading());
     }
   }, [addToothActionMutation]);
+
+  useEffect(() => {
+    if (!captureNewSession || !planSessionsQuery.data?.length) return;
+    const newest = [...planSessionsQuery.data].sort(
+      (a, b) => b.sessionNumber - a.sessionNumber
+    )[0];
+    if (!newest || newest.id === sessionSnapshot.current) return;
+    setCurrentToothAction(prev => ({
+      ...prev,
+      treatmentSessionId: newest.id
+    }));
+    setCaptureNewSession(false);
+  }, [captureNewSession, planSessionsQuery.data]);
 
   const addService = () => {
     addToothService({
@@ -251,181 +356,287 @@ const DentalChart = ({
     });
   };
 
+  const midGapAfter = Math.floor(upperTeeth.length / 2);
+
+  const toothIdAllowed = (tooth: any) => {
+    if (!allowedToothIds || allowedToothIds.length === 0) return true;
+    if (tooth?.id == null) return false;
+    return allowedToothIds.some((id: any) => String(id) === String(tooth.id));
+  };
+
+  const isToothHighlighted = (tooth: any) => {
+    if (!highlightToothIds || highlightToothIds.length === 0) return false;
+    if (tooth?.id == null) return false;
+    return highlightToothIds.some((id: any) => String(id) === String(tooth.id));
+  };
+
+  const isToothSelected = (tooth: any) => {
+    if (multiSelect) {
+      return (selectedTeeth ?? []).some(
+        (item: any) =>
+          (item?.id != null && tooth?.id != null && String(item.id) === String(tooth.id)) ||
+          (item?.toothNumber != null &&
+            tooth?.toothNumber != null &&
+            item.toothNumber === tooth.toothNumber)
+      );
+    }
+
+    return (
+      (selectedTooth?.id != null &&
+        tooth?.id != null &&
+        String(selectedTooth.id) === String(tooth.id)) ||
+      tooth?.toothNumber === selectedTooth?.toothNumber
+    );
+  };
+
+  const toothMeta = (tooth: any) => {
+    const selected = isToothSelected(tooth);
+    const highlighted = isToothHighlighted(tooth);
+    const hasCondition = (tooth.actions ?? []).some(
+      (action: any) => dentalActionsMap?.[action.dentalActionId]?.type === 'CONDITION'
+    );
+    const hasTreatment = (tooth.actions ?? []).some(
+      (action: any) => dentalActionsMap?.[action.dentalActionId]?.type === 'TREATMENT'
+    );
+    return {
+      selected,
+      highlighted,
+      hasCondition,
+      hasTreatment,
+      surfaceStates: getSurfaceStates(tooth, dentalActionsMap)
+    };
+  };
+
+  const selectTooth = (tooth: any) => {
+    if (!toothIdAllowed(tooth)) return;
+
+    if (multiSelect) {
+      const current = selectedTeeth ?? [];
+      const alreadySelected = current.some(
+        (item: any) =>
+          item?.id != null && tooth?.id != null && String(item.id) === String(tooth.id)
+      );
+
+      const next = alreadySelected
+        ? current.filter(
+            (item: any) =>
+              !(item?.id != null && tooth?.id != null && String(item.id) === String(tooth.id))
+          )
+        : [...current, tooth];
+
+      setSelectedTeeth?.(next);
+      setSelectedTooth?.(alreadySelected ? next[next.length - 1] ?? null : tooth);
+      return;
+    }
+
+    setSelectedTooth(tooth);
+  };
+
+  const openToothDetails = () => {
+    if (!selectionOnly) setActionModalOpen(true);
+  };
+
+  const renderToothColumns = (teeth: any[], arch: 'upper' | 'lower') =>
+    teeth.map((tooth: any, idx: number) => {
+      const { selected, highlighted, hasCondition, hasTreatment, surfaceStates } =
+        toothMeta(tooth);
+      const primary = isPrimaryTooth(tooth.toothNumber);
+      const allowed = toothIdAllowed(tooth);
+      const toothDisabled = props.disabled || !allowed;
+      const dimmed =
+        Array.isArray(allowedToothIds) &&
+        allowedToothIds.length > 0 &&
+        !allowed;
+      const showNestedSelection = selected && !planReviewMode;
+      const colClass = clsx('tooth-col', {
+        selected,
+        'has-plan-treatment': highlighted && !planReviewMode,
+        dimmed,
+        'midline-gap': idx === midGapAfter
+      });
+
+      return (
+        <div key={tooth.id} className={colClass}>
+          {arch === 'upper' && (
+            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
+          )}
+
+          {arch === 'upper' ? (
+            <>
+              <Button
+                disabled={toothDisabled}
+                onClick={() => selectTooth(tooth)}
+                onDoubleClick={openToothDetails}
+                appearance={showNestedSelection ? 'primary' : 'default'}
+                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+              >
+                <Tooth
+                  chartTooth={tooth}
+                  selected={showNestedSelection}
+                  hasCondition={hasCondition}
+                  hasTreatment={hasTreatment}
+                  flipVertical={primary}
+                />
+              </Button>
+              <Button
+                disabled={toothDisabled}
+                onClick={() => selectTooth(tooth)}
+                onDoubleClick={openToothDetails}
+                appearance={showNestedSelection ? 'primary' : 'default'}
+                className={clsx('tooth-btn occlusal-btn', {
+                  selected: showNestedSelection
+                })}
+              >
+                {primary ? (
+                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
+                ) : (
+                  <AdultOcclusal
+                    toothNumber={tooth.toothNumber}
+                    surfaceStates={surfaceStates}
+                    selected={showNestedSelection}
+                  />
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                disabled={toothDisabled}
+                onClick={() => selectTooth(tooth)}
+                onDoubleClick={openToothDetails}
+                appearance={showNestedSelection ? 'primary' : 'default'}
+                className={clsx('tooth-btn occlusal-btn', {
+                  selected: showNestedSelection
+                })}
+              >
+                {primary ? (
+                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
+                ) : (
+                  <AdultOcclusal
+                    toothNumber={tooth.toothNumber}
+                    surfaceStates={surfaceStates}
+                    selected={showNestedSelection}
+                  />
+                )}
+              </Button>
+              <Button
+                disabled={toothDisabled}
+                onClick={() => selectTooth(tooth)}
+                onDoubleClick={openToothDetails}
+                appearance={showNestedSelection ? 'primary' : 'default'}
+                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+              >
+                <Tooth
+                  chartTooth={tooth}
+                  selected={showNestedSelection}
+                  hasCondition={hasCondition}
+                  hasTreatment={hasTreatment}
+                />
+              </Button>
+            </>
+          )}
+
+          {arch === 'lower' && (
+            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
+          )}
+        </div>
+      );
+    });
+
   return (
     <>
-      <Box className="dental-chart-container">
-        <Box className="tooth-arc upper">
-          {upperTeeth.map((_tooth: any, idx: number) => {
-            const total = upperTeeth.length;
-            const angle = (Math.PI * idx) / (total - 1);
-            const x = 50 + 44 * Math.cos(angle - Math.PI);
-            const y = 50 + 65 * Math.sin(angle - Math.PI);
-            const rotationDeg = (idx - total / 2) * 11;
-            const selected = _tooth.toothNumber === selectedTooth.toothNumber;
-            const hasCondition = (_tooth as any).actions?.some(
-              action => dentalActionsMap?.[action.dentalActionId]?.type === 'CONDITION'
-            );
-            const hasTreatment = (_tooth as any).actions?.some(
-              action => dentalActionsMap?.[action.dentalActionId]?.type === 'TREATMENT'
-            );
-            return (
-              <div
-                key={_tooth.id}
-                className={clsx(`tooth-slot`, {
-                  selected: selected
-                })}
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`
-                }}
-              >
-                <div className="tooth-number">{toothDisplayLabel(_tooth.toothNumber)}</div>
-                <Button
-                  disabled={props.disabled}
-                  onClick={() => setSelectedTooth(_tooth)}
-                  onDoubleClick={() => setActionModalOpen(true)}
-                  appearance={
-                    _tooth.toothNumber === selectedTooth.toothNumber ? 'primary' : 'default'
-                  }
-                  className={clsx(`tooth-btn tooth_${toothCssClassSuffix(_tooth.toothNumber)}`)}
-                >
-                  {/* Upper jaw: root attaches to the gum above, crown points down into the mouth. */}
-                  <div style={{ transform: 'scaleY(-1)' }}>
-                    <Tooth
-                      chartTooth={_tooth}
-                      selected={selected}
-                      type={dentalActionsMap?.[(_tooth as any)?.actions[0]?.dentalActionId]?.type}
-                      hasCondition={hasCondition}
-                      hasTreatment={hasTreatment}
-                    />
-                  </div>
-                </Button>
-                <div className="tooth-occlusal-badge">
-                  <OcclusalBadge
-                    shapeType={getToothShapeType(_tooth.toothNumber)}
-                    surfaceStates={getSurfaceStates(_tooth, dentalActionsMap)}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </Box>
-
-        <Box className="tooth-arc lower">
-          {lowerTeeth.map((_tooth: any, idx: number) => {
-            const total = lowerTeeth.length;
-            const angle = (Math.PI * idx) / (total - 1);
-            const x = 50 + 44 * Math.cos(angle);
-            const y = 50 + 70 * Math.sin(angle);
-            const rotationDeg = (idx - total / 2) * 11;
-            const selected = _tooth.toothNumber === selectedTooth.toothNumber;
-            const hasCondition = (_tooth as any).actions?.some(
-              action => dentalActionsMap?.[action.dentalActionId]?.type === 'CONDITION'
-            );
-            const hasTreatment = (_tooth as any).actions?.some(
-              action => dentalActionsMap?.[action.dentalActionId]?.type === 'TREATMENT'
-            );
-            return (
-              <div
-                key={_tooth.id}
-                className={clsx(`tooth-slot`, {
-                  selected: selected
-                })}
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`
-                }}
-              >
-                <Button
-                  disabled={props.disabled}
-                  onClick={() => setSelectedTooth(_tooth)}
-                  onDoubleClick={() => setActionModalOpen(true)}
-                  appearance={
-                    _tooth.toothNumber === selectedTooth.toothNumber ? 'primary' : 'default'
-                  }
-                  className={clsx(`tooth-btn tooth_${toothCssClassSuffix(_tooth.toothNumber)}`)}
-                >
-                  <div>
-                    <Tooth
-                      chartTooth={_tooth}
-                      selected={selected}
-                      type={dentalActionsMap?.[(_tooth as any)?.actions[0]?.dentalActionId]?.type}
-                      hasCondition={hasCondition}
-                      hasTreatment={hasTreatment}
-                    />
-                  </div>
-                </Button>
-                <div className="tooth-occlusal-badge">
-                  <OcclusalBadge
-                    shapeType={getToothShapeType(_tooth.toothNumber)}
-                    surfaceStates={getSurfaceStates(_tooth, dentalActionsMap)}
-                  />
-                </div>
-                <div className="tooth-number">{toothDisplayLabel(_tooth.toothNumber)}</div>
-              </div>
-            );
-          })}
-        </Box>
+      <Box
+        className={clsx('dental-chart-container', {
+          'dental-chart--plan-review': planReviewMode
+        })}
+        dir="ltr"
+      >
+        <div className="chart-side-label chart-side-r" aria-hidden>
+          R
+        </div>
+        <div className={clsx('dental-chart-grid', { pediatric: upperTeeth.length > 0 && upperTeeth.length <= 10 })}>
+          <div className="chart-arch upper">{renderToothColumns(upperTeeth, 'upper')}</div>
+          <div className="chart-midline" aria-hidden />
+          <div className="chart-arch lower">{renderToothColumns(lowerTeeth, 'lower')}</div>
+        </div>
+        <div className="chart-side-label chart-side-l" aria-hidden>
+          L
+        </div>
       </Box>
 
-      <MyModal
-        open={actionModalOpen}
-        size="70vw"
-        position="right"
-        setOpen={() => {
-          setActionModalOpen(false);
-          clearCurrentAction();
-          clearCurrentService();
-        }}
-        title={`Tooth Details - #${selectedTooth.toothNumber}`}
-        actionButtonFunction={() => addAction()}
-        customClassName="dental-chart-modal"
-        content={
-          <Tabs>
-            <TabList>
-              <Tab>Current Tooth State</Tab>
-              <Tab>Tooth History</Tab>
-              <Tab>Applied Services</Tab>
-              <Tab>CDT Procedures</Tab>
-            </TabList>
+      {!selectionOnly && (
+        <MyModal
+          open={actionModalOpen}
+          size="70vw"
+          position="right"
+          setOpen={() => {
+            setActionModalOpen(false);
+            clearCurrentAction();
+            clearCurrentService();
+          }}
+          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '')}`}
+          actionButtonFunction={() => addAction()}
+          customClassName="dental-chart-modal"
+          content={
+            <Tabs>
+              <TabList>
+                <Tab>Current Tooth State</Tab>
+                <Tab>Tooth History</Tab>
+                <Tab>Applied Services</Tab>
+                <Tab>CDT Procedures</Tab>
+              </TabList>
 
-            <TabPanel>
-              <ToothStateTab
-                selectedTooth={selectedTooth}
-                currentToothAction={currentToothAction}
-                setCurrentToothAction={setCurrentToothAction}
-                selectedCdt={selectedCdt}
-                setSelectedCdt={setSelectedCdt}
-                dentalActionsList={dentalActionsList}
-                dentalActionsMap={dentalActionsMap}
-                removeToothAction={removeToothAction}
-                clearCurrentAction={clearCurrentAction}
-              />
-            </TabPanel>
+              <TabPanel>
+                <ToothStateTab
+                  selectedTooth={selectedTooth}
+                  currentToothAction={currentToothAction}
+                  setCurrentToothAction={setCurrentToothAction}
+                  selectedCdt={selectedCdt}
+                  setSelectedCdt={setSelectedCdt}
+                  eligiblePlans={eligiblePlans}
+                  planSessions={planSessionsQuery.data ?? []}
+                  onCreatePlan={() => {
+                    setPlanForm({ title: '', notes: '', practitionerId: null });
+                    setPlanModalOpen(true);
+                  }}
+                  dentalActionsList={dentalActionsList}
+                  dentalActionsMap={dentalActionsMap}
+                  removeToothAction={removeToothAction}
+                  clearCurrentAction={clearCurrentAction}
+                />
+              </TabPanel>
 
-            <TabPanel>
-              <ToothHistoryTab selectedTooth={selectedTooth} dentalActionsMap={dentalActionsMap} />
-            </TabPanel>
+              <TabPanel>
+                <ToothHistoryTab selectedTooth={selectedTooth} dentalActionsMap={dentalActionsMap} />
+              </TabPanel>
 
-            <TabPanel>
-              <ToothServicesTab
-                selectedTooth={selectedTooth}
-                currentToothService={currentToothService}
-                setCurrentToothService={setCurrentToothService}
-                dentalServicesList={dentalServicesList}
-                dentalServicesMap={dentalServicesMap}
-                addService={addService}
-                servicesLoading={props.servicesLoading}
-              />
-            </TabPanel>
+              <TabPanel>
+                <ToothServicesTab
+                  selectedTooth={selectedTooth}
+                  currentToothService={currentToothService}
+                  setCurrentToothService={setCurrentToothService}
+                  dentalServicesList={dentalServicesList}
+                  dentalServicesMap={dentalServicesMap}
+                  addService={addService}
+                  servicesLoading={props.servicesLoading}
+                />
+              </TabPanel>
 
-            <TabPanel>
-              <ToothCdtTab selectedTooth={selectedTooth} cdtMap={cdtMap} />
-            </TabPanel>
-          </Tabs>
-        }
+              <TabPanel>
+                <ToothCdtTab selectedTooth={selectedTooth} cdtMap={cdtMap} />
+              </TabPanel>
+            </Tabs>
+          }
+        />
+      )}
+      <TreatmentPlanHeaderModal
+        open={planModalOpen}
+        setOpen={setPlanModalOpen}
+        form={planForm}
+        setForm={setPlanForm}
+        practitioners={toPractitionerOptions(practitionersQuery.data?.data ?? [])}
+        saving={createPlanMutation.isLoading}
+        onSave={saveChartPlan}
       />
     </>
   );

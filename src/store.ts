@@ -216,6 +216,7 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 import { radiologyReportService } from './services/reports/radiologyReportService';
+import { dentalTreatmentPlanReportService } from './services/reports/dentalTreatmentPlanReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
@@ -612,6 +613,7 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportService.reducerPath]: radiologyReportService.reducer,
+    [dentalTreatmentPlanReportService.reducerPath]: dentalTreatmentPlanReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
@@ -936,6 +938,7 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         systemConfigurationService.middleware,
         radiologyReportService.middleware,
+        dentalTreatmentPlanReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         mobileAppConfigService.middleware,
