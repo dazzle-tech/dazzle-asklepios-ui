@@ -6096,6 +6096,21 @@ export interface DentalProcedureResponseVM {
   cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
+  /** The insurance state of each tooth, from its billing line. */
+  toothApprovals?: DentalToothApproval[];
+}
+
+export type DentalToothApprovalStatus =
+  | 'NO_APPROVAL_NEEDED'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'PARTIALLY_APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
+export interface DentalToothApproval {
+  toothNumber: string;
+  status: DentalToothApprovalStatus;
 }
 
 export interface DentalProcedureCreateDTO {

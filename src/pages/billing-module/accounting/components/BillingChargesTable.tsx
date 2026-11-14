@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { Checkbox, Loader, Tag, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBan, faClone, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faClone, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 
 
 
@@ -134,6 +134,8 @@ type BillingChargesTableProps = {
   showPreAuthActions?: boolean;
   preAuthActionLoadingId?: number | null;
   onPayRejectedAsCash?: (patientServiceProductId: number) => void;
+  /** The patient accepts a partial approval and pays the difference. */
+  onAcceptPartial?: (patientServiceProductId: number) => void;
   onClonePreAuthorization?: (patientServiceProductId: number) => void;
   onCancelService?: (patientServiceProductId: number) => void;
 };
@@ -165,6 +167,8 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
   preAuthActionLoadingId = null,
 
   onPayRejectedAsCash,
+
+  onAcceptPartial,
 
   onClonePreAuthorization,
 
@@ -267,8 +271,9 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
 
 
   /**
-   * Pre-auth actions as icons (tooltip = action name): pay cash / cancel service after a
-   * rejection, clone the request. A Waseel partial approval shows "Communication required".
+   * Pre-auth actions as icons (tooltip = action name), the patient's choice after the payer decision:
+   * rejected → pay cash / cancel service (or clone the request);
+   * partially approved → accept and pay the difference / cancel service.
    */
   const renderPreAuthActions = (row: UnifiedBillingChargeRow) => {
     if (!shouldShowPreAuthRowActions(row, billingSummary)) {
@@ -276,30 +281,28 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
     }
 
     const awaitingPatientChoice = isAwaitingPatientChoice(row);
-
-    if (!awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus)) {
-      return (
-        <Tag color="yellow" size="sm">
-          Communication required
-        </Tag>
-      );
-    }
-
+    const partial = !awaitingPatientChoice && isPreAuthPartial(row.preAuthorizationStatus);
     const pspId = row.patientServiceProductId;
 
-    if (pspId == null || (!awaitingPatientChoice && !isPreAuthRejected(row.preAuthorizationStatus))) {
+    if (pspId == null || (!awaitingPatientChoice && !partial && !isPreAuthRejected(row.preAuthorizationStatus))) {
       return null;
     }
 
     const actionsDisabled = disabled || preAuthActionLoadingId === pspId;
+    const cancelAction = onCancelService
+      ? [{ key: 'cancel-service', label: 'Cancel service', icon: faBan, onClick: onCancelService }]
+      : [];
 
-    const actions = [
-      { key: 'pay-cash', label: 'Pay cash', icon: faMoneyBillWave, onClick: onPayRejectedAsCash },
-      ...(awaitingPatientChoice && onCancelService
-        ? [{ key: 'cancel-service', label: 'Cancel service', icon: faBan, onClick: onCancelService }]
-        : []),
-      { key: 'clone', label: 'Clone pre-auth', icon: faClone, onClick: onClonePreAuthorization }
-    ];
+    const actions = partial
+      ? [
+          { key: 'accept-partial', label: 'Accept – patient pays the difference', icon: faCheck, onClick: onAcceptPartial },
+          ...cancelAction
+        ]
+      : [
+          { key: 'pay-cash', label: 'Pay cash', icon: faMoneyBillWave, onClick: onPayRejectedAsCash },
+          ...(awaitingPatientChoice ? cancelAction : []),
+          { key: 'clone', label: 'Clone pre-auth', icon: faClone, onClick: onClonePreAuthorization }
+        ];
 
     return (
       <div className="billing-accounting__preauth-row-actions">
@@ -733,7 +736,7 @@ const BillingChargesTable: React.FC<BillingChargesTableProps> = ({
         if (isPreAuthPartial(row.preAuthorizationStatus)) {
           return (
             <Tag color="yellow" size="sm">
-              Partial — communication required
+              Partially approved
             </Tag>
           );
         }

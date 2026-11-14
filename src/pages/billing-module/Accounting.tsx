@@ -19,11 +19,13 @@ import Invoices from './Invoices';
 import Receipt from './Receipt';
 import { useLocation } from 'react-router-dom';
 import {
+  useAcceptPartialPreAuthorizationMutation,
   useCloneRejectedPreAuthorizationItemMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useRefreshEncounterPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 import { useDeletePatientServiceOrProductMutation } from '@/services/encounters/patientServicesAndProductsService';
+import { extractApiErrorMessage } from '@/utils';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
@@ -35,6 +37,7 @@ import type { ChargeEstimatePrintData } from './accounting/utils/chargeEstimateP
 import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
+import PreAuthorizationReadinessAlert from './accounting/components/PreAuthorizationReadinessAlert';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
 import WalletRefundModal from './accounting/components/WalletRefundModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
@@ -135,6 +138,7 @@ const Accounting: React.FC = () => {
     usePayRejectedPreAuthorizationItemAsCashMutation();
   const [cloneRejectedPreAuthorizationItem] =
     useCloneRejectedPreAuthorizationItemMutation();
+  const [acceptPartialPreAuthorization] = useAcceptPartialPreAuthorizationMutation();
   const [cancelPatientService] = useDeletePatientServiceOrProductMutation();
 
   const facilityPrintInfo = useMemo(
@@ -593,6 +597,43 @@ const Accounting: React.FC = () => {
     }
   };
 
+  /**
+   * The patient accepts a partial approval: insurance pays the approved amount and the
+   * patient pays the difference. The other choice is "Cancel service".
+   */
+  const handleAcceptPartial = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await acceptPartialPreAuthorization({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
+
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Partial approval accepted: insurance pays the approved amount, the patient pays the rest.',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Unable to accept the partial approval.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
   const handleClonePreAuthorization = async (patientServiceProductId: number) => {
     if (selectedEncounterId == null) {
       return;
@@ -947,6 +988,9 @@ const Accounting: React.FC = () => {
                   Print unofficial estimate
                 </MyButton>
               </div>
+              {coverageType === 'INSURANCE' && (
+                <PreAuthorizationReadinessAlert encounterId={selectedEncounterId} onSent={refreshAll} />
+              )}
               <PreAuthorizationBillingControls
                 visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
                 pendingCount={pendingPreAuthItems.length}
@@ -968,6 +1012,7 @@ const Accounting: React.FC = () => {
                 showPreAuthActions={coverageType === 'INSURANCE'}
                 preAuthActionLoadingId={preAuthActionLoadingId}
                 onPayRejectedAsCash={handlePayRejectedAsCash}
+                onAcceptPartial={handleAcceptPartial}
                 onClonePreAuthorization={handleClonePreAuthorization}
                 onCancelService={handleCancelPreAuthService}
               />

@@ -5,6 +5,9 @@ import { summarizationService } from '@/services/summarizationService';
 
 import uiSlice from './reducers/uiSlice';
 import divSlice from './reducers/divSlice';
+import preAuthorizationMissingFieldsSlice, {
+  preAuthorizationMissingFieldsListener
+} from './reducers/preAuthorizationMissingFieldsSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import authReducer from './reducers/authSlice';
@@ -344,6 +347,7 @@ export const store = configureStore({
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
     [divSlice.name]: divSlice.reducer,
+    [preAuthorizationMissingFieldsSlice.name]: preAuthorizationMissingFieldsSlice.reducer,
 
     // auth
     auth: authReducer,
@@ -754,6 +758,7 @@ export const store = configureStore({
     })
       .prepend(rtkDispatchLoopGuard)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,

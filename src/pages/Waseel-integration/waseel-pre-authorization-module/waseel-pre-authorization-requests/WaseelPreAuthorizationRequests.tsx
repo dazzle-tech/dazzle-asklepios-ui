@@ -325,8 +325,15 @@ const WaseelPreAuthorizationRequests: React.FC = () => {
       setOpenCancelModal(false);
       setCancelReason('');
       refetch();
-    } catch {
-      dispatch(notify({ msg: 'Failed to cancel pre-authorization', sev: 'error' }));
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Failed to cancel pre-authorization',
+          sev: 'error'
+        })
+      );
+      // A refused cancel is still recorded with Waseel's reason, so show it.
+      refetch();
     }
   };
 
