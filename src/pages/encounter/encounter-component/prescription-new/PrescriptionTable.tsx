@@ -92,7 +92,26 @@ const PrescriptionTable = ({
       dataKey: 'medicationsId',
       title: <Translate>Medication Name</Translate>,
       flexGrow: 2,
-      render: (rowData: any) => getMedicationDisplayName(rowData) || '-'
+      render: (rowData: any) => (
+        <span>
+          {getMedicationDisplayName(rowData) || '-'}
+          {rowData?.dispensed && (
+            <span
+              style={{
+                marginInlineStart: 8,
+                padding: '1px 8px',
+                borderRadius: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#fff',
+                backgroundColor: 'var(--primary-green, #2e7d32)'
+              }}
+            >
+              <Translate>Dispensed</Translate>
+            </span>
+          )}
+        </span>
+      )
     },
     {
       key: 'instructions',
@@ -221,29 +240,33 @@ const PrescriptionTable = ({
       title: 'Actions',
       flexGrow: 1.5,
       render: (rowData: any) => {
-        const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+        // A submitted prescription can still be edited (then resent to the pharmacy);
+        // a cancelled line, or one the pharmacy already dispensed, cannot.
         const isCancelled = String(rowData.status ?? '').toUpperCase() === 'CANCELLED';
-        console.log(currentPrescription?.status);
+        const isDispensed = Boolean(rowData?.dispensed);
+        const isLocked = edit || isCancelled || isDispensed;
         return (
           <div className="flex-c8">
             <MdModeEdit
               title={
                 edit
                   ? 'View Only'
-                  : isSubmitted
-                    ? 'Prescription is submitted'
-                    : 'Edit'
+                  : isDispensed
+                    ? 'Dispensed by the pharmacy'
+                    : isCancelled
+                      ? 'Medication is cancelled'
+                      : 'Edit'
               }
               size={20}
               className={!edit ? 'font-aws' : 'font-aws view-only-action-edit-delete-encounter'}
               style={{
-                opacity: edit || isSubmitted || isCancelled ? 0.5 : 1,
-                cursor: edit || isSubmitted || isCancelled ? 'not-allowed' : 'pointer'
+                opacity: isLocked ? 0.5 : 1,
+                cursor: isLocked ? 'not-allowed' : 'pointer'
               }}
               onClick={e => {
                 e.stopPropagation();
 
-                if (edit || isSubmitted || isCancelled) return;
+                if (isLocked) return;
 
                 setPatientPrescriptionMedicationObject({
                   ...rowData,
