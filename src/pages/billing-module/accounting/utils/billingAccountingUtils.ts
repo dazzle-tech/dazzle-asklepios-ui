@@ -3,7 +3,8 @@ import type {
   EncounterBillingSummary,
   PatientEncounter,
   PatientServiceAndProduct,
-  BillingPaymentResult
+  BillingPaymentResult,
+  BillingRefundResult
 } from '@/types/model-types-new';
 import type { InvoiceLineItem } from '@/services/billing/financialDocumentAdjustmentService';
 import type { PaymentReceiptData } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
@@ -60,26 +61,61 @@ export type UnifiedBillingChargeRow = {
   chargedAt: string | null;
   preAuthorizationStatus?: string | null;
   preAuthorizationRequired?: boolean | null;
+  /** Why a local pre-approval holds the line, e.g. "Coverage limit exceeded". */
+  preAuthorizationReason?: string | null;
   isBilled: boolean;
+  clinicalStatus?: string | null;
 };
 
-export type RowPaymentStatus = 'SETTLED' | 'RESERVED' | 'PARTIAL' | 'UNPAID';
+export type RowPaymentStatus = 'SETTLED' | 'RESERVED' | 'PARTIAL' | 'UNPAID' | 'PENDING_PRE_AUTH';
+
+export const PRE_AUTHORIZATION_HOLD_MESSAGE =
+  'This service needs pre-authorization. It was sent to the pre-authorization page and shows as pending pre-authorization on the ledger account.';
+
+export const isHeldForPreAuthorization = (result: unknown): boolean => {
+  if (!result || typeof result !== 'object') {
+    return false;
+  }
+  const raw = result as Record<string, unknown>;
+  const row = (raw.object && typeof raw.object === 'object' ? raw.object : raw) as {
+    coveragePreApprovalPending?: boolean | null;
+    preAuthorizationRequired?: boolean | null;
+    preAuthorizationStatus?: string | null;
+    paymentStatus?: string | null;
+    message?: string | null;
+  };
+  if (row.coveragePreApprovalPending === true) {
+    return true;
+  }
+  const payment = String(row.paymentStatus ?? '').toUpperCase();
+  const auth = String(row.preAuthorizationStatus ?? '').toUpperCase();
+  const message = String(row.message ?? '').toLowerCase();
+  return (
+    payment === 'SKIPPED_PENDING_PRE_AUTH' ||
+    auth === 'PENDING_APPROVAL' ||
+    auth === 'PENDING' ||
+    message.includes('pre-authorization') ||
+    (row.preAuthorizationRequired === true && auth !== 'NOT_REQUIRED' && auth !== 'APPROVED')
+  );
+};
 
 export const ROW_PAYMENT_STATUS_LABELS: Record<RowPaymentStatus, string> = {
   SETTLED: 'Settled',
   RESERVED: 'Reserved',
   PARTIAL: 'Partial',
-  UNPAID: 'Unpaid'
+  UNPAID: 'Unpaid',
+  PENDING_PRE_AUTH: 'Pending pre-authorization'
 };
 
 export const ROW_PAYMENT_STATUS_COLORS: Record<
   RowPaymentStatus,
-  'green' | 'blue' | 'orange' | 'red'
+  'green' | 'blue' | 'orange' | 'red' | 'cyan'
 > = {
   SETTLED: 'green',
   RESERVED: 'blue',
   PARTIAL: 'orange',
-  UNPAID: 'red'
+  UNPAID: 'red',
+  PENDING_PRE_AUTH: 'cyan'
 };
 
 export const toNumericId = (val: unknown): number | null => {
@@ -869,6 +905,15 @@ export const resolveRowPaymentStatus = (
   row: UnifiedBillingChargeRow,
   summary?: EncounterBillingSummary | null
 ): RowPaymentStatus => {
+  if (
+    isPreAuthRequiredRow(row) &&
+    (!row.preAuthorizationStatus ||
+      isPreAuthPending(row.preAuthorizationStatus) ||
+      String(row.preAuthorizationStatus).toUpperCase() === 'PENDING_APPROVAL')
+  ) {
+    return 'PENDING_PRE_AUTH';
+  }
+
   const paidOnInvoice = Number(row.allocatedAmount ?? 0);
   const remainingOnInvoice = Number(row.outstandingAmount ?? NaN);
 
@@ -1122,6 +1167,134 @@ export const buildWalletDepositReceipt = ({
   };
 };
 
+export const buildWalletRefundReceipt = ({
+  refundResult,
+  patient,
+  encounter,
+  facilityName = 'Healthcare Facility',
+  currency,
+  paymentMethodLabel,
+  notes
+}: {
+  refundResult: BillingRefundResult;
+  patient?: any;
+  encounter?: PatientEncounter | null;
+  facilityName?: string;
+  currency: string;
+  paymentMethodLabel: string;
+  notes?: string;
+}): PaymentReceiptData => {
+  const amount = Number(refundResult.refundedAmount ?? refundResult.requestedAmount ?? 0);
+  const walletAvailable = Number(refundResult.walletAvailableBalance ?? 0);
+
+  const receiptNotes = [
+    notes?.trim(),
+    `Wallet available after refund: ${formatMoney(walletAvailable, currency)}`
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    receiptNumber:
+      refundResult.documentNumber ?? refundResult.refundNumber ?? '-',
+    transactionNumber: refundResult.refundPaymentTransactionNumber ?? '-',
+    paymentDate: new Date().toLocaleString(),
+    patientName: resolvePatientDisplayName(patient),
+    patientMrn: resolvePatientMrn(patient),
+    encounterNumber: resolveEncounterNumber(encounter) ?? 'Wallet refund',
+    facilityName,
+    coverageType: 'Wallet refund',
+    currency,
+    paymentAmount: amount,
+    paymentMethod: paymentMethodLabel,
+    chargeNumber: '-',
+    items: [
+      {
+        name: 'Available wallet refund',
+        type: 'REFUND',
+        quantity: 1,
+        unitPrice: amount,
+        netAmount: amount,
+        patientShare: amount
+      }
+    ],
+    totals: {
+      grossAmount: amount,
+      discountAmount: 0,
+      exemptionAmount: 0,
+      taxAmount: 0,
+      netAmount: amount,
+      patientResponsibilityAmount: amount,
+      insuranceResponsibilityAmount: 0,
+      patientOutstandingAmount: 0,
+      isPreview: false
+    },
+    notes: receiptNotes || undefined
+  };
+};
+
+export const buildIssuedRefundReceipt = ({
+  document,
+  patient,
+  encounterNumber,
+  facilityName = 'Healthcare Facility'
+}: {
+  document: {
+    documentNumber?: string | null;
+    totalAmount?: number | null;
+    currency?: string | null;
+    createdDate?: string | null;
+    adjustmentReason?: string | null;
+    encounterNumber?: string | null;
+  };
+  patient?: any;
+  encounterNumber?: string | null;
+  facilityName?: string;
+}): PaymentReceiptData => {
+  const amount = Number(document.totalAmount ?? 0);
+  const currency = document.currency ?? 'SAR';
+
+  return {
+    receiptNumber: document.documentNumber ?? '-',
+    transactionNumber: document.documentNumber ?? '-',
+    paymentDate: document.createdDate
+      ? formatBillingTimestamp(document.createdDate)
+      : new Date().toLocaleString(),
+    patientName: resolvePatientDisplayName(patient),
+    patientMrn: resolvePatientMrn(patient),
+    encounterNumber:
+      encounterNumber ?? document.encounterNumber ?? 'Wallet refund',
+    facilityName,
+    coverageType: 'Wallet refund',
+    currency,
+    paymentAmount: amount,
+    paymentMethod: 'Refund',
+    chargeNumber: '-',
+    items: [
+      {
+        name: 'Available wallet refund',
+        type: 'REFUND',
+        quantity: 1,
+        unitPrice: amount,
+        netAmount: amount,
+        patientShare: amount
+      }
+    ],
+    totals: {
+      grossAmount: amount,
+      discountAmount: 0,
+      exemptionAmount: 0,
+      taxAmount: 0,
+      netAmount: amount,
+      patientResponsibilityAmount: amount,
+      insuranceResponsibilityAmount: 0,
+      patientOutstandingAmount: 0,
+      isPreview: false
+    },
+    notes: document.adjustmentReason?.trim() || undefined
+  };
+};
+
 export const buildBillingPaymentReceipt = ({
   paymentResult,
   patient,
@@ -1236,6 +1409,9 @@ export const buildBillingPaymentReceipt = ({
 
 /** Primary action label for adding cash/card funds to the patient wallet. */
 export const WALLET_DEPOSIT_BUTTON_LABEL = 'Add to wallet';
+
+/** Primary action label for returning available wallet funds to the patient. */
+export const WALLET_REFUND_BUTTON_LABEL = 'Refund to patient';
 
 export const BILLING_PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Cash',
@@ -1389,14 +1565,24 @@ export const isRowFullyReserved = (
   summary?: EncounterBillingSummary | null
 ): boolean => resolveRowPaymentStatus(row, summary) === 'RESERVED';
 
+/**
+ * Rejected by the payer and not billed yet: the patient pays the service as cash or it is
+ * cancelled. (A local partial approval is billed with the approved insurance amount.)
+ */
+export const isAwaitingPatientChoice = (row: UnifiedBillingChargeRow): boolean =>
+  row.chargeLineId == null &&
+  row.preAuthorizationRequired !== true &&
+  isPreAuthRejected(row.preAuthorizationStatus);
+
 export const shouldShowPreAuthRowActions = (
   row: UnifiedBillingChargeRow,
   summary?: EncounterBillingSummary | null
 ): boolean =>
-  isPreAuthRequiredRow(row) &&
-  !isRowFullyReserved(row, summary) &&
-  (isPreAuthRejected(row.preAuthorizationStatus) ||
-    isPreAuthPartial(row.preAuthorizationStatus));
+  isAwaitingPatientChoice(row) ||
+  (isPreAuthRequiredRow(row) &&
+    !isRowFullyReserved(row, summary) &&
+    (isPreAuthRejected(row.preAuthorizationStatus) ||
+      isPreAuthPartial(row.preAuthorizationStatus)));
 
 export const findPendingPreAuthItems = (
   pspRows: PatientServiceAndProduct[]
@@ -1873,7 +2059,9 @@ export const mapSummaryItemToRow = (
         preAuthorizationRequired?: boolean | null;
       }
     )?.preAuthorizationRequired ?? null,
-  isBilled: item.chargeLineId != null
+  preAuthorizationReason: linkedPsp?.preAuthorizationReason ?? null,
+  isBilled: item.chargeLineId != null,
+  clinicalStatus: item.clinicalStatus ?? linkedPsp?.clinicalStatus ?? null
 };
 };
 
@@ -1888,6 +2076,7 @@ export const mapPspItemToRow = (
     itemCode?: string | null;
     itemName?: string | null;
     priceSource?: string | null;
+    clinicalStatus?: string | null;
   };
 
   const netAmount =
@@ -1923,7 +2112,9 @@ export const mapPspItemToRow = (
     chargedAt: rowAny.createdDate ?? null,
     preAuthorizationStatus: rowAny.preAuthorizationStatus ?? null,
     preAuthorizationRequired: rowAny.preAuthorizationRequired ?? null,
-    isBilled: row.isBilled
+    preAuthorizationReason: row.preAuthorizationReason ?? null,
+    isBilled: row.isBilled,
+    clinicalStatus: rowAny.clinicalStatus ?? null
   };
 };
 
@@ -1978,6 +2169,34 @@ export const resolveDisplayChargeRows = (
   return mergeBillingChargeRows(summary, pspRows, emptyBillingCatalogLookups());
 };
 
+/**
+ * Unbilled line still waiting on pre-authorization: the payer decision, the patient's
+ * choice (pay cash / cancel) after a rejection, or billing right after a partial approval.
+ */
+const isAwaitingPreApproval = (row: PatientServiceAndProduct): boolean => {
+  const rowAny = row as PatientServiceAndProduct & {
+    preAuthorizationStatus?: string | null;
+    paymentStatus?: string | null;
+  };
+  return (
+    isPreAuthPending(rowAny.preAuthorizationStatus) ||
+    isPreAuthPartial(rowAny.preAuthorizationStatus) ||
+    isPreAuthRejected(rowAny.preAuthorizationStatus) ||
+    String(rowAny.paymentStatus ?? '').toUpperCase() === 'SKIPPED_PENDING_PRE_AUTH'
+  );
+};
+
+/**
+ * Nothing is due on a line waiting for pre-approval. The patient / insurance split
+ * is calculated after the payer decision.
+ */
+const toAwaitingPreApprovalRow = (row: UnifiedBillingChargeRow): UnifiedBillingChargeRow => ({
+  ...row,
+  patientAmount: 0,
+  insuranceAmount: 0,
+  outstandingAmount: 0
+});
+
 export const mergeBillingChargeRows = (
   summary: EncounterBillingSummary | null | undefined,
   pspRows: PatientServiceAndProduct[] = [],
@@ -1986,9 +2205,21 @@ export const mergeBillingChargeRows = (
   const summaryItems = summary?.items ?? [];
 
   if (summaryItems.length > 0) {
-    return summaryItems.map(item =>
-      mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+    const chargedPspIds = new Set(
+      summaryItems
+        .map(item => item.patientServiceProductId)
+        .filter((id): id is number => id != null)
     );
+    // Lines held for pre-approval have no charge line yet; keep them visible as pending.
+    const heldRows = pspRows
+      .filter(row => !chargedPspIds.has(row.id) && !row.isBilled && isAwaitingPreApproval(row))
+      .map(row => toAwaitingPreApprovalRow(mapPspItemToRow(row, lookups)));
+    return [
+      ...summaryItems.map(item =>
+        mapSummaryItemToRow(item, pspRows, summary?.chargeDate ?? null)
+      ),
+      ...heldRows
+    ];
   }
 
   const summaryPspIds = new Set(
@@ -2014,7 +2245,10 @@ export const mergeBillingChargeRows = (
 
       return true;
     })
-    .map(row => mapPspItemToRow(row, lookups));
+    .map(row => {
+      const mapped = mapPspItemToRow(row, lookups);
+      return isAwaitingPreApproval(row) ? toAwaitingPreApprovalRow(mapped) : mapped;
+    });
 
   return unbilledPspRows;
 };

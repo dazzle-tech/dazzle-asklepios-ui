@@ -40,6 +40,11 @@ import ExternalLabAction from './ExternalLabAction';
 import PrintSampleLabelAction from './PrintSampleLabelAction';
 import PrintSelectedSampleLabelsAction from './PrintSelectedSampleLabelsAction';
 import SampleModal from './SampleModal';
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
+import {
+  PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE,
+  isSampleBlockedByPreAuthorization
+} from '@/utils/preAuthorizationSampleLock';
 import './styles.less';
 
 type Props = {
@@ -663,16 +668,34 @@ const Tests = forwardRef<any, Props>(
         width: 60,
         align: 'center',
         render: (rowData: any) => {
+          const blockedByPreAuthorization = isSampleBlockedByPreAuthorization(rowData);
           const canCollectSample =
             rowData.status === DiagnosticOrderTestStatus.SUBMITTED &&
-            rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
+            rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED &&
+            !blockedByPreAuthorization;
+          // Accept requires a collected sample, so later statuses also mean collected
+          const isSampleCollected = [
+            DiagnosticOrderTestStatus.SAMPLE_COLLECTED,
+            DiagnosticOrderTestStatus.ACCEPTED,
+            DiagnosticOrderTestStatus.RESULT_READY,
+            DiagnosticOrderTestStatus.RESULT_APPROVED,
+            DiagnosticOrderTestStatus.RESULT_REJECTED
+          ].includes(rowData.processingStatus);
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faVialCircleCheck}
                 className="icon-laboratory-size"
-                style={{ fontSize: '1em', cursor: canCollectSample ? 'pointer' : 'not-allowed' }}
+                style={{
+                  fontSize: '1em',
+                  cursor: canCollectSample ? 'pointer' : 'not-allowed',
+                  ...(isSampleCollected && { color: 'var(--primary-blue)' })
+                }}
                 onClick={() => {
+                  if (blockedByPreAuthorization) {
+                    dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
+                    return;
+                  }
                   if (!canCollectSample) {
                     dispatch(
                       notify({
@@ -696,6 +719,15 @@ const Tests = forwardRef<any, Props>(
         width: 80,
         align: 'center',
         render: (rowData: any) => <>{formatEnumString(rowData.processingStatus ?? '—')}</>
+      },
+      {
+        key: 'preAuthorizationStatus',
+        title: <Translate>PRE-AUTH</Translate>,
+        width: 110,
+        align: 'center',
+        render: (rowData: any) => (
+          <PreAuthorizationStatusBadge status={rowData.preAuthorizationStatus} />
+        )
       },
       {
         key: 'action',
@@ -880,7 +912,16 @@ const Tests = forwardRef<any, Props>(
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faVialCircleCheck} />}
               disabled={!selectedRows.length}
-              onClick={() => setOpenBulkSampleModal(true)}
+              onClick={() => {
+                const blocked = normalizedOrderTests.some(
+                  t => selectedRows.includes(t.id) && isSampleBlockedByPreAuthorization(t)
+                );
+                if (blocked) {
+                  dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
+                  return;
+                }
+                setOpenBulkSampleModal(true);
+              }}
             >
               Bulk Collect Sample
             </MyButton>

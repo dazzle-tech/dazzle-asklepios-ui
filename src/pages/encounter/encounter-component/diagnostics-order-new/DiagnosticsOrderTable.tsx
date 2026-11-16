@@ -7,6 +7,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -195,6 +196,16 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       flexGrow: 1,
       fullText: true,
       render: (rowData: any) => <>{formatEnumString(rowData.processingStatus)}</>
+    },
+    {
+      key: 'preAuthorizationStatus',
+      dataKey: 'preAuthorizationStatus',
+      title: <Translate>PRE-AUTH</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => (
+        <PreAuthorizationStatusBadge status={rowData.preAuthorizationStatus} />
+      )
     },
     {
       key: 'receivedDepartmentId',

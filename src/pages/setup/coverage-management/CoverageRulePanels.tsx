@@ -1,0 +1,1071 @@
+﻿import React, { useMemo, useState } from 'react';
+import { Form, Nav } from 'rsuite';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { MdAdd, MdBlock, MdModeEdit, MdToggleOff } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
+import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
+import { useAppDispatch } from '@/hooks';
+import CoveragePagedSelect, { useLookupPaging } from './CoveragePagedSelect';
+import BillingCategoryItemFields from './BillingCategoryItemFields';
+import PreApprovalPanel from './PreApprovalPanel';
+import CoverageLimitExclusionModal from './CoverageLimitExclusionModal';
+import { RuleModalTitleProvider, useRuleModalTitle } from './RuleModalTitleContext';
+import { departmentPickerValue, departmentScope, discountCategoryLabel, discountItemLabel, exceedsPercentage, exclusionResultLabel, exclusionTypeLabel, diagnosisIdsOf, diagnosisLabel, notifyError, notifySuccess, notifyWarning, percentageMax, withSelectedDiagnoses } from './coverageHelpers';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
+import {
+  useCreateDiscountMutation,
+  useCreateExclusionMutation,
+  useDeactivateDiscountMutation,
+  useDeactivateExclusionMutation,
+  useListCopaymentsQuery,
+  useListDiscountsQuery,
+  useListExclusionsQuery,
+  useListTermItemsQuery,
+  useListTermsQuery,
+  useSaveCopaymentMutation,
+  useSaveTermItemMutation,
+  useSaveTermMutation,
+  useToggleCopaymentActiveMutation,
+  useToggleTermActiveMutation,
+  useSearchCoverageDepartmentsQuery,
+  useSearchCoverageFacilitiesQuery
+} from '@/services/setup/coverageManagement/coverageManagementService';
+
+const CoverageIcd10Field = ({
+  record,
+  setRecord,
+  required
+}: {
+  record: any;
+  setRecord: (next: any) => void;
+  required?: boolean;
+}) => (
+  <div className="coverage-icd10-field">
+    <Icd10DiagnosisSearch
+      multiple
+      diagnosisIds={diagnosisIdsOf(record)}
+      setDiagnosisIds={ids => setRecord(withSelectedDiagnoses(record, ids))}
+      label="Specific diagnoses"
+      required={required}
+      compact
+    />
+    <p className="coverage-icd10-hint">
+      <Translate>
+        Add as many specific diagnoses as needed. Selecting a parent code (for example A00) applies this rule to the whole group under it (A00.0, A00.1, â€¦).
+      </Translate>
+    </p>
+  </div>
+);
+
+const statusOptions = [
+  { label: 'Active', value: true },
+  { label: 'Inactive', value: false }
+];
+
+export const RuleActions = ({
+  readOnly,
+  onEdit,
+  isActive,
+  onToggle,
+  extra
+}: {
+  readOnly?: boolean;
+  onEdit: () => void;
+  isActive?: boolean;
+  onToggle: () => void;
+  extra?: React.ReactNode;
+}) => {
+  if (readOnly) {
+    return null;
+  }
+  return (
+    <div className="coverage-row-actions">
+      <MdModeEdit className="icons-style" size={22} title="Edit" onClick={event => {
+        event.stopPropagation();
+        onEdit();
+      }} />
+      {extra}
+      {isActive ? (
+        <MdToggleOff
+          className="icons-style"
+          size={24}
+          title="Deactivate"
+          onClick={event => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          size={18}
+          title="Activate"
+          onClick={event => {
+            event.stopPropagation();
+            onToggle();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+const emptyPage = { page: 0, size: 10, sort: 'id,desc' };
+
+const RULE_TABS = [
+  { key: 'copayment', label: 'Patient Co-Payment' },
+  { key: 'COVERAGE', label: 'Coverages' },
+  { key: 'LIMIT', label: 'Coverage Limit' },
+  { key: 'CASH_LIMIT', label: 'Cash Limit' },
+  { key: 'discount', label: 'Discount' },
+  { key: 'exclusion', label: 'Exclusions' },
+  { key: 'preApproval', label: 'Pre-Approval' }
+];
+
+const CoverageRulePanels = ({
+  classId,
+  coverageClassName,
+  readOnly
+}: {
+  classId: number;
+  coverageClassName?: string | null;
+  readOnly?: boolean;
+}) => {
+  const [tab, setTab] = useState('copayment');
+  const tabLabel = RULE_TABS.find(item => item.key === tab)?.label;
+
+  return (
+    <RuleModalTitleProvider value={{ className: coverageClassName, tabLabel }}>
+    <div className="coverage-rules">
+      <Nav appearance="tabs" activeKey={tab} onSelect={setTab} className="coverage-rules-nav">
+        {RULE_TABS.map(item => (
+          <Nav.Item key={item.key} eventKey={item.key}>{item.label}</Nav.Item>
+        ))}
+      </Nav>
+
+      {tab === 'copayment' && <CopaymentPanel classId={classId} readOnly={readOnly} />}
+      {(tab === 'COVERAGE' || tab === 'LIMIT' || tab === 'CASH_LIMIT') && (
+        <TermPanel key={tab} classId={classId} termType={tab} readOnly={readOnly} />
+      )}
+      {tab === 'discount' && <DiscountPanel classId={classId} readOnly={readOnly} />}
+      {tab === 'exclusion' && <ExclusionPanel classId={classId} readOnly={readOnly} />}
+      {tab === 'preApproval' && <PreApprovalPanel classId={classId} readOnly={readOnly} />}
+    </div>
+    </RuleModalTitleProvider>
+  );
+};
+
+export const RuleToolbar = ({
+  isActive,
+  setIsActive,
+  onAdd,
+  readOnly,
+  includeAll
+}: {
+  isActive: boolean | '';
+  setIsActive: (value: any) => void;
+  onAdd: () => void;
+  readOnly?: boolean;
+  includeAll?: boolean;
+}) => (
+  <div className="coverage-rule-toolbar">
+    <Form fluid>
+      <MyInput
+        width="160px"
+        fieldLabel="Status"
+        fieldType="select"
+        fieldName="isActive"
+        record={{ isActive }}
+        setRecord={(next: any) => {
+          if (includeAll) {
+            setIsActive(next.isActive === true || next.isActive === false ? next.isActive : '');
+            return;
+          }
+          setIsActive(Boolean(next.isActive));
+        }}
+        selectData={
+          includeAll
+            ? [
+                { label: 'All', value: '' },
+                { label: 'Active', value: true },
+                { label: 'Inactive', value: false }
+              ]
+            : statusOptions
+        }
+        selectDataLabel="label"
+        selectDataValue="value"
+        searchable={false}
+      />
+    </Form>
+    {!readOnly && (
+      <MyButton prefixIcon={() => <AddOutlineIcon />} color="var(--deep-blue)" onClick={onAdd} width="109px">
+        Add
+      </MyButton>
+    )}
+  </div>
+);
+
+const CopaymentPanel = ({ classId, readOnly }: { classId: number; readOnly?: boolean }) => {
+  const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
+  const encounterTypes = useEnumOptions('EncounterType');
+  const valueTypes = useEnumOptions('InsuranceCoverageType');
+  const [isActive, setIsActive] = useState(true);
+  const [paging, setPaging] = useState(emptyPage);
+  const [open, setOpen] = useState(false);
+  const [record, setRecord] = useState<any>({});
+  const facilityLookup = useLookupPaging(String(open));
+  const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
+  const facilities = useSearchCoverageFacilitiesQuery({ page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch }, { skip: !open });
+  const departments = useSearchCoverageDepartmentsQuery(
+    { facilityId: Number(record.facilityId), page: departmentLookup.page, size: 15, search: departmentLookup.appliedSearch },
+    { skip: !open || !record.facilityId }
+  );
+  const { data, isFetching } = useListCopaymentsQuery({ classId, isActive, ...paging });
+  const [save] = useSaveCopaymentMutation();
+  const [toggleActive] = useToggleCopaymentActiveMutation();
+
+  const saveRow = async () => {
+    if (!record.facilityId) {
+      notifyWarning(dispatch, 'Facility is required');
+      return;
+    }
+    if (exceedsPercentage(record.valueType === 'PERCENTAGE', record.valueAmount)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
+    try {
+      await save({ classId, body: { ...record, ...departmentScope(record.departmentId) } }).unwrap();
+      notifySuccess(dispatch, record.id ? 'Co-payment updated' : 'Co-payment saved');
+      setOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to save co-payment');
+    }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await toggleActive(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Co-payment deactivated' : 'Co-payment activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update co-payment status');
+    }
+  };
+
+  return (
+    <>
+      <RuleToolbar
+        isActive={isActive}
+        setIsActive={value => {
+          setIsActive(value);
+          setPaging(prev => ({ ...prev, page: 0 }));
+        }}
+        readOnly={readOnly}
+        onAdd={() => {
+          setRecord({
+            departmentId: departmentPickerValue({ allDepartments: true }),
+            encounterType: 'ALL',
+            valueType: 'PERCENTAGE'
+          });
+          setOpen(true);
+        }}
+      />
+      <MyTable
+        data={data?.data ?? []}
+        totalCount={data?.totalCount ?? 0}
+        loading={isFetching}
+        height={280}
+        page={paging.page}
+        rowsPerPage={paging.size}
+        onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
+        onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
+        columns={[
+          { key: 'facilityName', title: 'Facility', flexGrow: 2, render: (row: any) => row.facilityName || 'All' },
+          { key: 'departmentName', title: 'Department', flexGrow: 2, render: (row: any) => row.departmentName || 'All' },
+          { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
+          { key: 'valueType', title: 'Value Type', flexGrow: 1, render: (row: any) => formatEnumString(row.valueType) },
+          { key: 'valueAmount', title: 'Value', flexGrow: 1 },
+          { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => {
+                  setRecord({ ...row, departmentId: departmentPickerValue(row) });
+                  setOpen(true);
+                }}
+                onToggle={() => changeStatus(row)}
+              />
+            )
+          }
+        ]}
+      />
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Patient Co-Payment' : 'Patient Co-Payment')} size="56vw" bodyheight="40vh" actionButtonFunction={saveRow} content={
+        <Form fluid className="coverage-form-grid">
+          <CoveragePagedSelect fieldName="facilityId" fieldLabel="Facility name" record={record} setRecord={next => setRecord({ ...next, departmentId: departmentPickerValue({ allDepartments: true }) })} result={facilities} page={facilityLookup.page} setPage={facilityLookup.setPage} search={facilityLookup.search} setSearch={facilityLookup.setSearch} required />
+          <CoveragePagedSelect fieldName="departmentId" fieldLabel="Department" record={record} setRecord={setRecord} result={departments} page={departmentLookup.page} setPage={departmentLookup.setPage} search={departmentLookup.search} setSearch={departmentLookup.setSearch} includeAll required disabled={!record.facilityId} />
+          <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
+          <MyInput required width="100%" fieldLabel="Value Type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
+          <MyInput required width="100%" fieldLabel="Value Entry" fieldType="number" fieldName="valueAmount" record={record} setRecord={setRecord} max={percentageMax(record.valueType === 'PERCENTAGE')} />
+        </Form>
+      } />
+    </>
+  );
+};
+
+const TermPanel = ({ classId, termType, readOnly }: { classId: number; termType: string; readOnly?: boolean }) => {
+  const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
+  const diagnosisScopes = useEnumOptions('CoverageDiagnosisScope');
+  const periodTypes = useEnumOptions('CoveragePeriodBasis');
+  const coverageBasis = useEnumOptions('CoverageBasis');
+  const valueTypes = useEnumOptions('InsuranceCoverageType');
+  const allEncounterTypes = useEnumOptions('EncounterType');
+  const hasReadings = termType === 'COVERAGE' || termType === 'LIMIT' || termType === 'CASH_LIMIT';
+  const readingTitle =
+    termType === 'LIMIT'
+      ? 'Coverage Limit readings'
+      : termType === 'CASH_LIMIT'
+        ? 'Cash Limit readings'
+        : 'Coverage readings';
+  const readingModalTitle =
+    termType === 'LIMIT'
+      ? 'Coverage Limit reading'
+      : termType === 'CASH_LIMIT'
+        ? 'Cash Limit reading'
+        : 'Coverage reading';
+  const [isActive, setIsActive] = useState(true);
+  const [paging, setPaging] = useState(emptyPage);
+  const [open, setOpen] = useState(false);
+  const [itemOpen, setItemOpen] = useState(false);
+  const [record, setRecord] = useState<any>({});
+  const [item, setItem] = useState<any>({});
+  const [selectedTerm, setSelectedTerm] = useState<any>(null);
+  const [exclusionTerm, setExclusionTerm] = useState<any>(null);
+  const facilityLookup = useLookupPaging(String(open));
+  const departmentLookup = useLookupPaging(`${record.facilityId || ''}-${open}`);
+  const facilities = useSearchCoverageFacilitiesQuery({ page: facilityLookup.page, size: 15, search: facilityLookup.appliedSearch }, { skip: !open });
+  const departments = useSearchCoverageDepartmentsQuery(
+    { facilityId: Number(record.facilityId), page: departmentLookup.page, size: 15, search: departmentLookup.appliedSearch },
+    { skip: !open || !record.facilityId }
+  );
+  const { data, isFetching } = useListTermsQuery({ classId, termType, isActive, ...paging });
+  const itemsQuery = useListTermItemsQuery(
+    { termId: Number(selectedTerm?.id), page: 0, size: 10 },
+    { skip: !hasReadings || !selectedTerm?.id }
+  );
+  const [saveTerm] = useSaveTermMutation();
+  const [saveItem] = useSaveTermItemMutation();
+  const [toggleActive] = useToggleTermActiveMutation();
+
+  const encounterOptions = useMemo(() => {
+    const selectedDept = (departments.data?.data ?? []).find(row => Number(row.id) === Number(record.departmentId));
+    if (!record.departmentId || Number(record.departmentId) === 0 || !selectedDept?.encounterType) {
+      return allEncounterTypes;
+    }
+    return allEncounterTypes.filter(option => option.value === 'ALL' || option.value === selectedDept.encounterType);
+  }, [allEncounterTypes, departments.data, record.departmentId]);
+
+  const persistTerm = async () => {
+    const selectedDiagnoses = diagnosisIdsOf(record);
+    if (record.diagnosisScope === 'SPECIFIC_DIAGNOSIS' && !selectedDiagnoses.length) {
+      notifyWarning(dispatch, 'Select at least one specific diagnosis');
+      return;
+    }
+    if (exceedsPercentage(record.valueType === 'PERCENTAGE', record.limitValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
+    try {
+      await saveTerm({
+        classId,
+        body: {
+          ...record,
+          termType,
+          diagnoses: selectedDiagnoses.map(diagnosisId => ({ diagnosisId })),
+          diagnosisId: selectedDiagnoses[0] ?? null,
+          diagnosisCode: record.diagnosisCode || null,
+          ...departmentScope(record.departmentId)
+        }
+      }).unwrap();
+      notifySuccess(dispatch, record.id ? 'Coverage rule updated' : 'Coverage rule saved');
+      setOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to save coverage rule');
+    }
+  };
+
+  const changeTermStatus = async (row: any) => {
+    try {
+      await toggleActive(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Coverage rule deactivated' : 'Coverage rule activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update coverage rule status');
+    }
+  };
+
+  const persistItem = async () => {
+    if (!item.billingItemType) {
+      notifyWarning(dispatch, 'Category is required');
+      return;
+    }
+    if (!item.valueType) {
+      notifyWarning(dispatch, 'Value type is required');
+      return;
+    }
+    if (item.limitValue == null || Number(item.limitValue) <= 0) {
+      notifyWarning(dispatch, 'Limit value must be greater than zero');
+      return;
+    }
+    if (exceedsPercentage(item.valueType === 'PERCENTAGE', item.limitValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
+    const billingItemType = item.billingItemType === 'ALL' ? null : item.billingItemType;
+    const itemId = item.itemId == null || item.itemId === '' ? null : Number(item.itemId);
+    const hasItem = Number.isFinite(itemId as number);
+    const subcategoryKey =
+      termType === 'LIMIT' && !hasItem && item.subcategoryKey ? String(item.subcategoryKey) : null;
+    try {
+      await saveItem({
+        termId: Number(selectedTerm.id),
+        body: {
+          id: item.id,
+          categoryScope: billingItemType ? (hasItem ? 'SERVICE' : subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL',
+          billingItemType,
+          serviceId: hasItem ? itemId : null,
+          subcategoryKey,
+          serviceName: hasItem ? item.itemName || null : null,
+          valueType: item.valueType,
+          limitValue: item.limitValue,
+          isActive: item.isActive !== false && item.isActive !== 'false'
+        }
+      }).unwrap();
+      notifySuccess(dispatch, item.id ? `${readingModalTitle} updated` : `${readingModalTitle} added`);
+      setItemOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, `Unable to save ${readingModalTitle.toLowerCase()}`);
+    }
+  };
+
+  const persistReadingStatus = (row: any, nextActive: boolean) => {
+    if (!selectedTerm?.id) {
+      return;
+    }
+    saveItem({
+      termId: Number(selectedTerm.id),
+      body: {
+        id: row.id,
+        categoryScope: row.categoryScope
+          ?? (row.billingItemType ? (row.serviceId ? 'SERVICE' : row.subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL'),
+        billingItemType: row.billingItemType ?? null,
+        serviceId: row.serviceId ?? null,
+        subcategoryKey: row.serviceId ? null : row.subcategoryKey ?? null,
+        serviceName: row.serviceId ? row.serviceName || null : null,
+        valueType: row.valueType,
+        limitValue: row.limitValue,
+        isActive: nextActive
+      }
+    });
+  };
+
+  const openCoverageReading = (term: any, row?: any) => {
+    setSelectedTerm(term);
+    setItem(
+      row
+        ? {
+            ...row,
+            billingItemType: row.billingItemType ?? 'ALL',
+            itemId: row.serviceId ?? null,
+            itemName: row.serviceName ?? null,
+            subcategoryKey: row.subcategoryKey ?? null
+          }
+        : { billingItemType: null, itemId: null, valueType: 'PERCENTAGE', isActive: true }
+    );
+    setItemOpen(true);
+  };
+
+  return (
+    <>
+      <RuleToolbar
+        isActive={isActive}
+        setIsActive={value => {
+          setIsActive(value);
+          setPaging(prev => ({ ...prev, page: 0 }));
+        }}
+        readOnly={readOnly}
+        onAdd={() => {
+          setRecord({
+            termType,
+            diagnosisScope: 'ALL_DIAGNOSIS',
+            allDepartments: true,
+            encounterType: 'ALL',
+            valueType: 'PERCENTAGE',
+            coverageBasis: 'GROSS',
+            periodBasis: 'PER_ENCOUNTER'
+          });
+          setOpen(true);
+        }}
+      />
+      <MyTable
+        data={data?.data ?? []}
+        totalCount={data?.totalCount ?? 0}
+        loading={isFetching}
+        height={260}
+        page={paging.page}
+        rowsPerPage={paging.size}
+        onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
+        onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
+        onRowClick={(row: any) => setSelectedTerm(row)}
+        rowClassName={(row: any) => (selectedTerm?.id === row.id ? 'selected-row' : '')}
+        columns={[
+          { key: 'diagnosisScope', title: 'Coverage Type', flexGrow: 2, render: (row: any) => formatEnumString(row.diagnosisScope) },
+          { key: 'diagnosisName', title: 'Diagnoses', flexGrow: 3, render: (row: any) => row.diagnosisScope === 'SPECIFIC_DIAGNOSIS' ? diagnosisLabel(row) : 'All' },
+          { key: 'facilityName', title: 'Facility', flexGrow: 2 },
+          { key: 'departmentName', title: 'Department', flexGrow: 2 },
+          { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
+          { key: 'limitValue', title: 'Limit Value', flexGrow: 1 },
+          { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => {
+                  setRecord(row);
+                  setOpen(true);
+                }}
+                onToggle={() => changeTermStatus(row)}
+                extra={
+                  <>
+                    {hasReadings && (
+                      <MdAdd
+                        className="icons-style"
+                        size={22}
+                        title={`Add ${readingModalTitle.toLowerCase()}`}
+                        onClick={event => {
+                          event.stopPropagation();
+                          openCoverageReading(row);
+                        }}
+                      />
+                    )}
+                    {termType === 'LIMIT' && (
+                      <MdBlock
+                        className="icons-style"
+                        size={20}
+                        title="Exclusions from this limit"
+                        onClick={event => {
+                          event.stopPropagation();
+                          setExclusionTerm(row);
+                        }}
+                      />
+                    )}
+                  </>
+                }
+              />
+            )
+          }
+        ]}
+      />
+
+      {hasReadings && selectedTerm?.id && (
+        <div className="coverage-nested-block">
+          <div className="coverage-nested-title">
+            <Translate>{readingTitle}</Translate>
+            {!readOnly && (
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                width="109px"
+                onClick={() => openCoverageReading(selectedTerm)}
+              >
+                Add
+              </MyButton>
+            )}
+          </div>
+          <MyTable
+            data={itemsQuery.data?.data ?? []}
+            totalCount={itemsQuery.data?.totalCount ?? 0}
+            loading={itemsQuery.isFetching}
+            height={220}
+            columns={[
+              {
+                key: 'billingItemType',
+                title: 'Category',
+                flexGrow: 2,
+                render: (row: any) => discountCategoryLabel({ ...row, targetType: row.categoryScope })
+              },
+              ...(termType === 'LIMIT'
+                ? [{
+                    key: 'subcategoryLabel',
+                    title: 'Subcategory',
+                    flexGrow: 2,
+                    render: (row: any) => row.subcategoryLabel || '-'
+                  }]
+                : []),
+              {
+                key: 'serviceName',
+                title: termType === 'COVERAGE' ? 'Item' : 'Service name',
+                flexGrow: 2,
+                render: (row: any) => discountItemLabel({ ...row, targetType: row.categoryScope })
+              },
+              { key: 'valueType', title: 'Value Type', flexGrow: 1, render: (row: any) => formatEnumString(row.valueType) },
+              { key: 'limitValue', title: 'Limit Value', flexGrow: 1 },
+              { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
+              {
+                key: 'actions',
+                title: '',
+                flexGrow: 1,
+                render: (row: any) =>
+                  readOnly ? null : (
+                    <div className="coverage-row-actions">
+                      <MdModeEdit
+                        className="icons-style"
+                        size={22}
+                        title="Update"
+                        onClick={() => openCoverageReading(selectedTerm, row)}
+                      />
+                      {row.isActive ? (
+                        <MdToggleOff
+                          className="icons-style"
+                          size={24}
+                          title="Deactivate"
+                          onClick={() => persistReadingStatus(row, false)}
+                        />
+                      ) : (
+                        <FaUndo
+                          className="icons-style"
+                          size={18}
+                          title="Activate"
+                          onClick={() => persistReadingStatus(row, true)}
+                        />
+                      )}
+                    </div>
+                  )
+              }
+            ]}
+          />
+        </div>
+      )}
+
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Coverage Rule' : 'Coverage Rule')} size="72vw" bodyheight="72vh" actionButtonFunction={persistTerm} content={
+        <Form fluid className="coverage-form-grid">
+          <MyInput required width="100%" fieldLabel="Coverage Type" fieldType="select" fieldName="diagnosisScope" record={record} setRecord={setRecord} selectData={diagnosisScopes} />
+          {record.diagnosisScope === 'SPECIFIC_DIAGNOSIS' && (
+            <CoverageIcd10Field record={record} setRecord={setRecord} required />
+          )}
+          <CoveragePagedSelect fieldName="facilityId" fieldLabel="Facility name" record={record} setRecord={next => setRecord({ ...next, departmentId: undefined })} result={facilities} page={facilityLookup.page} setPage={facilityLookup.setPage} search={facilityLookup.search} setSearch={facilityLookup.setSearch} required />
+          <CoveragePagedSelect fieldName="departmentId" fieldLabel="Department" record={record} setRecord={setRecord} result={departments} page={departmentLookup.page} setPage={departmentLookup.setPage} search={departmentLookup.search} setSearch={departmentLookup.setSearch} includeAll required disabled={!record.facilityId} />
+          <MyInput width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterOptions} />
+          {termType !== 'COVERAGE' && (
+            <>
+              <MyInput required width="100%" fieldLabel="Period type" fieldType="select" fieldName="periodBasis" record={record} setRecord={setRecord} selectData={periodTypes} />
+              <MyInput required width="100%" fieldLabel="Discount Type" fieldType="select" fieldName="coverageBasis" record={record} setRecord={setRecord} selectData={coverageBasis} />
+            </>
+          )}
+          <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={record} setRecord={setRecord} selectData={valueTypes} />
+          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={record} setRecord={setRecord} max={percentageMax(record.valueType === 'PERCENTAGE')} />
+        </Form>
+      } />
+
+      <MyModal open={itemOpen} setOpen={setItemOpen} title={modalTitle(readingModalTitle)} size="56vw" bodyheight="68vh" actionButtonFunction={persistItem} content={
+        <Form fluid className="coverage-form-grid">
+          <BillingCategoryItemFields
+            open={itemOpen}
+            record={item}
+            setRecord={setItem}
+            showSubcategory={termType === 'LIMIT'}
+          />
+          <MyInput required width="100%" fieldLabel="Value type" fieldType="select" fieldName="valueType" record={item} setRecord={setItem} selectData={valueTypes} />
+          <MyInput required width="100%" fieldLabel="Limit Value" fieldType="number" fieldName="limitValue" record={item} setRecord={setItem} max={percentageMax(item.valueType === 'PERCENTAGE')} />
+          <MyInput required width="100%" fieldLabel="Status" fieldType="select" fieldName="isActive" record={item} setRecord={setItem} selectData={statusOptions} selectDataLabel="label" selectDataValue="value" searchable={false} />
+        </Form>
+      } />
+
+      {termType === 'LIMIT' && (
+        <CoverageLimitExclusionModal
+          open={Boolean(exclusionTerm)}
+          setOpen={value => {
+            if (!value) {
+              setExclusionTerm(null);
+            }
+          }}
+          term={exclusionTerm}
+          readOnly={readOnly}
+        />
+      )}
+    </>
+  );
+};
+
+const DiscountPanel = ({
+  classId,
+  tpaId,
+  readOnly
+}: {
+  classId?: number;
+  tpaId?: number;
+  readOnly?: boolean;
+}) => {
+  const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
+  const encounterTypes = useEnumOptions('EncounterType');
+  const discountTypes = useEnumOptions('DiscountType');
+  const [isActive, setIsActive] = useState<boolean | ''>('');
+  const [paging, setPaging] = useState(emptyPage);
+  const [open, setOpen] = useState(false);
+  const [record, setRecord] = useState<any>({});
+  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
+  const { data, isFetching } = useListDiscountsQuery({
+    ...owner,
+    ...(typeof isActive === 'boolean' ? { isActive } : {}),
+    ...paging
+  });
+  const [create] = useCreateDiscountMutation();
+  const [deactivate] = useDeactivateDiscountMutation();
+
+  const persist = async () => {
+    if (!record.discountType) {
+      notifyWarning(dispatch, 'Discount type is required');
+      return;
+    }
+    if (record.discountValue == null || Number(record.discountValue) <= 0) {
+      notifyWarning(dispatch, 'Discount value must be greater than zero');
+      return;
+    }
+    if (exceedsPercentage(record.discountType === 'PERCENTAGE', record.discountValue)) {
+      notifyWarning(dispatch, 'Percentage value cannot be greater than 100');
+      return;
+    }
+    if (!record.billingItemType) {
+      notifyWarning(dispatch, 'Category is required');
+      return;
+    }
+    const billingItemType = record.billingItemType === 'ALL' ? null : record.billingItemType;
+    const itemId = record.itemId == null || record.itemId === '' ? null : Number(record.itemId);
+    const subcategoryKey = billingItemType && !itemId && record.subcategoryKey ? String(record.subcategoryKey) : null;
+    try {
+      await create({
+        ...owner,
+        body: {
+          id: record.id,
+          targetType: billingItemType ? (itemId ? 'SERVICE' : subcategoryKey ? 'SUBCATEGORY' : 'CATEGORY') : 'ALL',
+          billingItemType,
+          serviceId: Number.isFinite(itemId as number) ? itemId : null,
+          serviceName: itemId ? record.itemName || null : null,
+          subcategoryKey,
+          encounterType: record.encounterType,
+          discountType: record.discountType,
+          discountValue: record.discountValue
+        }
+      }).unwrap();
+      notifySuccess(dispatch, record.id ? 'Discount updated' : 'Discount added');
+      setOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, record.id ? 'Unable to update discount' : 'Unable to add discount');
+    }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await deactivate(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Discount deactivated' : 'Discount activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update discount status');
+    }
+  };
+
+  const openDiscount = (row?: any) => {
+    setRecord(
+      row
+        ? {
+            ...row,
+            billingItemType: row.billingItemType ?? 'ALL',
+            itemId: row.serviceId ?? null,
+            itemName: row.serviceId ? row.serviceName ?? null : null,
+            subcategoryKey: row.serviceId ? null : row.subcategoryKey ?? null
+          }
+        : { encounterType: 'ALL', discountType: 'PERCENTAGE', billingItemType: null, itemId: null, subcategoryKey: null }
+    );
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <RuleToolbar
+        readOnly={readOnly}
+        includeAll
+        isActive={isActive}
+        setIsActive={setIsActive}
+        onAdd={() => openDiscount()} />
+      <MyTable
+        data={data?.data ?? []}
+        totalCount={data?.totalCount ?? 0}
+        loading={isFetching}
+        height={280}
+        page={paging.page}
+        rowsPerPage={paging.size}
+        onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
+        onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
+        columns={[
+          { key: 'billingItemType', title: 'Category', flexGrow: 2, render: (row: any) => discountCategoryLabel(row) },
+          { key: 'subcategoryLabel', title: 'Subcategory', flexGrow: 2, render: (row: any) => row.subcategoryLabel || '-' },
+          { key: 'serviceName', title: 'Item', flexGrow: 2, render: (row: any) => discountItemLabel(row) },
+          { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
+          { key: 'discountType', title: 'Discount type', flexGrow: 2, render: (row: any) => formatEnumString(row.discountType) },
+          { key: 'discountValue', title: 'Value', flexGrow: 1 },
+          { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => openDiscount(row)}
+                onToggle={() => changeStatus(row)}
+              />
+            )
+          }
+        ]}
+      />
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Discount' : 'Discount')} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+        <Form fluid className="coverage-form-grid">
+          <MyInput required width="100%" fieldLabel="Discount type" fieldType="select" fieldName="discountType" record={record} setRecord={setRecord} selectData={discountTypes} />
+          <MyInput required width="100%" fieldLabel="Value" fieldType="number" fieldName="discountValue" record={record} setRecord={setRecord} max={percentageMax(record.discountType === 'PERCENTAGE')} />
+          <BillingCategoryItemFields open={open} record={record} setRecord={setRecord} showSubcategory />
+          <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
+        </Form>
+      } />
+    </>
+  );
+};
+
+const exclusionTypeOptions = [
+  { label: 'Category', value: 'CATEGORY' },
+  { label: 'Diagnosis', value: 'DIAGNOSIS' }
+];
+
+const ExclusionPanel = ({
+  classId,
+  tpaId,
+  readOnly
+}: {
+  classId?: number;
+  tpaId?: number;
+  readOnly?: boolean;
+}) => {
+  const dispatch = useAppDispatch();
+  const modalTitle = useRuleModalTitle();
+  const encounterTypes = useEnumOptions('EncounterType');
+  const yesNo = useEnumOptions('YesNoQuestion', { exclude: ['NOT_YET_DETERMINED'] });
+  const [isActive, setIsActive] = useState<boolean | ''>('');
+  const [paging, setPaging] = useState(emptyPage);
+  const [open, setOpen] = useState(false);
+  const [record, setRecord] = useState<any>({});
+  const owner = tpaId ? { tpaId } : { classId: Number(classId) };
+  const { data, isFetching } = useListExclusionsQuery({
+    ...owner,
+    ...(typeof isActive === 'boolean' ? { isActive } : {}),
+    ...paging
+  });
+  const [create] = useCreateExclusionMutation();
+  const [deactivate] = useDeactivateExclusionMutation();
+
+  const persist = async () => {
+    if (!record.exclusionType) {
+      notifyWarning(dispatch, 'Excluded type is required');
+      return;
+    }
+    if (record.exclusionType === 'CATEGORY' && !record.billingItemType) {
+      notifyWarning(dispatch, 'Category is required');
+      return;
+    }
+    if (
+      record.exclusionType === 'DIAGNOSIS' &&
+      !record.allDiagnoses &&
+      !diagnosisIdsOf(record).length
+    ) {
+      notifyWarning(dispatch, 'Select at least one diagnosis');
+      return;
+    }
+    const billingItemType =
+      record.exclusionType === 'CATEGORY' && record.billingItemType !== 'ALL'
+        ? record.billingItemType
+        : null;
+    const itemId =
+      record.exclusionType === 'CATEGORY' && record.itemId != null && record.itemId !== ''
+        ? Number(record.itemId)
+        : null;
+    try {
+      await create({
+        ...owner,
+        body: {
+          id: record.id,
+          exclusionType:
+            record.exclusionType === 'DIAGNOSIS'
+              ? 'DIAGNOSIS'
+              : billingItemType
+                ? itemId
+                  ? 'SERVICE'
+                  : 'CATEGORY'
+                : 'ALL',
+          billingItemType,
+          serviceId: Number.isFinite(itemId as number) ? itemId : null,
+          serviceName: itemId ? record.itemName || null : null,
+          allDiagnoses: record.exclusionType === 'DIAGNOSIS' ? Boolean(record.allDiagnoses) : false,
+          diagnoses:
+            record.exclusionType === 'DIAGNOSIS' && !record.allDiagnoses
+              ? diagnosisIdsOf(record).map(diagnosisId => ({ diagnosisId }))
+              : [],
+          diagnosisId:
+            record.exclusionType === 'DIAGNOSIS' && !record.allDiagnoses
+              ? diagnosisIdsOf(record)[0] ?? null
+              : null,
+          encounterType: record.encounterType,
+          excludedResult: record.excludedResult
+        }
+      }).unwrap();
+      notifySuccess(dispatch, record.id ? 'Exclusion updated' : 'Exclusion added');
+      setOpen(false);
+    } catch (error: any) {
+      notifyError(dispatch, error, record.id ? 'Unable to update exclusion' : 'Unable to add exclusion');
+    }
+  };
+
+  const changeStatus = async (row: any) => {
+    try {
+      await deactivate(row.id).unwrap();
+      notifySuccess(dispatch, row.isActive ? 'Exclusion deactivated' : 'Exclusion activated');
+    } catch (error: any) {
+      notifyError(dispatch, error, 'Unable to update exclusion status');
+    }
+  };
+
+  const openExclusion = (row?: any) => {
+    setRecord(
+      row
+        ? {
+            ...row,
+            exclusionType: row.exclusionType === 'DIAGNOSIS' ? 'DIAGNOSIS' : 'CATEGORY',
+            billingItemType: row.exclusionType === 'DIAGNOSIS' ? null : row.billingItemType ?? 'ALL',
+            itemId: row.serviceId ?? null,
+            itemName: row.serviceId ? row.serviceName ?? null : null
+          }
+        : {
+            exclusionType: 'CATEGORY',
+            encounterType: 'ALL',
+            excludedResult: 'YES',
+            allDiagnoses: false,
+            billingItemType: null,
+            itemId: null
+          }
+    );
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <RuleToolbar
+        readOnly={readOnly}
+        includeAll
+        isActive={isActive}
+        setIsActive={setIsActive}
+        onAdd={() => openExclusion()} />
+      <MyTable
+        data={data?.data ?? []}
+        totalCount={data?.totalCount ?? 0}
+        loading={isFetching}
+        height={280}
+        page={paging.page}
+        rowsPerPage={paging.size}
+        onPageChange={(_e: any, page: number) => setPaging(prev => ({ ...prev, page }))}
+        onRowsPerPageChange={(e: any) => setPaging(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}
+        columns={[
+          { key: 'exclusionType', title: 'Excluded type', flexGrow: 2, render: (row: any) => exclusionTypeLabel(row) },
+          { key: 'serviceName', title: 'Result', flexGrow: 2, render: (row: any) => exclusionResultLabel(row) },
+          { key: 'encounterType', title: 'Encounter Type', flexGrow: 2, render: (row: any) => formatEnumString(row.encounterType) },
+          { key: 'excludedResult', title: 'Excluded Result', flexGrow: 1, render: (row: any) => formatEnumString(row.excludedResult) },
+          { key: 'isActive', title: 'Status', flexGrow: 1, render: (row: any) => (row.isActive ? 'Active' : 'Inactive') },
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: (row: any) => (
+              <RuleActions
+                readOnly={readOnly}
+                isActive={row.isActive}
+                onEdit={() => openExclusion(row)}
+                onToggle={() => changeStatus(row)}
+              />
+            )
+          }
+        ]}
+      />
+      <MyModal open={open} setOpen={setOpen} title={modalTitle(record.id ? 'Edit Exclusion' : 'Exclusion')} size="56vw" bodyheight="68vh" actionButtonFunction={persist} content={
+        <Form fluid className="coverage-form-grid">
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Excluded type"
+            fieldType="select"
+            fieldName="exclusionType"
+            record={record}
+            setRecord={(next: any) => {
+              if (next?.exclusionType !== record.exclusionType) {
+                setRecord({
+                  ...next,
+                  billingItemType: null,
+                  itemId: null,
+                  itemName: null,
+                  allDiagnoses: false,
+                  diagnosisId: null,
+                  diagnoses: [],
+                  diagnosisIds: []
+                });
+                return;
+              }
+              setRecord(next);
+            }}
+            selectData={exclusionTypeOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            searchable={false}
+          />
+          {record.exclusionType === 'CATEGORY' && (
+            <BillingCategoryItemFields open={open} record={record} setRecord={setRecord} />
+          )}
+          {record.exclusionType === 'DIAGNOSIS' && (
+            <>
+              <MyInput width="100%" fieldLabel="All diagnoses" fieldType="check" fieldName="allDiagnoses" record={record} setRecord={setRecord} />
+              {!record.allDiagnoses && (
+                <CoverageIcd10Field record={record} setRecord={setRecord} required />
+              )}
+            </>
+          )}
+          <MyInput required width="100%" fieldLabel="Encounter Type" fieldType="select" fieldName="encounterType" record={record} setRecord={setRecord} selectData={encounterTypes} />
+          <MyInput required width="100%" fieldLabel="Excluded Result" fieldType="select" fieldName="excludedResult" record={record} setRecord={setRecord} selectData={yesNo} />
+        </Form>
+      } />
+    </>
+  );
+};
+
+
+export { DiscountPanel, ExclusionPanel, PreApprovalPanel };
+export default CoverageRulePanels;
+

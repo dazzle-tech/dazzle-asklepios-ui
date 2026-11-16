@@ -4,6 +4,8 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   EligibilityCheckResponse,
   EncounterPreAuthorizationRefreshResponse,
+  LocalPreAuthorizationCoverageResponse,
+  LocalPreAuthorizationDecisionRequest,
   PreAuthorizationCancelRequest,
   PreAuthorizationCommunicationHistoryResponse,
   PreAuthorizationCommunicationRequest,
@@ -11,6 +13,24 @@ import type {
 } from '@/types/model-types-new';
 
 export type { PreAuthorizationTrackingResponse, PreAuthorizationCommunicationHistoryResponse };
+
+/** NPHIES claim type the visit is sent as; it decides which fields are mandatory. */
+export type PreAuthorizationClaimType = 'PROFESSIONAL_OP' | 'PROFESSIONAL_EMERGENCY' | 'ORAL_OP';
+
+export type PreAuthorizationMissingField = {
+  code: string;
+  label: string;
+  section: string;
+};
+
+/** What the visit still needs before its held services can be sent to Waseel. */
+export type PreAuthorizationReadiness = {
+  encounterId: number;
+  claimType: PreAuthorizationClaimType;
+  ready: boolean;
+  missingFields: PreAuthorizationMissingField[];
+  waitingItems: number;
+};
 
 type PagedParams = {
   page: number;
@@ -218,6 +238,34 @@ export const preAuthorizationApi = createApi({
       }
     }),
 
+    getPreAuthorizationReadiness: builder.query<PreAuthorizationReadiness, { encounterId: number }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/readiness`,
+        method: 'GET'
+      }),
+      providesTags: ['EncounterPreAuthorization']
+    }),
+
+    sendPendingPreAuthorization: builder.mutation<PreAuthorizationReadiness, { encounterId: number }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/send`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization']
+    }),
+
+    /** The patient accepts a partial approval: insurance pays the approved amount, the patient the rest. */
+    acceptPartialPreAuthorization: builder.mutation<
+      unknown,
+      { encounterId: number; patientServiceProductId: number }
+    >({
+      query: ({ encounterId, patientServiceProductId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/items/${patientServiceProductId}/accept-partial`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization']
+    }),
+
     refreshEncounterPreAuthorizationLocal: builder.mutation<
       EncounterPreAuthorizationRefreshResponse,
       { encounterId: number }
@@ -272,6 +320,29 @@ export const preAuthorizationApi = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       }
+    }),
+
+    getLocalPreAuthorizationCoverage: builder.query<LocalPreAuthorizationCoverageResponse, number>({
+      query: preAuthorizationId => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/local-coverage`,
+        method: 'GET'
+      }),
+      keepUnusedDataFor: 0
+    }),
+
+    decideLocalPreAuthorization: builder.mutation<
+      EncounterPreAuthorizationRefreshResponse,
+      { preAuthorizationId: number; body: LocalPreAuthorizationDecisionRequest }
+    >({
+      query: ({ preAuthorizationId, body }) => ({
+        url: `/api/patient/internal/waseel/pre-authorizations/${preAuthorizationId}/local-decision`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization'],
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      }
     })
   })
 });
@@ -289,7 +360,12 @@ export const {
   useCheckEncounterEligibilityMutation,
   useRefreshEncounterPreAuthorizationMutation,
   useRefreshEncounterPreAuthorizationLocalMutation,
+  useGetPreAuthorizationReadinessQuery,
+  useSendPendingPreAuthorizationMutation,
+  useAcceptPartialPreAuthorizationMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useCloneRejectedPreAuthorizationItemMutation,
-  useResubmitPreAuthorizationMutation
+  useResubmitPreAuthorizationMutation,
+  useGetLocalPreAuthorizationCoverageQuery,
+  useDecideLocalPreAuthorizationMutation
 } = preAuthorizationApi;

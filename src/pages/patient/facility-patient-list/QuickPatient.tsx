@@ -195,7 +195,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   );
 
   const genderEnum = useEnumOptions('Gender');
-  const EncounterTypeEnum = useEnumOptions('EncounterType');
+  const EncounterTypeEnum = useEnumOptions('EncounterType', { exclude: ['ALL'] });
 
   const [isUnknown, setIsUnknown] = useState({isUnknown: false});
   const [validationResult, setValidationResult] = useState<any>({});

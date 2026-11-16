@@ -25,6 +25,11 @@ import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnostic
 import { useLazyGetVaccineBrandsByIdsQuery } from '@/services/vaccine/vaccineBrandsService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useAddProcedureEquipmentMutation,
+  useDeleteProcedureEquipmentMutation,
+  useGetProcedureEquipmentQuery
+} from '@/services/patients/patientProcedureService';
 
 const LOCKED_PAYMENT_STATUSES = new Set([
   'RESERVED',
@@ -37,25 +42,47 @@ const LOCKED_PAYMENT_STATUSES = new Set([
   'CANCELLED'
 ]);
 
-const ServiceAndProductsTab = ({ edit: propEdit }) => {
+type ServiceAndProductsTabProps = {
+  edit?: boolean;
+  /** Given outside the encounter page, where the route state has no encounter. */
+  encounter?: any;
+  patient?: any;
+  /** Shows and adds only the items that come from this procedure. */
+  procedureId?: number;
+};
+
+const ServiceAndProductsTab = ({
+  edit: propEdit,
+  encounter: encounterProp,
+  patient,
+  procedureId
+}: ServiceAndProductsTabProps) => {
   const location = useLocation();
-  const encounter = location.state?.encounter;
+  const encounter = encounterProp ?? location.state?.encounter;
   const dispatch = useAppDispatch();
+  const [addProcedureItem] = useAddProcedureEquipmentMutation();
+  const [deleteProcedureItem] = useDeleteProcedureEquipmentMutation();
 
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 15, sort: 'id,asc', });
 
   const [deletePatientServiceProduct] = useDeletePatientServiceOrProductMutation();
 
-  const { data: patientServiceProductListResponse, refetch, isLoading } =
-    useGetPatientServicesAndProductsByEncounterQuery(
-      {
-        encounterId: encounter?.id,
-        ...paginationParams
-      },
-      {
-        skip: !encounter?.id,
-      }
-    );
+  const encounterItems = useGetPatientServicesAndProductsByEncounterQuery(
+    {
+      encounterId: encounter?.id,
+      ...paginationParams
+    },
+    {
+      skip: !encounter?.id || Boolean(procedureId),
+    }
+  );
+  const procedureItems = useGetProcedureEquipmentQuery(procedureId as number, {
+    skip: !procedureId
+  });
+  const patientServiceProductListResponse = procedureId
+    ? { data: procedureItems.data ?? [], totalCount: procedureItems.data?.length ?? 0 }
+    : encounterItems.data;
+  const { refetch, isLoading } = procedureId ? procedureItems : encounterItems;
 
   const { data: billingSummary } = useGetEncounterBillingSummaryQuery(
     { encounterId: encounter?.id as number },
@@ -323,10 +350,17 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     if (patientServiceAndProduct?.id === undefined) return;
 
     try {
-      await deletePatientServiceProduct({
-        id: patientServiceAndProduct?.id,
-        encounterId: encounter?.id
-      }).unwrap();
+      if (procedureId) {
+        await deleteProcedureItem({
+          id: procedureId,
+          equipmentId: patientServiceAndProduct.id as number
+        }).unwrap();
+      } else {
+        await deletePatientServiceProduct({
+          id: patientServiceAndProduct?.id,
+          encounterId: encounter?.id
+        }).unwrap();
+      }
 
       dispatch(
         notify({ msg: 'Deleted Successfully', sev: 'success' })
@@ -453,7 +487,14 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     setOpenModal(false);
   }, [billingFinalized]);
 
+  // Edits go through the shared endpoint, which does not refresh the procedure's list
   useEffect(() => {
+    if (procedureId && !popupOpen) refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popupOpen]);
+
+  useEffect(() => {
+    if (procedureId) return;
     dispatch(setPageCode('serviceandproducts'));
     dispatch(setDivContent('Service and Products'));
 
@@ -505,6 +546,13 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setOpen={setPopupOpen}
         patientServiceAndProduct={patientServiceAndProduct}
         setPatientServiceAndProduct={setPatientServiceAndProduct}
+        patient={patient}
+        encounter={encounter}
+        createItem={
+          procedureId
+            ? dto => addProcedureItem({ id: procedureId, body: dto }).unwrap()
+            : undefined
+        }
       />
 
       <DeletionConfirmationModal

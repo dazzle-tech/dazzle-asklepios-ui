@@ -114,6 +114,12 @@ export function useEnumByName(name: string, allowAnonymous = false): string[] {
 const EMPTY_EXCLUDE: string[] = [];
 const EMPTY_LABEL_OVERRIDES: Record<string, string> = {};
 
+const BUILTIN_ENUM_LABEL_OVERRIDES: Record<string, Record<string, string>> = {
+  EncounterReason: {
+    PRE_EMPLOYMENT: 'Pre-Employment'
+  }
+};
+
 export function useEnumOptions(
   name: string,
   params: EnumOptionsParams = {}
@@ -129,12 +135,13 @@ export function useEnumOptions(
   return useMemo(() => {
     const filtered = values.filter(v => !exclude.includes(v));
     const fmt = labelFormatter ?? formatEnumLabel;
+    const builtinOverrides = BUILTIN_ENUM_LABEL_OVERRIDES[name] ?? EMPTY_LABEL_OVERRIDES;
 
     return filtered.map(v => ({
       value: v,
-      label: labelOverrides[v] ?? fmt(v)
+      label: labelOverrides[v] ?? builtinOverrides[v] ?? fmt(v)
     }));
-  }, [values, exclude, labelOverrides, labelFormatter]);
+  }, [name, values, exclude, labelOverrides, labelFormatter]);
 }
 
 export function useEnumNames(

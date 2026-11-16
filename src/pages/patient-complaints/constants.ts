@@ -104,6 +104,21 @@ export const PATIENT_COMPLAINT_TYPE_LABEL_OVERRIDES: Record<string, string> = {
   BILLING_FINANCE: 'Billing / Finance'
 };
 
+/** Map backend enum name lists to select options (same labeling as useEnumOptions). */
+export const toComplaintEnumOptions = (
+  values: string[] | null | undefined,
+  labelOverrides: Record<string, string> = {}
+): { value: string; label: string }[] =>
+  (values ?? []).map(value => ({
+    value,
+    label:
+      labelOverrides[value] ??
+      value
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, c => c.toUpperCase())
+  }));
+
 /** UI-only Yes/No for on-behalf toggle (not a backend enum). */
 export const ON_BEHALF_OPTIONS = [
   { label: 'No', value: 'false' },

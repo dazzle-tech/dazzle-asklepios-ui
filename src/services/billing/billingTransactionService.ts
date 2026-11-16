@@ -561,10 +561,19 @@ export const billingTransactionService =
                 body
               }),
 
-            invalidatesTags: [
+            invalidatesTags: (
+              _result,
+              _error,
+              arg
+            ) => [
               'BillingRefund',
               'BillingPayment',
               'BillingWallet',
+              'PatientFinancialInvoices',
+              {
+                type: 'EncounterBillingSummary',
+                id: String(arg.encounterId ?? '')
+              },
               'EncounterBillingSummary'
             ]
           }),
@@ -612,6 +621,22 @@ export const billingTransactionService =
           >({
             query: body => ({
               url: '/api/patient/insurance-coverage/price-list-check',
+              method: 'POST',
+              body
+            })
+          }),
+
+        closePreAuthorizationAlert:
+          builder.mutation<
+            unknown,
+            {
+              encounterId: number;
+              message: string;
+              items: { patientServiceProductId?: number | null; label?: string | null }[];
+            }
+          >({
+            query: body => ({
+              url: '/api/patient/pre-authorization-alerts/close',
               method: 'POST',
               body
             })
@@ -719,6 +744,7 @@ export const {
 
   useEvaluateBillingRuleMutation,
   useCheckInsurancePriceListCoverageMutation,
+  useClosePreAuthorizationAlertMutation,
 
   useSearchRegistrationPendingItemsQuery,
   useLazySearchRegistrationPendingItemsQuery,

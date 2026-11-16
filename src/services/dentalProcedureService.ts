@@ -44,9 +44,8 @@ export const dentalProcedureService = createApi({
       }),
       invalidatesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
+      // The API returns the saved procedure itself (not wrapped in `object`).
+      transformResponse: (response: any) => response?.object ?? response
     }),
 
     updateDentalProcedure: builder.mutation({
@@ -57,9 +56,8 @@ export const dentalProcedureService = createApi({
       }),
       invalidatesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
+      // The API returns the saved procedure itself (not wrapped in `object`).
+      transformResponse: (response: any) => response?.object ?? response
     }),
 
     cancelDentalProcedure: builder.mutation({

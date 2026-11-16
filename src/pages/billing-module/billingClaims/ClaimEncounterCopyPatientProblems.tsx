@@ -10,6 +10,7 @@ import MyTable from '@/components/MyTable';
 import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import Translate from '@/components/Translate';
 
@@ -376,30 +377,41 @@ const ClaimEncounterCopyPatientProblemsTable = ({
         }
       },
       {
-        key: 'createdDate',
+        key: 'originalCreatedDate',
         title: (
           <Translate>
-            CREATED AT / BY
+            ORIGINAL CREATED BY / AT
           </Translate>
         ),
-        expandable: true,
         render: (
           row: ClaimEncounterCopyPatientProblem
         ) => (
           <UserDateCell
-            login={row?.createdBy}
-            date={row?.createdDate}
+            login={row?.originalCreatedBy}
+            date={row?.originalCreatedDate}
           />
+        )
+      },
+      {
+        key: 'createdDate',
+        title: (
+          <Translate>
+            COPIED BY / AT
+          </Translate>
+        ),
+        render: (
+          row: ClaimEncounterCopyPatientProblem
+        ) => (
+          <CopiedAuditCell row={row} />
         )
       },
       {
         key: 'lastModifiedDate',
         title: (
           <Translate>
-            UPDATED AT / BY
+            COPY UPDATED BY / AT
           </Translate>
         ),
-        expandable: true,
         render: (
           row: ClaimEncounterCopyPatientProblem
         ) => (
@@ -413,7 +425,7 @@ const ClaimEncounterCopyPatientProblemsTable = ({
         key: 'cancelledDate',
         title: (
           <Translate>
-            CANCELLED AT / BY
+            CANCELLED BY / AT
           </Translate>
         ),
         expandable: true,

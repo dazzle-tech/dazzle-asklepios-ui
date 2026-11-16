@@ -30,6 +30,7 @@ export const newApUser: modelTypes.ApUser = {
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
   canReturnClaimForResubmit: false,
+  canEditSubmittedPrescription: false,
 };
 
 // ------------------- Candidate -------------------
@@ -65,6 +66,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,
@@ -94,6 +96,7 @@ export const newFacility: modelTypes.Facility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -116,6 +119,7 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Role -------------------
@@ -1544,10 +1548,64 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
   nphiesId: '',
   nameEn: '',
   nameAr: null,
+  shortName: null,
+
+  facilityId: null,
+  facilityName: null,
+
+  insuranceAuthorityLicenseNo: null,
+  commercialRegistrationNo: null,
+  vatRegistrationNo: null,
+  unifiedNationalNo: null,
+
+  headOfficeAddress: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  postalCode: null,
+  contactPerson: null,
+  phone: null,
+  mobile: null,
+  email: null,
+  website: null,
 
   isActive: true,
 
+  approvalCoverageCompany: null,
+  validFrom: null,
+  validTo: null,
+
+  tpaIds: [],
+  tpas: [],
+
   createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newTpaDefinition: modelTypes.TpaDefinition = {
+  id: undefined,
+  tpaCode: '',
+  nphiesId: null,
+  name: '',
+  guarantorType: 'TPA',
+  activationDate: null,
+  isActive: true,
+  approvalCoverageCompany: null,
+  taxRegistrationNo: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  address: null,
+  phone: null,
+  email: null,
+  insuranceCompanyIds: [],
+  insuranceCompanies: [],
+  linkedInsuranceCount: 0,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
   lastModifiedDate: null
 };
 
@@ -1897,6 +1955,8 @@ export const newPatientInsurance: modelTypes.PatientInsurance = {
 
   payerName: null,
   payerNphiesId: null,
+  tpaNphiesId: null,
+  tpaName: null,
 
   policyHolderId: null,
 
@@ -3121,6 +3181,44 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
   acceptedBy: null
 };
 
+export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: true
+};
+
+export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
+  id: undefined,
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+};
+
+export const newConfiguration: modelTypes.Configuration = {
+  id: undefined,
+  scopeType: undefined,
+  facility: undefined,
+  users: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+};
+
 export const newPolicyDefinition: modelTypes.PolicyDefinition = {
   id: undefined,
   facilityId: undefined,
@@ -3329,6 +3427,8 @@ export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   serviceId: undefined,
   cdtCodeId: null,
   notes: null,
+  informedConsentObtained: false,
+  treatmentOutcome: null
 };
 export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
   id: undefined,
@@ -3581,8 +3681,11 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
 
   payerId: undefined,
   payerName: undefined,
+  nphiesPayerId: undefined,
+  nphiesPayerName: undefined,
 
   name: undefined,
+  shortName: undefined,
   description: undefined,
 
   versionNumber: 1,
@@ -3893,9 +3996,10 @@ export const newBillingCancellationRequest: modelTypes.BillingCancellationReques
 export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
   patientId: 0,
   encounterId: null,
+  facilityId: null,
   originalPaymentId: null,
   originalPaymentTransactionId: null,
-  refundSourceType: 'AVAILABLE_WALLET',
+  refundSourceType: 'WALLET_AVAILABLE',
   requestedAmount: 0,
   refundMethodCode: '',
   refundMethodId: 0,
@@ -4137,12 +4241,25 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
   configKey: '',
   configType: '',
   configValue: '',
+  configValues: [],
   description: ''
 };
 
 export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
   configKey: '',
   configType: '',
-  configValue: '',
+  configValues: [''],
   description: ''
+};
+
+// ------------------- External Results (Scan Document) -------------------
+
+export const newExternalLabResultEntry: modelTypes.ExternalLabResultEntry = {
+  testName: '',
+  resultDate: null,
+  resultValue: null,
+  unit: null,
+  normalRangeValue: null,
+  marker: 'UNKNOWN',
+  physicianName: null
 };

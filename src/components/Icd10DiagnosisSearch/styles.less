@@ -39,6 +39,11 @@
     margin-bottom: 6px;
   }
 
+  &__required {
+    color: var(--primary-red, #d32f2f);
+    font-weight: 700;
+  }
+
   &__inputGroup {
     height: 36px;
 
@@ -108,10 +113,18 @@
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     background: #fff;
+    margin: 0;
     padding: 6px 0;
+    list-style: none;
+  }
+
+  &__status {
+    padding: 8px 12px;
+    color: #888;
   }
 
   &__item {
+    cursor: pointer;
     display: flex;
     gap: 12px; 
     align-items: center;
@@ -140,13 +153,86 @@
     line-height: 1.4;
   }
 
+  &__picked {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-blue, #006264);
+  }
+
+  &__item--selected {
+    background: rgba(0, 98, 100, 0.08);
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    background: var(--extra-light-blue, #f4fbfb);
+    color: var(--primary-gray, #888);
+    font-size: 13px;
+
+    &--selected {
+      color: inherit;
+      background: #fff;
+    }
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 98, 100, 0.2);
+    border-radius: 999px;
+    background: rgba(0, 98, 100, 0.06);
+    color: inherit;
+    cursor: pointer;
+
+    strong {
+      color: var(--primary-blue, #006264);
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   &__loadMore {
+    cursor: pointer;
     font-weight: 700;
     padding: 10px 12px !important;
   }
 
   &__selectedRow {
     margin-top: 8px;
+  }
+
+  &__summary {
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    background: var(--extra-light-blue, #f4fbfb);
+    color: var(--primary-gray, #888);
+    font-size: 13px;
+    line-height: 1.4;
+
+    &--selected {
+      color: inherit;
+      background: #fff;
+    }
+
+    strong {
+      color: var(--primary-blue, #006264);
+    }
   }
 
   &__selected {
@@ -173,6 +259,43 @@
 
     &__desc {
       color: rgba(255, 255, 255, 0.75);
+    }
+
+    &__chips {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.65);
+
+      &--selected {
+        color: rgba(255, 255, 255, 0.95);
+      }
+    }
+
+    &__chip {
+      background: rgba(94, 200, 203, 0.12);
+      border-color: rgba(94, 200, 203, 0.28);
+    }
+
+    &__item--selected {
+      background: rgba(94, 200, 203, 0.12);
+    }
+
+    &__picked {
+      color: var(--primary-blue, #5ec8cb);
+    }
+
+    &__summary {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.65);
+
+      &--selected {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      strong {
+        color: var(--primary-blue, #5ec8cb);
+      }
     }
 
     &__inputGroup .rs-input-group-btn .rs-btn {

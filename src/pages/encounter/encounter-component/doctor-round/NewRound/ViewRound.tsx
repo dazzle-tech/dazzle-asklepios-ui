@@ -9,7 +9,7 @@ import {
   newApDoctorRoundStaff,
 } from '@/types/model-types-constructor';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import StaffAssignment from '../../procedure/StaffMember';
+import StaffAssignment from '@/components/clinical/StaffAssignment';
 import MyLabel from '@/components/MyLabel';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';

@@ -3,7 +3,7 @@ import MyInput from "@/components/MyInput";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import { useAppDispatch } from "@/hooks";
 import ActiveIngredient from "@/pages/encounter/encounter-component/drug-order/ActiveIngredient";
-import GenericAdministeredMedications from "@/pages/encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
+import GenericAdministeredMedications from '@/components/clinical/GenericAdministeredMedications';
 import { useGetOperationAnesthesiaInductionMonitoringByOperationQuery, useGetOperationInductionListQuery, useGetOperationPreMedicationListQuery, useSaveOperationAnesthesiaInductionMonitoringMutation, useSaveOperationInductionMutation, useSaveOperationPreMedicationMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationAnesthesiaInductionMonitoring, newApOperationInduction, newApOperationPreMedication } from "@/types/model-types-constructor";

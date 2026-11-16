@@ -109,18 +109,34 @@ const MobileAppConfiguration = () => {
       key: 'configValue',
       title: 'Value',
       flexGrow: 3,
-      render: (row: MobileAppConfigResponseVM) =>
-        row.configType === 'IMAGE' ? (
-          <img className="mobile-app-config-image" src={row.configValue} alt={row.configKey} />
-        ) : (
-          <Whisper placement="top" speaker={<Tooltip>{row.configValue}</Tooltip>}>
-            <span>
-              {row.configValue && row.configValue.length > 80
-                ? `${row.configValue.substring(0, 80)}...`
-                : row.configValue}
-            </span>
+      render: (row: MobileAppConfigResponseVM) => {
+        const values =
+          row.configValues?.length
+            ? row.configValues
+            : row.configValue
+              ? [row.configValue]
+              : [];
+        if (row.configType === 'IMAGE') {
+          return (
+            <div className="mobile-app-config-images-cell">
+              {values.map(url => (
+                <img
+                  key={url}
+                  className="mobile-app-config-image"
+                  src={url}
+                  alt={row.configKey}
+                />
+              ))}
+            </div>
+          );
+        }
+        const joined = values.join(', ');
+        return (
+          <Whisper placement="top" speaker={<Tooltip>{joined}</Tooltip>}>
+            <span>{joined.length > 80 ? `${joined.substring(0, 80)}...` : joined}</span>
           </Whisper>
-        ),
+        );
+      },
     },
     {
       key: 'description',

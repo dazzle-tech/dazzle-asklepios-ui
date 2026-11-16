@@ -62,7 +62,7 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
-const renderMarker = (marker?: string) => {
+export const renderMarker = (marker?: string) => {
   const isCritical =
     marker === 'CRITICAL_UPPER' || marker === 'CRITICAL_LOWER';
 

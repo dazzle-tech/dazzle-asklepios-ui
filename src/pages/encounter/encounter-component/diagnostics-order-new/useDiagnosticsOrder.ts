@@ -3,6 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import type { PreAuthorizationAlertItem } from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -99,6 +100,7 @@ const extractErrorMessage = (error: any) => {
 
 export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef, setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const patientId = patient?.id;
@@ -801,6 +803,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       );
 
       let added: string[] = [];
+      let held: PreAuthorizationAlertItem[] = [];
       let duplicates: string[] = [];
       let failed: string[] = [];
 
@@ -825,7 +828,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               return;
             }
 
-            await createOrderTest({
+            const created = await createOrderTest({
               orderId: _orderId,
               testId,
               orderType: item.type || 'LABORATORY',
@@ -835,7 +838,13 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               )
             }).unwrap();
 
-            added.push(testName);
+            // Radiology does not stop the order screen: it is notified on submit instead.
+            const isRadiology = String(item.type ?? '').toUpperCase() === 'RADIOLOGY';
+            if (created?.coveragePreApprovalPending && !isRadiology) {
+              held.push({ label: testName });
+            } else {
+              added.push(testName);
+            }
           } catch (e: any) {
             if (isUncoveredCashCancelled(e)) {
               return;
@@ -854,6 +863,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
             sev: 'success'
           })
         );
+      }
+
+      if (held.length) {
+        setPreAuthAlert(held);
       }
 
       if (duplicates.length) {
@@ -978,6 +991,22 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       await submitDiagnosticOrder(_orderId).unwrap();
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+
+      // Radiology tests waiting on pre-authorization are not sent to the department on submit
+      // (they stay New until the decision); the alert lists them.
+      const radiologyHeldForApproval: PreAuthorizationAlertItem[] = orderTestList
+        .filter(
+          (t: any) =>
+            String(t.orderType ?? '').toUpperCase() === 'RADIOLOGY' &&
+            t.preAuthorizationBlocked === true
+        )
+        .map((t: any) => ({
+          patientServiceProductId: null,
+          label: t.test?.testName ?? t.test?.name ?? t.testName ?? 'Radiology test'
+        }));
+      if (radiologyHeldForApproval.length) {
+        setPreAuthAlert(radiologyHeldForApproval);
+      }
 
 
       await ordersRefetch();
@@ -1196,6 +1225,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     // route data
     patient,
     encounter,
+    preAuthAlert,
+    clearPreAuthAlert: () => setPreAuthAlert(null),
     edit,
     reson,
     setReson,

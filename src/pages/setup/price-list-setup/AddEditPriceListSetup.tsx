@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -35,15 +36,22 @@ import {
 
 import {
   useAddPriceListSetupMutation,
+  useClonePriceListSetupMutation,
+  useGetPriceListSetupsQuery,
   useUpdatePriceListSetupMutation
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
 import type {
+  ClonePriceListSetupRequest,
   PriceListSetup,
   PriceListSetupType,
   SavePriceListSetupRequest
 } from '@/types/model-types-new';
-import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import {
+  useGetAllNphiesPayersQuery,
+  useGetNphiesPayerByIdQuery
+} from '@/services/setup/payer/NphiesPayerSetupService';
+import { useGetActiveTaxesByFacilityQuery } from '@/services/billing/taxService';
 import { useEnumOptions } from '@/services/enumsApi';
 
 type Props = {
@@ -64,6 +72,8 @@ type Props = {
     >;
 
   onSaveSuccess?: () => void;
+
+  cloneSourceId?: number;
 };
 
 type NphiesPayerOption = {
@@ -142,9 +152,51 @@ const normalizePayerOptions = (
         nameAr,
 
         displayName:
-          displayParts.join(' - ')
+          displayParts.join(' - ') || `Payer #${Number(row.id)}`
       };
     });
+};
+
+const toDateValue = (
+  value?: string | null
+): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const text = String(value).trim();
+  const isoDate = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) {
+    return isoDate[1];
+  }
+
+  return text.slice(0, 10);
+};
+
+const localToday = (): string => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+const intervalsOverlap = (
+  from1?: string | null,
+  to1?: string | null,
+  from2?: string | null,
+  to2?: string | null
+): boolean => {
+  const start1 = toDateValue(from1);
+  const start2 = toDateValue(from2);
+
+  if (!start1 || !start2) {
+    return false;
+  }
+
+  const end1 = toDateValue(to1) ?? '9999-12-31';
+  const end2 = toDateValue(to2) ?? '9999-12-31';
+
+  return start1 <= end2 && start2 <= end1;
 };
 
 const mergePayerOptions = (
@@ -182,7 +234,8 @@ React.FC<Props> = ({
   width,
   priceList,
   setPriceList,
-  onSaveSuccess
+  onSaveSuccess,
+  cloneSourceId
 }) => {
   const dispatch =
     useAppDispatch();
@@ -203,6 +256,20 @@ React.FC<Props> = ({
       facilityListResponse
   } =
     useGetAllFacilitiesQuery({});
+
+  const {
+    data: taxListResponse
+  } = useGetActiveTaxesByFacilityQuery(
+    {
+      facilityId: Number(priceList.facilityId || defaultFacility?.id || 0),
+      page: 0,
+      size: 200,
+      sort: 'name,asc'
+    },
+    {
+      skip: !priceList.facilityId && !defaultFacility?.id
+    }
+  );
 
   /*
    * ============================================================
@@ -300,6 +367,18 @@ React.FC<Props> = ({
       }
     );
 
+  const {
+    data: currentNphiesPayer
+  } = useGetNphiesPayerByIdQuery(
+    Number(priceList.nphiesPayerId),
+    {
+      skip:
+        !open ||
+        priceList.type !== 'INSURANCE' ||
+        priceList.nphiesPayerId == null
+    }
+  );
+
   /*
    * ============================================================
    * MUTATIONS
@@ -324,12 +403,46 @@ React.FC<Props> = ({
   ] =
     useUpdatePriceListSetupMutation();
 
+  const [
+    clonePriceListSetup,
+    {
+      isLoading:
+        isCloning
+    }
+  ] =
+    useClonePriceListSetupMutation();
+
+  const [
+    cloneOptions,
+    setCloneOptions
+  ] = useState({
+    cloneItems: true
+  });
+
   const isEdit =
     Boolean(priceList.id);
 
+  const isClone =
+    Boolean(cloneSourceId) &&
+    !isEdit;
+
   const isLoading =
     isAdding ||
-    isUpdating;
+    isUpdating ||
+    isCloning;
+
+  const {
+    data: existingPriceListsPage
+  } = useGetPriceListSetupsQuery(
+    {
+      page: 0,
+      size: 500,
+      sort: 'id,desc'
+    },
+    {
+      skip: !open
+    }
+  );
 
   /*
    * ============================================================
@@ -381,6 +494,11 @@ React.FC<Props> = ({
           previous.status ??
           'ACTIVE',
 
+        isActive:
+          (previous.status ??
+            'ACTIVE') ===
+          'ACTIVE',
+
         versionNumber:
           previous
             .versionNumber ??
@@ -410,8 +528,6 @@ React.FC<Props> = ({
         );
 
         setPayerPage(0);
-
-        setPayerCache([]);
       }, 300);
 
     return () =>
@@ -436,16 +552,53 @@ React.FC<Props> = ({
       );
 
     setPayerCache(
-      previous =>
-        mergePayerOptions(
-          previous,
-          options,
-          payerPage
-        )
+      previous => {
+        const merged =
+          mergePayerOptions(
+            previous,
+            options,
+            payerPage
+          );
+
+        const selectedId =
+          priceList.nphiesPayerId;
+
+        if (
+          selectedId == null ||
+          merged.some(
+            payer =>
+              Number(payer.id) ===
+              Number(selectedId)
+          )
+        ) {
+          return merged;
+        }
+
+        const seeded =
+          previous.find(
+            payer =>
+              Number(payer.id) ===
+              Number(selectedId)
+          ) ??
+          normalizePayerOptions([
+            {
+              id: Number(selectedId),
+              nameEn:
+                priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])[0];
+
+        return seeded
+          ? [seeded, ...merged]
+          : merged;
+      }
     );
   }, [
     payerResponse,
-    payerPage
+    payerPage,
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName
   ]);
 
   /*
@@ -473,6 +626,37 @@ React.FC<Props> = ({
     payerTotalCount >
       payerCache.length;
 
+  const payerSelectData = useMemo(() => {
+    const selectedId = priceList.nphiesPayerId;
+    if (
+      selectedId == null ||
+      payerCache.some(payer => Number(payer.id) === Number(selectedId))
+    ) {
+      return payerCache;
+    }
+
+    const seeded =
+      (currentNphiesPayer
+        ? normalizePayerOptions([currentNphiesPayer])[0]
+        : undefined) ??
+      selectedPayer ??
+      normalizePayerOptions([
+        {
+          id: Number(selectedId),
+          nameEn: priceList.nphiesPayerName,
+          nphiesId: ''
+        }
+      ])[0];
+
+    return seeded ? [seeded, ...payerCache] : payerCache;
+  }, [
+    payerCache,
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName,
+    currentNphiesPayer,
+    selectedPayer
+  ]);
+
   /*
    * ============================================================
    * AUTO-SELECT PAYER IN EDIT MODE
@@ -484,8 +668,7 @@ React.FC<Props> = ({
       !open ||
       priceList.type !==
         'INSURANCE' ||
-      !priceList.payerId ||
-      payerCache.length === 0
+      priceList.nphiesPayerId == null
     ) {
       return;
     }
@@ -495,9 +678,21 @@ React.FC<Props> = ({
         payer =>
           Number(payer.id) ===
           Number(
-            priceList.payerId
+            priceList.nphiesPayerId
           )
-      );
+      ) ??
+      (currentNphiesPayer
+        ? normalizePayerOptions([
+            currentNphiesPayer
+          ])[0]
+        : undefined) ??
+      normalizePayerOptions([
+        {
+          id: Number(priceList.nphiesPayerId),
+          nameEn: priceList.nphiesPayerName,
+          nphiesId: ''
+        }
+      ])[0];
 
     if (matchingPayer) {
       setSelectedPayer(
@@ -507,9 +702,30 @@ React.FC<Props> = ({
   }, [
     open,
     priceList.type,
-    priceList.payerId,
-    payerCache
+    priceList.nphiesPayerId,
+    priceList.nphiesPayerName,
+    payerCache,
+    currentNphiesPayer
   ]);
+
+  useEffect(() => {
+    if (!currentNphiesPayer?.id) {
+      return;
+    }
+
+    const option =
+      normalizePayerOptions([
+        currentNphiesPayer
+      ])[0];
+
+    if (!option) {
+      return;
+    }
+
+    setPayerCache(previous =>
+      mergePayerOptions(previous, [option], 1)
+    );
+  }, [currentNphiesPayer]);
 
   /*
    * ============================================================
@@ -549,9 +765,33 @@ React.FC<Props> = ({
 
     setAppliedPayerSearch('');
 
-    setPayerCache([]);
+    setPayerCache(
+      priceList.nphiesPayerId != null
+        ? normalizePayerOptions([
+            {
+              id: Number(priceList.nphiesPayerId),
+              nameEn: priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])
+        : []
+    );
 
-    setSelectedPayer(null);
+    setSelectedPayer(
+      priceList.nphiesPayerId != null
+        ? normalizePayerOptions([
+            {
+              id: Number(priceList.nphiesPayerId),
+              nameEn: priceList.nphiesPayerName,
+              nphiesId: ''
+            }
+          ])[0] ?? null
+        : null
+    );
+
+    setCloneOptions({
+      cloneItems: true
+    });
 
     setPayerRefreshToken(
       previous =>
@@ -612,17 +852,20 @@ React.FC<Props> = ({
       previous => ({
         ...previous,
 
-        payerId:
+        nphiesPayerId:
           payer?.id
             ? Number(
                 payer.id
               )
             : undefined,
 
-        payerName:
+        nphiesPayerName:
           payer?.nameEn ||
           payer?.nameAr ||
-          undefined
+          undefined,
+
+        payerId: undefined,
+        payerName: undefined
       })
     );
   };
@@ -646,9 +889,9 @@ React.FC<Props> = ({
     if (
       priceList.type ===
         'INSURANCE' &&
-      !priceList.payerId
+      !priceList.nphiesPayerId
     ) {
-      return 'Payer is required for insurance price lists.';
+      return 'Insurance company is required.';
     }
 
     if (
@@ -668,10 +911,28 @@ React.FC<Props> = ({
     }
 
     if (
-      !priceList
-        .effectiveFrom
+      !isClone &&
+      !priceList.effectiveFrom
     ) {
       return 'Effective-from date is required.';
+    }
+
+    if (
+      isClone &&
+      priceList.status ===
+        'ACTIVE' &&
+      !priceList.effectiveFrom
+    ) {
+      return 'Effective start date is required for an active price list.';
+    }
+
+    if (
+      !isClone &&
+      !isEdit &&
+      toDateValue(priceList.effectiveFrom) &&
+      toDateValue(priceList.effectiveFrom)! < localToday()
+    ) {
+      return 'The start date cannot be in the past.';
     }
 
     if (
@@ -687,6 +948,78 @@ React.FC<Props> = ({
 
     if (!priceList.currency) {
       return 'Currency is required.';
+    }
+
+    if (
+      isClone &&
+      priceList.status !==
+        'ACTIVE'
+    ) {
+      return null;
+    }
+
+    const overlappingList =
+      (
+        existingPriceListsPage?.data ??
+        []
+      ).find(list => {
+        if (
+          priceList.id &&
+          Number(list.id) ===
+            Number(priceList.id)
+        ) {
+          return false;
+        }
+
+        if (
+          Number(list.facilityId) !==
+          Number(priceList.facilityId)
+        ) {
+          return false;
+        }
+
+        if (
+          priceList.type ===
+          'INSURANCE'
+        ) {
+          const sameInternalPayer =
+            priceList.payerId != null &&
+            list.payerId != null &&
+            Number(list.payerId) ===
+              Number(priceList.payerId);
+
+          const sameNphiesPayer =
+            priceList.nphiesPayerId != null &&
+            list.nphiesPayerId != null &&
+            Number(list.nphiesPayerId) ===
+              Number(priceList.nphiesPayerId);
+
+          if (!sameInternalPayer && !sameNphiesPayer) {
+            return false;
+          }
+        } else if (
+          list.type !== priceList.type
+        ) {
+          return false;
+        }
+
+        return intervalsOverlap(
+          priceList.effectiveFrom,
+          priceList.effectiveTo,
+          list.effectiveFrom,
+          list.effectiveTo
+        );
+      });
+
+    if (overlappingList) {
+      return priceList.type ===
+        'INSURANCE'
+        ? PRICE_LIST_SETUP_ERROR_MAP[
+            'interval.payer.duplicate'
+          ]
+        : PRICE_LIST_SETUP_ERROR_MAP[
+            'interval.type.duplicate'
+          ];
     }
 
     return null;
@@ -729,11 +1062,14 @@ React.FC<Props> = ({
             .type as
             PriceListSetupType,
 
-        payerId:
+        payerId: null,
+
+        nphiesPayerId:
           priceList.type ===
-            'INSURANCE'
+            'INSURANCE' &&
+          priceList.nphiesPayerId
             ? Number(
-                priceList.payerId
+                priceList.nphiesPayerId
               )
             : null,
 
@@ -741,6 +1077,10 @@ React.FC<Props> = ({
           String(
             priceList.name
           ).trim(),
+
+        shortName:
+          priceList.shortName?.trim() ||
+          null,
 
         description:
           priceList
@@ -755,14 +1095,11 @@ React.FC<Props> = ({
           ),
 
         effectiveFrom:
-          String(
-            priceList
-              .effectiveFrom
-          ),
+          toDateValue(priceList.effectiveFrom) ||
+          null,
 
         effectiveTo:
-          priceList
-            .effectiveTo ||
+          toDateValue(priceList.effectiveTo) ||
           null,
 
         currency:
@@ -772,7 +1109,17 @@ React.FC<Props> = ({
 
         status:
           (priceList.status as SavePriceListSetupRequest['status']) ??
-          'ACTIVE'
+          'ACTIVE',
+
+        appliesToAllFacilities:
+          Boolean(
+            priceList.appliesToAllFacilities
+          ),
+
+        taxId:
+          priceList.taxId
+            ? Number(priceList.taxId)
+            : null
       };
 
       try {
@@ -792,6 +1139,35 @@ React.FC<Props> = ({
             notify({
               msg:
                 'Price list updated successfully',
+
+              sev:
+                'success'
+            })
+          );
+        } else if (
+          isClone &&
+          cloneSourceId
+        ) {
+          const clonePayload:
+            ClonePriceListSetupRequest = {
+            ...payload,
+            cloneItems:
+              Boolean(
+                cloneOptions.cloneItems
+              )
+          };
+
+          await clonePriceListSetup({
+            id: cloneSourceId,
+            data: clonePayload
+          }).unwrap();
+
+          dispatch(
+            notify({
+              msg:
+                cloneOptions.cloneItems
+                  ? 'Price list and items cloned successfully'
+                  : 'Price list cloned successfully',
 
               sev:
                 'success'
@@ -829,6 +1205,8 @@ React.FC<Props> = ({
               (
                 isEdit
                   ? 'Failed to update price list'
+                  : isClone
+                  ? 'Failed to clone price list'
                   : 'Failed to create price list'
               ),
 
@@ -865,6 +1243,20 @@ React.FC<Props> = ({
                 .payerId
             : undefined,
 
+        nphiesPayerId:
+          type ===
+            'INSURANCE'
+            ? previous
+                .nphiesPayerId
+            : undefined,
+
+        nphiesPayerName:
+          type ===
+            'INSURANCE'
+            ? previous
+                .nphiesPayerName
+            : undefined,
+
         payerName:
           type ===
             'INSURANCE'
@@ -886,6 +1278,7 @@ React.FC<Props> = ({
   const content = () => (
     <Form fluid>
       <div className="price-list-two-columns">
+
         <MyInput
           required
           width="100%"
@@ -928,7 +1321,22 @@ React.FC<Props> = ({
             );
           }}
         />
+      </div>
 
+      <br />
+
+      <MyInput
+        width="100%"
+        fieldLabel="Apply to all facilities"
+        fieldType="checkbox"
+        fieldName="appliesToAllFacilities"
+        record={priceList}
+        setRecord={setPriceList}
+      />
+
+      <br />
+
+      <div className="price-list-two-columns">
         <MyInput
           required
           width="100%"
@@ -936,7 +1344,7 @@ React.FC<Props> = ({
           fieldType="select"
           fieldName="type"
           selectData={
-            typeOptions 
+            typeOptions
           }
           selectDataLabel="label"
           selectDataValue="value"
@@ -958,6 +1366,18 @@ React.FC<Props> = ({
           width="100%"
           fieldLabel="Name"
           fieldName="name"
+          record={
+            priceList
+          }
+          setRecord={
+            setPriceList
+          }
+        />
+
+        <MyInput
+          width="100%"
+          fieldLabel="Short Name"
+          fieldName="shortName"
           record={
             priceList
           }
@@ -990,11 +1410,11 @@ React.FC<Props> = ({
             key="nphies-payer-select"
             required
             width="100%"
-            fieldLabel="NPHIES Payer"
+            fieldLabel="Insurance Company"
             fieldType="selectPagination"
-            fieldName="payerId"
+            fieldName="nphiesPayerId"
             selectData={
-              payerCache
+              payerSelectData
             }
             selectDataLabel="displayName"
             selectDataValue="id"
@@ -1005,25 +1425,32 @@ React.FC<Props> = ({
               updatedPriceList:
                 PriceListSetup
             ) => {
-              setPriceList(
-                updatedPriceList
-              );
+              if (updatedPriceList.nphiesPayerId == null) {
+                handlePayerSelected(null);
+                return;
+              }
 
               const payer =
-                payerCache.find(
+                payerSelectData.find(
                   item =>
                     Number(
                       item.id
                     ) ===
                     Number(
                       updatedPriceList
-                        .payerId
+                        .nphiesPayerId
                     )
                 );
 
-              handlePayerSelected(
-                payer ||
-                null
+              if (payer) {
+                handlePayerSelected(
+                  payer
+                );
+                return;
+              }
+
+              setPriceList(
+                updatedPriceList
               );
             }}
             searchable
@@ -1057,7 +1484,7 @@ React.FC<Props> = ({
                 ? 'Loading payers...'
                 : payerCache.length === 0
                 ? 'No active payers found'
-                : 'Select NPHIES payer'
+                : 'Select insurance company'
             }
           />
 
@@ -1101,7 +1528,10 @@ React.FC<Props> = ({
 
       <div className="price-list-two-columns">
         <MyInput
-          required
+          required={
+            !isClone ||
+            priceList.status === 'ACTIVE'
+          }
           width="100%"
           fieldLabel="Effective From"
           fieldType="date"
@@ -1136,12 +1566,29 @@ React.FC<Props> = ({
         width="100%"
         fieldLabel="Currency"
         fieldName="currency"
-        record={
-          priceList
-        }
-        setRecord={
-          setPriceList
-        }
+        record={{
+          ...priceList,
+          currency: priceList.currency
+            ? String(priceList.currency).toUpperCase()
+            : priceList.currency
+        }}
+        setRecord={setPriceList}
+      />
+
+      <br />
+
+      <MyInput
+        width="100%"
+        fieldLabel="Tax"
+        fieldType="select"
+        fieldName="taxId"
+        selectData={taxListResponse?.data ?? []}
+        selectDataLabel="name"
+        selectDataValue="id"
+        record={priceList}
+        setRecord={setPriceList}
+        searchable
+        placeholder="Optional tax type"
       />
 
       <br />
@@ -1156,7 +1603,16 @@ React.FC<Props> = ({
         selectDataLabel="label"
         selectDataValue="value"
         record={priceList}
-        setRecord={setPriceList}
+        setRecord={(
+          updated: PriceListSetup
+        ) => {
+          setPriceList({
+            ...updated,
+            isActive:
+              updated.status ===
+              'ACTIVE'
+          });
+        }}
         searchable={false}
       />
 
@@ -1164,7 +1620,7 @@ React.FC<Props> = ({
 
       <MyInput
         width="100%"
-        fieldLabel="Description"
+        fieldLabel="Remarks"
         fieldType="textarea"
         fieldName="description"
         record={
@@ -1174,6 +1630,70 @@ React.FC<Props> = ({
           setPriceList
         }
       />
+
+      {priceList.id ? (
+        <>
+          <br />
+          <div className="price-list-two-columns">
+            <MyInput
+              disabled
+              width="100%"
+              fieldLabel="Created Date"
+              fieldName="createdDate"
+              record={priceList}
+              setRecord={setPriceList}
+            />
+            <MyInput
+              disabled
+              width="100%"
+              fieldLabel="Created By"
+              fieldName="createdBy"
+              record={priceList}
+              setRecord={setPriceList}
+            />
+          </div>
+          <br />
+          <div className="price-list-two-columns">
+            <MyInput
+              disabled
+              width="100%"
+              fieldLabel="Updated Date"
+              fieldName="lastModifiedDate"
+              record={priceList}
+              setRecord={setPriceList}
+            />
+            <MyInput
+              disabled
+              width="100%"
+              fieldLabel="Updated By"
+              fieldName="lastModifiedBy"
+              record={priceList}
+              setRecord={setPriceList}
+            />
+          </div>
+        </>
+      ) : null}
+
+      {isClone && (
+        <>
+          <br />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Also clone items"
+            fieldType="checkbox"
+            fieldName="cloneItems"
+            record={cloneOptions}
+            setRecord={setCloneOptions}
+          />
+
+          <p className="price-list-clone-hint">
+            The clone is Active by default, and the start and end dates
+            are saved. Change the dates if this company already has an
+            active list for the same period.
+          </p>
+        </>
+      )}
     </Form>
   );
 
@@ -1216,6 +1736,8 @@ React.FC<Props> = ({
       title={
         isEdit
           ? 'Edit Price List'
+          : isClone
+          ? 'Clone Price List'
           : 'New Price List'
       }
       position="right"
@@ -1227,6 +1749,8 @@ React.FC<Props> = ({
       actionButtonLabel={
         isEdit
           ? 'Save'
+          : isClone
+          ? 'Clone'
           : 'Create'
       }
       actionButtonFunction={

@@ -9,10 +9,11 @@ import MyModal from '@/components/MyModal/MyModal';
 import CancellationModal from '@/components/CancellationModal';
 import Translate from '@/components/Translate';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
+import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds } from '@/utils';
 
 import {
     useGetClaimEncounterProgressNotesQuery,
@@ -134,22 +135,6 @@ const ClaimEncounterProgressNotes: React.FC<Props> = ({
         }
     };
 
-    const UserDateCell: React.FC<{
-        login?: string | null;
-        date?: string | null;
-    }> = ({ login, date }) => {
-        if (!date) return null;
-
-        return (
-            <>
-                {login}
-                <br />
-                <span className="date-table-style">
-                    {formatDateWithoutSeconds(date)}
-                </span>
-            </>
-        );
-    };
 
     const columns = useMemo(
         () => [
@@ -166,19 +151,25 @@ const ClaimEncounterProgressNotes: React.FC<Props> = ({
                 )
             },
             {
-                key: 'created',
-                title: <Translate>CREATED AT / BY</Translate>,
+                key: 'originalCreatedDate',
+                title: <Translate>ORIGINAL CREATED BY / AT</Translate>,
                 render: (row: ClaimEncounterProgressNote) => (
                     <UserDateCell
-                        login={row.createdBy}
-                        date={row.createdDate}
+                        login={row.originalCreatedBy}
+                        date={row.originalCreatedDate}
                     />
                 )
             },
             {
+                key: 'created',
+                title: <Translate>COPIED BY / AT</Translate>,
+                render: (row: ClaimEncounterProgressNote) => (
+                    <CopiedAuditCell row={row} />
+                )
+            },
+            {
                 key: 'lastModified',
-                title: 'LAST MODIFIED AT / BY',
-                expandable: true,
+                title: 'COPY UPDATED BY / AT',
                 render: (row: ClaimEncounterProgressNote) => (
                     <UserDateCell
                         login={row.lastModifiedBy}
@@ -188,7 +179,7 @@ const ClaimEncounterProgressNotes: React.FC<Props> = ({
             },
             {
                 key: 'cancelled',
-                title: 'CANCELLED AT / BY',
+                title: 'CANCELLED BY / AT',
                 expandable: true,
                 render: (row: ClaimEncounterProgressNote) => (
                     <UserDateCell

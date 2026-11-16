@@ -29,7 +29,7 @@ import { initialListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { Col, Divider, Form, Row, Text } from 'rsuite';
-import StaffMember from '@/pages/encounter/encounter-component/procedure/StaffMember';
+import StaffMember from '@/components/clinical/StaffAssignment';
 import clsx from 'clsx';
 import Translate from '@/components/Translate';
 const PatientArrival = ({
