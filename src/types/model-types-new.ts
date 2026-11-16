@@ -29,6 +29,7 @@ export interface ApUser {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canEditSubmittedPrescription: boolean;
 }
 
 
@@ -72,6 +73,7 @@ export interface Department {
   requirePractitioner: boolean,
   requireBilling: boolean,
   requirePreAssessment: boolean,
+  assignPractitionerOnVisitStart: boolean,
   ageSpecific: boolean;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
@@ -101,6 +103,7 @@ export interface DepartmentResponseVM {
   requirePractitioner?: boolean | null;
   requireBilling?: boolean | null;
   requirePreAssessment?: boolean | null;
+  assignPractitionerOnVisitStart?: boolean | null;
   ageSpecific?: boolean | null;
   fromAge?: number | null;
   fromAgeUnit?: string | null;
@@ -6094,6 +6097,21 @@ export interface DentalProcedureResponseVM {
   cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
+  /** The insurance state of each tooth, from its billing line. */
+  toothApprovals?: DentalToothApproval[];
+}
+
+export type DentalToothApprovalStatus =
+  | 'NO_APPROVAL_NEEDED'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'PARTIALLY_APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
+export interface DentalToothApproval {
+  toothNumber: string;
+  status: DentalToothApprovalStatus;
 }
 
 export interface DentalProcedureCreateDTO {

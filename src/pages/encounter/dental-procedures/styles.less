@@ -176,3 +176,47 @@
   color: var(--primary-gray);
   font-size: 12px;
 }
+
+.tooth-approval-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  &__tooth {
+    --tooth-color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+    border: 1px solid var(--tooth-color);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+
+    &--pending_approval {
+      --tooth-color: #d97706;
+    }
+
+    &--approved {
+      --tooth-color: #0daa41;
+    }
+
+    &--partially_approved {
+      --tooth-color: #2563eb;
+    }
+
+    &--rejected,
+    &--cancelled {
+      --tooth-color: #d64545;
+    }
+
+    &--cancelled strong {
+      text-decoration: line-through;
+    }
+  }
+
+  &__status {
+    color: var(--tooth-color);
+  }
+}

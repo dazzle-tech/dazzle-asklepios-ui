@@ -14,6 +14,24 @@ import type {
 
 export type { PreAuthorizationTrackingResponse, PreAuthorizationCommunicationHistoryResponse };
 
+/** NPHIES claim type the visit is sent as; it decides which fields are mandatory. */
+export type PreAuthorizationClaimType = 'PROFESSIONAL_OP' | 'PROFESSIONAL_EMERGENCY' | 'ORAL_OP';
+
+export type PreAuthorizationMissingField = {
+  code: string;
+  label: string;
+  section: string;
+};
+
+/** What the visit still needs before its held services can be sent to Waseel. */
+export type PreAuthorizationReadiness = {
+  encounterId: number;
+  claimType: PreAuthorizationClaimType;
+  ready: boolean;
+  missingFields: PreAuthorizationMissingField[];
+  waitingItems: number;
+};
+
 type PagedParams = {
   page: number;
   size: number;
@@ -220,6 +238,34 @@ export const preAuthorizationApi = createApi({
       }
     }),
 
+    getPreAuthorizationReadiness: builder.query<PreAuthorizationReadiness, { encounterId: number }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/readiness`,
+        method: 'GET'
+      }),
+      providesTags: ['EncounterPreAuthorization']
+    }),
+
+    sendPendingPreAuthorization: builder.mutation<PreAuthorizationReadiness, { encounterId: number }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/send`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization']
+    }),
+
+    /** The patient accepts a partial approval: insurance pays the approved amount, the patient the rest. */
+    acceptPartialPreAuthorization: builder.mutation<
+      unknown,
+      { encounterId: number; patientServiceProductId: number }
+    >({
+      query: ({ encounterId, patientServiceProductId }) => ({
+        url: `/api/patient/internal/waseel/encounters/${encounterId}/pre-authorization/items/${patientServiceProductId}/accept-partial`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['PreAuthorizationTracking', 'EncounterPreAuthorization']
+    }),
+
     refreshEncounterPreAuthorizationLocal: builder.mutation<
       EncounterPreAuthorizationRefreshResponse,
       { encounterId: number }
@@ -314,6 +360,9 @@ export const {
   useCheckEncounterEligibilityMutation,
   useRefreshEncounterPreAuthorizationMutation,
   useRefreshEncounterPreAuthorizationLocalMutation,
+  useGetPreAuthorizationReadinessQuery,
+  useSendPendingPreAuthorizationMutation,
+  useAcceptPartialPreAuthorizationMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useCloneRejectedPreAuthorizationItemMutation,
   useResubmitPreAuthorizationMutation,

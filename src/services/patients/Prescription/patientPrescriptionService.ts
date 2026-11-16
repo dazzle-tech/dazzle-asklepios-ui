@@ -121,6 +121,50 @@ export const patientPrescriptionService = createApi({
       ],
     }),
 
+    // POST /api/patient/nahdi/prescriptions/{id}/dispensing-status/refresh : which medications the pharmacy dispensed
+    refreshNahdiDispensingStatus: builder.mutation<
+      { refreshed: boolean; message?: string | null; checkedAt?: string; dispensedMedicationIds: number[] },
+      number
+    >({
+      query: (id) => ({
+        url: `/api/patient/nahdi/prescriptions/${id}/dispensing-status/refresh`,
+        method: 'POST'
+      }),
+      transformResponse: (response: any) => response
+    }),
+
+    // GET /api/patient/patient-prescriptions/edit-after-submit-access : may the current user change a submitted prescription
+    getPrescriptionEditAfterSubmitAccess: builder.query<{ allowed: boolean }, void>({
+      query: () => ({
+        url: `/api/patient/patient-prescriptions/edit-after-submit-access`
+      }),
+      transformResponse: (response: any) => response
+    }),
+
+    // GET /api/patient/nahdi/prescriptions/{id}/sync-status : changes made after the last successful send to Nahdi
+    getNahdiSyncStatus: builder.query<
+      { hasUnsentChanges: boolean; lastSentAt?: string | null; lastAttemptStatus?: 'SUCCESS' | 'FAILED' | null },
+      number
+    >({
+      query: (id) => ({
+        url: `/api/patient/nahdi/prescriptions/${id}/sync-status`
+      }),
+      transformResponse: (response: any) => response
+    }),
+
+    // POST /api/patient/nahdi/prescriptions/{id}/resend : sends the edited submitted prescription to Nahdi again
+    resendPrescriptionToNahdi: builder.mutation<
+      { status: 'SUCCESS' | 'FAILED' | 'SKIPPED'; orderNumber?: string | null; message?: string | null },
+      number
+    >({
+      query: (id) => ({
+        url: `/api/patient/nahdi/prescriptions/${id}/resend`,
+        method: 'POST'
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response
+    }),
+
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
       PatientPrescription,
@@ -178,6 +222,10 @@ export const {
   useLazyGetPatientPrescriptionQuery,
   useUpdatePatientPrescriptionMutation,
   useSubmitPatientPrescriptionMutation,
+  useResendPrescriptionToNahdiMutation,
+  useGetNahdiSyncStatusQuery,
+  useGetPrescriptionEditAfterSubmitAccessQuery,
+  useRefreshNahdiDispensingStatusMutation,
   useCancelPatientPrescriptionMutation,
   useGetPrescriptionPdfQuery,
   useLazyGetPrescriptionPdfQuery

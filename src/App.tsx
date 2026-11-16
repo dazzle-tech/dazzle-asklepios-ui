@@ -17,6 +17,7 @@ import enGB from 'rsuite/locales/en_GB';
 import Frame from './components/Frame';
 import SystemLoader from './components/Loaders/SystemLoader';
 import MyToast from './components/MyToast/MyToast';
+import PreAuthorizationMissingFieldsModal from './components/PreAuthorizationMissingFieldsModal/PreAuthorizationMissingFieldsModal';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import IdleTimeoutManager from './components/IdleTimeoutManager/IdleTimeoutManager';
@@ -652,6 +653,7 @@ const App = () => {
       </div>
 
       <MyToast />
+      <PreAuthorizationMissingFieldsModal />
       <SessionExpiredBackdrop />
       <IdleTimeoutManager />
 

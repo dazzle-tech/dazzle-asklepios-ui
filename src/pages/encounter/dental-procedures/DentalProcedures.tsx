@@ -40,6 +40,7 @@ import { newDentalProcedure } from '@/types/model-types-constructor-new';
 import { DentalProcedureResponseVM } from '@/types/model-types-new';
 import './styles.less';
 import ToothNumberField from './ToothNumberField';
+import ToothApprovalList from './ToothApprovalList';
 import { formatStoredToothNumber } from './toothChart';
 import SectionContainer from '@/components/SectionsoContainer';
 import MedicalHistory from '@/pages/encounter/encounter-component/patient-history/MedicalHistory/MedicalHistory';
@@ -50,6 +51,7 @@ import ChiefComplaintSection from './ChiefComplaintSection';
 import DentalHistorySection from './DentalHistorySection';
 import PatientFamilyEducationSection from './PatientFamilyEducationSection';
 import DentalSheetActions from './DentalSheetActions';
+import { readMissingFields } from '@/reducers/preAuthorizationMissingFieldsSlice';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
@@ -116,7 +118,8 @@ const normalizeMsg = (msg: string) => {
 };
 
 const handleCrudError = (error: any, dispatch: any) => {
-  if (isUncoveredCashCancelled(error)) {
+  // Missing pre-authorization fields open their own dialog (preAuthorizationMissingFieldsSlice).
+  if (isUncoveredCashCancelled(error) || readMissingFields(error)) {
     return;
   }
 
@@ -491,7 +494,12 @@ const DentalProcedures = props => {
         key: 'toothNumbers',
         title: <Translate>Tooth Number</Translate>,
         flexGrow: 1,
-        render: (row: DentalProcedureResponseVM) => formatToothNumbers(row)
+        render: (row: DentalProcedureResponseVM) =>
+          row.toothApprovals?.length ? (
+            <ToothApprovalList approvals={row.toothApprovals} />
+          ) : (
+            formatToothNumbers(row)
+          )
       },
       {
         key: 'surface',

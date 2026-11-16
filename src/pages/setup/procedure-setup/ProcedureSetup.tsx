@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Checkbox, Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete, MdLink, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -71,6 +71,9 @@ const ProcedureSetup: React.FC = () => {
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  const [showInactive, setShowInactive] = useState(false);
+  // Undefined means no status filter, so inactive records are included
+  const activeFilter = showInactive ? undefined : true;
 
   // Pagination state when list is filtered
   const [filterPagination, setFilterPagination] = useState({
@@ -94,6 +97,7 @@ const ProcedureSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
+    isActive: activeFilter,
   });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
@@ -180,7 +184,7 @@ const ProcedureSetup: React.FC = () => {
   ) => {
     if (value === null || value === undefined || value === '') return undefined;
 
-    const common = { page, size, sort: paginationParams.sort };
+    const common = { page, size, sort: paginationParams.sort, isActive: activeFilter };
 
     if (fieldName === 'categoryType') {
       return await fetchByCategory({
@@ -279,6 +283,9 @@ const ProcedureSetup: React.FC = () => {
 
         if (!isFiltered) {
           refetch();
+        } else if (!showInactive) {
+          // The row must leave the search results too
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page, filterPagination.size);
         } else {
           // Also update local selected procedure state
           setProcedure(prev =>
@@ -600,8 +607,20 @@ const ProcedureSetup: React.FC = () => {
       >
         Search
       </MyButton>
+
+      <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+        <Translate>Show inactive</Translate>
+      </Checkbox>
     </Form>
   );
+
+  // The list and any applied search must follow the checkbox
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    }
+  }, [showInactive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto reset when filter value is cleared
   useEffect(() => {

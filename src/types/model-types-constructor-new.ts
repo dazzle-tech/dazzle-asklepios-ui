@@ -30,6 +30,7 @@ export const newApUser: modelTypes.ApUser = {
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
   canReturnClaimForResubmit: false,
+  canEditSubmittedPrescription: false,
 };
 
 // ------------------- Candidate -------------------
@@ -65,6 +66,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,
