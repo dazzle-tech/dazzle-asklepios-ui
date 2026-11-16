@@ -333,8 +333,7 @@ const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
 
     return (
-
-    <div dir={dir} style={{maxWidth:'65vw'}}>
+    <div dir={dir}>
       <MyTable
         data={ordersList}
         columns={tableColumns}
