@@ -4,9 +4,26 @@ import MyButton from '@/components/MyButton/MyButton';
 import AiTooltip from '@/components/AiTooltip/AiTooltip';
 import './styles.less';
 
+type TooltipContent = {
+  title: string;
+  body: string;
+  chips?: string[];
+  foot?: string;
+};
+
 type Props = {
   disabled?: boolean;
   onClick: () => void;
+  label?: string;
+  tooltip?: TooltipContent;
+};
+
+// Defaults describe the encounter scan; registration passes its own label and tooltip
+const DEFAULT_TOOLTIP: TooltipContent = {
+  title: 'AI document scan',
+  body: 'AI reads a lab result or report, checks it belongs to this patient, and prepares a structured draft for you to review.',
+  chips: ['Lab results', 'Reports'],
+  foot: 'Nothing is saved until you confirm.'
 };
 
 // Scan frame with an AI spark inside, as in the Scan Document template.
@@ -18,16 +35,16 @@ const ScanSparkIcon = ({ style }: { style?: React.CSSProperties }) => (
   </span>
 );
 
-const ScanDocumentButton: React.FC<Props> = ({ disabled, onClick }) => (
-  <AiTooltip
-    title="AI document scan"
-    body="AI reads a lab result or report, checks it belongs to this patient, and prepares a structured draft for you to review."
-    chips={['Lab results', 'Reports']}
-    foot="Nothing is saved until you confirm."
-  >
+const ScanDocumentButton: React.FC<Props> = ({
+  disabled,
+  onClick,
+  label = 'Scan Document',
+  tooltip = DEFAULT_TOOLTIP
+}) => (
+  <AiTooltip {...tooltip}>
     <span className="scan-ai-btn">
       <MyButton disabled={disabled} prefixIcon={ScanSparkIcon} onClick={onClick}>
-        Scan Document
+        {label}
       </MyButton>
       <span className="scan-ai-btn__badge" aria-hidden="true">
         AI

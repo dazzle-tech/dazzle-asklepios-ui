@@ -64,6 +64,7 @@ import {
 import QuickPatient from '../facility-patient-list/QuickPatient';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
+import ScanDocumentButton from '@/pages/encounter/encounter-screen/external-results/ScanDocumentButton';
 import './styles.less';
 import {
   buildWaseelClassListDisplay,
@@ -1083,7 +1084,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '8px',
-                justifyContent: 'flex-end'
+                justifyContent: 'flex-end',
+                // Room for the AI badge on Smart Scan, so the header does not clip it
+                paddingTop: '6px'
               }}
             >
               <MyButton
@@ -1131,9 +1134,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
 
-               <MyButton onClick={handleScanDocumentClick}>
-                Scan Document
-              </MyButton>
+              <ScanDocumentButton
+                label="Smart Scan"
+                onClick={handleScanDocumentClick}
+                tooltip={{
+                  title: 'AI document scan',
+                  body: 'AI reads an ID card or passport photo and fills the patient details for you to review.',
+                  chips: ['Name', 'Date of birth', 'Document number'],
+                  foot: 'Nothing is saved until you apply it.'
+                }}
+              />
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
