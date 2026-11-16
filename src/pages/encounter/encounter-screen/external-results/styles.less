@@ -8,21 +8,34 @@
 
   &__badge {
     position: absolute;
-    top: -7px;
-    inset-inline-end: -7px;
+    // Kept close to the button so the parent toolbar does not clip the circle
+    top: -5px;
+    inset-inline-end: -5px;
     z-index: 1;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     display: grid;
     place-items: center;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: 7px;
     font-weight: 700;
     line-height: 1;
     pointer-events: none;
     color: var(--primary-blue);
     background: var(--rs-bg-card);
     border: 1.5px solid var(--primary-blue);
+  }
+}
+
+.scan-ai-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+
+  &__spark {
+    position: absolute;
+    fill: currentColor;
   }
 }
 

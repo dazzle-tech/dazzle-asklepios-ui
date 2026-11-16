@@ -1,0 +1,66 @@
+.clinical-documentation-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 4px 24px;
+  box-sizing: border-box;
+
+  .cd-top-grid,
+  .cd-bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cd-section {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cd-section--full {
+    grid-column: 1 / -1;
+  }
+
+  .cd-bottom-grid--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cd-section-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cd-education-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .cd-top-grid > *,
+  .cd-bottom-grid > *,
+  .cd-education-grid > * {
+    min-width: 0;
+  }
+
+  @media (max-width: 960px) {
+    .cd-top-grid,
+    .cd-bottom-grid,
+    .cd-education-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding: 8px 0 16px;
+  }
+}

@@ -109,6 +109,16 @@ export type PublicDepartmentOption = {
   name: string;
 };
 
+export type PatientComplaintPublicFormLookups = {
+  feedbackTypes: string[];
+  complaintTypes: string[];
+  preferredContactMethods: string[];
+  documentTypes: string[];
+};
+
+const unwrapStringList = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+
 const unwrapNamedOptions = <T extends { id: number; name: string }>(response: any): T[] => {
   const list = Array.isArray(response)
     ? response
@@ -127,6 +137,19 @@ export const patientComplaintPublicService = createApi({
   reducerPath: 'patientComplaintPublicApi',
   baseQuery: PublicBaseQuery,
   endpoints: builder => ({
+    getPublicFormLookups: builder.query<PatientComplaintPublicFormLookups, void>({
+      query: () => ({
+        url: '/api/patient/patient-complaints/form-lookups',
+        method: 'GET'
+      }),
+      transformResponse: (response: any): PatientComplaintPublicFormLookups => ({
+        feedbackTypes: unwrapStringList(response?.feedbackTypes),
+        complaintTypes: unwrapStringList(response?.complaintTypes),
+        preferredContactMethods: unwrapStringList(response?.preferredContactMethods),
+        documentTypes: unwrapStringList(response?.documentTypes)
+      })
+    }),
+
     getPublicActiveFacilities: builder.query<PublicFacilityOption[], void>({
       query: () => ({
         url: '/api/setup/facility/active',
@@ -436,6 +459,7 @@ export const patientComplaintService = createApi({
 });
 
 export const {
+  useGetPublicFormLookupsQuery,
   useGetPublicActiveFacilitiesQuery,
   useGetPublicActiveDepartmentsByFacilityQuery,
   useSubmitPatientComplaintMutation,

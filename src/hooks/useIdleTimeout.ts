@@ -100,3 +100,26 @@ export const useIdleTimeout = ({ enabled, timeoutMs, warningMs, onTimeout }: Use
 
   return { showWarning, secondsLeft, stayActive };
 };
+
+/** How often a kept-alive page refreshes the shared activity timestamp. */
+const KEEP_ALIVE_INTERVAL_MS = 10000;
+
+/**
+ * Keeps the session from timing out for inactivity while the calling page is
+ * mounted, e.g. wall-mounted monitoring boards nobody touches.
+ *
+ * It refreshes the shared `lastActivity` timestamp, so every open tab of this
+ * browser stays signed in too (they all share one token). On unmount it marks
+ * activity once more, so leaving the page starts a fresh idle countdown instead
+ * of logging the user out immediately. Token expiry still applies.
+ */
+export const useKeepSessionAlive = () => {
+  useEffect(() => {
+    markActivity();
+    const interval = window.setInterval(markActivity, KEEP_ALIVE_INTERVAL_MS);
+    return () => {
+      window.clearInterval(interval);
+      markActivity();
+    };
+  }, []);
+};

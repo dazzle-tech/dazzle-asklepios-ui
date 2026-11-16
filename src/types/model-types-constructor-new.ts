@@ -65,6 +65,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,

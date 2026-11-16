@@ -1,5 +1,6 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import { useKeepSessionAlive } from '@/hooks/useIdleTimeout';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -18,6 +19,9 @@ import useERBedBoardData from './useERBedBoardData';
 const ERBedBoard = () => {
   const dispatch = useDispatch();
   const boardRef = useRef<HTMLDivElement>(null);
+
+  // Monitoring board: often left open on a screen nobody touches, so never idle-logout here.
+  useKeepSessionAlive();
 
   const dir =
     localStorage.getItem('direction') === 'RTL' ? 'rtl' : 'ltr';

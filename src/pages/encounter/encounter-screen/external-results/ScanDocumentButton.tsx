@@ -1,8 +1,7 @@
 import React from 'react';
-import { Tooltip, Whisper } from 'rsuite';
-import { MdDocumentScanner } from 'react-icons/md';
+import { LuScan, LuSparkle } from 'react-icons/lu';
 import MyButton from '@/components/MyButton/MyButton';
-import Translate from '@/components/Translate';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
 import './styles.less';
 
 type Props = {
@@ -10,28 +9,31 @@ type Props = {
   onClick: () => void;
 };
 
+// Scan frame with an AI spark inside, as in the Scan Document template.
+// MyButton passes the spacing between the icon and the label through style.
+const ScanSparkIcon = ({ style }: { style?: React.CSSProperties }) => (
+  <span className="scan-ai-icon" style={style} aria-hidden="true">
+    <LuScan size={18} />
+    <LuSparkle size={8} className="scan-ai-icon__spark" />
+  </span>
+);
+
 const ScanDocumentButton: React.FC<Props> = ({ disabled, onClick }) => (
-  <Whisper
-    placement="bottom"
-    trigger="hover"
-    speaker={
-      <Tooltip>
-        <Translate>
-          AI reads a lab result or radiology report, checks it belongs to this patient, and prepares a draft for you
-          to review. Nothing is saved until you confirm.
-        </Translate>
-      </Tooltip>
-    }
+  <AiTooltip
+    title="AI document scan"
+    body="AI reads a lab result or report, checks it belongs to this patient, and prepares a structured draft for you to review."
+    chips={['Lab results', 'Reports']}
+    foot="Nothing is saved until you confirm."
   >
     <span className="scan-ai-btn">
-      <MyButton disabled={disabled} prefixIcon={MdDocumentScanner} onClick={onClick}>
+      <MyButton disabled={disabled} prefixIcon={ScanSparkIcon} onClick={onClick}>
         Scan Document
       </MyButton>
       <span className="scan-ai-btn__badge" aria-hidden="true">
         AI
       </span>
     </span>
-  </Whisper>
+  </AiTooltip>
 );
 
 export default ScanDocumentButton;

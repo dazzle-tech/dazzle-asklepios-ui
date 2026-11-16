@@ -5,6 +5,9 @@ import { summarizationService } from '@/services/summarizationService';
 
 import uiSlice from './reducers/uiSlice';
 import divSlice from './reducers/divSlice';
+import preAuthorizationMissingFieldsSlice, {
+  preAuthorizationMissingFieldsListener
+} from './reducers/preAuthorizationMissingFieldsSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import authReducer from './reducers/authSlice';
@@ -213,6 +216,7 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 import { radiologyReportService } from './services/reports/radiologyReportService';
+import { dentalTreatmentPlanReportService } from './services/reports/dentalTreatmentPlanReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
@@ -343,6 +347,7 @@ export const store = configureStore({
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
     [divSlice.name]: divSlice.reducer,
+    [preAuthorizationMissingFieldsSlice.name]: preAuthorizationMissingFieldsSlice.reducer,
 
     // auth
     auth: authReducer,
@@ -608,6 +613,7 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportService.reducerPath]: radiologyReportService.reducer,
+    [dentalTreatmentPlanReportService.reducerPath]: dentalTreatmentPlanReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
@@ -752,6 +758,7 @@ export const store = configureStore({
     })
       .prepend(rtkDispatchLoopGuard)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
@@ -931,6 +938,7 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         systemConfigurationService.middleware,
         radiologyReportService.middleware,
+        dentalTreatmentPlanReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         mobileAppConfigService.middleware,

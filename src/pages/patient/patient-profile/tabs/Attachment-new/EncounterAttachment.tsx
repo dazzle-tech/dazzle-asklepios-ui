@@ -190,7 +190,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 (v: any) => v.key === attachment.type
             )?.valueCode || '';
 
-        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN', 'DENTIST'];
 
         if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
             dispatch(
@@ -236,7 +236,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 (v: any) => v.key === attachment.type
             )?.valueCode || '';
 
-        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN'];
+        const allowedMedicalRoles = ['NURSE', 'HIS_ADMINISTRATOR', 'PHYSICIAN', 'DENTIST'];
 
         if (attachmentTypeCode === 'ATAC_TYP_MED' && !allowedMedicalRoles.includes(jobRole)) {
             dispatch(

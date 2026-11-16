@@ -5,6 +5,9 @@ import { faFlask } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
+import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -220,6 +223,22 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
     }
   };
 
+  const AUDIT_COLUMN_WIDTH = 170;
+
+  const auditHeaderStyle: React.CSSProperties = {
+    width: AUDIT_COLUMN_WIDTH,
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--rs-text-secondary)'
+  };
+
+  // Each profile result is its own copy record, so its audit is shown per row
+  const renderAuditCell = (login?: string, date?: string) => (
+    <div style={{ width: AUDIT_COLUMN_WIDTH, fontSize: 13 }}>
+      {login || date ? <UserDateCell login={login} date={date} /> : '-'}
+    </div>
+  );
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
@@ -229,7 +248,7 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
         open={open}
         setOpen={setOpen}
         title="Laboratory Results"
-        size="50vw"
+        size="85vw"
         actionButtonFunction={handleSaveAll}
         isDisabledActionBtn={isCreating || isUpdating || profiles.length === 0}
         steps={[
@@ -242,9 +261,38 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
               header={<strong>{testName || `Test #${orderTest?.testId}`}</strong>}
             >
               <Form fluid>
+                {profiles.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '4px 0 8px',
+                      borderBottom: '1px solid var(--rs-border-primary)'
+                    }}
+                  >
+                    <div style={{ ...auditHeaderStyle, width: 180 }}>
+                      <Translate>PARAMETER</Translate>
+                    </div>
+                    <div style={{ ...auditHeaderStyle, flex: 1, minWidth: 220 }}>
+                      <Translate>RESULT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>ORIGINAL CREATED BY / AT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>COPIED BY / AT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>COPY UPDATED BY / AT</Translate>
+                    </div>
+                  </div>
+                )}
+
                 {profiles.map(profile => {
                   const isLov = isLovProfile(profile);
                   const isText = isTextProfile(profile);
+                  const existing = copyByProfileId.get(profile.id);
 
                   const rowRecord = form[profile.id] ?? {
                     resultValueNumber: null,
@@ -266,6 +314,15 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                         {profile.name}
                       </div>
 
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 220,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12
+                        }}
+                      >
                       <MyInput
                         fieldName={isLov || isText ? 'resultValueText' : 'resultValueNumber'}
                         fieldType={isLov ? 'select' : isText ? 'text' : 'number'}
@@ -289,6 +346,18 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                           {resolveUnitLabel(profile)}
                         </span>
                       )}
+                      </div>
+
+                      {/* No original means the result was added in the claim, not in the visit */}
+                      {renderAuditCell(existing?.originalCreatedBy, existing?.originalCreatedDate)}
+                      {existing ? (
+                        <div style={{ width: AUDIT_COLUMN_WIDTH, fontSize: 13 }}>
+                          <CopiedAuditCell row={existing} />
+                        </div>
+                      ) : (
+                        renderAuditCell()
+                      )}
+                      {renderAuditCell(existing?.lastModifiedBy, existing?.lastModifiedDate)}
                     </div>
                   );
                 })}

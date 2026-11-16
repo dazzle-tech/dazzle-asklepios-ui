@@ -17,6 +17,7 @@ import enGB from 'rsuite/locales/en_GB';
 import Frame from './components/Frame';
 import SystemLoader from './components/Loaders/SystemLoader';
 import MyToast from './components/MyToast/MyToast';
+import PreAuthorizationMissingFieldsModal from './components/PreAuthorizationMissingFieldsModal/PreAuthorizationMissingFieldsModal';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import IdleTimeoutManager from './components/IdleTimeoutManager/IdleTimeoutManager';
@@ -264,6 +265,7 @@ const SubmitPatientComplaintPage = lazy(
 );
 const PatientComplaintsPage = lazy(() => import('./pages/patient-complaints/PatientComplaintsPage'));
 const SurveyPage = lazy(() => import('./pages/survey/SurveyPage'));
+const VerifyReportPage = lazy(() => import('./pages/verify-report/VerifyReportPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -651,6 +653,7 @@ const App = () => {
       </div>
 
       <MyToast />
+      <PreAuthorizationMissingFieldsModal />
       <SessionExpiredBackdrop />
       <IdleTimeoutManager />
 
@@ -1091,6 +1094,7 @@ const App = () => {
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="patient-satisfaction-survey" element={<SurveyPage />} />
           <Route path="submit-patient-complaint" element={<SubmitPatientComplaintPage />} />
+          <Route path="verify-report" element={<VerifyReportPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

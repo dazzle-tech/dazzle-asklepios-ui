@@ -11,6 +11,7 @@ import { useUploadAttachmentsMutation as useUploadPatientAttachmentsMutation } f
 import { useUploadAttachmentMutation as useUploadEncounterAttachmentMutation } from '@/services/encounters/attachmentsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
+import DentalAttachmentNotice, { DENTAL_PROCEDURE_ATTACHMENT_SOURCE } from './DentalAttachmentNotice';
 
 interface AttachmentUploadModalProps {
   isOpen: boolean;
@@ -55,6 +56,9 @@ const AttachmentUploadModal = ({
     typeLkey: ''
   });
   const [attachmentDetails, setAttachmentDetails] = useState({ attachmentDetails: '' });
+
+  // A dental procedure attachment goes with the claim: the user is told what NPHIES accepts.
+  const isDentalProcedureAttachment = source === DENTAL_PROCEDURE_ATTACHMENT_SOURCE;
 
   // Handle Attachment File Upload Click
   const handleAttachmentFileUploadClick = () => {
@@ -263,6 +267,7 @@ const AttachmentUploadModal = ({
                   disableByField='isValid'
 
         />
+        {isDentalProcedureAttachment && <DentalAttachmentNotice files={selectedFiles} />}
         <MyInput
           width={550}
           record={attachmentDetails}
