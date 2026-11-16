@@ -29,6 +29,7 @@ export interface ApUser {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canEditSubmittedPrescription: boolean;
 }
 
 

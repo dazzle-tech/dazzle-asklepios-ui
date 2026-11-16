@@ -287,7 +287,10 @@ const Prescription = (props: Props) => {
   // A submitted prescription can be changed and resent only by users the backend allows
   // (SubmittedPrescriptionEditPolicy), also on a read-only (closed) visit opened from the EMR.
   // Drafts and the rest of the visit follow the visit's own read-only state.
-  const { data: editAfterSubmitAccess } = useGetPrescriptionEditAfterSubmitAccessQuery();
+  // Asked again whenever the screen opens, so a permission changed by an admin applies without a page reload.
+  const { data: editAfterSubmitAccess } = useGetPrescriptionEditAfterSubmitAccessQuery(undefined, {
+    refetchOnMountOrArgChange: true
+  });
   const canEditSubmitted = editAfterSubmitAccess?.allowed === true;
   const prescriptionEdit = isCurrentPrescriptionSubmitted ? !canEditSubmitted : edit;
 
