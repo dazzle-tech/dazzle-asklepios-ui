@@ -243,11 +243,11 @@ const Notice = ({ title, children }: { title: string; children?: React.ReactNode
   </div>
 );
 
+// The AI compares only these fields; it no longer matches on facility patient IDs
 const MISMATCH_LABELS: Record<string, string> = {
   full_name: 'Name',
   sex: 'Sex',
-  date_of_birth: 'Date of Birth',
-  patient_id: 'Patient ID'
+  date_of_birth: 'Date of Birth'
 };
 
 // The AI sends sex in lower case (male / female)
