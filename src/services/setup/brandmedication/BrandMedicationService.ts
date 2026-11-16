@@ -2,7 +2,7 @@ import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number; isActive?: boolean };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -23,10 +23,10 @@ export const BrandMedicationService = createApi({
 
     // 🔹 Get all
     getAllBrandMedications: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+      query: ({ page, size, sort = "id,asc", isActive }) => ({
         url: "/api/setup/brand-medication",
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;

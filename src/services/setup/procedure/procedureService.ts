@@ -4,7 +4,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type { ProcedureItemCreate, ProcedureItemUpdate } from '@/types/model-types-new';
 
 type Id = number | string;
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number; isActive?: boolean };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -29,9 +29,9 @@ export const procedureSetupService = createApi({
   endpoints: builder => ({
     // ===== PROCEDURES (Paginated) =====
     getProcedures: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+      query: ({ page, size, sort = 'id,asc', isActive }) => ({
         url: '/api/setup/procedure',
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
@@ -41,27 +41,27 @@ export const procedureSetupService = createApi({
       PagedResult<any>,
       { categoryType: string } & PagedParams
     >({
-      query: ({ categoryType, page, size, sort = 'id,asc' }) => ({
+      query: ({ categoryType, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-category/${encodeURIComponent(categoryType)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
     }),
 
     getProceduresByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
-      query: ({ code, page, size, sort = 'id,asc' }) => ({
+      query: ({ code, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-code/${encodeURIComponent(code)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
     }),
 
     getProceduresByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
-      query: ({ name, page, size, sort = 'id,asc' }) => ({
+      query: ({ name, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-name/${encodeURIComponent(name)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
@@ -97,9 +97,9 @@ export const procedureSetupService = createApi({
       PagedResult<any>,
       { facilityId: Id; category?: Id } & PagedParams
     >({
-      query: ({ facilityId, category, page, size, sort = 'id,asc' }) => ({
+      query: ({ facilityId, category, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-facility/${encodeURIComponent(String(facilityId))}`,
-        params: { page, size, sort, ...(category ? { category } : {}) }
+        params: { page, size, sort, isActive, ...(category ? { category } : {}) }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
