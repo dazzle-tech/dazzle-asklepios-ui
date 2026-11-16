@@ -5,6 +5,9 @@ import { summarizationService } from '@/services/summarizationService';
 
 import uiSlice from './reducers/uiSlice';
 import divSlice from './reducers/divSlice';
+import preAuthorizationMissingFieldsSlice, {
+  preAuthorizationMissingFieldsListener
+} from './reducers/preAuthorizationMissingFieldsSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import authReducer from './reducers/authSlice';
@@ -54,7 +57,6 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 
 import { userService } from '@/services/userService';
 
-import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
 import { inventoryService } from './services/inventoryTransactionService';
@@ -212,7 +214,9 @@ import { patientServicesAndProductsService } from './services/encounters/patient
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
+import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 import { radiologyReportService } from './services/reports/radiologyReportService';
+import { dentalTreatmentPlanReportService } from './services/reports/dentalTreatmentPlanReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
@@ -245,6 +249,8 @@ import { encounterAssignToBedService } from './services/patients/emergency/encou
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
+import { dentalHistoryService } from '@/services/dentalHistoryService';
+import { patientFamilyEducationService } from '@/services/patientFamilyEducationService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 import { sickLeaveReportService } from './services/reports/sickLeaveReportService';
 import { patientSickLeaveService } from './services/patients/patientSickLeaveService';
@@ -261,12 +267,16 @@ import { systemConfigService } from '@/services/systemConfigService';
 import { medicationValidationService } from './services/medicationTestOrdersValidation/MedicationTestOrdersValidation';
 import { waseelSbsSetupService } from '@/services/waseel-integration/waseelSbsSetupService';
 import { NphiesPayerService } from '@/services/setup/payer/NphiesPayerSetupService';
+import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
+import { InsuranceCompanyPolicyService } from '@/services/setup/payer/InsuranceCompanyPolicyService';
+import { coverageManagementService } from '@/services/setup/coverageManagement/coverageManagementService';
 import { priceListSetupService } from './services/setup/priceListSetup/priceListSetupService';
 import { billingRuleSetupService } from './services/setup/billingRuleSetup/billingRuleSetupService';
 import { billingConfigurationService } from './services/billing/billingConfigurationService';
 import { financialDocumentNumberingService } from './services/billing/financialDocumentNumberingService';
 import { discountService } from './services/billing/discountService';
 import { taxService } from './services/billing/taxService';
+import { patientFinancialStatementService } from './services/billing/patientFinancialStatementService';
 import { flaccPainSacoreService } from './services/encounters/flaccPainSacoreService';
 import { PointOfSaleCheckInService } from './services/point-of-sale/PointOfSaleCheckInService';
 import { PointOfSaleTransactionService } from '@/services/point-of-sale/PointOfSaleTransactionService';
@@ -280,6 +290,8 @@ import { patientTimelineService } from './services/patients/patientTimelineServi
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { externalDocumentService } from './services/ai-services/externalDocumentService';
+import { externalResultService } from './services/patients/externalResultService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { refreshHl7EventsService } from './services/refreshHl7EventsService';
 import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
@@ -335,6 +347,7 @@ export const store = configureStore({
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
     [divSlice.name]: divSlice.reducer,
+    [preAuthorizationMissingFieldsSlice.name]: preAuthorizationMissingFieldsSlice.reducer,
 
     // auth
     auth: authReducer,
@@ -355,6 +368,8 @@ export const store = configureStore({
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [externalDocumentService.reducerPath]: externalDocumentService.reducer,
+    [externalResultService.reducerPath]: externalResultService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
     [ambientDraftService.reducerPath]: ambientDraftService.reducer,
@@ -362,6 +377,7 @@ export const store = configureStore({
     [ambientScribeSetupService.reducerPath]: ambientScribeSetupService.reducer,
     // setup
     [setupService.reducerPath]: setupService.reducer,
+    [systemConfigurationService.reducerPath]: systemConfigurationService.reducer,
 
     [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
     [PolicyAssignmentService.reducerPath]: PolicyAssignmentService.reducer,
@@ -412,7 +428,6 @@ export const store = configureStore({
 
     // lab / rad / operation / procedures
     [operationService.reducerPath]: operationService.reducer,
-    [procedureService.reducerPath]: procedureService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
     // refetch flags
@@ -598,6 +613,7 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportService.reducerPath]: radiologyReportService.reducer,
+    [dentalTreatmentPlanReportService.reducerPath]: dentalTreatmentPlanReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
@@ -688,6 +704,8 @@ export const store = configureStore({
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
     [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [dentalHistoryService.reducerPath]: dentalHistoryService.reducer,
+    [patientFamilyEducationService.reducerPath]: patientFamilyEducationService.reducer,
     [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
     [sickLeaveReportService.reducerPath]: sickLeaveReportService.reducer,
     [patientSickLeaveService.reducerPath]: patientSickLeaveService.reducer,
@@ -704,6 +722,9 @@ export const store = configureStore({
 
     [waseelSbsSetupService.reducerPath]: waseelSbsSetupService.reducer,
     [NphiesPayerService.reducerPath]: NphiesPayerService.reducer,
+    [TpaDefinitionService.reducerPath]: TpaDefinitionService.reducer,
+    [InsuranceCompanyPolicyService.reducerPath]: InsuranceCompanyPolicyService.reducer,
+    [coverageManagementService.reducerPath]: coverageManagementService.reducer,
 
     [priceListSetupService.reducerPath]: priceListSetupService.reducer,
     [billingRuleSetupService.reducerPath]: billingRuleSetupService.reducer,
@@ -711,10 +732,10 @@ export const store = configureStore({
     [financialDocumentNumberingService.reducerPath]: financialDocumentNumberingService.reducer,
     [taxService.reducerPath]: taxService.reducer,
     [discountService.reducerPath]: discountService.reducer,
-
     [billingTransactionService.reducerPath]: billingTransactionService.reducer,
     [invoiceGenerationService.reducerPath]: invoiceGenerationService.reducer,
     [financialDocumentAdjustmentService.reducerPath]: financialDocumentAdjustmentService.reducer,
+    [patientFinancialStatementService.reducerPath]: patientFinancialStatementService.reducer,
     [PointOfSaleCheckInService.reducerPath]: PointOfSaleCheckInService.reducer,
     [PointOfSaleConfigurationService.reducerPath]: PointOfSaleConfigurationService.reducer,
     [PointOfSaleTransactionService.reducerPath]: PointOfSaleTransactionService.reducer,
@@ -737,6 +758,7 @@ export const store = configureStore({
     })
       .prepend(rtkDispatchLoopGuard)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
@@ -778,7 +800,6 @@ export const store = configureStore({
         encounterAttachmentsService.middleware,
         inventoryTransferAttachmentService.middleware,
         inventoryTransactionAttachmentService.middleware,
-        procedureService.middleware,
         operationService.middleware,
         recoveryService.middleware,
         userService.middleware,
@@ -915,7 +936,9 @@ export const store = configureStore({
         NextOfKinService.middleware,
         RelationsMatrixService.middleware,
         patientAdministrativeWarningsService.middleware,
+        systemConfigurationService.middleware,
         radiologyReportService.middleware,
+        dentalTreatmentPlanReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         mobileAppConfigService.middleware,
@@ -944,6 +967,8 @@ export const store = configureStore({
         currentMedicationService.middleware,
         uccMedicationOrderService.middleware,
         dentalProcedureService.middleware,
+        dentalHistoryService.middleware,
+        patientFamilyEducationService.middleware,
         laboratoryReportsService.middleware,
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
@@ -961,6 +986,9 @@ export const store = configureStore({
         glasgowComaScaleAssessmentService.middleware,
         systemConfigService.middleware,
         NphiesPayerService.middleware,
+        TpaDefinitionService.middleware,
+        InsuranceCompanyPolicyService.middleware,
+        coverageManagementService.middleware,
         priceListSetupService.middleware,
         billingRuleSetupService.middleware,
         billingConfigurationService.middleware,
@@ -970,6 +998,7 @@ export const store = configureStore({
         billingTransactionService.middleware,
         invoiceGenerationService.middleware,
         financialDocumentAdjustmentService.middleware,
+        patientFinancialStatementService.middleware,
         flaccPainSacoreService.middleware,
         PointOfSaleCheckInService.middleware,
         PointOfSaleConfigurationService.middleware,
@@ -980,6 +1009,8 @@ export const store = configureStore({
         autoPopulationService.middleware,
         dischargeReportService.middleware,
          ocrParsingService.middleware,
+        externalDocumentService.middleware,
+        externalResultService.middleware,
         labInterpretationService.middleware,
         nephrologyKidneyAssessmentService.middleware,
         nephrologyRenalFunctionService.middleware,

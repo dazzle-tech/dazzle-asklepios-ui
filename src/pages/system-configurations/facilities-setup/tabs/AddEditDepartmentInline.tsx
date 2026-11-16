@@ -387,6 +387,15 @@ const defaultNurseMedicalSheetsInfo = (
 
           <MyInput
             column
+            fieldType="checkbox"
+            fieldLabel="Assign Practitioner on Visit Start"
+            fieldName="assignPractitionerOnVisitStart"
+            record={department}
+            setRecord={setDepartment}
+          />
+
+          <MyInput
+            column
             fieldType="number"
             fieldName="parallelCapacityValue"
             record={department}

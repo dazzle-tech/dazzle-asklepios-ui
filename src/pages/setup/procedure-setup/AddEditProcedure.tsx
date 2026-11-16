@@ -10,6 +10,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 
 import {
   useAddProcedureMutation,
@@ -50,6 +51,8 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');
+
+  const priceListPrompt = usePriceListPrompt();
 
   const isLoading = isAdding || isUpdating || actionLoading;
 
@@ -100,8 +103,9 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         return;
       }
 
+      let saved: any;
       if (isUpdate) {
-        await updateProcedure({
+        saved = await updateProcedure({
           facilityId: procedure.facilityId,
           id: procedure.id,
           ...payload
@@ -109,13 +113,23 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
         dispatch(notify({ msg: 'Procedure updated successfully', sev: 'success' }));
       } else {
-        await addProcedure({
+        saved = await addProcedure({
           facilityId: procedure.facilityId,
           ...payload
         }).unwrap();
 
         dispatch(notify({ msg: 'Procedure added successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'PROCEDURE',
+        sourceId: saved?.id ?? procedure.id,
+        itemCode: payload.code,
+        itemName: payload.name,
+        unitPrice: payload.price,
+        facilityId: procedure.facilityId,
+        currency: payload.currency
+      });
 
       onSaveSuccess?.();
     } catch (err: any) {
@@ -408,18 +422,21 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
     console.log(procedure.categoryType);
   }, [procedure.categoryType]);
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={isEdit ? 'Edit Procedure' : 'New Procedure'}
-      position="right"
-      content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
-      actionButtonLabel={isEdit ? 'Save' : 'Create'}
-      actionButtonFunction={handleSave}
-      isDisabledActionBtn={isLoading}
-      steps={[{ title: 'Procedure Info', icon: <FaStar /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={isEdit ? 'Edit Procedure' : 'New Procedure'}
+        position="right"
+        content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
+        actionButtonLabel={isEdit ? 'Save' : 'Create'}
+        actionButtonFunction={handleSave}
+        isDisabledActionBtn={isLoading}
+        steps={[{ title: 'Procedure Info', icon: <FaStar /> }]}
+        size={width > 600 ? '36vw' : '70vw'}
+      />
+      <PriceListPrompt prompt={priceListPrompt} />
+    </>
   );
 };
 

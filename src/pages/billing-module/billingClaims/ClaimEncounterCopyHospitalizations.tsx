@@ -10,6 +10,7 @@ import MyTable from '@/components/MyTable';
 import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 import Translate from '@/components/Translate';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 
@@ -315,10 +316,10 @@ const ClaimEncounterCopyHospitalizations = ({
       )
     },
     {
-      key: 'created',
+      key: 'originalCreatedDate',
       title: (
         <Translate>
-          Created By / Date
+          ORIGINAL CREATED BY / AT
         </Translate>
       ),
       flexGrow: 1.5,
@@ -326,16 +327,30 @@ const ClaimEncounterCopyHospitalizations = ({
         row: ClaimEncounterCopyHospitalization
       ) => (
         <UserDateCell
-          login={row.createdBy}
-          date={row.createdDate}
+          login={row.originalCreatedBy}
+          date={row.originalCreatedDate}
         />
+      )
+    },
+    {
+      key: 'created',
+      title: (
+        <Translate>
+          COPIED BY / AT
+        </Translate>
+      ),
+      flexGrow: 1.5,
+      render: (
+        row: ClaimEncounterCopyHospitalization
+      ) => (
+        <CopiedAuditCell row={row} />
       )
     },
     {
       key: 'lastModified',
       title: (
         <Translate>
-          Last Modified By / Date
+          COPY UPDATED BY / AT
         </Translate>
       ),
       flexGrow: 1.5,

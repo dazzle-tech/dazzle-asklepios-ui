@@ -21,15 +21,20 @@ import {
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Col, Form, Row, Tabs } from 'rsuite';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import './styles.less';
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
@@ -71,7 +76,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+  const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+  const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
 
   const [departmentFilter, setDepartmentFilter] = useState<any>({
   fromDepartmentIdIn: null
@@ -282,9 +289,21 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
 const handleClearFilters = () => {
   const now = new Date();
   setDateFilter({ fromDate: now, toDate: now });
-  setSelectedPatient(null);
+  setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+  setResolvedPatientIds(null);
   setDepartmentFilter({ fromDepartmentIdIn: null });
   setOrderNumberFilter('');
+};
+
+const handleSearchFilters = async () => {
+  const raw = patientSearch?.patientName;
+  const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+  const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+  // Commit IDs before refetch so Orders does not reuse the previous patientIdIn.
+  flushSync(() => {
+    setResolvedPatientIds(ids);
+  });
+  await refetchAllRadData();
 };
 
 const filters = (
@@ -309,12 +328,11 @@ const filters = (
                     showLabel={false}
                   />
 
-                  <PatientSearch
-                    value={selectedPatient}
-                    onChange={setSelectedPatient}
-                    showLabel={false}
-                    width="22vw"
-                    containerMinWidth={250}
+                  <SearchPatientCriteria
+                    record={patientSearch}
+                    setRecord={setPatientSearch}
+                    liveSearchMinLength={0}
+                    searchMarginTop={0}
                   />
 
                   <MyInput
@@ -344,7 +362,7 @@ const filters = (
                   />
                   <AdvancedSearchFilters
                     showAdvancedButton={false}
-                    searchOnClick={refetchAllRadData}
+                    searchOnClick={handleSearchFilters}
                     clearOnClick={handleClearFilters}
                   />
                 </Form>
@@ -407,7 +425,7 @@ const filters = (
               dateFilter={dateFilter}
               loading={globalLoading}
               orderNumberFilter={orderNumberFilter}
-              selectedPatient={selectedPatient}
+              patientIdIn={resolvedPatientIds}
               departmentFilter={departmentFilter}
               filters={filters}
             />

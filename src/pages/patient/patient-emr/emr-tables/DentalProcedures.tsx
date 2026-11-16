@@ -9,8 +9,8 @@ import { useGetDentalProceduresByPatientQuery } from '@/services/dentalProcedure
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
-import { useEnumOptions } from '@/services/enumsApi';
 import UserDateCell from '@/components/UserDateCell';
+import { formatStoredToothNumber } from '@/pages/encounter/dental-procedures/toothChart';
 
 const DentalProcedures = ({ patient, encounter }: any) => {
   const [page, setPage] = useState(0);
@@ -33,8 +33,6 @@ const DentalProcedures = ({ patient, encounter }: any) => {
     size: 1000,
     category: 'DENTAL'
   });
-
-  const ToothEnum = useEnumOptions('ToothNumber');
 
   // ─────────── CDT Mapping ───────────
   const cdtIds = useMemo(() => {
@@ -71,12 +69,7 @@ const DentalProcedures = ({ patient, encounter }: any) => {
           : row.toothNumber
             ? [row.toothNumber]
             : [];
-        const labels = values
-          .filter(Boolean)
-          .map(
-            (value: string) =>
-              ToothEnum?.find((tooth: any) => tooth.value === value)?.label || value
-          );
+        const labels = values.filter(Boolean).map((value: string) => formatStoredToothNumber(value));
         return labels.length ? labels.join(', ') : '-';
       }
     },
@@ -152,6 +145,18 @@ const DentalProcedures = ({ patient, encounter }: any) => {
       title: <Translate>Notes</Translate>,
       expandable: true,
       render: row => row.notes || '-'
+    },
+    {
+      key: 'informedConsent',
+      title: <Translate>Informed Consent</Translate>,
+      expandable: true,
+      render: row => (row.informedConsentObtained ? 'Yes' : 'No')
+    },
+    {
+      key: 'treatmentOutcome',
+      title: <Translate>Treatment Outcome</Translate>,
+      expandable: true,
+      render: row => row.treatmentOutcome || '-'
     },
     {
       key: 'status',

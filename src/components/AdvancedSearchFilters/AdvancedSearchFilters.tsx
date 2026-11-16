@@ -17,8 +17,9 @@ const AdvancedSearchFilters = ({
   content = null,
   showAdvancedButton = true,
   hideSearchBtn = false,
+  ...props
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(props.showAdvanced ?? false);
 
   return (
     <>
@@ -26,7 +27,7 @@ const AdvancedSearchFilters = ({
         {showAdvancedButton && (
           <MyButton
             appearance="ghost"
-            onClick={() => setShowAdvanced(!showAdvanced)}
+            onClick={() => {setShowAdvanced(!showAdvanced); if(props.setShowAdvanced) props.setShowAdvanced(!props.showAdvanced)}}
             prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}
           >
            <Translate>Advanced</Translate>

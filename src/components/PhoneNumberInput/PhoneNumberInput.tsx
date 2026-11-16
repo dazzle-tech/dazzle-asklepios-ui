@@ -6,6 +6,7 @@ import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import MyLabel from '../MyLabel';
 import { camelCaseToLabel } from '@/utils';
+import { facilityPhoneCountryIso2 } from '@/utils/facilityPhoneCountry';
 import './styles.less';
 
 type PhoneNumberInputProps = {
@@ -36,7 +37,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   showLabel = true,
   required = false,
   disabled = false,
-  defaultCountry = 'sa',
+  defaultCountry,
   placeholder = 'Enter phone number',
   width = 145,
   className = '',
@@ -44,8 +45,12 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   resetKey
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const selectedFacility = useSelector((state: any) => state.auth?.tenant?.selectedFacility);
   const label = fieldLabel ?? camelCaseToLabel(fieldName);
   const resolvedValue = value ?? String(record?.[fieldName] ?? '');
+  const resolvedDefaultCountry = (
+    defaultCountry || facilityPhoneCountryIso2(selectedFacility)
+  ).toLowerCase();
 
   const [phoneInputKey, setPhoneInputKey] = useState(0);
   const prevResetKey = useRef(resetKey);
@@ -78,8 +83,8 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         style={{ width: typeof width === 'number' ? `${width}px` : width }}
       >
         <PhoneInput
-          key={phoneInputKey}
-          defaultCountry={defaultCountry}
+          key={`${phoneInputKey}-${resolvedDefaultCountry}`}
+          defaultCountry={resolvedDefaultCountry}
           value={resolvedValue}
           onChange={phone => handleChange(phone)}
           disabled={disabled}

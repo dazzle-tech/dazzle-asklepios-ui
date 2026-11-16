@@ -5,7 +5,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
 import Translate from '@/components/Translate';
 import UserDateCell from '@/components/UserDateCell';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -50,6 +51,7 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useDispatch } from 'react-redux';
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import './ReviewResultsIcon.less';
@@ -130,7 +132,10 @@ const ReviewResults = forwardRef<any, any>(
 
     const [filtersKey, setFiltersKey] = useState(0);
     const [orderIdFilter, setOrderIdFilter] = useState('');
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+    const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+    const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+    const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
     const [departmentFilter, setDepartmentFilter] = useState<any>({
       fromDepartmentIdIn: null
     });
@@ -184,8 +189,8 @@ const ReviewResults = forwardRef<any, any>(
 
       params.reviewed = showReview;
 
-      if (selectedPatient?.id) {
-        params.patientIdIn = [selectedPatient.id];
+      if (resolvedPatientIds != null) {
+        params.patientIdIn = resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1];
       }
 
       if (departmentFilter?.fromDepartmentIdIn) {
@@ -222,7 +227,7 @@ const ReviewResults = forwardRef<any, any>(
       }
 
       if (
-        selectedPatient?.id ||
+        resolvedPatientIds != null ||
         departmentFilter?.fromDepartmentIdIn ||
         orderDate.fromDate ||
         orderDate.toDate
@@ -244,7 +249,7 @@ const ReviewResults = forwardRef<any, any>(
       orderIdIn,
       orderDate,
       orderIdFilter,
-      selectedPatient?.id,
+      resolvedPatientIds,
       departmentFilter?.fromDepartmentIdIn,
       encounterNumberFilter
     ]);
@@ -503,7 +508,8 @@ const ReviewResults = forwardRef<any, any>(
       setShowReview(false);
       setShowAbnormal(false);
       setOrderIdIn(null);
-      setSelectedPatient(null);
+      setPatientSearch({ ...EMPTY_PATIENT_SEARCH });
+      setResolvedPatientIds(null);
 
       setDepartmentFilter({
         fromDepartmentIdIn: null
@@ -513,6 +519,20 @@ const ReviewResults = forwardRef<any, any>(
       setPage(0);
 
       setFiltersKey(prev => prev + 1);
+    };
+
+    const handleSearchFilters = async () => {
+      const raw = patientSearch?.patientName;
+      const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+      const ids = hasValue ? await resolvePatientIds(patientSearch) : null;
+      // Commit IDs and clear stale orderIdIn before refetch so results do not
+      // briefly query with the previous patient's order IDs.
+      flushSync(() => {
+        setResolvedPatientIds(ids);
+        setOrderIdIn([]);
+        setPage(0);
+      });
+      refetch();
     };
     // const handleSelectAll = (checked: boolean) => {
     //   if (checked) {
@@ -796,12 +816,11 @@ const ReviewResults = forwardRef<any, any>(
           />
 
           <div className='check-box-review-results-handle'>
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatient}
-              showLabel={false}
-              width="22vw"
-              containerMinWidth={250}
+            <SearchPatientCriteria
+              record={patientSearch}
+              setRecord={setPatientSearch}
+              liveSearchMinLength={0}
+              searchMarginTop={0}
             />
 
             <MyInput
@@ -860,7 +879,7 @@ const ReviewResults = forwardRef<any, any>(
 
         <AdvancedSearchFilters
           showAdvancedButton={false}
-          searchOnClick={() => refetch()}
+          searchOnClick={handleSearchFilters}
           clearOnClick={resetFilters}
         />
         <div className="test-table-buttons-main-container">{tablebuttons}</div>
@@ -890,9 +909,9 @@ const ReviewResults = forwardRef<any, any>(
           ? endOfDay(toDate).toISOString()
           : undefined,
 
-        ...(selectedPatient?.id
+        ...(resolvedPatientIds != null
           ? {
-            patientIdIn: [selectedPatient.id]
+            patientIdIn: resolvedPatientIds.length > 0 ? resolvedPatientIds : [-1]
           }
           : {}),
 
@@ -917,7 +936,7 @@ const ReviewResults = forwardRef<any, any>(
         .catch(() => setOrderIdIn([]));
     }, [
       orderDate,
-      selectedPatient?.id,
+      resolvedPatientIds,
       departmentFilter?.fromDepartmentIdIn
     ]);
 
@@ -926,7 +945,7 @@ const ReviewResults = forwardRef<any, any>(
       setPage(0);
     }, [
       orderDate,
-      selectedPatient?.id,
+      resolvedPatientIds,
       departmentFilter?.fromDepartmentIdIn,
       encounterNumberFilter
     ]);

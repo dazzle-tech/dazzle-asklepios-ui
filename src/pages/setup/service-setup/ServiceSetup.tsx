@@ -1,13 +1,14 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdMedicalServices } from 'react-icons/md';
+import { Checkbox, Panel, Form } from 'rsuite';
+import { MdModeEdit, MdDelete, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditService from './AddEditService';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import LinkedItems from './LinkedItems';
 import './styles.less';
@@ -53,6 +54,7 @@ const ServiceSetup: React.FC = () => {
 
   // UI state
   const [popupOpen, setPopupOpen] = useState(false);
+  const priceListPrompt = usePriceListPrompt();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
@@ -65,6 +67,9 @@ const ServiceSetup: React.FC = () => {
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  const [showInactive, setShowInactive] = useState(false);
+  // Undefined means no status filter, so inactive records are included
+  const activeFilter = showInactive ? undefined : true;
 
   // Unfiltered pagination (main list via Link headers)
   const [paginationParams, setPaginationParams] = useState({
@@ -104,6 +109,7 @@ const ServiceSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
+    isActive: activeFilter,
   });
 
   // ===== Helpers to keep filtered list in sync after add/update/toggle =====
@@ -200,7 +206,7 @@ const ServiceSetup: React.FC = () => {
     { label: 'Category', value: 'category' },
     { label: 'Price', value: 'price' },
     { label: 'Currency', value: 'currency' },
-    { label: 'Status', value: 'status' },
+    ...(showInactive ? [{ label: 'Status', value: 'status' }] : []),
   ];
 
   // New
@@ -321,6 +327,16 @@ const ServiceSetup: React.FC = () => {
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
 
+      priceListPrompt.prompt({
+        itemType: 'SERVICE',
+        sourceId: saved?.id ?? service.id!,
+        itemCode: payloadBody.code,
+        itemName: payloadBody.name,
+        unitPrice: payloadBody.price,
+        facilityId: effectiveFacilityId,
+        currency: payloadBody.currency
+      });
+
       if (isFiltered) {
         const { data: nextData, added } = upsertIntoFiltered(
           saved,
@@ -402,7 +418,10 @@ const ServiceSetup: React.FC = () => {
       .then((toggled: Service | void) => {
         dispatch(notify({ msg: 'Service deactivated successfully', sev: 'success' }));
 
-        if (isFiltered) {
+        if (isFiltered && !showInactive) {
+          // The row must leave the search results too
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page);
+        } else if (isFiltered) {
           // If API returns the updated entity, upsert it; otherwise patch isActive locally.
           if (toggled && typeof (toggled as any).id !== 'undefined') {
             const { data: nextData } = upsertIntoFiltered(
@@ -474,6 +493,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'category') {
       return await fetchByCategory({
@@ -481,6 +501,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'code') {
       return await fetchByCode({
@@ -488,6 +509,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'name') {
       return await fetchByName({
@@ -495,6 +517,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'abbreviation') {
       return await fetchByAbbreviation({
@@ -502,6 +525,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'price') {
       return await fetchByPrice({
@@ -509,6 +533,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'currency') {
       return await fetchByCurrency({
@@ -516,6 +541,7 @@ const ServiceSetup: React.FC = () => {
         page,
         size,
         sort: effectiveSort,
+        isActive: activeFilter,
       }).unwrap();
     } else if (fieldName === 'status') {
       return await fetchByStatus({
@@ -628,6 +654,23 @@ const ServiceSetup: React.FC = () => {
           setService(rowData);
           setPopupOpen(true);
         }}
+      />
+      <MdLocalOffer
+        className="icons-style"
+        title="Price Lists"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() =>
+          priceListPrompt.view({
+            itemType: 'SERVICE',
+            sourceId: rowData.id,
+            itemCode: rowData.code,
+            itemName: rowData.name,
+            unitPrice: rowData.price,
+            facilityId: rowData.facilityId,
+            currency: rowData.currency
+          })
+        }
       />
       {rowData?.isActive ? (
         <MdDelete
@@ -855,9 +898,25 @@ const ServiceSetup: React.FC = () => {
         >
           Search
         </MyButton>
+
+        <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+          <Translate>Show inactive</Translate>
+        </Checkbox>
       </Form>
     );
   };
+
+  // The list and any applied search must follow the checkbox
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+    if (!isFiltered) return;
+    if (!showInactive && recordOfFilter.filter === 'status') {
+      setRecordOfFilter({ filter: '', value: '' });
+      resetToUnfiltered();
+      return;
+    }
+    handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
+  }, [showInactive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Effects
   useEffect(() => {
@@ -924,6 +983,7 @@ const ServiceSetup: React.FC = () => {
         setService={setService}
         handleSave={handleSave}
       />
+      <PriceListPrompt prompt={priceListPrompt} />
       <MyModal
         open={openPolicyAssignmentModal}
         setOpen={setOpenPolicyAssignmentModal}

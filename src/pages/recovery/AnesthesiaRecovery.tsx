@@ -13,7 +13,7 @@ import { newApOperationAnesthesiaRecovery } from '@/types/model-types-constructo
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { Col, Radio, RadioGroup, Row, Slider, Text } from 'rsuite';
-import GenericAdministeredMedications from '../encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ';
+import GenericAdministeredMedications from '@/components/clinical/GenericAdministeredMedications';
 import MyLabel from '@/components/MyLabel';
 
 const AnesthesiaRecovery = ({ operation }) => {

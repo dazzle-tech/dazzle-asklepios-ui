@@ -167,6 +167,16 @@ export const waseelSbsSetupService = createApi({
       providesTags: ['WaseelItemMapping']
     }),
 
+    // The active mapping of one catalog item (404 when it has none)
+    getMappingByItem: builder.query<WaseelItemMapping, { itemType: string; sourceId: number }>({
+      query: ({ itemType, sourceId }) => ({
+        url: '/api/setup/waseel/item-mapping/by-item',
+        method: 'GET',
+        params: { itemType, sourceId }
+      }),
+      providesTags: ['WaseelItemMapping']
+    }),
+
     deactivateItemMapping: builder.mutation<void, number>({
       query: id => ({
         url: `/api/setup/waseel/item-mapping/${id}`,
@@ -186,5 +196,6 @@ export const {
   useUpdateItemMappingMutation,
   useSearchItemMappingsQuery,
   useGetMappingByServiceItemIdQuery,
+  useLazyGetMappingByItemQuery,
   useDeactivateItemMappingMutation
 } = waseelSbsSetupService;

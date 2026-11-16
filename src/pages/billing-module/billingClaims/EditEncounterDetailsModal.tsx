@@ -30,7 +30,8 @@ const EditEncounterDetailsModal = ({
     const [record, setRecord] = useState({});
 
     const {
-        data: encounterCopy,
+        // currentData only holds this encounter's copy, never the previously opened one
+        currentData: encounterCopy,
         isLoading,
         isFetching
     } = useGetClaimEncounterCopyQuery(
@@ -46,9 +47,8 @@ const EditEncounterDetailsModal = ({
         useUpdateClaimEncounterCopyMutation();
 
     useEffect(() => {
-        if (encounterCopy) {
-            setRecord(encounterCopy);
-        }
+        // An encounter without a copy must open empty, not keep the last record
+        setRecord(encounterCopy ?? {});
     }, [encounterCopy]);
 
     const handleSave = async () => {

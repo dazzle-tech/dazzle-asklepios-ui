@@ -5,7 +5,7 @@ import MyTable from '@/components/MyTable';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import StaffAssignment from '@/pages/encounter/encounter-component/procedure/StaffMember';
+import StaffAssignment from '@/components/clinical/StaffAssignment';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 import {
   useDeleteOperationStaffMutation,

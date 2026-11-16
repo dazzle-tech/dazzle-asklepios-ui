@@ -4,6 +4,7 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
 
 import { useGetOrdersByEncounterQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useGetTestsByOrderIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
@@ -15,6 +16,7 @@ import {
 import { useGetClaimEncounterCopyDiagnosticOrderTestResultsQuery } from '@/services/billing/claimEncounterCopyDiagnosticOrderTestResultService';
 
 import ClaimEncounterCopyDiagnosticOrderLabResultModal from './ClaimEncounterCopyDiagnosticOrderLabResultModal';
+import { AddedInClaimBadge } from './CopiedAuditCell';
 import AddClaimEncounterCopyDiagnosticOrderTestReport from './AddClaimEncounterCopyDiagnosticOrderTestReport';
 
 interface ClaimEncounterCopyDiagnosticOrdersProps {
@@ -69,6 +71,28 @@ const ClaimEncounterCopyDiagnosticOrders = ({
     return map;
   }, [diagnosticTestsResponse]);
 
+  // A lab test has one copy per profile, so pick the earliest/latest audit across all of them
+  const pickAudit = (
+    copies: any[],
+    byKey: string,
+    dateKey: string,
+    latest: boolean
+  ) => {
+    const picked = copies
+      .filter(c => c[dateKey])
+      .reduce<any>((best, c) => {
+        if (!best) return c;
+        const diff =
+          new Date(c[dateKey]).getTime() - new Date(best[dateKey]).getTime();
+        return (latest ? diff > 0 : diff < 0) ? c : best;
+      }, null);
+
+    return picked ? { login: picked[byKey], date: picked[dateKey] } : null;
+  };
+
+  const renderAudit = (audit: { login?: string; date?: string } | null) =>
+    audit ? <UserDateCell login={audit.login} date={audit.date} /> : '-';
+
   const testRows = useMemo(() => {
     return (testsResponse?.data ?? []).map((test: any) => {
       const isLab = test.orderType === 'LABORATORY';
@@ -88,6 +112,9 @@ const ClaimEncounterCopyDiagnosticOrders = ({
         isLab,
         copies,
         copy: copies[0] ?? null,
+        originalAudit: pickAudit(copies, 'originalCreatedBy', 'originalCreatedDate', false),
+        copiedAudit: pickAudit(copies, 'createdBy', 'createdDate', false),
+        copyUpdatedAudit: pickAudit(copies, 'lastModifiedBy', 'lastModifiedDate', true),
         isCopied,
         testName: testNameMap.get(test.testId) || `Test #${test.testId}`
       };
@@ -126,6 +153,18 @@ const ClaimEncounterCopyDiagnosticOrders = ({
         row.submittedDate
           ? new Date(row.submittedDate).toLocaleString()
           : '-'
+    },
+    {
+      key: 'createdDate',
+      title: <Translate>ORDERED BY / AT</Translate>,
+      render: (row: any) => <UserDateCell login={row.createdBy} date={row.createdDate} />
+    },
+    {
+      key: 'lastModifiedDate',
+      title: <Translate>ORDER UPDATED BY / AT</Translate>,
+      render: (row: any) => (
+        <UserDateCell login={row.lastModifiedBy} date={row.lastModifiedDate} />
+      )
     }
   ];
 
@@ -172,6 +211,30 @@ const ClaimEncounterCopyDiagnosticOrders = ({
           color={row.isCopied ? '#28a745' : '#6c757d'}
         />
       )
+    },
+    {
+      key: 'originalCreatedDate',
+      title: <Translate>ORIGINAL CREATED BY / AT</Translate>,
+      render: (row: any) => renderAudit(row.originalAudit)
+    },
+    {
+      key: 'copyCreatedDate',
+      title: <Translate>COPIED BY / AT</Translate>,
+      render: (row: any) =>
+        // Every result of the test was entered in the claim, none came from the visit
+        row.copiedAudit && !row.originalAudit ? (
+          <>
+            <AddedInClaimBadge />
+            {renderAudit(row.copiedAudit)}
+          </>
+        ) : (
+          renderAudit(row.copiedAudit)
+        )
+    },
+    {
+      key: 'copyLastModifiedDate',
+      title: <Translate>COPY UPDATED BY / AT</Translate>,
+      render: (row: any) => renderAudit(row.copyUpdatedAudit)
     },
     {
       key: 'actions',

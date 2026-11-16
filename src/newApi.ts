@@ -1,6 +1,7 @@
 // src/newApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { notify } from '@/utils/uiReducerActions';
+import { expireSession } from '@/utils/sessionExpiry';
 import config from '../app-config';
 import { RootState } from './store'; 
 
@@ -20,8 +21,29 @@ const baseFetchBaseQuery = fetchBaseQuery({
   }
 });
 
+/**
+ * Logs the user out when the backend rejects their token (expired / invalid).
+ * Only reacts if the request carried the token that is still current, so a late
+ * 401 from an old session can't log out a fresh login, and never on the login call.
+ */
+const baseQueryWithSessionExpiry: typeof baseFetchBaseQuery = async (args, api, extraOptions) => {
+  const sentToken = localStorage.getItem('id_token') || localStorage.getItem('token');
+  const result = await baseFetchBaseQuery(args, api, extraOptions);
+
+  const url = typeof args === 'string' ? args : args?.url;
+  if (
+    result.error?.status === 401 &&
+    sentToken &&
+    sentToken === localStorage.getItem('id_token') &&
+    !String(url ?? '').includes('/authenticate')
+  ) {
+    api.dispatch(expireSession() as any);
+  }
+  return result;
+};
+
 // Export BaseQuery
-export const BaseQuery = baseFetchBaseQuery;
+export const BaseQuery = baseQueryWithSessionExpiry;
 
 /** Public endpoints (e.g. patient survey) — no Authorization header */
 export const PublicBaseQuery = fetchBaseQuery({

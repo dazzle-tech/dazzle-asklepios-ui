@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink, MdMedicalServices } from 'react-icons/md';
+import { Checkbox, Panel, Form } from 'rsuite';
+import { MdModeEdit, MdDelete, MdLink, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
@@ -28,6 +28,7 @@ import type { Procedure } from '@/types/model-types-new';
 import { newProcedure } from '@/types/model-types-constructor-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
 import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
@@ -35,6 +36,7 @@ import LinkProcedureItems from './LinkProcedureItems';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
+  const priceListView = usePriceListPrompt();
 
   // Facility context (used to default new procedure)
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -69,6 +71,9 @@ const ProcedureSetup: React.FC = () => {
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  const [showInactive, setShowInactive] = useState(false);
+  // Undefined means no status filter, so inactive records are included
+  const activeFilter = showInactive ? undefined : true;
 
   // Pagination state when list is filtered
   const [filterPagination, setFilterPagination] = useState({
@@ -92,6 +97,7 @@ const ProcedureSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
+    isActive: activeFilter,
   });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
@@ -178,7 +184,7 @@ const ProcedureSetup: React.FC = () => {
   ) => {
     if (value === null || value === undefined || value === '') return undefined;
 
-    const common = { page, size, sort: paginationParams.sort };
+    const common = { page, size, sort: paginationParams.sort, isActive: activeFilter };
 
     if (fieldName === 'categoryType') {
       return await fetchByCategory({
@@ -277,6 +283,9 @@ const ProcedureSetup: React.FC = () => {
 
         if (!isFiltered) {
           refetch();
+        } else if (!showInactive) {
+          // The row must leave the search results too
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page, filterPagination.size);
         } else {
           // Also update local selected procedure state
           setProcedure(prev =>
@@ -483,6 +492,23 @@ const ProcedureSetup: React.FC = () => {
               setPopupOpen(true);
             }}
           />
+          <MdLocalOffer
+            className="icons-style"
+            title="Price Lists"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() =>
+              priceListView.view({
+                itemType: 'PROCEDURE',
+                sourceId: row.id,
+                itemCode: row.code,
+                itemName: row.name,
+                unitPrice: row.price,
+                facilityId: row.facilityId,
+                currency: row.currency
+              })
+            }
+          />
           {row?.isActive ? (
             <MdDelete
               className="icons-style"
@@ -581,8 +607,20 @@ const ProcedureSetup: React.FC = () => {
       >
         Search
       </MyButton>
+
+      <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+        <Translate>Show inactive</Translate>
+      </Checkbox>
     </Form>
   );
+
+  // The list and any applied search must follow the checkbox
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    }
+  }, [showInactive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto reset when filter value is cleared
   useEffect(() => {
@@ -642,6 +680,7 @@ const ProcedureSetup: React.FC = () => {
         onSaveSuccess={handleSaveSuccess}
         actionLoading={isFetching}
       />
+      <PriceListPrompt prompt={priceListView} />
 
       <DeletionConfirmationModal
         open={openConfirmToggleActive}

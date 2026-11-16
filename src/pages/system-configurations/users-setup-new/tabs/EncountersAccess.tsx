@@ -22,6 +22,7 @@ type EncountersAccessRecord = {
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
   canCancelServiceBeforeInvoice: boolean;
+  canEditSubmittedPrescription: boolean;
 };
 
 const EncountersAccess = ({ user }: EncountersAccessProps) => {
@@ -34,6 +35,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
     canUnCompleteEncounter: false,
     canReturnClaimForResubmit: false,
     canCancelServiceBeforeInvoice: false,
+    canEditSubmittedPrescription: false,
   });
 
   const {
@@ -65,6 +67,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         canUnCompleteEncounter: false,
         canReturnClaimForResubmit: false,
         canCancelServiceBeforeInvoice: false,
+        canEditSubmittedPrescription: false,
       });
       return;
     }
@@ -80,6 +83,8 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
           encountersAccess.canReturnClaimForResubmit ?? false,
         canCancelServiceBeforeInvoice:
           encountersAccess.canCancelServiceBeforeInvoice ?? false,
+        canEditSubmittedPrescription:
+          encountersAccess.canEditSubmittedPrescription ?? false,
       });
     }
   }, [userId, encountersAccess]);
@@ -176,6 +181,16 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         fieldType="checkbox"
         fieldName="canCancelServiceBeforeInvoice"
         fieldLabel="Can cancel services before invoice"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      {/* Add, edit or cancel medications on a submitted prescription and resend it to the pharmacy. */}
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canEditSubmittedPrescription"
+        fieldLabel="Can Edit Submitted Prescription"
         record={record}
         setRecord={setRecord}
         disabled={isLoadingAccess}

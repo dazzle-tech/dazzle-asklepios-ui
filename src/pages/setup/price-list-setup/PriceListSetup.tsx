@@ -7,10 +7,11 @@ import React, {
 import { Form, Panel } from 'rsuite';
 
 import {
-  MdCheckCircle,
-  MdDelete,
-  MdList,
-  MdModeEdit
+    MdCheckCircle,
+    MdContentCopy,
+    MdDelete,
+    MdList,
+    MdModeEdit
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -20,6 +21,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyTab from '@/components/MyTab';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -38,6 +40,7 @@ import {
 
 import {
   conjureValueBasedOnIDFromList,
+  formatDateWithoutSeconds,
   formatEnumString
 } from '@/utils';
 
@@ -70,6 +73,7 @@ import {
 
 import AddEditPriceListSetup from './AddEditPriceListSetup';
 import PriceListSetupItems from './PriceListSetupItems';
+import PriceListItemDashboard from './PriceListItemDashboard';
 
 import './styles.less';
 
@@ -107,6 +111,13 @@ const PriceListSetup: React.FC = () => {
     deleteConfirmationOpen,
     setDeleteConfirmationOpen
   ] = useState(false);
+
+  const [
+    cloneSourceId,
+    setCloneSourceId
+  ] = useState<number | undefined>();
+
+  const [activeTab, setActiveTab] = useState('1');
 
   const [width, setWidth] = useState(
     typeof window !== 'undefined'
@@ -292,6 +303,8 @@ const PriceListSetup: React.FC = () => {
   };
 
   const handleNew = () => {
+    setCloneSourceId(undefined);
+
     setSelectedPriceList({
       ...newPriceListSetup,
 
@@ -319,8 +332,79 @@ const PriceListSetup: React.FC = () => {
   const handleEdit = (
     row: PriceListSetupModel
   ) => {
+    setCloneSourceId(undefined);
+
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
     setSelectedPriceList({
-      ...row
+      ...row,
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      isActive: row.status === 'ACTIVE'
+    });
+
+    setHeaderModalOpen(true);
+  };
+
+  const handleClone = (
+    row: PriceListSetupModel
+  ) => {
+    if (!row.id) {
+      return;
+    }
+
+    setCloneSourceId(row.id);
+
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
+    setSelectedPriceList({
+      ...row,
+      id: undefined,
+      name: row.name
+        ? `${row.name} (Copy)`
+        : undefined,
+      versionNumber:
+        (row.versionNumber ?? 1) + 1,
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      status: 'ACTIVE',
+      isActive: true
     });
 
     setHeaderModalOpen(true);
@@ -625,6 +709,13 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
+      key: 'shortName',
+      title: <Translate>Short Name</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.shortName || '-'
+    },
+
+    {
       key: 'type',
       title: <Translate>Type</Translate>,
       flexGrow: 2,
@@ -645,11 +736,15 @@ const PriceListSetup: React.FC = () => {
       render: (
         row: PriceListSetupModel
       ) => {
+        if (row.nphiesPayerName) {
+          return row.nphiesPayerName;
+        }
+
         if (row.payerName) {
           return row.payerName;
         }
 
-        if (!row.payerId) {
+        if (!row.payerId && !row.nphiesPayerId) {
           return '-';
         }
 
@@ -657,7 +752,7 @@ const PriceListSetup: React.FC = () => {
           payerListResponse?.data?.find(
             item =>
               Number(item.id) ===
-              Number(row.payerId)
+              Number(row.nphiesPayerId ?? row.payerId)
           );
 
         return (
@@ -699,10 +794,43 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
+      key: 'taxName',
+      title: <Translate>Tax</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.taxName || '-'
+    },
+
+    {
       key: 'currency',
       title: <Translate>Currency</Translate>,
       width: 100,
-      align: 'center' as const
+      align: 'center' as const,
+      render: (row: PriceListSetupModel) => (
+        <span>
+          {row.currency ? String(row.currency).toUpperCase() : '-'}
+        </span>
+      )
+    },
+
+    {
+      key: 'createdBy',
+      title: <Translate>Created By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.createdBy || '-'
+    },
+
+    {
+      key: 'createdDate',
+      title: <Translate>Created Date</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => formatDateWithoutSeconds(row.createdDate) || '-'
+    },
+
+    {
+      key: 'lastModifiedBy',
+      title: <Translate>Updated By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.lastModifiedBy || '-'
     },
 
     {
@@ -735,7 +863,7 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'actions',
       title: <Translate>Actions</Translate>,
-      width: 190,
+      width: 220,
       align: 'center' as const,
 
       render: (
@@ -747,8 +875,9 @@ const PriceListSetup: React.FC = () => {
               className="icons-style"
               title="Activate for billing"
               size={23}
-              fill="var(--primary-green, #28a745)"
-              onClick={() => {
+              fill="var(--primary-gray)"
+              onClick={event => {
+                event.stopPropagation();
                 void handleActivate(row);
               }}
             />
@@ -759,29 +888,43 @@ const PriceListSetup: React.FC = () => {
             title="Edit"
             size={23}
             fill="var(--primary-gray)"
-            onClick={() =>
-              handleEdit(row)
-            }
+            onClick={event => {
+              event.stopPropagation();
+              handleEdit(row);
+            }}
+          />
+
+          <MdContentCopy
+            className="icons-style"
+            title="Clone"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleClone(row);
+            }}
           />
 
           <MdList
             className="icons-style"
             title="Price List Items"
             size={24}
-            fill="var(--deep-blue)"
-            onClick={() =>
-              handleOpenItems(row)
-            }
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleOpenItems(row);
+            }}
           />
 
           <MdDelete
             className="icons-style"
             title="Delete"
             size={23}
-            fill="var(--primary-pink)"
-            onClick={() =>
-              handleDeleteRequest(row)
-            }
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleDeleteRequest(row);
+            }}
           />
         </div>
       )
@@ -806,46 +949,73 @@ const PriceListSetup: React.FC = () => {
 
   return (
     <Panel dir={dir}>
-      <MyTable
-        data={isFiltered ? filteredList : tableData}
-        totalCount={isFiltered ? filteredTotal : totalCount}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={selectedRowClass}
-        onRowClick={row =>
-          setSelectedPriceList(row)
-        }
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={
-          handleRowsPerPageChange
-        }
-        tableButtons={
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => (
-                <AddOutlineIcon />
-              )}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="125px"
-              disabled={!facilityId}
-            >
-              Add New
-            </MyButton>
-          </div>
-        }
+      <MyTab
+        className="price-list-setup-tabs"
+        activeTab={activeTab}
+        setActiveTab={key => setActiveTab(String(key))}
+        data={[
+          {
+            title: 'Price Lists',
+            content: (
+              <MyTable
+                data={isFiltered ? filteredList : tableData}
+                totalCount={isFiltered ? filteredTotal : totalCount}
+                loading={isFetching}
+                columns={tableColumns}
+                rowClassName={selectedRowClass}
+                onRowClick={row => {
+                  if (headerModalOpen || itemsModalOpen) {
+                    return;
+                  }
+
+                  setSelectedPriceList(row);
+                }}
+                filters={filters()}
+                page={isFiltered ? filterPagination.page : paginationParams.page}
+                rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={
+                  handleRowsPerPageChange
+                }
+                tableButtons={
+                  <div className="container-of-add-new-button">
+                    <MyButton
+                      prefixIcon={() => (
+                        <AddOutlineIcon />
+                      )}
+                      color="var(--deep-blue)"
+                      onClick={handleNew}
+                      width="125px"
+                      disabled={!facilityId}
+                    >
+                      Add New
+                    </MyButton>
+                  </div>
+                }
+              />
+            )
+          },
+          {
+            title: 'Item Dashboard',
+            content: <PriceListItemDashboard active={activeTab === '2'} />
+          }
+        ]}
       />
 
       <AddEditPriceListSetup
         open={headerModalOpen}
-        setOpen={setHeaderModalOpen}
+        setOpen={value => {
+          setHeaderModalOpen(value);
+
+          if (!value) {
+            setCloneSourceId(undefined);
+          }
+        }}
         width={width}
         priceList={selectedPriceList}
         setPriceList={setSelectedPriceList}
         onSaveSuccess={handleSaveSuccess}
+        cloneSourceId={cloneSourceId}
       />
 
       <PriceListSetupItems

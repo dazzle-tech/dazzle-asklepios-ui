@@ -28,6 +28,7 @@ import Logo from '../../../images/Logo_BLUE_New1.svg';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import { useBranding } from '@/hooks/useBranding';
+import { markActivity } from '@/hooks/useIdleTimeout';
 
 
 const mapDefaultDepartmentToSelectedDepartment = (
@@ -116,6 +117,8 @@ const background = branding.loginBackground || Background;
         rememberMe: true
       }).unwrap();
 
+      // Start the idle timer fresh so a stale value from an old session can't log us out.
+      markActivity();
       dispatch(setToken(resp.id_token));
       localStorage.setItem('id_token', resp.id_token);
 

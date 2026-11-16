@@ -270,7 +270,8 @@ const PointOfSaleWebhookLogsPage = () => {
           appearance="primary"
           disabled={
             rowData.transactionStatus !== 'APPROVED' ||
-            !rowData.transactionId
+            !rowData.transactionId ||
+            !!rowData.alreadyPaid
           }
           onClick={() => {
             setCompletingWebhook(rowData);

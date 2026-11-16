@@ -104,6 +104,11 @@ const DetailsModal = ({
   const [capturedSourceId, setCapturedSourceId] = useState<number>(0);
 
   const instructionTypeOptions = useEnumOptions('PrescriptionInstructionsType');
+
+  // A medication already on a submitted prescription keeps its identity: to change it, cancel it and add a new one.
+  const isIdentityLocked =
+    prescriptionMedication?.id != null &&
+    String(prescriptionMedication?.status ?? '').toUpperCase() === 'SUBMITTED';
   const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
   const { data: administrationInstructionsLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
@@ -1073,6 +1078,7 @@ const createPayload: any = {
                                 placeholder={'Active Ingredient Name'}
                                 value={activeIngredientKeyword}
                                 onChange={handleSearchActiveIngredient}
+                                disabled={isIdentityLocked}
                                 onFocus={() =>
                                   setShowActiveIngredientDropdown(!!activeIngredientKeyword)
                                 }
@@ -1114,6 +1120,7 @@ const createPayload: any = {
                                   placeholder="Other Medication Name"
                                   value={otherMedicationName}
                                   onChange={value => setOtherMedicationName(value)}
+                                  disabled={isIdentityLocked}
                                 />
                               </div>
                             )}
@@ -1128,6 +1135,7 @@ const createPayload: any = {
                                   placeholder={'Medication Name'}
                                   value={searchKeyword}
                                   onChange={handleSearch}
+                                  disabled={isIdentityLocked}
                                   onFocus={() => {
                                     if (!selectedActiveIngredient) {
                                       dispatch(

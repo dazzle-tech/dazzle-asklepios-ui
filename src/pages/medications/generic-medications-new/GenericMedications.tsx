@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Panel, Form, Whisper, Tooltip } from "rsuite";
+import { Checkbox, Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { MdCheckCircle } from "react-icons/md";
+import { MdCheckCircle, MdLocalOffer } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -27,6 +27,7 @@ import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import AddEditBrandMedication from "./AddEditBrandMedication";
+import PriceListPrompt, { usePriceListPrompt } from "@/components/PriceListPrompt";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import Translate from "@/components/Translate";
 import { MdModeEdit, MdDelete } from "react-icons/md";
@@ -241,6 +242,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
     const [openSubstitute, setOpenSubstitute] = useState(false);
     const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+    const priceListPrompt = usePriceListPrompt();
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
 
@@ -248,6 +250,9 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [isFiltered, setIsFiltered] = useState(false);
     const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
     const [filteredTotal, setFilteredTotal] = useState(0);
+    const [showInactive, setShowInactive] = useState(false);
+    // Undefined means no status filter, so inactive records are included
+    const activeFilter = showInactive ? undefined : true;
 
     const isSelected = (rowData: BrandMedication) =>
       rowData?.id === brandMedication?.id ? "selected-row" : "";
@@ -263,7 +268,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
     const { data: allMedications, isFetching, refetch } =
-      useGetAllBrandMedicationsQuery(paginationParams);
+      useGetAllBrandMedicationsQuery({ ...paginationParams, isActive: activeFilter });
 
     const totalCount = allMedications?.totalCount ?? 0;
 
@@ -288,6 +293,18 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
     const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
 
+    // The list and any applied search must follow the checkbox
+    useEffect(() => {
+      setPaginationParams((prev) => ({ ...prev, page: 0 }));
+      if (!isFiltered) return;
+      if (!showInactive && recordOfFilter.filter === "isActive") {
+        setRecordOfFilter({ filter: "", value: "" });
+        handleFilterChange("", "");
+        return;
+      }
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
+    }, [showInactive]);
+
     useEffect(() => {
       dispatch(setPageCode("Brand_Medications"));
       dispatch(setDivContent("Brand Medications List"));
@@ -300,15 +317,26 @@ const prettifyInlineBackendMessage = (message: string): string => {
 
     const handleSave = async () => {
       try {
+        let saved: any;
         if (brandMedication.id) {
           const { hasActiveIngredient, ...updatePayload } = brandMedication;
-          await updateBrandMedication(updatePayload).unwrap();
+          saved = await updateBrandMedication(updatePayload).unwrap();
           dispatch(notify({ msg: "Updated successfully", sev: "success" }));
         } else {
           const { hasActiveIngredient, ...payload } = brandMedication;
-          await addBrandMedication(payload).unwrap();
+          saved = await addBrandMedication(payload).unwrap();
           dispatch(notify({ msg: "Added successfully", sev: "success" }));
         }
+
+        priceListPrompt.prompt({
+          itemType: "MEDICATION",
+          sourceId: saved?.id ?? brandMedication.id,
+          itemCode: saved?.code ?? brandMedication.code,
+          itemName: saved?.name ?? brandMedication.name,
+          unitPrice: saved?.price ?? brandMedication.price,
+          facilityId: saved?.facilityId ?? brandMedication.facilityId,
+          currency: saved?.currency ?? brandMedication.currency,
+        });
 
         setOpenAddEditPopup(false);
         refetch();
@@ -323,6 +351,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
         dispatch(notify({ msg: "Status toggled", sev: "success" }));
         setOpenConfirmModal(false);
         refetch();
+        if (isFiltered) handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
       } catch (error: any) {
         handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
         setOpenConfirmModal(false);
@@ -360,7 +389,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
       }
 
       try {
-        const params = { page: 0, size: 15, sort: "id,asc" };
+        const params = { page: 0, size: 15, sort: "id,asc", isActive: activeFilter };
         let response;
 
         switch (field) {
@@ -393,8 +422,8 @@ const prettifyInlineBackendMessage = (message: string): string => {
             break;
           case "isActive":
             response = await getByIsActive({
-              isActive: normalizeBool(value),
               ...params,
+              isActive: normalizeBool(value),
             }).unwrap();
             break;
           default:
@@ -512,7 +541,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
             { label: "ROA", value: "roa" },
             { label: "Expires After Opening", value: "expiresAfterOpening" },
             { label: "Single Patient Use", value: "useSinglePatient" },
-            { label: "Active", value: "isActive" },
+            ...(showInactive ? [{ label: "Active", value: "isActive" }] : []),
           ]}
           selectDataLabel="label"
           selectDataValue="value"
@@ -533,6 +562,10 @@ const prettifyInlineBackendMessage = (message: string): string => {
         >
           Search
         </MyButton>
+
+        <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
+          <Translate>Show inactive</Translate>
+        </Checkbox>
       </Form>
     );
 
@@ -546,6 +579,22 @@ const prettifyInlineBackendMessage = (message: string): string => {
             setBrandMedication(row);
             setOpenAddEditPopup(true);
           }}
+        />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={22}
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: "MEDICATION",
+              sourceId: row.id,
+              itemCode: row.code,
+              itemName: row.name,
+              unitPrice: row.price,
+              facilityId: row.facilityId,
+              currency: row.currency
+            })
+          }
         />
 
         {row.isActive ? (
@@ -712,6 +761,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
           setBrandMedication={setBrandMedication}
           handleSave={handleSave}
         />
+        <PriceListPrompt prompt={priceListPrompt} />
 
         <DeletionConfirmationModal
           open={openConfirmModal}

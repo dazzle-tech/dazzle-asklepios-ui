@@ -4,14 +4,17 @@ import MyButton from '../MyButton/MyButton';
 import Translate from '../Translate';
 import { Form } from 'rsuite';
 import { useSelector } from 'react-redux';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import FileUploadIcon from '@rsuite/icons/FileUpload';
 import './styles.less';
 
 type CodesExcelCsvImportModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
   title?: string;
-  excelTemplateUrl: string;
+  excelTemplateUrl?: string;
   excelTemplateFileName?: string;
+  onDownloadTemplate?: () => Promise<void> | void;
   onImport: (file: File) => Promise<void> | void;
 };
 
@@ -21,6 +24,7 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
   title = 'Codes Import',
   excelTemplateUrl,
   excelTemplateFileName = 'Codes_Template.xlsx',
+  onDownloadTemplate,
   onImport
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -29,7 +33,16 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
 
   const mode = useSelector((state: any) => state.ui.mode);
 
-  const handleDownloadExcelTemplate = () => {
+  const handleDownloadExcelTemplate = async () => {
+    if (onDownloadTemplate) {
+      await onDownloadTemplate();
+      return;
+    }
+
+    if (!excelTemplateUrl) {
+      return;
+    }
+
     const link = document.createElement('a');
     link.href = `${excelTemplateUrl}?v=${Date.now()}`;
     link.download = excelTemplateFileName;
@@ -59,55 +72,46 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
 
   const content = (
     <div className={`codes-import-wrapper ${mode === 'dark' ? 'dark' : 'light'}`}>
-      {/* Header */}
-      <div className="codes-import-header">
-        <div className="codes-import-header-icon">📄</div>
-        <div>
-          <h3 className="codes-import-title">
-            <Translate>{title}</Translate>
-          </h3>
-          <p className="codes-import-subtitle">
-            <Translate>Import or update codes using Excel / CSV template.</Translate>
-          </p>
-        </div>
-      </div>
+      <p className="codes-import-subtitle">
+        <Translate>
+          Download the template, fill the rows, then upload the Excel or CSV file.
+        </Translate>
+      </p>
 
-      {/* How it works */}
       <Form className="codes-import-card codes-import-instructions">
-        <Form className="codes-import-card-header">
-          <span className="codes-import-card-icon">i</span>
+        <div className="codes-import-card-header">
           <span className="codes-import-card-title">
             <Translate>How it works</Translate>
           </span>
-        </Form>
+        </div>
         <ol className="codes-import-steps">
           <li>
-            <Translate>Download the Excel template or use the client CPT file format.</Translate>
+            <Translate>Download the Excel template.</Translate>
           </li>
           <li>
-            <Translate>Fill in codes data according to the template columns.</Translate>
+            <Translate>Fill in the data according to the template columns.</Translate>
           </li>
           <li>
-            <Translate>Upload the Excel (.xlsx) file directly, or save as</Translate>{' '}
-            <span className="codes-import-badge">CSV (Comma delimited) (*.csv)</span>{' '}
-            <Translate>and upload.</Translate>
+            <Translate>Upload the Excel (.xlsx) file, or save as CSV and upload.</Translate>
           </li>
           <li>
-            <Translate>Click Import to load codes into the system.</Translate>
+            <Translate>Click Import to load the data into the system.</Translate>
           </li>
         </ol>
       </Form>
 
-      {/* Template download button */}
       <div className="codes-import-card">
         <div className="codes-import-buttons">
-          <MyButton onClick={handleDownloadExcelTemplate}>
-            <Translate>Download Excel Template</Translate>
+          <MyButton
+            prefixIcon={() => <FileDownloadIcon />}
+            color="var(--deep-blue)"
+            onClick={handleDownloadExcelTemplate}
+          >
+            Download Template
           </MyButton>
         </div>
       </div>
 
-      {/* Upload file */}
       <div className="codes-import-card codes-import-upload">
         <div className="codes-import-upload-header">
           <span className="codes-import-upload-label">
@@ -132,18 +136,24 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
           <div className="codes-import-file-display">
             {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
           </div>
-          <MyButton appearance="ghost" onClick={handleClickUpload}>
-            <Translate>Choose File</Translate>
+          <MyButton
+            color="var(--deep-blue)"
+            onClick={handleClickUpload}
+            width="125px"
+          >
+            Choose File
           </MyButton>
         </div>
 
         <MyButton
+          prefixIcon={() => <FileUploadIcon />}
+          color="var(--deep-blue)"
           onClick={handleImportClick}
           disabled={!selectedFile || isImporting}
           loading={isImporting}
-          width="100%"
+          width="125px"
         >
-          <Translate>Import</Translate>
+          Import
         </MyButton>
       </div>
     </div>

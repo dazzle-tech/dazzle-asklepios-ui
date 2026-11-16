@@ -34,6 +34,7 @@ type PatientDiagnosisProps = {
   title?: React.ReactNode;
   width?: string;
   onDiagnosisSaved?: () => void;
+  hidePreviousVisits?: boolean;
 };
 
 const extractRows = (resp: any): any[] => {
@@ -96,7 +97,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   disabled = false,
   title = 'Patient Diagnosis',
   width = '100%',
-  onDiagnosisSaved
+  onDiagnosisSaved,
+  hidePreviousVisits = false
 }) => {
   const dispatch = useAppDispatch();
 
@@ -188,12 +190,17 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   // Diagnoses added in this visit (all patient diagnoses when there is no encounter)
   const currentVisit = useDiagnosesPage(patientIdNumber, encounterIdNumber, true);
   // Diagnoses added in the patient's previous visits
-  const previousVisits = useDiagnosesPage(patientIdNumber, encounterIdNumber, false, !encounterIdNumber);
+  const previousVisits = useDiagnosesPage(
+    patientIdNumber,
+    encounterIdNumber,
+    false,
+    hidePreviousVisits || !encounterIdNumber
+  );
 
   const refetchTables = async () => {
     await Promise.all([
       currentVisit.refetch(),
-      encounterIdNumber ? previousVisits.refetch() : Promise.resolve()
+      encounterIdNumber && !hidePreviousVisits ? previousVisits.refetch() : Promise.resolve()
     ]);
   };
 
@@ -560,7 +567,7 @@ useEffect(() => {
             onRowsPerPageChange={currentVisit.handleRowsPerPageChange}
           />
 
-          {encounterIdNumber && (
+          {encounterIdNumber && !hidePreviousVisits && (
             <div className="pd-section">
               <div className="pd-card-title">
                 <Translate>Previous Visits Diagnoses</Translate>

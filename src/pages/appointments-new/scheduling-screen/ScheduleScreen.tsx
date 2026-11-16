@@ -42,6 +42,9 @@ import ScheduleFiltersPanel from './components/ScheduleFiltersPanel';
 import ScheduleSummaryBar from './components/ScheduleSummaryBar';
 import ScheduleContentGrid from './components/ScheduleContentGrid';
 import RescheduleAppointmentModal from './components/RescheduleAppointmentModal';
+import { useResolvePatientIdsFromCriteria } from '@/components/SearchPatientCriteria/resolvePatientIdsFromCriteria';
+
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
 
 const getAppointmentPatientId = (appointment: any): number | null => {
   const raw =
@@ -170,7 +173,9 @@ const appointmentStatusToLegendBucket = (rawStatus: string): string => {
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [schedulePatientFilter, setSchedulePatientFilter] = useState<any | null>(null);
+  const [patientSearch, setPatientSearch] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
+  const [resolvedPatientIds, setResolvedPatientIds] = useState<number[] | null>(null);
+  const { resolvePatientIds } = useResolvePatientIdsFromCriteria();
   const [bookPatientModalOpen, setBookPatientModalOpen] = useState(false);
   const [bookPatientReadOnly, setBookPatientReadOnly] = useState(false);
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
@@ -238,11 +243,31 @@ const ScheduleScreen = () => {
     reason: '',
   });
 
+  // null = no filter; single id → API patientId; empty → sentinel -1; multi → omit + client filter
   const schedulePatientIdForSearch = useMemo(() => {
-    if (!schedulePatientFilter) return null;
-    const n = Number(schedulePatientFilter.id ?? schedulePatientFilter.key ?? 0);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }, [schedulePatientFilter]);
+    if (resolvedPatientIds == null) return null;
+    if (resolvedPatientIds.length === 0) return -1;
+    if (resolvedPatientIds.length === 1) return resolvedPatientIds[0];
+    return null;
+  }, [resolvedPatientIds]);
+
+  const schedulePatientClientFilterIds = useMemo(() => {
+    if (resolvedPatientIds != null && resolvedPatientIds.length > 1) {
+      return new Set(resolvedPatientIds);
+    }
+    return null;
+  }, [resolvedPatientIds]);
+
+  const handlePatientSearchClick = useCallback(async () => {
+    const raw = patientSearch?.patientName;
+    const hasValue = raw instanceof Date || String(raw ?? '').trim().length > 0;
+    if (!hasValue) {
+      setResolvedPatientIds(null);
+      return;
+    }
+    const ids = await resolvePatientIds(patientSearch);
+    setResolvedPatientIds(ids);
+  }, [patientSearch, resolvePatientIds]);
 
   const appointmentSearchFilter = useMemo<AppointmentSearchFilterMultiDepartmentDTO>(() => {
     const rk = selectedResources?.resourceKey;
@@ -480,7 +505,13 @@ const ScheduleScreen = () => {
   }, [patientsByIdsData]);
 
   useEffect(() => {
-    const sourceAppointments = searchedAppointments ?? [];
+    let sourceAppointments = searchedAppointments ?? [];
+    if (schedulePatientClientFilterIds) {
+      sourceAppointments = sourceAppointments.filter((a: any) => {
+        const id = getAppointmentPatientId(a);
+        return id != null && schedulePatientClientFilterIds.has(id);
+      });
+    }
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
       const today = new Date();
 
@@ -572,7 +603,8 @@ const ScheduleScreen = () => {
     resourcesWithAvailabilityResponse,
     currentView,
     patientDisplayByPatientService,
-    resourceNameById
+    resourceNameById,
+    schedulePatientClientFilterIds
   ]);
 
   const departmentOptions = useMemo(() => bookableDepartmentOptions, [bookableDepartmentOptions]);
@@ -1830,8 +1862,9 @@ const ScheduleScreen = () => {
           selectedResources={selectedResources}
           setSelectedResources={setSelectedResources}
           mode={mode}
-          schedulePatientFilter={schedulePatientFilter}
-          setSchedulePatientFilter={setSchedulePatientFilter}
+          patientSearch={patientSearch}
+          setPatientSearch={setPatientSearch}
+          onPatientSearchClick={handlePatientSearchClick}
           AppointmentStatusEnum={AppointmentStatusEnum as any[]}
           selectedAppointmentStatus={selectedAppointmentStatus}
           setSelectedAppointmentStatus={setSelectedAppointmentStatus}
