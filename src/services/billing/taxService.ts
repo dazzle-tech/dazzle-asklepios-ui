@@ -170,6 +170,25 @@ const mapPagedResponse = <T,>(
   };
 };
 
+// Table column filters: /api/setup/tax/{path}/{value}?facilityId=...
+export type TaxColumnFilterParams =
+  TaxPagedParams & {
+    value: string | number | boolean;
+  };
+
+const taxColumnFilterQuery =
+  (path: string) =>
+  ({ facilityId, value, page, size, sort = 'id,desc' }: TaxColumnFilterParams) => ({
+    url: `/api/setup/tax/${path}/${encodeURIComponent(String(value))}`,
+    method: 'GET',
+    params: { facilityId, page, size, sort }
+  });
+
+const toTaxPage = (
+  response: Tax[] | SpringPageResponse<Tax>,
+  meta: any
+) => mapPagedResponse<Tax>(response, meta);
+
 export const taxService =
   createApi({
     reducerPath:
@@ -451,6 +470,55 @@ export const taxService =
             providesTags: [
               'Tax'
             ]
+          }),
+
+        getTaxesByValue:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-value'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByApplicableOn:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-applicable-on'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByCitizenCategory:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-citizen-category'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByPatientCopayment:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-patient-copayment'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByClaimShare:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-claim-share'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByDefault:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-default'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByActive:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-active'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
           }),
 
         getTaxesByCalculationType:
@@ -735,6 +803,14 @@ export const {
 
   useGetTaxesByCalculationTypeQuery,
   useLazyGetTaxesByCalculationTypeQuery,
+
+  useLazyGetTaxesByValueQuery,
+  useLazyGetTaxesByApplicableOnQuery,
+  useLazyGetTaxesByCitizenCategoryQuery,
+  useLazyGetTaxesByPatientCopaymentQuery,
+  useLazyGetTaxesByClaimShareQuery,
+  useLazyGetTaxesByDefaultQuery,
+  useLazyGetTaxesByActiveQuery,
 
   useGetEffectiveTaxesQuery,
   useLazyGetEffectiveTaxesQuery,
