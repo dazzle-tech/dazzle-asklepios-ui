@@ -27,12 +27,15 @@ import { Form } from 'rsuite';
 type Props = {
     encounter: any;
     disabled?: boolean;
+    /** Shows the edit action on each note. */
+    allowEdit?: boolean;
     claimEncounterCopyId: number;
 };
 
 const ClaimEncounterProgressNotes: React.FC<Props> = ({
     encounter,
     disabled = false,
+    allowEdit = true,
     claimEncounterCopyId
 }) => {
     const dispatch = useAppDispatch();
@@ -199,7 +202,7 @@ const ClaimEncounterProgressNotes: React.FC<Props> = ({
                     />
                 )
             },
-            {
+            ...(allowEdit ? [{
                 key: 'actions',
                 title: 'ACTIONS',
                 width: 120,
@@ -225,9 +228,9 @@ const ClaimEncounterProgressNotes: React.FC<Props> = ({
                         />
                     </div>
                 )
-            }
+            }] : [])
         ],
-        [disabled]
+        [disabled, allowEdit]
     );
 
     const isSelected = (
