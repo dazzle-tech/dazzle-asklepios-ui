@@ -37,6 +37,7 @@ import {
 } from '@/utils';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import {
   useChangeFinancialDocumentNumberingActivationStatusMutation,
@@ -61,11 +62,53 @@ import {
 import './styles.less';
 
 type FilterState = {
-  documentType: string;
+  filter: string;
+  value: any;
 };
 
 const initialFilterState: FilterState = {
-  documentType: ''
+  filter: '',
+  value: ''
+};
+
+const filterFields = [
+  { label: 'Document Type', value: 'documentType' },
+  { label: 'Prefix', value: 'prefix' },
+  { label: 'Reset Frequency', value: 'resetFrequency' },
+  { label: 'Starting Number', value: 'startingNumber' },
+  { label: 'Status', value: 'status' },
+  { label: 'Active', value: 'active' }
+];
+
+const isEmptyFilterValue = (value: unknown) =>
+  value === null ||
+  value === undefined ||
+  (typeof value === 'string' && value.trim() === '');
+
+// The page loads every configuration of the facility at once, so filtering happens here
+const matchesFilter = (
+  row: FinancialDocumentNumbering,
+  { filter, value }: FilterState
+) => {
+  if (!filter || isEmptyFilterValue(value)) {
+    return true;
+  }
+
+  switch (filter) {
+    case 'prefix':
+      return (row.prefix ?? '')
+        .toLowerCase()
+        .includes(String(value).trim().toLowerCase());
+    case 'startingNumber':
+      return Number(row.startingNumber) === Number(value);
+    case 'status':
+      return (row.status ?? 'DRAFT') === value;
+    case 'active':
+      return Boolean(row.active) === (value === true || value === 'true');
+    default:
+      return String(row[filter as keyof FinancialDocumentNumbering] ?? '').toUpperCase() ===
+        String(value).toUpperCase();
+  }
 };
 
 const FinancialDocumentNumberingSetup: React.FC = () => {
@@ -93,6 +136,8 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     useState<FilterState>(initialFilterState);
 
   const documentTypeOptions = useFinancialDocumentTypeOptions();
+  const resetFrequencyOptions = useEnumOptions('BillingResetFrequency') ?? [];
+  const statusOptions = useEnumOptions('BillingConfigurationStatus') ?? [];
 
   const { data: facilityListResponse } =
     useGetAllFacilitiesQuery({});
@@ -113,16 +158,13 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     { isLoading: isChangingActivation }
   ] = useChangeFinancialDocumentNumberingActivationStatusMutation();
 
-  const tableData = useMemo(() => {
-    if (!appliedFilters.documentType) {
-      return configurations;
-    }
-
-    return configurations.filter(
-      item =>
-        item.documentType === appliedFilters.documentType
-    );
-  }, [appliedFilters.documentType, configurations]);
+  const tableData = useMemo(
+    () =>
+      configurations.filter(item =>
+        matchesFilter(item, appliedFilters)
+      ),
+    [appliedFilters, configurations]
+  );
 
   const usedDocumentTypes = useMemo(
     () =>
@@ -282,11 +324,6 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     setAppliedFilters({ ...filters });
   };
 
-  const handleResetFilter = () => {
-    setFilters(initialFilterState);
-    setAppliedFilters(initialFilterState);
-  };
-
   const handleSaveSuccess = async () => {
     setModalOpen(false);
     setSelectedConfiguration({
@@ -295,22 +332,86 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     await refetch();
   };
 
-  const filtersContent = () => (
-    <Form fluid className="form-of-filters-set-up">
+  const renderFilterValueInput = () => {
+    const selectInput = (
+      options: { label: string; value: any }[]
+    ) => (
       <MyInput
-        width="240px"
-        fieldName="documentType"
+        width={220}
+        fieldName="value"
+        fieldLabel=""
         fieldType="select"
-        placeholder="Document Type"
-        selectData={documentTypeOptions}
+        selectData={options}
         selectDataLabel="label"
         selectDataValue="value"
         record={filters}
         setRecord={setFilters}
-        showLabel={false}
-        searchable
-        isEnum
+        searchable={false}
       />
+    );
+
+    switch (filters.filter) {
+      case 'documentType':
+        return selectInput(documentTypeOptions);
+      case 'resetFrequency':
+        return selectInput(resetFrequencyOptions);
+      case 'status':
+        return selectInput(statusOptions);
+      case 'active':
+        return selectInput([
+          { label: 'Active', value: true },
+          { label: 'Inactive', value: false }
+        ]);
+      case 'startingNumber':
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="number"
+            record={filters}
+            setRecord={setFilters}
+            showLabel={false}
+            placeholder="Enter Number"
+            width={220}
+          />
+        );
+      default:
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="text"
+            record={filters}
+            setRecord={setFilters}
+            showLabel={false}
+            placeholder="Enter Value"
+            width={220}
+            enterClick={handleSearch}
+          />
+        );
+    }
+  };
+
+  const filtersContent = () => (
+    <Form fluid className="form-of-filters-set-up">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={filters}
+        setRecord={(updated: FilterState) =>
+          setFilters({
+            filter: updated.filter,
+            value: ''
+          })
+        }
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+        width="170px"
+      />
+
+      {renderFilterValueInput()}
 
       <MyButton
         color="var(--deep-blue)"
@@ -318,14 +419,6 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
         width="80px"
       >
         Search
-      </MyButton>
-
-      <MyButton
-        color="var(--primary-gray)"
-        onClick={handleResetFilter}
-        width="80px"
-      >
-        Clear
       </MyButton>
     </Form>
   );
