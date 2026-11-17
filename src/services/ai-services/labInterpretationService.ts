@@ -40,11 +40,29 @@ export interface KeyFindingDTO {
   unit?: string;
   flag?: string;
   finding?: string;
+  reference_range?: string;
+  timestamp?: string;
+}
+
+export interface PatternDTO {
+  label: string;
+  reason: string;
+}
+
+export interface TrendDTO {
+  lab_name: string;
+  direction: string;
+  summary?: string;
+  from_value?: string;
+  to_value?: string;
+  unit?: string;
 }
 
 export interface InterpretationDTO {
   severity?: string;
   key_findings: KeyFindingDTO[];
+  patterns?: PatternDTO[];
+  trends?: TrendDTO[];
   follow_up_considerations: string[];
 }
 
