@@ -163,6 +163,37 @@
     padding: 18px;
   }
 
+  .tst-tooth-art {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .tst-tooth-outer {
+    width: 56px;
+
+    .adult-outer-img,
+    svg {
+      width: 100%;
+      height: auto;
+      max-height: 96px;
+      object-fit: contain;
+    }
+  }
+
+  .tst-tooth-occlusal {
+    width: 44px;
+
+    .adult-occlusal-img,
+    svg {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+  }
+
   .tst-tooth-preview {
     display: flex;
     align-items: center;
@@ -234,31 +265,5 @@
     .tst-form {
       padding-inline: 14px;
     }
-  }
-}
-
-// Picker menus can be rendered outside the modal.
-.tst-action-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  > span:first-child {
-    min-width: 0;
-    white-space: normal;
-  }
-}
-
-.tst-action-type {
-  flex-shrink: 0;
-  font-size: 10px;
-
-  &--treatment {
-    color: #309064;
-  }
-
-  &--condition {
-    color: #bd7a46;
   }
 }

@@ -1,0 +1,25 @@
+// Picker menus render outside the modal/form, so these stay top-level.
+.dental-action-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  > span:first-child {
+    min-width: 0;
+    white-space: normal;
+  }
+}
+
+.dental-action-type {
+  flex-shrink: 0;
+  font-size: 10px;
+
+  &--treatment {
+    color: #309064;
+  }
+
+  &--condition {
+    color: #bd7a46;
+  }
+}

@@ -630,6 +630,26 @@ export const newDentalAction: modelTypes.DentalAction = {
   isActive: true
 };
 
+export const newDentalChartAgeRule: modelTypes.DentalChartAgeRule = {
+  id: null,
+  name: '',
+  ageFrom: null,
+  ageTo: null,
+  chartType: null,
+  numberingSystem: 'UNIVERSAL',
+  numberingMethodId: null,
+  toothNumbers: [],
+  isActive: true
+};
+
+export const newDentalToothNumberingMethod: modelTypes.DentalToothNumberingMethod = {
+  id: null,
+  name: '',
+  description: '',
+  toothLabels: {},
+  isActive: false
+};
+
 // ------------------- Test Normal Range -------------------
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,

@@ -30,38 +30,38 @@ const TreatmentPlanHeaderModal = ({
     isDisabledActionBtn={saving}
     actionButtonFunction={onSave}
     content={
-    <Form fluid>
-      <MyInput
-        width="100%"
-        fieldName="title"
-        fieldLabel="Title"
-        fieldType="text"
-        record={form}
-        setRecord={setForm}
-        required
-      />
-      <MyInput
-        width="100%"
-        fieldName="practitionerId"
-        fieldLabel="Responsible Practitioner"
-        fieldType="select"
-        selectData={practitioners}
-        selectDataLabel="label"
-        selectDataValue="id"
-        record={form}
-        setRecord={setForm}
-        searchable
-      />
-      <MyInput
-        width="100%"
-        height={90}
-        fieldName="notes"
-        fieldLabel="Notes"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-      />
-    </Form>
+      <Form fluid>
+        <MyInput
+          width="100%"
+          fieldName="title"
+          fieldLabel="Title"
+          fieldType="text"
+          record={form}
+          setRecord={setForm}
+          required
+        />
+        <MyInput
+          width="100%"
+          fieldName="practitionerId"
+          fieldLabel="Responsible Practitioner"
+          fieldType="select"
+          selectData={practitioners}
+          selectDataLabel="label"
+          selectDataValue="id"
+          record={form}
+          setRecord={setForm}
+          searchable
+        />
+        <MyInput
+          width="100%"
+          height={90}
+          fieldName="notes"
+          fieldLabel="Notes"
+          fieldType="textarea"
+          record={form}
+          setRecord={setForm}
+        />
+      </Form>
     }
   />
 );

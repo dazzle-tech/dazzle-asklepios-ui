@@ -1,7 +1,8 @@
 import React from 'react';
 import OcclusalBadge from './OcclusalBadge';
 import { getToothShapeType } from './toothShape';
-import { getAdultOcclusalSrc } from './colorAssets';
+import { getAdultOcclusalSrc, getPrimaryOcclusalSrc } from './colorAssets';
+import { isPrimaryTooth } from '@/utils/toothNumber';
 
 interface AdultOcclusalProps {
   toothNumber: string;
@@ -10,11 +11,13 @@ interface AdultOcclusalProps {
 }
 
 /**
- * Permanent-tooth occlusal cell: Color artwork base + OcclusalBadge overlay
+ * Permanent/primary occlusal cell: Color artwork base + OcclusalBadge overlay
  * for surface condition/treatment (Color SVGs have no semantic surface zones).
  */
 const AdultOcclusal: React.FC<AdultOcclusalProps> = ({ toothNumber, surfaceStates, selected }) => {
-  const src = getAdultOcclusalSrc(toothNumber);
+  const src = isPrimaryTooth(toothNumber)
+    ? getPrimaryOcclusalSrc(toothNumber)
+    : getAdultOcclusalSrc(toothNumber);
   const shapeType = getToothShapeType(toothNumber);
 
   if (!src) {

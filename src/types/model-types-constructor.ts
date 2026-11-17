@@ -614,6 +614,8 @@ export const newApDentalChart: Partial<import("./model-types-new").DentalChartRe
 	chartType: null,
 	status: null,
 	treatmentPlan: '',
+	numberingSystem: 'UNIVERSAL',
+	ageRuleId: null,
 	teeth: [],
 	chartActions: [],
 	historyCharts: [],

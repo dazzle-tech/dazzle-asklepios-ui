@@ -62,6 +62,15 @@ const treatmentChoiceLabel = (
   return [cdtPart, procedure].filter(Boolean).join(' · ');
 };
 
+/** Rows that treat this tooth, directly or as part of an arch / full-mouth coverage. */
+const rowsCoveringTooth = (rows: any[], toothId: string | number) => {
+  const key = String(toothId);
+  return rows.filter((row: any) => {
+    if (row.toothId != null && String(row.toothId) === key) return true;
+    return (row.coveredToothIds ?? []).some((id: any) => id != null && String(id) === key);
+  });
+};
+
 const toViewForm = (row: any, tooth: any) => {
   const scope: TreatmentAreaScope = row.treatmentScope || 'SPECIFIC_TOOTH';
   const coveredIds = Array.isArray(row.coveredToothIds)
@@ -164,18 +173,10 @@ const ProposeTreatmentChartModal: React.FC<ProposeTreatmentChartModalProps> = ({
     ) ||
     null;
 
-  const treatmentsForTooth = useMemo(() => {
-    if (!selectedTooth?.id) return [];
-
-    const toothId = String(selectedTooth.id);
-
-    return activeTreatments.filter((row: any) => {
-      if (row.toothId != null && String(row.toothId) === toothId) return true;
-      return (row.coveredToothIds ?? []).some(
-        (id: any) => id != null && String(id) === toothId
-      );
-    });
-  }, [activeTreatments, selectedTooth]);
+  const treatmentsForTooth = useMemo(
+    () => (selectedTooth?.id ? rowsCoveringTooth(activeTreatments, selectedTooth.id) : []),
+    [activeTreatments, selectedTooth]
+  );
 
   const treatmentChoices = useMemo(
     () =>
@@ -201,15 +202,7 @@ const ProposeTreatmentChartModal: React.FC<ProposeTreatmentChartModalProps> = ({
 
     setSelectedTooth(tooth);
 
-    const rows = activeTreatments.filter((row: any) => {
-      const toothId = String(tooth.id);
-      if (row.toothId != null && String(row.toothId) === toothId) return true;
-      return (row.coveredToothIds ?? []).some(
-        (id: any) => id != null && String(id) === toothId
-      );
-    });
-
-    applyTreatment(rows[0], tooth);
+    applyTreatment(rowsCoveringTooth(activeTreatments, tooth.id)[0], tooth);
   };
 
   useEffect(() => {
@@ -237,8 +230,10 @@ const ProposeTreatmentChartModal: React.FC<ProposeTreatmentChartModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, highlightToothIds.join('|')]);
 
+  const numberingSystem = originalChart?.numberingSystem || 'UNIVERSAL';
+  const numberingLabels = originalChart?.numberingLabels ?? null;
   const detailsToothLabel = selectedTooth?.toothNumber
-    ? `Tooth ${toothDisplayLabel(selectedTooth.toothNumber)}`
+    ? `Tooth ${toothDisplayLabel(selectedTooth.toothNumber, numberingSystem, numberingLabels)}`
     : null;
 
   const modalTitle = plan

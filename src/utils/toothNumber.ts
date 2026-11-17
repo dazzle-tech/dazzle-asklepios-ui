@@ -7,6 +7,14 @@
  * the UI needs to know which chart type is active.
  */
 
+import {
+  MIXED_ARCH_MIDLINE_SLOT,
+  MIXED_LOWER_ORDER,
+  MIXED_UPPER_ORDER,
+  mixedToothSlot,
+  toothDisplayLabelForSystem
+} from '@/utils/toothNumberingSystems';
+
 const isPrimaryToothLetter = (remainder: string): boolean => /^[A-T]$/.test(remainder);
 
 /** 1-based position within the tooth set (1-32 for permanent, 1-20 for primary). */
@@ -23,21 +31,36 @@ export const isPrimaryTooth = (toothNumber: string): boolean =>
   isPrimaryToothLetter(toothNumber.replace('Tooth', ''));
 
 /**
- * Zero-padded image-asset code (e.g. "05") used by the legacy
- * `Tooth_XX_vertical.png` image files. Only meaningful for permanent teeth --
- * there are no corresponding images for primary teeth, callers should expect
- * `undefined`/no image in that case (handled gracefully by the legacy
- * image-loading try/catch).
+ * Zero-padded artwork code (e.g. "05") of a permanent tooth, as used by the
+ * `Color05.*.svg` assets. Primary teeth have no numeric code; their artwork is
+ * looked up by letter in colorAssets.
  */
 export const toothImageCodeFromEnum = (toothNumber: string): string =>
   toothIndexFromEnum(toothNumber).toString().padStart(2, '0');
 
-/** Short label dentists actually use: the number (permanent) or the letter (primary). */
-export const toothDisplayLabel = (toothNumber: string): string => toothNumber.replace('Tooth', '');
+/**
+ * Short label dentists actually use. When a chart numbering system is provided,
+ * use Universal / FDI / Palmer labels; otherwise fall back to Universal remnant.
+ */
+export const toothDisplayLabel = (
+  toothNumber: string,
+  numberingSystem?: string | null,
+  numberingLabels?: Record<string, string> | null
+): string => {
+  // A chart's numbering snapshot (custom method labels) wins; legacy charts have none.
+  const snapshotLabel = numberingLabels?.[toothNumber]?.trim();
+  if (snapshotLabel) return snapshotLabel;
+  if (numberingSystem) {
+    return toothDisplayLabelForSystem(toothNumber, numberingSystem);
+  }
+  return toothNumber.replace('Tooth', '');
+};
 
 /** CSS class suffix matching styles.less's per-tooth width overrides (zero-padded, permanent only). */
 export const toothCssClassSuffix = (toothNumber: string): string =>
-  isPrimaryTooth(toothNumber) ? toothDisplayLabel(toothNumber) : toothImageCodeFromEnum(toothNumber);
+  isPrimaryTooth(toothNumber)
+    ? toothNumber.replace('Tooth', '')
+    : toothImageCodeFromEnum(toothNumber);
 
 export type TreatmentAreaScope =
   | 'SPECIFIC_TOOTH'
@@ -45,8 +68,33 @@ export type TreatmentAreaScope =
   | 'LOWER_ARCH'
   | 'FULL_MOUTH';
 
+// Anatomical order per arch (patient right → left); primary and permanent
+// teeth share one sequence so a mixed arch renders as a single row.
+const UPPER_ARCH_ORDER = MIXED_UPPER_ORDER;
+const LOWER_ARCH_ORDER = MIXED_LOWER_ORDER;
+const UPPER_ARCH_SET = new Set(UPPER_ARCH_ORDER);
+const LOWER_ARCH_SET = new Set(LOWER_ARCH_ORDER);
+
+/** Scheme-aware upper-arch membership (permanent 1–16 / primary A–J). */
+export const isUpperArchTooth = (toothNumber?: string | null): boolean => {
+  if (!toothNumber) return false;
+  if (UPPER_ARCH_SET.has(toothNumber)) return true;
+  if (LOWER_ARCH_SET.has(toothNumber)) return false;
+  // Fallback for unexpected ids: permanent index ≤16 or primary index ≤10.
+  if (isPrimaryTooth(toothNumber)) {
+    return toothIndexFromEnum(toothNumber) <= 10;
+  }
+  return toothIndexFromEnum(toothNumber) <= 16;
+};
+
+const orderIndex = (toothNumber: string, order: string[]): number => {
+  const idx = order.indexOf(toothNumber);
+  return idx >= 0 ? idx : 9999;
+};
+
 /**
- * Split chart teeth into upper/lower halves by sorted tooth index (chart layout).
+ * Split chart teeth into upper/lower by dentition scheme (not length/2).
+ * Safe for MIXED inventories that mix primary and permanent ids.
  */
 export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>(
   teeth: T[] | null | undefined
@@ -56,20 +104,37 @@ export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>
     return { upper: [], lower: [], all: [] };
   }
 
-  const sorted = [...list]
-    .filter(t => t?.toothNumber)
+  const withNumbers = list.filter(t => t?.toothNumber);
+  const upper = withNumbers
+    .filter(t => isUpperArchTooth(String(t.toothNumber)))
     .sort(
       (a, b) =>
-        toothIndexFromEnum(String(a.toothNumber)) -
-        toothIndexFromEnum(String(b.toothNumber))
+        orderIndex(String(a.toothNumber), UPPER_ARCH_ORDER) -
+        orderIndex(String(b.toothNumber), UPPER_ARCH_ORDER)
+    );
+  const lower = withNumbers
+    .filter(t => !isUpperArchTooth(String(t.toothNumber)))
+    .sort(
+      (a, b) =>
+        orderIndex(String(a.toothNumber), LOWER_ARCH_ORDER) -
+        orderIndex(String(b.toothNumber), LOWER_ARCH_ORDER)
     );
 
-  const mid = Math.floor(sorted.length / 2);
-  const upper = sorted.slice(0, mid);
-  const lower = sorted.slice(mid);
-
-  return { upper, lower, all: sorted };
+  return { upper, lower, all: [...upper, ...lower] };
 };
+
+/**
+ * Index in a single anatomical arch row where the midline gap goes: the
+ * number of teeth on the patient's right side of the midline.
+ */
+export const mixedArchMidGapIndex = <T extends { toothNumber?: string | null }>(
+  archTeeth: T[] | null | undefined
+): number =>
+  (archTeeth ?? []).filter(
+    tooth =>
+      tooth?.toothNumber &&
+      mixedToothSlot(String(tooth.toothNumber)) < MIXED_ARCH_MIDLINE_SLOT
+  ).length;
 
 export const teethForTreatmentScope = <T extends { toothNumber?: string | null }>(
   teeth: T[] | null | undefined,

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { getToothShapeType } from './toothShape';
-import { getAdultOuterSrc } from './colorAssets';
+import { getAdultOuterSrc, getPrimaryOuterSrc } from './colorAssets';
 import { isPrimaryTooth } from '@/utils/toothNumber';
 
 interface ToothProps {
@@ -42,6 +42,28 @@ const ROOT_PATH =
 
 const NERVE_PATH = 'M 22,22 C 21,40 21,58 22,94';
 
+const outerSrcFor = (toothNumber?: string | null): string | null => {
+  if (!toothNumber) return null;
+  return isPrimaryTooth(toothNumber) ? getPrimaryOuterSrc(toothNumber) : getAdultOuterSrc(toothNumber);
+};
+
+/** Dashed outline drawn instead of the artwork for a tooth that is missing from the mouth. */
+const MissingToothOutline = () => (
+  <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
+    <rect
+      x={4}
+      y={10}
+      width={36}
+      height={84}
+      rx={9}
+      fill="none"
+      stroke={COLORS.missingStroke}
+      strokeWidth={2}
+      strokeDasharray="4,3"
+    />
+  </svg>
+);
+
 /** Primary / fallback schematic tooth (root below crown in local coords). */
 const SchematicTooth = ({
   chartTooth,
@@ -62,19 +84,7 @@ const SchematicTooth = ({
   const showSecondaryTreatmentDot = hasCondition && hasTreatment;
 
   const body = missing ? (
-    <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
-      <rect
-        x={4}
-        y={10}
-        width={36}
-        height={84}
-        rx={9}
-        fill="none"
-        stroke={COLORS.missingStroke}
-        strokeWidth={2}
-        strokeDasharray="4,3"
-      />
-    </svg>
+    <MissingToothOutline />
   ) : (
     <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
       {selected && (
@@ -104,14 +114,15 @@ const SchematicTooth = ({
   return <div style={flipVertical ? { transform: 'scaleY(-1)' } : undefined}>{body}</div>;
 };
 
-/** Permanent tooth outer view from ColorNN.outer.svg with clinical state chrome. */
+/** Color artwork outer view (permanent or primary) with the existing clinical state chrome. */
 const AdultOuterTooth = ({
   chartTooth,
   selected,
   hasCondition,
   hasTreatment
 }: ToothProps) => {
-  const src = getAdultOuterSrc(chartTooth?.toothNumber);
+  const toothNumber = chartTooth?.toothNumber;
+  const src = outerSrcFor(toothNumber);
   const hasImplant = useMemo(
     () => chartTooth?.actions?.some((action: any) => action.imageName === 'Implant'),
     [chartTooth?.actions]
@@ -132,19 +143,7 @@ const AdultOuterTooth = ({
   if (missing) {
     return (
       <div className="adult-outer missing">
-        <svg viewBox="0 0 44 104" width="100%" style={{ display: 'block' }}>
-          <rect
-            x={4}
-            y={10}
-            width={36}
-            height={84}
-            rx={9}
-            fill="none"
-            stroke={COLORS.missingStroke}
-            strokeWidth={2}
-            strokeDasharray="4,3"
-          />
-        </svg>
+        <MissingToothOutline />
       </div>
     );
   }
@@ -161,14 +160,8 @@ const AdultOuterTooth = ({
 };
 
 const Tooth = (props: ToothProps) => {
-  const toothNumber = props.chartTooth?.toothNumber;
-  const useAdultArt = toothNumber && !isPrimaryTooth(toothNumber) && getAdultOuterSrc(toothNumber);
-
-  if (useAdultArt) {
-    return <AdultOuterTooth {...props} />;
-  }
-
-  return <SchematicTooth {...props} />;
+  // Tooth identity decides the artwork; a tooth without color artwork falls back to the schematic drawing.
+  return outerSrcFor(props.chartTooth?.toothNumber) ? <AdultOuterTooth {...props} /> : <SchematicTooth {...props} />;
 };
 
 export default React.memo(Tooth);

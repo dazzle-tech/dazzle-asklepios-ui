@@ -39,6 +39,7 @@ import {
   useUpdatePlannedTreatmentMutation,
   useCancelPlannedTreatmentMutation,
   useCompletePlannedTreatmentMutation,
+  useReturnPlannedTreatmentToInProgressMutation,
   useStartPlannedTreatmentMutation,
   useGetTreatmentPlansByPatientQuery,
   useGetTreatmentPlanSessionsQuery,
@@ -60,6 +61,7 @@ import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 import { useGetProceduresByCategoryQuery } from '@/services/setup/procedure/procedureService';
 import { useGetAllDentalActionsQuery } from '@/services/setup/dental-action/dentalActionService';
 import { patientServicesAndProductsService } from '@/services/encounters/patientServicesAndProductsService';
+import { dentalChartService } from '@/services/dental/dentalChartService';
 
 import {
   newApDentalPlannedTreatment,
@@ -73,6 +75,8 @@ import {
 
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { notify } from '@/utils/uiReducerActions';
+import BookAppointmentModal from './BookAppointmentModal';
+import CompleteTreatmentModal from './CompleteTreatmentModal';
 
 import './TreatmentPlanTab.less';
 
@@ -145,6 +149,11 @@ const TreatmentPlanTab = ({
   });
   const [rowPendingAction, setRowPendingAction] = useState<any>(null);
   const [completingId, setCompletingId] = useState<number | null>(null);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [rowToComplete, setRowToComplete] = useState<any>(null);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [rowToReturn, setRowToReturn] = useState<any>(null);
+  const [returnForm, setReturnForm] = useState<any>({ reason: '' });
 
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [plansTab, setPlansTab] = useState('1');
@@ -168,6 +177,7 @@ const TreatmentPlanTab = ({
 
   const [rememberedSession, setRememberedSession] =
     useState<Record<number, string>>({});
+  const [bookAppointmentOpen, setBookAppointmentOpen] = useState(false);
 
   const cdtListResponse = useGetAllCdtQuery({
     page: 0,
@@ -239,6 +249,8 @@ const TreatmentPlanTab = ({
     useCancelPlannedTreatmentMutation();
   const [completePlannedTreatment, completeMutation] =
     useCompletePlannedTreatmentMutation();
+  const [returnPlannedTreatmentToInProgress, returnMutation] =
+    useReturnPlannedTreatmentToInProgressMutation();
   const [startPlannedTreatment, startMutation] =
     useStartPlannedTreatmentMutation();
 
@@ -267,6 +279,7 @@ const TreatmentPlanTab = ({
     cancelMutation.isLoading ||
     startMutation.isLoading ||
     completeMutation.isLoading ||
+    returnMutation.isLoading ||
     completingId != null ||
     headerSaving ||
     planActionBusy;
@@ -384,12 +397,32 @@ const TreatmentPlanTab = ({
   );
 
   const allHistoryPlans = plans.filter(
-    plan => plan.status === 'COMPLETED' || plan.status === 'CANCELLED'
+    plan =>
+      plan.status === 'COMPLETED' ||
+      plan.status === 'CANCELLED' ||
+      (ACTIVE_PLAN_STATUSES.includes(plan.status) &&
+        Number(plan.completedTreatments ?? 0) > 0)
   );
 
   const historyPlans = allHistoryPlans.filter(
     plan => historyStatus === 'ALL' || plan.status === historyStatus
   );
+
+  const activePlanTreatments = useMemo(
+    () => planTreatments.filter((row: any) => !isCompleted(row)),
+    [planTreatments]
+  );
+
+  const historyPlanTreatments = useMemo(
+    () =>
+      selectedPlan && ACTIVE_PLAN_STATUSES.includes(selectedPlan.status)
+        ? planTreatments.filter((row: any) => isCompleted(row))
+        : planTreatments,
+    [planTreatments, selectedPlan]
+  );
+
+  const proposeTreatments =
+    plansTab === '1' ? activePlanTreatments : historyPlanTreatments;
 
   const planExecutable =
     selectedPlan?.status === 'ACCEPTED' ||
@@ -400,6 +433,10 @@ const TreatmentPlanTab = ({
     selectedPlan?.status === 'PROPOSED';
 
   const planAcceptsTreatments = planEditableHeader || planExecutable;
+
+  // A completed item can be reopened while its plan is running or completed (not on hold or cancelled).
+  const planReturnable =
+    planExecutable || selectedPlan?.status === 'COMPLETED';
 
   const teethById = useMemo(
     () =>
@@ -438,6 +475,22 @@ const TreatmentPlanTab = ({
     setViewOnly(false);
   };
 
+  const resolvePlanTooth = (toothId: any, tooth?: any) => {
+    if (toothId != null && teethById[toothId]) {
+      return teethById[toothId];
+    }
+
+    const toothNumber = tooth?.toothNumber;
+    if (toothNumber != null) {
+      const byNumber = (originalChart?.teeth ?? []).find(
+        (item: any) => String(item.toothNumber) === String(toothNumber)
+      );
+      if (byNumber) return byNumber;
+    }
+
+    return null;
+  };
+
   const getRowTeeth = (row: any) => {
     const scope: TreatmentAreaScope =
       row.treatmentScope || 'SPECIFIC_TOOTH';
@@ -447,15 +500,22 @@ const TreatmentPlanTab = ({
       : [];
 
     if (isGroupedScope(scope)) {
-      return coveredIds.length
-        ? coveredIds.map(id => teethById[id]).filter(Boolean)
+      if (!coveredIds.length) {
+        return teethForTreatmentScope(originalChart?.teeth, scope);
+      }
+
+      const resolved = coveredIds
+        .map(id => resolvePlanTooth(id))
+        .filter(Boolean);
+
+      return resolved.length
+        ? resolved
         : teethForTreatmentScope(originalChart?.teeth, scope);
     }
 
     const toothId = row.toothId ?? row.tooth?.id;
-    return toothId != null && teethById[toothId]
-      ? [teethById[toothId]]
-      : [];
+    const resolved = resolvePlanTooth(toothId, row.tooth);
+    return resolved ? [resolved] : [];
   };
 
   const openAddModal = () => {
@@ -514,7 +574,7 @@ const TreatmentPlanTab = ({
       dose: row.dose ?? null,
       unit: row.unit ?? null,
       fillingMaterial: row.fillingMaterial ?? '',
-      surface: isGroupedScope(scope) ? null : row.surface ?? null,
+      surface: row.surface ?? null,
       sessionChoice:
         row.treatmentSessionId != null
           ? String(row.treatmentSessionId)
@@ -715,7 +775,7 @@ const TreatmentPlanTab = ({
       treatmentScope: scope,
       coveredToothIds: grouped ? coveredIds : null,
       note: treatment.note ?? null,
-      surface: grouped ? null : treatment.surface ?? null,
+      surface: treatment.surface ?? null,
       insurance: treatment.insurance ?? 0,
       serviceId: treatment.serviceId ?? null,
       procedureId: treatment.procedureId ?? null,
@@ -775,8 +835,8 @@ const TreatmentPlanTab = ({
   ) => {
     const missing: string[] = [];
 
-    if (!form.cdtCodeId) missing.push('CDT');
     if (!form.procedureId) missing.push('Dental Procedure');
+    if (!form.surface) missing.push('Surface');
 
     if (toothCount < 1) {
       missing.push(isGroupedScope(scope) ? 'Treatment Area' : 'Tooth');
@@ -994,7 +1054,7 @@ const TreatmentPlanTab = ({
     }
   };
 
-  const handleComplete = async (row: any) => {
+  const handleComplete = (row: any) => {
     if (
       readOnly ||
       isBusy ||
@@ -1016,15 +1076,85 @@ const TreatmentPlanTab = ({
       return;
     }
 
+    setRowToComplete(row);
+    setCompleteOpen(true);
+  };
+
+  const handleReturn = (row: any) => {
+    if (
+      readOnly ||
+      isBusy ||
+      !row?.id ||
+      row.status !== 'COMPLETED' ||
+      row.patientServiceAndProductId ||
+      isExistingDocumentation(row) ||
+      row.cancelled
+    ) {
+      return;
+    }
+
+    setRowToReturn(row);
+    setReturnForm({ reason: '' });
+    setReturnOpen(true);
+  };
+
+  const confirmReturn = async () => {
+    const row = rowToReturn;
+    const reason = String(returnForm.reason ?? '').trim();
+    if (!row?.id || !reason || returnMutation.isLoading) return;
+
+    if (!encounter?.id) {
+      dispatch(notify({ msg: 'Encounter is required.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      const returned = await returnPlannedTreatmentToInProgress({
+        id: row.id,
+        encounterId: encounter.id,
+        reason
+      }).unwrap();
+
+      setReturnOpen(false);
+      setRowToReturn(null);
+      setReturnForm({ reason: '' });
+
+      refreshPlans();
+      // The reversal changes the chart: refresh the Dental Chart and the plan tooth previews.
+      dispatch(dentalChartService.util.invalidateTags(['DentalChart']));
+
+      dispatch(
+        notify({
+          msg: returned?.chartEffect
+            ? `Treatment returned to In Progress. ${returned.chartEffect}`
+            : 'Treatment returned to In Progress',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      showError(error, 'Return to In Progress Failed');
+    }
+  };
+
+  const confirmComplete = async (dentalActionId: number) => {
+    const row = rowToComplete;
+    if (!row?.id || completingId != null) return;
+
     setCompletingId(row.id);
 
     try {
-      await completePlannedTreatment({
+      const completed = await completePlannedTreatment({
         id: row.id,
-        executionEncounterId: encounter?.id
+        executionEncounterId: encounter?.id,
+        dentalActionId
       }).unwrap();
 
+      setCompleteOpen(false);
+      setRowToComplete(null);
+
       refreshPlans();
+      // Completion records its chart effect: refresh the Dental Chart and the plan tooth previews.
+      dispatch(dentalChartService.util.invalidateTags(['DentalChart']));
 
       dispatch(
         patientServicesAndProductsService.util.invalidateTags([
@@ -1034,7 +1164,7 @@ const TreatmentPlanTab = ({
 
       dispatch(
         notify({
-          msg: 'Treatment completed',
+          msg: completed?.chartEffect ? `Treatment completed. ${completed.chartEffect}` : 'Treatment completed',
           sev: 'success'
         })
       );
@@ -1096,6 +1226,20 @@ const TreatmentPlanTab = ({
     setPlansTab(key);
     setSelectedPlanId(null);
     setHistoryOpen(false);
+  };
+
+  // Book Appointment modal: scheduler slots for this visit's department, booked through BookPatient.
+  const bookAppointment = () => {
+    if (!patient?.id || !encounter?.facilityId || !encounter?.departmentId) {
+      dispatch(
+        notify({
+          msg: 'The visit has no patient, facility or department, so an appointment cannot be booked from here.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setBookAppointmentOpen(true);
   };
 
   const openNewPlan = () => {
@@ -1268,8 +1412,8 @@ const TreatmentPlanTab = ({
         open={proposeChartOpen}
         onClose={() => setProposeChartOpen(false)}
         plan={selectedPlan}
-        treatments={planTreatments}
-        treatmentCount={planTreatments.length}
+        treatments={proposeTreatments}
+        treatmentCount={proposeTreatments.length}
         originalChart={originalChart}
         teethById={teethById}
         cdtList={cdtListResponse.data?.data ?? []}
@@ -1316,6 +1460,35 @@ const TreatmentPlanTab = ({
         onCancelPlan={() => askPlanReason('cancel')}
       />
 
+      <CompleteTreatmentModal
+        open={completeOpen}
+        setOpen={setCompleteOpen}
+        treatment={rowToComplete}
+        dentalActions={dentalActionsRes.data?.data ?? []}
+        dentalActionsMap={dentalActionsMap}
+        dentalProceduresMap={dentalProceduresMap}
+        dentalServicesMap={dentalServicesMap}
+        cdtMap={cdtMap}
+        executionChart={originalChart}
+        saving={completeMutation.isLoading}
+        onConfirm={confirmComplete}
+      />
+
+      <CancellationModal
+        title="Return to In Progress"
+        fieldLabel="Reason"
+        open={returnOpen}
+        setOpen={(open: boolean) => {
+          setReturnOpen(open);
+          if (!open) setRowToReturn(null);
+        }}
+        object={returnForm}
+        setObject={setReturnForm}
+        handleCancle={confirmReturn}
+        fieldName="reason"
+        required={true}
+      />
+
       <CancellationModal
         title="Cancel Planned Treatment"
         fieldLabel="Cancellation Reason"
@@ -1344,6 +1517,14 @@ const TreatmentPlanTab = ({
         handleCancle={submitPlanReason}
         fieldName="reason"
         required={true}
+      />
+
+      <BookAppointmentModal
+        open={bookAppointmentOpen}
+        setOpen={setBookAppointmentOpen}
+        patient={patient}
+        facilityId={encounter?.facilityId}
+        departmentId={encounter?.departmentId}
       />
 
       <TreatmentPlanHeaderModal
@@ -1472,12 +1653,21 @@ const TreatmentPlanTab = ({
                           CREATED: 'Created',
                           IN_PROGRESS: 'In Progress',
                           COMPLETED: 'Completed',
-                          CANCELLED: 'Cancelled'
+                          CANCELLED: 'Cancelled',
+                          RETURNED_TO_IN_PROGRESS: 'Returned to In Progress'
                         };
                         return (
                           <span>{labels[row.action] || row.action || EMPTY_VALUE}</span>
                         );
                       }
+                    },
+                    {
+                      key: 'reason',
+                      title: 'Reason',
+                      width: 200,
+                      render: (row: any) => (
+                        <span>{row.reason || EMPTY_VALUE}</span>
+                      )
                     },
                     {
                       key: 'changedBy',
@@ -1529,13 +1719,23 @@ const TreatmentPlanTab = ({
                 practitioners={practitioners}
                 onViewPlan={openPlan}
                 onOpenChart={() => setProposeChartOpen(true)}
+                onPropose={() => {
+                  if (!selectedPlan) return;
+
+                  return runPlanAction(
+                    () => proposeTreatmentPlan(selectedPlan.id).unwrap(),
+                    'Plan proposed'
+                  );
+                }}
                 onCloseDetails={closeDetails}
                 onNewPlan={openNewPlan}
+                onBookAppointment={bookAppointment}
+                bookAppointmentDisabled={!encounter?.id}
                 newPlanDisabled={
                   readOnly || isBusy || !patient?.id || !encounter?.id
                 }
                 actionsDisabled={readOnly || isBusy}
-                planTreatments={planTreatments}
+                planTreatments={activePlanTreatments}
                 existingDocumentation={existingDocumentation}
                 treatmentsFetching={planTreatmentsQuery.isFetching}
                 existingFetching={treatmentPlanDataResponse.isFetching}
@@ -1547,6 +1747,8 @@ const TreatmentPlanTab = ({
                 canExecute={planExecutable}
                 completingId={completingId}
                 teethById={teethById}
+                numberingSystem={originalChart?.numberingSystem}
+                numberingLabels={originalChart?.numberingLabels}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}
@@ -1560,6 +1762,9 @@ const TreatmentPlanTab = ({
                   setCancelForm({ cancellationReason: '' });
                   setConfirmCancelOpen(true);
                 }}
+                readOnly={readOnly}
+                canReturn={planReturnable}
+                onReturnTreatment={handleReturn}
               />
             )
           },
@@ -1575,15 +1780,25 @@ const TreatmentPlanTab = ({
                 practitioners={practitioners}
                 onViewPlan={openPlan}
                 onOpenChart={() => setProposeChartOpen(true)}
+                onPropose={() => {
+                  if (!selectedPlan) return;
+
+                  return runPlanAction(
+                    () => proposeTreatmentPlan(selectedPlan.id).unwrap(),
+                    'Plan proposed'
+                  );
+                }}
                 historyStatus={historyStatus}
                 onHistoryStatusChange={setHistoryStatus}
                 onCloseDetails={closeDetails}
                 onNewPlan={openNewPlan}
+                onBookAppointment={bookAppointment}
+                bookAppointmentDisabled={!encounter?.id}
                 newPlanDisabled={
                   readOnly || isBusy || !patient?.id || !encounter?.id
                 }
                 actionsDisabled={readOnly || isBusy}
-                planTreatments={planTreatments}
+                planTreatments={historyPlanTreatments}
                 treatmentsFetching={planTreatmentsQuery.isFetching}
                 treatmentsError={
                   Boolean(selectedPlan) && planTreatmentsQuery.isError
@@ -1593,6 +1808,8 @@ const TreatmentPlanTab = ({
                 canExecute={planExecutable}
                 completingId={completingId}
                 teethById={teethById}
+                numberingSystem={originalChart?.numberingSystem}
+                numberingLabels={originalChart?.numberingLabels}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}
@@ -1606,6 +1823,9 @@ const TreatmentPlanTab = ({
                   setCancelForm({ cancellationReason: '' });
                   setConfirmCancelOpen(true);
                 }}
+                readOnly={readOnly}
+                canReturn={planReturnable}
+                onReturnTreatment={handleReturn}
               />
             )
           }

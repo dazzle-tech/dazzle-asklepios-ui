@@ -3,12 +3,17 @@ import { useAppDispatch } from '@/hooks';
 import {
   useSaveToothActionMutation,
   useCancelToothActionMutation,
-  useSaveToothServiceMutation,
-  useCancelToothServiceMutation
+  useSaveToothServiceMutation
 } from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
-import { toothIndexFromEnum, toothDisplayLabel, toothCssClassSuffix, isPrimaryTooth } from '@/utils/toothNumber';
+import {
+  toothDisplayLabel,
+  toothCssClassSuffix,
+  isPrimaryTooth,
+  splitChartTeethByArch,
+  mixedArchMidGapIndex
+} from '@/utils/toothNumber';
 import { useEffect, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import { Button } from 'rsuite';
@@ -18,9 +23,8 @@ import clsx from 'clsx';
 import './styles.less';
 import MyModal from '../MyModal/MyModal';
 import Tooth from './Tooth/Tooth';
-import OcclusalBadge from './Tooth/OcclusalBadge';
+import { getSurfaceStates } from './Tooth/surfaceStates';
 import AdultOcclusal from './Tooth/AdultOcclusal';
-import { getToothShapeType } from './Tooth/toothShape';
 import ToothStateTab from './tabs/ToothStateTab';
 import ToothHistoryTab from './tabs/ToothHistoryTab';
 import ToothServicesTab from './tabs/ToothServicesTab';
@@ -36,20 +40,6 @@ import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/Pract
 import TreatmentPlanHeaderModal, {
   toPractitionerOptions
 } from '@/pages/encounter/dental-screen/tabs/TreatmentPlan/TreatmentPlanHeaderModal';
-
-// One entry per surface that has an active (non-cancelled) action on the
-// tooth; condition takes priority over treatment if both exist on the same
-// surface, matching the main tooth icon's own condition-over-treatment rule.
-const getSurfaceStates = (tooth: any, dentalActionsMap: any): Record<string, 'condition' | 'treatment'> => {
-  const states: Record<string, 'condition' | 'treatment'> = {};
-  (tooth?.actions ?? []).forEach((action: any) => {
-    const actionType = dentalActionsMap?.[action.dentalActionId]?.type;
-    if (actionType !== 'CONDITION' && actionType !== 'TREATMENT') return;
-    if (states[action.surface] === 'condition') return;
-    states[action.surface] = actionType === 'CONDITION' ? 'condition' : 'treatment';
-  });
-  return states;
-};
 
 const DentalChart = ({
   chartObject,
@@ -123,22 +113,19 @@ const DentalChart = ({
   const [addToothService, addToothServiceMutation] = useSaveToothServiceMutation();
   const [removeToothAction, removeToothActionMutation] = useCancelToothActionMutation();
 
+  const numberingSystem = chartObject?.numberingSystem || 'UNIVERSAL';
+  // Snapshot labels taken when the chart was created; absent on legacy charts.
+  const numberingLabels = chartObject?.numberingLabels ?? null;
+
   useEffect(() => {
     if (!chartObject?.teeth?.length) {
       setUpperTeeth([]);
       setLowerTeeth([]);
       return;
     }
-    // Half-based split (16/32 permanent, 10/20 primary). Sort explicitly so
-    // display order is Upper 1→16 / A→J and Lower 32→17 / T→K regardless of
-    // API array order.
-    const upperCutoff = chartObject.teeth.length / 2;
-    const upper = chartObject.teeth
-      .filter((t: any) => toothIndexFromEnum(t.toothNumber) <= upperCutoff)
-      .sort((a: any, b: any) => toothIndexFromEnum(a.toothNumber) - toothIndexFromEnum(b.toothNumber));
-    const lower = chartObject.teeth
-      .filter((t: any) => toothIndexFromEnum(t.toothNumber) > upperCutoff)
-      .sort((a: any, b: any) => toothIndexFromEnum(b.toothNumber) - toothIndexFromEnum(a.toothNumber));
+    // Scheme-aware arches: permanent 1–16 / primary A–J upper; permanent 17–32 /
+    // primary K–T lower. Safe for MIXED inventories (never length/2).
+    const { upper, lower } = splitChartTeethByArch(chartObject.teeth);
     setUpperTeeth(upper);
     setLowerTeeth(lower);
   }, [chartObject]);
@@ -356,8 +343,6 @@ const DentalChart = ({
     });
   };
 
-  const midGapAfter = Math.floor(upperTeeth.length / 2);
-
   const toothIdAllowed = (tooth: any) => {
     if (!allowedToothIds || allowedToothIds.length === 0) return true;
     if (tooth?.id == null) return false;
@@ -436,112 +421,128 @@ const DentalChart = ({
     if (!selectionOnly) setActionModalOpen(true);
   };
 
-  const renderToothColumns = (teeth: any[], arch: 'upper' | 'lower') =>
-    teeth.map((tooth: any, idx: number) => {
-      const { selected, highlighted, hasCondition, hasTreatment, surfaceStates } =
-        toothMeta(tooth);
-      const primary = isPrimaryTooth(tooth.toothNumber);
-      const allowed = toothIdAllowed(tooth);
-      const toothDisabled = props.disabled || !allowed;
-      const dimmed =
-        Array.isArray(allowedToothIds) &&
-        allowedToothIds.length > 0 &&
-        !allowed;
-      const showNestedSelection = selected && !planReviewMode;
-      const colClass = clsx('tooth-col', {
-        selected,
-        'has-plan-treatment': highlighted && !planReviewMode,
-        dimmed,
-        'midline-gap': idx === midGapAfter
-      });
-
-      return (
-        <div key={tooth.id} className={colClass}>
-          {arch === 'upper' && (
-            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
-          )}
-
-          {arch === 'upper' ? (
-            <>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
-              >
-                <Tooth
-                  chartTooth={tooth}
-                  selected={showNestedSelection}
-                  hasCondition={hasCondition}
-                  hasTreatment={hasTreatment}
-                  flipVertical={primary}
-                />
-              </Button>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn occlusal-btn', {
-                  selected: showNestedSelection
-                })}
-              >
-                {primary ? (
-                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-                ) : (
-                  <AdultOcclusal
-                    toothNumber={tooth.toothNumber}
-                    surfaceStates={surfaceStates}
-                    selected={showNestedSelection}
-                  />
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn occlusal-btn', {
-                  selected: showNestedSelection
-                })}
-              >
-                {primary ? (
-                  <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-                ) : (
-                  <AdultOcclusal
-                    toothNumber={tooth.toothNumber}
-                    surfaceStates={surfaceStates}
-                    selected={showNestedSelection}
-                  />
-                )}
-              </Button>
-              <Button
-                disabled={toothDisabled}
-                onClick={() => selectTooth(tooth)}
-                onDoubleClick={openToothDetails}
-                appearance={showNestedSelection ? 'primary' : 'default'}
-                className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
-              >
-                <Tooth
-                  chartTooth={tooth}
-                  selected={showNestedSelection}
-                  hasCondition={hasCondition}
-                  hasTreatment={hasTreatment}
-                />
-              </Button>
-            </>
-          )}
-
-          {arch === 'lower' && (
-            <div className="tooth-number">{toothDisplayLabel(tooth.toothNumber)}</div>
-          )}
-        </div>
-      );
+  const renderToothColumn = (
+    tooth: any,
+    arch: 'upper' | 'lower',
+    idx: number,
+    midGapIndex: number
+  ) => {
+    const { selected, highlighted, hasCondition, hasTreatment, surfaceStates } =
+      toothMeta(tooth);
+    const primary = isPrimaryTooth(tooth.toothNumber);
+    const allowed = toothIdAllowed(tooth);
+    const toothDisabled = props.disabled || !allowed;
+    const dimmed =
+      Array.isArray(allowedToothIds) &&
+      allowedToothIds.length > 0 &&
+      !allowed;
+    const showNestedSelection = selected && !planReviewMode;
+    const colClass = clsx('tooth-col', {
+      selected,
+      'has-plan-treatment': highlighted && !planReviewMode,
+      dimmed,
+      'midline-gap': idx === midGapIndex
     });
+
+    return (
+      <div key={tooth.id ?? `${arch}-${tooth.toothNumber}`} className={colClass}>
+        {arch === 'upper' && (
+          <div className="tooth-number">
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)}
+          </div>
+        )}
+
+        {arch === 'upper' ? (
+          <>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+            >
+              <Tooth
+                chartTooth={tooth}
+                selected={showNestedSelection}
+                hasCondition={hasCondition}
+                hasTreatment={hasTreatment}
+                flipVertical={primary}
+              />
+            </Button>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn occlusal-btn', {
+                selected: showNestedSelection
+              })}
+            >
+              <AdultOcclusal
+                toothNumber={tooth.toothNumber}
+                surfaceStates={surfaceStates}
+                selected={showNestedSelection}
+              />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn occlusal-btn', {
+                selected: showNestedSelection
+              })}
+            >
+              <AdultOcclusal
+                toothNumber={tooth.toothNumber}
+                surfaceStates={surfaceStates}
+                selected={showNestedSelection}
+              />
+            </Button>
+            <Button
+              disabled={toothDisabled}
+              onClick={() => selectTooth(tooth)}
+              onDoubleClick={openToothDetails}
+              appearance={showNestedSelection ? 'primary' : 'default'}
+              className={clsx('tooth-btn outer-btn', `tooth_${toothCssClassSuffix(tooth.toothNumber)}`)}
+            >
+              <Tooth
+                chartTooth={tooth}
+                selected={showNestedSelection}
+                hasCondition={hasCondition}
+                hasTreatment={hasTreatment}
+              />
+            </Button>
+          </>
+        )}
+
+        {arch === 'lower' && (
+          <div className="tooth-number">
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderToothColumns = (
+    teeth: any[],
+    arch: 'upper' | 'lower',
+    midGapIndex = Math.floor(teeth.length / 2)
+  ) =>
+    teeth.map((tooth: any, idx: number) =>
+      renderToothColumn(tooth, arch, idx, midGapIndex)
+    );
+
+  const hasPrimary = upperTeeth.some((t: any) => isPrimaryTooth(t.toothNumber))
+    || lowerTeeth.some((t: any) => isPrimaryTooth(t.toothNumber));
+  const hasPermanent = upperTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber))
+    || lowerTeeth.some((t: any) => !isPrimaryTooth(t.toothNumber));
+  const pediatricLayout = hasPrimary && !hasPermanent;
+  const mixedLayout = hasPrimary && hasPermanent;
 
   return (
     <>
@@ -554,10 +555,27 @@ const DentalChart = ({
         <div className="chart-side-label chart-side-r" aria-hidden>
           R
         </div>
-        <div className={clsx('dental-chart-grid', { pediatric: upperTeeth.length > 0 && upperTeeth.length <= 10 })}>
-          <div className="chart-arch upper">{renderToothColumns(upperTeeth, 'upper')}</div>
+        <div
+          className={clsx('dental-chart-grid', {
+            pediatric: pediatricLayout,
+            mixed: mixedLayout
+          })}
+        >
+          <div className="chart-arch upper">
+            {renderToothColumns(
+              upperTeeth,
+              'upper',
+              mixedLayout ? mixedArchMidGapIndex(upperTeeth) : undefined
+            )}
+          </div>
           <div className="chart-midline" aria-hidden />
-          <div className="chart-arch lower">{renderToothColumns(lowerTeeth, 'lower')}</div>
+          <div className="chart-arch lower">
+            {renderToothColumns(
+              lowerTeeth,
+              'lower',
+              mixedLayout ? mixedArchMidGapIndex(lowerTeeth) : undefined
+            )}
+          </div>
         </div>
         <div className="chart-side-label chart-side-l" aria-hidden>
           L
@@ -574,7 +592,7 @@ const DentalChart = ({
             clearCurrentAction();
             clearCurrentService();
           }}
-          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '')}`}
+          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '', numberingSystem, numberingLabels)}`}
           actionButtonFunction={() => addAction()}
           customClassName="dental-chart-modal"
           content={
@@ -603,6 +621,8 @@ const DentalChart = ({
                   dentalActionsMap={dentalActionsMap}
                   removeToothAction={removeToothAction}
                   clearCurrentAction={clearCurrentAction}
+                  numberingSystem={numberingSystem}
+                  numberingLabels={numberingLabels}
                 />
               </TabPanel>
 

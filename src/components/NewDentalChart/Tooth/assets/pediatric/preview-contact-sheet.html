@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pediatric Color Assets — Full Contact Sheet</title>
+  <style>
+    :root { --bg:#f3efe6; --ink:#2a2824; --line:#d6d0c4; --warn:#8a4b12; --ok:#3d5a3d; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; padding:28px; color:var(--ink);
+      font-family:"Segoe UI","Helvetica Neue",sans-serif;
+      background:radial-gradient(circle at 10% 0%,#fff8ea,transparent 40%), var(--bg);
+    }
+    h1 { margin:0 0 8px; font-size:1.5rem; }
+    .lede { max-width:78ch; margin:0 0 14px; line-height:1.45; color:#555; }
+    .legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; font-size:0.9rem; }
+    .pill { border:1px solid var(--line); border-radius:999px; padding:4px 12px; background:#fff; }
+    .pill.warn { border-color:#d7a36a; color:var(--warn); }
+    .pill.ok { border-color:#9cbc9c; color:var(--ok); }
+    .grid { display:grid; grid-template-columns:1fr; gap:16px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .card.needs-review { box-shadow: inset 3px 0 0 #d0893b; }
+    .card.optional-review { box-shadow: inset 3px 0 0 #7aa67a; }
+    header { display:flex; flex-direction:column; gap:2px; margin-bottom:10px; }
+    header strong { font-size:1.05rem; }
+    header span { font-size:0.82rem; color:#666; }
+    .pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .col-label { font-size:0.78rem; color:#666; margin-bottom:6px; }
+    .views { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    figure { margin:0; text-align:center; background:#faf7f1; border-radius:8px; padding:8px; border:1px solid #eee8dc; }
+    img { width:100%; height:170px; object-fit:contain; display:block; }
+    figcaption { margin-top:4px; font-size:0.7rem; letter-spacing:0.05em; text-transform:uppercase; color:#777; }
+    .note { margin:10px 0 0; font-size:0.78rem; line-height:1.35; color:#555; }
+    .summary { margin-top:24px; padding:16px; background:#fff; border:1px solid var(--line); border-radius:12px; max-width:960px; }
+    .summary h2 { margin:0 0 8px; font-size:1.1rem; }
+    .summary ul { margin:0; padding-left:18px; }
+    .summary li { margin:4px 0; }
+    code { background:#f0ebe2; padding:1px 5px; border-radius:4px; }
+    @media (max-width:900px) { .pair { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Pediatric Color Assets — Full Contact Sheet</h1>
+  <p class="lede">
+    All 20 primary teeth (<code>ToothA</code>–<code>ToothT</code>) at Adult Color finish:
+    same outline/enamel/dentin treatment, with tooth-class-specific primary warps and
+    side-matched Adult donors. Pediatric and Adult shown at the same display size.
+  </p>
+  <div class="legend">
+    <span class="pill warn">Amber — anatomical review recommended</span>
+    <span class="pill ok">Green — optional / low-risk review</span>
+  </div>
+  <div class="grid">
+    
+            <article class="card needs-review">
+              <header>
+                <strong>ToothA</strong>
+                <span>Upper right 2nd primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorA.outer.svg" alt="ToothA outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorA.occlusal.svg" alt="ToothA occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth3 (2nd molar)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color03.outer.svg" alt="Color03 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color03.occlusal.svg" alt="Color03 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Primary 2nd-molar crown is wider/shorter than permanent; groove map inherits Adult molar topology.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothB</strong>
+                <span>Upper right 1st primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorB.outer.svg" alt="ToothB outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorB.occlusal.svg" alt="ToothB occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth4 (1st premolar donor)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color04.outer.svg" alt="Color04 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color04.occlusal.svg" alt="Color04 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> No true Adult primary-1st-molar analogue — premolar donor warped toward primary 1st-molar bulk. Confirm cusp count.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothC</strong>
+                <span>Upper right primary canine</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorC.outer.svg" alt="ToothC outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorC.occlusal.svg" alt="ToothC occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth6 (canine)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color06.outer.svg" alt="Color06 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color06.occlusal.svg" alt="Color06 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (medium):</em> Primary canine is shorter with broader cervix; cusp sharpness is approximate.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothD</strong>
+                <span>Upper right primary lateral incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorD.outer.svg" alt="ToothD outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorD.occlusal.svg" alt="ToothD occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth7 (lateral)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color07.outer.svg" alt="Color07 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color07.occlusal.svg" alt="Color07 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Primary lateral is narrower than central; mamelon/edge detail inherited from Adult.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothE</strong>
+                <span>Upper right primary central incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorE.outer.svg" alt="ToothE outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorE.occlusal.svg" alt="ToothE occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth8 (central)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color08.outer.svg" alt="Color08 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color08.occlusal.svg" alt="Color08 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Primary central is more bulbous with a shorter root; optional edge-detail review.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothF</strong>
+                <span>Upper left primary central incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorF.outer.svg" alt="ToothF outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorF.occlusal.svg" alt="ToothF occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth9 (central)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color09.outer.svg" alt="Color09 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color09.occlusal.svg" alt="Color09 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Mirror of E lineage; optional edge-detail review.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothG</strong>
+                <span>Upper left primary lateral incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorG.outer.svg" alt="ToothG outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorG.occlusal.svg" alt="ToothG occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth10 (lateral)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color10.outer.svg" alt="Color10 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color10.occlusal.svg" alt="Color10 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Mirror of D lineage; mamelon/edge detail inherited.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothH</strong>
+                <span>Upper left primary canine</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorH.outer.svg" alt="ToothH outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorH.occlusal.svg" alt="ToothH occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth11 (canine)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color11.outer.svg" alt="Color11 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color11.occlusal.svg" alt="Color11 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (medium):</em> Mirror of C lineage; cusp sharpness approximate.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothI</strong>
+                <span>Upper left 1st primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorI.outer.svg" alt="ToothI outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorI.occlusal.svg" alt="ToothI occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth12 (1st premolar donor)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color12.outer.svg" alt="Color12 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color12.occlusal.svg" alt="Color12 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Premolar donor warped to primary 1st-molar bulk. Confirm cusp count vs maxillary primary 1st molar.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothJ</strong>
+                <span>Upper left 2nd primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorJ.outer.svg" alt="ToothJ outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorJ.occlusal.svg" alt="ToothJ occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth14 (1st molar)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color14.outer.svg" alt="Color14 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color14.occlusal.svg" alt="Color14 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Uses Adult 1st-molar donor for left-side 2nd-primary mass; groove topology is permanent-derived.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothK</strong>
+                <span>Lower left 2nd primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorK.outer.svg" alt="ToothK outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorK.occlusal.svg" alt="ToothK occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth19 (2nd molar)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color19.outer.svg" alt="Color19 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color19.occlusal.svg" alt="Color19 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Lower orientation from Adult crop. Primary mandibular 2nd-molar proportions are approximate.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothL</strong>
+                <span>Lower left 1st primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorL.outer.svg" alt="ToothL outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorL.occlusal.svg" alt="ToothL occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth20 (1st premolar donor)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color20.outer.svg" alt="Color20 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color20.occlusal.svg" alt="Color20 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Premolar donor → primary 1st molar. Mandibular primary 1st-molar cusp pattern needs review.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothM</strong>
+                <span>Lower left primary canine</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorM.outer.svg" alt="ToothM outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorM.occlusal.svg" alt="ToothM occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth22 (canine)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color22.outer.svg" alt="Color22 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color22.occlusal.svg" alt="Color22 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (medium):</em> Lower canine; primary cervix/cusp proportions approximate.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothN</strong>
+                <span>Lower left primary lateral incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorN.outer.svg" alt="ToothN outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorN.occlusal.svg" alt="ToothN occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth23 (lateral)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color23.outer.svg" alt="Color23 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color23.occlusal.svg" alt="Color23 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Lower lateral; edge detail inherited from Adult.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothO</strong>
+                <span>Lower left primary central incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorO.outer.svg" alt="ToothO outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorO.occlusal.svg" alt="ToothO occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth24 (central)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color24.outer.svg" alt="Color24 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color24.occlusal.svg" alt="Color24 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Lower central; bulbous primary proportions approximate.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothP</strong>
+                <span>Lower right primary central incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorP.outer.svg" alt="ToothP outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorP.occlusal.svg" alt="ToothP occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth25 (central)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color25.outer.svg" alt="Color25 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color25.occlusal.svg" alt="Color25 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Mirror of O lineage.</p>
+            </article>
+            
+            <article class="card optional-review">
+              <header>
+                <strong>ToothQ</strong>
+                <span>Lower right primary lateral incisor</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorQ.outer.svg" alt="ToothQ outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorQ.occlusal.svg" alt="ToothQ occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth26 (lateral)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color26.outer.svg" alt="Color26 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color26.occlusal.svg" alt="Color26 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (low):</em> Mirror of N lineage.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothR</strong>
+                <span>Lower right primary canine</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorR.outer.svg" alt="ToothR outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorR.occlusal.svg" alt="ToothR occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth27 (canine)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color27.outer.svg" alt="Color27 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color27.occlusal.svg" alt="Color27 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (medium):</em> Mirror of M lineage; cusp sharpness approximate.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothS</strong>
+                <span>Lower right 1st primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorS.outer.svg" alt="ToothS outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorS.occlusal.svg" alt="ToothS occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth28 (1st premolar donor)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color28.outer.svg" alt="Color28 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color28.occlusal.svg" alt="Color28 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Premolar donor → primary 1st molar. Confirm mandibular cusp layout.</p>
+            </article>
+            
+            <article class="card needs-review">
+              <header>
+                <strong>ToothT</strong>
+                <span>Lower right 2nd primary molar</span>
+              </header>
+              <div class="pair">
+                <div>
+                  <div class="col-label">Pediatric</div>
+                  <div class="views">
+                    <figure><img src="ColorT.outer.svg" alt="ToothT outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="ColorT.occlusal.svg" alt="ToothT occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-label">Adult ref — Adult Tooth30 (1st molar)</div>
+                  <div class="views">
+                    <figure><img src="../color/Color30.outer.svg" alt="Color30 outer" /><figcaption>outer</figcaption></figure>
+                    <figure><img src="../color/Color30.occlusal.svg" alt="Color30 occlusal" /><figcaption>occlusal</figcaption></figure>
+                  </div>
+                </div>
+              </div>
+              <p class="note"><em>Review (high):</em> Adult 1st-molar donor for right-side 2nd-primary mass; groove map permanent-derived.</p>
+            </article>
+            
+  </div>
+  <section class="summary">
+    <h2>Remaining anatomical approximations</h2>
+    <ul>
+      <li><strong>High:</strong> ToothA, ToothB, ToothI, ToothJ, ToothK, ToothL, ToothS, ToothT —
+        molar donors are permanent molars/premolars; primary cusp counts and groove maps are approximate.
+        First-molar assets (B, I, L, S) especially need clinician review because Adult premolars were used as donors.</li>
+      <li><strong>Medium:</strong> ToothC, ToothH, ToothM, ToothR —
+        primary canine cervix/cusp proportions are warped from permanent canines.</li>
+      <li><strong>Low / optional:</strong> ToothD, ToothE, ToothF, ToothG, ToothN, ToothO, ToothP, ToothQ —
+        primary incisor bulb/short-root warps; edge detail still follows Adult path topology.</li>
+    </ul>
+  </section>
+</body>
+</html>

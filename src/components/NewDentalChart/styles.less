@@ -35,6 +35,10 @@
   &.pediatric {
     min-width: 420px;
   }
+
+  &.mixed {
+    min-width: 560px;
+  }
 }
 
 .chart-midline {
@@ -49,6 +53,32 @@
   align-items: stretch;
   justify-content: center;
   width: 100%;
+
+  &.mixed {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.chart-subrow {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+}
+
+.tooth-col-empty {
+  pointer-events: none;
+  min-height: 0;
+
+  // Preserve horizontal anatomical slot width without adding visual chrome.
+  &::after {
+    content: '';
+    display: block;
+    width: 100%;
+    min-height: 1px;
+  }
 }
 
 .tooth-col {

@@ -12,10 +12,16 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import CancellationModal from '@/components/CancellationModal/CancellationModal';
 
-import FullTooth from '../../DentalChart/Tooth/Tooth';
+import Tooth from '../Tooth/Tooth';
+import AdultOcclusal from '../Tooth/AdultOcclusal';
+import { getSurfaceStates } from '../Tooth/surfaceStates';
 import ToothActionCard from '../ToothActionCard/ToothActionCard';
+import {
+  buildDentalActionOptions,
+  renderDentalActionMenuItem
+} from '../DentalActionOption/dentalActionOptions';
 
-import { toothDisplayLabel } from '@/utils/toothNumber';
+import { isPrimaryTooth, isUpperArchTooth, toothDisplayLabel } from '@/utils/toothNumber';
 import { useGetByDentalActionQuery } from '@/services/setup/dental-action/CdtDentalActionService';
 import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 
@@ -34,6 +40,8 @@ interface ToothStateTabProps {
   eligiblePlans?: any[];
   planSessions?: any[];
   onCreatePlan?: () => void;
+  numberingSystem?: string | null;
+  numberingLabels?: Record<string, string> | null;
 }
 
 const SURFACE_OPTIONS = [
@@ -67,7 +75,9 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   clearCurrentAction,
   eligiblePlans = [],
   planSessions = [],
-  onCreatePlan
+  onCreatePlan,
+  numberingSystem = 'UNIVERSAL',
+  numberingLabels = null
 }) => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({
@@ -84,22 +94,45 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   const appliedActions = selectedTooth?.actions ?? [];
 
   const toothLabel = selectedTooth?.toothNumber
-    ? toothDisplayLabel(selectedTooth.toothNumber)
+    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem, numberingLabels)
     : '—';
+
+  // Same renderer, tooth identity (ToothA–ToothT / Tooth1–Tooth32) and action state as the chart cell.
+  const renderToothArtwork = () => {
+    const surfaceStates = getSurfaceStates(selectedTooth, dentalActionsMap);
+    const hasCondition = Object.values(surfaceStates).includes('condition');
+    const hasTreatment = Object.values(surfaceStates).includes('treatment');
+    const upper = isUpperArchTooth(selectedTooth.toothNumber);
+    const outer = (
+      <div className="tst-tooth-outer">
+        <Tooth
+          chartTooth={selectedTooth}
+          hasCondition={hasCondition}
+          hasTreatment={hasTreatment}
+          flipVertical={upper && isPrimaryTooth(selectedTooth.toothNumber)}
+        />
+      </div>
+    );
+    const occlusal = (
+      <div className="tst-tooth-occlusal">
+        <AdultOcclusal toothNumber={selectedTooth.toothNumber} surfaceStates={surfaceStates} />
+      </div>
+    );
+    return (
+      <div className="tst-tooth-art" key={`${selectedTooth.id}-${selectedTooth.toothNumber}`}>
+        {upper ? outer : occlusal}
+        {upper ? occlusal : outer}
+      </div>
+    );
+  };
 
   const sortedDentalActions = useMemo(
     () =>
-      [...(dentalActionsList ?? [])].sort((a, b) => {
-        const typeDifference =
-          Number(a.type === 'TREATMENT') -
-          Number(b.type === 'TREATMENT');
-
-        return (
-          typeDifference ||
-          (a.description ?? '').localeCompare(b.description ?? '')
-        );
-      }),
-    [dentalActionsList]
+      buildDentalActionOptions(
+        dentalActionsList,
+        currentToothAction.dentalActionId
+      ),
+    [dentalActionsList, currentToothAction.dentalActionId]
   );
 
   const { currentData: cdtDentalActionRows } =
@@ -219,25 +252,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                   selectData={sortedDentalActions}
                   selectDataLabel="description"
                   selectDataValue="id"
-                  renderMenuItem={(_, action) => (
-                    <div className="tst-action-option">
-                      <span>{action.description}</span>
-
-                      <span
-                        className={
-                          action.type === 'TREATMENT'
-                            ? 'tst-action-type tst-action-type--treatment'
-                            : 'tst-action-type tst-action-type--condition'
-                        }
-                      >
-                        <Translate>
-                          {action.type === 'TREATMENT'
-                            ? 'Treatment'
-                            : 'Condition'}
-                        </Translate>
-                      </span>
-                    </div>
-                  )}
+                  renderMenuItem={renderDentalActionMenuItem}
                 />
               </div>
 
@@ -491,12 +506,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
         <div className="tst-applied-layout">
           <div className="tst-tooth-preview">
-            {selectedTooth?.id && (
-              <FullTooth
-                key={selectedTooth.id}
-                chartTooth={selectedTooth}
-              />
-            )}
+            {selectedTooth?.id && renderToothArtwork()}
 
             <span className="tst-preview-label">
               <Translate>Tooth</Translate> #{toothLabel}
@@ -552,8 +562,15 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     }
                     note={action.note}
                     existing={action.existing}
+                    carriedForward={
+                      action.carriedFromActionId
+                        ? { by: action.originalRecordedBy, at: action.originalRecordedAt }
+                        : null
+                    }
                     anesthesiaUsed={action.anesthesiaUsed}
                     dose={action.dose}
+                    numberingSystem={numberingSystem}
+                    numberingLabels={numberingLabels}
                   />
                 </div>
               ))
