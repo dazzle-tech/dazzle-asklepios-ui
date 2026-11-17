@@ -31,6 +31,7 @@ export interface ApUser {
   canReturnClaimForResubmit: boolean;
   canCancelServiceBeforeInvoice: boolean;
   canEditSubmittedPrescription: boolean;
+  canCollectZeroPayment: boolean;
 }
 
 
@@ -6213,6 +6214,9 @@ export interface EligibilityCheckResult {
   eligibilityResponseId?: string | null;
   eligibilityResponseUrl?: string | null;
   requestStatus?: string | null;
+  /** False when the payer answered that the patient is not eligible; null when the check did not tell. */
+  eligible?: boolean | null;
+  notEligibleReason?: string | null;
 }
 
 export interface EligibilityCheckResponse {
@@ -6223,6 +6227,8 @@ export interface EligibilityCheckResponse {
   eligibilityResponseId?: string | null;
   eligibilityResponseUrl?: string | null;
   requestStatus?: string | null;
+  eligible?: boolean | null;
+  notEligibleReason?: string | null;
 }
 
 // ------------------- Waseel Pre-Authorization -------------------
