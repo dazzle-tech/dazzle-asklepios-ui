@@ -20,6 +20,12 @@ export type PagedParams = {
   name?: string;
 };
 
+type FilterPageParams = {
+  page: number;
+  size: number;
+  sort?: string;
+};
+
 export type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -79,6 +85,11 @@ const mapPagedResponse = <T>(
     links: parseLinkHeader(headers?.get('Link'))
   };
 };
+
+const toBillingRulePage = (
+  response: BillingRule[] | SpringPageResponse<BillingRule>,
+  meta: any
+) => mapPagedResponse<BillingRule>(response, meta);
 
 export const billingRuleSetupService = createApi({
   reducerPath: 'billingRuleSetupService',
@@ -171,6 +182,78 @@ export const billingRuleSetupService = createApi({
                 id: 'LIST'
               }
             ]
+    }),
+
+    getBillingRulesByName: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { name: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/by-name/${encodeURIComponent(filter.name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByItemType: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { billingItemType: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-item-type/${encodeURIComponent(filter.billingItemType)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByPaymentType: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { paymentType: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-payment-type/${encodeURIComponent(filter.paymentType)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByTrigger: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { billingTrigger: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-trigger/${encodeURIComponent(filter.billingTrigger)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByDefault: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { isDefault: boolean }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-default/${filter.isDefault}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByCreatedDate: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { from: string; to: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: '/api/setup/billing-rule/search/by-created-date',
+        params: { page, size, sort, from: filter.from, to: filter.to }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
     }),
 
     getBillingRuleById: builder.query<
@@ -298,6 +381,12 @@ export const billingRuleSetupService = createApi({
 export const {
   useGetBillingRulesQuery,
   useLazyGetBillingRulesQuery,
+  useLazyGetBillingRulesByNameQuery,
+  useLazyGetBillingRulesByItemTypeQuery,
+  useLazyGetBillingRulesByPaymentTypeQuery,
+  useLazyGetBillingRulesByTriggerQuery,
+  useLazyGetBillingRulesByDefaultQuery,
+  useLazyGetBillingRulesByCreatedDateQuery,
   useGetBillingRuleByIdQuery,
   useAddBillingRuleMutation,
   useUpdateBillingRuleMutation,
