@@ -680,3 +680,87 @@
     flex-direction: column;
   }
 }
+/* Item Price Dashboard: Items / Data checks tabs */
+.item-dashboard-tabs {
+  display: flex;
+  gap: 0.3vw;
+  border-bottom: 1px solid var(--rs-border-primary, #e5e5ea);
+}
+
+.item-dashboard-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--primary-gray);
+  padding: 0.5vw 0.9vw;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.item-dashboard-tab.is-active {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+}
+
+.item-dashboard-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vw;
+}
+
+.item-dashboard-check-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.8vw;
+}
+
+.item-dashboard-check-card {
+  text-align: start;
+  cursor: pointer;
+}
+
+.item-dashboard-check-card.is-selected {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 1px var(--primary-blue);
+}
+
+.item-dashboard-check-table {
+  border: 1px solid var(--rs-border-primary, #e5e5ea);
+  border-radius: 6px;
+  background: var(--rs-bg-card, #fff);
+  padding: 0.8vw;
+}
+
+.item-dashboard-check-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1vw;
+  margin-bottom: 0.6vw;
+
+  h3 {
+    margin: 0;
+    font-size: var(--normal-font-size, 14px);
+    color: var(--primary-blue);
+  }
+
+  p {
+    margin: 0.2vw 0 0;
+    color: var(--primary-gray);
+    font-size: var(--small-font-size, 12px);
+  }
+}
+
+.item-dashboard-check-search {
+  width: 280px;
+  max-width: 100%;
+}
+
+.item-dashboard-link {
+  border: 0;
+  background: transparent;
+  color: var(--primary-blue);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
