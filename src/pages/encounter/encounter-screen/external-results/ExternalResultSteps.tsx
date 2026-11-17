@@ -34,9 +34,10 @@ export const PatientCard = ({ patient }: { patient?: Patient }) => (
   <div className="external-result__patient">
     <FaUserInjured aria-hidden="true" />
     <div>
-      <strong>
-        <Translate>Checking against</Translate>: {patientName(patient)}
-      </strong>
+      <span>
+        <Translate>Checking against</Translate>
+      </span>
+      <strong>{patientName(patient)}</strong>
       <span>
         {[
           (patient as any)?.patientMrn && `# ${(patient as any).patientMrn}`,
