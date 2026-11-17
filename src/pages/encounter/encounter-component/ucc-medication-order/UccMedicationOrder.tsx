@@ -28,6 +28,7 @@ import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients
 import { formatEnumString } from '@/utils';
 import clsx from 'clsx';
 import './styles.less';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const UccMedicationOrder = (props: any) => {
   const location = useLocation();
@@ -260,7 +261,13 @@ const {
       key: 'medicationName',
       title: <Translate>MEDICATION NAME</Translate>,
       flexGrow: 2,
-      render: (row: any) => ingredientMap[row?.activeIngredientId]?.name || '-'
+      render: (row: any) => (
+        <ActiveIngredientLink
+          activeIngredientId={row?.activeIngredientId}
+          activeIngredient={ingredientMap[row?.activeIngredientId]}
+          label={ingredientMap[row?.activeIngredientId]?.name}
+        />
+      )
     },
     {
       key: 'highAlert',

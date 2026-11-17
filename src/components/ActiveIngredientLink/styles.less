@@ -1,0 +1,244 @@
+// Colors follow the theme, so the link and card adapt to theme changes and dark mode
+.ai-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: start;
+  color: var(--primary-blue);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration-style: solid;
+  }
+
+  &--loading {
+    cursor: progress;
+    opacity: 0.6;
+  }
+}
+
+.ai-card {
+  width: 340px;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: color-mix(in srgb, var(--primary-blue) 10%, var(--rs-bg-card));
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--primary-blue);
+  }
+
+  &__title-wrap {
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--rs-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__subtitle {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--rs-text-secondary);
+  }
+
+  &__code {
+    font-family: monospace;
+  }
+
+  &__inactive {
+    color: var(--rs-red-500);
+    font-weight: 600;
+  }
+
+  // Max height is set inline from the room left on screen; the header stays and the body scrolls
+  &__body {
+    overflow-y: auto;
+    padding: 12px 14px;
+    color: var(--rs-text-primary);
+  }
+
+  &__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  // Own class, because Translate renders a span inside the flag that a plain span selector would also style
+  &__flag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid currentColor;
+
+    &--danger {
+      color: var(--rs-red-600);
+      background: color-mix(in srgb, var(--rs-red-500) 10%, transparent);
+    }
+    &--warning {
+      color: var(--rs-orange-600);
+      background: color-mix(in srgb, var(--rs-orange-500) 10%, transparent);
+    }
+    &--dark {
+      color: var(--rs-text-primary);
+      background: var(--rs-bg-well);
+    }
+    &--purple {
+      color: var(--rs-violet-600);
+      background: color-mix(in srgb, var(--rs-violet-500) 10%, transparent);
+    }
+    &--info {
+      color: var(--rs-blue-600);
+      background: color-mix(in srgb, var(--rs-blue-500) 10%, transparent);
+    }
+    &--success {
+      color: var(--rs-green-600);
+      background: color-mix(in srgb, var(--rs-green-500) 10%, transparent);
+    }
+    &--neutral {
+      color: var(--rs-text-secondary);
+      background: var(--rs-bg-well);
+    }
+  }
+
+  &__warning {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border-inline-start: 3px solid var(--rs-text-primary);
+    border-radius: 4px;
+    background: var(--rs-bg-well);
+    font-size: 11px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+  }
+
+  &__field-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--rs-text-secondary);
+  }
+
+  &__field-value {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  &__section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rs-border-primary);
+  }
+
+  &__text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__section-title {
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-blue);
+  }
+
+  &__paragraph {
+    white-space: pre-line;
+  }
+
+  &__row {
+    padding: 6px 0;
+
+    & + & {
+      border-top: 1px dashed var(--rs-border-primary);
+    }
+  }
+
+  &__row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__row-title {
+    font-weight: 600;
+  }
+
+  &__row-text {
+    margin-top: 2px;
+    color: var(--rs-text-secondary);
+  }
+
+  &__severity {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 99px;
+    color: var(--rs-orange-600);
+    background: color-mix(in srgb, var(--rs-orange-500) 10%, transparent);
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 6px 0;
+    border: 0;
+    border-top: 1px solid var(--rs-border-primary);
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--primary-blue);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--rs-bg-well);
+    }
+  }
+
+  &__state {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    color: var(--rs-text-secondary);
+  }
+}

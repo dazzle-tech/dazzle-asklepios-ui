@@ -24,7 +24,7 @@ export const mobileAppConfigService = createApi({
       {
         configKey: string;
         configType: string | null;
-        configValue: string | null;
+        configValues: string[] | null;
         description: string | null;
       }[],
       string[]
@@ -47,10 +47,10 @@ export const mobileAppConfigService = createApi({
     }),
 
     updateMobileAppConfig: builder.mutation<MobileAppConfigResponseVM, MobileAppConfigUpdateDTO>({
-      query: ({ id, configType, configValue, description }) => ({
+      query: ({ id, configType, configValues, description }) => ({
         url: `/api/setup/mobile-app-config/${id}`,
         method: 'PUT',
-        body: { configType, configValue, description },
+        body: { configType, configValues, description },
       }),
       invalidatesTags: ['MobileAppConfig'],
     }),
@@ -65,12 +65,12 @@ export const mobileAppConfigService = createApi({
 
     createMobileAppConfigImage: builder.mutation<
       MobileAppConfigResponseVM,
-      { configKey: string; file: File; description?: string | null }
+      { configKey: string; files: File[]; description?: string | null }
     >({
-      query: ({ configKey, file, description }) => {
+      query: ({ configKey, files, description }) => {
         const body = new FormData();
         body.append('configKey', configKey);
-        body.append('file', file);
+        files.forEach(file => body.append('files', file));
         if (description != null && description !== '') {
           body.append('description', description);
         }
@@ -85,13 +85,17 @@ export const mobileAppConfigService = createApi({
 
     updateMobileAppConfigImage: builder.mutation<
       MobileAppConfigResponseVM,
-      { id: number; file?: File | null; description?: string | null }
+      {
+        id: number;
+        files?: File[];
+        keptValues?: string[];
+        description?: string | null;
+      }
     >({
-      query: ({ id, file, description }) => {
+      query: ({ id, files, keptValues, description }) => {
         const body = new FormData();
-        if (file) {
-          body.append('file', file);
-        }
+        (files ?? []).forEach(file => body.append('files', file));
+        (keptValues ?? []).forEach(value => body.append('keptValues', value));
         if (description != null) {
           body.append('description', description);
         }

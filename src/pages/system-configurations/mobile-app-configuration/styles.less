@@ -22,10 +22,84 @@
   display: block;
 }
 
+.mobile-app-config-images-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.mobile-app-config-images-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-app-config-images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mobile-app-config-image-item {
+  position: relative;
+  width: 120px;
+}
+
 .mobile-app-config-image-preview {
-  max-height: 160px;
-  max-width: 100%;
+  max-height: 120px;
+  width: 100%;
   object-fit: contain;
+  display: block;
+}
+
+.mobile-app-config-image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  padding: 0;
+}
+
+.mobile-app-config-text-values {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-app-config-text-values-label {
+  font-weight: 600;
+}
+
+.mobile-app-config-text-value-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.mobile-app-config-text-value-remove {
+  border: none;
+  background: transparent;
+  color: var(--primary-pink);
+  cursor: pointer;
+  padding: 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-app-config-text-value-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .mobile-app-config-notify-loading {

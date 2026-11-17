@@ -10,6 +10,7 @@ import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import { useEnumOptions } from '@/services/enumsApi';
 
 import {
+  useGetDepartmentByIdQuery,
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useLazyGetDepartmentByIdQuery
 } from '@/services/security/departmentService';
@@ -321,6 +322,18 @@ useEffect(() => {
     () => formatSpecialtyLabel(localEncounter?.specialty),
     [localEncounter?.specialty]
   );
+
+  const selectedDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const { data: selectedDepartmentDetails } = useGetDepartmentByIdQuery(selectedDepartmentId, {
+    skip: !selectedDepartmentId
+  });
+
+  const assignsPractitionerOnVisitStart = Boolean(
+    selectedDepartmentDetails?.assignPractitionerOnVisitStart
+  );
+
+  const allowsNullPractitionerAtRegistration =
+    localEncounter?.encounterType === 'EMERGENCY' || assignsPractitionerOnVisitStart;
 
   const mergePractitioners = (rows: any[]) => {
     if (!rows?.length) return;
@@ -722,7 +735,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
-        required={localEncounter?.encounterType !== 'EMERGENCY'}
+        required={!allowsNullPractitionerAtRegistration}
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
@@ -733,6 +746,11 @@ useEffect(() => {
         record={localEncounter}
         setRecord={handlePractitionerChange}
         disabled={isReadOnly || !localEncounter?.departmentId}
+        placeholder={
+          assignsPractitionerOnVisitStart && !isReadOnly
+            ? 'Practitioner is optional. If left blank, it will be assigned when the visit starts.'
+            : undefined
+        }
         loading={isPractitionersFetching}
         searchable
         hasMore={practHasMore}

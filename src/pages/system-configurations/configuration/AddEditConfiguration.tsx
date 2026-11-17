@@ -36,10 +36,13 @@ const toFormValue = (valueType: string | undefined, value: unknown) =>
 
 const toApiBody = (vm: ConfigurationCreateVM | ConfigurationUpdateVM) => {
     const { userId, ...rest } = vm;
+    const userIds = Array.isArray(vm.userIds)
+        ? vm.userIds.map(id => Number(id)).filter(id => Number.isFinite(id))
+        : [];
     return {
         ...rest,
         facilityId: vm.facilityId || undefined,
-        userIds: userId ? [Number(userId)] : [],
+        userIds,
         value: vm.valueType === 'BOOLEAN' ? (isBooleanOn(vm.value) ? 'true' : 'false') : vm.value
     };
 };
@@ -106,7 +109,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
     // when click on save button display a confirmation message if there is no facility
     const handleClickSave = () => {
         const record = configuration?.id ? updateVM : createVM;
-        if (record.userId && !record.facilityId) {
+        if ((record.userIds?.length ?? 0) > 0 && !record.facilityId) {
             dispatch(notify({ msg: 'Select a facility before assigning a user', sev: 'warning' }));
             return;
         }
@@ -205,27 +208,21 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                                 <Col md={12}>
                                     <MyInput
                                         width="100%"
-                                        fieldLabel="User"
-                                        fieldType="selectPagination"
-                                        fieldName="userId"
+                                        fieldLabel="Users"
+                                        fieldType="checkPicker"
+                                        fieldName="userIds"
                                         selectData={userOptions}
                                         selectDataLabel="displayName"
                                         selectDataValue="id"
                                         record={activeRecord}
-                                        setRecord={(updated: any) => {
-                                            if (!updated?.userId) {
-                                                setActiveRecord({ ...updated, userId: undefined, userIds: [] });
-                                                return;
-                                            }
-                                            setActiveRecord({ ...updated, userIds: [Number(updated.userId)] });
-                                        }}
+                                        setRecord={setActiveRecord}
                                         searchable
                                         searchKeyWard={userSearch}
                                         setSearchKeyWard={(keyword: string) => {
                                             setUserPage(0);
                                             setUserSearch(keyword);
                                         }}
-                                        placeholder={activeRecord.facilityId ? 'Search user' : 'Select a facility first'}
+                                        placeholder={activeRecord.facilityId ? 'Search users' : 'Select a facility first'}
                                         disabled={!activeRecord.facilityId}
                                         loading={loadingUsers}
                                         hasMore={!!userSearchResponse?.links?.next}
@@ -350,7 +347,6 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
         if (configuration?.id) {
             const selectedUsers = (configuration.users ?? []).map(toUserOption);
             setUserOptions(selectedUsers);
-            const firstUser = configuration.users?.[0];
             setUpdateVM({
                 id: configuration.id,
                 key: configuration.key,
@@ -359,7 +355,6 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                 referenceType: configuration.referenceType,
                 description: configuration.description,
                 facilityId: configuration.facility?.id,
-                userId: firstUser?.id,
                 userIds: (configuration.users ?? []).map(user => user.id),
                 isActive: configuration?.isActive
             });
@@ -373,16 +368,15 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
         if (!userSearchResponse?.data) return;
         const incoming = userSearchResponse.data.map(toUserOption);
         setUserOptions(prev => {
-            const selectedId = activeRecord.userId;
+            const selectedIds = new Set(activeRecord.userIds ?? []);
             const known = [...(configuration?.users ?? []).map(toUserOption), ...prev];
-            const selected = known.find(option => option.id === selectedId);
             const merged = userPage === 0 ? incoming : [...prev, ...incoming];
             const byId = new Map<number, UserOption>();
-            if (selected) byId.set(selected.id, selected);
+            known.filter(option => selectedIds.has(option.id)).forEach(option => byId.set(option.id, option));
             merged.forEach(option => byId.set(option.id, option));
             return Array.from(byId.values());
         });
-    }, [userSearchResponse, userPage, activeRecord.userId, configuration]);
+    }, [userSearchResponse, userPage, activeRecord.userIds, configuration]);
 
     return (
         <MyModal

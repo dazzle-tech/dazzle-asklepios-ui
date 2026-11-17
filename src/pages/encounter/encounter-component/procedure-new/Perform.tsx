@@ -36,6 +36,7 @@ import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
 import PreProcedureAssessment from './Pre-ProcedureAssessment/PreProcedureAssessment';
 import ProcedurePerforming from './ProcedurePerforming/ProcedurePerforming';
 import ProcedureRegistration from './ProcedureRegistration';
+import ProcedureReportButton from './ProcedureReportButton';
 import {
   canMoveToStatus,
   getStatusColor,
@@ -214,6 +215,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure, proRefetch
             </div>
           </div>
           <div className="perform-actions">
+            <ProcedureReportButton procedureRequestId={id} variant="ghost" />
             {canMove('AWAITING_CONSENT') && (
               <MyButton
                 appearance="ghost"

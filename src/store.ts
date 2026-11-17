@@ -5,6 +5,9 @@ import { summarizationService } from '@/services/summarizationService';
 
 import uiSlice from './reducers/uiSlice';
 import divSlice from './reducers/divSlice';
+import preAuthorizationMissingFieldsSlice, {
+  preAuthorizationMissingFieldsListener
+} from './reducers/preAuthorizationMissingFieldsSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import authReducer from './reducers/authSlice';
@@ -213,6 +216,7 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 import { radiologyReportService } from './services/reports/radiologyReportService';
+import { dentalTreatmentPlanReportService } from './services/reports/dentalTreatmentPlanReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { mobileAppConfigService } from './services/system-configurations/mobileAppConfigService';
@@ -286,6 +290,8 @@ import { patientTimelineService } from './services/patients/patientTimelineServi
 import { autoPopulationService } from './services/auto-Population/autoPopulationService';
 import { dischargeReportService } from './services/ai-services/dischargeReportService';
 import { ocrParsingService } from './services/ocr-parsing/ocrParsingService';
+import { externalDocumentService } from './services/ai-services/externalDocumentService';
+import { externalResultService } from './services/patients/externalResultService';
 import {labInterpretationService} from '@/services/ai-services/labInterpretationService';
 import { refreshHl7EventsService } from './services/refreshHl7EventsService';
 import { nephrologyKidneyAssessmentService } from './services/dialysis/nephrologyKidneyAssessmentService';
@@ -341,6 +347,7 @@ export const store = configureStore({
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
     [divSlice.name]: divSlice.reducer,
+    [preAuthorizationMissingFieldsSlice.name]: preAuthorizationMissingFieldsSlice.reducer,
 
     // auth
     auth: authReducer,
@@ -361,6 +368,8 @@ export const store = configureStore({
     [patientMergeService.reducerPath]: patientMergeService.reducer,
     [patientTimelineService.reducerPath]: patientTimelineService.reducer,
     [ocrParsingService.reducerPath]: ocrParsingService.reducer,
+    [externalDocumentService.reducerPath]: externalDocumentService.reducer,
+    [externalResultService.reducerPath]: externalResultService.reducer,
     [refreshHl7EventsService.reducerPath]: refreshHl7EventsService.reducer,
     [clinicalSummaryVoiceService.reducerPath]: clinicalSummaryVoiceService.reducer,
     [ambientDraftService.reducerPath]: ambientDraftService.reducer,
@@ -604,6 +613,7 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportService.reducerPath]: radiologyReportService.reducer,
+    [dentalTreatmentPlanReportService.reducerPath]: dentalTreatmentPlanReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
@@ -748,6 +758,7 @@ export const store = configureStore({
     })
       .prepend(rtkDispatchLoopGuard)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,
         summarizationService.middleware,
@@ -927,6 +938,7 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         systemConfigurationService.middleware,
         radiologyReportService.middleware,
+        dentalTreatmentPlanReportService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         mobileAppConfigService.middleware,
@@ -997,6 +1009,8 @@ export const store = configureStore({
         autoPopulationService.middleware,
         dischargeReportService.middleware,
          ocrParsingService.middleware,
+        externalDocumentService.middleware,
+        externalResultService.middleware,
         labInterpretationService.middleware,
         nephrologyKidneyAssessmentService.middleware,
         nephrologyRenalFunctionService.middleware,

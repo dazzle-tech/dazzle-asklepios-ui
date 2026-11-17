@@ -9,6 +9,7 @@ import { MdAttachFile } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTab from '@/components/MyTab/MyTab';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
@@ -39,6 +40,7 @@ import { newDentalProcedure } from '@/types/model-types-constructor-new';
 import { DentalProcedureResponseVM } from '@/types/model-types-new';
 import './styles.less';
 import ToothNumberField from './ToothNumberField';
+import ToothApprovalList from './ToothApprovalList';
 import { formatStoredToothNumber } from './toothChart';
 import SectionContainer from '@/components/SectionsoContainer';
 import MedicalHistory from '@/pages/encounter/encounter-component/patient-history/MedicalHistory/MedicalHistory';
@@ -49,6 +51,7 @@ import ChiefComplaintSection from './ChiefComplaintSection';
 import DentalHistorySection from './DentalHistorySection';
 import PatientFamilyEducationSection from './PatientFamilyEducationSection';
 import DentalSheetActions from './DentalSheetActions';
+import { readMissingFields } from '@/reducers/preAuthorizationMissingFieldsSlice';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
@@ -115,7 +118,8 @@ const normalizeMsg = (msg: string) => {
 };
 
 const handleCrudError = (error: any, dispatch: any) => {
-  if (isUncoveredCashCancelled(error)) {
+  // Missing pre-authorization fields open their own dialog (preAuthorizationMissingFieldsSlice).
+  if (isUncoveredCashCancelled(error) || readMissingFields(error)) {
     return;
   }
 
@@ -490,7 +494,12 @@ const DentalProcedures = props => {
         key: 'toothNumbers',
         title: <Translate>Tooth Number</Translate>,
         flexGrow: 1,
-        render: (row: DentalProcedureResponseVM) => formatToothNumbers(row)
+        render: (row: DentalProcedureResponseVM) =>
+          row.toothApprovals?.length ? (
+            <ToothApprovalList approvals={row.toothApprovals} />
+          ) : (
+            formatToothNumbers(row)
+          )
       },
       {
         key: 'surface',
@@ -729,58 +738,18 @@ const DentalProcedures = props => {
         open={formModalOpen}
         setOpen={setFormModalOpen}
         title={formMode === 'add' ? 'Add Dental Procedure' : 'Edit Dental Procedure'}
-        size="72vw"
+        size="92vw"
         bodyheight="82vh"
         position="right"
-        steps={[{ title: 'Procedure Details' }]}
         hideActionBtn
         content={() => (
           <div className="dental-procedure-modal">
-            <ChiefComplaintSection encounter={encounter} disabled={edit} />
-
-            <SectionContainer
-              collapsible
-              title={<Translate>Medical History</Translate>}
-              content={
-                <MedicalHistory
-                  patient={patient}
-                  encounter={encounter}
-                  edit={edit}
-                  toShowData={false}
-                  showFreeText
-                />
-              }
-            />
-
-            <DentalHistorySection patient={patient} encounter={encounter} disabled={edit} />
-
-            {patientId && encounterId ? (
-              <Form fluid>
-                <PainAssessment
-                  patientId={patientId}
-                  encounterId={encounterId}
-                  encounter={encounter}
-                  disabled={edit}
-                  title="Pain Assessment"
-                />
-              </Form>
-            ) : null}
-
-            <PatientDiagnosis
-              patient={patient}
-              encounter={encounter}
-              disabled={edit}
-              title="Patient Diagnosis"
-              hidePreviousVisits
-            />
-
-            <PatientPlan
-              patient={patient}
-              localEncounter={encounter}
-              disabled={edit}
-              title="Plan of Care"
-            />
-
+            <MyTab
+              data={[
+                {
+                  title: 'Treatment Plan',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
             <SectionContainer
               collapsible
               title={<Translate>Dental Procedure</Translate>}
@@ -923,8 +892,70 @@ const DentalProcedures = props => {
             />
 
             <PatientFamilyEducationSection patient={patient} encounter={encounter} disabled={edit} />
+                    </div>
+                  )
+                },
+                {
+                  title: 'Clinical Documentation',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
+                      <DentalSheetActions patient={patient} encounter={encounter} disabled={edit} />
 
-            <DentalSheetActions patient={patient} encounter={encounter} disabled={edit} />
+                      <div className="dental-procedure-modal__sections">
+                        <ChiefComplaintSection encounter={encounter} disabled={edit} />
+
+                        <div>
+                          <DentalHistorySection patient={patient} encounter={encounter} disabled={edit} />
+                        </div>
+
+                        <PatientPlan
+                          patient={patient}
+                          localEncounter={encounter}
+                          disabled={edit}
+                          title="Plan of Care"
+                        />
+
+                        {patientId && encounterId ? (
+                          <Form fluid>
+                            <PainAssessment
+                              patientId={patientId}
+                              encounterId={encounterId}
+                              encounter={encounter}
+                              disabled={edit}
+                              title="Pain Assessment"
+                            />
+                          </Form>
+                        ) : (
+                          <div />
+                        )}
+
+                        <SectionContainer
+                          collapsible
+                          title={<Translate>Medical History</Translate>}
+                          content={
+                            <MedicalHistory
+                              patient={patient}
+                              encounter={encounter}
+                              edit={edit}
+                              toShowData={false}
+                              showFreeText
+                            />
+                          }
+                        />
+
+                        <PatientDiagnosis
+                          patient={patient}
+                          encounter={encounter}
+                          disabled={edit}
+                          title="Patient Diagnosis"
+                          hidePreviousVisits
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+              ]}
+            />
           </div>
         )}
       />

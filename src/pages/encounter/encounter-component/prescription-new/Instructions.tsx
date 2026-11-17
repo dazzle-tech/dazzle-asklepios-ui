@@ -125,6 +125,7 @@ const Instructions = ({
                 fieldType="number"
                 fieldName="dose"
                 fieldLabel="Dose"
+                allowDecimal
                 record={customeinst}
                 setRecord={setCustomeinst}
                 required={true}

@@ -12,6 +12,9 @@ import { notify } from '@/utils/uiReducerActions';
 import MyTab from '@/components/MyTab';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
+import CancellationModal from '@/components/CancellationModal';
+import { useLazyGetUserByLoginQuery } from '@/services/userService';
+import { useCancelServiceBeforeInvoiceMutation } from '@/services/billing/billingTransactionService';
 
 import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
 import PatientBillingSide from './PatientBillingSide';
@@ -19,11 +22,13 @@ import Invoices from './Invoices';
 import Receipt from './Receipt';
 import { useLocation } from 'react-router-dom';
 import {
+  useAcceptPartialPreAuthorizationMutation,
   useCloneRejectedPreAuthorizationItemMutation,
   usePayRejectedPreAuthorizationItemAsCashMutation,
   useRefreshEncounterPreAuthorizationMutation
 } from '@/services/waseel-integration/preAuthorizationService';
 import { useDeletePatientServiceOrProductMutation } from '@/services/encounters/patientServicesAndProductsService';
+import { extractApiErrorMessage } from '@/utils';
 import { useBillingAccountingData } from './accounting/hooks/useBillingAccountingData';
 import EncounterSelector from './accounting/components/EncounterSelector';
 import BillingSummaryCards from './accounting/components/BillingSummaryCards';
@@ -35,6 +40,7 @@ import type { ChargeEstimatePrintData } from './accounting/utils/chargeEstimateP
 import WaseelCoveragePanel from './accounting/components/WaseelCoveragePanel';
 import CashFallbackBanner from './accounting/components/CashFallbackBanner';
 import PreAuthorizationBillingControls from './accounting/components/PreAuthorizationBillingControls';
+import PreAuthorizationReadinessAlert from './accounting/components/PreAuthorizationReadinessAlert';
 import WalletDepositModal from './accounting/components/WalletDepositModal';
 import WalletRefundModal from './accounting/components/WalletRefundModal';
 import CollectPaymentModal from './accounting/components/CollectPaymentModal';
@@ -50,7 +56,9 @@ import {
   patientInsuranceRecordId,
   pickDefaultPatientInsurance
 } from '@/pages/patient/patient-profile/insuranceDisplayUtils';
-import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
+import { resolvePatientId, sumEncounterReservedAmount, toNumber, computeRowRemainingAmount, computeEncounterRemainingToPay, formatMoney, isRowCollectable, isEncounterChargeCollectionComplete, isBillingServicesLocked, isEncounterClosedForBilling, encounterHasInvoice, WALLET_DEPOSIT_BUTTON_LABEL, formatEncounterDisplayLabel, normalizeBillingCoverageType } from './accounting/utils/billingAccountingUtils';
+
+import type { UnifiedBillingChargeRow } from './accounting/utils/billingAccountingUtils';
 
 import './accounting/styles.less';
 import BillingPendingQueueModal from './BillingPendingQueueModal';
@@ -135,6 +143,25 @@ const Accounting: React.FC = () => {
     usePayRejectedPreAuthorizationItemAsCashMutation();
   const [cloneRejectedPreAuthorizationItem] =
     useCloneRejectedPreAuthorizationItemMutation();
+  const [cancelServiceBeforeInvoice] = useCancelServiceBeforeInvoiceMutation();
+
+  const authUser = useAppSelector(state => state.auth.user);
+  const [getUserByLogin, { data: userByLogin }] = useLazyGetUserByLoginQuery();
+
+  useEffect(() => {
+    if (authUser?.login) {
+      getUserByLogin(authUser.login);
+    }
+  }, [authUser?.login, getUserByLogin]);
+
+  const [cancelServiceTarget, setCancelServiceTarget] =
+    useState<UnifiedBillingChargeRow | null>(null);
+  const [cancelServiceRecord, setCancelServiceRecord] = useState<{ reason: string }>({
+    reason: ''
+  });
+  const [cancelServiceLoadingId, setCancelServiceLoadingId] = useState<number | null>(null);
+
+  const [acceptPartialPreAuthorization] = useAcceptPartialPreAuthorizationMutation();
   const [cancelPatientService] = useDeletePatientServiceOrProductMutation();
 
   const facilityPrintInfo = useMemo(
@@ -593,6 +620,90 @@ const Accounting: React.FC = () => {
     }
   };
 
+  const handleOpenCancelService = (row: UnifiedBillingChargeRow) => {
+    setCancelServiceRecord({ reason: '' });
+    setCancelServiceTarget(row);
+  };
+
+  const handleCancelServiceBeforeInvoice = async () => {
+    const patientServiceProductId = cancelServiceTarget?.patientServiceProductId;
+    const reason = cancelServiceRecord.reason?.trim();
+
+    if (patientServiceProductId == null || !reason) {
+      return;
+    }
+
+    setCancelServiceLoadingId(patientServiceProductId);
+
+    try {
+      await cancelServiceBeforeInvoice({
+        patientServiceProductId,
+        reason
+      }).unwrap();
+
+      setCancelServiceTarget(null);
+      setSelectedChargeRowIds([]);
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Service cancelled and billing recalculated.',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg:
+            error?.data?.message ??
+            error?.data?.detail ??
+            error?.message ??
+            'Unable to cancel this service.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setCancelServiceLoadingId(null);
+    }
+  };
+
+  /**
+   * The patient accepts a partial approval: insurance pays the approved amount and the
+   * patient pays the difference. The other choice is "Cancel service".
+   */
+  const handleAcceptPartial = async (patientServiceProductId: number) => {
+    if (selectedEncounterId == null) {
+      return;
+    }
+
+    setPreAuthActionLoadingId(patientServiceProductId);
+
+    try {
+      await acceptPartialPreAuthorization({
+        encounterId: selectedEncounterId,
+        patientServiceProductId
+      }).unwrap();
+
+      await refreshAll();
+
+      dispatch(
+        notify({
+          msg: 'Partial approval accepted: insurance pays the approved amount, the patient pays the rest.',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: extractApiErrorMessage(error) || 'Unable to accept the partial approval.',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setPreAuthActionLoadingId(null);
+    }
+  };
+
   const handleClonePreAuthorization = async (patientServiceProductId: number) => {
     if (selectedEncounterId == null) {
       return;
@@ -763,6 +874,11 @@ const Accounting: React.FC = () => {
     loadingBillingWorkspace || billingRefreshPending || refreshingPreAuthorization;
 
   const billingChargeFinalized = chargeCollectionComplete;
+
+  const canCancelServicesBeforeInvoice =
+    Boolean(userByLogin?.canCancelServiceBeforeInvoice) &&
+    resolvedInvoiceId == null &&
+    !encounterHasInvoice(summary);
 
   const preAuthBlocksCheckout = useMemo(
     () =>
@@ -947,6 +1063,9 @@ const Accounting: React.FC = () => {
                   Print unofficial estimate
                 </MyButton>
               </div>
+              {coverageType === 'INSURANCE' && (
+                <PreAuthorizationReadinessAlert encounterId={selectedEncounterId} onSent={refreshAll} />
+              )}
               <PreAuthorizationBillingControls
                 visible={coverageType === 'INSURANCE' && selectedEncounterId != null}
                 pendingCount={pendingPreAuthItems.length}
@@ -968,7 +1087,11 @@ const Accounting: React.FC = () => {
                 showPreAuthActions={coverageType === 'INSURANCE'}
                 preAuthActionLoadingId={preAuthActionLoadingId}
                 onPayRejectedAsCash={handlePayRejectedAsCash}
+                onAcceptPartial={handleAcceptPartial}
                 onClonePreAuthorization={handleClonePreAuthorization}
+                canCancelServices={canCancelServicesBeforeInvoice}
+                cancelServiceLoadingId={cancelServiceLoadingId}
+                onCancelServiceBeforeInvoice={handleOpenCancelService}
                 onCancelService={handleCancelPreAuthService}
               />
             </div>
@@ -1023,6 +1146,8 @@ const Accounting: React.FC = () => {
       facilityId,
       handleClonePreAuthorization,
       handleConvertRejectedToCash,
+      canCancelServicesBeforeInvoice,
+      cancelServiceLoadingId,
       handlePayRejectedAsCash,
       handlePrintChargeEstimate,
       handleRefreshPreAuthorization,
@@ -1205,6 +1330,24 @@ const Accounting: React.FC = () => {
               setSelectedChargeRowIds([]);
               void refreshAll();
             }}
+          />
+          <CancellationModal
+            open={cancelServiceTarget != null}
+            setOpen={(open: boolean) => {
+              if (!open && cancelServiceLoadingId == null) {
+                setCancelServiceTarget(null);
+              }
+            }}
+            handleCancle={handleCancelServiceBeforeInvoice}
+            object={cancelServiceRecord}
+            setObject={setCancelServiceRecord}
+            fieldName="reason"
+            fieldLabel={`Cancellation reason${
+              cancelServiceTarget?.itemName ? ` (${cancelServiceTarget.itemName})` : ''
+            }`}
+            title="Service Cancellation"
+            statusField="cancelStatus"
+            required
           />
           <PaymentReceiptModal
             open={paymentReceiptModal.open}

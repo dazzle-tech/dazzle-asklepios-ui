@@ -14,6 +14,7 @@ import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patie
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const PatientChronicMedication = ({ patient, title = null, loadingHeight = undefined }) => {
   const [open, setOpen] = useState(false);
@@ -102,7 +103,7 @@ const activeIngredientsMap = useMemo(() => {
         flexGrow: 1,
         render: (rowData: any) => {
          const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
-          return ingredient?.name ? String(ingredient.name) : '-';
+          return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
         }
   
     },

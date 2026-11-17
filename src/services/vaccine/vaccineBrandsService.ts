@@ -35,11 +35,12 @@ export const vaccineBrandsService = createApi({
   endpoints: builder => ({
     getVaccineBrandsByVaccine: builder.query<
       PagedResult<modelTypes.VaccineBrand>,
-      { vaccineId: Id } & PagedParams
+      // isActive: true = active only, false = inactive only, omitted = all
+      { vaccineId: Id; isActive?: boolean } & PagedParams
     >({
-      query: ({ vaccineId, page, size, sort = 'id,asc' }) => ({
+      query: ({ vaccineId, isActive, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine-brands/by-vaccine/${vaccineId}`,
-        params: { page, size, sort }
+        params: { page, size, sort, ...(isActive === undefined ? {} : { isActive }) }
       }),
       transformResponse: mapPaged,
       providesTags: (_res, _err, { vaccineId }) => [

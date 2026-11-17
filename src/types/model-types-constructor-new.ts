@@ -30,6 +30,8 @@ export const newApUser: modelTypes.ApUser = {
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
   canReturnClaimForResubmit: false,
+  canCancelServiceBeforeInvoice: false,
+  canEditSubmittedPrescription: false,
 };
 
 // ------------------- Candidate -------------------
@@ -65,6 +67,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,
@@ -4228,12 +4231,25 @@ export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM 
   configKey: '',
   configType: '',
   configValue: '',
+  configValues: [],
   description: ''
 };
 
 export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
   configKey: '',
   configType: '',
-  configValue: '',
+  configValues: [''],
   description: ''
+};
+
+// ------------------- External Results (Scan Document) -------------------
+
+export const newExternalLabResultEntry: modelTypes.ExternalLabResultEntry = {
+  testName: '',
+  resultDate: null,
+  resultValue: null,
+  unit: null,
+  normalRangeValue: null,
+  marker: 'UNKNOWN',
+  physicianName: null
 };

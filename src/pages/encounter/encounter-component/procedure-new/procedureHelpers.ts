@@ -57,7 +57,7 @@ export const isCurrentDepartment = (record: any): boolean =>
  * permissions and the visit's Procedure tab hides its Perform column. Set to true
  * to bring Perform back (current department from the visit, the rest from the module).
  */
-export const PROCEDURE_MODULE_IN_USE = true;
+export const PROCEDURE_MODULE_IN_USE = false;
 
 /** Whether the visit's Procedure tab may open Perform for this procedure. */
 export const canPerformFromVisit = (record: any): boolean =>

@@ -673,12 +673,24 @@ const Tests = forwardRef<any, Props>(
             rowData.status === DiagnosticOrderTestStatus.SUBMITTED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED &&
             !blockedByPreAuthorization;
+          // Accept requires a collected sample, so later statuses also mean collected
+          const isSampleCollected = [
+            DiagnosticOrderTestStatus.SAMPLE_COLLECTED,
+            DiagnosticOrderTestStatus.ACCEPTED,
+            DiagnosticOrderTestStatus.RESULT_READY,
+            DiagnosticOrderTestStatus.RESULT_APPROVED,
+            DiagnosticOrderTestStatus.RESULT_REJECTED
+          ].includes(rowData.processingStatus);
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faVialCircleCheck}
                 className="icon-laboratory-size"
-                style={{ fontSize: '1em', cursor: canCollectSample ? 'pointer' : 'not-allowed' }}
+                style={{
+                  fontSize: '1em',
+                  cursor: canCollectSample ? 'pointer' : 'not-allowed',
+                  ...(isSampleCollected && { color: 'var(--primary-blue)' })
+                }}
                 onClick={() => {
                   if (blockedByPreAuthorization) {
                     dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
