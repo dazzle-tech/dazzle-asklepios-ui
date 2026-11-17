@@ -8,6 +8,52 @@
   display: flex;
   align-items: center;
   gap: 12px;
+
+  // rsuite spaces form groups 24px apart vertically, which pushes the inputs above the buttons in a row
+  // !important: rsuite's selector (.rs-form:not(.rs-form-inline) ...) is more specific than this one
+  .rs-form-group:not(:last-child) {
+    margin-bottom: 0 !important;
+  }
+
+  .rs-form-control-label:empty {
+    display: none;
+  }
+}
+
+// File picker and Import button, pushed to the right of the SBS filters
+.waseel-sbs-import {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+.waseel-sbs-file-name {
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--rs-text-secondary);
+}
+
+// Mapping tab: buttons on the right of the first row, Advanced fields on their own row below
+.waseel-mapping-filters {
+  flex-wrap: wrap;
+
+  .bt-right-group {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .advanced-filters {
+    flex-basis: 100%;
+    margin-top: 0;
+
+    .dissss {
+      gap: 12px;
+    }
+  }
 }
 
 .waseel-mapping-form {

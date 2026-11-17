@@ -56,18 +56,23 @@ import {
 import {
     useChangeTaxActivationStatusMutation,
     useDeleteTaxMutation,
-    useGetTaxesByCalculationTypeQuery,
-    useGetTaxesByCodeQuery,
     useGetTaxesByFacilityQuery,
-    useGetTaxesByNameQuery,
-    useGetTaxesByTaxTypeQuery,
+    useLazyGetTaxesByActiveQuery,
+    useLazyGetTaxesByApplicableOnQuery,
+    useLazyGetTaxesByCalculationTypeQuery,
+    useLazyGetTaxesByCitizenCategoryQuery,
+    useLazyGetTaxesByClaimShareQuery,
+    useLazyGetTaxesByCodeQuery,
+    useLazyGetTaxesByDefaultQuery,
+    useLazyGetTaxesByNameQuery,
+    useLazyGetTaxesByPatientCopaymentQuery,
+    useLazyGetTaxesByTaxTypeQuery,
+    useLazyGetTaxesByValueQuery,
     useSetDefaultTaxMutation
 } from '@/services/billing/taxService';
 
 import type {
-    Tax,
-    TaxCalculationType,
-    TaxType
+    Tax
 } from '@/types/model-types-new';
 
 import {
@@ -78,25 +83,9 @@ import AddEditTax from './AddEditTax';
 
 import './styles.less';
 
-type FilterCriteria =
-    | ''
-    | 'code'
-    | 'name'
-    | 'taxType'
-    | 'calculationType';
-
-type TaxFilter = {
-    criteria:
-    FilterCriteria;
-
-    textValue:
-    string;
-
-    taxType:
-    TaxType | '';
-
-    calculationType:
-    TaxCalculationType | '';
+type FilterState = {
+    filter: string;
+    value: any;
 };
 
 type ApiFieldError = {
@@ -118,51 +107,37 @@ type ApiErrorData = {
     ApiFieldError[];
 };
 
-const filterCriteriaOptions = [
-    {
-        label:
-            'Code',
+const initialFilterState: FilterState = {
+    filter: '',
+    value: ''
+};
 
-        value:
-            'code'
-    },
-    {
-        label:
-            'Name',
-
-        value:
-            'name'
-    },
-    {
-        label:
-            'Tax Type',
-
-        value:
-            'taxType'
-    },
-    {
-        label:
-            'Calculation Type',
-
-        value:
-            'calculationType'
-    }
+const filterFields = [
+    { label: 'Code', value: 'code' },
+    { label: 'Name', value: 'name' },
+    { label: 'Tax Type', value: 'taxType' },
+    { label: 'Tax Value', value: 'value' },
+    { label: 'Calculation', value: 'calculationType' },
+    { label: 'Applicable On', value: 'applicableOn' },
+    { label: 'Citizen Category', value: 'citizenCategory' },
+    { label: 'Patient Copayment', value: 'applyOnPatientCopayment' },
+    { label: 'Claim Share', value: 'applyOnClaimShare' },
+    { label: 'Default', value: 'isDefault' },
+    { label: 'Active', value: 'active' }
 ];
 
-const initialTaxFilter:
-    TaxFilter = {
-    criteria:
-        '',
+const taxedOptions = [
+    { label: 'Taxed', value: true },
+    { label: 'Not Taxed', value: false }
+];
 
-    textValue:
-        '',
+const isEmptyFilterValue = (value: unknown) =>
+    value === null ||
+    value === undefined ||
+    (typeof value === 'string' && value.trim() === '');
 
-    taxType:
-        '',
-
-    calculationType:
-        ''
-};
+const toBoolean = (value: unknown) =>
+    value === true || value === 'true';
 
 const taxFieldLabels:
     Record<string, string> = {
@@ -539,6 +514,24 @@ const TaxSetup:
                 'TaxCalculationType'
             );
 
+        // Same choices as the Applicable On field in AddEditTax
+        const billingCategoryOptions =
+            useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
+        const applicableOnOptions = useMemo(
+            () => [
+                { value: 'INVOICE', label: 'Invoice' },
+                { value: 'CHARGE_LINE', label: 'Charge Line' },
+                ...billingCategoryOptions
+            ],
+            [billingCategoryOptions]
+        );
+
+        const citizenCategoryOptions = [
+            { value: 'ALL', label: 'All' },
+            { value: 'CITIZEN', label: 'Citizens' },
+            { value: 'NON_CITIZEN', label: 'Non-Citizens' }
+        ];
+
         const [
             selectedTax,
             setSelectedTax
@@ -610,59 +603,36 @@ const TaxSetup:
                 'desc'
             );
 
-        const [
-            taxFilter,
-            setTaxFilter
-        ] =
-            useState<TaxFilter>({
-                ...initialTaxFilter
-            });
+        // Filter being edited in the filter bar, and the one the table currently shows
+        const [recordOfFilter, setRecordOfFilter] =
+            useState<FilterState>(initialFilterState);
+        const [activeFilter, setActiveFilter] =
+            useState<FilterState>(initialFilterState);
+        const [isFiltered, setIsFiltered] = useState(false);
+        const [filteredData, setFilteredData] = useState<Tax[]>([]);
+        const [filteredTotal, setFilteredTotal] = useState<number>(0);
+        const [isFilterLoading, setIsFilterLoading] = useState(false);
 
-        const [
-            appliedTaxFilter,
-            setAppliedTaxFilter
-        ] =
-            useState<TaxFilter>({
-                ...initialTaxFilter
-            });
+        // Filtered pagination (independent state)
+        const [filterPagination, setFilterPagination] = useState({
+            page: 0,
+            size: 15,
+            sort: 'id,desc'
+        });
 
-        const hasCodeFilter =
-            appliedTaxFilter.criteria ===
-            'code' &&
-            Boolean(
-                appliedTaxFilter.textValue
-                    .trim()
-            );
+        const [fetchByCode] = useLazyGetTaxesByCodeQuery();
+        const [fetchByName] = useLazyGetTaxesByNameQuery();
+        const [fetchByTaxType] = useLazyGetTaxesByTaxTypeQuery();
+        const [fetchByValue] = useLazyGetTaxesByValueQuery();
+        const [fetchByCalculationType] = useLazyGetTaxesByCalculationTypeQuery();
+        const [fetchByApplicableOn] = useLazyGetTaxesByApplicableOnQuery();
+        const [fetchByCitizenCategory] = useLazyGetTaxesByCitizenCategoryQuery();
+        const [fetchByPatientCopayment] = useLazyGetTaxesByPatientCopaymentQuery();
+        const [fetchByClaimShare] = useLazyGetTaxesByClaimShareQuery();
+        const [fetchByDefault] = useLazyGetTaxesByDefaultQuery();
+        const [fetchByActive] = useLazyGetTaxesByActiveQuery();
 
-        const hasNameFilter =
-            appliedTaxFilter.criteria ===
-            'name' &&
-            Boolean(
-                appliedTaxFilter.textValue
-                    .trim()
-            );
-
-        const hasTaxTypeFilter =
-            appliedTaxFilter.criteria ===
-            'taxType' &&
-            Boolean(
-                appliedTaxFilter.taxType
-            );
-
-        const hasCalculationTypeFilter =
-            appliedTaxFilter.criteria ===
-            'calculationType' &&
-            Boolean(
-                appliedTaxFilter
-                    .calculationType
-            );
-
-        const hasAnyFilter =
-            hasCodeFilter ||
-            hasNameFilter ||
-            hasTaxTypeFilter ||
-            hasCalculationTypeFilter;
-
+        // Main list: all taxes of the facility
         const allTaxesQuery =
             useGetTaxesByFacilityQuery(
                 {
@@ -683,126 +653,7 @@ const TaxSetup:
                 },
                 {
                     skip:
-                        !facilityId ||
-                        hasAnyFilter
-                }
-            );
-
-        const taxesByCodeQuery =
-            useGetTaxesByCodeQuery(
-                {
-                    facilityId:
-                        facilityId as number,
-
-                    value:
-                        appliedTaxFilter
-                            .textValue,
-
-                    page:
-                        paginationParams.page,
-
-                    size:
-                        paginationParams.size,
-
-                    sort:
-                        paginationParams.sort,
-
-                    timestamp:
-                        paginationParams.timestamp
-                },
-                {
-                    skip:
-                        !facilityId ||
-                        !hasCodeFilter
-                }
-            );
-
-        const taxesByNameQuery =
-            useGetTaxesByNameQuery(
-                {
-                    facilityId:
-                        facilityId as number,
-
-                    value:
-                        appliedTaxFilter
-                            .textValue,
-
-                    page:
-                        paginationParams.page,
-
-                    size:
-                        paginationParams.size,
-
-                    sort:
-                        paginationParams.sort,
-
-                    timestamp:
-                        paginationParams.timestamp
-                },
-                {
-                    skip:
-                        !facilityId ||
-                        !hasNameFilter
-                }
-            );
-
-        const taxesByTaxTypeQuery =
-            useGetTaxesByTaxTypeQuery(
-                {
-                    facilityId:
-                        facilityId as number,
-
-                    taxType:
-                        appliedTaxFilter
-                            .taxType as
-                        TaxType,
-
-                    page:
-                        paginationParams.page,
-
-                    size:
-                        paginationParams.size,
-
-                    sort:
-                        paginationParams.sort,
-
-                    timestamp:
-                        paginationParams.timestamp
-                },
-                {
-                    skip:
-                        !facilityId ||
-                        !hasTaxTypeFilter
-                }
-            );
-
-        const taxesByCalculationTypeQuery =
-            useGetTaxesByCalculationTypeQuery(
-                {
-                    facilityId:
-                        facilityId as number,
-
-                    calculationType:
-                        appliedTaxFilter
-                            .calculationType as
-                        TaxCalculationType,
-
-                    page:
-                        paginationParams.page,
-
-                    size:
-                        paginationParams.size,
-
-                    sort:
-                        paginationParams.sort,
-
-                    timestamp:
-                        paginationParams.timestamp
-                },
-                {
-                    skip:
-                        !facilityId ||
-                        !hasCalculationTypeFilter
+                        !facilityId
                 }
             );
 
@@ -839,146 +690,114 @@ const TaxSetup:
         ] =
             useSetDefaultTaxMutation();
 
-        const activeResponse =
-            useMemo(() => {
-                if (
-                    hasCodeFilter
-                ) {
-                    return {
-                        data:
-                            taxesByCodeQuery
-                                .data?.data ??
-                            [],
+        const activeResponse = useMemo(
+            () =>
+                isFiltered
+                    ? { data: filteredData, totalCount: filteredTotal }
+                    : {
+                        data: allTaxesQuery.data?.data ?? [],
+                        totalCount: allTaxesQuery.data?.totalCount ?? 0
+                    },
+            [isFiltered, filteredData, filteredTotal, allTaxesQuery.data]
+        );
 
-                        totalCount:
-                            taxesByCodeQuery
-                                .data
-                                ?.totalCount ??
-                            0
-                    };
-                }
+        const isFetching = isFiltered
+            ? isFilterLoading
+            : allTaxesQuery.isFetching;
 
-                if (
-                    hasNameFilter
-                ) {
-                    return {
-                        data:
-                            taxesByNameQuery
-                                .data?.data ??
-                            [],
+        // ===== Filtering =====
+        const runFilterQuery = async (
+            fieldName: string,
+            value: any,
+            page: number,
+            size: number,
+            sort: string
+        ) => {
+            const params = { facilityId: facilityId as number, page, size, sort };
 
-                        totalCount:
-                            taxesByNameQuery
-                                .data
-                                ?.totalCount ??
-                            0
-                    };
-                }
+            if (fieldName === 'code') {
+                return await fetchByCode({ ...params, value: String(value).trim() }).unwrap();
+            } else if (fieldName === 'name') {
+                return await fetchByName({ ...params, value: String(value).trim() }).unwrap();
+            } else if (fieldName === 'taxType') {
+                return await fetchByTaxType({ ...params, taxType: value }).unwrap();
+            } else if (fieldName === 'value') {
+                return await fetchByValue({ ...params, value: Number(value) }).unwrap();
+            } else if (fieldName === 'calculationType') {
+                return await fetchByCalculationType({ ...params, calculationType: value }).unwrap();
+            } else if (fieldName === 'applicableOn') {
+                return await fetchByApplicableOn({ ...params, value }).unwrap();
+            } else if (fieldName === 'citizenCategory') {
+                return await fetchByCitizenCategory({ ...params, value }).unwrap();
+            } else if (fieldName === 'applyOnPatientCopayment') {
+                return await fetchByPatientCopayment({ ...params, value: toBoolean(value) }).unwrap();
+            } else if (fieldName === 'applyOnClaimShare') {
+                return await fetchByClaimShare({ ...params, value: toBoolean(value) }).unwrap();
+            } else if (fieldName === 'isDefault') {
+                return await fetchByDefault({ ...params, value: toBoolean(value) }).unwrap();
+            } else if (fieldName === 'active') {
+                return await fetchByActive({ ...params, value: toBoolean(value) }).unwrap();
+            }
 
-                if (
-                    hasTaxTypeFilter
-                ) {
-                    return {
-                        data:
-                            taxesByTaxTypeQuery
-                                .data?.data ??
-                            [],
+            return undefined;
+        };
 
-                        totalCount:
-                            taxesByTaxTypeQuery
-                                .data
-                                ?.totalCount ??
-                            0
-                    };
-                }
+        // Reset to main list
+        const resetToUnfiltered = () => {
+            setIsFiltered(false);
+            setActiveFilter(initialFilterState);
+            setFilteredData([]);
+            setFilteredTotal(0);
+            setFilterPagination(previous => ({ ...previous, page: 0 }));
+            setPaginationParams(previous => ({ ...previous, page: 0, timestamp: Date.now() }));
+        };
 
-                if (
-                    hasCalculationTypeFilter
-                ) {
-                    return {
-                        data:
-                            taxesByCalculationTypeQuery
-                                .data?.data ??
-                            [],
+        // Apply/Clear filters
+        const handleFilterChange = async (
+            fieldName: string,
+            value: any,
+            page = 0,
+            size = filterPagination.size,
+            sort = filterPagination.sort
+        ) => {
+            if (!facilityId) {
+                return;
+            }
 
-                        totalCount:
-                            taxesByCalculationTypeQuery
-                                .data
-                                ?.totalCount ??
-                            0
-                    };
-                }
+            if (!fieldName || isEmptyFilterValue(value)) {
+                resetToUnfiltered();
+                return;
+            }
 
-                return {
-                    data:
-                        allTaxesQuery
-                            .data?.data ??
-                        [],
+            setIsFilterLoading(true);
+            try {
+                const resp = await runFilterQuery(fieldName, value, page, size, sort);
+                setFilteredData(resp?.data ?? []);
+                setFilteredTotal(resp?.totalCount ?? 0);
+                setActiveFilter({ filter: fieldName, value });
+                setIsFiltered(true);
+                setFilterPagination(previous => ({ ...previous, page, size, sort }));
+            } catch (error: any) {
+                dispatch(
+                    notify({
+                        msg: extractTaxErrorMessage(error, 'Failed to load taxes'),
+                        sev: 'error'
+                    })
+                );
+            } finally {
+                setIsFilterLoading(false);
+            }
+        };
 
-                    totalCount:
-                        allTaxesQuery
-                            .data?.totalCount ??
-                        0
-                };
-            }, [
-                hasCodeFilter,
-                hasNameFilter,
-                hasTaxTypeFilter,
-                hasCalculationTypeFilter,
-                taxesByCodeQuery.data,
-                taxesByNameQuery.data,
-                taxesByTaxTypeQuery.data,
-                taxesByCalculationTypeQuery.data,
-                allTaxesQuery.data
-            ]);
-
-        const isFetching =
-            allTaxesQuery
-                .isFetching ||
-            taxesByCodeQuery
-                .isFetching ||
-            taxesByNameQuery
-                .isFetching ||
-            taxesByTaxTypeQuery
-                .isFetching ||
-            taxesByCalculationTypeQuery
-                .isFetching;
-
+        // Reload whatever the table shows after add/edit/delete/default/activation changes
         const refetchActiveQuery =
             async () => {
-                if (
-                    hasCodeFilter
-                ) {
-                    await taxesByCodeQuery
-                        .refetch();
-
-                    return;
-                }
-
-                if (
-                    hasNameFilter
-                ) {
-                    await taxesByNameQuery
-                        .refetch();
-
-                    return;
-                }
-
-                if (
-                    hasTaxTypeFilter
-                ) {
-                    await taxesByTaxTypeQuery
-                        .refetch();
-
-                    return;
-                }
-
-                if (
-                    hasCalculationTypeFilter
-                ) {
-                    await taxesByCalculationTypeQuery
-                        .refetch();
-
+                if (isFiltered) {
+                    await handleFilterChange(
+                        activeFilter.filter,
+                        activeFilter.value,
+                        filterPagination.page
+                    );
                     return;
                 }
 
@@ -1034,13 +853,11 @@ const TaxSetup:
         }, []);
 
         useEffect(() => {
-            setTaxFilter({
-                ...initialTaxFilter
-            });
-
-            setAppliedTaxFilter({
-                ...initialTaxFilter
-            });
+            setRecordOfFilter(initialFilterState);
+            setActiveFilter(initialFilterState);
+            setIsFiltered(false);
+            setFilteredData([]);
+            setFilteredTotal(0);
 
             setPaginationParams(
                 previous => ({
@@ -1057,95 +874,12 @@ const TaxSetup:
             facilityId
         ]);
 
-        const handleResetFilter =
-            () => {
-                setTaxFilter({
-                    ...initialTaxFilter
-                });
-
-                setAppliedTaxFilter({
-                    ...initialTaxFilter
-                });
-
-                setPaginationParams(
-                    previous => ({
-                        ...previous,
-
-                        page:
-                            0,
-
-                        timestamp:
-                            Date.now()
-                    })
-                );
-            };
-
-        const handleSearch =
-            () => {
-                const {
-                    criteria,
-                    textValue,
-                    taxType,
-                    calculationType
-                } =
-                    taxFilter;
-
-                const valid =
-                    (
-                        (
-                            criteria ===
-                            'code' ||
-                            criteria ===
-                            'name'
-                        ) &&
-                        Boolean(
-                            textValue.trim()
-                        )
-                    ) ||
-                    (
-                        criteria ===
-                        'taxType' &&
-                        Boolean(
-                            taxType
-                        )
-                    ) ||
-                    (
-                        criteria ===
-                        'calculationType' &&
-                        Boolean(
-                            calculationType
-                        )
-                    );
-
-                if (!valid) {
-                    handleResetFilter();
-
-                    return;
-                }
-
-                setAppliedTaxFilter({
-                    criteria,
-
-                    textValue:
-                        textValue.trim(),
-
-                    taxType,
-
-                    calculationType
-                });
-
-                setPaginationParams(
-                    previous => ({
-                        ...previous,
-
-                        page:
-                            0,
-
-                        timestamp:
-                            Date.now()
-                    })
-                );
-            };
+        const handleSearch = () => {
+            handleFilterChange(
+                recordOfFilter.filter,
+                recordOfFilter.value
+            );
+        };
 
         const handleNew =
             () => {
@@ -1399,6 +1133,15 @@ const TaxSetup:
             newPage:
                 number
         ) => {
+            if (isFiltered) {
+                handleFilterChange(
+                    activeFilter.filter,
+                    activeFilter.value,
+                    newPage
+                );
+                return;
+            }
+
             setPaginationParams(
                 previous => ({
                     ...previous,
@@ -1420,6 +1163,16 @@ const TaxSetup:
                 Number(
                     event.target.value
                 );
+
+            if (isFiltered) {
+                handleFilterChange(
+                    activeFilter.filter,
+                    activeFilter.value,
+                    0,
+                    newSize
+                );
+                return;
+            }
 
             setPaginationParams(
                 previous => ({
@@ -1450,6 +1203,17 @@ const TaxSetup:
             setSortType(
                 type
             );
+
+            if (isFiltered) {
+                handleFilterChange(
+                    activeFilter.filter,
+                    activeFilter.value,
+                    0,
+                    filterPagination.size,
+                    `${column},${type}`
+                );
+                return;
+            }
 
             setPaginationParams(
                 previous => ({
@@ -1882,155 +1646,106 @@ const TaxSetup:
             }
         ];
 
-        const filters =
-            () => (
-                <Form
-                    fluid
-                    className="form-of-filters-set-up"
-                >
-                    <MyInput
-                        width="190px"
-                        fieldName="criteria"
-                        fieldType="select"
-                        selectData={
-                            filterCriteriaOptions
-                        }
-                        selectDataLabel="label"
-                        selectDataValue="value"
-                        record={
-                            taxFilter
-                        }
-                        setRecord={(
-                            updated:
-                                any
-                        ) => {
-                            const next =
-                                typeof updated ===
-                                    'function'
-                                    ? updated(
-                                        taxFilter
-                                    )
-                                    : updated;
-
-                            const nextCriteria =
-                                (
-                                    next?.criteria ??
-                                    ''
-                                ) as
-                                FilterCriteria;
-
-                            if (
-                                !nextCriteria
-                            ) {
-                                handleResetFilter();
-
-                                return;
-                            }
-
-                            setTaxFilter({
-                                ...initialTaxFilter,
-
-                                criteria:
-                                    nextCriteria
-                            });
-                        }}
-                        showLabel={false}
-                        placeholder="Select Criteria"
-                        searchable={false}
-                    />
-
-                    {(
-                        taxFilter.criteria ===
-                        'code' ||
-                        taxFilter.criteria ===
-                        'name'
-                    ) && (
-                            <MyInput
-                                width="240px"
-                                fieldName="textValue"
-                                record={
-                                    taxFilter
-                                }
-                                setRecord={
-                                    setTaxFilter
-                                }
-                                showLabel={false}
-                                placeholder={
-                                    taxFilter.criteria ===
-                                        'code'
-                                        ? 'Enter Tax Code'
-                                        : 'Enter Tax Name'
-                                }
-                            />
-                        )}
-
-                    {taxFilter.criteria ===
-                        'taxType' && (
-                            <MyInput
-                                width="220px"
-                                fieldName="taxType"
-                                fieldType="select"
-                                selectData={
-                                    taxTypeOptions
-                                }
-                                selectDataLabel="label"
-                                selectDataValue="value"
-                                record={
-                                    taxFilter
-                                }
-                                setRecord={
-                                    setTaxFilter
-                                }
-                                showLabel={false}
-                                placeholder="Select Tax Type"
-                                searchable={false}
-                            />
-                        )}
-
-                    {taxFilter.criteria ===
-                        'calculationType' && (
-                            <MyInput
-                                width="240px"
-                                fieldName="calculationType"
-                                fieldType="select"
-                                selectData={
-                                    calculationTypeOptions
-                                }
-                                selectDataLabel="label"
-                                selectDataValue="value"
-                                record={
-                                    taxFilter
-                                }
-                                setRecord={
-                                    setTaxFilter
-                                }
-                                showLabel={false}
-                                placeholder="Select Calculation Type"
-                                searchable={false}
-                            />
-                        )}
-
-                    <MyButton
-                        color="var(--deep-blue)"
-                        onClick={
-                            handleSearch
-                        }
-                        width="80px"
-                    >
-                        Search
-                    </MyButton>
-
-                    <MyButton
-                        color="var(--primary-gray)"
-                        onClick={
-                            handleResetFilter
-                        }
-                        width="80px"
-                    >
-                        Clear
-                    </MyButton>
-                </Form>
+        const renderFilterValueInput = () => {
+            const selectInput = (
+                options: { label: string; value: any }[]
+            ) => (
+                <MyInput
+                    width={220}
+                    fieldName="value"
+                    fieldLabel=""
+                    fieldType="select"
+                    selectData={options}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={recordOfFilter}
+                    setRecord={setRecordOfFilter}
+                    searchable={false}
+                />
             );
+
+            switch (recordOfFilter.filter) {
+                case 'taxType':
+                    return selectInput(taxTypeOptions ?? []);
+                case 'calculationType':
+                    return selectInput(calculationTypeOptions ?? []);
+                case 'applicableOn':
+                    return selectInput(applicableOnOptions);
+                case 'citizenCategory':
+                    return selectInput(citizenCategoryOptions);
+                case 'applyOnPatientCopayment':
+                case 'applyOnClaimShare':
+                    return selectInput(taxedOptions);
+                case 'isDefault':
+                    return selectInput([
+                        { label: 'Default', value: true },
+                        { label: 'No', value: false }
+                    ]);
+                case 'active':
+                    return selectInput([
+                        { label: 'Active', value: true },
+                        { label: 'Inactive', value: false }
+                    ]);
+                case 'value':
+                    return (
+                        <MyInput
+                            fieldName="value"
+                            fieldType="number"
+                            record={recordOfFilter}
+                            setRecord={setRecordOfFilter}
+                            showLabel={false}
+                            placeholder="Enter Value"
+                            width={220}
+                        />
+                    );
+                default:
+                    return (
+                        <MyInput
+                            fieldName="value"
+                            fieldType="text"
+                            record={recordOfFilter}
+                            setRecord={setRecordOfFilter}
+                            showLabel={false}
+                            placeholder="Enter Value"
+                            width={220}
+                            enterClick={handleSearch}
+                        />
+                    );
+            }
+        };
+
+        const filters = () => (
+            <Form fluid className="form-of-filters-set-up">
+                <MyInput
+                    selectDataValue="value"
+                    selectDataLabel="label"
+                    selectData={filterFields}
+                    fieldName="filter"
+                    fieldType="select"
+                    record={recordOfFilter}
+                    setRecord={(updated: FilterState) =>
+                        setRecordOfFilter({
+                            filter: updated.filter,
+                            value: ''
+                        })
+                    }
+                    showLabel={false}
+                    placeholder="Select Filter"
+                    searchable={false}
+                    width="170px"
+                />
+
+                {renderFilterValueInput()}
+
+                <MyButton
+                    color="var(--deep-blue)"
+                    onClick={handleSearch}
+                    width="80px"
+                >
+                    Search
+                </MyButton>
+            </Form>
+        );
 
         const selectedRowClass = (
             row:
@@ -2083,10 +1798,14 @@ const TaxSetup:
                         filters()
                     }
                     page={
-                        paginationParams.page
+                        isFiltered
+                            ? filterPagination.page
+                            : paginationParams.page
                     }
                     rowsPerPage={
-                        paginationParams.size
+                        isFiltered
+                            ? filterPagination.size
+                            : paginationParams.size
                     }
                     onPageChange={
                         handlePageChange

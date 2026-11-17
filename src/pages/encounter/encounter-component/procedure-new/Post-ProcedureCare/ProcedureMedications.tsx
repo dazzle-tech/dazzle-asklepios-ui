@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Form, Text, Tooltip, Whisper } from 'rsuite';
 import type { ProcedureStepHandle } from '../useStepForm';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const INGREDIENTS_PAGE_SIZE = 20;
 // MyInput hides Load more while a search term is set, so a search asks for more at once
@@ -144,7 +145,12 @@ const ProcedureMedications = forwardRef<ProcedureStepHandle, ProcedureMedication
     {
       key: 'name',
       title: <Translate>Active Ingredient</Translate>,
-      render: (rowData: any) => ingredientNames[rowData.activeIngredientId]
+      render: (rowData: any) => (
+        <ActiveIngredientLink
+          activeIngredientId={rowData.activeIngredientId}
+          label={ingredientNames[rowData.activeIngredientId]}
+        />
+      )
     },
     {
       key: 'dose',

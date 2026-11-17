@@ -21,6 +21,7 @@ import {
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import {
@@ -36,6 +37,9 @@ import {
 import {
   useEnumOptions
 } from '@/services/enumsApi';
+import {
+  useLazyGetUserByLoginQuery
+} from '@/services/userService';
 
 import {
   BILLING_PAYMENT_METHOD_LABELS,
@@ -480,21 +484,13 @@ const normalizeError =
       error ??
       {};
 
-    const traceId =
-      data?.traceId ??
-      data?.requestId ??
-      data?.correlationId;
-
-    const message =
+    return (
       data?.detail ??
       data?.message ??
       data?.title ??
       error?.error ??
-      'Unexpected billing error';
-
-    return traceId
-      ? `${message}\nTrace ID: ${traceId}`
-      : message;
+      'Unexpected billing error'
+    );
   };
 
 type MetricVariant =
@@ -608,6 +604,12 @@ const WorkflowStep = ({
   </div>
 );
 
+/** The backend marks a payer rejection (or an expired plan) with notEligible. */
+const isNotEligibleRejection = (
+  error: any
+): boolean =>
+  error?.data?.notEligible === true;
+
 const PatientPaymentInfo =
   forwardRef<
     PatientPaymentInfoHandle,
@@ -644,6 +646,27 @@ const PatientPaymentInfo =
         useAppSelector(
           state =>
             state.auth
+        );
+
+      const [
+        getCurrentUserByLogin,
+        { data: currentUser }
+      ] = useLazyGetUserByLoginQuery();
+
+      useEffect(() => {
+        if (authSlice?.user?.login) {
+          getCurrentUserByLogin(
+            authSlice.user.login
+          );
+        }
+      }, [
+        authSlice?.user?.login,
+        getCurrentUserByLogin
+      ]);
+
+      const canCollectZeroPayment =
+        Boolean(
+          currentUser?.canCollectZeroPayment
         );
 
       const patientId =
@@ -1420,6 +1443,12 @@ const PatientPaymentInfo =
       ] =
         useCheckEligibilityMutation();
 
+      // Set when an eligibility check from this screen finds the patient not eligible.
+      const [
+        selfPayPromptReason,
+        setSelfPayPromptReason
+      ] = useState<string | null>(null);
+
       const enumPaymentMethods =
         useEnumOptions(
           'PaymentMethods',
@@ -1603,13 +1632,31 @@ const PatientPaymentInfo =
                     : 'info'
               })
             );
+
+            if (result.eligible === false) {
+              setSelfPayPromptReason(
+                result.notEligibleReason ||
+                  'The patient is not eligible.'
+              );
+            }
           } catch (error: any) {
+            const message =
+              extractEligibilityErrorMessage(error);
+
             dispatch(
               notify({
-                msg: extractEligibilityErrorMessage(error),
+                msg: message,
                 sev: 'error'
               })
             );
+
+            if (
+              isNotEligibleRejection(error)
+            ) {
+              setSelfPayPromptReason(
+                message
+              );
+            }
           }
         }, [
           patientId,
@@ -1662,6 +1709,57 @@ const PatientPaymentInfo =
             insuranceResponse.data
           ]
         );
+
+      const applyCoverageChange =
+        useCallback(
+          (updatedForm: BillingFormState) => {
+            userTouchedCoverageRef.current =
+              true;
+            coverageHydratedEncounterIdRef.current =
+              encounterId;
+
+            const nextCoverage =
+              updatedForm.coverageType;
+
+            const pickedInsuranceId =
+              nextCoverage ===
+                'INSURANCE' &&
+              !updatedForm.patientInsuranceId
+                ? patientInsuranceRecordId(
+                    pickDefaultPatientInsurance(
+                      patientInsurances
+                    )
+                  )
+                : null;
+
+            setFormState({
+              ...updatedForm,
+              patientInsuranceId:
+                nextCoverage === 'INSURANCE'
+                  ? updatedForm.patientInsuranceId ??
+                    pickedInsuranceId
+                  : null
+            });
+          },
+          [
+            encounterId,
+            patientInsurances
+          ]
+        );
+
+      // Same as picking "Self Pay" in Coverage Type.
+      const handleSwitchToSelfPay =
+        useCallback(() => {
+          setSelfPayPromptReason(null);
+          applyCoverageChange({
+            ...formState,
+            coverageType:
+              'SELF_PAY'
+          });
+        }, [
+          applyCoverageChange,
+          formState
+        ]);
 
       useEffect(() => {
         if (
@@ -5946,35 +6044,7 @@ const PatientPaymentInfo =
               record={
                 formState
               }
-              setRecord={(updatedForm: BillingFormState) => {
-                userTouchedCoverageRef.current =
-                  true;
-                coverageHydratedEncounterIdRef.current =
-                  encounterId;
-
-                const nextCoverage =
-                  updatedForm.coverageType;
-
-                const pickedInsuranceId =
-                  nextCoverage ===
-                    'INSURANCE' &&
-                  !updatedForm.patientInsuranceId
-                    ? patientInsuranceRecordId(
-                        pickDefaultPatientInsurance(
-                          patientInsurances
-                        )
-                      )
-                    : null;
-
-                setFormState({
-                  ...updatedForm,
-                  patientInsuranceId:
-                    nextCoverage === 'INSURANCE'
-                      ? updatedForm.patientInsuranceId ??
-                        pickedInsuranceId
-                      : null
-                });
-              }}
+              setRecord={applyCoverageChange}
               disabled={
                 isLocked
               }
@@ -6834,6 +6904,19 @@ const PatientPaymentInfo =
                     isLocked
                   }
                   onChange={checked => {
+                    if (
+                      checked &&
+                      !canCollectZeroPayment
+                    ) {
+                      dispatch(
+                        notify({
+                          msg: 'You do not have permission to collect zero now.',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+
                     setFormState(
                       previous => ({
                         ...previous,
@@ -6880,6 +6963,35 @@ const PatientPaymentInfo =
               autoPrint
             />
           ) : null}
+          <MyModal
+            open={
+              Boolean(selfPayPromptReason) &&
+              isInsurance &&
+              !isLocked
+            }
+            setOpen={(open: boolean) => {
+              if (!open) {
+                setSelfPayPromptReason(null);
+              }
+            }}
+            title="Patient Not Eligible"
+            size="28vw"
+            bodyheight="auto"
+            position="center"
+            actionButtonLabel="Switch to Self Pay"
+            actionButtonFunction={handleSwitchToSelfPay}
+            cancelButtonLabel="Keep Insurance"
+            content={
+              <div>
+                <p>{selfPayPromptReason}</p>
+                <p>
+                  <Translate>
+                    Do you want to switch this visit to Self Pay?
+                  </Translate>
+                </p>
+              </div>
+            }
+          />
           <PreAuthorizationAlertModal
             open={Boolean(preAuthAlert?.length)}
             encounterId={encounterId}

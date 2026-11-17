@@ -18,6 +18,7 @@ import type {
   PriceListItemType
 } from '@/types/model-types-new';
 
+import PriceListDataChecks from './PriceListDataChecks';
 import './styles.less';
 
 type SelectedItem = {
@@ -81,6 +82,7 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [selected, setSelected] = useState<SelectedItem>(null);
+  const [tab, setTab] = useState<'items' | 'checks'>('items');
   const debouncedSearch = useDebouncedSearch(search);
 
   useEffect(() => {
@@ -91,7 +93,7 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
     data: overview,
     isError: overviewError,
     refetch: refetchOverview
-  } = useGetPriceListItemDashboardQuery(undefined, { skip: !active });
+  } = useGetPriceListItemDashboardQuery(undefined, { skip: !active, refetchOnMountOrArgChange: true });
 
   const {
     data: itemPage,
@@ -105,7 +107,7 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
       page,
       size: pageSize
     },
-    { skip: !active }
+    { skip: !active, refetchOnMountOrArgChange: true }
   );
 
   const cardQuery = useGetPriceListItemDashboardCardQuery(
@@ -113,7 +115,7 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
       itemType: selected?.itemType ?? 'SERVICE',
       sourceId: selected?.sourceId ?? 0
     },
-    { skip: !active || !selected }
+    { skip: !active || !selected, refetchOnMountOrArgChange: true }
   );
 
   const items = itemPage?.content ?? [];
@@ -150,6 +152,33 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
         </button>
       </div>
 
+      <div className="item-dashboard-tabs">
+        <button
+          type="button"
+          className={`item-dashboard-tab${tab === 'items' ? ' is-active' : ''}`}
+          onClick={() => setTab('items')}
+        >
+          <Translate>Items</Translate>
+        </button>
+        <button
+          type="button"
+          className={`item-dashboard-tab${tab === 'checks' ? ' is-active' : ''}`}
+          onClick={() => setTab('checks')}
+        >
+          <Translate>Data checks</Translate>
+        </button>
+      </div>
+
+      {tab === 'checks' ? (
+        <PriceListDataChecks
+          active={active}
+          onOpenItem={(nextType, sourceId) => {
+            setSelected({ itemType: nextType, sourceId });
+            setTab('items');
+          }}
+        />
+      ) : (
+      <>
       <div className="item-dashboard-kpis">
         <Kpi label="Price lists" value={summary?.priceListCount ?? overview?.priceLists?.length ?? 0} />
         <Kpi label="Items" value={summary?.uniqueItemCount} accent="purple" />
@@ -261,6 +290,8 @@ const PriceListItemDashboard = ({ active = true }: { active?: boolean }) => {
             )}
           </section>
         </div>
+      )}
+      </>
       )}
     </div>
   );

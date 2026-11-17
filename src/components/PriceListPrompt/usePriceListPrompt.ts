@@ -43,7 +43,7 @@ export type PriceListDraft = {
 
 export type PriceListRow = {
   list: PriceListSetup;
-  // Set when the item is already on this list (read-only in the prompt)
+  // Set when the item is already on this list, active or inactive (read-only in the prompt)
   existing?: PriceListSetupItem;
 };
 
@@ -135,18 +135,26 @@ export const usePriceListPrompt = () => {
     const [listsPage, existingItems, itemMapping] = await Promise.all([
       // Not from cache: a list added a moment ago must show up
       fetchLists({ page: 0, size: 1000, sort: 'name,asc' }, false).unwrap(),
-      fetchExisting({ itemType: next.itemType, sourceId: Number(next.sourceId) }).unwrap(),
+      // Inactive items too: a list the item is inactive on is shown, not offered for a second item
+      fetchExisting(
+        { itemType: next.itemType, sourceId: Number(next.sourceId), includeInactive: true },
+        false
+      ).unwrap(),
       // No mapping answers 404: insurance lists then cannot be added
       fetchMapping({ itemType: next.itemType, sourceId: Number(next.sourceId) })
         .unwrap()
         .catch(() => null)
     ]);
 
-    // Only active items come back: an inactive one does not count, a new item can be added
+    // One item per list, the active one first: a list with only an inactive item still counts as
+    // linked (shown as Inactive, reactivated from Price List Setup), so no second item is added
     const existingByList = new Map<number, PriceListSetupItem>();
     (existingItems ?? []).forEach(existing => {
-      if (existing.priceListSetupId != null) {
-        existingByList.set(Number(existing.priceListSetupId), existing);
+      if (existing.priceListSetupId == null) return;
+      const listId = Number(existing.priceListSetupId);
+      const current = existingByList.get(listId);
+      if (!current || (current.isActive === false && existing.isActive !== false)) {
+        existingByList.set(listId, existing);
       }
     });
 

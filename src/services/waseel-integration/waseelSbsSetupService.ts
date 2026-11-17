@@ -78,7 +78,19 @@ export const waseelSbsSetupService = createApi({
     }),
 
     searchSbs: builder.query<PageResponse<WaseelSbsCatalog>, WaseelSbsSearchParams>({
-      query: ({ page, size, search = '', sort = 'id,desc', activeOnly }) => ({
+      query: ({
+        page,
+        size,
+        search = '',
+        sort = 'id,desc',
+        activeOnly,
+        waseelItemType,
+        sbsCode,
+        shortDescription,
+        longDescription,
+        updateType,
+        isActive
+      }) => ({
         url: '/api/setup/waseel/sbs',
         method: 'GET',
         params: {
@@ -86,7 +98,13 @@ export const waseelSbsSetupService = createApi({
           size,
           search,
           sort,
-          ...(activeOnly != null ? { activeOnly } : {})
+          ...(activeOnly != null ? { activeOnly } : {}),
+          ...(waseelItemType ? { waseelItemType } : {}),
+          ...(sbsCode ? { sbsCode } : {}),
+          ...(shortDescription ? { shortDescription } : {}),
+          ...(longDescription ? { longDescription } : {}),
+          ...(updateType ? { updateType } : {}),
+          ...(isActive ? { isActive } : {})
         }
       }),
       providesTags: ['WaseelSbs']
@@ -132,7 +150,9 @@ export const waseelSbsSetupService = createApi({
         itemType,
         itemName,
         itemCode,
-        sbsCode
+        sbsCode,
+        sbsDescription,
+        isActive
       }) => ({
         url: '/api/setup/waseel/item-mapping',
         method: 'GET',
@@ -143,7 +163,9 @@ export const waseelSbsSetupService = createApi({
           ...(itemType ? { itemType } : {}),
           ...(itemName ? { itemName } : {}),
           ...(itemCode ? { itemCode } : {}),
-          ...(sbsCode ? { sbsCode } : {})
+          ...(sbsCode ? { sbsCode } : {}),
+          ...(sbsDescription ? { sbsDescription } : {}),
+          ...(isActive ? { isActive } : {})
         }
       }),
       transformResponse: (

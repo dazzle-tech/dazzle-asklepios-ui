@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import dayjs from 'dayjs';
 import { FaMagic } from 'react-icons/fa';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
@@ -154,6 +155,10 @@ const ExternalResultModal: React.FC<Props> = ({ open, setOpen, patient, encounte
     setPhase('upload');
   };
 
+  // An edited date arrives as a Date; the server takes YYYY-MM-DD
+  const toApiDate = (value: unknown) =>
+    value && dayjs(value as any).isValid() ? dayjs(value as any).format('YYYY-MM-DD') : null;
+
   const handleSave = async () => {
     if (!result || !patient?.id) return;
 
@@ -172,9 +177,11 @@ const ExternalResultModal: React.FC<Props> = ({ open, setOpen, patient, encounte
 
     try {
       if (isLab) {
-        await saveLabResults({ data: { ...extraction, results: labRows }, file }).unwrap();
+        const results = labRows.map(row => ({ ...row, resultDate: toApiDate(row.resultDate) }));
+        await saveLabResults({ data: { ...extraction, results }, file }).unwrap();
       } else {
-        await saveRadiologyReports({ data: { ...extraction, reports: radiologyReports }, file }).unwrap();
+        const reports = radiologyReports.map(report => ({ ...report, reportDate: toApiDate(report.reportDate) }));
+        await saveRadiologyReports({ data: { ...extraction, reports }, file }).unwrap();
       }
       dispatch(notify({ msg: 'Saved to Diagnostics Test Result and Attachments', sev: 'success' }));
       setOpen(false);

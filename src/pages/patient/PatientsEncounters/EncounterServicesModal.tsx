@@ -9,6 +9,7 @@ import {
 } from '@/services/encounters/patientEncounterService';
 import { formatBillingItemType } from '@/pages/patient/patient-profile/PatientQuickAppoinment/paymentPreviewUtils';
 import { formatEnumString } from '@/utils';
+import { formatBillingPriceSource } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 type EncounterServicesModalProps = {
   open: boolean;
@@ -220,9 +221,15 @@ const EncounterServicesModal = ({
       {
         key: 'priceSource',
         title: 'Price source',
-        width: 130,
-        render: (row: ServiceLineRow) =>
-          row.isTotal ? '' : formatEnumString(row.priceSource || '') || '—',
+        width: 170,
+        render: (row: ServiceLineRow) => {
+          if (row.isTotal) {
+            return '';
+          }
+
+          const label = formatBillingPriceSource(row.priceSource, row.priceListName);
+          return label === '-' ? '—' : label;
+        },
       },
       {
         key: 'unitPrice',

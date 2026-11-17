@@ -46,7 +46,6 @@ export type PatientEncounterCompletionValidation = {
   surgicalHistory: boolean;
   socialHistory: boolean;
 
-  progressNotes: boolean;
   vitalSigns: boolean;
   bodyMeasurements: boolean;
   canComplete: boolean;
@@ -156,6 +155,7 @@ export type EncounterExecutedServiceLine = {
   taxAmount: number | null;
   taxRate: number | null;
   coverageStatus: string | null;
+  priceListName?: string | null;
 };
 
 export type EncounterListVM = {

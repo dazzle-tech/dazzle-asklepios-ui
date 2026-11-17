@@ -29,7 +29,9 @@ export interface ApUser {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canCancelServiceBeforeInvoice: boolean;
   canEditSubmittedPrescription: boolean;
+  canCollectZeroPayment: boolean;
 }
 
 
@@ -6241,6 +6243,9 @@ export interface EligibilityCheckResult {
   eligibilityResponseId?: string | null;
   eligibilityResponseUrl?: string | null;
   requestStatus?: string | null;
+  /** False when the payer answered that the patient is not eligible; null when the check did not tell. */
+  eligible?: boolean | null;
+  notEligibleReason?: string | null;
 }
 
 export interface EligibilityCheckResponse {
@@ -6251,6 +6256,8 @@ export interface EligibilityCheckResponse {
   eligibilityResponseId?: string | null;
   eligibilityResponseUrl?: string | null;
   requestStatus?: string | null;
+  eligible?: boolean | null;
+  notEligibleReason?: string | null;
 }
 
 // ------------------- Waseel Pre-Authorization -------------------
@@ -6611,6 +6618,42 @@ export type PriceListItemType =
   | 'SERVICE'
   | 'PROCEDURE'
   | 'VACCINE';
+
+// Item Price Dashboard, "Data checks" tab
+export type PriceListDataCheckKey =
+  | 'INACTIVE_SOURCE_ACTIVE_ITEM'
+  | 'MISSING_FROM_CASH'
+  | 'CASH_PRICE_DIFFERS'
+  | 'INSURANCE_WITHOUT_SBS'
+  | 'ZERO_PRICE'
+  | 'DUPLICATE_IN_LIST'
+  | 'ORPHAN_ITEM';
+
+export type PriceListDataCheckSummary = {
+  checks: { key: PriceListDataCheckKey; count: number }[];
+};
+
+export type PriceListDataCheckRow = {
+  itemType?: PriceListItemType | null;
+  sourceId?: number | null;
+  itemCode?: string | null;
+  itemName?: string | null;
+  priceListId?: number | null;
+  priceListName?: string | null;
+  priceListItemId?: number | null;
+  unitPrice?: number | null;
+  setupPrice?: number | null;
+  detail?: string | null;
+};
+
+export type PriceListDataCheckPage = {
+  key: PriceListDataCheckKey;
+  content: PriceListDataCheckRow[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
 
 export type PricingMethod =
   | 'FIXED_PRICE'
@@ -7520,6 +7563,7 @@ export type EncounterBillingItemSummary = {
   clinicalStatus?: string | null;
   patientTaxAmount?: number | null;
   insuranceTaxAmount?: number | null;
+  priceListName?: string | null;
 };
 
 export type WaseelBenefitDetail = {
@@ -7723,6 +7767,11 @@ export type BillingCancellationRequest = {
   cancelledBy: string;
   requestId: string;
   sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type ServiceCancellationBeforeInvoiceRequest = {
+  patientServiceProductId: number;
+  reason: string;
 };
 
 export type BillingCancellationResult = {

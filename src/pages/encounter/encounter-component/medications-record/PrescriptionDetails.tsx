@@ -10,6 +10,7 @@ import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import {useLazyGetLovValuesBulkByKeysQuery} from '@/services/setupService';
 import React, {  useEffect, useMemo, useState } from 'react';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const PrescriptionDetails = ({ prescription }) => {
   const [paginationParams, setPaginationParams] = useState({
@@ -204,7 +205,7 @@ const indicationUseLovMap = useMemo(() => {
         flexGrow: 1,
         render: (rowData: any) => {
          const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
-          return ingredient?.name ? String(ingredient.name) : '-';
+          return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
         }
   
       },

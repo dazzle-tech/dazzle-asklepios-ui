@@ -5,6 +5,9 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
   ClonePriceListSetupRequest,
+  PriceListDataCheckKey,
+  PriceListDataCheckPage,
+  PriceListDataCheckSummary,
   PriceListItemDashboard,
   PriceListItemDashboardCard,
   PriceListItemDashboardPage,
@@ -594,17 +597,19 @@ export const priceListSetupService = createApi({
       ]
     }),
 
-    // Active items of one catalog item (item type + source id) across all price lists
+    // Items of one catalog item (item type + source id) across all price lists:
+    // active only, or inactive ones too with includeInactive
     getPriceListSetupItemsBySource: builder.query<
       PriceListSetupItem[],
       {
         itemType: PriceListItemType;
         sourceId: Id;
+        includeInactive?: boolean;
       }
     >({
-      query: ({ itemType, sourceId }) => ({
+      query: ({ itemType, sourceId, includeInactive }) => ({
         url: '/api/setup/price-list-setup-items/by-source',
-        params: { itemType, sourceId }
+        params: { itemType, sourceId, ...(includeInactive ? { includeInactive: true } : {}) }
       }),
 
       providesTags: (_result, _error, { itemType, sourceId }) => [
@@ -853,6 +858,58 @@ export const priceListSetupService = createApi({
       }),
       transformResponse: (res: any) => (res?.itemType && res?.sourceId != null ? res : res?.data),
       providesTags: ['PriceListSetupItem']
+    }),
+
+    // Data checks of the facility price lists: one count per check
+    getPriceListDataCheckSummary: builder.query<
+      PriceListDataCheckSummary,
+      { itemType?: PriceListItemType }
+    >({
+      query: ({ itemType } = {}) => ({
+        url: '/api/setup/price-list-setups/item-dashboard/checks',
+        method: 'GET',
+        params: itemType ? { itemType } : {}
+      }),
+      transformResponse: (res: any): PriceListDataCheckSummary => {
+        const body = Array.isArray(res?.checks) ? res : (res?.data ?? {});
+        return { checks: Array.isArray(body.checks) ? body.checks : [] };
+      },
+      providesTags: ['PriceListSetup', 'PriceListSetupItem']
+    }),
+
+    // Rows of one data check (size up to 10000 for the export)
+    getPriceListDataCheckRows: builder.query<
+      PriceListDataCheckPage,
+      {
+        check: PriceListDataCheckKey;
+        itemType?: PriceListItemType;
+        search?: string;
+        page?: number;
+        size?: number;
+      }
+    >({
+      query: ({ check, itemType, search, page = 0, size = 20 }) => ({
+        url: `/api/setup/price-list-setups/item-dashboard/checks/${encodeURIComponent(check)}`,
+        method: 'GET',
+        params: {
+          page,
+          size,
+          ...(itemType ? { itemType } : {}),
+          ...(search ? { search } : {})
+        }
+      }),
+      transformResponse: (res: any, _meta, arg): PriceListDataCheckPage => {
+        const body = Array.isArray(res?.content) ? res : (res?.data ?? {});
+        return {
+          key: body.key ?? arg.check,
+          content: Array.isArray(body.content) ? body.content : [],
+          page: Number(body.page ?? 0),
+          size: Number(body.size ?? 20),
+          totalElements: Number(body.totalElements ?? 0),
+          totalPages: Number(body.totalPages ?? 0)
+        };
+      },
+      providesTags: ['PriceListSetupItem']
     })
   })
 });
@@ -900,5 +957,8 @@ export const {
 
   useGetPriceListItemDashboardQuery,
   useGetPriceListItemDashboardItemsQuery,
-  useGetPriceListItemDashboardCardQuery
+  useGetPriceListItemDashboardCardQuery,
+  useGetPriceListDataCheckSummaryQuery,
+  useGetPriceListDataCheckRowsQuery,
+  useLazyGetPriceListDataCheckRowsQuery
 } = priceListSetupService;
