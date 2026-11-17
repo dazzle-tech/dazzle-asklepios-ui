@@ -259,6 +259,7 @@ const EditEncounterDetailsModal = ({
         <ClaimEncounterProgressNotes
             encounter={encounter}
             claimEncounterCopyId={encounterCopy?.id}
+            allowEdit={false}
         />
     );
 
@@ -281,10 +282,11 @@ const EditEncounterDetailsModal = ({
                         title: 'Diagnoses',
                         content: diagnosesContent()
                     },
-                    {
-                        title: 'Progress Notes',
-                        content: progressNotesContent()
-                    },
+                    // Progress Notes tab hidden for now
+                    // {
+                    //     title: 'Progress Notes',
+                    //     content: progressNotesContent()
+                    // },
                     {
                         title: 'Patient History',
                         content: (
