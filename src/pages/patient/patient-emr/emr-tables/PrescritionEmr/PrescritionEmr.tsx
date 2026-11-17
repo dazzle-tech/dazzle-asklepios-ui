@@ -32,6 +32,7 @@ import {
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 import type { PatientPrescription } from '@/types/model-types-new';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 type PrescriptionEmrRow = PatientPrescription & {
     submitedBy?: string | null;
@@ -458,7 +459,7 @@ useEffect(() => {
                     String(rowData.activeIngredientId)
                 );
 
-                return ingredient?.name ?? '-';
+                return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
             }
         },
         {

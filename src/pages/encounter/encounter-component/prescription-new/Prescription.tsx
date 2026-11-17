@@ -51,6 +51,7 @@ import type { PatientPrescription, PatientPrescriptionMedication } from '@/types
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
 import PrescriptionReportButton from './PrescriptionReportButton';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 type Props = any;
 
@@ -743,7 +744,7 @@ const Prescription = (props: Props) => {
       flexGrow: 1,
       render: (rowData: any) => {
         const ingredient = activeIngredientsMap.get(rowData.activeIngredientId);
-        return ingredient?.name ? String(ingredient.name) : '-';
+        return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
       }
     },
     {
