@@ -47,6 +47,7 @@ const PriceListCard: React.FC<CardProps> = ({ row, prompt, facilityNames }) => {
   const { list, existing } = row;
   const listId = Number(list.id);
   const insurance = isInsuranceList(list);
+  const inactive = !!existing && existing.isActive === false;
   // Insurance needs the item's Waseel (SBS) mapping
   const blocked = !existing && insurance && !prompt.mapping;
   const draft = prompt.drafts[listId];
@@ -66,6 +67,7 @@ const PriceListCard: React.FC<CardProps> = ({ row, prompt, facilityNames }) => {
   const cardClass = [
     'price-list-prompt-card',
     existing ? 'is-linked' : '',
+    inactive ? 'is-inactive' : '',
     draft ? 'is-selected' : '',
     blocked ? 'is-blocked' : '',
     error ? 'has-error' : ''
@@ -94,7 +96,11 @@ const PriceListCard: React.FC<CardProps> = ({ row, prompt, facilityNames }) => {
             ))}
           </span>
         </div>
-        {existing ? (
+        {inactive ? (
+          <span className="price-list-prompt-status is-inactive">
+            <Translate>Inactive</Translate>
+          </span>
+        ) : existing ? (
           <span className="price-list-prompt-status is-linked">
             <Translate>Linked</Translate>
           </span>
@@ -116,6 +122,11 @@ const PriceListCard: React.FC<CardProps> = ({ row, prompt, facilityNames }) => {
           <span>
             <Translate>Code</Translate> <b>{formatAmount(existing.itemCode)}</b>
           </span>
+          {inactive && (
+            <span className="price-list-prompt-inactive-note">
+              <Translate>Inactive on this list: reactivate it from Price List Setup.</Translate>
+            </span>
+          )}
           {insurance && (
             <span>
               <Translate>Pre-Authorization</Translate>{' '}

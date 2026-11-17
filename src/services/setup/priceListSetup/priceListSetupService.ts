@@ -594,17 +594,19 @@ export const priceListSetupService = createApi({
       ]
     }),
 
-    // Active items of one catalog item (item type + source id) across all price lists
+    // Items of one catalog item (item type + source id) across all price lists:
+    // active only, or inactive ones too with includeInactive
     getPriceListSetupItemsBySource: builder.query<
       PriceListSetupItem[],
       {
         itemType: PriceListItemType;
         sourceId: Id;
+        includeInactive?: boolean;
       }
     >({
-      query: ({ itemType, sourceId }) => ({
+      query: ({ itemType, sourceId, includeInactive }) => ({
         url: '/api/setup/price-list-setup-items/by-source',
-        params: { itemType, sourceId }
+        params: { itemType, sourceId, ...(includeInactive ? { includeInactive: true } : {}) }
       }),
 
       providesTags: (_result, _error, { itemType, sourceId }) => [
