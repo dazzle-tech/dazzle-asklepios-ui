@@ -16,10 +16,24 @@ interface ToothActionCardProps {
   surface: string;
   note?: string | null;
   existing: boolean;
+  /** Original recorder/date when this existing finding was carried forward from an earlier chart. */
+  carriedForward?: { by?: string | null; at?: string | null } | null;
   anesthesiaUsed?: string | null;
   dose?: string | number | null;
   numberingSystem?: string | null;
+  numberingLabels?: Record<string, string> | null;
 }
+
+/** "Carried forward (originally by <user>, <yyyy-mm-dd>)", omitting whichever part is unknown. */
+const carriedForwardLabel = (carriedForward: { by?: string | null; at?: string | null }): string => {
+  const detail = [
+    carriedForward.by ? `originally by ${carriedForward.by}` : null,
+    carriedForward.at ? String(carriedForward.at).slice(0, 10) : null
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return detail ? `Carried forward (${detail})` : 'Carried forward';
+};
 
 const ToothActionCard = ({
   date,
@@ -29,9 +43,11 @@ const ToothActionCard = ({
   surface,
   note,
   existing,
+  carriedForward = null,
   anesthesiaUsed,
   dose,
-  numberingSystem = 'UNIVERSAL'
+  numberingSystem = 'UNIVERSAL',
+  numberingLabels = null
 }: ToothActionCardProps) => {
   const parsedDate =
     date == null || date === ''
@@ -63,7 +79,7 @@ const ToothActionCard = ({
           label: 'Tooth #',
           value:
             typeof toothNumber === 'string'
-              ? toothDisplayLabel(toothNumber, numberingSystem)
+              ? toothDisplayLabel(toothNumber, numberingSystem, numberingLabels)
               : toothNumber
         }]
       : []),
@@ -85,7 +101,7 @@ const ToothActionCard = ({
     {
       key: 'existing',
       label: 'Existing',
-      value: existing ? 'Yes' : 'No'
+      value: carriedForward ? carriedForwardLabel(carriedForward) : existing ? 'Yes' : 'No'
     },
     ...(anesthesiaUsed
       ? [{

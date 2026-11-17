@@ -635,8 +635,17 @@ export const newDentalChartAgeRule: modelTypes.DentalChartAgeRule = {
   ageTo: null,
   chartType: null,
   numberingSystem: 'UNIVERSAL',
+  numberingMethodId: null,
   toothNumbers: [],
   isActive: true
+};
+
+export const newDentalToothNumberingMethod: modelTypes.DentalToothNumberingMethod = {
+  id: null,
+  name: '',
+  description: '',
+  toothLabels: {},
+  isActive: false
 };
 
 // ------------------- Test Normal Range -------------------

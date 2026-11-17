@@ -24,6 +24,9 @@ import { newApDentalChartTooth } from '@/types/model-types-constructor';
 import { toothDisplayLabel } from '@/utils/toothNumber';
 
 import { useGetChartByIdQuery } from '@/services/dental/dentalChartService';
+import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
+import EditTeethModal from './EditTeethModal';
+import InventoryHistoryModal from './InventoryHistoryModal';
 import { useGetAllDentalActionsQuery } from '@/services/setup/dental-action/dentalActionService';
 import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';
 import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
@@ -41,7 +44,8 @@ const SURFACE_LABELS: Record<string, string> = {
   INCISAL: 'Incisal',
   PALATAL: 'Palatal',
   LABIAL: 'Labial',
-  FACIAL: 'Facial'
+  FACIAL: 'Facial',
+  WHOLE_TOOTH: 'Whole Tooth'
 };
 
 type ChartViewportProps = {
@@ -289,9 +293,19 @@ const ChartTab = ({
   };
 
   const numberingSystem = currentChart?.numberingSystem || 'UNIVERSAL';
+  const numberingLabels = currentChart?.numberingLabels ?? null;
+
+  // Edit Teeth changes the current visit chart only. The backend is the authority; the button just
+  // mirrors its rule: finished or cancelled encounters are locked unless an amendment is open.
+  const isAmendmentOpen = useIsAmendmentOpen();
+  const [editTeethOpen, setEditTeethOpen] = useState(false);
+  const [inventoryHistoryOpen, setInventoryHistoryOpen] = useState(false);
+  const encounterStatus = String(encounter?.status ?? '').toUpperCase();
+  const encounterLocked = ['COMPLETED', 'DISCHARGED', 'CLOSED', 'CANCELLED'].includes(encounterStatus);
+  const canEditTeeth = !isPreviewingHistory && !isLoading && (!encounterLocked || isAmendmentOpen);
 
   const selectedToothLabel = selectedTooth?.toothNumber
-    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem)
+    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem, numberingLabels)
     : EMPTY_VALUE;
 
   const actionColumns = useMemo(
@@ -307,7 +321,7 @@ const ChartTab = ({
 
           return (
             <span className="dct-tooth-number">
-              {number ? toothDisplayLabel(number, numberingSystem) : EMPTY_VALUE}
+              {number ? toothDisplayLabel(number, numberingSystem, numberingLabels) : EMPTY_VALUE}
             </span>
           );
         }
@@ -359,9 +373,22 @@ const ChartTab = ({
       {
         key: 'existing',
         title: <Translate>Existing</Translate>,
-        width: 100,
+        width: 170,
         render: (row: any) => (
-          <Translate>{row.existing ? 'Yes' : 'No'}</Translate>
+          row.carriedFromActionId ? (
+            <span
+              title={
+                'Carried forward from an earlier chart' +
+                (row.originalRecordedBy ? ` - originally recorded by ${row.originalRecordedBy}` : '') +
+                (row.originalRecordedAt ? ` on ${String(row.originalRecordedAt).slice(0, 10)}` : '')
+              }
+            >
+              <Translate>Carried forward</Translate>
+              {row.originalRecordedAt ? ` (${String(row.originalRecordedAt).slice(0, 10)})` : ''}
+            </span>
+          ) : (
+            <Translate>{row.existing ? 'Yes' : 'No'}</Translate>
+          )
         )
       },
       {
@@ -388,7 +415,7 @@ const ChartTab = ({
         )
       }
     ],
-    [dentalActionsMap, teethById, numberingSystem]
+    [dentalActionsMap, teethById, numberingSystem, numberingLabels]
   );
 
   const direction =
@@ -440,6 +467,21 @@ const ChartTab = ({
                 }
               }}
             />
+
+            {!isPreviewingHistory && originalChart?.id != null && (
+              <>
+                <MyButton
+                  appearance="ghost"
+                  disabled={!canEditTeeth}
+                  onClick={() => setEditTeethOpen(true)}
+                >
+                  <Translate>Edit Teeth</Translate>
+                </MyButton>
+                <MyButton appearance="ghost" onClick={() => setInventoryHistoryOpen(true)}>
+                  <Translate>Teeth History</Translate>
+                </MyButton>
+              </>
+            )}
 
             {(isPreviewingHistory || selectedPreviousChartId != null) && (
               <MyButton
@@ -598,6 +640,22 @@ const ChartTab = ({
           />
         </div>
       </Panel>
+
+      <EditTeethModal
+        open={editTeethOpen}
+        setOpen={setEditTeethOpen}
+        chart={originalChart}
+        encounterId={encounter?.id}
+        width={window.innerWidth}
+      />
+      <InventoryHistoryModal
+        open={inventoryHistoryOpen}
+        setOpen={setInventoryHistoryOpen}
+        chartId={originalChart?.id}
+        numberingSystem={originalChart?.numberingSystem}
+        numberingLabels={originalChart?.numberingLabels}
+        width={window.innerWidth}
+      />
     </div>
   );
 };

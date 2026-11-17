@@ -1305,8 +1305,20 @@ export interface DentalChartAgeRule {
   chartType: 'ADULT' | 'CHILD' | 'MIXED' | string | null;
   /** Display numbering only; selection uses stable Tooth1–32 / ToothA–T ids. */
   numberingSystem?: 'UNIVERSAL' | 'FDI' | 'PALMER' | string | null;
+  /** Optional custom Tooth Numbering method; null/absent keeps the legacy numberingSystem. */
+  numberingMethodId?: number | null;
   /** Stable internal tooth identifiers for this rule's inventory. */
   toothNumbers?: string[] | null;
+  isActive?: boolean;
+}
+
+/** Dental Tooth Numbering Setup method (setup-service): display labels keyed by stable tooth id. */
+export interface DentalToothNumberingMethod {
+  id?: number | null;
+  name: string;
+  description?: string | null;
+  /** Tooth1–Tooth32 / ToothA–ToothT -> display label. Display metadata only. */
+  toothLabels?: Record<string, string> | null;
   isActive?: boolean;
 }
 
@@ -9514,6 +9526,11 @@ export interface ToothActionDTO {
   cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
+  /** Set when this existing finding was carried forward from an earlier chart (id of the original action). */
+  carriedFromActionId?: number | null;
+  /** Who/when the ORIGINAL finding was recorded (not the carry-forward). */
+  originalRecordedBy?: string | null;
+  originalRecordedAt?: string | null;
 }
 
 export interface ToothActionLogDTO {
@@ -9561,6 +9578,12 @@ export interface DentalChartToothDTO {
   history: ToothActionLogDTO[];
   services: ToothServiceDTO[];
   cdts: ToothCdtDTO[];
+  /** ACTIVE, REMOVED or REPLACED; only ACTIVE teeth form the chart inventory. */
+  inventoryStatus?: 'ACTIVE' | 'REMOVED' | 'REPLACED' | string | null;
+  /** Open (pending or in-progress) planned treatments on this tooth. */
+  pendingTreatments?: number | null;
+  /** Why this tooth cannot be removed or replaced (it has recorded work); null when it can. */
+  inventoryProtection?: string | null;
 }
 
 export interface DentalChartToothSummaryDTO {
@@ -9591,9 +9614,53 @@ export interface DentalChartResponseDTO {
   numberingSystem?: 'UNIVERSAL' | 'FDI' | 'PALMER' | string | null;
   /** Snapshot of the age rule that seeded this chart. */
   ageRuleId?: number | null;
+  numberingMethodId?: number | null;
+  numberingLabels?: Record<string, string> | null;
+  /** Optimistic-lock version; send it back with an inventory save. */
+  version?: number | null;
   teeth: DentalChartToothDTO[];
+  /** Removed/replaced teeth, kept with their history. */
+  inactiveTeeth?: DentalChartToothDTO[];
   chartActions: ToothActionDTO[];
   historyCharts: DentalChartSummaryDTO[];
+}
+
+export interface ChartInventoryChangeDTO {
+  action: 'ADD' | 'REMOVE' | 'REPLACE';
+  toothNumber: string;
+  replacementToothNumber?: string | null;
+}
+
+export interface ChartInventoryUpdateDTO {
+  expectedVersion: number;
+  encounterId: number;
+  reason: string;
+  changes: ChartInventoryChangeDTO[];
+}
+
+export interface ChartInventoryWarningDTO {
+  toothNumber: string;
+  pendingTreatments: number;
+}
+
+export interface ChartInventoryResultDTO {
+  chart: DentalChartResponseDTO;
+  warnings: ChartInventoryWarningDTO[];
+}
+
+export interface ChartInventoryAuditDTO {
+  id: number;
+  batchId: string;
+  action: string;
+  toothNumber: string;
+  relatedToothNumber?: string | null;
+  statusBefore?: string | null;
+  statusAfter: string;
+  reason: string;
+  encounterId: number;
+  reopenSessionId?: number | null;
+  changedBy?: string | null;
+  changedAt?: string | null;
 }
 
 export interface ChartUpdateDTO {
@@ -9683,6 +9750,8 @@ export interface PlannedTreatmentDTO {
   treatmentPlanId?: number | null;
   treatmentSessionId?: number | null;
   executionEncounterId?: number | null;
+  /** Outcome of the chart visual effect, only present in the completion response. */
+  chartEffect?: string | null;
 }
 
 export interface PlannedTreatmentSaveDTO {

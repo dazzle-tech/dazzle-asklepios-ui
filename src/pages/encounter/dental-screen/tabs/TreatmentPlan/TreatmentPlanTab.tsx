@@ -60,6 +60,7 @@ import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 import { useGetProceduresByCategoryQuery } from '@/services/setup/procedure/procedureService';
 import { useGetAllDentalActionsQuery } from '@/services/setup/dental-action/dentalActionService';
 import { patientServicesAndProductsService } from '@/services/encounters/patientServicesAndProductsService';
+import { dentalChartService } from '@/services/dental/dentalChartService';
 
 import {
   newApDentalPlannedTreatment,
@@ -73,6 +74,7 @@ import {
 
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { notify } from '@/utils/uiReducerActions';
+import BookAppointmentModal from './BookAppointmentModal';
 
 import './TreatmentPlanTab.less';
 
@@ -168,6 +170,7 @@ const TreatmentPlanTab = ({
 
   const [rememberedSession, setRememberedSession] =
     useState<Record<number, string>>({});
+  const [bookAppointmentOpen, setBookAppointmentOpen] = useState(false);
 
   const cdtListResponse = useGetAllCdtQuery({
     page: 0,
@@ -1042,12 +1045,14 @@ const TreatmentPlanTab = ({
     setCompletingId(row.id);
 
     try {
-      await completePlannedTreatment({
+      const completed = await completePlannedTreatment({
         id: row.id,
         executionEncounterId: encounter?.id
       }).unwrap();
 
       refreshPlans();
+      // Completion records its chart effect: refresh the Dental Chart and the plan tooth previews.
+      dispatch(dentalChartService.util.invalidateTags(['DentalChart']));
 
       dispatch(
         patientServicesAndProductsService.util.invalidateTags([
@@ -1057,7 +1062,7 @@ const TreatmentPlanTab = ({
 
       dispatch(
         notify({
-          msg: 'Treatment completed',
+          msg: completed?.chartEffect ? `Treatment completed. ${completed.chartEffect}` : 'Treatment completed',
           sev: 'success'
         })
       );
@@ -1119,6 +1124,20 @@ const TreatmentPlanTab = ({
     setPlansTab(key);
     setSelectedPlanId(null);
     setHistoryOpen(false);
+  };
+
+  // Book Appointment modal: scheduler slots for this visit's department, booked through BookPatient.
+  const bookAppointment = () => {
+    if (!patient?.id || !encounter?.facilityId || !encounter?.departmentId) {
+      dispatch(
+        notify({
+          msg: 'The visit has no patient, facility or department, so an appointment cannot be booked from here.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+    setBookAppointmentOpen(true);
   };
 
   const openNewPlan = () => {
@@ -1369,6 +1388,14 @@ const TreatmentPlanTab = ({
         required={true}
       />
 
+      <BookAppointmentModal
+        open={bookAppointmentOpen}
+        setOpen={setBookAppointmentOpen}
+        patient={patient}
+        facilityId={encounter?.facilityId}
+        departmentId={encounter?.departmentId}
+      />
+
       <TreatmentPlanHeaderModal
         open={planModalOpen}
         setOpen={setPlanModalOpen}
@@ -1562,6 +1589,8 @@ const TreatmentPlanTab = ({
                 }}
                 onCloseDetails={closeDetails}
                 onNewPlan={openNewPlan}
+                onBookAppointment={bookAppointment}
+                bookAppointmentDisabled={!encounter?.id}
                 newPlanDisabled={
                   readOnly || isBusy || !patient?.id || !encounter?.id
                 }
@@ -1579,6 +1608,7 @@ const TreatmentPlanTab = ({
                 completingId={completingId}
                 teethById={teethById}
                 numberingSystem={originalChart?.numberingSystem}
+                numberingLabels={originalChart?.numberingLabels}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}
@@ -1619,6 +1649,8 @@ const TreatmentPlanTab = ({
                 onHistoryStatusChange={setHistoryStatus}
                 onCloseDetails={closeDetails}
                 onNewPlan={openNewPlan}
+                onBookAppointment={bookAppointment}
+                bookAppointmentDisabled={!encounter?.id}
                 newPlanDisabled={
                   readOnly || isBusy || !patient?.id || !encounter?.id
                 }
@@ -1634,6 +1666,7 @@ const TreatmentPlanTab = ({
                 completingId={completingId}
                 teethById={teethById}
                 numberingSystem={originalChart?.numberingSystem}
+                numberingLabels={originalChart?.numberingLabels}
                 cdtMap={cdtMap}
                 dentalServicesMap={dentalServicesMap}
                 dentalProceduresMap={dentalProceduresMap}

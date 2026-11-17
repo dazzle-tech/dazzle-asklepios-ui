@@ -12,10 +12,12 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import CancellationModal from '@/components/CancellationModal/CancellationModal';
 
-import FullTooth from '../../DentalChart/Tooth/Tooth';
+import Tooth from '../Tooth/Tooth';
+import AdultOcclusal from '../Tooth/AdultOcclusal';
+import { getSurfaceStates } from '../Tooth/surfaceStates';
 import ToothActionCard from '../ToothActionCard/ToothActionCard';
 
-import { toothDisplayLabel } from '@/utils/toothNumber';
+import { isPrimaryTooth, isUpperArchTooth, toothDisplayLabel } from '@/utils/toothNumber';
 import { useGetByDentalActionQuery } from '@/services/setup/dental-action/CdtDentalActionService';
 import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 
@@ -35,6 +37,7 @@ interface ToothStateTabProps {
   planSessions?: any[];
   onCreatePlan?: () => void;
   numberingSystem?: string | null;
+  numberingLabels?: Record<string, string> | null;
 }
 
 const SURFACE_OPTIONS = [
@@ -69,7 +72,8 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   eligiblePlans = [],
   planSessions = [],
   onCreatePlan,
-  numberingSystem = 'UNIVERSAL'
+  numberingSystem = 'UNIVERSAL',
+  numberingLabels = null
 }) => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({
@@ -86,8 +90,37 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
   const appliedActions = selectedTooth?.actions ?? [];
 
   const toothLabel = selectedTooth?.toothNumber
-    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem)
+    ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem, numberingLabels)
     : '—';
+
+  // Same renderer, tooth identity (ToothA–ToothT / Tooth1–Tooth32) and action state as the chart cell.
+  const renderToothArtwork = () => {
+    const surfaceStates = getSurfaceStates(selectedTooth, dentalActionsMap);
+    const hasCondition = Object.values(surfaceStates).includes('condition');
+    const hasTreatment = Object.values(surfaceStates).includes('treatment');
+    const upper = isUpperArchTooth(selectedTooth.toothNumber);
+    const outer = (
+      <div className="tst-tooth-outer">
+        <Tooth
+          chartTooth={selectedTooth}
+          hasCondition={hasCondition}
+          hasTreatment={hasTreatment}
+          flipVertical={upper && isPrimaryTooth(selectedTooth.toothNumber)}
+        />
+      </div>
+    );
+    const occlusal = (
+      <div className="tst-tooth-occlusal">
+        <AdultOcclusal toothNumber={selectedTooth.toothNumber} surfaceStates={surfaceStates} />
+      </div>
+    );
+    return (
+      <div className="tst-tooth-art" key={`${selectedTooth.id}-${selectedTooth.toothNumber}`}>
+        {upper ? outer : occlusal}
+        {upper ? occlusal : outer}
+      </div>
+    );
+  };
 
   const sortedDentalActions = useMemo(
     () =>
@@ -493,12 +526,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
         <div className="tst-applied-layout">
           <div className="tst-tooth-preview">
-            {selectedTooth?.id && (
-              <FullTooth
-                key={selectedTooth.id}
-                chartTooth={selectedTooth}
-              />
-            )}
+            {selectedTooth?.id && renderToothArtwork()}
 
             <span className="tst-preview-label">
               <Translate>Tooth</Translate> #{toothLabel}
@@ -554,9 +582,15 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     }
                     note={action.note}
                     existing={action.existing}
+                    carriedForward={
+                      action.carriedFromActionId
+                        ? { by: action.originalRecordedBy, at: action.originalRecordedAt }
+                        : null
+                    }
                     anesthesiaUsed={action.anesthesiaUsed}
                     dose={action.dose}
                     numberingSystem={numberingSystem}
+                    numberingLabels={numberingLabels}
                   />
                 </div>
               ))

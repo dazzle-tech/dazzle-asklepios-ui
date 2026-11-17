@@ -29,6 +29,14 @@ export const SURFACE_OPTIONS = [
   { key: 'WHOLE_TOOTH', lovDisplayVale: 'Whole Tooth' }
 ];
 
+export const SURFACE_LABELS = SURFACE_OPTIONS.reduce<Record<string, string>>(
+  (result, option) => {
+    result[option.key] = option.lovDisplayVale;
+    return result;
+  },
+  {}
+);
+
 export const TREATMENT_AREA_OPTIONS: {
   key: TreatmentAreaScope;
   label: string;
@@ -138,6 +146,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
 
   const chartTeeth = originalChart?.teeth ?? [];
   const numberingSystem = originalChart?.numberingSystem || 'UNIVERSAL';
+  const numberingLabels = originalChart?.numberingLabels ?? null;
 
   const scopeTeeth = isGroupedScope
     ? teethForTreatmentScope(chartTeeth, treatmentScope)
@@ -186,7 +195,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const surfaceDisabled = inputsDisabled || isGroupedScope;
 
   const selectedToothLabels = validSelectedTeeth
-    .map((tooth: any) => toothDisplayLabel(tooth.toothNumber, numberingSystem))
+    .map((tooth: any) => toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels))
     .filter(Boolean);
 
   const selectedToothSummary = isGroupedScope
@@ -200,7 +209,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
     .map((id: any) => {
       const tooth = chartTeeth.find((item: any) => String(item.id) === String(id));
       return tooth?.toothNumber
-        ? toothDisplayLabel(tooth.toothNumber, numberingSystem)
+        ? toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)
         : null;
     })
     .filter(Boolean);
@@ -521,7 +530,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                   <div className="tpm-tooth-chips" dir="ltr">
                     {validSelectedTeeth.map((tooth: any) => (
                       <span className="tpm-tooth-chip" key={tooth.id}>
-                        {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+                        {toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)}
                       </span>
                     ))}
                   </div>
@@ -795,7 +804,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                 </section>
 
                 <section className="tpm-section">
-                  {renderSectionHeading('04', 'Clinical Details')}
+                  {renderSectionHeading('03', 'Clinical Details')}
 
                   <div className="tpm-fields-grid">
                     <div className="tpm-field">
@@ -879,7 +888,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                 </section>
 
                 <section className="tpm-section">
-                  {renderSectionHeading('03', 'Price & Quantity')}
+                  {renderSectionHeading('04', 'Price & Quantity')}
 
                   <div className="tpm-fields-grid tpm-fields-grid--pricing">
                     <div className="tpm-field">

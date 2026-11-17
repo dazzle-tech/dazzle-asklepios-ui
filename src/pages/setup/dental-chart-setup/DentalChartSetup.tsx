@@ -24,8 +24,13 @@ import {
   useUpdateDentalChartAgeRuleMutation,
   useToggleDentalChartAgeRuleActiveMutation
 } from '@/services/setup/dental-chart-age-rule/dentalChartAgeRuleService';
+import { useGetAllDentalToothNumberingMethodsQuery } from '@/services/setup/dental-tooth-numbering/dentalToothNumberingService';
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
+  MIXED_MAX_TEETH_PER_ARCH,
+  MIXED_MAX_TEETH_TOTAL,
+  mixedPositionConflicts,
+  mixedToothCounts,
   numberingSystemLabel,
   toothIdsForChartType
 } from '@/utils/toothNumberingSystems';
@@ -70,6 +75,15 @@ const DentalChartSetup = () => {
   });
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+
+  // Method names for the Numbering column (custom methods are referenced by id).
+  const { data: numberingMethods } = useGetAllDentalToothNumberingMethodsQuery({
+    page: 0,
+    size: 500,
+    sort: 'name,asc'
+  });
+  const numberingMethodName = (id?: number | null) =>
+    (numberingMethods?.data ?? []).find((m: any) => m.id === id)?.name ?? `Method #${id}`;
 
   const [createRule] = useCreateDentalChartAgeRuleMutation();
   const [updateRule] = useUpdateDentalChartAgeRuleMutation();
@@ -168,6 +182,20 @@ const DentalChartSetup = () => {
     if (toothNumbers.some(id => !allowed.has(id))) {
       return 'One or more selected teeth are invalid for the chart type';
     }
+    if (new Set(toothNumbers).size !== toothNumbers.length) {
+      return 'Duplicate teeth are not allowed';
+    }
+    const counts = mixedToothCounts(toothNumbers);
+    if (
+      counts.total > MIXED_MAX_TEETH_TOTAL ||
+      counts.upper > MIXED_MAX_TEETH_PER_ARCH ||
+      counts.lower > MIXED_MAX_TEETH_PER_ARCH
+    ) {
+      return `At most ${MIXED_MAX_TEETH_PER_ARCH} teeth per arch and ${MIXED_MAX_TEETH_TOTAL} in total`;
+    }
+    if (mixedPositionConflicts(toothNumbers).length > 0) {
+      return 'A primary and a permanent tooth cannot both occupy the same position; remove one first';
+    }
     return null;
   };
 
@@ -187,6 +215,7 @@ const DentalChartSetup = () => {
       ageTo,
       chartType,
       numberingSystem: rule.numberingSystem || 'UNIVERSAL',
+      numberingMethodId: rule.numberingMethodId ?? null,
       toothNumbers,
       isActive: rule.isActive ?? true
     };
@@ -318,7 +347,9 @@ const DentalChartSetup = () => {
       title: <Translate>Numbering</Translate>,
       flexGrow: 2,
       render: (rowData: DentalChartAgeRule) =>
-        numberingSystemLabel(rowData.numberingSystem)
+        rowData.numberingMethodId
+          ? numberingMethodName(rowData.numberingMethodId)
+          : numberingSystemLabel(rowData.numberingSystem)
     },
     {
       key: 'toothNumbers',

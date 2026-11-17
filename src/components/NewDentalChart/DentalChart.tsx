@@ -3,8 +3,7 @@ import { useAppDispatch } from '@/hooks';
 import {
   useSaveToothActionMutation,
   useCancelToothActionMutation,
-  useSaveToothServiceMutation,
-  useCancelToothServiceMutation
+  useSaveToothServiceMutation
 } from '@/services/dental/dentalChartService';
 import { hideLoading, notify, showLoading } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
@@ -13,9 +12,7 @@ import {
   toothCssClassSuffix,
   isPrimaryTooth,
   splitChartTeethByArch,
-  buildMixedArchSlots,
-  padPrimarySlotsToArch,
-  MIXED_ARCH_MIDLINE_INDEX
+  mixedArchMidGapIndex
 } from '@/utils/toothNumber';
 import { useEffect, useRef, useState } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
@@ -26,9 +23,8 @@ import clsx from 'clsx';
 import './styles.less';
 import MyModal from '../MyModal/MyModal';
 import Tooth from './Tooth/Tooth';
-import OcclusalBadge from './Tooth/OcclusalBadge';
+import { getSurfaceStates } from './Tooth/surfaceStates';
 import AdultOcclusal from './Tooth/AdultOcclusal';
-import { getToothShapeType } from './Tooth/toothShape';
 import ToothStateTab from './tabs/ToothStateTab';
 import ToothHistoryTab from './tabs/ToothHistoryTab';
 import ToothServicesTab from './tabs/ToothServicesTab';
@@ -44,20 +40,6 @@ import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/Pract
 import TreatmentPlanHeaderModal, {
   toPractitionerOptions
 } from '@/pages/encounter/dental-screen/tabs/TreatmentPlan/TreatmentPlanHeaderModal';
-
-// One entry per surface that has an active (non-cancelled) action on the
-// tooth; condition takes priority over treatment if both exist on the same
-// surface, matching the main tooth icon's own condition-over-treatment rule.
-const getSurfaceStates = (tooth: any, dentalActionsMap: any): Record<string, 'condition' | 'treatment'> => {
-  const states: Record<string, 'condition' | 'treatment'> = {};
-  (tooth?.actions ?? []).forEach((action: any) => {
-    const actionType = dentalActionsMap?.[action.dentalActionId]?.type;
-    if (actionType !== 'CONDITION' && actionType !== 'TREATMENT') return;
-    if (states[action.surface] === 'condition') return;
-    states[action.surface] = actionType === 'CONDITION' ? 'condition' : 'treatment';
-  });
-  return states;
-};
 
 const DentalChart = ({
   chartObject,
@@ -132,6 +114,8 @@ const DentalChart = ({
   const [removeToothAction, removeToothActionMutation] = useCancelToothActionMutation();
 
   const numberingSystem = chartObject?.numberingSystem || 'UNIVERSAL';
+  // Snapshot labels taken when the chart was created; absent on legacy charts.
+  const numberingLabels = chartObject?.numberingLabels ?? null;
 
   useEffect(() => {
     if (!chartObject?.teeth?.length) {
@@ -464,7 +448,7 @@ const DentalChart = ({
       <div key={tooth.id ?? `${arch}-${tooth.toothNumber}`} className={colClass}>
         {arch === 'upper' && (
           <div className="tooth-number">
-            {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)}
           </div>
         )}
 
@@ -494,15 +478,11 @@ const DentalChart = ({
                 selected: showNestedSelection
               })}
             >
-              {primary ? (
-                <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-              ) : (
-                <AdultOcclusal
-                  toothNumber={tooth.toothNumber}
-                  surfaceStates={surfaceStates}
-                  selected={showNestedSelection}
-                />
-              )}
+              <AdultOcclusal
+                toothNumber={tooth.toothNumber}
+                surfaceStates={surfaceStates}
+                selected={showNestedSelection}
+              />
             </Button>
           </>
         ) : (
@@ -516,15 +496,11 @@ const DentalChart = ({
                 selected: showNestedSelection
               })}
             >
-              {primary ? (
-                <OcclusalBadge shapeType={getToothShapeType(tooth.toothNumber)} surfaceStates={surfaceStates} />
-              ) : (
-                <AdultOcclusal
-                  toothNumber={tooth.toothNumber}
-                  surfaceStates={surfaceStates}
-                  selected={showNestedSelection}
-                />
-              )}
+              <AdultOcclusal
+                toothNumber={tooth.toothNumber}
+                surfaceStates={surfaceStates}
+                selected={showNestedSelection}
+              />
             </Button>
             <Button
               disabled={toothDisabled}
@@ -545,7 +521,7 @@ const DentalChart = ({
 
         {arch === 'lower' && (
           <div className="tooth-number">
-            {toothDisplayLabel(tooth.toothNumber, numberingSystem)}
+            {toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels)}
           </div>
         )}
       </div>
@@ -560,68 +536,6 @@ const DentalChart = ({
     teeth.map((tooth: any, idx: number) =>
       renderToothColumn(tooth, arch, idx, midGapIndex)
     );
-
-  const renderSlotColumns = (
-    slots: Array<any | null>,
-    arch: 'upper' | 'lower',
-    midGapIndex: number,
-    keyPrefix: string
-  ) =>
-    slots.map((tooth, idx) => {
-      if (!tooth) {
-        return (
-          <div
-            key={`${keyPrefix}-empty-${idx}`}
-            className={clsx('tooth-col', 'tooth-col-empty', {
-              'midline-gap': idx === midGapIndex
-            })}
-            aria-hidden
-          />
-        );
-      }
-      return renderToothColumn(tooth, arch, idx, midGapIndex);
-    });
-
-  const renderMixedArch = (teeth: any[], arch: 'upper' | 'lower') => {
-    const slots = buildMixedArchSlots(teeth, arch);
-    const primaryPadded = padPrimarySlotsToArch(slots.primary);
-    const permanentRow = (
-      <div className="chart-subrow chart-subrow--permanent">
-        {renderSlotColumns(
-          slots.permanent,
-          arch,
-          MIXED_ARCH_MIDLINE_INDEX,
-          `${arch}-perm`
-        )}
-      </div>
-    );
-    const primaryRow = (
-      <div className="chart-subrow chart-subrow--primary">
-        {renderSlotColumns(
-          primaryPadded,
-          arch,
-          MIXED_ARCH_MIDLINE_INDEX,
-          `${arch}-prim`
-        )}
-      </div>
-    );
-
-    return (
-      <div className={clsx('chart-arch', 'mixed', arch)}>
-        {arch === 'upper' ? (
-          <>
-            {permanentRow}
-            {primaryRow}
-          </>
-        ) : (
-          <>
-            {primaryRow}
-            {permanentRow}
-          </>
-        )}
-      </div>
-    );
-  };
 
   const hasPrimary = upperTeeth.some((t: any) => isPrimaryTooth(t.toothNumber))
     || lowerTeeth.some((t: any) => isPrimaryTooth(t.toothNumber));
@@ -647,21 +561,21 @@ const DentalChart = ({
             mixed: mixedLayout
           })}
         >
-          {mixedLayout ? (
-            renderMixedArch(upperTeeth, 'upper')
-          ) : (
-            <div className="chart-arch upper">
-              {renderToothColumns(upperTeeth, 'upper')}
-            </div>
-          )}
+          <div className="chart-arch upper">
+            {renderToothColumns(
+              upperTeeth,
+              'upper',
+              mixedLayout ? mixedArchMidGapIndex(upperTeeth) : undefined
+            )}
+          </div>
           <div className="chart-midline" aria-hidden />
-          {mixedLayout ? (
-            renderMixedArch(lowerTeeth, 'lower')
-          ) : (
-            <div className="chart-arch lower">
-              {renderToothColumns(lowerTeeth, 'lower')}
-            </div>
-          )}
+          <div className="chart-arch lower">
+            {renderToothColumns(
+              lowerTeeth,
+              'lower',
+              mixedLayout ? mixedArchMidGapIndex(lowerTeeth) : undefined
+            )}
+          </div>
         </div>
         <div className="chart-side-label chart-side-l" aria-hidden>
           L
@@ -678,7 +592,7 @@ const DentalChart = ({
             clearCurrentAction();
             clearCurrentService();
           }}
-          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '', numberingSystem)}`}
+          title={`Tooth Details - #${toothDisplayLabel(selectedTooth?.toothNumber || '', numberingSystem, numberingLabels)}`}
           actionButtonFunction={() => addAction()}
           customClassName="dental-chart-modal"
           content={
@@ -708,6 +622,7 @@ const DentalChart = ({
                   removeToothAction={removeToothAction}
                   clearCurrentAction={clearCurrentAction}
                   numberingSystem={numberingSystem}
+                  numberingLabels={numberingLabels}
                 />
               </TabPanel>
 

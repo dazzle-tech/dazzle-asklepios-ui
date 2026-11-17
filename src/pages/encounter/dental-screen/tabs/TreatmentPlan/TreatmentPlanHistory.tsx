@@ -3,6 +3,7 @@ import { Box, IconButton } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
+  faCalendarPlus,
   faPen,
   faTrash,
   faCircleCheck,
@@ -15,7 +16,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { practitionerDisplayName } from './TreatmentPlanHeaderModal';
-import { SURFACE_OPTIONS } from './TreatmentPlanModal';
+import { SURFACE_LABELS } from './TreatmentPlanModal';
 import {
   toothDisplayLabel,
   treatmentScopeLabel
@@ -27,7 +28,6 @@ import {
   formatDate,
   formatMoney,
   formatLineNet,
-  groupTreatmentRows,
   isCompleted,
   isExistingDocumentation,
   isGroupedScope,
@@ -52,6 +52,8 @@ export type TreatmentPlanHistoryProps = {
   onCloseDetails: () => void;
   onNewPlan: () => void;
   newPlanDisabled: boolean;
+  onBookAppointment: () => void;
+  bookAppointmentDisabled: boolean;
   actionsDisabled: boolean;
   planTreatments: any[];
   treatmentsFetching: boolean;
@@ -62,6 +64,7 @@ export type TreatmentPlanHistoryProps = {
   completingId: number | null;
   teethById: Record<number, any>;
   numberingSystem?: string | null;
+  numberingLabels?: Record<string, string> | null;
   cdtMap: Record<number, any>;
   dentalServicesMap: Record<number, any>;
   dentalProceduresMap: Record<number, any>;
@@ -72,14 +75,6 @@ export type TreatmentPlanHistoryProps = {
   onCompleteTreatment: (row: any) => void;
   onCancelTreatment: (row: any) => void;
 };
-
-const SURFACE_LABELS = SURFACE_OPTIONS.reduce<Record<string, string>>(
-  (result, option) => {
-    result[option.key] = option.lovDisplayVale;
-    return result;
-  },
-  {}
-);
 
 type RowActionProps = {
   label: string;
@@ -123,6 +118,8 @@ const TreatmentPlanHistory = ({
   onCloseDetails,
   onNewPlan,
   newPlanDisabled,
+  onBookAppointment,
+  bookAppointmentDisabled,
   actionsDisabled,
   planTreatments,
   treatmentsFetching,
@@ -133,6 +130,7 @@ const TreatmentPlanHistory = ({
   completingId,
   teethById,
   numberingSystem = 'UNIVERSAL',
+  numberingLabels = null,
   cdtMap,
   dentalServicesMap,
   dentalProceduresMap,
@@ -279,7 +277,7 @@ const TreatmentPlanHistory = ({
           return (
             <span className="ap-tooth-number">
               {toothNumber
-                ? toothDisplayLabel(toothNumber, numberingSystem)
+                ? toothDisplayLabel(toothNumber, numberingSystem, numberingLabels)
                 : row.toothId ?? EMPTY_VALUE}
             </span>
           );
@@ -514,6 +512,7 @@ const TreatmentPlanHistory = ({
       canExecute,
       cdtMap,
       completingId,
+      dentalProceduresMap,
       dentalServicesMap,
       onCancelTreatment,
       onCompleteTreatment,
@@ -521,7 +520,8 @@ const TreatmentPlanHistory = ({
       onStartTreatment,
       onViewTreatment,
       teethById,
-      numberingSystem
+      numberingSystem,
+      numberingLabels
     ]
   );
 
@@ -543,13 +543,22 @@ const TreatmentPlanHistory = ({
             </p>
           </div>
 
-          <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-            onClick={onNewPlan}
-            disabled={newPlanDisabled}
-          >
-            <Translate>New Treatment Plan</Translate>
-          </MyButton>
+          <div className="ap-section-actions">
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+              onClick={onNewPlan}
+              disabled={newPlanDisabled}
+            >
+              <Translate>New Treatment Plan</Translate>
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faCalendarPlus} />}
+              onClick={onBookAppointment}
+              disabled={bookAppointmentDisabled}
+            >
+              <Translate>Book Appointment</Translate>
+            </MyButton>
+          </div>
         </div>
 
         <div

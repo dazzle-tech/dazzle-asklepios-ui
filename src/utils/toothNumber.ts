@@ -8,12 +8,10 @@
  */
 
 import {
-  MIXED_ARCH_SLOT_COUNT,
-  MIXED_PRIMARY_SLOT_OFFSET,
-  PERMANENT_LOWER_IDS,
-  PERMANENT_UPPER_IDS,
-  PRIMARY_LOWER_IDS,
-  PRIMARY_UPPER_IDS,
+  MIXED_ARCH_MIDLINE_SLOT,
+  MIXED_LOWER_ORDER,
+  MIXED_UPPER_ORDER,
+  mixedToothSlot,
   toothDisplayLabelForSystem
 } from '@/utils/toothNumberingSystems';
 
@@ -33,11 +31,9 @@ export const isPrimaryTooth = (toothNumber: string): boolean =>
   isPrimaryToothLetter(toothNumber.replace('Tooth', ''));
 
 /**
- * Zero-padded image-asset code (e.g. "05") used by the legacy
- * `Tooth_XX_vertical.png` image files. Only meaningful for permanent teeth --
- * there are no corresponding images for primary teeth, callers should expect
- * `undefined`/no image in that case (handled gracefully by the legacy
- * image-loading try/catch).
+ * Zero-padded artwork code (e.g. "05") of a permanent tooth, as used by the
+ * `Color05.*.svg` assets. Primary teeth have no numeric code; their artwork is
+ * looked up by letter in colorAssets.
  */
 export const toothImageCodeFromEnum = (toothNumber: string): string =>
   toothIndexFromEnum(toothNumber).toString().padStart(2, '0');
@@ -48,8 +44,12 @@ export const toothImageCodeFromEnum = (toothNumber: string): string =>
  */
 export const toothDisplayLabel = (
   toothNumber: string,
-  numberingSystem?: string | null
+  numberingSystem?: string | null,
+  numberingLabels?: Record<string, string> | null
 ): string => {
+  // A chart's numbering snapshot (custom method labels) wins; legacy charts have none.
+  const snapshotLabel = numberingLabels?.[toothNumber]?.trim();
+  if (snapshotLabel) return snapshotLabel;
   if (numberingSystem) {
     return toothDisplayLabelForSystem(toothNumber, numberingSystem);
   }
@@ -68,8 +68,10 @@ export type TreatmentAreaScope =
   | 'LOWER_ARCH'
   | 'FULL_MOUTH';
 
-const UPPER_ARCH_ORDER = [...PERMANENT_UPPER_IDS, ...PRIMARY_UPPER_IDS];
-const LOWER_ARCH_ORDER = [...PERMANENT_LOWER_IDS, ...PRIMARY_LOWER_IDS];
+// Anatomical order per arch (patient right → left); primary and permanent
+// teeth share one sequence so a mixed arch renders as a single row.
+const UPPER_ARCH_ORDER = MIXED_UPPER_ORDER;
+const LOWER_ARCH_ORDER = MIXED_LOWER_ORDER;
 const UPPER_ARCH_SET = new Set(UPPER_ARCH_ORDER);
 const LOWER_ARCH_SET = new Set(LOWER_ARCH_ORDER);
 
@@ -121,55 +123,18 @@ export const splitChartTeethByArch = <T extends { toothNumber?: string | null }>
   return { upper, lower, all: [...upper, ...lower] };
 };
 
-export type MixedArchSlots<T> = {
-  permanent: Array<T | null>;
-  primary: Array<T | null>;
-};
-
 /**
- * Map an arch's saved teeth onto stable anatomical permanent/primary slots.
- * Missing ids become null placeholders so siblings do not shift.
+ * Index in a single anatomical arch row where the midline gap goes: the
+ * number of teeth on the patient's right side of the midline.
  */
-export const buildMixedArchSlots = <T extends { toothNumber?: string | null }>(
-  archTeeth: T[] | null | undefined,
-  arch: 'upper' | 'lower'
-): MixedArchSlots<T> => {
-  const permanentIds = arch === 'upper' ? PERMANENT_UPPER_IDS : PERMANENT_LOWER_IDS;
-  const primaryIds = arch === 'upper' ? PRIMARY_UPPER_IDS : PRIMARY_LOWER_IDS;
-  const byNumber = new Map<string, T>();
-  (archTeeth ?? []).forEach(tooth => {
-    if (tooth?.toothNumber) {
-      byNumber.set(String(tooth.toothNumber), tooth);
-    }
-  });
-  return {
-    permanent: permanentIds.map(id => byNumber.get(id) ?? null),
-    primary: primaryIds.map(id => byNumber.get(id) ?? null)
-  };
-};
-
-/**
- * Pad primary slots into the shared 16-column arch so they align under
- * permanent positions 4–13 (outer molar columns stay empty).
- */
-export const padPrimarySlotsToArch = <T>(
-  primarySlots: Array<T | null>
-): Array<T | null> => {
-  const leading = Array.from({ length: MIXED_PRIMARY_SLOT_OFFSET }, () => null);
-  const trailing = Array.from(
-    {
-      length: Math.max(
-        0,
-        MIXED_ARCH_SLOT_COUNT - MIXED_PRIMARY_SLOT_OFFSET - primarySlots.length
-      )
-    },
-    () => null
-  );
-  return [...leading, ...primarySlots, ...trailing];
-};
-
-/** Fixed midline index for the 16-column mixed/adult arch (after UR/LR 8). */
-export const MIXED_ARCH_MIDLINE_INDEX = 8;
+export const mixedArchMidGapIndex = <T extends { toothNumber?: string | null }>(
+  archTeeth: T[] | null | undefined
+): number =>
+  (archTeeth ?? []).filter(
+    tooth =>
+      tooth?.toothNumber &&
+      mixedToothSlot(String(tooth.toothNumber)) < MIXED_ARCH_MIDLINE_SLOT
+  ).length;
 
 export const teethForTreatmentScope = <T extends { toothNumber?: string | null }>(
   teeth: T[] | null | undefined,

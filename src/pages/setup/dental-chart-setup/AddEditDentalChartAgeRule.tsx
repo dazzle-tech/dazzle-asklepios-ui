@@ -1,6 +1,6 @@
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { Form } from 'rsuite';
 import { FaTeeth } from 'react-icons/fa6';
 import {
@@ -8,6 +8,10 @@ import {
   defaultToothIdsForChartType
 } from '@/utils/toothNumberingSystems';
 import SetupToothSelector from './SetupToothSelector';
+import {
+  useGetActiveDentalToothNumberingMethodsQuery,
+  useGetAllDentalToothNumberingMethodsQuery
+} from '@/services/setup/dental-tooth-numbering/dentalToothNumberingService';
 import './styles.less';
 
 const chartTypeOptions = [
@@ -28,29 +32,48 @@ const AddEditDentalChartAgeRule = ({
     ? rule.toothNumbers
     : [];
 
-  const [addToothOpen, setAddToothOpen] = useState(false);
-  const ignoreParentCloseRef = useRef(false);
+  // Built-in systems stay as-is; active custom methods are offered alongside them.
+  const { data: activeMethods = [], isSuccess: activeMethodsLoaded } =
+    useGetActiveDentalToothNumberingMethodsQuery();
+  // Same arguments as the Dental Chart Setup list, so this reuses its cache entry.
+  const { data: allMethods } = useGetAllDentalToothNumberingMethodsQuery({
+    page: 0,
+    size: 500,
+    sort: 'name,asc'
+  });
+  const methodId = rule?.numberingMethodId ?? null;
+  const selectedMethod = methodId
+    ? activeMethods.find((m: any) => m.id === methodId) ??
+      (allMethods?.data ?? []).find((m: any) => m.id === methodId) ??
+      null
+    : null;
+  const methodIsInactive =
+    activeMethodsLoaded && !!methodId && !activeMethods.some((m: any) => m.id === methodId);
+  const numberingOptions = [
+    ...NUMBERING_SYSTEM_OPTIONS,
+    ...activeMethods.map((m: any) => ({ label: m.name, value: `METHOD:${m.id}` })),
+    // A saved reference stays visible and is preserved when unrelated fields are edited, even if its
+    // method is now inactive; choosing a different method requires an active one.
+    ...(methodIsInactive
+      ? [{ label: `${selectedMethod?.name ?? `Method #${methodId}`} (inactive)`, value: `METHOD:${methodId}` }]
+      : [])
+  ];
+  const numberingChoice = {
+    numberingChoice: methodId ? `METHOD:${methodId}` : rule?.numberingSystem || 'UNIVERSAL'
+  };
 
-  const handleRuleModalOpen = (
-    next: boolean | ((prev: boolean) => boolean)
-  ) => {
-    const resolved = typeof next === 'function' ? next(open) : next;
-    if (!resolved) {
-      // Esc / backdrop on the nested picker must not dismiss the parent rule modal.
-      if (addToothOpen) {
-        setAddToothOpen(false);
-        ignoreParentCloseRef.current = true;
-        window.setTimeout(() => {
-          ignoreParentCloseRef.current = false;
-        }, 50);
-        return;
-      }
-      if (ignoreParentCloseRef.current) {
-        return;
-      }
-      setAddToothOpen(false);
+  // Only the numbering fields change; the selected teeth are never touched.
+  const handleNumberingChange = (updated: { numberingChoice?: string }) => {
+    const value = updated.numberingChoice || 'UNIVERSAL';
+    if (value.startsWith('METHOD:')) {
+      setRule((prev: any) => ({
+        ...prev,
+        numberingMethodId: Number(value.replace('METHOD:', '')),
+        numberingSystem: 'UNIVERSAL'
+      }));
+    } else {
+      setRule((prev: any) => ({ ...prev, numberingMethodId: null, numberingSystem: value }));
     }
-    setOpen(resolved);
   };
 
   const handleChartTypeChange = (updated: any) => {
@@ -87,7 +110,7 @@ const AddEditDentalChartAgeRule = ({
               Ages are in completed years. Age From is inclusive; Age To is exclusive.
               Leave Age To empty for an open-ended range.
               {rule?.chartType === 'MIXED'
-                ? ' For Mixed, use + Add Tooth and × to configure the inventory;'
+                ? ' For Mixed, use the + at each end of an arch and × to configure the inventory (max 16 per arch, 32 total);'
                 : ' Click teeth to select them;'}{' '}
               changing the numbering system only updates labels.
             </p>
@@ -122,24 +145,29 @@ const AddEditDentalChartAgeRule = ({
             />
             <MyInput
               width="100%"
-              fieldName="numberingSystem"
+              fieldName="numberingChoice"
               fieldLabel="Tooth Numbering System"
               fieldType="select"
-              selectData={NUMBERING_SYSTEM_OPTIONS}
+              selectData={numberingOptions}
               selectDataLabel="label"
               selectDataValue="value"
-              record={rule}
-              setRecord={setRule}
+              record={numberingChoice}
+              setRecord={handleNumberingChange}
               searchable={false}
             />
+            {methodIsInactive && (
+              <p className="dental-chart-setup-hint">
+                This numbering method is inactive. The reference is kept, but new charts from this rule use
+                the built-in numbering until the method is reactivated or another one is selected.
+              </p>
+            )}
             {rule?.chartType && (
               <SetupToothSelector
                 chartType={rule.chartType}
                 numberingSystem={rule.numberingSystem}
+                numberingLabels={selectedMethod?.toothLabels ?? null}
                 selectedToothIds={selectedIds}
                 onChange={handleToothNumbersChange}
-                addModalOpen={addToothOpen}
-                onAddModalOpenChange={setAddToothOpen}
               />
             )}
             <MyInput
@@ -164,7 +192,7 @@ const AddEditDentalChartAgeRule = ({
   return (
     <MyModal
       open={open}
-      setOpen={handleRuleModalOpen}
+      setOpen={setOpen}
       title={rule?.id ? 'Edit Dental Chart Rule' : 'New Dental Chart Rule'}
       position="right"
       content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}

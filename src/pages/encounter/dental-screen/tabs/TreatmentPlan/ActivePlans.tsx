@@ -3,6 +3,7 @@ import { Box, IconButton } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
+  faCalendarPlus,
   faPen,
   faTrash,
   faCircleCheck,
@@ -17,7 +18,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 
 import { practitionerDisplayName } from './TreatmentPlanHeaderModal';
-import { SURFACE_OPTIONS } from './TreatmentPlanModal';
+import { SURFACE_LABELS } from './TreatmentPlanModal';
 
 import {
   toothDisplayLabel,
@@ -53,6 +54,8 @@ export type ActivePlansProps = {
   onCloseDetails: () => void;
   onNewPlan: () => void;
   newPlanDisabled: boolean;
+  onBookAppointment: () => void;
+  bookAppointmentDisabled: boolean;
   actionsDisabled: boolean;
   planTreatments: any[];
   existingDocumentation: any[];
@@ -65,6 +68,7 @@ export type ActivePlansProps = {
   completingId: number | null;
   teethById: Record<number, any>;
   numberingSystem?: string | null;
+  numberingLabels?: Record<string, string> | null;
   cdtMap: Record<number, any>;
   dentalServicesMap: Record<number, any>;
   dentalProceduresMap: Record<number, any>;
@@ -83,14 +87,6 @@ type RowActionProps = {
   disabled?: boolean;
   onClick: () => void;
 };
-
-const SURFACE_LABELS = SURFACE_OPTIONS.reduce<Record<string, string>>(
-  (result, option) => {
-    result[option.key] = option.lovDisplayVale;
-    return result;
-  },
-  {}
-);
 
 const RowAction = ({
   label,
@@ -127,6 +123,8 @@ const ActivePlans = ({
   onCloseDetails,
   onNewPlan,
   newPlanDisabled,
+  onBookAppointment,
+  bookAppointmentDisabled,
   actionsDisabled,
   planTreatments,
   existingDocumentation,
@@ -139,6 +137,7 @@ const ActivePlans = ({
   completingId,
   teethById,
   numberingSystem = 'UNIVERSAL',
+  numberingLabels = null,
   cdtMap,
   dentalServicesMap,
   dentalProceduresMap,
@@ -300,7 +299,7 @@ const ActivePlans = ({
           return (
             <span className="ap-tooth-number">
               {toothNumber
-                ? toothDisplayLabel(toothNumber, numberingSystem)
+                ? toothDisplayLabel(toothNumber, numberingSystem, numberingLabels)
                 : row.toothId ?? EMPTY_VALUE}
             </span>
           );
@@ -525,6 +524,7 @@ const ActivePlans = ({
       canExecute,
       cdtMap,
       completingId,
+      dentalProceduresMap,
       dentalServicesMap,
       onCancelTreatment,
       onCompleteTreatment,
@@ -532,7 +532,8 @@ const ActivePlans = ({
       onStartTreatment,
       onViewTreatment,
       teethById,
-      numberingSystem
+      numberingSystem,
+      numberingLabels
     ]
   );
 
@@ -555,13 +556,22 @@ const ActivePlans = ({
             </p>
           </div>
 
-          <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-            onClick={onNewPlan}
-            disabled={newPlanDisabled}
-          >
-            <Translate>New Treatment Plan</Translate>
-          </MyButton>
+          <div className="ap-section-actions">
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+              onClick={onNewPlan}
+              disabled={newPlanDisabled}
+            >
+              <Translate>New Treatment Plan</Translate>
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faCalendarPlus} />}
+              onClick={onBookAppointment}
+              disabled={bookAppointmentDisabled}
+            >
+              <Translate>Book Appointment</Translate>
+            </MyButton>
+          </div>
         </div>
 
         {plansError ? (
@@ -731,7 +741,6 @@ const ActivePlans = ({
             </MyButton>
           </div>
         )}
-
 
         {showTreatmentTable && (
           <div className="ap-table-container">
