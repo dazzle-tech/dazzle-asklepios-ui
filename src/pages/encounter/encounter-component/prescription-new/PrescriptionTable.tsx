@@ -8,6 +8,7 @@ import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 
 import UserDateCell from '@/components/UserDateCell';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 type Props = {
   edit: boolean;
@@ -84,7 +85,7 @@ const PrescriptionTable = ({
       flexGrow: 1,
       render: (rowData: any) => {
         const ingredient = activeIngredientsMap.get(rowData.activeIngredientId);
-        return ingredient?.name ? String(ingredient.name) : '-';
+        return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
       }
     },
     {

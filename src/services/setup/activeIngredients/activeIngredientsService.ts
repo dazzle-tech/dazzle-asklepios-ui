@@ -165,6 +165,10 @@ export const activeIngredientsService = createApi({
           ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
+    getActiveIngredientById: builder.query<ActiveIngredient, Id>({
+      query: (id) => `/api/setup/active-ingredients/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'ActiveIngredients', id }],
+    }),
     getActiveIngredientsByIds: builder.mutation<ActiveIngredient[], Id[]>({
   query: (ids) => ({
     url: '/api/setup/active-ingredients/by-ids',
@@ -199,6 +203,8 @@ export const {
   useGetAllActiveIngredientsQuery,
   useLazyGetAllActiveIngredientsQuery,
   useGetActiveIngredientsByIdsMutation,
+  useGetActiveIngredientByIdQuery,
+  useLazyGetActiveIngredientByIdQuery,
 
 } = activeIngredientsService;
 

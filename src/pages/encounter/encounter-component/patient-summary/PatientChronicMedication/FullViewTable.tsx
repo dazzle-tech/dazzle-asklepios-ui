@@ -146,6 +146,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
 import { formatEnumString } from '@/utils';
 import Translate from '@/components/Translate';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const FullViewTable = ({
   open,
@@ -177,7 +178,7 @@ const FullViewTable = ({
       flexGrow: 1,
       render: (rowData: any) => {
        const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
-        return ingredient?.name ? String(ingredient.name) : '-';
+        return <ActiveIngredientLink activeIngredientId={rowData.activeIngredientId} label={ingredient?.name} />;
       }
 
     },
