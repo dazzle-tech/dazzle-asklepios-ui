@@ -6584,6 +6584,42 @@ export type PriceListItemType =
   | 'PROCEDURE'
   | 'VACCINE';
 
+// Item Price Dashboard, "Data checks" tab
+export type PriceListDataCheckKey =
+  | 'INACTIVE_SOURCE_ACTIVE_ITEM'
+  | 'MISSING_FROM_CASH'
+  | 'CASH_PRICE_DIFFERS'
+  | 'INSURANCE_WITHOUT_SBS'
+  | 'ZERO_PRICE'
+  | 'DUPLICATE_IN_LIST'
+  | 'ORPHAN_ITEM';
+
+export type PriceListDataCheckSummary = {
+  checks: { key: PriceListDataCheckKey; count: number }[];
+};
+
+export type PriceListDataCheckRow = {
+  itemType?: PriceListItemType | null;
+  sourceId?: number | null;
+  itemCode?: string | null;
+  itemName?: string | null;
+  priceListId?: number | null;
+  priceListName?: string | null;
+  priceListItemId?: number | null;
+  unitPrice?: number | null;
+  setupPrice?: number | null;
+  detail?: string | null;
+};
+
+export type PriceListDataCheckPage = {
+  key: PriceListDataCheckKey;
+  content: PriceListDataCheckRow[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
 export type PricingMethod =
   | 'FIXED_PRICE'
   | 'DISCOUNT'
