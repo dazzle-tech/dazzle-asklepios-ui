@@ -62,7 +62,11 @@ const CompleteTreatmentModal = ({
 
   // Same active list, ordering and Condition/Treatment metadata as the Chart's Action selector.
   const actionOptions = useMemo(
-    () => buildDentalActionOptions(dentalActions, record.dentalActionId),
+    () =>
+      buildDentalActionOptions(
+        dentalActions.filter(action => action.type === 'TREATMENT'),
+        record.dentalActionId
+      ),
     [dentalActions, record.dentalActionId]
   );
 

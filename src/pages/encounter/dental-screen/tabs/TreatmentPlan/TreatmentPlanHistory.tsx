@@ -263,31 +263,210 @@ const TreatmentPlanHistory = ({
         render: (row: any) => {
           if (row._sessionHeader) return null;
 
+          if (isGroupedScope(row.treatmentScope)) {
+            return (
+              <span className="ap-area-tag">
+                <Translate>
+                  {treatmentScopeLabel(row.treatmentScope)}
+                </Translate>
+              </span>
+            );
+          }
+
+          const toothNumber =
+            row.tooth?.toothNumber ||
+            teethById[row.toothId]?.toothNumber;
+
           return (
-            <TreatmentRowActions
-              row={row}
-              actionsDisabled={readOnly}
-              canAddTreatment={canAddTreatment}
-              canExecute={canExecute}
-              canReturn={canReturn}
-              completingId={completingId}
-              onViewTreatment={onViewTreatment}
-              onEditTreatment={onEditTreatment}
-              onStartTreatment={onStartTreatment}
-              onCompleteTreatment={onCompleteTreatment}
-              onCancelTreatment={onCancelTreatment}
-              onReturnTreatment={onReturnTreatment}
-            />
+            <span className="ap-tooth-number">
+              {toothNumber
+                ? toothDisplayLabel(toothNumber)
+                : row.toothId ?? EMPTY_VALUE}
+            </span>
           );
         }
+      },
+      {
+        key: 'surface',
+        title: <Translate>Surface</Translate>,
+        width: 105,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-muted">
+              {SURFACE_LABELS[row.surface] || row.surface || EMPTY_VALUE}
+            </span>
+          )
+      },
+      {
+        key: 'cdt',
+        title: <Translate>CDT</Translate>,
+        width: 230,
+        render: (row: any) => {
+          if (row._sessionHeader) return null;
+
+          const cdt =
+            row.cdtCodeId != null ? cdtMap[row.cdtCodeId] : null;
+
+          return cdt ? (
+            <div className="ap-procedure">
+              <span className="ap-procedure-code">
+                {cdt.code || EMPTY_VALUE}
+              </span>
+              <span className="ap-procedure-description">
+                {cdt.description || EMPTY_VALUE}
+              </span>
+            </div>
+          ) : (
+            <span className="ap-procedure-description">
+              {row.dentalActionDescription || EMPTY_VALUE}
+            </span>
+          );
+        }
+      },
+      {
+        key: 'dentalProcedure',
+        title: <Translate>Dental Procedure</Translate>,
+        width: 185,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-service-name">
+              {(row.procedureId != null
+                ? dentalProceduresMap[row.procedureId]?.name
+                : null) ||
+                (row.serviceId != null
+                  ? dentalServicesMap[row.serviceId]?.name
+                  : null) ||
+                EMPTY_VALUE}
+            </span>
+          )
+      },
+      {
+        key: 'price',
+        title: <Translate>Unit Price</Translate>,
+        width: 95,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-number">
+              {isExistingDocumentation(row)
+                ? EMPTY_VALUE
+                : formatMoney(row.price)}
+            </span>
+          )
+      },
+      {
+        key: 'quantity',
+        title: <Translate>Quantity</Translate>,
+        width: 90,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-number">
+              {isExistingDocumentation(row)
+                ? EMPTY_VALUE
+                : row.quantity ?? 1}
+            </span>
+          )
+      },
+      {
+        key: 'discount',
+        title: <Translate>Discount Amount</Translate>,
+        width: 110,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-number">
+              {isExistingDocumentation(row)
+                ? EMPTY_VALUE
+                : formatMoney(row.discount)}
+            </span>
+          )
+      },
+      {
+        key: 'netTotal',
+        title: <Translate>Net Total</Translate>,
+        width: 100,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <span className="ap-number">
+              {isExistingDocumentation(row)
+                ? EMPTY_VALUE
+                : formatLineNet(row.price, row.quantity ?? 1, row.discount)}
+            </span>
+          )
+      },
+      {
+        key: 'status',
+        title: <Translate>Status</Translate>,
+        width: 175,
+        render: (row: any) => {
+          if (row._sessionHeader) return null;
+
+          const existing = isExistingDocumentation(row);
+
+          const status = row.cancelled
+            ? 'cancelled'
+            : existing || isCompleted(row)
+              ? 'completed'
+              : isInProgress(row)
+                ? 'in-progress'
+                : 'pending';
+
+          const labels = {
+            cancelled: 'Cancelled',
+            completed: 'Completed',
+            'in-progress': 'In Progress',
+            pending: 'Pending'
+          };
+
+          return (
+            <Box className="ap-status-group">
+              <span className={`ap-status ap-status--${status}`}>
+                <span className="ap-status-dot" aria-hidden="true" />
+                <Translate>{labels[status]}</Translate>
+              </span>
+
+              {existing && (
+                <span className="ap-status ap-status--existing">
+                  <Translate>Existing</Translate>
+                </span>
+              )}
+            </Box>
+          );
+        }
+      },
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        width: 175,
+        render: (row: any) =>
+          row._sessionHeader ? null : (
+            <Box
+              className="ap-actions"
+              onClick={event => event.stopPropagation()}
+              onKeyDown={event => event.stopPropagation()}
+            >
+              <TreatmentRowActions
+                row={row}
+                actionsDisabled={actionsDisabled || readOnly}
+                canAddTreatment={canAddTreatment}
+                canExecute={canExecute}
+                canReturn={canReturn}
+                completingId={completingId}
+                onViewTreatment={onViewTreatment}
+                onEditTreatment={onEditTreatment}
+                onStartTreatment={onStartTreatment}
+                onCompleteTreatment={onCompleteTreatment}
+                onCancelTreatment={onCancelTreatment}
+                onReturnTreatment={onReturnTreatment}
+              />
+            </Box>
+          )
       }
     ],
     [
+      actionsDisabled,
       readOnly,
-      canReturn,
-      onReturnTreatment,
       canAddTreatment,
       canExecute,
+      canReturn,
       cdtMap,
       completingId,
       dentalProceduresMap,
@@ -297,9 +476,8 @@ const TreatmentPlanHistory = ({
       onEditTreatment,
       onStartTreatment,
       onViewTreatment,
-      teethById,
-      numberingSystem,
-      numberingLabels
+      onReturnTreatment,
+      teethById
     ]
   );
 
