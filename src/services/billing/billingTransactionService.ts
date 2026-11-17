@@ -9,6 +9,7 @@ import {
 import type {
   BillingCancellationRequest,
   BillingCancellationResult,
+  ServiceCancellationBeforeInvoiceRequest,
   BillingCheckoutRequest,
   BillingCheckoutResult,
   BillingPaymentResult,
@@ -545,6 +546,30 @@ export const billingTransactionService =
             ]
           }),
 
+        cancelServiceBeforeInvoice:
+          builder.mutation<
+            void,
+            ServiceCancellationBeforeInvoiceRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/cancel-service-before-invoice',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: [
+              'BillingCheckout',
+              'BillingWallet',
+              'EncounterBillingSummary',
+              'PatientLedgerSummary'
+            ]
+          }),
+
         refundBillingPayment:
           builder.mutation<
             BillingRefundResult,
@@ -737,6 +762,8 @@ export const {
   useCheckoutBillingChargeMutation,
 
   useCancelBillingServiceMutation,
+
+  useCancelServiceBeforeInvoiceMutation,
 
   useRefundBillingPaymentMutation,
 

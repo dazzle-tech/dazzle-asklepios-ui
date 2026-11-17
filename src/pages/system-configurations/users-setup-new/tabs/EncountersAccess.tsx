@@ -21,6 +21,7 @@ type EncountersAccessRecord = {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canCancelServiceBeforeInvoice: boolean;
   canEditSubmittedPrescription: boolean;
 };
 
@@ -33,6 +34,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
     canUnDischargeUrgentCare: false,
     canUnCompleteEncounter: false,
     canReturnClaimForResubmit: false,
+    canCancelServiceBeforeInvoice: false,
     canEditSubmittedPrescription: false,
   });
 
@@ -64,6 +66,7 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         canUnDischargeUrgentCare: false,
         canUnCompleteEncounter: false,
         canReturnClaimForResubmit: false,
+        canCancelServiceBeforeInvoice: false,
         canEditSubmittedPrescription: false,
       });
       return;
@@ -78,6 +81,8 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
           encountersAccess.canUnCompleteEncounter ?? false,
         canReturnClaimForResubmit:
           encountersAccess.canReturnClaimForResubmit ?? false,
+        canCancelServiceBeforeInvoice:
+          encountersAccess.canCancelServiceBeforeInvoice ?? false,
         canEditSubmittedPrescription:
           encountersAccess.canEditSubmittedPrescription ?? false,
       });
@@ -167,6 +172,15 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         fieldType="checkbox"
         fieldName="canReturnClaimForResubmit"
         fieldLabel="Can return claims for resubmit"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canCancelServiceBeforeInvoice"
+        fieldLabel="Can cancel services before invoice"
         record={record}
         setRecord={setRecord}
         disabled={isLoadingAccess}

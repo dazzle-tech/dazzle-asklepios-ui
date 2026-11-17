@@ -29,6 +29,7 @@ export interface ApUser {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canCancelServiceBeforeInvoice: boolean;
   canEditSubmittedPrescription: boolean;
 }
 
@@ -7491,6 +7492,7 @@ export type EncounterBillingItemSummary = {
   clinicalStatus?: string | null;
   patientTaxAmount?: number | null;
   insuranceTaxAmount?: number | null;
+  priceListName?: string | null;
 };
 
 export type WaseelBenefitDetail = {
@@ -7694,6 +7696,11 @@ export type BillingCancellationRequest = {
   cancelledBy: string;
   requestId: string;
   sourceChannel: BillingLedgerSourceChannel;
+};
+
+export type ServiceCancellationBeforeInvoiceRequest = {
+  patientServiceProductId: number;
+  reason: string;
 };
 
 export type BillingCancellationResult = {
