@@ -32,6 +32,7 @@ export const newApUser: modelTypes.ApUser = {
   canReturnClaimForResubmit: false,
   canCancelServiceBeforeInvoice: false,
   canEditSubmittedPrescription: false,
+  canCollectZeroPayment: false,
 };
 
 // ------------------- Candidate -------------------
