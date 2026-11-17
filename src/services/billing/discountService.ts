@@ -177,6 +177,25 @@ const mapPagedResponse = <T,>(
   };
 };
 
+// Table column filters: /api/setup/discount/{path}/{value}?facilityId=...
+export type DiscountColumnFilterParams =
+  DiscountPagedParams & {
+    value: string | number | boolean;
+  };
+
+const discountColumnFilterQuery =
+  (path: string) =>
+  ({ facilityId, value, page, size, sort = 'id,desc' }: DiscountColumnFilterParams) => ({
+    url: `/api/setup/discount/${path}/${encodeURIComponent(String(value))}`,
+    method: 'GET',
+    params: { facilityId, page, size, sort }
+  });
+
+const toDiscountPage = (
+  response: Discount[] | SpringPageResponse<Discount>,
+  meta: any
+) => mapPagedResponse<Discount>(response, meta);
+
 export const discountService =
   createApi({
     reducerPath:
@@ -494,6 +513,34 @@ export const discountService =
             ]
           }),
 
+        getDiscountsByValue:
+          builder.query<PagedResult<Discount>, DiscountColumnFilterParams>({
+            query: discountColumnFilterQuery('by-value'),
+            transformResponse: toDiscountPage,
+            providesTags: ['Discount']
+          }),
+
+        getDiscountsByRequiresApproval:
+          builder.query<PagedResult<Discount>, DiscountColumnFilterParams>({
+            query: discountColumnFilterQuery('by-requires-approval'),
+            transformResponse: toDiscountPage,
+            providesTags: ['Discount']
+          }),
+
+        getDiscountsByDefault:
+          builder.query<PagedResult<Discount>, DiscountColumnFilterParams>({
+            query: discountColumnFilterQuery('by-default'),
+            transformResponse: toDiscountPage,
+            providesTags: ['Discount']
+          }),
+
+        getDiscountsByActive:
+          builder.query<PagedResult<Discount>, DiscountColumnFilterParams>({
+            query: discountColumnFilterQuery('by-active'),
+            transformResponse: toDiscountPage,
+            providesTags: ['Discount']
+          }),
+
         getDiscountsByApplicableOn:
           builder.query<
             PagedResult<Discount>,
@@ -779,6 +826,11 @@ export const {
 
   useGetDiscountsByApplicableOnQuery,
   useLazyGetDiscountsByApplicableOnQuery,
+
+  useLazyGetDiscountsByValueQuery,
+  useLazyGetDiscountsByRequiresApprovalQuery,
+  useLazyGetDiscountsByDefaultQuery,
+  useLazyGetDiscountsByActiveQuery,
 
   useGetEffectiveDiscountsQuery,
   useLazyGetEffectiveDiscountsQuery,
