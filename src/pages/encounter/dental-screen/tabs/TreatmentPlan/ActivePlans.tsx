@@ -4,11 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
   faCalendarPlus,
-  faPen,
-  faTrash,
-  faCircleCheck,
   faEye,
-  faPlay,
   faTooth,
   faCircleInfo
 } from '@fortawesome/free-solid-svg-icons';
@@ -19,6 +15,7 @@ import MyButton from '@/components/MyButton/MyButton';
 
 import { practitionerDisplayName } from './TreatmentPlanHeaderModal';
 import { SURFACE_LABELS } from './TreatmentPlanModal';
+import TreatmentRowActions from './TreatmentRowActions';
 
 import {
   toothDisplayLabel,
@@ -78,6 +75,9 @@ export type ActivePlansProps = {
   onStartTreatment: (row: any) => void;
   onCompleteTreatment: (row: any) => void;
   onCancelTreatment: (row: any) => void;
+  readOnly: boolean;
+  canReturn: boolean;
+  onReturnTreatment: (row: any) => void;
 };
 
 type RowActionProps = {
@@ -146,7 +146,10 @@ const ActivePlans = ({
   onEditTreatment,
   onStartTreatment,
   onCompleteTreatment,
-  onCancelTreatment
+  onCancelTreatment,
+  readOnly,
+  canReturn,
+  onReturnTreatment
 }: ActivePlansProps) => {
   const planOnHold = selectedPlan?.status === 'ON_HOLD';
 
@@ -282,244 +285,29 @@ const ActivePlans = ({
         title: <Translate>Tooth / Area</Translate>,
         width: 130,
         render: (row: any) => {
-          if (isGroupedScope(row.treatmentScope)) {
-            return (
-              <span className="ap-area-tag">
-                <Translate>
-                  {treatmentScopeLabel(row.treatmentScope)}
-                </Translate>
-              </span>
-            );
-          }
-
-          const toothNumber =
-            row.tooth?.toothNumber ||
-            teethById[row.toothId]?.toothNumber;
-
           return (
-            <span className="ap-tooth-number">
-              {toothNumber
-                ? toothDisplayLabel(toothNumber, numberingSystem, numberingLabels)
-                : row.toothId ?? EMPTY_VALUE}
-            </span>
-          );
-        }
-      },
-      {
-        key: 'surface',
-        title: <Translate>Surface</Translate>,
-        width: 105,
-        render: (row: any) => (
-          <span className="ap-muted">
-            {isGroupedScope(row.treatmentScope)
-              ? EMPTY_VALUE
-              : SURFACE_LABELS[row.surface] ||
-                row.surface ||
-                EMPTY_VALUE}
-          </span>
-        )
-      },
-      {
-        key: 'cdt',
-        title: <Translate>CDT</Translate>,
-        width: 230,
-        render: (row: any) => {
-          const cdt =
-            row.cdtCodeId != null ? cdtMap[row.cdtCodeId] : null;
-
-          return cdt ? (
-            <div className="ap-procedure">
-              <span className="ap-procedure-code">
-                {cdt.code || EMPTY_VALUE}
-              </span>
-
-              <span className="ap-procedure-description">
-                {cdt.description || EMPTY_VALUE}
-              </span>
-            </div>
-          ) : (
-            <span className="ap-procedure-description">
-              {row.dentalActionDescription || EMPTY_VALUE}
-            </span>
-          );
-        }
-      },
-      {
-        key: 'dentalProcedure',
-        title: <Translate>Dental Procedure</Translate>,
-        width: 185,
-        render: (row: any) => (
-          <span className="ap-service-name">
-            {(row.procedureId != null
-              ? dentalProceduresMap[row.procedureId]?.name
-              : null) ||
-              (row.serviceId != null
-                ? dentalServicesMap[row.serviceId]?.name
-                : null) ||
-              EMPTY_VALUE}
-          </span>
-        )
-      },
-      {
-        key: 'price',
-        title: <Translate>Unit Price</Translate>,
-        width: 95,
-        render: (row: any) => (
-          <span className="ap-number">
-            {isExistingDocumentation(row)
-              ? EMPTY_VALUE
-              : formatMoney(row.price)}
-          </span>
-        )
-      },
-      {
-        key: 'quantity',
-        title: <Translate>Quantity</Translate>,
-        width: 90,
-        render: (row: any) => (
-          <span className="ap-number">
-            {isExistingDocumentation(row)
-              ? EMPTY_VALUE
-              : row.quantity ?? 1}
-          </span>
-        )
-      },
-      {
-        key: 'discount',
-        title: <Translate>Discount Amount</Translate>,
-        width: 110,
-        render: (row: any) => (
-          <span className="ap-number">
-            {isExistingDocumentation(row)
-              ? EMPTY_VALUE
-              : formatMoney(row.discount)}
-          </span>
-        )
-      },
-      {
-        key: 'netTotal',
-        title: <Translate>Net Total</Translate>,
-        width: 100,
-        render: (row: any) => (
-          <span className="ap-number">
-            {isExistingDocumentation(row)
-              ? EMPTY_VALUE
-              : formatLineNet(row.price, row.quantity ?? 1, row.discount)}
-          </span>
-        )
-      },
-      {
-        key: 'status',
-        title: <Translate>Status</Translate>,
-        width: 175,
-        render: (row: any) => {
-          const existing = isExistingDocumentation(row);
-
-          const status = row.cancelled
-            ? 'cancelled'
-            : existing || isCompleted(row)
-              ? 'completed'
-              : isInProgress(row)
-                ? 'in-progress'
-                : 'pending';
-
-          const labels = {
-            cancelled: 'Cancelled',
-            completed: 'Completed',
-            'in-progress': 'In Progress',
-            pending: 'Pending'
-          };
-
-          return (
-            <Box className="ap-status-group">
-              <span className={`ap-status ap-status--${status}`}>
-                <span className="ap-status-dot" aria-hidden="true" />
-                <Translate>{labels[status]}</Translate>
-              </span>
-
-              {existing && (
-                <span className="ap-status ap-status--existing">
-                  <Translate>Existing</Translate>
-                </span>
-              )}
-            </Box>
-          );
-        }
-      },
-      {
-        key: 'actions',
-        title: <Translate>Actions</Translate>,
-        width: 175,
-        render: (row: any) => {
-          const existing = isExistingDocumentation(row);
-
-          const unfinished =
-            !actionsDisabled &&
-            !isCompleted(row) &&
-            !row.cancelled &&
-            canAddTreatment;
-
-          return (
-            <Box
-              className="ap-actions"
-              onClick={event => event.stopPropagation()}
-              onKeyDown={event => event.stopPropagation()}
-            >
-              <RowAction
-                label="View Details"
-                className="ap-action--view"
-                icon={faEye}
-                onClick={() => onViewTreatment(row)}
-              />
-
-              {!existing && (
-                <>
-                  <RowAction
-                    label="Edit Treatment"
-                    className="ap-action--edit"
-                    icon={faPen}
-                    disabled={!unfinished}
-                    onClick={() => onEditTreatment(row)}
-                  />
-
-                  <RowAction
-                    label="Start Treatment"
-                    className="ap-action--start"
-                    icon={faPlay}
-                    disabled={
-                      !unfinished || isInProgress(row) || !canExecute
-                    }
-                    onClick={() => onStartTreatment(row)}
-                  />
-
-                  <RowAction
-                    label={
-                      completingId === row.id
-                        ? 'Completing...'
-                        : 'Complete Treatment'
-                    }
-                    className="ap-action--complete"
-                    icon={faCircleCheck}
-                    disabled={!unfinished || !canExecute}
-                    onClick={() => onCompleteTreatment(row)}
-                  />
-
-                  <RowAction
-                    label="Cancel Treatment"
-                    className="ap-action--cancel"
-                    icon={faTrash}
-                    disabled={!unfinished}
-                    onClick={() => onCancelTreatment(row)}
-                  />
-                </>
-              )}
-            </Box>
+            <TreatmentRowActions
+              row={row}
+              actionsDisabled={readOnly}
+              canAddTreatment={canAddTreatment}
+              canExecute={canExecute}
+              canReturn={canReturn}
+              completingId={completingId}
+              onViewTreatment={onViewTreatment}
+              onEditTreatment={onEditTreatment}
+              onStartTreatment={onStartTreatment}
+              onCompleteTreatment={onCompleteTreatment}
+              onCancelTreatment={onCancelTreatment}
+              onReturnTreatment={onReturnTreatment}
+            />
           );
         }
       }
     ],
     [
-      actionsDisabled,
+      readOnly,
+      canReturn,
+      onReturnTreatment,
       canAddTreatment,
       canExecute,
       cdtMap,

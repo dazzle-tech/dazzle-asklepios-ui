@@ -16,6 +16,10 @@ import Tooth from '../Tooth/Tooth';
 import AdultOcclusal from '../Tooth/AdultOcclusal';
 import { getSurfaceStates } from '../Tooth/surfaceStates';
 import ToothActionCard from '../ToothActionCard/ToothActionCard';
+import {
+  buildDentalActionOptions,
+  renderDentalActionMenuItem
+} from '../DentalActionOption/dentalActionOptions';
 
 import { isPrimaryTooth, isUpperArchTooth, toothDisplayLabel } from '@/utils/toothNumber';
 import { useGetByDentalActionQuery } from '@/services/setup/dental-action/CdtDentalActionService';
@@ -124,17 +128,11 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
   const sortedDentalActions = useMemo(
     () =>
-      [...(dentalActionsList ?? [])].sort((a, b) => {
-        const typeDifference =
-          Number(a.type === 'TREATMENT') -
-          Number(b.type === 'TREATMENT');
-
-        return (
-          typeDifference ||
-          (a.description ?? '').localeCompare(b.description ?? '')
-        );
-      }),
-    [dentalActionsList]
+      buildDentalActionOptions(
+        dentalActionsList,
+        currentToothAction.dentalActionId
+      ),
+    [dentalActionsList, currentToothAction.dentalActionId]
   );
 
   const { currentData: cdtDentalActionRows } =
@@ -254,25 +252,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                   selectData={sortedDentalActions}
                   selectDataLabel="description"
                   selectDataValue="id"
-                  renderMenuItem={(_, action) => (
-                    <div className="tst-action-option">
-                      <span>{action.description}</span>
-
-                      <span
-                        className={
-                          action.type === 'TREATMENT'
-                            ? 'tst-action-type tst-action-type--treatment'
-                            : 'tst-action-type tst-action-type--condition'
-                        }
-                      >
-                        <Translate>
-                          {action.type === 'TREATMENT'
-                            ? 'Treatment'
-                            : 'Condition'}
-                        </Translate>
-                      </span>
-                    </div>
-                  )}
+                  renderMenuItem={renderDentalActionMenuItem}
                 />
               </div>
 

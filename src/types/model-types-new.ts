@@ -9861,7 +9861,8 @@ export type PlannedTreatmentHistoryAction =
   | 'CREATED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'RETURNED_TO_IN_PROGRESS';
 
 export interface DentalPlannedTreatmentStatusLogDTO {
   id: number;
@@ -9870,6 +9871,9 @@ export interface DentalPlannedTreatmentStatusLogDTO {
   toothId?: number | null;
   toothLabel?: string | null;
   action: PlannedTreatmentHistoryAction;
+  previousStatus?: string | null;
+  newStatus?: string | null;
+  reason?: string | null;
   changedBy: string;
   changedAt: string;
 }

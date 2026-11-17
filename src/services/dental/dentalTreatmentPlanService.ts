@@ -118,12 +118,26 @@ export const dentalTreatmentPlanService = createApi({
 
     completePlannedTreatment: builder.mutation<
       PlannedTreatmentDTO,
-      { id: number; executionEncounterId: number }
+      { id: number; executionEncounterId: number; dentalActionId: number }
     >({
-      query: ({ id, executionEncounterId }) => ({
+      query: ({ id, executionEncounterId, dentalActionId }) => ({
         url: `/api/patient/dental/treatment-plan/${id}/complete`,
         method: 'POST',
-        body: { executionEncounterId }
+        body: { executionEncounterId, dentalActionId }
+      }),
+      invalidatesTags: ['DentalTreatmentPlan'],
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => response
+    }),
+
+    returnPlannedTreatmentToInProgress: builder.mutation<
+      PlannedTreatmentDTO,
+      { id: number; encounterId: number; reason: string }
+    >({
+      query: ({ id, encounterId, reason }) => ({
+        url: `/api/patient/dental/treatment-plan/${id}/return-to-in-progress`,
+        method: 'POST',
+        body: { encounterId, reason }
       }),
       invalidatesTags: ['DentalTreatmentPlan'],
       onQueryStarted: onQueryStarted,
@@ -280,6 +294,7 @@ export const {
   useCancelPlannedTreatmentMutation,
   useStartPlannedTreatmentMutation,
   useCompletePlannedTreatmentMutation,
+  useReturnPlannedTreatmentToInProgressMutation,
   useGetTreatmentSessionsByPatientQuery,
   useGetTreatmentPlansByPatientQuery,
   useGetTreatmentPlanSessionsQuery,

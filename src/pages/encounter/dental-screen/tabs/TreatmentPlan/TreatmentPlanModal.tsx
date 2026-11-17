@@ -192,7 +192,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const chartDisabled =
     (!allowChartSelection && locked) || (!allowChartSelection && isGroupedScope);
   const inputsDisabled = locked || !hasValidArea;
-  const surfaceDisabled = inputsDisabled || isGroupedScope;
+  const surfaceDisabled = inputsDisabled;
 
   const selectedToothLabels = validSelectedTeeth
     .map((tooth: any) => toothDisplayLabel(tooth.toothNumber, numberingSystem, numberingLabels))
@@ -671,6 +671,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                     <div className="tpm-field">
                       <MyInput
                         width="100%"
+                        required
                         fieldName="surface"
                         fieldLabel="Surface"
                         fieldType="select"
@@ -684,14 +685,6 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                       />
                     </div>
                   </div>
-
-                  {isGroupedScope && (
-                    <p className="tpm-field-hint">
-                      <Translate>
-                        Surface does not apply to arch or full-mouth treatments.
-                      </Translate>
-                    </p>
-                  )}
 
                   {viewOnly && isGroupedScope && (
                     <p className="tpm-field-hint">
@@ -754,7 +747,6 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                     <div className="tpm-field tpm-field-full">
                       <MyInput
                         width="100%"
-                        required
                         fieldName="cdtCodeId"
                         fieldLabel="CDT"
                         fieldType="select"
