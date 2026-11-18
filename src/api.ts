@@ -1,11 +1,12 @@
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { notify } from '@/utils/uiReducerActions';
+import { rememberListResponse } from '@/components/MyTable/loadAllTableRows';
 import config from '../app-config';
 
 /**
  * base services setup
  */
-export const baseQuery = fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080', // TODO change from config file to env variable
   prepareHeaders: (headers: Headers, { endpoint, type, getState }) => {
     if (endpoint === 'loadTenant' && type === 'query') {
@@ -26,6 +27,18 @@ export const baseQuery = fetchBaseQuery({
     return headers;
   }
 });
+
+export const baseQuery: typeof rawBaseQuery = async (args, api, extraOptions) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  rememberListResponse(args, result, nextArgs =>
+    rawBaseQuery(
+      nextArgs as typeof args,
+      { ...api, signal: new AbortController().signal },
+      extraOptions
+    )
+  );
+  return result;
+};
 
 export const dummyBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080', // TODO change from config file to env variable

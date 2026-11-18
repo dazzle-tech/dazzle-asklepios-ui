@@ -158,6 +158,7 @@ const MyTable: React.FC<MyTableProps> = ({
           <TableExportButton
             columns={columns}
             data={data}
+            totalCount={totalCount}
             fileName={exportFileName}
             disabled={loading || !data?.length}
           />

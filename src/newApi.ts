@@ -2,6 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { notify } from '@/utils/uiReducerActions';
 import { expireSession } from '@/utils/sessionExpiry';
+import { rememberListResponse } from '@/components/MyTable/loadAllTableRows';
 import config from '../app-config';
 import { RootState } from './store'; 
 
@@ -39,6 +40,13 @@ const baseQueryWithSessionExpiry: typeof baseFetchBaseQuery = async (args, api, 
   ) {
     api.dispatch(expireSession() as any);
   }
+  rememberListResponse(args, result, nextArgs =>
+    baseFetchBaseQuery(
+      nextArgs as typeof args,
+      { ...api, signal: new AbortController().signal },
+      extraOptions
+    )
+  );
   return result;
 };
 
