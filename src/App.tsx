@@ -184,6 +184,7 @@ const Questionnaire = lazy (() => import ( './pages/questionnaire-setup/Question
 const Rad = lazy (() => import ( './pages/rad-module/RadiologyMain'));
 const Recovery = lazy (() => import ( './pages/recovery'));
 const ResetPassword = lazy (() => import ( './pages/reset-password/ResetPassword'));
+const ForgotPassword = lazy (() => import ( './pages/forgot-password/ForgotPassword'));
 const AccessRoles = lazy (() => import ( './pages/setup/access-roles'));
 const AgeGroupSetup = lazy (() => import ( './pages/setup/age-group'));
 const Allergens = lazy (() => import ( './pages/setup/allergens-setup'));
@@ -1094,6 +1095,7 @@ const App = () => {
           </Route>
 
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
           <Route path="patient-satisfaction-survey" element={<SurveyPage />} />
