@@ -294,21 +294,22 @@
     border-radius: 99px;
     color: #fff;
 
-    &.critical,
-    &.high {
+    // Own modifier names: a global .critical rule elsewhere turned the text red
+    &--critical,
+    &--high {
       background: @danger;
     }
 
-    &.moderate {
+    &--moderate {
       color: #212121;
       background: @amber;
     }
 
-    &.low {
+    &--low {
       background: @ok;
     }
 
-    &.review {
+    &--review {
       color: darken(@amber, 25%);
       background: @warn-bg;
       border: 1px solid color-mix(in srgb, @amber 40%, var(--rs-border-primary));
@@ -367,19 +368,19 @@
   &__flag {
     font-weight: 700;
 
-    &.crit {
+    &--crit {
       color: @danger;
     }
 
-    &.high {
+    &--high {
       color: #c2410c;
     }
 
-    &.low {
+    &--low {
       color: #1d4ed8;
     }
 
-    &.ok {
+    &--ok {
       color: @ok;
     }
   }
