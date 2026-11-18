@@ -10,7 +10,7 @@ import preAuthorizationMissingFieldsSlice, {
 } from './reducers/preAuthorizationMissingFieldsSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
-import authReducer from './reducers/authSlice';
+import authReducer, { logout } from './reducers/authSlice';
 import callReducer from './store/callSlice';
 import patientSlice from '@/reducers/patientSlice';
 
@@ -334,6 +334,48 @@ const rtkDispatchLoopGuard: Middleware = () => {
     } finally {
       inCascade = false;
     }
+  };
+};
+
+/**
+ * On logout, resets every RTK Query cache with each api's own resetApiState (state, subscriptions,
+ * timers and polls), so the next login, maybe on another facility which the backend reads from
+ * the token, never sees the previous user's cached data.
+ * Every slice shaped like an RTK Query api state is reset; its reducerPath is its key.
+ *
+ * When the session expires, logout runs while the page stays mounted behind the Session Expired
+ * screen; resetting then would make that page refetch without a token. So the reset waits until
+ * the screen closes ("Go to login", or a fresh login), when that page is gone.
+ */
+const resetApiCachesOnLogout: Middleware = storeApi => {
+  let resetPending = false;
+
+  const resetAll = () => {
+    const state = storeApi.getState() as Record<string, any>;
+    Object.keys(state).forEach(reducerPath => {
+      const slice = state[reducerPath];
+      if (slice && typeof slice === 'object' && 'queries' in slice && 'config' in slice) {
+        storeApi.dispatch({ type: `${reducerPath}/resetApiState` });
+      }
+    });
+  };
+
+  return next => action => {
+    const result = next(action);
+    const backdropOpen = !!(storeApi.getState() as any)?.auth?.sessionExpiredBackdrop;
+
+    if ((action as { type?: string })?.type === logout.type) {
+      if (backdropOpen) {
+        resetPending = true;
+      } else {
+        resetPending = false;
+        resetAll();
+      }
+    } else if (resetPending && !backdropOpen) {
+      resetPending = false;
+      resetAll();
+    }
+    return result;
   };
 };
 
@@ -757,6 +799,7 @@ export const store = configureStore({
       serializableCheck: false
     })
       .prepend(rtkDispatchLoopGuard)
+      .prepend(resetApiCachesOnLogout)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
       .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
