@@ -39,6 +39,8 @@ import DiagnosticsOrder from '../diagnostics-order-new';
 import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
+import { calculateQuantity } from './prescriptionQuantity';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 import { useCheckCurrentMedicationExistsQuery } from '@/services/patients/currentMedicationService';
 
@@ -115,6 +117,13 @@ const DetailsModal = ({
   const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
   const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
   const { data: unitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  // Same queries as the Instructions tab (shared cache), used to fill the quantity.
+  const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+  const { data: predefinedInstructionsResponse } = useGetAllPrescriptionInstructionsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
 
   const shouldSkipActiveIngredientSearch =
     !open || !activeIngredientKeyword || activeIngredientKeyword.trim().length < 2;
@@ -752,6 +761,10 @@ const createPayload: any = {
       duration: prescriptionMedication?.duration ?? null,
       durationType:
         prescriptionMedication?.durationType ?? prescriptionMedication?.durationTypeLkey ?? null,
+      quantity:
+        prescriptionMedication?.quantity === '' || prescriptionMedication?.quantity == null
+          ? null
+          : Number(prescriptionMedication.quantity),
       maximumDose: prescriptionMedication?.maximumDose ?? null,
       allowedSubstitute:
         prescriptionMedication?.allowedSubstitute ??
@@ -792,6 +805,7 @@ const createPayload: any = {
             chronicMedication: createPayload.chronicMedication,
             duration: createPayload.duration,
             durationType: createPayload.durationType,
+            quantity: createPayload.quantity,
             maximumDose: createPayload.maximumDose,
             allowedSubstitute: createPayload.allowedSubstitute,
             indicationManually: createPayload.indicationManually,
@@ -985,6 +999,70 @@ const createPayload: any = {
         .map((name: string) => String(name).trim())
     )
   );
+
+  // ---------- Quantity: dose x times per day x days (see prescriptionQuantity.ts) ----------
+  const lovValueCode = (list: any[] | undefined, key: any): string | null =>
+    key == null ? null : (list ?? []).find((v: any) => String(v?.key) === String(key))?.valueCode ?? null;
+
+  const instructionOption = selectedOption ?? prescriptionMedication?.instructionsType;
+  const durationTypeKey = prescriptionMedication?.durationType ?? prescriptionMedication?.durationTypeLkey ?? null;
+
+  const autoQuantity = useMemo(() => {
+    let dose: any = null;
+    let frequencyCode: string | null = null;
+    if (instructionOption === 'CUSTOM_INSTRUCTIONS') {
+      dose = customeinst?.dose;
+      frequencyCode = lovValueCode(frequencyLovQueryResponse?.object, customeinst?.frequency);
+    } else if (instructionOption === 'PRE_DEFINED_INSTRUCTIONS') {
+      // Predefined instructions keep the MedFrequency enum name (e.g. ONCE_DAILY).
+      const instruction = (predefinedInstructionsResponse?.data ?? []).find(
+        (item: any) => String(item?.id) === String(inst)
+      );
+      dose = instruction?.dose;
+      frequencyCode = instruction?.frequency ?? null;
+    }
+    const quantity =
+      instructionOption === 'CUSTOM_INSTRUCTIONS' || instructionOption === 'PRE_DEFINED_INSTRUCTIONS'
+        ? calculateQuantity(
+            dose,
+            frequencyCode,
+            prescriptionMedication?.duration,
+            lovValueCode(DurationTypeLovQueryResponse?.object, durationTypeKey)
+          )
+        : null;
+    // A chronic medication often has no duration: it starts at 1 and the doctor enters the quantity.
+    return quantity === null && prescriptionMedication?.chronicMedication ? 1 : quantity;
+  }, [
+    prescriptionMedication?.chronicMedication,
+    instructionOption,
+    customeinst?.dose,
+    customeinst?.frequency,
+    inst,
+    prescriptionMedication?.duration,
+    durationTypeKey,
+    frequencyLovQueryResponse,
+    predefinedInstructionsResponse,
+    DurationTypeLovQueryResponse
+  ]);
+
+  // The calculated quantity fills the field while it is empty or still holds the previous calculated value
+  // (a calculated value that can no longer be calculated is cleared); a quantity the doctor typed is kept.
+  const lastAutoQuantityRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    lastAutoQuantityRef.current = null;
+  }, [prescriptionMedication?.id, open]);
+  useEffect(() => {
+    const current = prescriptionMedication?.quantity;
+    const isEmpty = current === null || current === undefined || String(current).trim() === '';
+    const isPreviousAuto =
+      !isEmpty && lastAutoQuantityRef.current !== null && Number(current) === lastAutoQuantityRef.current;
+    lastAutoQuantityRef.current = autoQuantity;
+    if (isPreviousAuto && autoQuantity === null) {
+      setPrescriptionMedications((prev: any) => ({ ...prev, quantity: null }));
+    } else if ((isEmpty || isPreviousAuto) && autoQuantity !== null && Number(current) !== autoQuantity) {
+      setPrescriptionMedications((prev: any) => ({ ...prev, quantity: autoQuantity }));
+    }
+  }, [autoQuantity]);
 
   const safeRecord = useMemo(() => {
     if (!prescriptionMedication) return {};
@@ -1248,6 +1326,17 @@ const createPayload: any = {
                             record={safeRecord}
                             setRecord={setPrescriptionMedications}
                             searchable={false}
+                          />
+                          {/* Filled from dose x frequency x duration; the doctor can change it. */}
+                          <MyInput
+                            disabled={preKey == null}
+                            width="8vw"
+                            fieldType="number"
+                            fieldLabel="Quantity"
+                            fieldName="quantity"
+                            allowDecimal
+                            record={safeRecord}
+                            setRecord={setPrescriptionMedications}
                           />
                           <div style={{ marginBottom: '1.5vw' }}>
                             <MyInput

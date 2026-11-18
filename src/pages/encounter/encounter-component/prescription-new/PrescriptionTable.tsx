@@ -191,6 +191,14 @@ const PrescriptionTable = ({
         rowData.instructionsType ? formatEnumString(rowData.instructionsType) : ''
     },
     {
+      key: 'quantity',
+      dataKey: 'quantity',
+      title: 'Quantity',
+      flexGrow: 1,
+      render: (rowData: any) =>
+        rowData?.quantity == null || rowData?.quantity === '' ? '' : Number(rowData.quantity)
+    },
+    {
       key: 'validUtil',
       dataKey: 'validUtil',
       title: 'Valid Util',
