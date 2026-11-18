@@ -58,24 +58,51 @@ export const formatMoney = (value: any) => {
   return number == null ? EMPTY_VALUE : moneyFormatter.format(number);
 };
 
-/** Unit price × quantity − absolute discount (once per line). */
+export type DiscountType = 'FIXED' | 'PERCENT';
+
+export const DISCOUNT_TYPE_OPTIONS = [
+  { key: 'FIXED', lovDisplayVale: 'Fixed' },
+  { key: 'PERCENT', lovDisplayVale: 'Percent' }
+];
+
+/** Discount amount for a line: Fixed = entered value, Percent = subtotal × value / 100. */
+export const lineDiscountAmount = (
+  unitPrice: any,
+  quantity: any,
+  discountValue: any,
+  discountType?: string | null
+): number => {
+  const value = normalizeNumber(discountValue) ?? 0;
+  if (discountType !== 'PERCENT') return Math.round(value * 100) / 100;
+  const price = normalizeNumber(unitPrice) ?? 0;
+  const qty = normalizeNumber(quantity) ?? 0;
+  return Math.round(((price * qty * value) / 100) * 100) / 100;
+};
+
+/** Unit price × quantity − discount amount (once per line). */
 export const lineNetTotal = (
   unitPrice: any,
   quantity: any,
-  discountAmount: any
+  discountValue: any,
+  discountType?: string | null
 ): number | null => {
   const price = normalizeNumber(unitPrice);
   const qty = normalizeNumber(quantity);
-  const discount = normalizeNumber(discountAmount) ?? 0;
   if (price == null || qty == null || qty <= 0) return null;
-  return Math.round((price * qty - discount) * 100) / 100;
+  const gross = Math.round(price * qty * 100) / 100;
+  return (
+    Math.round(
+      (gross - lineDiscountAmount(unitPrice, quantity, discountValue, discountType)) * 100
+    ) / 100
+  );
 };
 
 export const formatLineNet = (
   unitPrice: any,
   quantity: any,
-  discountAmount: any
-) => formatMoney(lineNetTotal(unitPrice, quantity, discountAmount));
+  discountValue: any,
+  discountType?: string | null
+) => formatMoney(lineNetTotal(unitPrice, quantity, discountValue, discountType));
 
 /**
  * UI validation for planned treatment line net (unit × qty − discount).
@@ -84,7 +111,8 @@ export const formatLineNet = (
 export const validateTreatmentFinancials = (
   unitPrice: any,
   quantity: any,
-  discountAmount: any
+  discountAmount: any,
+  discountType?: string | null
 ): string | null => {
   const price = normalizeNumber(unitPrice);
   const qty = normalizeNumber(quantity);
@@ -97,7 +125,10 @@ export const validateTreatmentFinancials = (
     return 'Quantity must be a positive number of billable units';
   }
   if (discount < 0) {
-    return 'Discount Amount cannot be negative';
+    return 'Discount cannot be negative';
+  }
+  if (discountType === 'PERCENT') {
+    return discount > 100 ? 'Discount percentage cannot exceed 100' : null;
   }
   const gross = Math.round(price * qty * 100) / 100;
   if (discount > gross) {

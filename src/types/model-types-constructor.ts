@@ -663,6 +663,7 @@ export const newApDentalPlannedTreatment: Partial<import("./model-types-new").Pl
 	price: 0,
 	quantity: 1,
 	discount: 0,
+	discountType: 'FIXED',
 	status: 'PENDING',
 	patientServiceAndProductId: null,
 	existing: false,

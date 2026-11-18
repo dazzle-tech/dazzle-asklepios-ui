@@ -14,7 +14,12 @@ import {
   type TreatmentAreaScope
 } from '@/utils/toothNumber';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { formatLineNet, formatMoney, lineNetTotal } from './treatmentPlanShared';
+import {
+  DISCOUNT_TYPE_OPTIONS,
+  formatLineNet,
+  formatMoney,
+  lineNetTotal
+} from './treatmentPlanShared';
 
 import './TreatmentPlanModal.less';
 
@@ -301,10 +306,20 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
     });
   };
 
-  const lineNetDisplay = formatLineNet(form?.price, form?.quantity, form?.discount);
+  const lineNetDisplay = formatLineNet(
+    form?.price,
+    form?.quantity,
+    form?.discount,
+    form?.discountType
+  );
   const isMultiToothBatch =
     !isEdit && !isGroupedScope && validSelectedTeeth.length > 1;
-  const perToothNet = lineNetTotal(form?.price, form?.quantity, form?.discount);
+  const perToothNet = lineNetTotal(
+    form?.price,
+    form?.quantity,
+    form?.discount,
+    form?.discountType
+  );
   const batchNetTotal =
     isMultiToothBatch && perToothNet != null
       ? Math.round(perToothNet * validSelectedTeeth.length * 100) / 100
@@ -925,8 +940,25 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                     <div className="tpm-field">
                       <MyInput
                         width="100%"
+                        fieldName="discountType"
+                        fieldLabel="Discount Type"
+                        fieldType="select"
+                        selectData={DISCOUNT_TYPE_OPTIONS}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        searchable={false}
+                        cleanable={false}
+                        record={form}
+                        setRecord={setForm}
+                        disabled={inputsDisabled}
+                      />
+                    </div>
+
+                    <div className="tpm-field">
+                      <MyInput
+                        width="100%"
                         fieldName="discount"
-                        fieldLabel="Discount Amount"
+                        fieldLabel="Discount"
                         fieldType={viewOnly && (form?.discount == null || form?.discount === '') ? 'text' : 'number'}
                         allowDecimal
                         showZero

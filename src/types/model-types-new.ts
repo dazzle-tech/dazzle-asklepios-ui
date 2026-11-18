@@ -9777,6 +9777,8 @@ export interface PlannedTreatmentDTO {
   price?: number | null;
   quantity?: number | null;
   discount?: number | null;
+  /** FIXED (default/legacy) or PERCENT; `discount` holds the entered value. */
+  discountType?: 'FIXED' | 'PERCENT' | null;
   status?: PlannedTreatmentStatus | null;
   patientServiceAndProductId?: number | null;
   source?: ToothActionOrServiceSource | null;
@@ -9844,6 +9846,7 @@ export interface PlannedTreatmentBatchSaveDTO {
   price?: number | null;
   quantity?: number | null;
   discount?: number | null;
+  discountType?: 'FIXED' | 'PERCENT' | null;
   anesthesiaUsed?: string | null;
   dose?: number | null;
   unit?: string | null;

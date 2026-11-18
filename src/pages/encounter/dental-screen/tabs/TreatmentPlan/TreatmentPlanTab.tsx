@@ -107,6 +107,7 @@ const emptyTreatment = () => ({
   quantity: 1,
   price: 0,
   discount: 0,
+  discountType: 'FIXED' as const,
   visitNumber: null,
   sessionChoice: 'NEW',
   note: '',
@@ -569,6 +570,7 @@ const TreatmentPlanTab = ({
         : row.quantity ?? 1,
       price: row.price ?? 0,
       discount: row.discount ?? 0,
+      discountType: row.discountType ?? 'FIXED',
       status: row.status || 'PENDING',
       anesthesiaUsed: row.anesthesiaUsed ?? '',
       dose: row.dose ?? null,
@@ -604,6 +606,7 @@ const TreatmentPlanTab = ({
       price: row.price ?? null,
       quantity: isExistingDocumentation(row) ? null : row.quantity ?? 1,
       discount: isExistingDocumentation(row) ? null : row.discount ?? 0,
+      discountType: row.discountType ?? 'FIXED',
       treatmentScope: scope,
       coveredToothIds: isGroupedScope(scope)
         ? teeth.length
@@ -784,6 +787,7 @@ const TreatmentPlanTab = ({
         ? coveredIds.length || Number(treatment.quantity ?? 1)
         : Number(treatment.quantity ?? 1),
       discount: Number(treatment.discount ?? 0),
+      discountType: treatment.discountType ?? 'FIXED',
       anesthesiaUsed: treatment.anesthesiaUsed?.trim?.() || null,
       dose: normalizeNumber(treatment.dose),
       unit: treatment.unit || null,
@@ -870,7 +874,8 @@ const TreatmentPlanTab = ({
     const financialError = validateTreatmentFinancials(
       form.price,
       form.quantity,
-      form.discount
+      form.discount,
+      form.discountType
     );
     if (financialError) {
       dispatch(
@@ -943,6 +948,7 @@ const TreatmentPlanTab = ({
           price: body.price,
           quantity: body.quantity,
           discount: body.discount,
+          discountType: body.discountType,
           anesthesiaUsed: body.anesthesiaUsed,
           dose: body.dose,
           unit: body.unit,
