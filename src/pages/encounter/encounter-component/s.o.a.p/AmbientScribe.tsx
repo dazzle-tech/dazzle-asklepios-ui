@@ -800,31 +800,43 @@ const ChoiceCard = ({ title, hint, selected, onSelect, extra }: ChoiceCardProps)
   </button>
 );
 
+const sameId = (
+  left?: number | string | null,
+  right?: number | string | null
+) => {
+  const a = Number(left);
+  const b = Number(right);
+  return Number.isFinite(a) && a === b;
+};
+
+const isRecordingClinician = (jobRole?: string | null) =>
+  ['PHYSICIAN', 'DENTIST'].includes(String(jobRole || '').toUpperCase());
+
 const startAccess = (
   clinic: AmbientScribeClinic | undefined,
-  practitionerId?: number | null
+  practitionerId?: number | string | null,
+  jobRole?: string | null
 ) => {
   if (!clinic || !clinic.enabled) {
     return { allowed: false, reason: 'Ambient Scribe is turned off for this clinic.' };
   }
-  if (!practitionerId) {
-    return { allowed: false, reason: 'Ambient Scribe can be started by a physician in this clinic.' };
+
+  const practitioners = clinic.practitioners ?? [];
+  const selected = practitioners.filter(practitioner => practitioner.enabled);
+  // Setup saves "All physicians" as an empty selection. That must allow the
+  // clinic's clinicians, including when the roster comes back empty.
+  if (selected.length === 0) {
+    return practitionerId || isRecordingClinician(jobRole)
+      ? { allowed: true, reason: '' }
+      : { allowed: false, reason: 'Ambient Scribe can be started by a physician in this clinic.' };
   }
 
-  const selected = clinic.practitioners.filter(practitioner => practitioner.enabled);
-  const allowed =
-    selected.length === 0
-      ? clinic.practitioners.some(practitioner => practitioner.id === practitionerId)
-      : selected.some(practitioner => practitioner.id === practitionerId);
-
+  const allowed = selected.some(practitioner => sameId(practitioner.id, practitionerId));
   return allowed
     ? { allowed: true, reason: '' }
     : {
         allowed: false,
-        reason:
-          selected.length === 0
-            ? 'Ambient Scribe can be started by a physician in this clinic.'
-            : 'Ambient Scribe is limited to the physicians selected for this clinic.'
+        reason: 'Ambient Scribe is limited to the physicians selected for this clinic.'
       };
 };
 
@@ -857,7 +869,12 @@ const AmbientScribe = ({
     consentStatusOptions.find(option => option.value === 'DECLINED')?.value ?? 'DECLINED';
   const dispatch = useAppDispatch();
   const ui = useSelector((state: { ui: { mode: string; lang: string } }) => state.ui);
-  const userId = useSelector((state: { auth: { user?: { id?: number } } }) => state.auth.user?.id);
+  const authUser = useSelector(
+    (state: {
+      auth: { user?: { id?: number; userId?: number; key?: number | string; jobRole?: string } };
+    }) => state.auth.user
+  );
+  const userId = Number(authUser?.id ?? authUser?.userId ?? authUser?.key);
   const resolvedFacilityId = facilityId || (() => {
     try {
       const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -869,7 +886,7 @@ const AmbientScribe = ({
   const { data: scribeSetup, isLoading: scribeSetupLoading, isError: scribeSetupError } =
     useGetAmbientScribeSetupQuery(resolvedFacilityId as number | string, { skip: !resolvedFacilityId });
   const { data: currentPractitioner, isLoading: practitionerLoading, isError: practitionerError } =
-    useGetPractitionerByUserIdQuery(Number(userId), { skip: !userId });
+    useGetPractitionerByUserIdQuery(userId, { skip: !Number.isFinite(userId) || userId <= 0 });
   const visitClinic = scribeSetup?.clinics.find(
     clinic => Number(clinic.departmentId) === Number(departmentId)
   );
@@ -963,9 +980,16 @@ const AmbientScribe = ({
   ]);
   const accessLoading = Boolean(resolvedFacilityId && departmentId && (scribeSetupLoading || practitionerLoading));
   const setupAdded = Boolean(scribeSetup?.id);
+  const practitionerRecord = Array.isArray(currentPractitioner)
+    ? currentPractitioner[0]
+    : currentPractitioner;
+  const practitionerId = practitionerError
+    ? null
+    : practitionerRecord?.id ?? practitionerRecord?.key ?? null;
   const access = startAccess(
     scribeSetupError || !setupAdded ? undefined : visitClinic,
-    practitionerError ? null : currentPractitioner?.id
+    practitionerId,
+    authUser?.jobRole
   );
   const canStartAmbient = setupAdded && !accessLoading && access.allowed;
   const [open, setOpen] = useState(false);
