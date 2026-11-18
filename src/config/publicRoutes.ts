@@ -1,6 +1,7 @@
 export const PUBLIC_AUTH_FREE_PATHS = [
   '/login',
   '/reset-password',
+  '/forgot-password',
   '/create-password',
   '/create-patient-password',
   '/patient-satisfaction-survey',
