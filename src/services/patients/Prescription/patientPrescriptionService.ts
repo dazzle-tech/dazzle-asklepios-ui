@@ -3,6 +3,17 @@ import { BaseQuery, onQueryStarted } from '@/newApi';
 import { PatientPrescription } from '@/types/model-types-new';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
+/** Send status of a submitted prescription at Nahdi (GET /api/patient/nahdi/prescriptions/{id}/sync-status). */
+export type NahdiSyncStatus = {
+  hasUnsentChanges: boolean;
+  lastSentAt?: string | null;
+  lastAttemptStatus?: 'SUCCESS' | 'FAILED' | null;
+  lastAttemptAt?: string | null;
+  orderNumber?: string | null;
+  failureReason?: string | null;
+  integrationEnabled: boolean;
+};
+
 export interface PatientPrescriptionListParams {
   patientId?: number;
   encounterId?: number;
@@ -142,10 +153,7 @@ export const patientPrescriptionService = createApi({
     }),
 
     // GET /api/patient/nahdi/prescriptions/{id}/sync-status : changes made after the last successful send to Nahdi
-    getNahdiSyncStatus: builder.query<
-      { hasUnsentChanges: boolean; lastSentAt?: string | null; lastAttemptStatus?: 'SUCCESS' | 'FAILED' | null },
-      number
-    >({
+    getNahdiSyncStatus: builder.query<NahdiSyncStatus, number>({
       query: (id) => ({
         url: `/api/patient/nahdi/prescriptions/${id}/sync-status`
       }),
