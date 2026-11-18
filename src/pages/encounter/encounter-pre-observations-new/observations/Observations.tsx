@@ -75,7 +75,7 @@ console.log(localPatient);
                 <VitalSigns
                   width="28vw"
                   disabled={isEncounterStatusClosed || readOnly || edit}
-                  patientId={Number(localPatient.id)}
+                  patientId={Number(patient?.id ?? localPatient.id)}
                   encounterId={Number(localEncounter.id)}
                   encounter={localEncounter}
                   showHistoryButton

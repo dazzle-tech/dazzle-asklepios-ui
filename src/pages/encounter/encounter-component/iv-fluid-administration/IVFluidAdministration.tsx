@@ -11,6 +11,7 @@ import './style.less';
 import { Tooltip, Whisper, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import VitalSigns from '@/pages/medical-component/vital-signs';
+import { useEncounterPatientContext } from '@/pages/medical-component/vital-signs/useEncounterPatientContext';
 import Section from '@/components/Section';
 import AdministrationDetails from './AdministrationDetails';
 import FluidAdministrationSection from './FluidAdministrationSection';
@@ -18,6 +19,7 @@ import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
 
 const IVFluidAdministration = () => {
+  const { encounter, patientId, encounterId } = useEncounterPatientContext();
   const [fluidOrder, setFluidOrder] = useState<any>({});
   const [openAddEditFluidOrderPopup, setOpenAddEditFluidOrderPopup] = useState<boolean>(false);
   const [openAdditivesPopup, setOpenAdditivesPopup] = useState<boolean>(false);
@@ -214,11 +216,11 @@ const IVFluidAdministration = () => {
                 content={
                   <div className="main-content-section-1 margin-left">
                     <VitalSigns
-                      object={vital}
-                      setObject={setVital}
+                      patientId={patientId as number}
+                      encounterId={encounterId as number}
+                      encounter={encounter}
                       disabled={true}
                       width="28vw"
-                      showNoteField={true}
                     />
                   </div>
                 }
