@@ -1,261 +1,493 @@
-import React, { useState } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import MyCard from '@/components/MyCard/MyCard';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useInterpretLabsMutation } from '@/services/ai-services/labInterpretationService';
-import { InterpretationDTO, LabInterpretationRequest } from '@/services/ai-services/labInterpretationService';
-import Translate from '@/components/Translate';
+import React, { useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { Form } from 'rsuite';
+import { LuAlertTriangle, LuSparkle, LuSparkles } from 'react-icons/lu';
+import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  InterpretationDTO,
+  KeyFindingDTO,
+  useInterpretLabsMutation
+} from '@/services/ai-services/labInterpretationService';
+import './LabInterpretationAI.less';
 
 type Props = {
   patientId: number;
 };
 
-interface FormData {
-  dateFrom: string | null;
-  dateTo: string | null;
-}
+type Range = { dateFrom: string | null; dateTo: string | null };
+type Phase = 'idle' | 'working' | 'empty' | 'error' | 'success';
+type SeverityView = { display: string; reason: string; guarded: boolean };
 
-// ✅ Severity colors
-const getSeverityColor = (severity?: string): string => {
-  if (!severity) return '#9E9E9E';
+const LATE_AFTER_MS = 20000;
+const DISPLAY_DATE = 'DD-MM-YYYY';
 
-  switch (severity.toLowerCase()) {
-    case 'high':
-    case 'critical':
-      return '#D32F2F';
-    case 'medium':
-    case 'warning':
-      return '#F57C00';
-    case 'low':
-    case 'info':
-      return '#388E3C';
-    default:
-      return '#9E9E9E';
+const flagKind = (flag?: string) => {
+  const value = (flag || '').toLowerCase();
+  if (value.includes('critical')) return 'crit';
+  if (value.includes('high') || value.includes('upper')) return 'high';
+  if (value.includes('low') || value.includes('lower')) return 'low';
+  if (value.includes('normal')) return 'ok';
+  return 'other';
+};
+
+const FLAG_LABEL: Record<string, string> = {
+  crit: 'Critical',
+  high: 'High',
+  low: 'Low',
+  ok: 'Normal',
+  other: '—'
+};
+const FLAG_RANK: Record<string, number> = { crit: 0, high: 1, low: 1, other: 2, ok: 3 };
+const SEVERITY_LABEL: Record<string, string> = {
+  critical: 'Critical',
+  high: 'High',
+  moderate: 'Moderate',
+  low: 'Low',
+  review: 'Needs review'
+};
+
+// The service can rate the whole set as critical while no listed finding is critical; show "Needs review" then
+const resolveSeverity = (interpretation: InterpretationDTO): SeverityView => {
+  const findings = interpretation.key_findings ?? [];
+  const critical = findings.filter(f => flagKind(f.flag) === 'crit');
+  const abnormal = findings.filter(f => ['high', 'low'].includes(flagKind(f.flag)));
+  const service = (interpretation.severity || 'low').toLowerCase();
+
+  if ((service === 'critical' || service === 'high') && !critical.length && !abnormal.length) {
+    return { display: 'review', reason: '', guarded: true };
   }
+  if (critical.length) {
+    return {
+      display: 'critical',
+      reason: `${critical.length} critical (${critical.map(f => f.lab_name).join(', ')})`,
+      guarded: false
+    };
+  }
+  if (abnormal.length) {
+    return {
+      display: service === 'low' ? 'moderate' : service,
+      reason: `${abnormal.length} outside the reference range`,
+      guarded: false
+    };
+  }
+  return { display: 'low', reason: 'No abnormal values in the listed findings', guarded: false };
+};
+
+const toDisplayDate = (value?: string | null) =>
+  value && dayjs(value).isValid() ? dayjs(value).format(DISPLAY_DATE) : '—';
+
+const toPlainText = (interpretation: InterpretationDTO, severity: SeverityView) => {
+  const lines = [`Lab Interpretation — ${SEVERITY_LABEL[severity.display] ?? severity.display}`];
+  if (severity.reason) lines.push(severity.reason);
+  lines.push('', 'Key findings:');
+  (interpretation.key_findings ?? []).forEach(f =>
+    lines.push(
+      `- ${f.lab_name}: ${f.value ?? ''} ${f.unit ?? ''} (${f.reference_range ?? ''}) [${
+        FLAG_LABEL[flagKind(f.flag)]
+      }] ${f.finding ?? ''}`
+    )
+  );
+  (interpretation.patterns ?? []).forEach((p, i) => {
+    if (i === 0) lines.push('', 'Patterns:');
+    lines.push(`- ${p.label.replace(/_/g, ' ')}: ${p.reason}`);
+  });
+  (interpretation.trends ?? []).forEach((t, i) => {
+    if (i === 0) lines.push('', 'Trends:');
+    lines.push(`- ${t.lab_name}: ${t.summary ?? ''}`);
+  });
+  (interpretation.follow_up_considerations ?? []).forEach((c, i) => {
+    if (i === 0) lines.push('', 'Follow-up:');
+    lines.push(`- ${c}`);
+  });
+  return lines.join('\n');
 };
 
 const LabInterpretationAI: React.FC<Props> = ({ patientId }) => {
-  const [formState, setFormState] = useState<FormData>({
-    dateFrom: null,
-    dateTo: null,
-  });
+  const dispatch = useAppDispatch();
+  const [interpretLabs] = useInterpretLabsMutation();
+  const requestRef = useRef<{ abort: () => void } | null>(null);
 
-  const [interpretLabs, { isLoading, data: interpretationResponse, error }] =
-    useInterpretLabsMutation();
+  const [range, setRange] = useState<Range>({ dateFrom: null, dateTo: null });
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [result, setResult] = useState<InterpretationDTO | null>(null);
+  const [interpretedRange, setInterpretedRange] = useState<Range | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [isLate, setIsLate] = useState(false);
 
-  const [localError, setLocalError] = useState<string | null>(null);
+  useEffect(() => {
+    if (phase !== 'working') return undefined;
+    setIsLate(false);
+    const timer = setTimeout(() => setIsLate(true), LATE_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
 
-  // ✅ Submit
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    await onSubmit(formState);
+  const validateRange = (): string | null => {
+    if (!range.dateFrom || !range.dateTo) return 'Pick both dates';
+    if (dayjs(range.dateFrom).isAfter(dayjs(range.dateTo)))
+      return 'From Date must be before To Date';
+    return null;
   };
 
-  const onSubmit = async (formData: FormData) => {
-    setLocalError(null);
-
-    if (!formData.dateFrom) {
-      setLocalError('Date From is required');
+  const handleInterpret = async () => {
+    const invalid = validateRange();
+    if (invalid) {
+      dispatch(notify({ msg: invalid, sev: 'warning' }));
       return;
     }
 
-    if (!formData.dateTo) {
-      setLocalError('Date To is required');
-      return;
-    }
-
-    const startDate = dayjs(formData.dateFrom);
-    const endDate = dayjs(formData.dateTo);
-
-    if (!startDate.isValid() || !endDate.isValid()) {
-      setLocalError('Please enter valid dates');
-      return;
-    }
-
-    if (startDate.isAfter(endDate)) {
-      setLocalError('Date From must be before Date To');
-      return;
-    }
+    setPhase('working');
+    const request = interpretLabs({
+      patientId,
+      dateFrom: dayjs(range.dateFrom).startOf('day').toISOString(),
+      dateTo: dayjs(range.dateTo).endOf('day').toISOString()
+    });
+    requestRef.current = request;
 
     try {
-      const request: LabInterpretationRequest = {
-        patientId,
-        // ✅ FIX الأساسي هون
-        dateFrom: startDate.startOf('day').toISOString(),
-        dateTo: endDate.endOf('day').toISOString(),
-      };
+      const response = await request.unwrap();
+      const interpretation = response?.interpretation;
+      const hasContent =
+        !!interpretation?.key_findings?.length ||
+        !!interpretation?.patterns?.length ||
+        !!interpretation?.trends?.length;
 
-      await interpretLabs(request).unwrap();
-    } catch (err: any) {
-      setLocalError(err?.message || 'Failed to interpret labs');
+      setResult(interpretation ?? null);
+      setInterpretedRange({ ...range });
+      setGeneratedAt(dayjs().format('HH:mm'));
+      setPhase(hasContent ? 'success' : 'empty');
+    } catch (error: any) {
+      // Cancel aborts the request; that is not an error to show
+      if (error?.name === 'AbortError') return;
+      setPhase('error');
+    } finally {
+      requestRef.current = null;
     }
   };
 
-  const interpretation = interpretationResponse?.interpretation as
-    | InterpretationDTO
-    | undefined;
+  const handleCancel = () => {
+    requestRef.current?.abort();
+    setPhase(result ? 'success' : 'idle');
+  };
 
-  const displayError =
-    localError ||
-    (error &&
-    typeof error === 'object' &&
-    'message' in error
-      ? (error.message as string)
-      : null);
+  const handleCopy = async (interpretation: InterpretationDTO, severity: SeverityView) => {
+    try {
+      await navigator.clipboard.writeText(toPlainText(interpretation, severity));
+      dispatch(notify({ msg: 'Summary copied', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Could not copy the summary', sev: 'warning' }));
+    }
+  };
 
-  // ✅ Date Inputs
-  const renderDateInput = (name: keyof FormData) => (
-    <Form>
-    <MyInput
-      fieldName={name}
-      fieldType="date"
-      record={formState}
-      setRecord={setFormState}
-      placeholder="YYYY-MM-DD"
-      width="100%"
-      showLabel={false}
-    />
-    </Form>
-  );
+  const isWorking = phase === 'working';
+  const isStale =
+    phase === 'success' &&
+    !!interpretedRange &&
+    (interpretedRange.dateFrom !== range.dateFrom || interpretedRange.dateTo !== range.dateTo);
+
+  const renderFinding = (finding: KeyFindingDTO, index: number) => {
+    const kind = flagKind(finding.flag);
+    return (
+      <tr key={`${finding.lab_name}-${index}`}>
+        <td>
+          <span className="lab-ai__test-name">{finding.lab_name || '—'}</span>
+          {finding.timestamp && (
+            <span className="lab-ai__test-date" dir="ltr">
+              {dayjs(finding.timestamp).isValid()
+                ? dayjs(finding.timestamp).format('DD-MM-YYYY HH:mm')
+                : finding.timestamp}
+            </span>
+          )}
+        </td>
+        <td dir="ltr">
+          {finding.value || '—'}
+          {finding.unit ? ` ${finding.unit}` : ''}
+        </td>
+        <td dir="ltr">{finding.reference_range || '—'}</td>
+        <td>
+          <span className={`lab-ai__flag ${kind}`}>
+            <Translate>{FLAG_LABEL[kind]}</Translate>
+          </span>
+        </td>
+        <td>{finding.finding}</td>
+      </tr>
+    );
+  };
+
+  const renderSuccess = (interpretation: InterpretationDTO) => {
+    const severity = resolveSeverity(interpretation);
+    const findings = [...(interpretation.key_findings ?? [])].sort(
+      (a, b) => FLAG_RANK[flagKind(a.flag)] - FLAG_RANK[flagKind(b.flag)]
+    );
+
+    return (
+      <>
+        {isStale && (
+          <div className="lab-ai__stale" role="status">
+            <LuAlertTriangle size={14} />
+            <Translate>The range changed. Interpret again to update.</Translate>
+          </div>
+        )}
+
+        <div className="lab-ai__meta">
+          <span className="lab-ai__chip">
+            <LuSparkle size={12} />
+            <Translate>AI-generated</Translate>
+          </span>
+          <span className="lab-ai__muted">
+            <Translate>Generated</Translate> {generatedAt}
+          </span>
+          <span>
+            <Translate>Range</Translate> {toDisplayDate(interpretedRange?.dateFrom)} –{' '}
+            {toDisplayDate(interpretedRange?.dateTo)}
+          </span>
+          {isStale && (
+            <span className="lab-ai__out-of-date">
+              <Translate>Out of date</Translate>
+            </span>
+          )}
+          <div className="lab-ai__actions">
+            <button type="button" className="lab-ai__btn sm" onClick={handleInterpret}>
+              <Translate>Regenerate</Translate>
+            </button>
+            <button
+              type="button"
+              className="lab-ai__btn sm outline"
+              onClick={() => handleCopy(interpretation, severity)}
+            >
+              <Translate>Copy summary</Translate>
+            </button>
+          </div>
+        </div>
+
+        <div className="lab-ai__severity">
+          <span className="lab-ai__muted">
+            <Translate>Severity</Translate>
+          </span>
+          <span className={`lab-ai__pill ${severity.display}`}>
+            <Translate>{SEVERITY_LABEL[severity.display] ?? severity.display}</Translate>
+          </span>
+          {severity.reason && <span>{severity.reason}</span>}
+          {severity.guarded && (
+            <div className="lab-ai__muted lab-ai__full">
+              <Translate>Overall rating could not be confirmed from the listed results.</Translate>
+            </div>
+          )}
+        </div>
+
+        {findings.length > 0 && (
+          <div className="lab-ai__section">
+            <h3>
+              <Translate>Key findings</Translate>
+            </h3>
+            <table className="lab-ai__findings">
+              <thead>
+                <tr>
+                  <th>
+                    <Translate>Test</Translate>
+                  </th>
+                  <th>
+                    <Translate>Value</Translate>
+                  </th>
+                  <th>
+                    <Translate>Range</Translate>
+                  </th>
+                  <th>
+                    <Translate>Flag</Translate>
+                  </th>
+                  <th>
+                    <Translate>Note</Translate>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>{findings.map(renderFinding)}</tbody>
+            </table>
+          </div>
+        )}
+
+        {!!interpretation.patterns?.length && (
+          <div className="lab-ai__section">
+            <h3>
+              <Translate>Patterns</Translate>
+            </h3>
+            {interpretation.patterns.map((pattern, index) => (
+              <div key={index} className="lab-ai__box">
+                <b>{pattern.label.replace(/_/g, ' ')}</b> — {pattern.reason}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!!interpretation.trends?.length && (
+          <div className="lab-ai__section">
+            <h3>
+              <Translate>Trends</Translate>
+            </h3>
+            {interpretation.trends.map((trend, index) => (
+              <div key={index} className="lab-ai__box">
+                <b>{trend.lab_name}</b> <Translate>{trend.direction}</Translate>{' '}
+                <span dir="ltr">
+                  {trend.from_value ?? '—'} → {trend.to_value ?? '—'}
+                  {trend.unit ? ` ${trend.unit}` : ''}
+                </span>
+                {trend.summary && <div className="lab-ai__muted">{trend.summary}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!!interpretation.follow_up_considerations?.length && (
+          <div className="lab-ai__section">
+            <h3>
+              <Translate>Follow-up considerations</Translate>
+            </h3>
+            <ul className="lab-ai__follow">
+              {interpretation.follow_up_considerations.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="lab-ai__disclaimer">
+          <Translate>
+            AI interpretation supports, but does not replace, clinical judgment. Not a diagnosis.
+          </Translate>
+        </div>
+      </>
+    );
+  };
 
   return (
-    <MyCard
-      title={
-        <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-          <span className="text-primary">⚙️</span>
-          <Translate>Lab Interpretation (AI)</Translate>
-        </div>
-      }
-      contant={
-        <div className="space-y-5">
-          {/* ✅ FORM */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-3">
-              {renderDateInput('dateFrom')}
-              {renderDateInput('dateTo')}
+    <section className="lab-ai">
+      <div className="lab-ai__header">
+        <LuSparkle size={14} className="lab-ai__spark" />
+        <h2>
+          <Translate>Lab Interpretation</Translate>
+        </h2>
+        <span className="lab-ai__chip">
+          <LuSparkle size={12} />
+          AI
+        </span>
+      </div>
 
-              <div className="flex items-end">
-                <MyButton
-                  type="submit"
-                  loading={isLoading}
-                  disabled={isLoading}
-                  appearance="primary"
-                  width="100%"
-                  backgroundColor="var(--primary-blue)"
-                >
-                  <Translate>Run AI Interpretation</Translate>
-                </MyButton>
-              </div>
+      <div className="lab-ai__body">
+        <Form fluid className="lab-ai__filters">
+          <MyInput
+            fieldName="dateFrom"
+            fieldLabel="From Date"
+            fieldType="date"
+            record={range}
+            setRecord={setRange}
+            disabled={isWorking}
+            width={160}
+          />
+          <MyInput
+            fieldName="dateTo"
+            fieldLabel="To Date"
+            fieldType="date"
+            record={range}
+            setRecord={setRange}
+            disabled={isWorking}
+            width={160}
+          />
+          <AiTooltip
+            title="AI lab interpretation"
+            body="AI reads the lab results in the selected period and highlights abnormal values, patterns and trends. It does not diagnose."
+            chips={['Abnormal values', 'Patterns', 'Trends']}
+            foot="Nothing is saved to the chart."
+          >
+            <span className="lab-ai__cta-wrap">
+              <button
+                type="button"
+                className={`lab-ai__cta${isWorking ? ' working' : ''}`}
+                disabled={isWorking}
+                aria-busy={isWorking}
+                onClick={handleInterpret}
+              >
+                <LuSparkles size={16} className="lab-ai__cta-icon" />
+                <Translate>{isWorking ? 'Reviewing results...' : 'Interpret with AI'}</Translate>
+              </button>
+              <span className="lab-ai__cta-badge" aria-hidden="true">
+                AI
+              </span>
+            </span>
+          </AiTooltip>
+        </Form>
+        <p className="lab-ai__muted lab-ai__hint">
+          <Translate>
+            Pick the period to interpret. This range is separate from the table filter above.
+          </Translate>
+        </p>
+
+        {phase === 'idle' && (
+          <p className="lab-ai__muted">
+            <Translate>
+              AI reads the results in this period and highlights abnormal values, patterns and
+              trends. Not a diagnosis.
+            </Translate>
+          </p>
+        )}
+
+        {isWorking && (
+          <div className="lab-ai__working" role="status">
+            <div className="lab-ai__working-title">
+              <LuSparkle size={14} className="lab-ai__spark spinning" />
+              <Translate>AI is reviewing these results</Translate>
             </div>
-          </form>
-
-          {/* ✅ ERROR */}
-          {displayError && (
-            <Alert variant="destructive">
-              <AlertTitle>
-                <Translate>Error</Translate>
-              </AlertTitle>
-              <AlertDescription>{displayError}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* ✅ RESULT */}
-          {interpretation && (
-            <div className="space-y-4">
-
-              {/* ✅ Severity */}
-              {interpretation.severity && (
-                <MyCard
-                  title={<Translate>Severity</Translate>}
-                  contant={
-                    <span
-                      className="rounded-full px-3 py-1 text-sm font-semibold text-white"
-                      style={{ backgroundColor: getSeverityColor(interpretation.severity) }}
-                    >
-                      {interpretation.severity.toUpperCase()}
-                    </span>
-                  }
-                />
-              )}
-
-              {/* ✅ Findings */}
-              {interpretation.key_findings && interpretation.key_findings.length > 0 && (
-                <MyCard
-                  title={<Translate>Key Findings</Translate>}
-                  contant={
-                    <div className="space-y-3">
-                      {interpretation.key_findings.map((finding, index) => (
-                        <MyCard
-                          key={index}
-                          title={<div className="text-sm font-semibold text-slate-900">{finding.lab_name}</div>}
-                          contant={
-                            <div className="space-y-3 bg-slate-50 p-3 rounded border">
-                              <div className="grid md:grid-cols-2 gap-2">
-                                <div>
-                                  <div className="text-xs text-slate-500">Value</div>
-                                  <div className="text-sm">
-                                    {finding.value} {finding.unit && `(${finding.unit})`}
-                                  </div>
-                                </div>
-
-                                {finding.flag && (
-                                  <div>
-                                    <div className="text-xs text-slate-500">Flag</div>
-                                    <div className="text-sm font-semibold text-red-600">
-                                      {finding.flag}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              {finding.finding && (
-                                <div className="pt-2 border-t text-sm text-slate-700">
-                                  {finding.finding}
-                                </div>
-                              )}
-                            </div>
-                          }
-                        />
-                      ))}
-                    </div>
-                  }
-                />
-              )}
-
-              {/* ✅ Follow-up */}
-              {interpretation.follow_up_considerations &&
-                interpretation.follow_up_considerations.length > 0 && (
-                  <MyCard
-                    title={<Translate>Follow-up Considerations</Translate>}
-                    contant={
-                      <ul className="list-disc pl-5 text-sm">
-                        {interpretation.follow_up_considerations.map((c, i) => (
-                          <li key={i}>{c}</li>
-                        ))}
-                      </ul>
-                    }
-                  />
-                )}
+            <div className="lab-ai__muted">
+              <Translate>This can take up to a minute.</Translate>
             </div>
-          )}
+            <div className="lab-ai__progress" aria-hidden="true">
+              <i />
+            </div>
+            <div className="lab-ai__skeleton" aria-hidden="true">
+              <div />
+              <div />
+              <div />
+            </div>
+            <div className="lab-ai__working-actions">
+              <button type="button" className="lab-ai__btn sm outline" onClick={handleCancel}>
+                <Translate>Cancel</Translate>
+              </button>
+              {isLate && (
+                <span className="lab-ai__muted">
+                  <Translate>Still working. Larger ranges take longer.</Translate>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
-          {/* ✅ Loading */}
-          {isLoading && (
-            <Alert>
-              <AlertTitle>
-                <Translate>Processing</Translate>
-              </AlertTitle>
-              <AlertDescription>
-                <Translate>Interpretation request is in progress...</Translate>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      }
-    />
+        {phase === 'empty' && (
+          <div className="lab-ai__alert empty">
+            <strong>
+              <Translate>No labs in this date range.</Translate>
+            </strong>{' '}
+            <Translate>Adjust the dates and try again.</Translate>
+          </div>
+        )}
+
+        {phase === 'error' && (
+          <div className="lab-ai__alert error">
+            <strong>
+              <Translate>Lab Interpretation is temporarily unavailable.</Translate>
+            </strong>{' '}
+            <Translate>You can retry or review the results table above.</Translate>
+            <div className="lab-ai__actions">
+              <button type="button" className="lab-ai__btn sm" onClick={handleInterpret}>
+                <Translate>Try again</Translate>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase === 'success' && result && renderSuccess(result)}
+      </div>
+    </section>
   );
 };
 
