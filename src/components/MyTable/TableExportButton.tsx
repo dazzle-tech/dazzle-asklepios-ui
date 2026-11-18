@@ -7,10 +7,12 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import type { ColumnConfig } from './MyTable';
 import { exportTableRecords, TableExportFormat } from './exportTableRecords';
+import { loadAllTableRows } from './loadAllTableRows';
 
 type Props = {
   columns: ColumnConfig[];
   data: any[];
+  totalCount?: number;
   fileName?: string;
   disabled?: boolean;
 };
@@ -21,7 +23,7 @@ const formats: { format: TableExportFormat; label: string; icon: typeof faFilePd
   { format: 'docx', label: 'Word', icon: faFileWord }
 ];
 
-const TableExportButton: React.FC<Props> = ({ columns, data, fileName, disabled }) => {
+const TableExportButton: React.FC<Props> = ({ columns, data, totalCount, fileName, disabled }) => {
   const dispatch = useAppDispatch();
   const screenName = useSelector((state: any) => state.div?.divElement);
   const downloadName = fileName?.trim() || screenName?.trim() || undefined;
@@ -30,7 +32,8 @@ const TableExportButton: React.FC<Props> = ({ columns, data, fileName, disabled 
   const handleExport = async (format: TableExportFormat) => {
     setExporting(format);
     try {
-      await exportTableRecords(format, columns, data, downloadName);
+      const rows = await loadAllTableRows(data, totalCount);
+      await exportTableRecords(format, columns, rows, downloadName);
     } catch (error) {
       dispatch(
         notify({
