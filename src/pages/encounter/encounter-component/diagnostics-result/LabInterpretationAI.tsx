@@ -208,7 +208,7 @@ const LabInterpretationAI: React.FC<Props> = ({ patientId }) => {
         </td>
         <td dir="ltr">{finding.reference_range || '—'}</td>
         <td>
-          <span className={`lab-ai__flag ${kind}`}>
+          <span className={`lab-ai__flag lab-ai__flag--${kind}`}>
             <Translate>{FLAG_LABEL[kind]}</Translate>
           </span>
         </td>
@@ -267,7 +267,7 @@ const LabInterpretationAI: React.FC<Props> = ({ patientId }) => {
           <span className="lab-ai__muted">
             <Translate>Severity</Translate>
           </span>
-          <span className={`lab-ai__pill ${severity.display}`}>
+          <span className={`lab-ai__pill lab-ai__pill--${severity.display}`}>
             <Translate>{SEVERITY_LABEL[severity.display] ?? severity.display}</Translate>
           </span>
           {severity.reason && <span>{severity.reason}</span>}
