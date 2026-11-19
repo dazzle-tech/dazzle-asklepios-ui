@@ -11,6 +11,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
 
+import type { NahdiSyncStatus } from '@/services/patients/Prescription/patientPrescriptionService';
+
 import PrescriptionReportButton from './PrescriptionReportButton';
 
 type Props = {
@@ -36,11 +38,57 @@ type Props = {
   // Re-checks the pharmacy dispensing status.
   handleRefreshDispensingStatus: () => void;
   isRefreshingDispensing: boolean;
+  // Whether the submitted prescription reached the pharmacy (order number, or the reason it failed).
+  nahdiSyncStatus?: NahdiSyncStatus;
 };
 
 const isDraftStatus = (status: any) => {
   const s = String(status ?? '').toUpperCase();
   return !s || s === 'DRAFT' || s === 'NEW';
+};
+
+/**
+ * Whether a submitted prescription reached the pharmacy (Nahdi): sent with its order number, or not delivered
+ * with the reason. Shown to every user; nothing is shown for prescriptions sent before sends were recorded.
+ */
+const PharmacySendStatus = ({ status }: { status?: NahdiSyncStatus }) => {
+  if (!status) return null;
+
+  const line = (color: string, label: string, detail?: string | null, title?: string | null) => (
+    <span
+      title={title ?? undefined}
+      style={{ alignSelf: 'center', display: 'inline-flex', flexDirection: 'column', lineHeight: 1.3, maxWidth: 360 }}
+    >
+      <span style={{ color, fontWeight: 600 }}>
+        ● <Translate>{label}</Translate>
+      </span>
+      {detail && <span style={{ color: 'var(--primary-gray)', fontSize: 12 }}>{detail}</span>}
+    </span>
+  );
+
+  if (!status.integrationEnabled) {
+    return line('var(--primary-gray)', 'Not sent to pharmacy', 'Pharmacy integration is off');
+  }
+  if (status.lastAttemptStatus === 'FAILED') {
+    const when = status.lastAttemptAt ? formatDateWithoutSeconds(status.lastAttemptAt) : '';
+    const reason = status.failureReason || 'Unknown reason';
+    return line(
+      'var(--primary-red)',
+      'Not delivered to pharmacy',
+      [reason, when].filter(Boolean).join(' · '),
+      reason
+    );
+  }
+  if (status.lastSentAt) {
+    const detail = [
+      status.orderNumber ? `Order ${status.orderNumber}` : null,
+      formatDateWithoutSeconds(status.lastSentAt)
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    return line('var(--primary-green)', 'Sent to pharmacy', detail);
+  }
+  return null;
 };
 
 const PrescriptionToolbar = ({
@@ -62,7 +110,8 @@ const PrescriptionToolbar = ({
   isResending,
   hasUnsentChanges,
   handleRefreshDispensingStatus,
-  isRefreshingDispensing
+  isRefreshingDispensing,
+  nahdiSyncStatus
 }: Props) => {
   const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
   const hasSelection = currentPrescription?.id != null;
@@ -202,6 +251,7 @@ const PrescriptionToolbar = ({
 
             {isSubmitted && (
               <>
+                <PharmacySendStatus status={nahdiSyncStatus} />
                 {/* Resend and Refresh Status are shown only to users allowed to change the submitted prescription;
                     it lights up when the prescription changed after it was last sent to the pharmacy. */}
                 {!edit && (

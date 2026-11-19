@@ -708,6 +708,7 @@ const Prescription = (props: Props) => {
       handleResendToNahdi={handleResendToNahdi}
       isResending={isResending}
       hasUnsentChanges={Boolean(nahdiSyncStatus?.hasUnsentChanges)}
+      nahdiSyncStatus={nahdiSyncStatus}
       handleRefreshDispensingStatus={() => refreshDispensingStatus(true)}
       isRefreshingDispensing={isRefreshingDispensing}
     />
