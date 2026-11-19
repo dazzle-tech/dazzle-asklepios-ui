@@ -38,10 +38,34 @@ export const serviceService = createApi({
 
     // ===== SERVICES (Paginated) =====
     // GET /api/setup/service  -> all services (no facility filter)
-    getAllServices: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', isActive }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllServices: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        facilityId?: number | string;
+        category?: string;
+        name?: string;
+        abbreviation?: string;
+        code?: string;
+        price?: number | string;
+        currency?: string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, facilityId, category, name, abbreviation, code, price, currency }) => ({
         url: '/api/setup/service',
-        params: { page, size, sort, isActive },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          category: category || undefined,
+          name: name?.trim() || undefined,
+          abbreviation: abbreviation?.trim() || undefined,
+          code: code?.trim() || undefined,
+          price: String(price ?? '').trim() || undefined,
+          currency: currency || undefined,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],

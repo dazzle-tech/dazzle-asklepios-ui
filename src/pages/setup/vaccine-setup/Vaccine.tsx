@@ -1,7 +1,6 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
@@ -9,21 +8,17 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useGetVaccinesQuery,
-  useLazyGetVaccinesByNameQuery,
-  useLazyGetVaccinesByRoaQuery,
-  useLazyGetVaccinesByTypeQuery,
   useToggleVaccineActiveMutation
 } from '@/services/vaccine/vaccineService';
 import { newVaccine as newVaccineModel } from '@/types/model-types-constructor-new';
 import { Vaccine as VaccineModel } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaSyringe, FaUndo } from 'react-icons/fa';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddEditVaccine from './AddEditVaccine';
 import DoesSchedule from './DoesSchedule';
 import './styles.less';
@@ -39,29 +34,20 @@ const Vaccine: React.FC = () => {
   const [dosesPopupOpen, setDosesPopupOpen] = useState(false);
   const [edit_new, setEdit_new] = useState(false);
 
-  // Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState<{
-    filter: '' | 'name' | 'type' | 'roa';
-    value: any;
-  }>({ filter: '', value: '' });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<VaccineModel[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { name: '', type: '', roa: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  // Unfiltered pagination (main API)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // Filtered pagination
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
+    sort: 'id,asc'
   });
 
   // Enums
@@ -79,24 +65,13 @@ const Vaccine: React.FC = () => {
   } = useGetVaccinesQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort
+    sort: paginationParams.sort,
+    isActive: activeFilter,
+    ...appliedFilters
   });
 
-  // Lazy queries used for filters
-  const [fetchByName, byNameResult] = useLazyGetVaccinesByNameQuery();
-  const [fetchByType, byTypeResult] = useLazyGetVaccinesByTypeQuery();
-  const [fetchByRoa, byRoaResult] = useLazyGetVaccinesByRoaQuery();
-
-  // Derived values
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : pageData?.totalCount ?? 0),
-    [isFiltered, filteredTotal, pageData?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : pageData?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : pageData?.data ?? []),
-    [isFiltered, filteredData, pageData?.data]
-  );
+  const totalCount = pageData?.totalCount ?? 0;
+  const tableData = useMemo(() => pageData?.data ?? [], [pageData?.data]);
 
   // Header page setUp
   useEffect(() => {
@@ -108,92 +83,10 @@ const Vaccine: React.FC = () => {
     };
   }, [dispatch]);
 
-  // Centralized reset to unfiltered
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0, size: prev.size, sort: 'id,desc' }));
-    setPaginationParams(prev => ({
-      ...prev,
-      page: 0,
-      size: prev.size,
-      sort: 'id,asc',
-      timestamp: Date.now()
-    }));
-    refetch();
-  };
-
-  // Unified refetch respecting current mode
+  // Reload the list with the current filters (used after add/edit)
   const refetchList = async () => {
-    if (isFiltered) {
-      await handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        filterPagination.size,
-        filterPagination.sort?.toLowerCase().startsWith('id,asc')
-          ? 'id,desc'
-          : filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      await refetch();
-    }
+    await refetch();
   };
-
-  // Run the proper filter
-  const runFilterQuery = async (
-    fieldName: 'name' | 'type' | 'roa',
-    value: any,
-    page = 0,
-    size = paginationParams.size,
-    sort?: string
-  ) => {
-    if (!value && value !== 0) return undefined;
-    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
-
-    // NOTE: append dummy ts to break RTK Query arg equality
-    const common = { page, size, sort: effectiveSort, ts: Date.now() } as const;
-    if (fieldName === 'name') return await fetchByName({ name: String(value), ...common }).unwrap();
-    if (fieldName === 'type') return await fetchByType({ type: String(value), ...common }).unwrap();
-    if (fieldName === 'roa') return await fetchByRoa({ roa: String(value), ...common }).unwrap();
-    return undefined;
-  };
-
-  // Apply/clear filter
-  const handleFilterChange = async (
-    fieldName: '' | 'name' | 'type' | 'roa',
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value && value !== 0) {
-      resetToUnfiltered();
-      return;
-    }
-    try {
-      const resp = await runFilterQuery(fieldName as any, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch {
-      dispatch(notify({ msg: 'Failed to filter vaccines', sev: 'error' }));
-      resetToUnfiltered();
-    }
-  };
-
-  // Auto revert when value cleared
-  useEffect(() => {
-    if (!recordOfFilter.value && recordOfFilter.value !== 0 && isFiltered) {
-      resetToUnfiltered();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordOfFilter.value]);
 
   // Sorting
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
@@ -202,83 +95,45 @@ const Vaccine: React.FC = () => {
     setSortColumn(column);
     setSortType(type);
     const sortValue = `${column},${type}`;
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        filterPagination.size,
-        sortValue
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0 }));
   };
 
   // Pagination
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-    const currentPage = paginationParams.page;
-    const linksMap = links || {};
-    let targetLink: string | null | undefined = null;
-    if (newPage > currentPage && linksMap.next) targetLink = linksMap.next;
-    else if (newPage < currentPage && linksMap.prev) targetLink = linksMap.prev;
-    else if (newPage === 0 && linksMap.first) targetLink = linksMap.first;
-    else if (newPage > currentPage + 1 && linksMap.last) targetLink = linksMap.last;
-
-    if (targetLink) {
-      // If you have a helper to parse link headers, use it; otherwise fall back
-      try {
-        const { page, size } = (PaginationPerPage as any).extractPaginationFromLink
-          ? (PaginationPerPage as any).extractPaginationFromLink(targetLink)
-          : { page: newPage, size: paginationParams.size };
-        setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
-      } catch {
-        PaginationPerPage.handlePageChange(
-          _,
-          newPage,
-          paginationParams,
-          linksMap,
-          setPaginationParams
-        );
-      }
-    } else {
-      PaginationPerPage.handlePageChange(
-        _,
-        newPage,
-        paginationParams,
-        linksMap,
-        setPaginationParams
-      );
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   // Actions
   const handleEdit = (row?: VaccineModel) => {
@@ -292,18 +147,7 @@ const Vaccine: React.FC = () => {
     if (!vaccine?.id) return;
     try {
       const res = await toggleActive({ id: vaccine.id }).unwrap();
-
-      if (isFiltered) {
-        await handleFilterChange(
-          recordOfFilter.filter,
-          recordOfFilter.value,
-          filterPagination.page,
-          filterPagination.size,
-          filterPagination.sort
-        );
-      } else {
-        await refetch();
-      }
+      await refetch();
 
       dispatch(
         notify({
@@ -320,118 +164,19 @@ const Vaccine: React.FC = () => {
   // Selected row helper
   const isSelected = (row: VaccineModel) => (row?.id === vaccine?.id ? 'selected-row' : '');
 
-  // Filters UI
-  const filterFields = [
-    { label: 'Vaccine Name', value: 'name' },
-    { label: 'Type', value: 'type' },
-    { label: 'Roa', value: 'roa' }
-  ];
-
-  const filters = () => {
-    const selected = recordOfFilter.filter;
-
-    let dynamicInput: React.ReactNode = (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-        width={220}
-      />
-    );
-
-    if (selected === 'type') {
-      dynamicInput = (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={vaccineTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(u: any) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          searchable={false}
-        />
-      );
-    } else if (selected === 'name') {
-      dynamicInput = (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
-      );
-    } else if (selected === 'roa') {
-      dynamicInput = (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={roa ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(u: any) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          searchable={false}
-        />
-      );
-    }
-
-    return (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(u: any) => setRecordOfFilter({ filter: u.filter, value: '' })}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="170px"
-        />
-        {dynamicInput}
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
-              resetToUnfiltered();
-            } else {
-              handleFilterChange(
-                recordOfFilter.filter,
-                recordOfFilter.value,
-                0,
-                filterPagination.size,
-                filterPagination.sort || 'id,desc'
-              );
-            }
-          }}
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
-
   // Columns
   const tableColumns = [
-    { key: 'name', title: <Translate>Vaccine Name</Translate>, flexGrow: 4 },
+    {
+      key: 'name',
+      title: <Translate>Vaccine Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name')
+    },
     {
       key: 'roa',
       title: <Translate>ROA</Translate>,
-      flexGrow: 4,
+      width: 170,
+      ...headerSelect('roa', roa ?? []),
       render: (row: VaccineModel) => formatEnumString(row?.roa)
     },
     { key: 'atcCode', title: <Translate>ATC Code</Translate>, flexGrow: 3 },
@@ -439,7 +184,8 @@ const Vaccine: React.FC = () => {
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 3,
+      width: 160,
+      ...headerSelect('type', vaccineTypeOptions ?? []),
       render: (row: VaccineModel) => {
         const value = formatEnumString(row?.type);
         if (String(row?.type).toUpperCase() === 'MRNA') {
@@ -458,7 +204,16 @@ const Vaccine: React.FC = () => {
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 2,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: rowData =>
         rowData.isActive ? (
           <MyBadgeStatus contant="Active" color="#45b887" />
@@ -536,21 +291,15 @@ const Vaccine: React.FC = () => {
         height={450}
         data={tableData}
         totalCount={totalCount}
-        loading={
-          isFetching ||
-          byNameResult?.isFetching ||
-          byTypeResult?.isFetching ||
-          byRoaResult?.isFetching
-        }
+        loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={(row: VaccineModel) => setVaccine(row)}
-        filters={filters()}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={handleSortChange}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         tableButtons={

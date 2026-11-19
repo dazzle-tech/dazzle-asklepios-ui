@@ -2,13 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { formatEnumString } from '@/utils';
-import { Form, IconButton, Tooltip, Whisper } from 'rsuite';
+import { IconButton, Tooltip, Whisper } from 'rsuite';
 import { useEnumOptions } from '@/services/enumsApi';
 import { MdLink, MdVisibility } from 'react-icons/md';
 import LinkServices, { ServiceLite } from './LinkServices';
@@ -17,9 +16,6 @@ import { useGetServicesQuery } from '@/services/setup/serviceService';
 import {
   useGetAllCdtQuery,
   useImportCdtMutation,
-  useLazyGetCdtByClassQuery,
-  useLazyGetCdtByCodeQuery,
-  useLazyGetCdtByDescriptionQuery,
   type CdtImportResult,
   type CdtConflict
 } from '@/services/setup/cdtCodeService';
@@ -33,65 +29,33 @@ const CDTSetup: React.FC = () => {
   const selectedFacility = tenant?.selectedFacility || null;
   const facilityId: number | undefined = selectedFacility?.id;
 
-  // ----------------------------------------
-  // MAIN pagination (unfiltered mode)
-  // ----------------------------------------
   const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // ----------------------------------------
-  // FILTERED pagination (client-driven)
-  // ----------------------------------------
-  const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc'
   });
 
-  // ----------------------------------------
-  // Filter/search state
-  // ----------------------------------------
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
-
-  // Lazy queries for filter operations
-  const [fetchByClass] = useLazyGetCdtByClassQuery();
-  const [fetchByCode] = useLazyGetCdtByCodeQuery();
-  const [fetchByDescription] = useLazyGetCdtByDescriptionQuery();
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { code: '', cdtClass: '', description: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   // Enum options for CDT Class
   const cdtClassOptions = useEnumOptions('CdtClass');
 
-  // Main list query (unfiltered)
-  const { data: cdtListResponse, isFetching, refetch } = useGetAllCdtQuery(paginationParams);
+  const { data: cdtListResponse, isFetching, refetch } = useGetAllCdtQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
 
-  // ----------------------------------------
-  // Derived table state (filtered / unfiltered)
-  // ----------------------------------------
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : cdtListResponse?.totalCount ?? 0),
-    [isFiltered, filteredTotal, cdtListResponse?.totalCount]
-  );
-
-  const links = (isFiltered ? filteredLinks : cdtListResponse?.links) || {};
-
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : cdtListResponse?.data ?? []),
-    [isFiltered, filteredData, cdtListResponse?.data]
-  );
-
-  const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
-  const rowsPerPage = isFiltered ? filterPagination.size : paginationParams.size;
+  const totalCount = cdtListResponse?.totalCount ?? 0;
+  const tableData = useMemo(() => cdtListResponse?.data ?? [], [cdtListResponse?.data]);
 
   // ----------------------------------------
   // Page shell (title)
@@ -105,247 +69,40 @@ const CDTSetup: React.FC = () => {
     };
   }, [dispatch]);
 
-  // ----------------------------------------
-  // Fetch one filtered page (used only in filtered mode)
-  // ----------------------------------------
-  const fetchFilteredPage = async (page: number, size: number, sort: string) => {
-    try {
-      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
-
-      if (recordOfFilter.filter === 'class') {
-        const classValue = String(recordOfFilter.value ?? '').toUpperCase();
-        resp = await fetchByClass({ cdtClass: classValue, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === 'code') {
-        const codeValue = String(recordOfFilter.value ?? '');
-        resp = await fetchByCode({ code: codeValue, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === 'description') {
-        const descValue = String(recordOfFilter.value ?? '');
-        resp = await fetchByDescription({ description: descValue, page, size, sort }).unwrap();
-      }
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setFilterPagination({ page, size, sort });
-    } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-  };
-
-  // ----------------------------------------
-  // Pagination handlers
-  // ----------------------------------------
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      fetchFilteredPage(newPage, filterPagination.size, filterPagination.sort);
-      return;
-    }
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      fetchFilteredPage(0, newSize, filterPagination.sort);
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
 
-  // ----------------------------------------
-  // Filters (Class/Code/Description)
-  // ----------------------------------------
-  const filterFields = [
-    { label: 'Class', value: 'class' },
-    { label: 'Code', value: 'code' },
-    { label: 'Description', value: 'description' }
-  ];
-
-  const handleFilterChange = async (fieldName: string, value: any, silent = false) => {
-    if (!value) {
-      // clear filter
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      if (!silent) refetch();
-      return;
-    }
-
-    try {
-      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
-
-      if (fieldName === 'class') {
-        const v = typeof value === 'object' && value !== null ? value.value ?? value : value;
-        resp = await fetchByClass({
-          cdtClass: String(v).toUpperCase(),
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'code') {
-        const v = typeof value === 'object' ? String(value.value ?? value) : value;
-        resp = await fetchByCode({
-          code: v,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'description') {
-        const v = typeof value === 'object' ? String(value.value ?? value) : value;
-        resp = await fetchByDescription({
-          description: v,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      }
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-
-      setFilterPagination({
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort
-      });
-
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      if (!silent) refetch();
-    }
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
 
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
   useEffect(() => {
-    if (!recordOfFilter.value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordOfFilter.value]);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
+  // Reload the list with the current filters after an import
   const refreshAfterMutation = async () => {
-    if (isFiltered && recordOfFilter.filter && recordOfFilter.value) {
-      await fetchFilteredPage(filterPagination.page, filterPagination.size, filterPagination.sort);
-    } else {
-      refetch();
-    }
+    await refetch();
   };
-
-  // ----------------------------------------
-  // Filters UI
-  // ----------------------------------------
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => {
-          const nextFilter = updated?.filter ?? '';
-          setRecordOfFilter(prev => {
-            if (prev.filter === nextFilter) return prev;
-            return { filter: nextFilter, value: '' };
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {recordOfFilter.filter === 'class' ? (
-        <MyInput
-          width={300}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={cdtClassOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(updated: any) => {
-            const raw = updated?.value;
-            const nextValue =
-              typeof raw === 'object' && raw !== null ? raw.value ?? raw : raw ?? '';
-            setRecordOfFilter(prev =>
-              prev.value === nextValue ? prev : { ...prev, value: nextValue }
-            );
-          }}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={(updated: any) => {
-            const next = updated?.value ?? '';
-            setRecordOfFilter(prev => (prev.value === next ? prev : { ...prev, value: next }));
-          }}
-          showLabel={false}
-          placeholder={
-            recordOfFilter.filter === 'code'
-              ? 'Enter Code'
-              : recordOfFilter.filter === 'description'
-              ? 'Enter description'
-              : 'Enter value'
-          }
-          width={300}
-        />
-      )}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
 
   const [importCdt, { isLoading: isImporting }] = useImportCdtMutation();
 
@@ -479,13 +236,49 @@ const CDTSetup: React.FC = () => {
   // Main CDT table columns
   // ----------------------------------------
   const columns = [
-    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
+    {
+      key: 'code',
+      title: 'Code',
+      width: 140,
+      ...headerSearch('code', 'Search code'),
+      render: (row: any) => row?.code ?? ''
+    },
     {
       key: 'cdtClass',
       title: 'Class',
+      width: 200,
+      ...headerSearch('cdtClass'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(cdtClassOptions ?? [])],
       render: (row: any) => (row?.cdtClass ? formatEnumString(row?.cdtClass) : '')
     },
-    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
+    {
+      key: 'description',
+      title: 'Description',
+      width: 320,
+      ...headerSearch('description', 'Search description'),
+      render: (row: any) => row?.description ?? ''
+    },
+    {
+      key: 'isActive',
+      title: 'Status',
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: (row: any) => (
+        <MyBadgeStatus
+          contant={row?.isActive ? 'Active' : 'Inactive'}
+          color={row?.isActive ? '#415be7' : '#b1acacff'}
+        />
+      )
+    },
     {
       key: 'lastUpdated',
       title: 'Last Updated',
@@ -590,29 +383,17 @@ const CDTSetup: React.FC = () => {
       <MyTable
         data={tableData}
         columns={columns}
-        filters={
-          <div
-            className="mb-3"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              justifyContent: 'space-between',
-              flexWrap: 'wrap'
-            }}
-          >
-            <div>{filters()}</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <MyButton onClick={() => setOpenCodesImportModal(true)}>
-                Import Codes (Excel / CSV)
-              </MyButton>
-            </div>
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton onClick={() => setOpenCodesImportModal(true)}>
+              Import Codes (Excel / CSV)
+            </MyButton>
           </div>
         }
         totalCount={totalCount}
         loading={isFetching}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />

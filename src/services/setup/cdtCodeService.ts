@@ -58,11 +58,23 @@ export const cdtCodeService = createApi({
   tagTypes: ['CDT', 'CDT_LINKS'],
 
   endpoints: builder => ({
-    getAllCdt: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllCdt: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; cdtClass?: string; code?: string; description?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, cdtClass, code, description }) => ({
         url: '/api/setup/cdt/all',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          cdtClass: cdtClass || undefined,
+          code: code?.trim() || undefined,
+          description: description?.trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['CDT']
