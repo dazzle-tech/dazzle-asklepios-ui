@@ -28,10 +28,23 @@ export const procedureSetupService = createApi({
   tagTypes: ['Procedure', 'ProcedureItemsByProcedure'],
   endpoints: builder => ({
     // ===== PROCEDURES (Paginated) =====
-    getProcedures: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', isActive }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getProcedures: builder.query<
+      PagedResult<any>,
+      PagedParams & { facilityId?: number | string; categoryType?: string; name?: string; code?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, facilityId, categoryType, name, code }) => ({
         url: '/api/setup/procedure',
-        params: { page, size, sort, isActive }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          categoryType: categoryType || undefined,
+          name: name?.trim() || undefined,
+          code: code?.trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
