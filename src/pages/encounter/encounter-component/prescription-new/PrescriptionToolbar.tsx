@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaFilePrescription } from 'react-icons/fa6';
+import { FaFilePrescription, FaPrescriptionBottleMedical } from 'react-icons/fa6';
+import { IconButton, Tooltip, Whisper } from 'rsuite';
 import PlusIcon from '@rsuite/icons/Plus';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -47,51 +48,120 @@ const isDraftStatus = (status: any) => {
   return !s || s === 'DRAFT' || s === 'NEW';
 };
 
-/**
- * Whether a submitted prescription reached the pharmacy (Nahdi): sent with its order number, or not delivered
- * with the reason. Shown to every user; nothing is shown for prescriptions sent before sends were recorded.
- */
 const PHARMACY_UNREACHABLE = 'Could not reach the pharmacy system. Try Resend later; if it keeps failing, contact IT.';
 
-const PharmacySendStatus = ({ status }: { status?: NahdiSyncStatus }) => {
+type PharmacyTone = 'sent' | 'pending' | 'failed' | 'off';
+
+type PharmacyPanelProps = {
+  status?: NahdiSyncStatus;
+  hasUnsentChanges: boolean;
+  // Resend / check dispensing are for users allowed to change the submitted prescription.
+  canAct: boolean;
+  onResend: () => void;
+  isResending: boolean;
+  onCheckDispensing: () => void;
+  isCheckingDispensing: boolean;
+};
+
+/**
+ * Everything about the pharmacy (Nahdi) for a submitted prescription, in one card under the buttons:
+ * a colour strip for the state, what happened (order number or the doctor's message), and the actions:
+ * "Resend" only when there is something to send, and an icon to check what the pharmacy dispensed.
+ */
+const PharmacyPanel = ({
+  status,
+  hasUnsentChanges,
+  canAct,
+  onResend,
+  isResending,
+  onCheckDispensing,
+  isCheckingDispensing
+}: PharmacyPanelProps) => {
   if (!status) return null;
 
-  const line = (color: string, label: string, detail?: string | null, title?: string | null) => (
-    <span
-      title={title ?? undefined}
-      style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, lineHeight: 1.4 }}
-    >
-      <span style={{ color, fontWeight: 600 }}>
-        ● <Translate>{label}</Translate>
-      </span>
-      {detail && <span style={{ color: 'var(--primary-gray)', fontSize: 12 }}>{detail}</span>}
-    </span>
-  );
+  let tone: PharmacyTone;
+  let title: string;
+  let detail: string | null = null;
+  let hint: string | null = null;
 
   if (!status.integrationEnabled) {
-    return line('var(--primary-gray)', 'Not sent to pharmacy', 'Pharmacy integration is off');
-  }
-  if (status.lastAttemptStatus === 'FAILED') {
-    const when = status.lastAttemptAt ? formatDateWithoutSeconds(status.lastAttemptAt) : '';
-    // The doctor sees what to do; the technical reason (e.g. invalid token) is only a hint for IT.
-    const message = status.failureMessage || PHARMACY_UNREACHABLE;
-    return line(
-      'var(--primary-red)',
-      'Not delivered to pharmacy',
-      [message, when].filter(Boolean).join(' · '),
-      status.failureReason ? `Technical details: ${status.failureReason}` : null
-    );
-  }
-  if (status.lastSentAt) {
-    const detail = [
+    tone = 'off';
+    title = 'Not sent';
+    detail = 'Pharmacy integration is off';
+  } else if (status.lastAttemptStatus === 'FAILED') {
+    tone = 'failed';
+    title = 'Not delivered';
+    detail = [
+      status.failureMessage || PHARMACY_UNREACHABLE,
+      status.lastAttemptAt ? formatDateWithoutSeconds(status.lastAttemptAt) : null
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    // The technical reason (e.g. invalid token) is only a hint for IT.
+    hint = status.failureReason ? `Technical details: ${status.failureReason}` : null;
+  } else if (status.lastSentAt) {
+    tone = hasUnsentChanges ? 'pending' : 'sent';
+    title = hasUnsentChanges ? 'Changes not sent yet' : 'Sent';
+    detail = [
       status.orderNumber ? `Order ${status.orderNumber}` : null,
       formatDateWithoutSeconds(status.lastSentAt)
     ]
       .filter(Boolean)
       .join(' · ');
-    return line('var(--primary-green)', 'Sent to pharmacy', detail);
+  } else if (hasUnsentChanges) {
+    tone = 'pending';
+    title = 'Changes not sent yet';
+  } else {
+    // Sent before sends were recorded: nothing to show.
+    return null;
   }
-  return null;
+
+  const showResend = canAct && status.integrationEnabled && hasUnsentChanges;
+
+  return (
+    <div className={`pharmacy-panel pharmacy-panel--${tone}`}>
+      <span className="pharmacy-panel__icon">
+        <FaPrescriptionBottleMedical />
+      </span>
+      <div className="pharmacy-panel__text" title={hint ?? undefined}>
+        <span className="pharmacy-panel__label">
+          <Translate>Pharmacy</Translate>
+        </span>
+        <span className="pharmacy-panel__title">
+          <Translate>{title}</Translate>
+        </span>
+        {detail && <span className="pharmacy-panel__detail">{detail}</span>}
+      </div>
+      {canAct && (
+        <div className="pharmacy-panel__actions">
+          {showResend && (
+            <MyButton
+              size="xsmall"
+              prefixIcon={() => <ReloadIcon />}
+              onClick={onResend}
+              loading={isResending}
+              disabled={isResending}
+              backgroundColor="var(--primary-orange)"
+            >
+              <Translate>Resend</Translate>
+            </MyButton>
+          )}
+          {status.integrationEnabled && (
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Check what the pharmacy dispensed</Tooltip>}>
+              <IconButton
+                size="sm"
+                appearance="subtle"
+                icon={<ReloadIcon spin={isCheckingDispensing} />}
+                onClick={onCheckDispensing}
+                disabled={isCheckingDispensing}
+                aria-label="Check what the pharmacy dispensed"
+              />
+            </Whisper>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const PrescriptionToolbar = ({
@@ -252,53 +322,23 @@ const PrescriptionToolbar = ({
               Sign & Submit Order
             </MyButton>
 
-            {isSubmitted && (
-              <>
-                {/* Resend and Refresh Status are shown only to users allowed to change the submitted prescription;
-                    Resend lights up when the prescription changed after it was last sent to the pharmacy. */}
-                {!edit && (
-                  <>
-                    <MyButton
-                      prefixIcon={() => <ReloadIcon />}
-                      onClick={handleResendToNahdi}
-                      loading={isResending}
-                      disabled={isResending || !hasUnsentChanges}
-                      appearance={hasUnsentChanges ? 'primary' : 'ghost'}
-                      backgroundColor={hasUnsentChanges ? 'var(--primary-orange)' : undefined}
-                      color={hasUnsentChanges ? undefined : 'var(--primary-gray)'}
-                    >
-                      <Translate>Resend to Pharmacy</Translate>
-                    </MyButton>
-                    {/* Re-checks which medications the pharmacy dispensed (also checked automatically on open). */}
-                    <MyButton
-                      appearance="ghost"
-                      onClick={handleRefreshDispensingStatus}
-                      loading={isRefreshingDispensing}
-                      disabled={isRefreshingDispensing}
-                    >
-                      <Translate>Refresh Status</Translate>
-                    </MyButton>
-                  </>
-                )}
-              </>
-            )}
-
             <PrescriptionReportButton
               prescriptionId={currentPrescription?.id}
               disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
             />
           </div>
 
-          {/* Pharmacy status on its own line under the buttons. */}
+          {/* Everything about the pharmacy in one card under the buttons. */}
           {isSubmitted && (
-            <div className="order-status-row">
-              <PharmacySendStatus status={nahdiSyncStatus} />
-              {!edit && hasUnsentChanges && (
-                <span style={{ color: 'var(--primary-orange)', fontWeight: 600 }}>
-                  ● <Translate>Unsent changes</Translate>
-                </span>
-              )}
-            </div>
+            <PharmacyPanel
+              status={nahdiSyncStatus}
+              hasUnsentChanges={hasUnsentChanges}
+              canAct={!edit}
+              onResend={handleResendToNahdi}
+              isResending={isResending}
+              onCheckDispensing={handleRefreshDispensingStatus}
+              isCheckingDispensing={isRefreshingDispensing}
+            />
           )}
         </div>
       </div>

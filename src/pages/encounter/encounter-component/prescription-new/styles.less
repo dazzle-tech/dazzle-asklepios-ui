@@ -1285,11 +1285,72 @@ form.margin-left-3 .rs-form-control-label {
     flex-wrap: wrap;
   }
 
-  .order-status-row {
+  // Pharmacy (Nahdi) card of a submitted prescription: colour strip = state, then what happened, then actions.
+  .pharmacy-panel {
+    --pharmacy-tone: var(--primary-gray);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 640px;
+    padding: 6px 8px 6px 12px;
+    // A light tint of the state colour (works in light and dark themes) instead of a flat background.
+    border: 1px solid color-mix(in srgb, var(--pharmacy-tone) 30%, transparent);
+    border-inline-start: 4px solid var(--pharmacy-tone);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--pharmacy-tone) 8%, transparent);
+
+    &--sent {
+      --pharmacy-tone: var(--primary-green);
+    }
+    &--pending {
+      --pharmacy-tone: var(--primary-orange);
+    }
+    &--failed {
+      --pharmacy-tone: var(--primary-red);
+    }
+    &--off {
+      --pharmacy-tone: var(--primary-gray);
+    }
+
+    &__icon {
+      display: flex;
+      font-size: 16px;
+      color: var(--pharmacy-tone);
+    }
+
+    &__text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 8px;
+      row-gap: 2px;
+      min-width: 0;
+    }
+
+    &__label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--primary-gray);
+    }
+
+    &__title {
+      font-weight: 600;
+      color: var(--pharmacy-tone);
+    }
+
+    &__detail {
+      font-size: 12px;
+      color: var(--primary-gray);
+    }
+
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-inline-start: auto;
+      padding-inline-start: 8px;
+    }
   }
 }
