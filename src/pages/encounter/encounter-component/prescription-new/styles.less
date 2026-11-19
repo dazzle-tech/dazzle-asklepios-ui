@@ -1267,21 +1267,29 @@ form.margin-left-3 .rs-form-control-label {
     }
   }
 
+  // Buttons on the first line, the pharmacy status on its own line under them (both right aligned).
   .order-actions-section {
     display: flex;
     flex: 1;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
     padding-top: 12px;
   }
 
   .order-actions-buttons {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .order-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
     flex-wrap: wrap;
   }
 }

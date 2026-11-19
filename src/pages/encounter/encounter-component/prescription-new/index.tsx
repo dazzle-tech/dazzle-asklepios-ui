@@ -204,7 +204,11 @@ const Prescription = (props: Props) => {
       } else if (result?.status === 'SKIPPED') {
         dispatch(notify({ msg: result.message || 'Nahdi integration is not enabled', sev: 'warning' }));
       } else {
-        dispatch(notify({ msg: `Nahdi did not accept the prescription: ${result?.message || 'unknown error'}`, sev: 'error' }));
+        // The doctor's message (general for technical errors); the technical reason stays in the Nahdi log.
+        dispatch(notify({
+          msg: result?.message || 'Could not reach the pharmacy system. Try Resend later; if it keeps failing, contact IT.',
+          sev: 'error'
+        }));
       }
     } catch {
       dispatch(notify({ msg: 'Resend to Nahdi failed', sev: 'error' }));

@@ -51,13 +51,15 @@ const isDraftStatus = (status: any) => {
  * Whether a submitted prescription reached the pharmacy (Nahdi): sent with its order number, or not delivered
  * with the reason. Shown to every user; nothing is shown for prescriptions sent before sends were recorded.
  */
+const PHARMACY_UNREACHABLE = 'Could not reach the pharmacy system. Try Resend later; if it keeps failing, contact IT.';
+
 const PharmacySendStatus = ({ status }: { status?: NahdiSyncStatus }) => {
   if (!status) return null;
 
   const line = (color: string, label: string, detail?: string | null, title?: string | null) => (
     <span
       title={title ?? undefined}
-      style={{ alignSelf: 'center', display: 'inline-flex', flexDirection: 'column', lineHeight: 1.3, maxWidth: 360 }}
+      style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, lineHeight: 1.4 }}
     >
       <span style={{ color, fontWeight: 600 }}>
         ● <Translate>{label}</Translate>
@@ -71,12 +73,13 @@ const PharmacySendStatus = ({ status }: { status?: NahdiSyncStatus }) => {
   }
   if (status.lastAttemptStatus === 'FAILED') {
     const when = status.lastAttemptAt ? formatDateWithoutSeconds(status.lastAttemptAt) : '';
-    const reason = status.failureReason || 'Unknown reason';
+    // The doctor sees what to do; the technical reason (e.g. invalid token) is only a hint for IT.
+    const message = status.failureMessage || PHARMACY_UNREACHABLE;
     return line(
       'var(--primary-red)',
       'Not delivered to pharmacy',
-      [reason, when].filter(Boolean).join(' · '),
-      reason
+      [message, when].filter(Boolean).join(' · '),
+      status.failureReason ? `Technical details: ${status.failureReason}` : null
     );
   }
   if (status.lastSentAt) {
@@ -251,9 +254,8 @@ const PrescriptionToolbar = ({
 
             {isSubmitted && (
               <>
-                <PharmacySendStatus status={nahdiSyncStatus} />
                 {/* Resend and Refresh Status are shown only to users allowed to change the submitted prescription;
-                    it lights up when the prescription changed after it was last sent to the pharmacy. */}
+                    Resend lights up when the prescription changed after it was last sent to the pharmacy. */}
                 {!edit && (
                   <>
                     <MyButton
@@ -267,11 +269,6 @@ const PrescriptionToolbar = ({
                     >
                       <Translate>Resend to Pharmacy</Translate>
                     </MyButton>
-                    {hasUnsentChanges && (
-                      <span style={{ color: 'var(--primary-orange)', fontWeight: 600, alignSelf: 'center' }}>
-                        ● <Translate>Unsent changes</Translate>
-                      </span>
-                    )}
                     {/* Re-checks which medications the pharmacy dispensed (also checked automatically on open). */}
                     <MyButton
                       appearance="ghost"
@@ -291,6 +288,18 @@ const PrescriptionToolbar = ({
               disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
             />
           </div>
+
+          {/* Pharmacy status on its own line under the buttons. */}
+          {isSubmitted && (
+            <div className="order-status-row">
+              <PharmacySendStatus status={nahdiSyncStatus} />
+              {!edit && hasUnsentChanges && (
+                <span style={{ color: 'var(--primary-orange)', fontWeight: 600 }}>
+                  ● <Translate>Unsent changes</Translate>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
