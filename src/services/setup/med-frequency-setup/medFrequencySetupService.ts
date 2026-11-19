@@ -50,10 +50,28 @@ export const medFrequencySetupService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['MedFrequencySetup'],
   endpoints: builder => ({
-    getAllMedFrequencySetups: builder.query<PagedResult<MedFrequencySetup>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllMedFrequencySetups: builder.query<
+      PagedResult<MedFrequencySetup>,
+      PagedParams & {
+        isActive?: boolean;
+        frequency?: string;
+        frequencyNumber?: number | string;
+        frequencyUnit?: string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', timestamp, isActive, frequency, frequencyNumber, frequencyUnit }) => ({
         url: '/api/setup/med-frequency-setup',
-        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+        params: {
+          page,
+          size,
+          sort,
+          ...(timestamp ? { timestamp } : {}),
+          isActive,
+          frequency: frequency || undefined,
+          frequencyNumber: String(frequencyNumber ?? '').trim() || undefined,
+          frequencyUnit: frequencyUnit || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['MedFrequencySetup']
