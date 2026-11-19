@@ -22,11 +22,33 @@ export const BrandMedicationService = createApi({
   endpoints: (builder) => ({
 
     // 🔹 Get all
-    getAllBrandMedications: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc", isActive }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllBrandMedications: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        name?: string;
+        manufacturer?: string;
+        dosageForm?: string;
+        roa?: string;
+        expiresAfterOpening?: boolean | string;
+        useSinglePatient?: boolean | string;
+      }
+    >({
+      query: ({ page, size, sort = "id,asc", isActive, name, manufacturer, dosageForm, roa, expiresAfterOpening, useSinglePatient }) => ({
         url: "/api/setup/brand-medication",
         method: "GET",
-        params: { page, size, sort, isActive },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          name: name?.trim() || undefined,
+          manufacturer: manufacturer || undefined,
+          dosageForm: dosageForm || undefined,
+          roa: roa || undefined,
+          expiresAfterOpening: expiresAfterOpening === "" ? undefined : expiresAfterOpening,
+          useSinglePatient: useSinglePatient === "" ? undefined : useSinglePatient,
+        },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
