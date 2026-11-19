@@ -41,6 +41,9 @@ export interface ColumnConfig {
   /** Plain cell value used in exports when the rendered cell is not text. */
   exportValue?: (rowData: any, rowIndex?: number) => ReactNode;
   searchable?: boolean;
+  /** 'select' renders a dropdown that applies on change (e.g. a status filter). */
+  searchType?: 'text' | 'select';
+  searchOptions?: { label: string; value: string }[];
   searchPlaceholder?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -101,6 +104,13 @@ const MyTable: React.FC<MyTableProps> = ({
   const isRTL = direction === 'RTL';
 
   const mode = useSelector((state: any) => state.ui.mode);
+  const lang = useSelector((state: any) => state.ui.lang);
+  const translations = useSelector((state: any) => state.ui.translations);
+  // <option> can only hold text, so translate labels here instead of using <Translate>
+  const translateText = (text: string) => {
+    const key = text.normalize('NFD').replace(/\s+/g, '_').toUpperCase();
+    return (lang && translations?.[lang]?.[key]) || text;
+  };
   const auth = useSelector((state: any) => state.auth);
   const currentUserId = useMemo(() => {
     const rawUser = auth?.user;
@@ -124,6 +134,12 @@ const MyTable: React.FC<MyTableProps> = ({
     ...col,
     align: col.align ?? (isRTL ? 'right' : 'left')
   }));
+
+  // With filters in the header, swapping rows for a spinner collapses the column
+  // widths and the header inputs jump. Keep the old rows (dimmed) until data arrives.
+  const hasHeaderFilters = columns.some(col => col.searchable);
+  const keepRowsWhileLoading = !!loading && hasHeaderFilters && data?.length > 0;
+  const showLoadingRow = !!loading && !keepRowsWhileLoading;
 
   const visibleColumns = processedColumns.filter(col => !col.expandable);
   const expandableColumns = processedColumns.filter(col => col.expandable);
@@ -167,7 +183,7 @@ const MyTable: React.FC<MyTableProps> = ({
           component={Paper}
           sx={{
             maxHeight: height,
-            height: loading ? loadingHeight ?? height : 'auto',
+            height: showLoadingRow ? loadingHeight ?? height : 'auto',
             overflowY: 'auto'
           }}
           className="my-table-container"
@@ -235,7 +251,25 @@ const MyTable: React.FC<MyTableProps> = ({
                           )}
                           {sortIcon}
                         </Box>
-                        {col.searchable && (
+                        {col.searchable && col.searchType === 'select' && (
+                          <select
+                            className="my-table-header-search-input"
+                            value={col.searchValue ?? ''}
+                            onClick={event => event.stopPropagation()}
+                            onMouseDown={event => event.stopPropagation()}
+                            onChange={event => {
+                              col.onSearchChange?.(event.target.value);
+                              col.onSearchSubmit?.(event.target.value);
+                            }}
+                          >
+                            {(col.searchOptions ?? []).map(option => (
+                              <option key={option.value} value={option.value}>
+                                {translateText(option.label)}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {col.searchable && col.searchType !== 'select' && (
                           <input
                             className="my-table-header-search-input"
                             value={col.searchValue ?? ''}
@@ -257,8 +291,12 @@ const MyTable: React.FC<MyTableProps> = ({
                 })}
               </TableRow>
             </TableHead>
-            <TableBody>
-              {loading ? (
+            <TableBody
+              sx={
+                keepRowsWhileLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined
+              }
+            >
+              {showLoadingRow ? (
                 <TableRow>
                   <TableCell
                     colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
