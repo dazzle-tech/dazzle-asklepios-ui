@@ -25,11 +25,15 @@ export const dentalToothNumberingService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['DentalToothNumberingMethod'],
   endpoints: builder => ({
-    getAllDentalToothNumberingMethods: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllDentalToothNumberingMethods: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; name?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, name }) => ({
         url: '/api/setup/dental-tooth-numbering-methods',
         method: 'GET',
-        params: { page, size, sort }
+        params: { page, size, sort, isActive, name: name?.trim() || undefined }
       }),
       transformResponse: mapPaged,
       providesTags: ['DentalToothNumberingMethod']

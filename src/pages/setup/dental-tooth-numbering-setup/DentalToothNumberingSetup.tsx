@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
 import './styles.less';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
@@ -11,19 +11,16 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import { extractErrorMessage } from '@/utils/extractErrorMessage';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditDentalToothNumberingMethod from './AddEditDentalToothNumberingMethod';
 import { newDentalToothNumberingMethod } from '@/types/model-types-constructor-new';
 import { DentalToothNumberingMethod } from '@/types/model-types-new';
 import {
   useGetAllDentalToothNumberingMethodsQuery,
-  useGetDentalToothNumberingMethodsByNameQuery,
   useCreateDentalToothNumberingMethodMutation,
   useUpdateDentalToothNumberingMethodMutation,
   useToggleDentalToothNumberingMethodActiveMutation
 } from '@/services/setup/dental-tooth-numbering/dentalToothNumberingService';
-import { skipToken } from '@reduxjs/toolkit/query';
 import {
   ALL_TOOTH_IDS,
   NUMBERING_LABEL_MAX,
@@ -43,9 +40,15 @@ const DentalToothNumberingSetup = () => {
   const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
   const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [filterPagination, setFilterPagination] = useState({ page: 0, size: 15, sort: 'id,asc' });
+  // Header filters: draft value typed in the input, applied on Enter.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { name: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 15, sort: 'id,asc' });
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
@@ -53,8 +56,6 @@ const DentalToothNumberingSetup = () => {
   const [createMethod] = useCreateDentalToothNumberingMethodMutation();
   const [updateMethod] = useUpdateDentalToothNumberingMethodMutation();
   const [toggleActive] = useToggleDentalToothNumberingMethodActiveMutation();
-
-  const filterFields = [{ label: 'Name', value: 'name' }];
 
   useEffect(() => {
     dispatch(setPageCode('Dental_Tooth_Numbering_Setup'));
@@ -71,20 +72,8 @@ const DentalToothNumberingSetup = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: listResponse, isFetching: isListFetching } =
-    useGetAllDentalToothNumberingMethodsQuery(!isFiltered ? paginationParams : skipToken);
-
-  const { data: filteredNameResponse, isFetching: isFetchingFilteredName } =
-    useGetDentalToothNumberingMethodsByNameQuery(
-      isFiltered && recordOfFilter.filter === 'name'
-        ? {
-            name: recordOfFilter.value,
-            page: filterPagination.page,
-            size: filterPagination.size,
-            sort: filterPagination.sort
-          }
-        : skipToken
-    );
+  const { data: listResponse, isFetching: isListFetching, refetch } =
+    useGetAllDentalToothNumberingMethodsQuery({ ...paginationParams, ...appliedFilters, isActive: activeFilter });
 
   // Copy source list (all saved methods) for the form's "Start from" selector.
   const { data: allMethodsResponse } = useGetAllDentalToothNumberingMethodsQuery({
@@ -151,6 +140,7 @@ const DentalToothNumberingSetup = () => {
         dispatch(notify({ msg: 'Tooth numbering method created successfully', sev: 'success' }));
       }
       setPopupOpen(false);
+      refetch();
     } catch (err) {
       const msg = extractErrorMessage(err) || 'Failed to save tooth numbering method';
       dispatch(notify({ msg, sev: 'error' }));
@@ -174,6 +164,7 @@ const DentalToothNumberingSetup = () => {
         })
       );
       setOpenConfirmToggle(false);
+      refetch();
     } catch (err) {
       const msg = extractErrorMessage(err) || 'Action failed, please try again';
       dispatch(notify({ msg, sev: 'error' }));
@@ -225,8 +216,29 @@ const DentalToothNumberingSetup = () => {
     </div>
   );
 
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
+
   const tableColumns = [
-    { key: 'name', title: <Translate>Name</Translate>, flexGrow: 3 },
+    { key: 'name', title: <Translate>Name</Translate>, width: 220, ...headerSearch('name', 'Search name') },
     {
       key: 'description',
       title: <Translate>Description</Translate>,
@@ -243,7 +255,16 @@ const DentalToothNumberingSetup = () => {
     {
       key: 'isActive',
       title: <Translate>Active</Translate>,
-      flexGrow: 1,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: DentalToothNumberingMethod) => (rowData.isActive ? 'Yes' : 'No')
     },
     {
@@ -254,74 +275,22 @@ const DentalToothNumberingSetup = () => {
     }
   ];
 
-  const handleFilterChange = (field: string, value: string, page = 0, size?: number) => {
-    if (!field || !value) {
-      setIsFiltered(false);
-      return;
-    }
-    setIsFiltered(true);
-    setFilterPagination({ ...filterPagination, page, size: size ?? filterPagination.size });
-    setRecordOfFilter({ filter: field, value });
-  };
-
   const handlePageChange = (_event, newPage) => {
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, page: newPage }));
-    } else {
-      setPaginationParams(prev => ({ ...prev, page: newPage }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleSortChange = (column: string, type: 'asc' | 'desc') => {
     setSortColumn(column);
     setSortType(type);
     const sortValue = `${column},${type}`;
-    if (isFiltered) {
-      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
-    } else {
-      setPaginationParams({ ...paginationParams, sort: sortValue, page: 0 });
-    }
+    setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0 }));
   };
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({ filter: updatedRecord.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
-  const tableData = isFiltered ? filteredNameResponse?.data ?? [] : listResponse?.data ?? [];
-  const totalCount = isFiltered ? filteredNameResponse?.totalCount ?? 0 : listResponse?.totalCount ?? 0;
+  const tableData = listResponse?.data ?? [];
+  const totalCount = listResponse?.totalCount ?? 0;
 
   return (
     <Panel dir={dir}>
@@ -333,22 +302,16 @@ const DentalToothNumberingSetup = () => {
       <MyTable
         data={tableData}
         totalCount={totalCount}
-        loading={isListFetching || isFetchingFilteredName}
+        loading={isListFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={(rowData: DentalToothNumberingMethod) => setMethod(rowData)}
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={e => {
           const newSize = Number(e.target.value);
-          if (isFiltered) {
-            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-          } else {
-            setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
-          }
+          setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
         }}
         sortColumn={sortColumn}
         sortType={sortType}
