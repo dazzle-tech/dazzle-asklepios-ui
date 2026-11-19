@@ -10,17 +10,11 @@ import {
   useCreateLoincMutation,
   useUpdateLoincMutation,
   useImportLoincMutation,
-  useLazyGetLoincByCategoryQuery,
-  useLazyGetLoincByCodeQuery,
-  useLazyGetLoincByDescriptionQuery,
   type ImportResult,
   type Conflict
 } from '@/services/setup/loincCodeService';
 import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
@@ -31,35 +25,18 @@ const newLoincCode = { code: '', category: '', description: '' };
 const LOINCSetup: React.FC = () => {
   const dispatch = useDispatch();
 
-  // main pagination (unfiltered mode - follows Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
+    sort: 'id,asc'
   });
 
-  // filtered pagination (client-driven page/size/sort during filtered mode only)
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
-  });
-
-  // filtering state (original logic preserved)
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
-
-  // lazy filter queries
-  const [fetchByCategory] = useLazyGetLoincByCategoryQuery();
-  const [fetchByCode] = useLazyGetLoincByCodeQuery();
-  const [fetchByDescription] = useLazyGetLoincByDescriptionQuery();
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND (LOINC codes have no active flag).
+  const emptyHeaderFilters = { code: '', category: '', description: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   // import modal state (conflicts)
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
@@ -71,23 +48,15 @@ const LOINCSetup: React.FC = () => {
   // enum options
   const loincCategoryOptions = useEnumOptions('LoincCategory');
 
-  // main list query (unfiltered)
-  const { data: loincListResponse, isFetching, refetch } = useGetAllLoincQuery(paginationParams);
+  const { data: loincListResponse, isFetching, refetch } = useGetAllLoincQuery({
+    ...paginationParams,
+    ...appliedFilters
+  });
 
-  // derived table state (switch between filtered/unfiltered)
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : loincListResponse?.totalCount ?? 0),
-    [isFiltered, filteredTotal, loincListResponse?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : loincListResponse?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : loincListResponse?.data ?? []),
-    [isFiltered, filteredData, loincListResponse?.data]
-  );
-
-  // current page/rows based on mode
-  const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
-  const rowsPerPage = isFiltered ? filterPagination.size : paginationParams.size;
+  const totalCount = loincListResponse?.totalCount ?? 0;
+  const tableData = useMemo(() => loincListResponse?.data ?? [], [loincListResponse?.data]);
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
 
   // set page header
   useEffect(() => {
@@ -99,70 +68,30 @@ const LOINCSetup: React.FC = () => {
     };
   }, [dispatch]);
 
-  // fetch a filtered page (used only during filtered pagination)
-  const fetchFilteredPage = async (page: number, size: number, sort: string) => {
-    try {
-      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
-
-      if (recordOfFilter.filter === 'category') {
-        resp = await fetchByCategory({ category: recordOfFilter.value, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === 'code') {
-        resp = await fetchByCode({ code: recordOfFilter.value, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === 'description') {
-        resp = await fetchByDescription({
-          description: recordOfFilter.value,
-          page,
-          size,
-          sort
-        }).unwrap();
-      }
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setFilterPagination({ page, size, sort });
-    } catch {
-      // fallback to unfiltered mode if filtered page fetch fails
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-  };
-
-  // pagination change (filtered mode re-runs filter; unfiltered follows Link headers)
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      fetchFilteredPage(newPage, filterPagination.size, filterPagination.sort);
-      return;
-    }
-
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  // rows-per-page change (filtered mode re-runs filter; unfiltered updates params)
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      fetchFilteredPage(0, newSize, filterPagination.sort);
-    } else {
-      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   // import LOINC CSV mutation
   const [importLoinc, { isLoading: isImporting }] = useImportLoincMutation();
@@ -191,12 +120,7 @@ const LOINCSetup: React.FC = () => {
           })
         );
 
-        // if filtered, re-apply current filter from page 0 (original behavior)
-        if (isFiltered) {
-          await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
-        } else {
-          refetch();
-        }
+        refetch();
       }
     } catch (error: any) {
       dispatch(
@@ -228,11 +152,7 @@ const LOINCSetup: React.FC = () => {
         })
       );
 
-      if (isFiltered) {
-        await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
-      } else {
-        refetch();
-      }
+      refetch();
     } catch (error: any) {
       dispatch(
         notify({
@@ -288,11 +208,7 @@ const LOINCSetup: React.FC = () => {
         })
       );
 
-      if (isFiltered) {
-        await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
-      } else {
-        refetch();
-      }
+      refetch();
     } catch (error: any) {
       dispatch(
         notify({
@@ -303,147 +219,31 @@ const LOINCSetup: React.FC = () => {
     }
   };
 
-  // filter fields
-  const filterFields = [
-    { label: 'Category', value: 'category' },
-    { label: 'Code', value: 'code' },
-    { label: 'Description', value: 'description' }
-  ];
-
-  // original filtering logic (unchanged)
-  const handleFilterChange = async (fieldName: string, value: any, silent = false) => {
-    if (!value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      if (!silent) refetch();
-      return;
-    }
-    try {
-      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
-
-      if (fieldName === 'category') {
-        resp = await fetchByCategory({
-          category: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'code') {
-        resp = await fetchByCode({
-          code: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'description') {
-        resp = await fetchByDescription({
-          description: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      }
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-
-      // initialize filtered pagination at page 0 using current table size
-      setFilterPagination(prev => ({ ...prev, page: 0, size: paginationParams.size }));
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      if (!silent) refetch();
-    }
-  };
-
-  // auto-reset to unfiltered when filter value cleared
-  useEffect(() => {
-    if (!recordOfFilter.value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordOfFilter.value]);
-
-  // filters UI
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {recordOfFilter.filter === 'category' ? (
-        <MyInput
-          width={300}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={loincCategoryOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder={
-            recordOfFilter.filter === 'code'
-              ? 'Enter Code'
-              : recordOfFilter.filter === 'description'
-              ? 'Enter description'
-              : 'Enter value'
-          }
-          width={300}
-        />
-      )}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   // table columns
   const columns = [
-    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
+    {
+      key: 'code',
+      title: 'Code',
+      width: 140,
+      ...headerSearch('code', 'Search code'),
+      render: (row: any) => row?.code ?? ''
+    },
     {
       key: 'category',
       title: 'Category',
+      width: 200,
+      ...headerSearch('category'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(loincCategoryOptions ?? [])],
       render: (row: any) => (row?.category ? formatEnumString(row?.category) : '')
     },
-    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
+    {
+      key: 'description',
+      title: 'Description',
+      width: 320,
+      ...headerSearch('description', 'Search description'),
+      render: (row: any) => row?.description ?? ''
+    },
     {
       key: 'lastUpdated',
       title: 'Last Updated',
@@ -516,19 +316,8 @@ const LOINCSetup: React.FC = () => {
       <MyTable
         data={tableData}
         columns={columns}
-        filters={
-          <div
-            className="mb-3"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              justifyContent: 'space-between',
-              flexWrap: 'wrap'
-            }}
-          >
-            <div>{filters()}</div>
-
+        tableButtons={
+          <div className="container-of-add-new-button">
             <div style={{ display: 'flex', gap: 10 }}>
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
