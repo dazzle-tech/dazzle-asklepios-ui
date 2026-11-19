@@ -53,11 +53,23 @@ export const PolicyDefinitionService = createApi({
   endpoints: (builder) => ({
 
     // List all (paginated)
-    getAllPolicyDefinitions: builder.query<PagedResult<PolicyDefinition>, PagedParams>({
-      query: ({ page, size, sort = "id,desc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllPolicyDefinitions: builder.query<
+      PagedResult<PolicyDefinition>,
+      PagedParams & { isActive?: boolean; facilityId?: number | string; code?: string; name?: string }
+    >({
+      query: ({ page, size, sort = "id,desc", isActive, facilityId, code, name }) => ({
         url: "/api/setup/policy-definition",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          code: code?.trim() || undefined,
+          name: name?.trim() || undefined,
+        },
       }),
       transformResponse: (response: PolicyDefinition[], meta) => {
         const headers = meta?.response?.headers;
