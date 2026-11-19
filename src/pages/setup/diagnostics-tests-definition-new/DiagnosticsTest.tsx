@@ -1,6 +1,5 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
@@ -11,12 +10,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCreateDiagnosticTestMutation,
   useGetAllDiagnosticTestsQuery,
-  useLazyGetDiagnosticTestsByNameQuery,
-  useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
-  useLazyGetDiagnosticTestsByInternalCodeQuery,
-  useLazyGetDiagnosticTestsByShortNameQuery,
-  useLazyGetDiagnosticTestsByStatusQuery,
   useUpdateDiagnosticTestMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
@@ -31,7 +25,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete, MdModeEdit, MdOutlineDescription, MdLocalOffer } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
-import { Checkbox, Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import Coding from './Coding';
@@ -54,10 +48,16 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [diagnosticsTest, setDiagnosticsTest] = useState<DiagnosticTest>({
     ...newDiagnosticTest
   });
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [showInactive, setShowInactive] = useState(false);
-  // Undefined means no status filter, so inactive records are included
-  const activeFilter = showInactive ? undefined : true;
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { type: '', name: '', shortName: '', internalCode: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter =
+    statusFilter === 'all' ? undefined : statusFilter === 'active';
   const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
   const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
@@ -78,19 +78,17 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     timestamp: Date.now()
   });
 
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc'
-  });
-
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const {
     data: diagnodticsTestList,
     refetch: refetchDiagnostics,
     isFetching
-  } = useGetAllDiagnosticTestsQuery({ ...paginationParams, isActive: activeFilter });
+  } = useGetAllDiagnosticTestsQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
 
   const testType = useEnumOptions('TestType');
 
@@ -98,11 +96,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const [updateDiagnosticTest, updateDiagnosticTestMutation] = useUpdateDiagnosticTestMutation();
   const [toggleDiagnosticTestActive, togglePractitionerActiveMutation] =
     useToggleDiagnosticTestActiveMutation();
-  const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
-  const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
-  const [diagnosticTestByInternalCode] = useLazyGetDiagnosticTestsByInternalCodeQuery();
-  const [diagnosticTestByShortName] = useLazyGetDiagnosticTestsByShortNameQuery();
-  const [diagnosticTestByStatus] = useLazyGetDiagnosticTestsByStatusQuery();
   const [setDiagnosticTestForRequest] =
     useSetDiagnosticTestForRequestMutation();
   const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
@@ -149,20 +142,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
     return [];
   };
-
-  // Re-run the currently active filter (if any) against its current page/size/sort.
-  // Used after add/update so the filtered list stays in sync with the server.
-  const refreshCurrentFilterIfActive = async (
-    page = filterPagination.page,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!isFiltered) return;
-    const valueForFilter =
-      recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-    await handleFilterChange(recordOfFilter.filter, valueForFilter, page, size, sort);
-  };
-
 
   const handleAddNewDiagnosticTest = async () => {
     try {
@@ -281,8 +260,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       }
 
       await refetchDiagnostics();
-      // Keep the filtered list (if a filter is active) in sync with the newly added record
-      await refreshCurrentFilterIfActive();
       setDiagnosticsTest(response);
 
       dispatch(
@@ -403,8 +380,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       });
 
       await refetchDiagnostics();
-      // Keep the filtered list (if a filter is active) in sync with the updated record
-      await refreshCurrentFilterIfActive();
       setDiagnosticsTest({ ...response });
 
       dispatch(
@@ -427,11 +402,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   const handleToggleActive = async (id: number) => {
     try {
-      const currentItem = (
-        isFiltered
-          ? filteredList
-          : diagnodticsTestList?.data ?? []
-      ).find(item => item.id === id);
+      const currentItem = (diagnodticsTestList?.data ?? []).find(item => item.id === id);
 
       if (!currentItem) return;
 
@@ -445,25 +416,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         isActive: newActiveStatus
       }));
 
-      if (isFiltered && !showInactive) {
-        // The row must leave the search results too
-        await refreshCurrentFilterIfActive();
-      } else if (isFiltered) {
-        setFilteredList(prev =>
-          prev.map(item =>
-            item.id === id
-              ? {
-                ...item,
-                isActive: newActiveStatus
-              }
-              : item
-          )
-        );
-
-
-      } else {
-        await refetchDiagnostics();
-      }
+      await refetchDiagnostics();
 
       dispatch(
         notify({
@@ -496,151 +449,16 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   };
 
 
-  // Handle filter change
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<DiagnosticTest[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState(0);
-  const [valueType, setValueType] = useState({ type: '' });
-  const handleFilterChange = async (
-    field: string,
-    value: string,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    try {
-      if (!field) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        setFilteredTotal(0);
-        setFilterPagination(prev => ({ ...prev, page: 0 }));
-        return;
-      }
-
-      const trimmedValue = value?.trim?.() ?? '';
-      if (field === 'type' && !trimmedValue) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        setFilteredTotal(0);
-        setFilterPagination(prev => ({ ...prev, page: 0 }));
-        return;
-      }
-      if (field !== 'type' && !trimmedValue) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        setFilteredTotal(0);
-        setFilterPagination(prev => ({ ...prev, page: 0 }));
-        return;
-      }
-
-      let response;
-
-      // _cb makes every call's query args unique so RTK Query always performs
-      // a fresh network fetch instead of possibly reusing a cached result from
-      // an earlier call with the exact same (type/name, page, size, sort).
-      // This is what makes the filtered list reflect a just-added/updated record
-      // immediately, without needing to trigger a page/sort change first.
-      const cacheBuster = Date.now();
-
-      if (field === 'type') {
-        response = await diagnosticTestByTypes({
-          type: trimmedValue,
-          page,
-          size,
-          sort,
-          isActive: activeFilter,
-          _cb: cacheBuster
-        }).unwrap();
-      } else if (field === 'name') {
-        response = await diagnosticTestByName({
-          name: trimmedValue,
-          page,
-          size,
-          sort,
-          isActive: activeFilter,
-          _cb: cacheBuster
-        }).unwrap();
-      } else if (field === 'internalCode') {
-        response = await diagnosticTestByInternalCode({
-          internalCode: trimmedValue,
-          page,
-          size,
-          sort,
-          isActive: activeFilter,
-          _cb: cacheBuster
-        }).unwrap();
-      } else if (field === 'shortName') {
-        response = await diagnosticTestByShortName({
-          shortName: trimmedValue,
-          page,
-          size,
-          sort,
-          isActive: activeFilter,
-          _cb: cacheBuster
-        }).unwrap();
-      } else if (field === 'status') {
-        response = await diagnosticTestByStatus({
-          isActive: trimmedValue,
-          page,
-          size,
-          sort,
-          _cb: cacheBuster
-        }).unwrap();
-      } else {
-        setIsFiltered(false);
-        setFilteredTotal(0);
-        setFilterPagination(prev => ({ ...prev, page: 0 }));
-        return;
-      }
-
-      setFilteredList([...(response.data ?? [])]);
-      setFilteredTotal(response.totalCount ?? 0);
-      setFilterPagination(prev => ({
-        ...prev,
-        page,
-        size,
-        sort
-      }));
-      setIsFiltered(true);
-    } catch (error) {
-      console.error('Error filtering diagnostic tests:', error);
-      dispatch(
-        notify({
-          msg: 'Failed to filter Diagnostic Tests',
-          sev: 'error'
-        })
-      );
-      setIsFiltered(false);
-      setFilteredTotal(0);
-      setFilterPagination(prev => ({ ...prev, page: 0 }));
-    }
-  };
-
-  // The list and any applied search must follow the checkbox
+  // Changing the status filter starts again from the first page
   useEffect(() => {
     setPaginationParams(prev => ({ ...prev, page: 0 }));
-    if (!isFiltered) return;
-    if (!showInactive && recordOfFilter.filter === 'status') {
-      setRecordOfFilter({ filter: '', value: '' });
-      handleFilterChange('', '');
-      return;
-    }
-    refreshCurrentFilterIfActive(0);
-  }, [showInactive]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   // Pagination values
   const totalCount = diagnodticsTestList?.totalCount ?? 0;
-  const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
-  const rowsPerPage = isFiltered ? filterPagination.size : paginationParams.size;
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
 
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Type', value: 'type' },
-    { label: 'Name', value: 'name' },
-    { label: 'Short Name', value: 'shortName' },
-    { label: 'Internal Code', value: 'internalCode' },
-    ...(showInactive ? [{ label: 'Status', value: 'status' }] : [])
-  ];
 
   // Header page setUp
   const divContent = 'Diagnostics Tests Definition';
@@ -808,26 +626,52 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   }
 
   //Table columns
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
   const tableColumns = [
     {
       key: 'type',
       title: <Translate>Type</Translate>,
+      width: 150,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(testType ?? [])],
       render: rowData => <p>{formatEnumString(rowData?.type)}</p>
     },
 
     {
       key: 'name',
       title: <Translate>Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name'),
       render: rowData => <p>{rowData?.name}</p>
     },
     {
       key: 'shortName',
       title: <Translate>Short Name</Translate>,
+      width: 170,
+      ...headerSearch('shortName', 'Search short name'),
       render: rowData => <p>{rowData?.shortName}</p>
     },
     {
       key: 'internalCode',
-      title: <Translate>Internal Code</Translate>
+      title: <Translate>Internal Code</Translate>,
+      width: 150,
+      ...headerSearch('internalCode', 'Search code')
     },
     {
       key: 'loincCode',
@@ -847,7 +691,17 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 2,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) =>
+        setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: DiagnosticTest) => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
     {
@@ -857,102 +711,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
-  // Filter table
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter(prev => {
-            if (prev.filter !== updatedRecord.filter) {
-              setIsFiltered(false);
-              setFilteredList([]);
-              setFilteredTotal(0);
-              setFilterPagination(fp => ({ ...fp, page: 0 }));
-            }
-            return {
-              filter: updatedRecord.filter,
-              value: ''
-            };
-          });
-          if (updatedRecord.filter !== 'type') {
-            setValueType({ type: '' });
-          }
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-
-      {recordOfFilter.filter !== 'type' && recordOfFilter.filter !== 'status' && (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
-      )}
-
-      {recordOfFilter.filter === 'status' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={[
-            { label: 'Active', value: 'true' },
-            { label: 'Inactive', value: 'false' }
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Status"
-          searchable={false}
-        />
-      )}
-
-      {recordOfFilter.filter === 'type' && (
-        <MyInput
-          width="9vw"
-          fieldLabel="Test Type"
-          fieldType="select"
-          fieldName="type"
-          selectData={testType ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={valueType}
-          setRecord={updatedRecord => {
-            setValueType({ type: updatedRecord.type });
-          }}
-          showLabel={false}
-          searchable={false}
-        />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() => {
-          const valueForFilter =
-            recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-          handleFilterChange(recordOfFilter.filter, valueForFilter);
-        }}
-      >
-        Search
-      </MyButton>
-
-      <Checkbox checked={showInactive} onChange={(_, checked) => setShowInactive(checked)}>
-        <Translate>Show inactive</Translate>
-      </Checkbox>
-    </Form>
-  );
 
   // handle click on add new button
   const handleNew = () => {
@@ -966,27 +724,10 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      // Update the filtered-pagination page and re-fetch that page from the active filter
-      setFilterPagination(prev => ({
-        ...prev,
-        page: newPage
-      }));
-      const valueForFilter =
-        recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-      handleFilterChange(
-        recordOfFilter.filter,
-        valueForFilter,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        page: newPage
-      }));
-    }
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage
+    }));
   };
 
   // Effects
@@ -1033,14 +774,13 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   return (
     <Panel dir={dir}>
       <MyTable
-        key={`${isFiltered}-${filteredTotal}-${filteredList.length}-${paginationParams.timestamp}`}
+        key={paginationParams.timestamp}
         height={450}
-        data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}
-        totalCount={isFiltered ? filteredTotal : totalCount}
+        data={diagnodticsTestList?.data ?? []}
+        totalCount={totalCount}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={rowData => {
           if (isRowDisabled(rowData)) return;
           setDiagnosticsTest(rowData);
@@ -1051,31 +791,14 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           if (!column) return;
           const nextSortType = (type ?? 'asc') as 'asc' | 'desc';
           const sortValue = `${column},${nextSortType}`;
-          const currentlyFiltered = isFiltered;
           setSortColumn(column);
           setSortType(nextSortType);
           setPaginationParams(prev => ({
             ...prev,
             sort: sortValue,
-            page: currentlyFiltered ? prev.page : 0,
-            timestamp: currentlyFiltered ? prev.timestamp : Date.now()
+            page: 0,
+            timestamp: Date.now()
           }));
-          if (currentlyFiltered) {
-            setFilterPagination(prev => ({
-              ...prev,
-              sort: sortValue,
-              page: 0
-            }));
-            const valueForFilter =
-              recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-            handleFilterChange(
-              recordOfFilter.filter,
-              valueForFilter,
-              0,
-              filterPagination.size,
-              sortValue
-            );
-          }
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -1085,23 +808,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
           if (Number.isNaN(newSize) || newSize <= 0) {
             return;
           }
-          if (isFiltered) {
-            setFilterPagination(prev => ({
-              ...prev,
-              size: newSize,
-              page: 0
-            }));
-            const valueForFilter =
-              recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-            handleFilterChange(recordOfFilter.filter, valueForFilter, 0, newSize);
-          } else {
-            setPaginationParams(prev => ({
-              ...prev,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now()
-            }));
-          }
+          setPaginationParams(prev => ({
+            ...prev,
+            size: newSize,
+            page: 0,
+            timestamp: Date.now()
+          }));
         }}
         tableButtons={
           <div className="container-of-add-new-button">

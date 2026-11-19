@@ -11,6 +11,9 @@ type PagedParams = {
   timestamp?: number;
   name?: string;
   catalogId?: number;
+  type?: string;
+  shortName?: string;
+  internalCode?: string;
 };
 type LinkMap = {
   next?: string | null;
@@ -31,10 +34,20 @@ export const diagnosticTestService = createApi({
   tagTypes: ["DiagnosticTest"],
   endpoints: (builder) => ({
     getAllDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc", isActive }) => ({
+      // Optional filters are ANDed by the backend; empty ones are left out
+      query: ({ page, size, sort = "id,asc", isActive, type, name, shortName, internalCode }) => ({
         url: "/api/setup/diagnostic-test",
         method: "GET",
-        params: { page, size, sort, isActive },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          type: type || undefined,
+          name: name?.trim() || undefined,
+          shortName: shortName?.trim() || undefined,
+          internalCode: internalCode?.trim() || undefined,
+        },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
