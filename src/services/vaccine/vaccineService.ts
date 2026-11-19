@@ -33,10 +33,22 @@ export const vaccineService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Vaccine'],
   endpoints: builder => ({
-    getVaccines: builder.query<PagedResult<modelTypes.Vaccine>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getVaccines: builder.query<
+      PagedResult<modelTypes.Vaccine>,
+      PagedParams & { isActive?: boolean; name?: string; type?: string; roa?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, name, type, roa }) => ({
         url: '/api/setup/vaccine',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          name: name?.trim() || undefined,
+          type: type || undefined,
+          roa: roa || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Vaccine']
