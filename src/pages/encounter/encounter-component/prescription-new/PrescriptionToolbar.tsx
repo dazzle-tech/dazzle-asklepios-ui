@@ -12,6 +12,8 @@ import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
 
 import PrescriptionReportButton from './PrescriptionReportButton';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
+import '@/components/AiValidationResult/styles.less';
 
 type Props = {
   edit: boolean;
@@ -191,14 +193,26 @@ const PrescriptionToolbar = ({
               Cancel
             </MyButton>
 
-            <MyButton
-              loading={isLoadingPrescriptions}
-              onClick={() => setSummaryModalOpen(true)}
-              disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
-              prefixIcon={() => <CheckIcon />}
+            <AiTooltip
+              title="AI medication validation"
+              body="Before the order is signed, AI checks these medications against the patient's age, gender, diagnosis and documented allergies, and suggests safer options. It does not prescribe."
+              chips={['Interactions', 'Dosing', 'Duplicates', 'Contraindications']}
+              foot="Nothing changes without your review."
             >
-              Sign & Submit Order
-            </MyButton>
+              <span className="mv-submit">
+                <MyButton
+                  loading={isLoadingPrescriptions}
+                  onClick={() => setSummaryModalOpen(true)}
+                  disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
+                  prefixIcon={() => <CheckIcon />}
+                >
+                  Sign & Submit Order
+                </MyButton>
+                <span className="mv-submit__badge" aria-hidden="true">
+                  AI
+                </span>
+              </span>
+            </AiTooltip>
 
             {isSubmitted && (
               <>

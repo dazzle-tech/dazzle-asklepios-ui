@@ -6519,12 +6519,14 @@ export interface MedicationTestValidationDiagnosis {
 export interface MedicationValidationRequestDTO {
   patientId: number;
   encounterId: number;
+  prescriptionId?: number;
   // [k: string]: any;
 }
 
 export interface TestValidationRequestDTO {
   patientId: number;
   encounterId: number;
+  orderNumber?: number;
   // [k: string]: any;
 }
 

@@ -610,7 +610,7 @@ const Prescription = (props: Props) => {
         encounterId: Number(encounter?.id ?? encounter?.key),
         prescriptionId: currentPrescription?.id
       };
-    }, [patient, encounter]);
+    }, [patient, encounter, currentPrescription?.id]);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;

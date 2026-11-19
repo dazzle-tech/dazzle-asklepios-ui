@@ -20,6 +20,8 @@ import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import Translate from '@/components/Translate';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
+import '@/components/AiValidationResult/styles.less';
 import { useAppSelector } from '@/hooks';
 import { formatDateWithoutSeconds } from '@/utils';
 
@@ -257,13 +259,25 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                 <FontAwesomeIcon icon={faStar} /> <Translate>Add Favorite Test</Translate>
               </MyButton>
 
-              <MyButton
-                onClick={() => setOpenValidationSummaryModal(true)}
-                disabled={isSubmitDisabled || isNurse || edit}
-                prefixIcon={() => <CheckIcon />}
+              <AiTooltip
+                title="AI test order validation"
+                body="Before the order is signed, AI checks these tests against the patient's age, gender and diagnosis, and suggests better options. It does not order anything."
+                chips={['Duplicates', 'Appropriateness', 'Contraindications']}
+                foot="Nothing changes without your review."
               >
-                Sign &amp; Submit
-              </MyButton>
+                <span className="mv-submit">
+                  <MyButton
+                    onClick={() => setOpenValidationSummaryModal(true)}
+                    disabled={isSubmitDisabled || isNurse || edit}
+                    prefixIcon={() => <CheckIcon />}
+                  >
+                    Sign &amp; Submit
+                  </MyButton>
+                  <span className="mv-submit__badge" aria-hidden="true">
+                    AI
+                  </span>
+                </span>
+              </AiTooltip>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}
