@@ -25,6 +25,7 @@ import {
   formatDate,
   formatMoney,
   formatLineNet,
+  lineDiscountAmount,
   isCompleted,
   isExistingDocumentation,
   isGroupedScope,
@@ -375,7 +376,9 @@ const TreatmentPlanHistory = ({
             <span className="ap-number">
               {isExistingDocumentation(row)
                 ? EMPTY_VALUE
-                : formatMoney(row.discount)}
+                : formatMoney(
+                    lineDiscountAmount(row.price, row.quantity ?? 1, row.discount, row.discountType)
+                  )}
             </span>
           )
       },
@@ -388,7 +391,12 @@ const TreatmentPlanHistory = ({
             <span className="ap-number">
               {isExistingDocumentation(row)
                 ? EMPTY_VALUE
-                : formatLineNet(row.price, row.quantity ?? 1, row.discount)}
+                : formatLineNet(
+                    row.price,
+                    row.quantity ?? 1,
+                    row.discount,
+                    row.discountType
+                  )}
             </span>
           )
       },

@@ -87,6 +87,7 @@ const toViewForm = (row: any, tooth: any) => {
     price: row.price ?? null,
     quantity: isExistingDocumentation(row) ? null : row.quantity ?? 1,
     discount: isExistingDocumentation(row) ? null : row.discount ?? 0,
+    discountType: row.discountType ?? 'FIXED',
     status: row.status || 'PENDING',
     anesthesiaUsed: row.anesthesiaUsed ?? '',
     dose: row.dose ?? null,
