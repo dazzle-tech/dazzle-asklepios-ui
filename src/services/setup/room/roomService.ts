@@ -31,10 +31,50 @@ export const roomService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Room'],
   endpoints: builder => ({
-    getRooms: builder.query<PagedResult<Room>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out.
+    // gender: a Gender value, or ROOM_NOT_GENDER_SPECIFIC for rooms that are not gender specific.
+    getRooms: builder.query<
+      PagedResult<Room>,
+      PagedParams & {
+        isActive?: boolean;
+        name?: string;
+        facilityId?: number | string;
+        floor?: string;
+        departmentId?: number | string;
+        type?: string;
+        gender?: string;
+        parallelCapacityValue?: number | string;
+      }
+    >({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        timestamp,
+        isActive,
+        name,
+        facilityId,
+        floor,
+        departmentId,
+        type,
+        gender,
+        parallelCapacityValue
+      }) => ({
         url: '/api/setup',
-        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+        params: {
+          page,
+          size,
+          sort,
+          ...(timestamp ? { timestamp } : {}),
+          isActive,
+          name: name?.trim() || undefined,
+          facilityId: facilityId || undefined,
+          floor: floor?.trim() || undefined,
+          departmentId: departmentId || undefined,
+          type: type || undefined,
+          gender: gender || undefined,
+          parallelCapacityValue: String(parallelCapacityValue ?? '').trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Room']

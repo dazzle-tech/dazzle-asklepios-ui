@@ -1,13 +1,12 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { faSheetPlastic, faRotateRight, faUserNurse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
-import MyInput from '@/components/MyInput';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
@@ -20,12 +19,11 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentsQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentsQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ChooseScreenNurse from './ChooseScreenNurse';
-import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { has } from 'lodash';
 
 
@@ -47,24 +45,15 @@ const Departments = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
-  const [record, setRecord] = useState({ filter: '', value: '' });
-  const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
-  const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
-  const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
-  const [departmentList, setDepartmentList] = useState<Department[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [linksState, setLinksState] = useState<{
-    next?: string | null;
-    prev?: string | null;
-    first?: string | null;
-    last?: string | null;
-  }>({});
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc'
-  });
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { facilityId: '', type: '', name: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -75,10 +64,13 @@ const Departments = () => {
 
 
   // Data fetching
-  const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
+  const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
 
   const totaldepartmentListResponseCount = departmentListResponse?.totalCount ?? 0;
-  const links = departmentListResponse?.links || {};
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
   // Add New Department
@@ -87,11 +79,6 @@ const Departments = () => {
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
 
-  const filterFields = [
-    { label: 'Facility', value: 'facilityName' },
-    { label: 'Department Name', value: 'name' },
-    { label: 'Department Type', value: 'departmentType' }
-  ];
 
 
 
@@ -117,11 +104,6 @@ const Departments = () => {
   }, []);
 
   
-  useEffect(() => {
-    if (departmentListResponse?.links) {
-      setLinksState(departmentListResponse.links);
-    }
-  }, [departmentListResponse?.links]);
 
   // Update department code field when department or code changes
   useEffect(() => {
@@ -225,51 +207,6 @@ const Departments = () => {
       .finally(() => setLoad(false));
   };
 
-  const handleFilterChange = async (fieldName, value, page = 0, size = filterPagination.size) => {
-    if (!value) {
-      setDepartmentList(departmentListResponse?.data ?? []);
-      setIsFiltered(false);
-      setFilteredTotal(0);
-      setFilterPagination(prev => ({ ...prev, page: 0 }));
-      setLinksState(links ?? {});
-      return;
-    }
-    try {
-      let response;
-      if (fieldName === "facilityName") {
-        response = await getDepartmentsByFacility({
-          facilityId: value,
-          page,
-          size,
-          sort: filterPagination.sort
-        }).unwrap();
-      } else if (fieldName === "departmentType") {
-        response = await getDepartmentsByType({
-          type: value?.toUpperCase().replace(/\s+/g, '_'),
-          page,
-          size,
-          sort: filterPagination.sort
-        }).unwrap();
-      } else if (fieldName === "name") {
-        response = await getDepartmentsByName({
-          name: value,
-          page,
-          size,
-          sort: filterPagination.sort
-        }).unwrap();
-      }
-      setDepartmentList(response?.data ?? []);
-      setIsFiltered(true);
-      setFilteredTotal(response?.totalCount ?? 0);
-      setFilterPagination(prev => ({ ...prev, page, size }));
-      setLinksState(response?.links ?? {});
-
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      setDepartmentList([]);
-      setIsFiltered(false);
-    }
-  };
   const isSelected = rowData => (rowData?.id === department?.id ? 'selected-row' : '');
   const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
   const handleToggleActive = (id: number) => {
@@ -363,11 +300,38 @@ const Departments = () => {
       />}
     </div>
   );
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
+
   const tableColumns = [
     {
       key: 'facilityId',
       title: <Translate key="FACILITY_NAME">Facility Name</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('facilityId'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }))
+      ],
       render: rowData => (
         <span>
           {conjureValueBasedOnIDFromList(
@@ -381,13 +345,17 @@ const Departments = () => {
     {
       key: 'departmentType',
       title: <Translate key="DEPARTMENT_TYPE">Department Type</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(depTypeOptions ?? [])],
       render: rowData => <p>{formatEnumString(rowData?.departmentType)}</p>
     },
     {
       key: 'name',
       title: <Translate key="DEPARTMENT_NAME">Department Name</Translate>,
-      flexGrow: 4
+      width: 200,
+      ...headerSearch('name', 'Search name')
     },
     {
       key: 'phoneNumber',
@@ -418,7 +386,16 @@ const Departments = () => {
     {
       key: 'isActive',
       title: <Translate key='STATUS'>Status</Translate>,
-      flexGrow: 4,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
     {
@@ -428,131 +405,13 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-  const getFilterWidth = (filter: string): string => {
-    switch (filter) {
-      case 'facilityName':
-        return '100px';
-      case 'departmentType':
-        return '200px';
-      case 'name':
-        return '170px';
-      default:
-        return '150px';
-    }
-  };
-
-  const filters = () => {
-    const selectedFilter = record.filter;
-
-    let dynamicInput;
-
-    if (selectedFilter === 'facilityName') {
-      dynamicInput = (
-        <MyInput
-          width={170}
-          fieldLabel=""
-          fieldName="value"
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={record}
-          setRecord={setRecord}
-        />
-
-      );
-    } else if (selectedFilter === 'departmentType') {
-      dynamicInput = (
-        <MyInput
-          width={170}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={depTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={record}
-          setRecord={setRecord}
-        />
-      );
-    } else {
-      dynamicInput = (
-        <MyInput
-          width={170}
-          fieldName="value"
-          fieldLabel=''
-          fieldType="text"
-          record={record}
-          setRecord={setRecord}
-          showLabel={false}
-          placeholder="Enter Value"
-        />
-      );
-    }
-
-    return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={record}
-          setRecord={updatedRecord => {
-            setRecord({
-              filter: updatedRecord.filter,
-              value: ''
-            });
-          }}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width={180}
-        />
-
-        {dynamicInput}
-
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => {
-            handleFilterChange(record.filter, record.value);
-          }}
-          width="80px"
-        >
-         Search
-        </MyButton>
-      </Form>
-    );
-  };
   const handlePageChange = (event: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(record.filter, record.value, newPage);
-    } else {
-      PaginationPerPage.handlePageChange(
-        event,
-        newPage,
-        paginationParams,
-        linksState,
-        setPaginationParams
-      );
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(record.filter, record.value, 0, newSize);
-    } else {
-      setPaginationParams({
-        ...paginationParams,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      });
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
   };
   const handleDeactiveReactivateDepartment = () => {
     handleToggleActive(department.id);
@@ -563,18 +422,13 @@ const Departments = () => {
     <Panel>
 
       <MyTable
-        data={
-          isFiltered
-            ? departmentList ?? []
-            : departmentListResponse?.data ?? []
-        }
-        totalCount={isFiltered ? filteredTotal : totaldepartmentListResponseCount}
+        data={departmentListResponse?.data ?? []}
+        totalCount={totaldepartmentListResponseCount}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : pageIndex}
-        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}

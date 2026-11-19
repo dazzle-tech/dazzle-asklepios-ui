@@ -33,10 +33,27 @@ export const ageGroupService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['AgeGroup'],
   endpoints: builder => ({
-    getAgeGroups: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAgeGroups: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        facilityId?: number | string;
+        ageGroup?: string;
+        fromAge?: number | string;
+        toAge?: number | string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', facilityId, ageGroup, fromAge, toAge }) => ({
         url: '/api/setup/age-group',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          facilityId: facilityId || undefined,
+          ageGroup: ageGroup || undefined,
+          fromAge: String(fromAge ?? '').trim() || undefined,
+          toAge: String(toAge ?? '').trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['AgeGroup']

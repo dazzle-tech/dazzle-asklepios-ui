@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import { FaUndo, FaBed, FaConciergeBell } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
@@ -11,10 +11,8 @@ import PolicyAssignmentManager from '@/components/PolicyAssignment';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -25,60 +23,31 @@ import AddBed from './AddBed';
 import AddService from './AddService';
 import './styles.less';
 
-import { Room, Department } from '@/types/model-types-new';
+import { Room } from '@/types/model-types-new';
 import { newRoom } from '@/types/model-types-constructor-new';
 
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
   useGetRoomsQuery,
-  useGetRoomsByDepartmentIdQuery,
-  useGetRoomsByNameQuery,
-  useGetRoomsByFilterQuery,
   useChangeRoomActivationStatusMutation,
-  RoomFilterCriteria,
   ROOM_NOT_GENDER_SPECIFIC
 } from '@/services/setup/room/roomService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
 
-const PAGE_SIZE = 20;
-
-type FilterCriteria = '' | 'department' | 'name' | RoomFilterCriteria;
-
-// Same order as the table columns
-const filterCriteriaOptions = [
-  { label: 'Room Name', value: 'name' },
-  { label: 'Facility', value: 'facility' },
-  { label: 'Floor', value: 'floor' },
-  { label: 'Department', value: 'department' },
-  { label: 'Type', value: 'type' },
-  { label: 'Gender Specific', value: 'gender' },
-  { label: 'Status', value: 'status' },
-  { label: 'Parallel Capacity', value: 'parallelCapacity' }
-];
-
-// Criteria served by the generic column-filter query (department and name keep their own queries)
-const GENERIC_FILTER_CRITERIA: FilterCriteria[] = [
-  'facility',
-  'floor',
-  'type',
-  'gender',
-  'status',
-  'parallelCapacity'
-];
-
-const STATUS_FILTER_OPTIONS = [
-  { label: 'Active', value: 'true' },
-  { label: 'Inactive', value: 'false' }
-];
-
-const initialRoomFilter = {
-  criteria: '' as FilterCriteria,
-  departmentId: null as string | null,
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
   name: '',
-  value: ''
+  facilityId: '',
+  floor: '',
+  departmentId: '',
+  type: '',
+  gender: '',
+  parallelCapacityValue: ''
 };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const ROOM_ERROR_MAP: Record<string, string> = {
   notfound: 'Room not found.',
@@ -158,40 +127,13 @@ const RoomSection = () => {
     sort: 'id,asc'
   });
 
-  const [roomFilter, setRoomFilter] = useState<{
-    criteria: FilterCriteria;
-    departmentId: string | null;
-    name: string;
-    value: string;
-  }>(initialRoomFilter);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  const [appliedRoomFilter, setAppliedRoomFilter] = useState<{
-    criteria: FilterCriteria;
-    departmentId: string | null;
-    name: string;
-    value: string;
-  }>(initialRoomFilter);
-
-  const [deptPage, setDeptPage] = useState(0);
-  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
-  const [deptHasMore, setDeptHasMore] = useState(false);
-  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
-  const [filterSession, setFilterSession] = useState(0);
-
-  const { data: departmentsResp, isFetching: isDeptLoading } = useGetDepartmentsQuery({
-    page: deptPage,
-    size: PAGE_SIZE,
-    sort: 'name,asc'
-  });
-
-  const hasDepartmentFilter =
-    appliedRoomFilter.criteria === 'department' && !!appliedRoomFilter.departmentId;
-  const hasNameFilter =
-    appliedRoomFilter.criteria === 'name' && !!appliedRoomFilter.name?.trim();
-  const hasGenericFilter =
-    GENERIC_FILTER_CRITERIA.includes(appliedRoomFilter.criteria) &&
-    String(appliedRoomFilter.value ?? '').trim() !== '';
-
+  const { data: departmentsList } = useGetAllDepartmentsWithoutPaginationQuery({});
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
   const roomTypeOptions = useEnumOptions('RoomType');
   const genderEnumOptions = useEnumOptions('Gender');
@@ -200,132 +142,52 @@ const RoomSection = () => {
     [genderEnumOptions]
   );
 
-  const roomsQuery = useGetRoomsQuery(
-    {
-      page: roomPagination.page,
-      size: roomPagination.size,
-      sort: roomPagination.sort
-    },
-    {
-      skip: hasDepartmentFilter || hasNameFilter || hasGenericFilter
-    }
-  );
-
-  const roomsByFilterQuery = useGetRoomsByFilterQuery(
-    {
-      criteria: appliedRoomFilter.criteria as RoomFilterCriteria,
-      value: String(appliedRoomFilter.value ?? '').trim(),
-      page: roomPagination.page,
-      size: roomPagination.size,
-      sort: roomPagination.sort
-    },
-    {
-      skip: !hasGenericFilter
-    }
-  );
-
-  const roomsByDepartmentQuery = useGetRoomsByDepartmentIdQuery(
-    {
-      departmentId: Number(appliedRoomFilter.departmentId),
-      page: roomPagination.page,
-      size: roomPagination.size,
-      sort: roomPagination.sort
-    },
-    {
-      skip: !hasDepartmentFilter
-    }
-  );
-
-  const roomsByNameQuery = useGetRoomsByNameQuery(
-    {
-      name: appliedRoomFilter.name.trim(),
-      page: roomPagination.page,
-      size: roomPagination.size,
-      sort: roomPagination.sort
-    },
-    {
-      skip: !hasNameFilter
-    }
-  );
+  const roomsQuery = useGetRoomsQuery({
+    page: roomPagination.page,
+    size: roomPagination.size,
+    sort: roomPagination.sort,
+    isActive: activeFilter,
+    ...appliedFilters
+  });
 
   const [changeRoomActivationStatus] = useChangeRoomActivationStatusMutation();
 
-  useEffect(() => {
-    if (!departmentsResp) return;
-
-    const rows = departmentsResp.data ?? [];
-    const nextLink = departmentsResp.links?.next ?? null;
-
-    setDeptHasMore(Boolean(nextLink));
-    setDeptNextLink(nextLink);
-
-    if (deptPage === 0) {
-      setAllDepartments(rows as Department[]);
-    } else {
-      setAllDepartments(prev => {
-        const seenIds = new Set(prev.map(d => Number(d.id)));
-        const merged = [...prev];
-
-        rows.forEach((d: Department) => {
-          if (!seenIds.has(Number(d.id))) {
-            merged.push(d);
-          }
-        });
-
-        return merged;
-      });
-    }
-  }, [departmentsResp, deptPage]);
-
-  const departmentFilterOptions = useMemo(
-    () =>
-      allDepartments.map((d: Department) => ({
-        label: d.name ?? '',
-        value: String(d.id)
-      })),
-    [allDepartments]
-  );
-
-  const activeRoomsResponse = hasDepartmentFilter
-    ? roomsByDepartmentQuery.data
-    : hasNameFilter
-      ? roomsByNameQuery.data
-      : hasGenericFilter
-        ? roomsByFilterQuery.data
-        : roomsQuery.data;
-
-  const isFetching =
-    roomsQuery.isFetching ||
-    roomsByDepartmentQuery.isFetching ||
-    roomsByNameQuery.isFetching ||
-    roomsByFilterQuery.isFetching;
-
-  const tableData = useMemo(() => {
-    return activeRoomsResponse?.data ?? [];
-  }, [activeRoomsResponse?.data]);
-
-  const totalCount = activeRoomsResponse?.totalCount ?? 0;
+  const isFetching = roomsQuery.isFetching;
+  const tableData = useMemo(() => roomsQuery.data?.data ?? [], [roomsQuery.data?.data]);
+  const totalCount = roomsQuery.data?.totalCount ?? 0;
   const pageIndex = roomPagination.page;
   const rowsPerPage = roomPagination.size;
 
   const refetchActiveList = async () => {
-    if (hasDepartmentFilter) {
-      await roomsByDepartmentQuery.refetch();
-      return;
-    }
-
-    if (hasNameFilter) {
-      await roomsByNameQuery.refetch();
-      return;
-    }
-
-    if (hasGenericFilter) {
-      await roomsByFilterQuery.refetch();
-      return;
-    }
-
     await roomsQuery.refetch();
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setRoomPagination(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setRoomPagination(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   useEffect(() => {
     dispatch(setPageCode('Rooms'));
@@ -393,260 +255,12 @@ const RoomSection = () => {
     }
   };
 
-  const handleResetFilter = () => {
-    setRoomFilter({ ...initialRoomFilter });
-    setAppliedRoomFilter({ ...initialRoomFilter });
-    setRoomPagination(prev => ({ ...prev, page: 0 }));
-    setDeptPage(0);
-    setDeptNextLink(null);
-    setDeptHasMore(false);
-    setFilterSession(prev => prev + 1);
-  };
-
   const isSelected = (rowData: Room) => {
     if (rowData && room && room.id === rowData.id) {
       return 'selected-row';
     }
     return '';
   };
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        width="180px"
-        fieldName="criteria"
-        fieldType="select"
-        selectData={filterCriteriaOptions}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={roomFilter}
-        setRecord={(updated: any) => {
-          const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-          const nextCriteria = (next?.criteria ?? '') as FilterCriteria;
-
-          if (!nextCriteria) {
-            handleResetFilter();
-            return;
-          }
-
-          setRoomFilter({
-            criteria: nextCriteria,
-            departmentId: null,
-            name: '',
-            value: ''
-          });
-
-          setDeptPage(0);
-          setDeptNextLink(null);
-          setDeptHasMore(false);
-          setFilterSession(prev => prev + 1);
-        }}
-        showLabel={false}
-        placeholder="Select Criteria"
-        searchable={false}
-      />
-
-      {roomFilter.criteria === 'department' && (
-        <MyInput
-          key={`department-filter-${filterSession}`}
-          width="240px"
-          fieldName="departmentId"
-          fieldLabel=""
-          fieldType="selectPagination"
-          selectData={departmentFilterOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            const nextDepartmentId = next?.departmentId ?? null;
-
-            if (!nextDepartmentId) {
-              handleResetFilter();
-              return;
-            }
-
-            setRoomFilter(prev => ({
-              ...prev,
-              departmentId: nextDepartmentId
-            }));
-          }}
-          loading={isDeptLoading}
-          searchable
-          showLabel={false}
-          placeholder="Select Department"
-          hasMore={deptHasMore}
-          onFetchMore={async () => {
-            if (!deptNextLink) return;
-            const { page } = extractPaginationFromLink(deptNextLink);
-            setDeptPage(page);
-          }}
-        />
-      )}
-
-      {roomFilter.criteria === 'name' && (
-        <MyInput
-          width="220px"
-          fieldName="name"
-          fieldType="text"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            const nextName = next?.name ?? '';
-
-            if (!nextName.trim()) {
-              handleResetFilter();
-              return;
-            }
-
-            setRoomFilter(prev => ({
-              ...prev,
-              name: nextName
-            }));
-          }}
-          showLabel={false}
-          placeholder="Search Room Name"
-        />
-      )}
-
-      {roomFilter.criteria === 'facility' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="select"
-          selectData={facilitiesResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Select Facility"
-          searchable
-        />
-      )}
-
-      {roomFilter.criteria === 'floor' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="text"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Search Floor"
-        />
-      )}
-
-      {roomFilter.criteria === 'type' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="select"
-          selectData={roomTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Select Type"
-          searchable={false}
-        />
-      )}
-
-      {roomFilter.criteria === 'gender' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="select"
-          selectData={genderFilterOptions}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Select Gender"
-          searchable={false}
-        />
-      )}
-
-      {roomFilter.criteria === 'status' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="select"
-          selectData={STATUS_FILTER_OPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Select Status"
-          searchable={false}
-        />
-      )}
-
-      {roomFilter.criteria === 'parallelCapacity' && (
-        <MyInput
-          width="220px"
-          fieldName="value"
-          fieldType="number"
-          record={roomFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
-            setRoomFilter(prev => ({ ...prev, value: next?.value ?? '' }));
-          }}
-          showLabel={false}
-          placeholder="Enter Parallel Capacity"
-        />
-      )}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => {
-          if (
-            !roomFilter.criteria ||
-            (roomFilter.criteria === 'department' && !roomFilter.departmentId) ||
-            (roomFilter.criteria === 'name' && !roomFilter.name.trim()) ||
-            (GENERIC_FILTER_CRITERIA.includes(roomFilter.criteria) &&
-              String(roomFilter.value ?? '').trim() === '')
-          ) {
-            handleResetFilter();
-            return;
-          }
-
-          setAppliedRoomFilter({
-            criteria: roomFilter.criteria,
-            departmentId: roomFilter.departmentId,
-            name: roomFilter.name,
-            value: String(roomFilter.value ?? '')
-          });
-
-          setRoomPagination(prev => ({
-            ...prev,
-            page: 0
-          }));
-        }}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
 
   const iconsForActions = (rowData: Room) => (
     <div className="container-of-icons">
@@ -733,41 +347,62 @@ const RoomSection = () => {
     {
       key: 'name',
       title: <Translate>Room Name</Translate>,
-      flexGrow: 4
+      width: 180,
+      ...headerSearch('name', 'Search name')
     },
     {
       key: 'facilityId',
       title: <Translate>Facility</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSelect(
+        'facilityId',
+        (facilitiesResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }))
+      ),
       render: (rowData: any) => <span>{rowData.facility?.name ?? 'N/A'}</span>
     },
     {
       key: 'floor',
       title: <Translate>Floor</Translate>,
-      flexGrow: 3
+      width: 110,
+      ...headerSearch('floor', 'Floor')
     },
     {
       key: 'departmentId',
       title: <Translate>Department</Translate>,
-      flexGrow: 4,
+      width: 190,
+      ...headerSelect(
+        'departmentId',
+        (departmentsList ?? []).map((d: any) => ({ label: d.name ?? '', value: String(d.id) }))
+      ),
       render: (rowData: any) => <span>{rowData.department?.name ?? 'N/A'}</span>
     },
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 3,
+      width: 150,
+      ...headerSelect('type', roomTypeOptions ?? []),
       render: (rowData: Room) => formatEnumString(rowData.type) ?? 'N/A'
     },
     {
       key: 'gender',
       title: <Translate>Gender Specific</Translate>,
-      flexGrow: 3,
+      width: 160,
+      ...headerSelect('gender', genderFilterOptions),
       render: (rowData: Room) => (rowData.isSpecificGender ? rowData.gender || 'Yes' : 'No')
     },
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 3,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: Room) =>
         rowData.isActive ? (
           <MyBadgeStatus contant="Active" color="#45b887" />
@@ -778,7 +413,8 @@ const RoomSection = () => {
     {
       key: 'parallelCapacityValue',
       title: <Translate>Parallel Capacity</Translate>,
-      flexGrow: 3,
+      width: 130,
+      ...headerSearch('parallelCapacityValue', 'Capacity'),
       render: (rowData: Room) => rowData.parallelCapacityValue ?? 1
     },
     {
@@ -801,7 +437,6 @@ const RoomSection = () => {
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={(rowData: Room) => {
           setRoom(rowData);
         }}
