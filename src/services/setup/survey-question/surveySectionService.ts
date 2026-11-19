@@ -51,10 +51,20 @@ export const surveySectionService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['SurveySection'],
   endpoints: builder => ({
-    getAllSurveySections: builder.query<PagedResult<SurveySection>, PagedParams>({
-      query: ({ page, size, timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out (name matches English or Arabic)
+    getAllSurveySections: builder.query<
+      PagedResult<SurveySection>,
+      PagedParams & { isActive?: boolean; name?: string }
+    >({
+      query: ({ page, size, timestamp, isActive, name }) => ({
         url: '/api/setup/survey-section',
-        params: { page, size, ...(timestamp ? { timestamp } : {}) }
+        params: {
+          page,
+          size,
+          ...(timestamp ? { timestamp } : {}),
+          isActive,
+          name: name?.trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['SurveySection']
