@@ -60,11 +60,23 @@ export const cptCodeService = createApi({
 
     // ====================== GET ALL ======================
 
-    getAllCpt: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllCpt: builder.query<
+      PagedResult<any>,
+      PagedParams & { mainCategory?: string; serviceCategory?: string; code?: string; description?: string }
+    >({
+      query: ({ page, size, sort = "id,asc", mainCategory, serviceCategory, code, description }) => ({
         url: "/api/setup/cpt/all",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          mainCategory: mainCategory?.trim() || undefined,
+          serviceCategory: serviceCategory?.trim() || undefined,
+          code: code?.trim() || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
 
       transformResponse: mapPaged,
