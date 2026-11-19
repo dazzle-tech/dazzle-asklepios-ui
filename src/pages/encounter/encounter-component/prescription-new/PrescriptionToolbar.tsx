@@ -55,7 +55,7 @@ type PharmacyTone = 'sent' | 'pending' | 'failed' | 'off';
 type PharmacyPanelProps = {
   status?: NahdiSyncStatus;
   hasUnsentChanges: boolean;
-  // Resend / check dispensing are for users allowed to change the submitted prescription.
+  // Allowed to change the submitted prescription (edit-after-submit permission).
   canAct: boolean;
   onResend: () => void;
   isResending: boolean;
@@ -116,7 +116,11 @@ const PharmacyPanel = ({
     return null;
   }
 
-  const showResend = canAct && status.integrationEnabled && hasUnsentChanges;
+  // A prescription that never reached the pharmacy can be resent by anyone (it is delivered as submitted);
+  // after it was delivered, resending a changed prescription needs the edit-after-submit permission (canAct).
+  const neverDelivered = !status.lastSentAt;
+  const showResend = (canAct || neverDelivered) && status.integrationEnabled && hasUnsentChanges;
+  const showCheckDispensing = canAct && status.integrationEnabled;
 
   return (
     <div className={`pharmacy-panel pharmacy-panel--${tone}`}>
@@ -132,7 +136,7 @@ const PharmacyPanel = ({
         </span>
         {detail && <span className="pharmacy-panel__detail">{detail}</span>}
       </div>
-      {canAct && (
+      {(showResend || showCheckDispensing) && (
         <div className="pharmacy-panel__actions">
           {showResend && (
             <MyButton
@@ -146,7 +150,7 @@ const PharmacyPanel = ({
               <Translate>Resend</Translate>
             </MyButton>
           )}
-          {status.integrationEnabled && (
+          {showCheckDispensing && (
             <Whisper placement="top" trigger="hover" speaker={<Tooltip>Check what the pharmacy dispensed</Tooltip>}>
               <IconButton
                 size="sm"
