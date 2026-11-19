@@ -5,11 +5,10 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { MdDelete, MdModeEdit, MdOutlineMail, MdPersonOff } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
-import { Panel, Tooltip, Whisper, Form } from 'rsuite';
+import { Panel, Tooltip, Whisper } from 'rsuite';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyTab from '@/components/MyTab';
 import { Box } from '@mui/material';
@@ -47,17 +46,12 @@ const Users = () => {
   const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const [filters, setFilters] = useState<{
-    name: string;
-    email: string;
-    login: string;
-    jobRole: string | null;
-  }>({
-    name: '',
-    email: '',
-    login: '',
-    jobRole: null,
-  });
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // All of them are sent together to users-basic, which combines them with AND.
+  const emptyHeaderFilters = { name: '', email: '', login: '', jobRole: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [filters, setFilters] = useState(emptyHeaderFilters);
 
 
   const jobRoles = useEnumOptions('JobRole');
@@ -79,10 +73,10 @@ const Users = () => {
     page: pageIndex,
     size: rowsPerPage,
     sort: 'id,asc',
-    name: filters.name,
-    email: filters.email,
-    login: filters.login,
-    jobRole: filters.jobRole,
+    name: filters.name.trim(),
+    email: filters.email.trim(),
+    login: filters.login.trim(),
+    jobRole: filters.jobRole || null,
   });
 
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
@@ -351,11 +345,28 @@ const Users = () => {
     );
   };
 
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setFilters(next);
+    setPageIndex(0);
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field]),
+  });
+
   const tableColumns = [
     {
       key: 'fullName',
       title: <Translate>Full Name</Translate>,
-      flexGrow: 4,
+      width: 200,
+      ...headerSearch('name', 'Search name'),
       render: rowData => (
         <Whisper
           placement="top"
@@ -378,17 +389,22 @@ const Users = () => {
     {
       key: 'login',
       title: <Translate>User Name</Translate>,
-      flexGrow: 3,
+      width: 160,
+      ...headerSearch('login', 'Search user name'),
     },
     {
       key: 'email',
       title: <Translate>Email</Translate>,
-      flexGrow: 4,
+      width: 220,
+      ...headerSearch('email', 'Search email'),
     },
     {
       key: 'jobRole',
       title: <Translate>Job Role</Translate>,
-      flexGrow: 4,
+      width: 170,
+      ...headerSearch('jobRole'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(jobRoles ?? [])],
       render: rowData => formatEnumString(rowData?.jobRole ?? '')
     },
     {
@@ -436,51 +452,6 @@ const Users = () => {
       render: rowData => iconsForActions(rowData),
     },
   ];
-
-  const tableFilters = (
-    <Form fluid>
-      <div className="users-table-main-filter-container">
-        <MyInput
-          fieldName="name"
-          fieldLabel="Name"
-          fieldType="text"
-          record={filters}
-          setRecord={setFilters}
-        />
-
-        <MyInput
-          fieldName="email"
-          fieldType="text"
-          fieldLabel="Email"
-          record={filters}
-          setRecord={setFilters}
-        />
-
-        <MyInput
-          fieldName="login"
-          fieldType="text"
-          fieldLabel="Username"
-          record={filters}
-          setRecord={setFilters}
-        />
-
-        <MyInput
-          fieldName="jobRole"
-          fieldLabel="Job Role"
-          fieldType="select"
-          record={filters}
-          setRecord={setFilters}
-          selectData={jobRoles ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          cleanable
-          isEnum
-        />
-
-
-      </div>
-    </Form>
-  );
 
   const tabData = [
     {
@@ -546,7 +517,6 @@ const Users = () => {
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
-          filters={tableFilters}
           loading={isLoading}
           tableButtons={
             <div className="container-of-add-new-button">
