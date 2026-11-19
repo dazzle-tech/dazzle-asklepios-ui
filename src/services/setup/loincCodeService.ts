@@ -46,11 +46,22 @@ export const loincCodeService = createApi({
   tagTypes: ["LOINC"],
 
   endpoints: (builder) => ({
-    getAllLoinc: builder.query<PagedResult<LoincCode>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllLoinc: builder.query<
+      PagedResult<LoincCode>,
+      PagedParams & { category?: string; code?: string; description?: string }
+    >({
+      query: ({ page, size, sort = "id,asc", category, code, description }) => ({
         url: "/api/setup/loinc/all",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          category: category || undefined,
+          code: code?.trim() || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ["LOINC"],
