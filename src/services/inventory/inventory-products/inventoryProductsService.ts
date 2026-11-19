@@ -34,10 +34,33 @@ export const inventoryProductsService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['InventoryProducts'],
   endpoints: (builder) => ({
-    getInventoryProducts: builder.query<PagedResult<InventoryProduct>, PagedParams>({
+    // Optional filters are ANDed by the backend; empty values are left out
+    getInventoryProducts: builder.query<
+      PagedResult<InventoryProduct>,
+      PagedParams & {
+        isActive?: boolean;
+        name?: string;
+        type?: string;
+        code?: string;
+        barcode?: string;
+        erpIntegrationId?: string;
+        uomGroupId?: number | string;
+        baseUom?: number | string;
+        dispenseUom?: number | string;
+        inventoryType?: string;
+        warrantyStartDate?: string;
+        warrantyEndDate?: string;
+      }
+    >({
       query: (params) => ({
         url: '/api/setup/inventory-products',
-        params,
+        params: Object.fromEntries(
+          // uomGroupId 0 means "no group" on the product screen
+          Object.entries(params).filter(
+            ([key, value]) =>
+              value !== '' && value !== null && value !== undefined && !(key === 'uomGroupId' && value === 0)
+          )
+        ),
       }),
       transformResponse: (response: InventoryProduct[], meta) =>
         mapPaged<InventoryProduct>(response, meta),

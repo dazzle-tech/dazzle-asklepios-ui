@@ -28,17 +28,9 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { InventoryProduct } from '@/types/model-types-new';
 import { newInventoryProduct } from '@/types/model-types-constructor-new';
 import {
-  useGetInventoryProductByBaseUomQuery,
-  useGetInventoryProductByInventoryTypeQuery,
-  useGetInventoryProductByTypeQuery,
-  useGetInventoryProductsByNameQuery,
   useGetInventoryProductsQuery,
   useToggleInventoryProductActiveMutation,
-  useSearchInventoryProductsQuery,
 } from '@/services/inventory/inventory-products/inventoryProductsService';
-import {
-  useGetUomGroupsUnitsQuery,
-} from '@/services/setupService';
 import { useAppSelector } from "@/hooks";
 import MyInput from '@/components/MyInput';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -55,19 +47,26 @@ const ProductSetup = () => {
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState<string>('deactivate');
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  // Filters above the table (UOM and advanced search); applied as they change
   const [filter, setFilter] = useState({
-    name: "",
-    inventoryType: "",
-    code: "",
     barcodeOrQrCode: "",
     warrantyStartDate: null,
     warrantyEndDate: null,
-    type: "",
     uomGroupId: 0,
     baseUom: null,
     dispenseUom: "",
     erpIntegrationId: ""
   });
+
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { type: '', code: '', name: '', inventoryType: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
 
   const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
@@ -87,70 +86,25 @@ const ProductSetup = () => {
   });
 
 
-const cleanFilter: any = Object.fromEntries(
-  Object.entries(filter).filter(([key, value]) => {
+  // Dates go to the backend as plain ISO dates (yyyy-MM-dd)
+  const toIsoDate = (value: any) => {
+    if (!value) return undefined;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
+  };
 
-    if (key === "uomGroupId") return false;
-
-    if (value === "" || value === null) return false;
-    return true;
-  })
-);
-
-
-
- let productQuery;
-
-if (
-  cleanFilter.code ||
-  cleanFilter.barcodeOrQrCode ||
-  cleanFilter.warrantyStartDate ||
-  cleanFilter.warrantyEndDate ||
-  cleanFilter.dispenseUom ||
-  cleanFilter.erpIntegrationId
-) {
-  productQuery = useSearchInventoryProductsQuery({
-    criteria: cleanFilter,
+  const { data: productListResponse, isFetching } = useGetInventoryProductsQuery({
     ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter,
+    barcode: filter.barcodeOrQrCode,
+    erpIntegrationId: filter.erpIntegrationId,
+    uomGroupId: filter.uomGroupId,
+    baseUom: filter.baseUom,
+    dispenseUom: filter.dispenseUom,
+    warrantyStartDate: toIsoDate(filter.warrantyStartDate),
+    warrantyEndDate: toIsoDate(filter.warrantyEndDate)
   });
-}
-
-else if (cleanFilter.name) {
-  productQuery = useGetInventoryProductsByNameQuery({
-    name: cleanFilter.name,
-    ...paginationParams,
-  });
-}
-
-else if (cleanFilter.type) {
-  productQuery = useGetInventoryProductByTypeQuery({
-    type: cleanFilter.type,
-    ...paginationParams,
-  });
-}
-
-else if (cleanFilter.inventoryType) {
-  productQuery = useGetInventoryProductByInventoryTypeQuery({
-    inventoryType: cleanFilter.inventoryType,
-    ...paginationParams,
-  });
-}
-
-else if (cleanFilter.baseUom) {
-  productQuery = useGetInventoryProductByBaseUomQuery({
-    baseUom: cleanFilter.baseUom,
-    ...paginationParams
-  });
-}
-
-
-else {
-  productQuery = useGetInventoryProductsQuery(paginationParams);
-}
-  const {
-    data: productListResponse,
-    isFetching
-  } = productQuery;
 
   const [toggleInventoryProductActive] = useToggleInventoryProductActiveMutation();
   const divContent = 'Inventory Products Setup';
@@ -242,6 +196,30 @@ else {
       page: 0,
     }));
   };
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
+
+  const productType = useEnumOptions("ProductTypes");
+  const lotSerial = useEnumOptions("InventoryType");
+
   const iconsForActions = (rowData: InventoryProduct) => (
     <div className="container-of-icons">
       {/* Edit */}
@@ -289,19 +267,24 @@ else {
     {
       key: 'type',
       title: <Translate>Item Type</Translate>,
-      flexGrow: 4,
+      width: 170,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(productType ?? [])],
       render: (rowData: InventoryProduct) => formatEnumString(rowData.type ?? ''),
     },
     {
       key: 'code',
       title: <Translate>Item Code</Translate>,
-      flexGrow: 4,
+      width: 140,
+      ...headerSearch('code', 'Search code'),
       render: (rowData: InventoryProduct) => rowData.code ?? '',
     },
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 4,
+      width: 200,
+      ...headerSearch('name', 'Search name'),
       render: (rowData: InventoryProduct) => rowData.name ?? '',
     },
     {
@@ -313,7 +296,10 @@ else {
     {
       key: 'inventoryType',
       title: <Translate>Lot Type</Translate>,
-      width: 100,
+      width: 130,
+      ...headerSearch('inventoryType'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(lotSerial ?? [])],
       render: (rowData: any) => {
         const status = rowData?.inventoryType || 'Unknown';
 
@@ -349,6 +335,26 @@ else {
           />
         );
       },
+    },
+    {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: (rowData: any) => (
+        <MyBadgeStatus
+          contant={rowData?.isActive ? 'Active' : 'Inactive'}
+          color={rowData?.isActive ? '#415be7' : '#b1acacff'}
+        />
+      )
     },
     {
       key: 'createdBy',
@@ -419,38 +425,11 @@ else {
     </Box>
   );
 
-  const productType = useEnumOptions("ProductTypes");
-  const lotSerial = useEnumOptions("InventoryType");
-  const handleFilterChange = (updatedFilter: any) => {
-    const key = Object.keys(updatedFilter)[0];
-    let value = updatedFilter[key];
-
-    if (value === "" || value === null) {
-      setFilter(prev => ({ ...prev, [key]: null }));
-      return;
-    }
-
-    if (!isNaN(value) && value !== "" && value !== null) {
-      value = Number(value);
-    }
-
-    setFilter(prev => ({ ...prev, [key]: value }));
-  };
 
 
   const contents = (
     <div className="advanced-filters">
       <Form fluid layout="inline" className="dissss">
-
-        <MyInput
-          column
-          fieldName="code"
-          fieldLabel="Code"
-          fieldType="text"
-          record={filter}
-          setRecord={setFilter}
-          width={160}
-        />
 
         <MyInput
           column
@@ -522,41 +501,6 @@ else {
       <Form fluid layout='inline'>
         <MyInput
           column
-          fieldName="name"
-          fieldLabel="Product Name"
-          fieldType="text"
-          record={filter}
-          setRecord={setFilter}
-          width={160}
-        />
-
-        <MyInput
-          column
-          fieldName="type"
-          fieldLabel="Type"
-          fieldType="select"
-          selectData={productType ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-          width={160}
-        />
-
-        <MyInput
-          column
-          fieldName="inventoryType"
-          fieldLabel="Inventory Type"
-          fieldType="select"
-          selectData={lotSerial ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filter}
-          setRecord={setFilter}
-          width={160}
-        />
-        <MyInput
-          column
           fieldLabel="UOM Group"
           fieldName="uomGroupId"
           fieldType="select"
@@ -596,13 +540,9 @@ else {
             content={contents}
             clearOnClick={() => {
                 setFilter({
-                    name: "",
-                    inventoryType: "",
-                    code: "",
                     barcodeOrQrCode: "",
                     warrantyStartDate: null,
                     warrantyEndDate: null,
-                    type: "",
                     uomGroupId: 0,
                     baseUom: null,
                     dispenseUom: null,
