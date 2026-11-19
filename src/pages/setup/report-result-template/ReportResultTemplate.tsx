@@ -129,7 +129,7 @@ const ReportResultTemplate = () => {
       key: "reportTemplate",
       title: "View",
       width: 80,
-      align: "left",
+      align: "left" as const,
       render: (rowData: ReportTemplate) => (
         <AiOutlineEye
           className="icon-view"
@@ -147,7 +147,7 @@ const ReportResultTemplate = () => {
       title: "Status",
       dataKey: "isActive",
       width: 120,
-      align: "center",
+      align: "center" as const,
       searchable: true,
       searchType: "select" as const,
       searchOptions: [
@@ -163,7 +163,7 @@ const ReportResultTemplate = () => {
       key: "actions",
       title: "Actions",
       width: 150,
-      align: "center",
+      align: "center" as const,
       render: (rowData: ReportTemplate) => (
         <div className="actions">
           <MdEdit
