@@ -23,10 +23,22 @@ export const departmentService = createApi({
   tagTypes: ['Department'],
   endpoints: builder => ({
     // GET /api/setup/department?page=&size=&sort=
-    getDepartments: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getDepartments: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; facilityId?: number | string; name?: string; type?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', timestamp, isActive, facilityId, name, type }) => ({
         url: '/api/setup/department',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          name: name?.trim() || undefined,
+          type: type || undefined
+        }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
