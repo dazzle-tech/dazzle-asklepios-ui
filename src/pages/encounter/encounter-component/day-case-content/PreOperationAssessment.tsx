@@ -3,6 +3,7 @@ import { Panel } from 'rsuite';
 import { Col, Divider, Row, Form, Text } from 'rsuite';
 import './styles.less';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import { useEncounterPatientContext } from '@/pages/medical-component/vital-signs/useEncounterPatientContext';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import GenericAdministeredMedications from '@/components/clinical/GenericAdministeredMedications';
@@ -11,6 +12,7 @@ import { newApPreOperationAdministeredMedications, newApPreOperationAssessment }
 import { useGetPreOperationMedicationsListQuery, useSavePreOperationMedicationsMutation } from '@/services/encounterService';
 import { Translate } from '@mui/icons-material';
 const PreOperationAssessment = () => {
+    const { encounter, patientId, encounterId } = useEncounterPatientContext();
     const [preOperationAssessment, setPreOperationAssessment] = useState<ApPreOperationAssessment>({ ...newApPreOperationAssessment });
 
     const [vital, setVital] = useState({
@@ -145,7 +147,7 @@ const PreOperationAssessment = () => {
                                     <Text><Translate>Vitals on Admission</Translate></Text>
                                 </div>
                                 <Divider />
-                                <VitalSigns object={vital} setObject={setVital} />
+                                <VitalSigns patientId={patientId as number} encounterId={encounterId as number} encounter={encounter} />
                             </div>
                         </Row>
                         <Row>

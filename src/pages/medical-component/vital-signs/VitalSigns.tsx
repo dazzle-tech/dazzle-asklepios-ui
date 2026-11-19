@@ -22,6 +22,7 @@ import { Tooltip, Whisper } from 'rsuite';
 import AllGraphsModal from '@/pages/encounter/encounter-pre-observations-new/previous-measurements/AllGraphsModal';
 import Translate from '@/components/Translate';
 import VitalSignsHistoryModal from '@/pages/medical-component/vital-signs/VitalSignsHistoryModal';
+import { useVitalSignRangeColor } from '@/pages/medical-component/vital-signs/useVitalSignRangeColor';
 
 type VitalSignsProps = {
   patientId: number;
@@ -68,13 +69,13 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   const [updateEncounter] = useUpdateEncounterMutation();
 
   // Latest active for encounter (nursing or triage)
-  const { data: latestVitalSignsByEncounterId } = useGetLatestVitalSignsByEncounterIdQuery(
+  const { currentData: latestVitalSignsByEncounterId } = useGetLatestVitalSignsByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId || isTriage }
   );
 
   // Triage latest — triage mode always; nursing mode only as fallback when no nursing reading
-  const { data: latestTriageVitalSignsByEncounterId } =
+  const { currentData: latestTriageVitalSignsByEncounterId } =
     useGetLatestTriageVitalSignsByEncounterIdQuery(
       { encounterId },
       {
@@ -97,6 +98,16 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     encounterId,
     isTriage
   });
+
+  // Range styling follows the reading's own recorded date when it has one, otherwise today.
+  const getRangeColor = useVitalSignRangeColor(patientId, vitalSigns?.createdDate);
+
+  // A different patient/encounter must never show the previous one's reading.
+  useEffect(() => {
+    setVitalSigns({ ...newVitalSigns, ...(prefill ?? {}), patientId, encounterId, isTriage });
+    setMeanArterialPressureValue(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientId, encounterId]);
 
   useEffect(() => {
     if (prefill) return;
@@ -370,6 +381,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 width="100%"
                 fieldType="number"
                 fieldName="bloodPressureSystolic"
+                inputColor={getRangeColor('bloodPressureSystolic', vitalSigns.bloodPressureSystolic)}
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
@@ -382,6 +394,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 width="100%"
                 fieldType="number"
                 fieldName="bloodPressureDiastolic"
+                inputColor={getRangeColor('bloodPressureDiastolic', vitalSigns.bloodPressureDiastolic)}
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
@@ -425,6 +438,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 width={showExtendedFields ? '10vw' : '100%'}
                 fieldType="number"
                 fieldName="heartRate"
+                inputColor={getRangeColor('heartRate', vitalSigns.heartRate)}
                 rightAddon="bpm"
                 rightAddonwidth={45}
                 record={vitalSigns}
@@ -438,6 +452,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 fieldType="number"
                 rightAddon="C"
                 fieldName="temperature"
+                inputColor={getRangeColor('temperature', vitalSigns.temperature)}
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
@@ -452,6 +467,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 fieldType="number"
                 rightAddon=" % "
                 fieldName="oxygenSaturation"
+                inputColor={getRangeColor('oxygenSaturation', vitalSigns.oxygenSaturation)}
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
@@ -465,6 +481,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 rightAddon="bpm"
                 rightAddonwidth={45}
                 fieldName="respiratoryRate"
+                inputColor={getRangeColor('respiratoryRate', vitalSigns.respiratoryRate)}
                 fieldLabel="R.R"
                 record={vitalSigns}
                 setRecord={setVitalSigns}

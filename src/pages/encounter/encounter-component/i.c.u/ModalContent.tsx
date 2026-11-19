@@ -13,8 +13,10 @@ import MyModal from "@/components/MyModal/MyModal";
 import PlusIcon from '@rsuite/icons/Plus';
 import VitalSigns from '@/pages/medical-component/vital-signs';
 import './style.less';
+import { useEncounterPatientContext } from '@/pages/medical-component/vital-signs/useEncounterPatientContext';
 
 const ModalContent: React.FC = () => {
+  const { encounter, patientId, encounterId } = useEncounterPatientContext();
   const [record, setRecord] = useState<any>({});
 
   const [vital, setVital] = useState({
@@ -43,11 +45,11 @@ const ModalContent: React.FC = () => {
       }
       content={<div dir={dir}>
       <VitalSigns
-        object={vital}
-        setObject={setVital}
+        patientId={patientId as number}
+        encounterId={encounterId as number}
+        encounter={encounter}
         disabled={false}
         width="40vw"
-        showNoteField={false}
       />
         <div className="vital-sign-icu-card">
           <Form>
