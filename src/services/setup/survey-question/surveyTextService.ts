@@ -48,10 +48,21 @@ export const surveyTextService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['SurveyText'],
   endpoints: builder => ({
-    getAllSurveyTexts: builder.query<PagedResult<SurveyText>, PagedParams>({
-      query: ({ page, size, sort = 'textKey,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out (text matches key, English or Arabic)
+    getAllSurveyTexts: builder.query<
+      PagedResult<SurveyText>,
+      PagedParams & { isActive?: boolean; text?: string }
+    >({
+      query: ({ page, size, sort = 'textKey,asc', timestamp, isActive, text }) => ({
         url: '/api/setup/survey-text',
-        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+        params: {
+          page,
+          size,
+          sort,
+          ...(timestamp ? { timestamp } : {}),
+          isActive,
+          text: text?.trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['SurveyText']
