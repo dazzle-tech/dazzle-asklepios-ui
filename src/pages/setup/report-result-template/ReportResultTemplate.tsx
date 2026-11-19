@@ -1,7 +1,7 @@
 // ReportResultTemplate.tsx
 import React, { useState, useEffect } from "react";
 import MyTable from "@/components/MyTable";
-import { Panel, Form } from "rsuite";
+import { Panel } from "rsuite";
 import MyButton from "@/components/MyButton/MyButton";
 import PlusIcon from "@rsuite/icons/Plus";
 import { MdDelete, MdEdit } from "react-icons/md";
@@ -16,10 +16,8 @@ import {
   useCreateReportTemplateMutation,
   useUpdateReportTemplateMutation,
   useToggleReportTemplateActiveMutation,
-  useLazyGetReportTemplatesByNameQuery,
 } from "@/services/setup/report-template/reportTemplateService";
 import { ReportTemplate } from "@/services/setup/report-template/reportTemplateService";
-import MyInput from "@/components/MyInput";
 import {
   hideSystemLoader,
   notify,
@@ -29,17 +27,17 @@ import {
 const ReportResultTemplate = () => {
   const dispatch = useDispatch();
 
-  // FILTER & SORT STATES
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filterValue, setFilterValue] = useState({ name: "" });
+  // Header filters: draft value typed in the input, applied on Enter.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { name: "" };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | "all">("active");
+  const activeFilter = statusFilter === "all" ? undefined : statusFilter === "active";
 
   const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 20,
-    sort: "id,desc",
-  });
-
-  const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 20,
     sort: "id,desc",
@@ -48,12 +46,11 @@ const ReportResultTemplate = () => {
   const [sortColumn, setSortColumn] = useState("id");
   const [sortType, setSortType] = useState<"asc" | "desc">("desc");
 
-  // Lazy filter request
-  const [triggerFilter, { data: filterResponse, isFetching: fetchingFilter }] =
-    useLazyGetReportTemplatesByNameQuery();
-
-  const { data, isLoading, refetch } =
-    useGetAllReportTemplatesQuery(paginationParams);
+  const { data, isFetching, refetch } = useGetAllReportTemplatesQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter,
+  });
 
   // ✅ split create/update
   const [createTemplate] = useCreateReportTemplateMutation();
@@ -73,11 +70,7 @@ const ReportResultTemplate = () => {
     try {
       dispatch(showSystemLoader());
 
-      // locate current record from correct datasource (filtered / not)
-      const currentList = isFiltered
-        ? filterResponse?.data ?? []
-        : data?.data ?? [];
-      const current = currentList.find((r) => r.id === selectedItemId)?.isActive;
+      const current = (data?.data ?? []).find((r) => r.id === selectedItemId)?.isActive;
 
       await toggleActive(selectedItemId).unwrap();
       refetch();
@@ -103,8 +96,35 @@ const ReportResultTemplate = () => {
     }
   };
 
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters((prev) => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field]),
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams((prev) => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
+
   const columns = [
-    { key: "TestName", title: "Template Name", dataKey: "name", width: 200 },
+    {
+      key: "TestName",
+      title: "Template Name",
+      dataKey: "name",
+      width: 240,
+      ...headerSearch("name", "Search name"),
+    },
     {
       key: "reportTemplate",
       title: "View",
@@ -126,8 +146,17 @@ const ReportResultTemplate = () => {
       key: "status",
       title: "Status",
       dataKey: "isActive",
-      width: 100,
+      width: 120,
       align: "center",
+      searchable: true,
+      searchType: "select" as const,
+      searchOptions: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "All", value: "all" },
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as "active" | "inactive" | "all"),
       render: (row: ReportTemplate) => (row.isActive ? "Active" : "Inactive"),
     },
     {
@@ -170,49 +199,14 @@ const ReportResultTemplate = () => {
     },
   ];
 
-  const filters = (
-    <Form fluid>
-      <div className="filters">
-        <MyInput
-          fieldName="name"
-          fieldLabel="Report Name"
-          record={filterValue}
-          setRecord={setFilterValue}
-        />
-      </div>
-    </Form>
-  );
-
   const handlePageChange = (event, newPage) => {
     const page = Math.max(0, Number(newPage));
-
-    if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, page }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? "",
-        page,
-        size: filterPagination.size,
-        sort: filterPagination.sort,
-      });
-    } else {
-      setPaginationParams((prev) => ({ ...prev, page }));
-    }
+    setPaginationParams((prev) => ({ ...prev, page }));
   };
 
   const handleRowsPerPageChange = (e: any) => {
     const newSize = Number(e?.target?.value ?? e);
-
-    if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, size: newSize, page: 0 }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? "",
-        page: 0,
-        size: newSize,
-        sort: filterPagination.sort,
-      });
-    } else {
-      setPaginationParams((prev) => ({ ...prev, size: newSize, page: 0 }));
-    }
+    setPaginationParams((prev) => ({ ...prev, size: newSize, page: 0 }));
   };
 
   const handleSortChange = (column: string, type: "asc" | "desc") => {
@@ -222,48 +216,13 @@ const ReportResultTemplate = () => {
     const realColumn =
       columns.find((col) => col.key === column)?.dataKey ?? column;
     const sortValue = `${realColumn},${type}`;
-
-    if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, sort: sortValue, page: 0 }));
-      triggerFilter({
-        name: filterValue?.name?.trim?.() ?? "",
-        page: 0,
-        size: filterPagination.size,
-        sort: sortValue,
-      });
-    } else {
-      setPaginationParams((prev) => ({ ...prev, sort: sortValue, page: 0 }));
-    }
+    setPaginationParams((prev) => ({ ...prev, sort: sortValue, page: 0 }));
   };
 
   useEffect(() => {
     dispatch(setPageCode("Report_Result_Template"));
     dispatch(setDivContent("Report Result Template"));
   }, [dispatch]);
-
-  useEffect(() => {
-    const input = filterValue?.name?.trim?.() ?? "";
-
-    const delay = setTimeout(() => {
-      if (!input) {
-        setIsFiltered(false);
-        setFilterPagination((prev) => ({ ...prev, page: 0 }));
-        return;
-      }
-
-      setIsFiltered(true);
-      setFilterPagination((prev) => ({ ...prev, page: 0 }));
-
-      triggerFilter({
-        name: input,
-        page: 0,
-        size: filterPagination.size,
-        sort: filterPagination.sort,
-      });
-    }, 100);
-
-    return () => clearTimeout(delay);
-  }, [filterValue.name]);
 
     // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -275,13 +234,10 @@ const ReportResultTemplate = () => {
   return (
     <Panel dir={dir}>
       <MyTable
-        data={isFiltered ? filterResponse?.data ?? [] : data?.data ?? []}
-        totalCount={
-          isFiltered ? filterResponse?.totalCount || 0 : data?.totalCount || 0
-        }
-        loading={isLoading || fetchingFilter}
+        data={data?.data ?? []}
+        totalCount={data?.totalCount || 0}
+        loading={isFetching}
         columns={columns}
-        filters={filters}
         tableButtons={<div className="bt-right">
                   <MyButton
                     prefixIcon={() => <PlusIcon />}
@@ -294,8 +250,8 @@ const ReportResultTemplate = () => {
                     Add New
                   </MyButton>
                 </div>}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}
@@ -351,18 +307,14 @@ const ReportResultTemplate = () => {
         setOpen={setOpenConfirmModal}
         itemToDelete={
           selectedItemId &&
-          (isFiltered ? filterResponse?.data : data?.data)?.find(
-            (r) => r.id === selectedItemId
-          )?.isActive
+          data?.data?.find((r) => r.id === selectedItemId)?.isActive
             ? "Deactivate"
             : "Reactivate"
         }
         actionButtonFunction={handleToggleActive}
         actionType={
           selectedItemId &&
-          (isFiltered ? filterResponse?.data : data?.data)?.find(
-            (r) => r.id === selectedItemId
-          )?.isActive
+          data?.data?.find((r) => r.id === selectedItemId)?.isActive
             ? "deactivate"
             : "reactivate"
         }

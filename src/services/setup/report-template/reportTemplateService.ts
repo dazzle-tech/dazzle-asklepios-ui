@@ -46,11 +46,15 @@ export const ReportTemplateService = createApi({
   endpoints: (builder) => ({
 
     // 🔹 List all (paginated)
-    getAllReportTemplates: builder.query<PagedResult<ReportTemplate>, PagedParams>({
-      query: ({ page, size, sort = "id,desc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllReportTemplates: builder.query<
+      PagedResult<ReportTemplate>,
+      PagedParams & { isActive?: boolean; name?: string }
+    >({
+      query: ({ page, size, sort = "id,desc", isActive, name }) => ({
         url: "/api/setup/report-template",
         method: "GET",
-        params: { page, size, sort },
+        params: { page, size, sort, isActive, name: name?.trim() || undefined },
       }),
       transformResponse: (response: ReportTemplate[], meta) => {
         const headers = meta?.response?.headers;
