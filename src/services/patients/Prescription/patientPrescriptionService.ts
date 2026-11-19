@@ -243,6 +243,7 @@ export const {
   useSubmitPatientPrescriptionMutation,
   useResendPrescriptionToNahdiMutation,
   useGetNahdiSyncStatusQuery,
+  useLazyGetNahdiSyncStatusQuery,
   useGetPrescriptionEditAfterSubmitAccessQuery,
   useRefreshNahdiDispensingStatusMutation,
   useCancelPatientPrescriptionMutation,
