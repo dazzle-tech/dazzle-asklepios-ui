@@ -10,7 +10,12 @@ export type NahdiSyncStatus = {
   lastAttemptStatus?: 'SUCCESS' | 'FAILED' | null;
   lastAttemptAt?: string | null;
   orderNumber?: string | null;
+  // Technical reason of the last failure (for IT, shown as a hint).
   failureReason?: string | null;
+  // What the doctor is told about the last failure.
+  failureMessage?: string | null;
+  // True when the failure is in the prescription data (the doctor can fix it).
+  failureDataError?: boolean;
   integrationEnabled: boolean;
 };
 
@@ -162,7 +167,13 @@ export const patientPrescriptionService = createApi({
 
     // POST /api/patient/nahdi/prescriptions/{id}/resend : sends the edited submitted prescription to Nahdi again
     resendPrescriptionToNahdi: builder.mutation<
-      { status: 'SUCCESS' | 'FAILED' | 'SKIPPED'; orderNumber?: string | null; message?: string | null },
+      {
+        status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
+        orderNumber?: string | null;
+        // For the doctor when not accepted; `detail` is the technical reason.
+        message?: string | null;
+        detail?: string | null;
+      },
       number
     >({
       query: (id) => ({
