@@ -1,16 +1,13 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useGetVisitDurationsQuery,
-  useDeleteVisitDurationMutation,
-  useLazyGetVisitDurationsByTypeQuery
+  useDeleteVisitDurationMutation
 } from '@/services/setup/visitDurationService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { notify } from '@/utils/uiReducerActions';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -37,15 +34,7 @@ const VisitDurationSetup: React.FC = () => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 5,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // pagination (filtered)
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 5,
-    sort: 'id,desc'
+    sort: 'id,asc'
   });
 
   // modal add/edit
@@ -57,18 +46,12 @@ const VisitDurationSetup: React.FC = () => {
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
-  //  Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState<{
-    filter: '' | 'visitType';
-    value: any;
-  }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<VisitDuration[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND (visit durations have no active flag).
+  const emptyHeaderFilters = { visitType: '', durationInMinutes: '', resourceSpecific: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   // enum options للـ VisitType
   const visitTypeOptions = useEnumOptions('VisitType');
@@ -82,117 +65,35 @@ const VisitDurationSetup: React.FC = () => {
   } = useGetVisitDurationsQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort
+    sort: paginationParams.sort,
+    ...appliedFilters
   });
-
-  // lazy query للفلترة بالسيرفر
-  const [fetchByVisitType, byVisitTypeResult] = useLazyGetVisitDurationsByTypeQuery();
 
   const [deleteVisitDuration, { isLoading: isDeleting }] = useDeleteVisitDurationMutation();
 
-  // ⛳ derived values (زي Vaccine)
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : pageData?.totalCount ?? 0),
-    [isFiltered, filteredTotal, pageData?.totalCount]
-  );
+  const totalCount = pageData?.totalCount ?? 0;
+  const tableData: VisitDuration[] = useMemo(() => pageData?.data ?? [], [pageData?.data]);
 
-  const links = (isFiltered ? filteredLinks : pageData?.links) || {};
-
-  const tableData: VisitDuration[] = useMemo(
-    () => (isFiltered ? filteredData : pageData?.data ?? []),
-    [isFiltered, filteredData, pageData?.data]
-  );
-
-  //  reset to unfiltered mode
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-
-    setFilterPagination(prev => ({ ...prev, page: 0, sort: 'id,desc' }));
-    setPaginationParams(prev => ({
-      ...prev,
-      page: 0,
-      sort: 'id,asc',
-      timestamp: Date.now()
-    }));
-
-    refetch();
-  };
-
-  //  unified refetch respecting current mode
+  // Reload the list with the current filters (after add/edit/delete)
   const refetchList = async () => {
-    if (isFiltered) {
-      await handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        filterPagination.page,
-        filterPagination.size,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      await refetch();
-    }
+    await refetch();
   };
 
-  //  run filtered query (server-side)
-  const runFilterQuery = async (
-    fieldName: 'visitType',
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort?: string
-  ) => {
-    if (!value && value !== 0) return undefined;
-    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
-
-    const common = { page, size, sort: effectiveSort, ts: Date.now() } as const;
-
-    if (fieldName === 'visitType') {
-      return await fetchByVisitType({ visitType: String(value), ...common }).unwrap();
-    }
-
-    return undefined;
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
 
-  //  apply / clear filter
-  const handleFilterChange = async (
-    fieldName: '' | 'visitType',
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value && value !== 0) {
-      resetToUnfiltered();
-      return;
-    }
-
-    try {
-      const resp = await runFilterQuery(fieldName as any, value, page, size, sort);
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch (e) {
-      console.error(e);
-      dispatch(notify({ msg: 'Failed to filter visit durations', sev: 'error' } as any));
-      resetToUnfiltered();
-    }
-  };
-
-  //  auto revert when filter value cleared
-  useEffect(() => {
-    if (!recordOfFilter.value && recordOfFilter.value !== 0 && isFiltered) {
-      resetToUnfiltered();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordOfFilter.value]);
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   // delete confirm
   const handleDeleteConfirm = async () => {
@@ -216,7 +117,10 @@ const VisitDurationSetup: React.FC = () => {
       key: 'visitType',
       title: 'Visit Type',
       dataKey: 'visitType',
-      width: 150,
+      width: 170,
+      ...headerSearch('visitType'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(visitTypeOptions ?? [])],
       render: (row: VisitDuration) => formatEnumString(row?.visitType)
     },
     {
@@ -224,6 +128,7 @@ const VisitDurationSetup: React.FC = () => {
       title: <span><Translate>Duration</Translate><Translate>(mins)</Translate></span>,
       dataKey: 'durationInMinutes',
       width: 150,
+      ...headerSearch('durationInMinutes', 'Minutes'),
       render: (row: VisitDuration) =>
         row?.durationInMinutes != null ? `${row.durationInMinutes} mins` : ''
     },
@@ -232,6 +137,13 @@ const VisitDurationSetup: React.FC = () => {
       title: 'Resource Specific',
       dataKey: 'resourceSpecific',
       width: 160,
+      ...headerSearch('resourceSpecific'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        { label: 'Yes', value: 'true' },
+        { label: 'No', value: 'false' }
+      ],
       render: (row: VisitDuration) => (row?.resourceSpecific ? 'Yes' : 'No')
     },
     {
@@ -280,176 +192,20 @@ const VisitDurationSetup: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
-  const filterFields = [{ label: 'Visit Type', value: 'visitType' }];
-
-  const filters = () => {
-    const selected = recordOfFilter.filter;
-
-    let dynamicInput: React.ReactNode = (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Enter Value"
-        width={220}
-      />
-    );
-
-    if (selected === 'visitType') {
-      dynamicInput = (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={visitTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(u: any) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          searchable={false}
-          placeholder="Select Visit Type"
-        />
-      );
-    }
-
-    return (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(u: any) => setRecordOfFilter({ filter: u.filter, value: '' })}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="170px"
-        />
-        {dynamicInput}
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() =>
-            handleFilterChange(
-              recordOfFilter.filter,
-              recordOfFilter.value,
-              0,
-              filterPagination.size,
-              filterPagination.sort || 'id,desc'
-            )
-          }
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
-
-
   const handleSortChange = (column: string, type: SortType) => {
     setSortColumn(column);
     setSortType(type);
     const sortValue = `${column},${type}`;
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        filterPagination.size,
-        sortValue
-      );
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        sort: sortValue,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0 }));
   };
 
-  //  pagination change
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-
-    const currentPage = paginationParams.page;
-    const linksMap = links || {};
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && linksMap.next) targetLink = linksMap.next;
-    else if (newPage < currentPage && linksMap.prev) targetLink = linksMap.prev;
-    else if (newPage === 0 && linksMap.first) targetLink = linksMap.first;
-    else if (newPage > currentPage + 1 && linksMap.last) targetLink = linksMap.last;
-
-    if (targetLink) {
-      try {
-        const { page, size } = (PaginationPerPage as any).extractPaginationFromLink
-          ? (PaginationPerPage as any).extractPaginationFromLink(targetLink)
-          : { page: newPage, size: paginationParams.size };
-
-        setPaginationParams(prev => ({
-          ...prev,
-          page,
-          size,
-          timestamp: Date.now()
-        }));
-      } catch {
-        PaginationPerPage.handlePageChange(
-          _,
-          newPage,
-          paginationParams,
-          linksMap,
-          setPaginationParams
-        );
-      }
-    } else {
-      PaginationPerPage.handlePageChange(
-        _,
-        newPage,
-        paginationParams,
-        linksMap,
-        setPaginationParams
-      );
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  // rows per page
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
 
             // Direction handling for RTL/LTR
@@ -464,7 +220,6 @@ const VisitDurationSetup: React.FC = () => {
       <MyTable
         data={tableData}
         columns={columns}
-        filters={filters()}
         tableButtons={
           <Form fluid>
             <div className="bt-div">
@@ -484,12 +239,12 @@ const VisitDurationSetup: React.FC = () => {
           </Form>
         }
         height={470}
-        loading={isLoading || isFetching || isDeleting || byVisitTypeResult.isFetching}
+        loading={isLoading || isFetching || isDeleting}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => handleSortChange(col, type as SortType)}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
