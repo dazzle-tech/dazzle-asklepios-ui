@@ -32,10 +32,21 @@ export const allergensService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Allergens'],
   endpoints: builder => ({
-    getAllergens: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllergens: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; name?: string; type?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, name, type }) => ({
         url: '/api/setup/allergen',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          name: name?.trim() || undefined,
+          type: type || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Allergens']
