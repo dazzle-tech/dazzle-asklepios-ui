@@ -25,11 +25,22 @@ export const dentalChartAgeRuleService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['DentalChartAgeRule'],
   endpoints: builder => ({
-    getAllDentalChartAgeRules: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllDentalChartAgeRules: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; name?: string; chartType?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, name, chartType }) => ({
         url: '/api/setup/dental-chart-age-rules',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          name: name?.trim() || undefined,
+          chartType: chartType || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['DentalChartAgeRule']

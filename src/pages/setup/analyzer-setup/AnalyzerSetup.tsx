@@ -1,11 +1,11 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import LovValueCell from '@/components/LovValueCell';
 import AddEditAnalyzer from './AddEditAnalyzer';
@@ -18,12 +18,9 @@ import {
   useGetAnalyzersQuery,
   useAddAnalyzerMutation,
   useUpdateAnalyzerMutation,
-  useToggleAnalyzerIsActiveMutation,
-  useLazyGetAnalyzersByTypeQuery,
-  useLazyGetAnalyzersByCodeQuery
+  useToggleAnalyzerIsActiveMutation
 } from '@/services/setup/analyzerService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Analyzer } from '@/types/model-types-new';
 import { newAnalyzer } from '@/types/model-types-constructor-new';
 
@@ -43,29 +40,20 @@ const AnalyzerSetup: React.FC = () => {
     'delete' | 'deactivate' | 'reactivate'
   >('delete');
 
-  // Filters state
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<Analyzer[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { code: '', type: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  // Pagination (unfiltered list via Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // Pagination for filtered mode
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
+    sort: 'id,asc'
   });
 
   // API hooks
@@ -76,15 +64,14 @@ const AnalyzerSetup: React.FC = () => {
   } = useGetAnalyzersQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort
+    sort: paginationParams.sort,
+    isActive: activeFilter,
+    ...appliedFilters
   });
 
   const [addAnalyzer] = useAddAnalyzerMutation();
   const [updateAnalyzer] = useUpdateAnalyzerMutation();
   const [toggleAnalyzerIsActive] = useToggleAnalyzerIsActiveMutation();
-
-  const [fetchByType] = useLazyGetAnalyzersByTypeQuery();
-  const [fetchByCode] = useLazyGetAnalyzersByCodeQuery();
 
   // Analyzer type LOV (used for the filter dropdown) - same LAB_CATEGORIES list
   // as the Add/Edit form's type field.
@@ -94,73 +81,8 @@ const AnalyzerSetup: React.FC = () => {
     [analyzerTypeLov]
   );
 
-  // Derived data
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : analyzersPage?.totalCount ?? 0),
-    [isFiltered, filteredTotal, analyzersPage?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : analyzersPage?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : analyzersPage?.data ?? []),
-    [isFiltered, filteredData, analyzersPage?.data]
-  );
-
-  // Filter fields
-  const filterFields = [
-    { label: 'Analyzer Type', value: 'type' },
-    { label: 'Analyzer Code', value: 'code' }
-  ];
-
-  // Helpers
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0 }));
-    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
-    refetch();
-  };
-
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value && value !== 0) return undefined;
-
-    if (fieldName === 'type') {
-      return await fetchByType({ type: String(value), page, size, sort }).unwrap();
-    } else if (fieldName === 'code') {
-      return await fetchByCode({ code: String(value), page, size, sort }).unwrap();
-    }
-    return undefined;
-  };
-
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value) {
-      resetToUnfiltered();
-      return;
-    }
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch {
-      resetToUnfiltered();
-    }
-  };
+  const totalCount = analyzersPage?.totalCount ?? 0;
+  const tableData = useMemo(() => analyzersPage?.data ?? [], [analyzersPage?.data]);
 
   // CRUD handlers
   const handleNew = () => {
@@ -182,44 +104,14 @@ const AnalyzerSetup: React.FC = () => {
       if (isUpdate) {
         const updated = await updateAnalyzer({ id: analyzer.id!, ...payload }).unwrap();
         dispatch(notify({ msg: 'Analyzer updated successfully', sev: 'success' }));
-        if (isFiltered) {
-          setFilteredData(prev => prev.map(row => (row.id === updated.id ? updated : row)));
-        } else {
-          setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-          refetch();
-        }
+        setAnalyzer(prev => (prev?.id === updated?.id ? { ...prev, ...updated } : prev));
+        refetch();
       } else {
         const created = await addAnalyzer(payload).unwrap();
         dispatch(notify({ msg: 'Analyzer added successfully', sev: 'success' }));
-        if (isFiltered) {
-          const filterField = recordOfFilter.filter;
-          const filterValue = recordOfFilter.value;
-          let matchesFilter = false;
-
-          if (filterField === 'type') {
-            matchesFilter = created.type === String(filterValue);
-          } else if (filterField === 'code') {
-            matchesFilter = (created.code ?? '')
-              .toLowerCase()
-              .includes(String(filterValue).toLowerCase());
-          }
-
-          if (matchesFilter) {
-            setFilteredData(prev => [created, ...prev]);
-            setFilteredTotal(prev => prev + 1);
-            setFilterPagination(prev => ({ ...prev, page: 0 }));
-          } else {
-            dispatch(
-              notify({
-                msg: 'Analyzer added but does not match current filter',
-                sev: 'info'
-              })
-            );
-          }
-        } else {
-          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-          refetch();
-        }
+        setAnalyzer(created);
+        // Reload the list with the current filters
+        refetch();
       }
     } catch (err: any) {
       const data = err?.data ?? {};
@@ -294,13 +186,7 @@ const AnalyzerSetup: React.FC = () => {
         prev && prev.id === toggledId ? { ...prev, isActive: newIsActive } : prev
       );
 
-      if (isFiltered) {
-        setFilteredData(prev =>
-          prev.map(row => (row.id === toggledId ? { ...row, isActive: newIsActive } : row))
-        );
-      } else {
-        refetch();
-      }
+      refetch();
 
       dispatch(
         notify({
@@ -338,57 +224,34 @@ const AnalyzerSetup: React.FC = () => {
 
   // Pagination handlers
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   // Row selection style
   const isSelected = (rowData: any) =>
@@ -396,12 +259,43 @@ const AnalyzerSetup: React.FC = () => {
 
   // Columns
   const tableColumns = [
-    { key: 'code', title: <Translate>Analyzer Code</Translate>, flexGrow: 4 },
+    {
+      key: 'code',
+      title: <Translate>Analyzer Code</Translate>,
+      width: 220,
+      ...headerSearch('code', 'Search code')
+    },
     {
       key: 'type',
       title: <Translate>Analyzer Type</Translate>,
-      flexGrow: 4,
+      width: 220,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...analyzerTypeOptions.map((o: any) => ({ label: o.lovDisplayVale, value: String(o.key) }))
+      ],
       render: (rowData: any) => <LovValueCell valueKey={rowData.type} />
+    },
+    {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: (rowData: any) => (
+        <MyBadgeStatus
+          contant={rowData?.isActive ? 'Active' : 'Inactive'}
+          color={rowData?.isActive ? '#415be7' : '#b1acacff'}
+        />
+      )
     },
     {
       key: 'icons',
@@ -449,77 +343,6 @@ const AnalyzerSetup: React.FC = () => {
     }
   ];
 
-  // Filters UI
-  const filters = () => {
-    const selected = recordOfFilter.filter;
-
-    const dynamicInput =
-      selected === 'type' ? (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={analyzerTypeOptions}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          searchable={false}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-          width={220}
-        />
-      );
-
-    return (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(updatedRecord: any) => {
-            setRecordOfFilter({ filter: updatedRecord.filter, value: '' });
-          }}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="180px"
-        />
-        {dynamicInput}
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
-              resetToUnfiltered();
-            } else {
-              handleFilterChange(
-                recordOfFilter.filter,
-                recordOfFilter.value,
-                0,
-                filterPagination.size,
-                filterPagination.sort
-              );
-            }
-          }}
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
-
   // Effects
   useEffect(() => {
     dispatch(setPageCode('Analyzer'));
@@ -538,13 +361,6 @@ const AnalyzerSetup: React.FC = () => {
     }
   }, []);
 
-  // If user clears value manually, revert to unfiltered list
-  useEffect(() => {
-    if (!recordOfFilter.value && isFiltered) {
-      resetToUnfiltered();
-    }
-  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -559,10 +375,9 @@ const AnalyzerSetup: React.FC = () => {
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={(rowData: any) => setAnalyzer(rowData)}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
