@@ -5890,6 +5890,7 @@ export interface PatientEncounterDischarge {
   encounterId: number | null;
   dischargeType: string | null;
   dischargeAt: Date | string | null;
+  investigationNotPerformedReason?: string | null;
 }
 export interface SurgicalHistory {
   id?: number;
@@ -9106,6 +9107,7 @@ export interface ClaimEncounterCopyResponse {
   bloodPressureDiastolic: number | null;
   height: number | null;
   weight: number | null;
+  investigationNotPerformedReason: string | null;
 }
 
 export interface ClaimEncounterDiagnosis {

@@ -70,7 +70,8 @@ const EditEncounterDetailsModal = ({
                     bloodPressureSystolic: record.bloodPressureSystolic,
                     bloodPressureDiastolic: record.bloodPressureDiastolic,
                     height: record.height,
-                    weight: record.weight
+                    weight: record.weight,
+                    investigationNotPerformedReason: record.investigationNotPerformedReason
                 }
             }).unwrap();
 
@@ -145,6 +146,14 @@ const EditEncounterDetailsModal = ({
             <MyInput
                 fieldName="treatmentPlan"
                 fieldLabel="Treatment Plan"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                width="100%"
+            />
+            <MyInput
+                fieldName="investigationNotPerformedReason"
+                fieldLabel="Reason Investigations Not Performed"
                 fieldType="textarea"
                 record={record}
                 setRecord={setRecord}

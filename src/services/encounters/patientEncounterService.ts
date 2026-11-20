@@ -48,6 +48,8 @@ export type PatientEncounterCompletionValidation = {
 
   vitalSigns: boolean;
   bodyMeasurements: boolean;
+  /** False when a Waseel insurance visit without investigations has no reason why none was done. */
+  investigationNotPerformedReason: boolean;
   canComplete: boolean;
   missing: string[];
   diagnosticApprovals?: DiagnosticCheckoutApproval[];
@@ -870,6 +872,18 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
+    saveInvestigationNotPerformedReason: builder.mutation<
+      PatientEncounter,
+      { id: Id; investigationNotPerformedReason: string }
+    >({
+      query: ({ id, investigationNotPerformedReason }) => ({
+        url: `/api/patient/encounter/${id}/investigation-not-performed-reason`,
+        method: 'PUT',
+        body: { investigationNotPerformedReason }
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+
     completeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/complete`,
@@ -1227,6 +1241,7 @@ export const {
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
+  useSaveInvestigationNotPerformedReasonMutation,
   useCloseEncounterForBillingMutation,
   useReassignPractitionerMutation,
 

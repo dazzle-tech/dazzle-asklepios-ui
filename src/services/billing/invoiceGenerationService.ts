@@ -118,6 +118,7 @@ export type FinancialCloseRequest = {
   encounterId: number;
   requestId: string;
   facilityId: number;
+  investigationNotPerformedReason?: string;
 };
 
 export type GenerateInvoicesRequest = {
@@ -175,12 +176,13 @@ export const invoiceGenerationService = createApi({
       FinancialCloseResult,
       FinancialCloseRequest
     >({
-      query: ({ encounterId, requestId, facilityId }) => ({
+      query: ({ encounterId, requestId, facilityId, investigationNotPerformedReason }) => ({
         url: `/api/patient/billing/invoice-generation/encounters/${encounterId}/financial-close`,
         method: 'POST',
         body: {
           requestId,
-          facilityId: Number(facilityId)
+          facilityId: Number(facilityId),
+          investigationNotPerformedReason
         }
       }),
       invalidatesTags: (_result, _error, { encounterId }) => [
