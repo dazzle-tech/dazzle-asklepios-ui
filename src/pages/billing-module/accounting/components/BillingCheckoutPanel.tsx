@@ -356,6 +356,19 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
     try {
 
+      // Insurance visits pass the same requirements as checkout before closing for billing
+      if (coverageType === 'INSURANCE') {
+        const validation = await validateEncounterCompletion({
+          encounterId,
+          includeDiagnostics: true
+        }).unwrap();
+        if (!validation.canComplete || (validation.diagnosticApprovals ?? []).length > 0) {
+          setCheckoutValidation(validation);
+          setValidationOpen(true);
+          return;
+        }
+      }
+
       await closeEncounterForBilling({ id: encounterId }).unwrap();
 
       dispatch(

@@ -14,8 +14,10 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useCompleteEncounterMutation,
-  useLazyGetEncounterCompletionValidationQuery
+  useLazyGetEncounterCompletionValidationQuery,
+  useSaveInvestigationNotPerformedReasonMutation
 } from '@/services/encounters/patientEncounterService';
+import InvestigationReasonModal from '@/pages/billing-module/invoices/InvestigationReasonModal';
 
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
@@ -159,6 +161,9 @@ const Encounter = ({
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
+  const [investigationReasonOpen, setInvestigationReasonOpen] = useState(false);
+  const [saveInvestigationReason, { isLoading: savingInvestigationReason }] =
+    useSaveInvestigationNotPerformedReasonMutation();
   const [showValidationModal, setShowValidationModal] = useState(false);
 
   const [validationItems, setValidationItems] = useState<
@@ -564,6 +569,7 @@ const handleGoBack = () => {
 
   const handleSubmitEncounter = async () => {
     const items: CompletionValidationItem[] = [];
+    let investigationReasonRequired = false;
 
     // =====================================================
     // INSURANCE VALIDATION
@@ -575,6 +581,10 @@ const handleGoBack = () => {
           await validateEncounterCompletion({
             encounterId
           }).unwrap();
+
+        investigationReasonRequired =
+          completionValidation?.insuranceVisit === true &&
+          completionValidation?.investigationNotPerformedReason === false;
 
         if (
           completionValidation?.insuranceVisit &&
@@ -845,7 +855,33 @@ const handleGoBack = () => {
       return;
     }
 
+    // Emergency visits enter the reason on Disposition
+    if (investigationReasonRequired) {
+      setInvestigationReasonOpen(true);
+      return;
+    }
+
     await completeEncounterNow();
+  };
+
+  const handleSaveInvestigationReason = async (reason: string) => {
+    if (!encounterId) return;
+
+    try {
+      await saveInvestigationReason({
+        id: encounterId,
+        investigationNotPerformedReason: reason
+      }).unwrap();
+      setInvestigationReasonOpen(false);
+      await completeEncounterNow();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || error?.data?.detail || 'Failed to save the reason',
+          sev: 'error'
+        })
+      );
+    }
   };
 
 
@@ -1342,6 +1378,14 @@ const handleGoBack = () => {
             state: sharedNavigationState
           });
         }}
+      />
+
+      <InvestigationReasonModal
+        open={investigationReasonOpen}
+        loading={savingInvestigationReason}
+        actionLabel="Save & Complete"
+        onClose={() => setInvestigationReasonOpen(false)}
+        onSubmit={handleSaveInvestigationReason}
       />
 
       <EncounterDischarge

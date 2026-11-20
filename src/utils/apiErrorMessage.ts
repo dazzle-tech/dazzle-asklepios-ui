@@ -2,9 +2,9 @@ const DEFAULT_ERROR = 'Unexpected error';
 
 
 
-const parseErrorKey = (data: any): string | undefined => {
+export const parseErrorKey = (data: any): string | undefined => {
 
-  const messageKeyProp: string = data?.properties?.messageKey || '';
+  const messageKeyProp: string = data?.properties?.messageKey || data?.messageKey || '';
 
   if (messageKeyProp.startsWith('error.')) {
 
@@ -161,6 +161,8 @@ export const INVOICE_GENERATION_ERROR_MAP: Record<string, string> = {
   'encounter.noBillableServices': 'Visit has no billable services.',
   'encounter.pendingServices':
     'Some services are still pending. Resolve them before financial closure.',
+  'encounter.investigationNotPerformedReason.required':
+    'This visit has no laboratory or radiology investigation. Enter why no investigation was performed.',
   'encounter.eligibility.required':
     'Insurance eligibility is required. Run Waseel eligibility, then freeze the snapshot.',
   'eligibility.notfound':
