@@ -83,6 +83,11 @@ const formToMonths = (months?: number | null): { value: number | null; unit: Age
     : { value: months, unit: 'MONTHS' };
 };
 
+// Header filters, applied on select change. The ranges are a short list, so the filters
+// are combined with AND here.
+const emptyHeaderFilters = { vitalSignKey: '', unit: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
 const emptyIfNull = (value?: number | null) => (value === null || value === undefined ? '-' : value);
 
 const VitalSignSetup = () => {
@@ -96,6 +101,7 @@ const VitalSignSetup = () => {
   const [form, setForm] = useState<RangeForm>({ ...emptyForm });
   const [popupOpen, setPopupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
 
   const { data: ranges = [], isFetching } = useGetVitalSignRangesQuery();
   const { data: vitalSignTypes = [] } = useGetVitalSignTypesQuery();
@@ -130,6 +136,33 @@ const VitalSignSetup = () => {
         (a.ageFromMonths ?? 0) - (b.ageFromMonths ?? 0)
     );
   }, [ranges, vitalSignTypes]);
+
+  const filteredRows = useMemo(
+    () =>
+      rows.filter(
+        row =>
+          (!headerFilters.vitalSignKey || row.vitalSignKey === headerFilters.vitalSignKey) &&
+          (!headerFilters.unit || (row.unit ?? '') === headerFilters.unit)
+      ),
+    [rows, headerFilters]
+  );
+
+  const unitOptions = useMemo(
+    () =>
+      Array.from(new Set(rows.map(row => row.unit).filter(Boolean))).map(unit => ({
+        label: String(unit),
+        value: String(unit)
+      })),
+    [rows]
+  );
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    searchable: true,
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options],
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value }))
+  });
 
   const vitalSignOptions = vitalSignTypes.map(t => ({
     label: VITAL_SIGN_LABELS[t.vitalSignKey] ?? t.vitalSignKey,
@@ -227,12 +260,13 @@ const VitalSignSetup = () => {
     {
       key: 'vitalSignKey',
       title: <Translate>Vital Sign</Translate>,
-      flexGrow: 3,
+      width: 220,
+      ...headerSelect('vitalSignKey', vitalSignOptions),
       render: (rowData: Row) => (
         <Translate>{VITAL_SIGN_LABELS[rowData.vitalSignKey] ?? rowData.vitalSignKey}</Translate>
       )
     },
-    { key: 'unit', title: <Translate>Unit</Translate>, flexGrow: 1 },
+    { key: 'unit', title: <Translate>Unit</Translate>, width: 120, ...headerSelect('unit', unitOptions) },
     {
       key: 'ageFromMonths',
       title: <Translate>Age From</Translate>,
@@ -329,8 +363,8 @@ const VitalSignSetup = () => {
   return (
     <Panel dir={dir}>
       <MyTable
-        data={rows}
-        totalCount={rows.length}
+        data={filteredRows}
+        totalCount={filteredRows.length}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
