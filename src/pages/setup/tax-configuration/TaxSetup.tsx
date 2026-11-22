@@ -1108,7 +1108,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    130
+                    130,
 
                 sortable:
                     true
@@ -1125,7 +1125,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    180
+                    180,
 
                 sortable:
                     true
@@ -1142,7 +1142,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    150
+                    150,
 
                 sortable:
                     true,
@@ -1169,7 +1169,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    120
+                    120,
 
                 render: (
                     row:
@@ -1197,7 +1197,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    150
+                    150,
 
                 sortable:
                     true,
@@ -1224,7 +1224,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    160
+                    160,
 
                 render: (
                     row:
@@ -1248,7 +1248,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    160
+                    160,
 
                 render: (
                     row:
@@ -1274,7 +1274,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    150
+                    150,
 
                 align:
                     'center' as const,
@@ -1311,7 +1311,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    140
+                    140,
 
                 align:
                     'center' as const,
@@ -1351,7 +1351,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    110
+                    110,
 
                 align:
                     'center' as const,
@@ -1394,7 +1394,7 @@ const TaxSetup:
                     </Translate>,
 
                 width:
-                    120
+                    120,
 
                 align:
                     'center' as const,
