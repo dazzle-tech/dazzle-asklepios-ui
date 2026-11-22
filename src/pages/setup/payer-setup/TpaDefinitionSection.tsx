@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import { Form } from 'rsuite';
+import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdBlock, MdBusiness, MdDelete, MdFactCheck, MdHistory, MdModeEdit } from 'react-icons/md';
@@ -17,8 +15,6 @@ import {
   TpaDefinitionService,
   useCreateTpaDefinitionMutation,
   useGetAllTpaDefinitionsQuery,
-  useGetTpaDefinitionsByCodeQuery,
-  useGetTpaDefinitionsByNameQuery,
   useToggleTpaDefinitionActiveMutation,
   useUpdateTpaDefinitionMutation
 } from '@/services/setup/payer/TpaDefinitionSetupService';
@@ -28,18 +24,15 @@ import TpaLinkedCompaniesModal from './TpaLinkedCompaniesModal';
 import TpaAuditLogModal from './TpaAuditLogModal';
 import TpaRuleModal, { TpaRuleKind } from './TpaRuleModal';
 
-type FilterCriteria = '' | 'tpaCode' | 'name';
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = { tpaCode: '', name: '', guarantorType: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
-const filterCriteriaOptions = [
-  { label: 'TPA Code', value: 'tpaCode' },
-  { label: 'Name', value: 'name' }
+const guarantorTypeOptions = [
+  { label: 'Insurance', value: 'INSURANCE' },
+  { label: 'TPA', value: 'TPA' }
 ];
-
-const initialTpaFilter = {
-  criteria: '' as FilterCriteria,
-  tpaCode: '',
-  name: ''
-};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -66,83 +59,50 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  const [tpaFilter, setTpaFilter] = useState(initialTpaFilter);
-  const [appliedTpaFilter, setAppliedTpaFilter] = useState(initialTpaFilter);
-
-  const hasCodeFilter = appliedTpaFilter.criteria === 'tpaCode' && !!appliedTpaFilter.tpaCode.trim();
-  const hasNameFilter = appliedTpaFilter.criteria === 'name' && !!appliedTpaFilter.name.trim();
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   const allTpasQuery = useGetAllTpaDefinitionsQuery(
     {
       page: paginationParams.page,
       size: paginationParams.size,
-      sort: paginationParams.sort
+      sort: paginationParams.sort,
+      ...appliedFilters,
+      isActive: activeFilter
     },
-    { skip: hasCodeFilter || hasNameFilter, refetchOnMountOrArgChange: true }
-  );
-
-  const tpasByCodeQuery = useGetTpaDefinitionsByCodeQuery(
-    {
-      tpaCode: appliedTpaFilter.tpaCode.trim(),
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    { skip: !hasCodeFilter }
-  );
-
-  const tpasByNameQuery = useGetTpaDefinitionsByNameQuery(
-    {
-      name: appliedTpaFilter.name.trim(),
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    { skip: !hasNameFilter }
+    { refetchOnMountOrArgChange: true }
   );
 
   const [createTpa] = useCreateTpaDefinitionMutation();
   const [updateTpa] = useUpdateTpaDefinitionMutation();
   const [toggleTpaActive] = useToggleTpaDefinitionActiveMutation();
 
-  const activeResponse = hasCodeFilter
-    ? tpasByCodeQuery.data
-    : hasNameFilter
-      ? tpasByNameQuery.data
-      : allTpasQuery.data;
+  const activeResponse = allTpasQuery.data;
+  const isFetching = allTpasQuery.isFetching;
 
-  const isFetching =
-    allTpasQuery.isFetching || tpasByCodeQuery.isFetching || tpasByNameQuery.isFetching;
-
-  const handleResetFilter = () => {
-    setTpaFilter({ ...initialTpaFilter });
-    setAppliedTpaFilter({ ...initialTpaFilter });
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
     setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
 
-  const handleSearch = (nextFilter = tpaFilter) => {
-    if (
-      !nextFilter.criteria ||
-      (nextFilter.criteria === 'tpaCode' && !nextFilter.tpaCode.trim()) ||
-      (nextFilter.criteria === 'name' && !nextFilter.name.trim())
-    ) {
-      handleResetFilter();
-      return;
-    }
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
-    setAppliedTpaFilter({ ...nextFilter });
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
     setPaginationParams(prev => ({ ...prev, page: 0 }));
-  };
-
-  const applyHeaderSearch = (criteria: FilterCriteria, value: string) => {
-    const next = {
-      criteria,
-      tpaCode: criteria === 'tpaCode' ? value : '',
-      name: criteria === 'name' ? value : ''
-    };
-    setTpaFilter(next);
-    handleSearch(next);
-  };
+  }, [statusFilter]);
 
   const handlePageChange = (_event: any, newPage: number) => {
     setPaginationParams(prev => ({ ...prev, page: newPage }));
@@ -245,7 +205,6 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
 
       dispatch(TpaDefinitionService.util.invalidateTags(['TpaDefinition']));
       dispatch(NphiesPayerService.util.invalidateTags(['NphiesPayer']));
-      handleResetFilter();
       setOpenModal(false);
     } catch (err: any) {
       let serverMessage =
@@ -392,39 +351,22 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
     {
       key: 'tpaCode',
       title: <Translate>TPA Code</Translate>,
-      flexGrow: 2,
-      searchable: true,
-      searchPlaceholder: 'Search code',
-      searchValue: tpaFilter.tpaCode,
-      onSearchChange: (value: string) =>
-        setTpaFilter(prev => ({
-          ...prev,
-          criteria: 'tpaCode',
-          tpaCode: value,
-          name: ''
-        })),
-      onSearchSubmit: (value?: string) => applyHeaderSearch('tpaCode', value ?? tpaFilter.tpaCode)
+      width: 150,
+      ...headerSearch('tpaCode', 'Search code')
     },
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 3,
-      searchable: true,
-      searchPlaceholder: 'Search name',
-      searchValue: tpaFilter.name,
-      onSearchChange: (value: string) =>
-        setTpaFilter(prev => ({
-          ...prev,
-          criteria: 'name',
-          name: value,
-          tpaCode: ''
-        })),
-      onSearchSubmit: (value?: string) => applyHeaderSearch('name', value ?? tpaFilter.name)
+      width: 220,
+      ...headerSearch('name', 'Search name')
     },
     {
       key: 'guarantorType',
       title: <Translate>Guarantor Type</Translate>,
-      flexGrow: 2
+      width: 150,
+      ...headerSearch('guarantorType'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...guarantorTypeOptions]
     },
     {
       key: 'approvalCoverageCompany',
@@ -448,7 +390,16 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 1,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: TpaDefinition) => <span>{rowData.isActive ? 'Active' : 'Inactive'}</span>
     },
     {
@@ -458,83 +409,6 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
       render: (rowData: TpaDefinition) => iconsForActions(rowData)
     }
   ];
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        width="180px"
-        fieldName="criteria"
-        fieldType="select"
-        selectData={filterCriteriaOptions}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={tpaFilter}
-        setRecord={(updated: any) => {
-          const next = typeof updated === 'function' ? updated(tpaFilter) : updated;
-          const nextCriteria = (next?.criteria ?? '') as FilterCriteria;
-          if (!nextCriteria) {
-            handleResetFilter();
-            return;
-          }
-          setTpaFilter({
-            criteria: nextCriteria,
-            tpaCode: '',
-            name: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Criteria"
-        searchable={false}
-      />
-
-      {tpaFilter.criteria === 'tpaCode' && (
-        <MyInput
-          width="220px"
-          fieldName="tpaCode"
-          fieldType="text"
-          record={tpaFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(tpaFilter) : updated;
-            const nextCode = next?.tpaCode ?? '';
-            if (!nextCode.trim()) {
-              handleResetFilter();
-              return;
-            }
-            setTpaFilter(prev => ({ ...prev, tpaCode: nextCode }));
-          }}
-          showLabel={false}
-          placeholder="Search TPA Code"
-        />
-      )}
-
-      {tpaFilter.criteria === 'name' && (
-        <MyInput
-          width="220px"
-          fieldName="name"
-          fieldType="text"
-          record={tpaFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(tpaFilter) : updated;
-            const nextName = next?.name ?? '';
-            if (!nextName.trim()) {
-              handleResetFilter();
-              return;
-            }
-            setTpaFilter(prev => ({ ...prev, name: nextName }));
-          }}
-          showLabel={false}
-          placeholder="Search Name"
-        />
-      )}
-
-      <MyButton color="var(--deep-blue)" onClick={() => handleSearch()} width="80px">
-        Search
-      </MyButton>
-      <MyButton color="var(--primary-gray)" onClick={handleResetFilter} width="80px">
-        Clear
-      </MyButton>
-    </Form>
-  );
 
   return (
     <div className="payer-setup-section">
@@ -555,7 +429,6 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
             insuranceCompanyIds: rowData.insuranceCompanyIds ?? []
           })
         }
-        filters={filters()}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}

@@ -127,22 +127,58 @@ export const priceListSetupService = createApi({
      * ======================================================
      */
 
+    // Optional filters are ANDed by the backend; empty ones are left out
     getPriceListSetups: builder.query<
       PagedResult<PriceListSetup>,
-      PagedParams
+      PagedParams & {
+        facilityId?: number | string;
+        name?: string;
+        type?: string;
+        payerId?: number | string;
+        versionNumber?: number | string;
+        /** YYYY-MM-DD */
+        effectiveFrom?: string;
+        /** YYYY-MM-DD */
+        effectiveTo?: string;
+        currency?: string;
+        status?: string;
+      }
     >({
       query: ({
         page,
         size,
-        sort = 'id,asc'
-      }) => ({
-        url: '/api/setup/price-list-setups',
-        params: {
-          page,
-          size,
-          sort
-        }
-      }),
+        sort = 'id,asc',
+        facilityId,
+        name,
+        type,
+        payerId,
+        versionNumber,
+        effectiveFrom,
+        effectiveTo,
+        currency,
+        status
+      }) => {
+        const version = String(versionNumber ?? '').trim();
+
+        return {
+          url: '/api/setup/price-list-setups',
+          params: {
+            page,
+            size,
+            sort,
+            facilityId: facilityId || undefined,
+            name: name?.trim() || undefined,
+            type: type || undefined,
+            payerId: payerId || undefined,
+            // A version that is not a whole number would be rejected, so it is left out
+            versionNumber: /^\d+$/.test(version) ? version : undefined,
+            effectiveFrom: effectiveFrom || undefined,
+            effectiveTo: effectiveTo || undefined,
+            currency: currency || undefined,
+            status: status || undefined
+          }
+        };
+      },
 
       transformResponse: (
         response:

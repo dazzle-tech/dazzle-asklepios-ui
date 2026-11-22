@@ -28,6 +28,21 @@ export type TaxPagedParams = {
   timestamp?: number;
 };
 
+/** Optional list filters (header filters on the Tax Setup table) */
+export type TaxListFilters = {
+  code?: string;
+  name?: string;
+  taxType?: string;
+  value?: string | number;
+  calculationType?: string;
+  applicableOn?: string;
+  citizenCategory?: string;
+  applyOnPatientCopayment?: boolean | string;
+  applyOnClaimShare?: boolean | string;
+  isDefault?: boolean | string;
+  active?: boolean;
+};
+
 export type TaxTextFilterParams =
   TaxPagedParams & {
     value: string;
@@ -206,27 +221,46 @@ export const taxService =
         getTaxesByFacility:
           builder.query<
             PagedResult<Tax>,
-            TaxPagedParams
+            TaxPagedParams & { filters?: TaxListFilters }
           >({
+            // Optional filters are ANDed by the backend; empty ones are left out
             query: ({
               facilityId,
               page,
               size,
-              sort = 'id,desc'
-            }) => ({
-              url:
-                '/api/setup/tax',
+              sort = 'id,desc',
+              filters
+            }) => {
+              const value = String(filters?.value ?? '').trim();
+              const bool = (v?: boolean | string) => (v === '' || v === undefined ? undefined : v);
 
-              method:
-                'GET',
+              return {
+                url:
+                  '/api/setup/tax',
 
-              params: {
-                facilityId,
-                page,
-                size,
-                sort
-              }
-            }),
+                method:
+                  'GET',
+
+                params: {
+                  facilityId,
+                  page,
+                  size,
+                  sort,
+                  code: filters?.code?.trim() || undefined,
+                  name: filters?.name?.trim() || undefined,
+                  taxType: filters?.taxType || undefined,
+                  // A value that is not a number would be rejected, so it is left out
+                  value: value && !isNaN(Number(value)) ? value : undefined,
+                  calculationType: filters?.calculationType || undefined,
+                  applicableOn: filters?.applicableOn || undefined,
+                  citizenCategory: filters?.citizenCategory || undefined,
+                  applyOnPatientCopayment: bool(filters?.applyOnPatientCopayment),
+                  applyOnClaimShare: bool(filters?.applyOnClaimShare),
+                  isDefault: bool(filters?.isDefault),
+                  active: filters?.active
+                }
+              };
+            },
 
             transformResponse: (
               response:
