@@ -4,7 +4,7 @@ import React, {
   useState
 } from 'react';
 
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 
 import {
   MdDelete,
@@ -18,7 +18,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -31,17 +30,10 @@ import {
 import { notify } from '@/utils/uiReducerActions';
 
 import { formatEnumString } from '@/utils';
-import dayjs from 'dayjs';
 
 import {
   useDeleteBillingRuleMutation,
   useGetBillingRulesQuery,
-  useLazyGetBillingRulesByCreatedDateQuery,
-  useLazyGetBillingRulesByDefaultQuery,
-  useLazyGetBillingRulesByItemTypeQuery,
-  useLazyGetBillingRulesByNameQuery,
-  useLazyGetBillingRulesByPaymentTypeQuery,
-  useLazyGetBillingRulesByTriggerQuery,
   useSetBillingRuleDefaultMutation
 } from '@/services/setup/billingRuleSetup/billingRuleSetupService';
 
@@ -61,29 +53,17 @@ import AddEditBillingRuleSetup from './AddEditBillingRuleSetup';
 
 import './styles.less';
 
-type FilterState = {
-  filter: string;
-  value: any;
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  name: '',
+  billingItemType: '',
+  paymentType: '',
+  billingTrigger: '',
+  isDefault: '',
+  createdDate: ''
 };
-
-const initialFilterState: FilterState = {
-  filter: '',
-  value: ''
-};
-
-const filterFields = [
-  { label: 'Name', value: 'name' },
-  { label: 'Item Type', value: 'billingItemType' },
-  { label: 'Payment Type', value: 'paymentType' },
-  { label: 'Billing Trigger', value: 'billingTrigger' },
-  { label: 'Default', value: 'isDefault' },
-  { label: 'Created Date', value: 'createdDate' }
-];
-
-const isEmptyFilterValue = (value: unknown) =>
-  value === null ||
-  value === undefined ||
-  (typeof value === 'string' && value.trim() === '');
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const normalizeBillingRuleError = (
   error: any
@@ -136,17 +116,9 @@ const BillingRuleSetup: React.FC = () => {
       : 1200
   );
 
-  // Filter being edited in the filter bar, and the one the table currently shows
-  const [recordOfFilter, setRecordOfFilter] =
-    useState<FilterState>(initialFilterState);
-  const [activeFilter, setActiveFilter] =
-    useState<FilterState>(initialFilterState);
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<BillingRuleModel[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
-  // Unfiltered pagination (main list)
   const [
     paginationParams,
     setPaginationParams
@@ -157,21 +129,7 @@ const BillingRuleSetup: React.FC = () => {
     timestamp: Date.now()
   });
 
-  // Filtered pagination (independent state)
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
-  });
-
-  const [fetchByName] = useLazyGetBillingRulesByNameQuery();
-  const [fetchByItemType] = useLazyGetBillingRulesByItemTypeQuery();
-  const [fetchByPaymentType] = useLazyGetBillingRulesByPaymentTypeQuery();
-  const [fetchByTrigger] = useLazyGetBillingRulesByTriggerQuery();
-  const [fetchByDefault] = useLazyGetBillingRulesByDefaultQuery();
-  const [fetchByCreatedDate] = useLazyGetBillingRulesByCreatedDateQuery();
-
-  // Main list: all billing rules
+  // Billing rules with the applied header filters
   const {
     data: billingRulePage,
     isFetching,
@@ -180,7 +138,9 @@ const BillingRuleSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
-    timestamp: paginationParams.timestamp
+    timestamp: paginationParams.timestamp,
+    ...appliedFilters,
+    billingItemType: appliedFilters.billingItemType as BillingItemType | ''
   });
 
   const [
@@ -204,13 +164,11 @@ const BillingRuleSetup: React.FC = () => {
     [];
 
   const tableData = useMemo(
-    () => (isFiltered ? filteredData : billingRulePage?.data ?? []),
-    [isFiltered, filteredData, billingRulePage?.data]
+    () => billingRulePage?.data ?? [],
+    [billingRulePage?.data]
   );
 
-  const totalCount = isFiltered
-    ? filteredTotal
-    : billingRulePage?.totalCount ?? 0;
+  const totalCount = billingRulePage?.totalCount ?? 0;
 
   useEffect(() => {
     dispatch(setPageCode('BillingRuleSetup'));
@@ -242,110 +200,39 @@ const BillingRuleSetup: React.FC = () => {
     };
   }, []);
 
-  // ===== Filtering =====
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page: number,
-    size: number,
-    sort: string
-  ) => {
-    const pageParams = { page, size, sort };
-
-    if (fieldName === 'name') {
-      return await fetchByName({ ...pageParams, name: String(value).trim() }).unwrap();
-    } else if (fieldName === 'billingItemType') {
-      return await fetchByItemType({ ...pageParams, billingItemType: value }).unwrap();
-    } else if (fieldName === 'paymentType') {
-      return await fetchByPaymentType({ ...pageParams, paymentType: value }).unwrap();
-    } else if (fieldName === 'billingTrigger') {
-      return await fetchByTrigger({ ...pageParams, billingTrigger: value }).unwrap();
-    } else if (fieldName === 'isDefault') {
-      return await fetchByDefault({ ...pageParams, isDefault: value === true || value === 'true' }).unwrap();
-    } else if (fieldName === 'createdDate') {
-      // Whole selected day in the user's time zone
-      const dayStart = dayjs(value).startOf('day');
-      return await fetchByCreatedDate({
-        ...pageParams,
-        from: dayStart.toISOString(),
-        to: dayStart.add(1, 'day').toISOString()
-      }).unwrap();
-    }
-
-    return undefined;
+  // ===== Header filters =====
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
 
-  // Reset to main list
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setActiveFilter(initialFilterState);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilterPagination(prev => ({ ...prev, page: 0 }));
-    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-  };
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
-  // Apply/Clear filters
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!fieldName || isEmptyFilterValue(value)) {
-      resetToUnfiltered();
-      return;
-    }
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
-    setIsFilterLoading(true);
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setActiveFilter({ filter: fieldName, value });
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: normalizeBillingRuleError(error),
-          sev: 'error'
-        })
-      );
-    } finally {
-      setIsFilterLoading(false);
-    }
-  };
-
-  // Reload whatever the table shows after add/edit/delete/default changes
+  // Reload the table after add/edit/delete/default changes
   const refreshList = async () => {
-    if (isFiltered) {
-      await handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        filterPagination.page
-      );
-      return;
-    }
-
     await refetch();
-  };
-
-  const handleSearch = () => {
-    handleFilterChange(
-      recordOfFilter.filter,
-      recordOfFilter.value
-    );
   };
 
   const handleNew = () => {
     setSelectedRule({
       ...newBillingRule,
       billingItemType:
-        (isFiltered &&
-          activeFilter.filter === 'billingItemType' &&
-          (activeFilter.value as BillingItemType)) ||
+        (appliedFilters.billingItemType as BillingItemType) ||
         'SERVICE'
     });
 
@@ -454,15 +341,6 @@ const BillingRuleSetup: React.FC = () => {
     _: unknown,
     newPage: number
   ) => {
-    if (isFiltered) {
-      handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        newPage
-      );
-      return;
-    }
-
     setPaginationParams(previous => ({
       ...previous,
       page: newPage,
@@ -478,16 +356,6 @@ const BillingRuleSetup: React.FC = () => {
       event.target.value
     );
 
-    if (isFiltered) {
-      handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        0,
-        newSize
-      );
-      return;
-    }
-
     setPaginationParams(previous => ({
       ...previous,
       page: 0,
@@ -500,7 +368,8 @@ const BillingRuleSetup: React.FC = () => {
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 3
+      width: 220,
+      ...headerSearch('name')
     },
 
     {
@@ -509,7 +378,8 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Item Type
         </Translate>,
-      flexGrow: 2,
+      width: 170,
+      ...headerSelect('billingItemType', itemTypeOptions),
 
       render: (
         row: BillingRuleModel
@@ -524,7 +394,8 @@ const BillingRuleSetup: React.FC = () => {
     {
       key: 'paymentType',
       title: <Translate>Payment Type</Translate>,
-      flexGrow: 2,
+      width: 160,
+      ...headerSelect('paymentType', paymentTypeOptions),
       render: (row: BillingRuleModel) =>
         row.paymentType
           ? formatEnumString(row.paymentType)
@@ -537,7 +408,8 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Billing Trigger
         </Translate>,
-      flexGrow: 2,
+      width: 190,
+      ...headerSelect('billingTrigger', billingTriggerOptions),
 
       render: (
         row: BillingRuleModel
@@ -557,6 +429,10 @@ const BillingRuleSetup: React.FC = () => {
           Default
         </Translate>,
       width: 110,
+      ...headerSelect('isDefault', [
+        { label: 'Yes', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
       align: 'center' as const,
 
       render: (
@@ -577,7 +453,9 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Created Date
         </Translate>,
-      flexGrow: 2,
+      width: 190,
+      ...headerSearch('createdDate'),
+      searchType: 'date' as const,
 
       render: (
         row: BillingRuleModel
@@ -645,97 +523,6 @@ const BillingRuleSetup: React.FC = () => {
     }
   ];
 
-  const renderFilterValueInput = () => {
-    const selectInput = (
-      options: { label: string; value: any }[]
-    ) => (
-      <MyInput
-        width={220}
-        fieldName="value"
-        fieldLabel=""
-        fieldType="select"
-        selectData={options}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        searchable={false}
-      />
-    );
-
-    switch (recordOfFilter.filter) {
-      case 'billingItemType':
-        return selectInput(itemTypeOptions);
-      case 'paymentType':
-        return selectInput(paymentTypeOptions);
-      case 'billingTrigger':
-        return selectInput(billingTriggerOptions);
-      case 'isDefault':
-        return selectInput([
-          { label: 'Yes', value: true },
-          { label: 'No', value: false }
-        ]);
-      case 'createdDate':
-        return (
-          <MyInput
-            width={220}
-            fieldName="value"
-            fieldLabel=""
-            fieldType="date"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-          />
-        );
-      default:
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-            enterClick={handleSearch}
-          />
-        );
-    }
-  };
-
-  const filtersBar = (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: FilterState) =>
-          setRecordOfFilter({
-            filter: updated.filter,
-            value: ''
-          })
-        }
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {renderFilterValueInput()}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={handleSearch}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   const selectedRowClass = (
     row: BillingRuleModel
   ) =>
@@ -757,15 +544,14 @@ const BillingRuleSetup: React.FC = () => {
       <MyTable
         data={tableData}
         totalCount={totalCount}
-        loading={isFiltered ? isFilterLoading : isFetching}
+        loading={isFetching}
         columns={tableColumns}
-        filters={filtersBar}
         rowClassName={selectedRowClass}
         onRowClick={row =>
           setSelectedRule(row)
         }
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={
           handleRowsPerPageChange

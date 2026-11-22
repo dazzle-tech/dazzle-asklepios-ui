@@ -41,8 +41,11 @@ export interface ColumnConfig {
   /** Plain cell value used in exports when the rendered cell is not text. */
   exportValue?: (rowData: any, rowIndex?: number) => ReactNode;
   searchable?: boolean;
-  /** 'select' renders a dropdown that applies on change (e.g. a status filter). */
-  searchType?: 'text' | 'select';
+  /**
+   * 'select' renders a dropdown that applies on change (e.g. a status filter).
+   * 'date' renders a date picker that applies on change; the value is YYYY-MM-DD ('' when cleared).
+   */
+  searchType?: 'text' | 'select' | 'date';
   searchOptions?: { label: string; value: string }[];
   searchPlaceholder?: string;
   searchValue?: string;
@@ -269,7 +272,21 @@ const MyTable: React.FC<MyTableProps> = ({
                             ))}
                           </select>
                         )}
-                        {col.searchable && col.searchType !== 'select' && (
+                        {col.searchable && col.searchType === 'date' && (
+                          <input
+                            type="date"
+                            className="my-table-header-search-input"
+                            value={col.searchValue ?? ''}
+                            onClick={event => event.stopPropagation()}
+                            onMouseDown={event => event.stopPropagation()}
+                            onKeyDown={event => event.stopPropagation()}
+                            onChange={event => {
+                              col.onSearchChange?.(event.target.value);
+                              col.onSearchSubmit?.(event.target.value);
+                            }}
+                          />
+                        )}
+                        {col.searchable && col.searchType !== 'select' && col.searchType !== 'date' && (
                           <input
                             className="my-table-header-search-input"
                             value={col.searchValue ?? ''}
