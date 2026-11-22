@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Loader, Modal, Panel, Whisper, Tooltip } from 'rsuite';
+import { Loader, Modal, Panel, Whisper, Tooltip } from 'rsuite';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdDelete, MdModeEdit, MdNotificationsActive } from 'react-icons/md';
@@ -24,6 +23,14 @@ import { newMobileAppConfigResponseVM } from '@/types/model-types-constructor-ne
 import AddEditMobileAppConfig from './AddEditMobileAppConfig';
 import './styles.less';
 
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// The page loads every configuration at once, so the filters are combined with AND here.
+const emptyHeaderFilters = { configKey: '', configType: '', configValue: '', description: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
+const valuesOf = (row: MobileAppConfigResponseVM) =>
+  row.configValues?.length ? row.configValues : row.configValue ? [row.configValue] : [];
+
 const MobileAppConfiguration = () => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
@@ -34,7 +41,8 @@ const MobileAppConfiguration = () => {
   const [selected, setSelected] = useState<MobileAppConfigResponseVM>({
     ...newMobileAppConfigResponseVM,
   });
-  const [filtersState, setFiltersState] = useState({ configKey: '' });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   const { data, isFetching, refetch } = useGetAllMobileAppConfigsQuery();
   const [deleteConfig] = useDeleteMobileAppConfigMutation();
@@ -52,10 +60,47 @@ const MobileAppConfiguration = () => {
   }, [dispatch]);
 
   const rows = useMemo(() => {
-    const list = data ?? [];
-    if (!filtersState.configKey) return list;
-    return list.filter(row => row.configKey === filtersState.configKey);
-  }, [data, filtersState.configKey]);
+    const value = appliedFilters.configValue.trim().toLowerCase();
+    const description = appliedFilters.description.trim().toLowerCase();
+    return (data ?? []).filter(
+      row =>
+        (!appliedFilters.configKey || row.configKey === appliedFilters.configKey) &&
+        (!appliedFilters.configType || row.configType === appliedFilters.configType) &&
+        (!value || valuesOf(row).some(v => String(v).toLowerCase().includes(value))) &&
+        (!description || (row.description ?? '').toLowerCase().includes(description))
+    );
+  }, [data, appliedFilters]);
+
+  // Types that exist in the list
+  const typeOptions = useMemo(
+    () =>
+      Array.from(new Set((data ?? []).map(row => row.configType).filter(Boolean))).map(type => ({
+        label: String(type),
+        value: String(type)
+      })),
+    [data]
+  );
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
   const isSelected = (rowData: MobileAppConfigResponseVM) =>
     rowData && selected && rowData.id === selected.id ? 'selected-row' : '';
@@ -103,19 +148,23 @@ const MobileAppConfiguration = () => {
   };
 
   const columns = [
-    { key: 'configKey', title: 'Key', flexGrow: 2 },
-    { key: 'configType', title: 'Type', flexGrow: 1 },
+    {
+      key: 'configKey',
+      title: 'Key',
+      width: 220,
+      ...headerSelect(
+        'configKey',
+        (enumOptions ?? []).map(option => ({ label: option.value, value: option.value }))
+      )
+    },
+    { key: 'configType', title: 'Type', width: 130, ...headerSelect('configType', typeOptions) },
     {
       key: 'configValue',
       title: 'Value',
-      flexGrow: 3,
+      width: 300,
+      ...headerSearch('configValue'),
       render: (row: MobileAppConfigResponseVM) => {
-        const values =
-          row.configValues?.length
-            ? row.configValues
-            : row.configValue
-              ? [row.configValue]
-              : [];
+        const values = valuesOf(row);
         if (row.configType === 'IMAGE') {
           return (
             <div className="mobile-app-config-images-cell">
@@ -141,7 +190,8 @@ const MobileAppConfiguration = () => {
     {
       key: 'description',
       title: 'Description',
-      flexGrow: 2,
+      width: 240,
+      ...headerSearch('description'),
       render: (row: MobileAppConfigResponseVM) => (
         <Whisper placement="top" speaker={<Tooltip>{row.description}</Tooltip>}>
           <span>
@@ -195,25 +245,6 @@ const MobileAppConfiguration = () => {
         loading={isFetching}
         columns={columns}
         onRowClick={row => setSelected(row)}
-        filters={
-          <Form layout="inline" fluid className="container-of-filters-mobile-app-config">
-            <MyInput
-              fieldName="configKey"
-              fieldLabel="Key"
-              fieldType="select"
-              selectData={enumOptions}
-              selectDataLabel="value"
-              selectDataValue="value"
-              placeholder="Key"
-              record={filtersState}
-              setRecord={setFiltersState}
-              column
-            />
-            <MyButton color="red" onClick={() => setFiltersState({ configKey: '' })}>
-              Reset
-            </MyButton>
-          </Form>
-        }
         tableButtons={
           <div className="container-of-mobile-app-config-buttons">
             <MyButton

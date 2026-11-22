@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Panel, Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
+import { Panel } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditConfiguration from './AddEditConfiguration';
@@ -12,17 +11,33 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useGetConfigurationsQuery,
   useUpdateConfigurationMutation,
-  useLazyFilterByValueTypeQuery,
-  useLazyFilterByReferenceTypeQuery,
-  useLazyQuickSearchConfigurationsQuery,
 } from '@/services/setup/systemConfiguration/systemConfigurationService';
 import { Configuration, ConfigurationUser } from '@/types/model-types-new';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { formatEnumString } from '@/utils';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { useEnumOptions } from '@/services/enumsApi';
+
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  scopeType: '',
+  facilityId: '',
+  key: '',
+  valueType: '',
+  value: '',
+  referenceType: '',
+  description: ''
+};
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
+const levelOptions = [
+  { label: 'Organization', value: 'ORGANIZATION' },
+  { label: 'Facility', value: 'FACILITY' },
+  { label: 'User', value: 'USER' }
+];
 
 const SystemConfiguration = () => {
   const dispatch = useAppDispatch();
@@ -31,48 +46,65 @@ const SystemConfiguration = () => {
   const [popupOpen, setPopupOpen] = useState<boolean>(false);
   const [openConfirmDeactivateReactivate, setOpenConfirmDeactivateReactivate] = useState(false);
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState<'deactivate' | 'reactivate'>('deactivate');
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
 
   // Pagination
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 5, sort: 'id,asc', timestamp: Date.now() });
-  const [filterPagination, setFilterPagination] = useState({ page: 0, size: 5, sort: 'id,asc' });
 
-  // Quick Search
-  const [quickSearchValue, setQuickSearchValue] = useState('');
-
-  // Advanced Search
-  const [advancedFilterRecord, setAdvancedFilterRecord] = useState({ filter: '', value: '' });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   // Data
-  const { data: configListResponse, refetch, isFetching } = useGetConfigurationsQuery(paginationParams);
+  const { data: configListResponse, refetch, isFetching } = useGetConfigurationsQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
+  const { data: facilityList } = useGetAllFacilitiesQuery({});
   const [updateConfiguration] = useUpdateConfigurationMutation();
-
-  // Lazy Queries for server-side filtering
-  const [fetchByValueType] = useLazyFilterByValueTypeQuery();
-  const [fetchByReferenceType] = useLazyFilterByReferenceTypeQuery();
-  const [fetchQuickSearch] = useLazyQuickSearchConfigurationsQuery();
 
   // Enums
   const configurationValueTypeEnumList = useEnumOptions('ConfigurationValueType');
   const configurationreferenceTypeEnumList = useEnumOptions('ConfigurationReferenceType');
+  const configurationKeyEnumList = useEnumOptions('ConfigurationKeys');
 
   // Page Header
   dispatch(setPageCode('SystemConfiguration'));
   dispatch(setDivContent('System Configuration'));
 
-  // Filtered list
-  const [filteredList, setFilteredList] = useState<Configuration[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [isFiltered, setIsFiltered] = useState(false);
+  const totalCount = configListResponse?.totalCount ?? 0;
 
-  const totalCount = isFiltered ? filteredTotal : configListResponse?.totalCount ?? 0;
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
 
-  const filterFields = [
-    { label: 'Value Type', value: 'valueType' },
-    { label: 'Reference Type', value: 'referenceType' },
-  ];
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  const facilityOptions = (facilityList ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }));
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   // Row selected
   const isSelected = (rowData: Configuration) => rowData?.id === selectedConfig?.id ? 'selected-row' : '';
@@ -115,144 +147,38 @@ const SystemConfiguration = () => {
   };
 
   const tableColumns = [
-    { key: 'scopeType', title: 'Level', render: (rowData: Configuration) => <p>{levelOf(rowData)}</p> },
-    { key: 'facilityId', title: 'Facility', render: (rowData: Configuration) => <p>{rowData?.facility?.name}</p> },
+    { key: 'scopeType', title: 'Level', width: 140, ...headerSelect('scopeType', levelOptions), render: (rowData: Configuration) => <p>{levelOf(rowData)}</p> },
+    { key: 'facilityId', title: 'Facility', width: 170, ...headerSelect('facilityId', facilityOptions), render: (rowData: Configuration) => <p>{rowData?.facility?.name}</p> },
     {
       key: 'user',
       title: 'User',
+      width: 160,
       render: (rowData: Configuration) => (
         <p>{(rowData.users ?? []).map(userLabel).filter(Boolean).join(', ')}</p>
       )
     },
-    { key: 'key', title: 'Key', render: (rowData: Configuration) => formatEnumString(rowData.key) },
-    { key: 'valueType', title: 'Value Type', render: (rowData: Configuration) => formatEnumString(rowData.valueType) },
-    { key: 'value', title: 'Value' },
-    { key: 'referenceType', title: 'Reference Type', render: (rowData: Configuration) => formatEnumString(rowData.referenceType) },
-    { key: 'description', title: 'Description' },
+    { key: 'key', title: 'Key', width: 200, ...headerSelect('key', configurationKeyEnumList ?? []), render: (rowData: Configuration) => formatEnumString(rowData.key) },
+    { key: 'valueType', title: 'Value Type', width: 140, ...headerSelect('valueType', configurationValueTypeEnumList ?? []), render: (rowData: Configuration) => formatEnumString(rowData.valueType) },
+    { key: 'value', title: 'Value', width: 150, ...headerSearch('value') },
+    { key: 'referenceType', title: 'Reference Type', width: 160, ...headerSelect('referenceType', configurationreferenceTypeEnumList ?? []), render: (rowData: Configuration) => formatEnumString(rowData.referenceType) },
+    { key: 'description', title: 'Description', width: 200, ...headerSearch('description') },
+    {
+      key: 'isActive',
+      title: 'Status',
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: (rowData: Configuration) => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
+    },
     { key: 'icons', title: '', render: rowData => iconsForActions(rowData) }
   ];
-
-  // advanced search
-  const handleAdvancedSearch = async (page = 0, size = filterPagination.size) => {
-    try {
-      if (!advancedFilterRecord.filter || !advancedFilterRecord.value) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-
-      const params = { page, size, sort: filterPagination.sort };
-      let response;
-
-      if (advancedFilterRecord.filter === 'valueType') {
-        response = await fetchByValueType({ valueType: advancedFilterRecord.value, ...params }).unwrap();
-      } else if (advancedFilterRecord.filter === 'referenceType') {
-        response = await fetchByReferenceType({ referenceType: advancedFilterRecord.value, ...params }).unwrap();
-      }
-
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size });
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to filter Configurations', sev: 'error' }));
-      setIsFiltered(false);
-    }
-  };
-
-
-  // quick search
-  const handleQuickSearch = async (page = 0, size = filterPagination.size) => {
-    if (!quickSearchValue || quickSearchValue.trim().length < 3) {
-      dispatch(notify({ msg: 'Please enter at least 3 characters', sev: 'warning' }));
-      return;
-    }
-
-    try {
-      const response = await fetchQuickSearch({
-        searchText: quickSearchValue,
-        page,
-        size,
-        sort: filterPagination.sort
-      }).unwrap();
-
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size });
-
-      setAdvancedFilterRecord({ filter: '', value: '' });
-      setShowAdvanced(false);
-    } catch (error) {
-      dispatch(notify({ msg: 'Quick search failed', sev: 'error' }));
-    }
-  };
-
-  const filters = () => (
-    <div className="my-table-filters">
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
-        <MyInput
-          fieldName="value"
-          record={{ value: quickSearchValue }}
-          setRecord={rec => setQuickSearchValue(rec.value)}
-          showLabel={false}
-          placeholder="Search"
-          disabled={showAdvanced}
-        />
-
-      </Form>
-
-      <AdvancedSearchFilters
-        showAdvanced={showAdvanced}
-        setShowAdvanced={setShowAdvanced}
-        searchFilter={true}
-        content={
-          <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
-            <MyInput
-              selectDataValue="value"
-              selectDataLabel="label"
-              selectData={filterFields}
-              fieldName="filter"
-              fieldType="select"
-              record={advancedFilterRecord}
-              setRecord={updated => setAdvancedFilterRecord({ ...advancedFilterRecord, filter: updated.filter, value: '' })}
-              showLabel={false}
-              placeholder="Select Filter"
-              searchable={false}
-            />
-            {advancedFilterRecord.filter === 'valueType' ? (
-              <MyInput
-                fieldName="value"
-                fieldType="select"
-                selectData={configurationValueTypeEnumList ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={advancedFilterRecord}
-                setRecord={setAdvancedFilterRecord}
-                searchable={false}
-                showLabel={false}
-              />
-            ) : advancedFilterRecord.filter === 'referenceType' ? (
-              <MyInput
-                fieldName="value"
-                fieldType="select"
-                selectData={configurationreferenceTypeEnumList ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={advancedFilterRecord}
-                setRecord={setAdvancedFilterRecord}
-                searchable={false}
-                showLabel={false}
-              />
-            ) : (
-              <MyInput fieldName="value" record={advancedFilterRecord} setRecord={setAdvancedFilterRecord} showLabel={false} placeholder='Value' />
-            )}
-          </Form>
-        }
-        searchOnClick={showAdvanced ? () => handleAdvancedSearch(0, filterPagination.size) : () => handleQuickSearch(0, filterPagination.size)}
-      />
-    </div>
-  );
 
   const handleNew = () => {
     setSelectedConfig(null);
@@ -284,28 +210,12 @@ const SystemConfiguration = () => {
   };
 
   const handlePageChange = (event, newPage) => {
-    if (isFiltered) {
-      if (showAdvanced) {
-        handleAdvancedSearch(newPage, filterPagination.size);
-      } else {
-        handleQuickSearch(newPage, filterPagination.size);
-      }
-    } else {
-      setPaginationParams({ ...paginationParams, page: newPage });
-    }
+    setPaginationParams({ ...paginationParams, page: newPage });
   };
 
   const handleRowsPerPageChange = e => {
     const newSize = Number(e.target.value);
-    if (isFiltered) {
-      if (showAdvanced) {
-        handleAdvancedSearch(filterPagination.page, newSize);
-      } else {
-        handleQuickSearch(filterPagination.page, newSize);
-      }
-    } else {
-      setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
-    }
+    setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
   };
 
   // Effects
@@ -328,17 +238,16 @@ const SystemConfiguration = () => {
         height={450}
         rowClassName={isSelected}
         totalCount={totalCount}
-        data={isFiltered ? filteredList : configListResponse?.data ?? []}
+        data={configListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
         onRowClick={rowData => setSelectedConfig(rowData)}
 
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
 
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        filters={filters()}
         tableButtons={
           <div className="container-of-add-new-button">
             <MyButton prefixIcon={() => <AddOutlineIcon />} color="var(--deep-blue)" onClick={handleNew} width="109px">

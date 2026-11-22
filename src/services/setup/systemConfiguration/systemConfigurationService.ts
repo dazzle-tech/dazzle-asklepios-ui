@@ -30,10 +30,36 @@ export const systemConfigurationService = createApi({
   endpoints: (builder) => ({
 
     // GET /api/setup/configuration?page=&size=&sort=
-    getConfigurations: builder.query<PagedResult<Configuration>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getConfigurations: builder.query<
+      PagedResult<Configuration>,
+      PagedParams & {
+        timestamp?: number;
+        scopeType?: string;
+        facilityId?: number | string;
+        key?: string;
+        valueType?: string;
+        value?: string;
+        referenceType?: string;
+        description?: string;
+        isActive?: boolean;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', scopeType, facilityId, key, valueType, value, referenceType, description, isActive }) => ({
         url: '/api/setup/configuration',
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          scopeType: scopeType || undefined,
+          facilityId: facilityId || undefined,
+          key: key || undefined,
+          valueType: valueType || undefined,
+          value: value?.trim() || undefined,
+          referenceType: referenceType || undefined,
+          description: description?.trim() || undefined,
+          isActive,
+        },
       }),
       transformResponse: (response: Configuration[], meta): PagedResult<Configuration> => {
         const headers = meta?.response?.headers;

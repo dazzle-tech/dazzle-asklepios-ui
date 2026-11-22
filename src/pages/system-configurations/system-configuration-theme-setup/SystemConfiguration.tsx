@@ -42,6 +42,11 @@ const fontOptions = [
   { label: 'Comic Sans MS', value: 'Comic Sans MS' }
 ];
 
+// Header filters: draft values typed in the inputs, applied on Enter.
+// The settings are a fixed list, so the filters are combined with AND here.
+const emptyHeaderFilters = { label: '', key: '', value: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
 const SystemConfiguration = () => {
   const dispatch = useAppDispatch();
 
@@ -54,7 +59,8 @@ const SystemConfiguration = () => {
   const [uploadSidebarLogoDark] = useUploadSidebarLogoDarkMutation();
   const [uploadPrescriptionStamp] = useUploadPrescriptionStampMutation();
 
-  const [searchTerm, setSearchTerm] = useState({ value: '' });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
   const [selectedRow, setSelectedRow] = useState<ConfigRow | null>(null);
   const [open, setOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<{ value: string }>({ value: '' });
@@ -143,19 +149,32 @@ const SystemConfiguration = () => {
   }, [data]);
 
   const tableData = useMemo(() => {
-    const value = searchTerm.value?.toLowerCase();
-
-    if (!value) {
-      return allRows;
-    }
+    const label = appliedFilters.label.trim().toLowerCase();
+    const key = appliedFilters.key.trim().toLowerCase();
+    const value = appliedFilters.value.trim().toLowerCase();
 
     return allRows.filter(
       row =>
-        row.label.toLowerCase().includes(value) ||
-        row.key.toLowerCase().includes(value) ||
-        String(row.value ?? '').toLowerCase().includes(value)
+        (!label || row.label.toLowerCase().includes(label)) &&
+        (!key || row.key.toLowerCase().includes(key)) &&
+        (!value || String(row.value ?? '').toLowerCase().includes(value))
     );
-  }, [allRows, searchTerm.value]);
+  }, [allRows, appliedFilters]);
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   const openEditModal = (row: ConfigRow) => {
     setSelectedRow(row);
@@ -275,17 +294,20 @@ const SystemConfiguration = () => {
     {
       key: 'label',
       title: 'Setting',
-      flexGrow: 3
+      width: 220,
+      ...headerSearch('label')
     },
     {
       key: 'key',
       title: 'Key',
-      flexGrow: 3
+      width: 220,
+      ...headerSearch('key')
     },
     {
       key: 'value',
       title: 'Current Value',
-      flexGrow: 6,
+      width: 360,
+      ...headerSearch('value'),
       render: (row: ConfigRow) => renderValue(row)
     },
     {
@@ -295,23 +317,6 @@ const SystemConfiguration = () => {
       render: (row: ConfigRow) => iconsForActions(row)
     }
   ];
-
-  const filters = () => (
-    <div className="container-of-header-actions-medication-matrix">
-      <Form layout="inline" className="form-medication-matrix">
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={searchTerm}
-          setRecord={setSearchTerm}
-          showLabel={false}
-          placeholder="Search by Setting"
-          width="220px"
-          height={32}
-        />
-      </Form>
-    </div>
-  );
 
   const handleSave = async () => {
     if (!selectedRow) return;
@@ -523,7 +528,6 @@ const SystemConfiguration = () => {
         data={tableData}
         loading={isFetching}
         columns={tableColumns}
-        filters={filters()}
         totalCount={tableData.length}
       />
 

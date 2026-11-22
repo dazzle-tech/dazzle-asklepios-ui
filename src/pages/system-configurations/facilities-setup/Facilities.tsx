@@ -1,6 +1,5 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -9,20 +8,20 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useAddFacilityMutation,
   useDeleteFacilityMutation,
-  useGetAllFacilitiesQuery,
+  useSearchFacilitiesQuery,
   useUpdateFacilityMutation
 } from '@/services/security/facilityService';
 import { ApDepartment } from '@/types/model-types';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { CreateFacility, Facility } from '@/types/model-types-new';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { addFilterToListRequest, fromCamelCaseToDBName, formatEnumString } from '@/utils';
+import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';  
 import { MdDelete, MdModeEdit } from 'react-icons/md';
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import MyTab from '@/components/MyTab';
 import { Box } from '@mui/material';
 import AddEditFacility from './AddEditFacility';
@@ -33,6 +32,11 @@ import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import TranslationModal from '@/components/TranslationModal';
 import ConfigurationTab from './tabs/FacilityConfigration';
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = { code: '', name: '', type: '', emailAddress: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const tenant = useAppSelector(state => state.auth?.tenant);
@@ -43,7 +47,11 @@ const Facilities = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openConfirmDeleteModel, setOpenConfirmDeleteModel] = useState<boolean>(false);
   const [load, setLoad] = useState<boolean>(false);
-  const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ name: '' });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
   // Initialize list request with default filters
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
    const [translationFields, setTranslationFields] = useState<
@@ -55,7 +63,7 @@ const Facilities = () => {
     data: facilityListResponse,
     refetch: refetchFacility,
     isFetching
-  } = useGetAllFacilitiesQuery({});
+  } = useSearchFacilitiesQuery({ ...appliedFilters, isActive: activeFilter });
   // Save Facility
   const [saveFacility, saveFacilityMutation] = useAddFacilityMutation();
   // Update Facility
@@ -67,8 +75,9 @@ const Facilities = () => {
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
-  const totalCount = facilityListResponse?.extraNumeric ?? 0;
+  const totalCount = facilityListResponse?.length ?? 0;
   const DayOfWeek = useEnumOptions('DayOfWeek');
+  const facilityTypeOptions = useEnumOptions('FacilityType');
 
   // Effects
   useEffect(() => {
@@ -83,9 +92,10 @@ const Facilities = () => {
     }
   }, [saveFacilityMutation.data]);
 
+  // Changing the status filter starts again from the first page
   useEffect(() => {
-    handleFilterChange('facilityName', recordOfSearchForFacility['facilityName']);
-  }, [recordOfSearchForFacility]);
+    setListRequest(prev => ({ ...prev, pageNumber: 1 }));
+  }, [statusFilter]);
 
 
 
@@ -356,45 +366,52 @@ const handleSave = async () => {
       return 'selected-row';
     } else return '';
   };
-  // Filter table by Facility Name
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
-    }
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setListRequest(prev => ({ ...prev, pageNumber: 1 }));
   };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
   //Table columns
   const tableColumns = [
     {
       key: 'code',
       title: <Translate>Code</Translate>,
-      flexGrow: 1,
+      width: 120,
+      ...headerSearch('code'),
       dataKey: 'code'
     },
     {
       key: 'name',
       title: <Translate>Facility Name</Translate>,
-      flexGrow: 4,
+      width: 220,
+      ...headerSearch('name'),
       dataKey: 'name'
     },
     {
       key: 'type',
       title: <Translate>Facility Type</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(facilityTypeOptions ?? [])],
       render: rowData => <p>{formatEnumString(rowData?.type)}</p>
     },
     {
       key: 'emailAddress',
       title: <Translate>Email Address</Translate>,
-      flexGrow: 4,
+      width: 220,
+      ...headerSearch('emailAddress'),
       dataKey: 'emailAddress'
     },
     {
@@ -412,7 +429,16 @@ const handleSave = async () => {
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 4,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: rowData => {
         return <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>;
       }
@@ -468,21 +494,6 @@ const handleSave = async () => {
                 >
                   Add New
                 </MyButton>
-              </div>
-            }
-            filters={
-              <div className="container-of-header-actions-facility">
-                <Form layout="inline">
-                  <MyInput
-                    fieldName="facilityName"
-                    fieldType="text"
-                    record={recordOfSearchForFacility}
-                    setRecord={setRecordOfSearchForFacility}
-                    showLabel={false}
-                    placeholder="Search by Facility Name"
-                    width={'220px'}
-                  />
-                </Form>
               </div>
             }
             dontTranslateData 
