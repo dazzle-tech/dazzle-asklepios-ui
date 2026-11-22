@@ -4,7 +4,7 @@ import React, {
   useState
 } from 'react';
 
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 
 import {
     MdCheckCircle,
@@ -19,7 +19,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyTab from '@/components/MyTab';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -51,16 +50,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import {
   useActivatePriceListSetupMutation,
   useDeletePriceListSetupMutation,
-  useGetPriceListSetupsQuery,
-  useLazyGetPriceListSetupsByFacilityQuery,
-  useLazyGetPriceListSetupsByNameQuery,
-  useLazyGetPriceListSetupsByTypeQuery,
-  useLazyGetPriceListSetupsByPayerQuery,
-  useLazyGetPriceListSetupsByVersionQuery,
-  useLazyGetPriceListSetupsByEffectiveFromQuery,
-  useLazyGetPriceListSetupsByEffectiveToQuery,
-  useLazyGetPriceListSetupsByCurrencyQuery,
-  useLazyGetPriceListSetupsByStatusQuery
+  useGetPriceListSetupsQuery
 } from '@/services/setup/priceListSetup/priceListSetupService';
 
 import type {
@@ -76,6 +66,21 @@ import PriceListSetupItems from './PriceListSetupItems';
 import PriceListItemDashboard from './PriceListItemDashboard';
 
 import './styles.less';
+
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  facilityId: '',
+  name: '',
+  type: '',
+  payerId: '',
+  versionNumber: '',
+  effectiveFrom: '',
+  effectiveTo: '',
+  currency: '',
+  status: ''
+};
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const PriceListSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -135,6 +140,9 @@ const PriceListSetup: React.FC = () => {
     timestamp: Date.now()
   });
 
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+
   const {
     data: priceListPage,
     isFetching,
@@ -143,7 +151,8 @@ const PriceListSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
-    timestamp: paginationParams.timestamp
+    timestamp: paginationParams.timestamp,
+    ...appliedFilters
   });
 
   const {
@@ -157,29 +166,6 @@ const PriceListSetup: React.FC = () => {
     size: 500,
     sort: 'nameEn,asc'
   });
-
-  const [recordOfFilter, setRecordOfFilter] = useState({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<PriceListSetupModel[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
-  });
-
-  const [getByFacility] = useLazyGetPriceListSetupsByFacilityQuery();
-  const [getByName] = useLazyGetPriceListSetupsByNameQuery();
-  const [getByType] = useLazyGetPriceListSetupsByTypeQuery();
-  const [getByPayer] = useLazyGetPriceListSetupsByPayerQuery();
-  const [getByVersion] = useLazyGetPriceListSetupsByVersionQuery();
-  const [getByEffectiveFrom] = useLazyGetPriceListSetupsByEffectiveFromQuery();
-  const [getByEffectiveTo] = useLazyGetPriceListSetupsByEffectiveToQuery();
-  const [getByCurrency] = useLazyGetPriceListSetupsByCurrencyQuery();
-  const [getByStatus] = useLazyGetPriceListSetupsByStatusQuery();
 
   const typeOptions = useEnumOptions('PriceListSetupType');
   const statusOptions = useEnumOptions('PriceListSetupStatus');
@@ -229,76 +215,34 @@ const PriceListSetup: React.FC = () => {
     };
   }, []);
 
-  // ──────────────────────────── FILTER LOGIC ────────────────────────────
-  const filterFields = [
-    { label: 'Facility', value: 'facility' },
-    { label: 'Name', value: 'name' },
-    { label: 'Type', value: 'type' },
-    { label: 'Payer', value: 'payer' },
-    { label: 'Version', value: 'version' },
-    { label: 'Effective From', value: 'effectiveFrom' },
-    { label: 'Effective To', value: 'effectiveTo' },
-    { label: 'Currency', value: 'currency' },
-    { label: 'Status', value: 'status' }
-  ];
-
-  const handleFilterChange = async (
-    field: string,
-    value: string,
-    page = 0,
-    size?: number
-  ) => {
-    try {
-      if (!field || value === '' || value == null) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-
-      const currentSize = size ?? filterPagination.size;
-
-      let response;
-      const params = {
-        page,
-        size: currentSize,
-        sort: filterPagination.sort
-      };
-
-      if (field === 'facility') {
-        response = await getByFacility({ facilityId: value, ...params }).unwrap();
-      } else if (field === 'name') {
-        response = await getByName({ name: value, ...params }).unwrap();
-      } else if (field === 'type') {
-        response = await getByType({ type: value, ...params }).unwrap();
-      } else if (field === 'payer') {
-        response = await getByPayer({ payerId: value, ...params }).unwrap();
-      } else if (field === 'version') {
-        response = await getByVersion({ versionNumber: value, ...params }).unwrap();
-      } else if (field === 'effectiveFrom') {
-        response = await getByEffectiveFrom({ effectiveFrom: value, ...params }).unwrap();
-      } else if (field === 'effectiveTo') {
-        response = await getByEffectiveTo({ effectiveTo: value, ...params }).unwrap();
-      } else if (field === 'currency') {
-        response = await getByCurrency({ currency: value, ...params }).unwrap();
-      } else if (field === 'status') {
-        response = await getByStatus({ status: value, ...params }).unwrap();
-      }
-
-      setFilteredList(response?.data ?? []);
-      setFilteredTotal(response?.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size: currentSize });
-    } catch (error) {
-      console.error('Error filtering price lists:', error);
-      dispatch(notify({ msg: 'Failed to filter price lists', sev: 'error' }));
-      setIsFiltered(false);
-    }
+  // ──────────────────────────── HEADER FILTERS ────────────────────────────
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
   };
 
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(previous => ({ ...previous, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  const facilityOptions = (facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }));
+  const payerOptions = (payerListResponse?.data ?? []).map((p: any) => ({ label: p.nameEn ?? p.nameAr ?? '', value: String(p.id) }));
+
+  // Reload the table after add/edit/delete
   const refetchList = async () => {
-    if (isFiltered) {
-      await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page);
-    }
     await refetch();
   };
 
@@ -449,9 +393,6 @@ const PriceListSetup: React.FC = () => {
         })
       );
 
-      if (isFiltered) {
-        await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, filterPagination.page);
-      }
     } catch (error: any) {
       dispatch(
         notify({
@@ -520,11 +461,6 @@ const PriceListSetup: React.FC = () => {
     _: unknown,
     newPage: number
   ) => {
-    if (isFiltered) {
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-      return;
-    }
-
     setPaginationParams(previous => ({
       ...previous,
       page: newPage,
@@ -539,11 +475,6 @@ const PriceListSetup: React.FC = () => {
       event.target.value
     );
 
-    if (isFiltered) {
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-      return;
-    }
-
     setPaginationParams(previous => ({
       ...previous,
       page: 0,
@@ -552,145 +483,12 @@ const PriceListSetup: React.FC = () => {
     }));
   };
 
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        fieldName="filter"
-        fieldType="select"
-        selectData={filterFields}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={u => setRecordOfFilter({ filter: u.filter, value: '' })}
-        placeholder="Select Filter"
-        showLabel={false}
-        width="180px"
-      />
-
-      {recordOfFilter.filter === 'facility' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Facility"
-        />
-      )}
-
-      {recordOfFilter.filter === 'type' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={typeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Type"
-        />
-      )}
-
-      {recordOfFilter.filter === 'payer' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={payerListResponse?.data ?? []}
-          selectDataLabel="nameEn"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Payer"
-        />
-      )}
-
-      {recordOfFilter.filter === 'version' && (
-        <MyInput
-          fieldName="value"
-          fieldType="number"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value ?? '' })}
-          showLabel={false}
-          placeholder="Enter Version"
-        />
-      )}
-
-      {(recordOfFilter.filter === 'effectiveFrom' || recordOfFilter.filter === 'effectiveTo') && (
-        <MyInput
-          fieldName="value"
-          fieldType="date"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value ?? '' })}
-          showLabel={false}
-        />
-      )}
-
-      {recordOfFilter.filter === 'currency' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={currencyOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Currency"
-        />
-      )}
-
-      {recordOfFilter.filter === 'status' && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={statusOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Status"
-        />
-      )}
-
-      {recordOfFilter.filter !== 'facility' &&
-        recordOfFilter.filter !== 'type' &&
-        recordOfFilter.filter !== 'payer' &&
-        recordOfFilter.filter !== 'version' &&
-        recordOfFilter.filter !== 'effectiveFrom' &&
-        recordOfFilter.filter !== 'effectiveTo' &&
-        recordOfFilter.filter !== 'currency' &&
-        recordOfFilter.filter !== 'status' && (
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            placeholder="Enter Value"
-            showLabel={false}
-          />
-        )}
-
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() => handleFilterChange(recordOfFilter.filter, String(recordOfFilter.value ?? ''))}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   const tableColumns = [
     {
       key: 'facilityId',
       title: <Translate>Facility</Translate>,
-      flexGrow: 3,
+      width: 180,
+      ...headerSelect('facilityId', facilityOptions),
 
       render: (
         row: PriceListSetupModel
@@ -705,7 +503,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 4
+      width: 200,
+      ...headerSearch('name')
     },
 
     {
@@ -718,7 +517,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 2,
+      width: 150,
+      ...headerSelect('type', typeOptions ?? []),
 
       render: (
         row: PriceListSetupModel
@@ -731,7 +531,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'payerName',
       title: <Translate>Payer</Translate>,
-      flexGrow: 3,
+      width: 190,
+      ...headerSelect('payerId', payerOptions),
 
       render: (
         row: PriceListSetupModel
@@ -766,7 +567,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'versionNumber',
       title: <Translate>Version</Translate>,
-      width: 90,
+      width: 100,
+      ...headerSearch('versionNumber', 'Version'),
       align: 'center' as const
     },
 
@@ -776,7 +578,9 @@ const PriceListSetup: React.FC = () => {
         <Translate>
           Effective From
         </Translate>,
-      flexGrow: 2
+      width: 160,
+      ...headerSearch('effectiveFrom'),
+      searchType: 'date' as const
     },
 
     {
@@ -785,7 +589,9 @@ const PriceListSetup: React.FC = () => {
         <Translate>
           Effective To
         </Translate>,
-      flexGrow: 2,
+      width: 160,
+      ...headerSearch('effectiveTo'),
+      searchType: 'date' as const,
 
       render: (
         row: PriceListSetupModel
@@ -803,7 +609,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'currency',
       title: <Translate>Currency</Translate>,
-      width: 100,
+      width: 110,
+      ...headerSelect('currency', currencyOptions ?? []),
       align: 'center' as const,
       render: (row: PriceListSetupModel) => (
         <span>
@@ -836,7 +643,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      width: 110,
+      width: 130,
+      ...headerSelect('status', statusOptions ?? []),
 
       render: (
         row: PriceListSetupModel
@@ -958,8 +766,8 @@ const PriceListSetup: React.FC = () => {
             title: 'Price Lists',
             content: (
               <MyTable
-                data={isFiltered ? filteredList : tableData}
-                totalCount={isFiltered ? filteredTotal : totalCount}
+                data={tableData}
+                totalCount={totalCount}
                 loading={isFetching}
                 columns={tableColumns}
                 rowClassName={selectedRowClass}
@@ -970,9 +778,8 @@ const PriceListSetup: React.FC = () => {
 
                   setSelectedPriceList(row);
                 }}
-                filters={filters()}
-                page={isFiltered ? filterPagination.page : paginationParams.page}
-                rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+                page={paginationParams.page}
+                rowsPerPage={paginationParams.size}
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={
                   handleRowsPerPageChange
