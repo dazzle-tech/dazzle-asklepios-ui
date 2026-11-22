@@ -5,7 +5,6 @@ import React, {
 } from 'react';
 
 import {
-  Form,
   Panel
 } from 'rsuite';
 
@@ -22,7 +21,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -57,14 +55,6 @@ import {
   useChangeDiscountActivationStatusMutation,
   useDeleteDiscountMutation,
   useGetDiscountsByFacilityQuery,
-  useLazyGetDiscountsByActiveQuery,
-  useLazyGetDiscountsByApplicableOnQuery,
-  useLazyGetDiscountsByCodeQuery,
-  useLazyGetDiscountsByDefaultQuery,
-  useLazyGetDiscountsByNameQuery,
-  useLazyGetDiscountsByRequiresApprovalQuery,
-  useLazyGetDiscountsByTypeQuery,
-  useLazyGetDiscountsByValueQuery,
   useSetDefaultDiscountMutation
 } from '@/services/billing/discountService';
 
@@ -84,34 +74,18 @@ import {
 
 import './styles.less';
 
-type FilterState = {
-  filter: string;
-  value: any;
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  code: '',
+  name: '',
+  discountType: '',
+  value: '',
+  applicableOn: '',
+  requiresApproval: '',
+  isDefault: ''
 };
-
-const initialFilterState: FilterState = {
-  filter: '',
-  value: ''
-};
-
-const filterFields = [
-  { label: 'Code', value: 'code' },
-  { label: 'Name', value: 'name' },
-  { label: 'Discount Type', value: 'discountType' },
-  { label: 'Discount Value', value: 'value' },
-  { label: 'Applicable On', value: 'applicableOn' },
-  { label: 'Approval', value: 'requiresApproval' },
-  { label: 'Default', value: 'isDefault' },
-  { label: 'Active', value: 'active' }
-];
-
-const isEmptyFilterValue = (value: unknown) =>
-  value === null ||
-  value === undefined ||
-  (typeof value === 'string' && value.trim() === '');
-
-const toBoolean = (value: unknown) =>
-  value === true || value === 'true';
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const DiscountSetup:
 React.FC = () => {
@@ -214,38 +188,23 @@ React.FC = () => {
       'desc'
     );
 
-  // Filter being edited in the filter bar, and the one the table currently shows
-  const [recordOfFilter, setRecordOfFilter] =
-    useState<FilterState>(initialFilterState);
-  const [activeFilter, setActiveFilter] =
-    useState<FilterState>(initialFilterState);
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<Discount[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no active param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  // Filtered pagination (independent state)
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
-  });
-
-  const [fetchByCode] = useLazyGetDiscountsByCodeQuery();
-  const [fetchByName] = useLazyGetDiscountsByNameQuery();
-  const [fetchByType] = useLazyGetDiscountsByTypeQuery();
-  const [fetchByValue] = useLazyGetDiscountsByValueQuery();
-  const [fetchByApplicableOn] = useLazyGetDiscountsByApplicableOnQuery();
-  const [fetchByRequiresApproval] = useLazyGetDiscountsByRequiresApprovalQuery();
-  const [fetchByDefault] = useLazyGetDiscountsByDefaultQuery();
-  const [fetchByActive] = useLazyGetDiscountsByActiveQuery();
-
-  // Main list: all discounts of the facility
+  // Discounts of the facility with the applied header filters
   const allDiscountsQuery =
     useGetDiscountsByFacilityQuery(
       {
         facilityId:
           facilityId as number,
+
+        filters: {
+          ...appliedFilters,
+          active: activeFilter
+        },
 
         page:
           paginationParams.page,
@@ -299,112 +258,48 @@ React.FC = () => {
     useSetDefaultDiscountMutation();
 
   const activeResponse = useMemo(
-    () =>
-      isFiltered
-        ? { data: filteredData, totalCount: filteredTotal }
-        : {
-            data: allDiscountsQuery.data?.data ?? [],
-            totalCount: allDiscountsQuery.data?.totalCount ?? 0
-          },
-    [isFiltered, filteredData, filteredTotal, allDiscountsQuery.data]
+    () => ({
+      data: allDiscountsQuery.data?.data ?? [],
+      totalCount: allDiscountsQuery.data?.totalCount ?? 0
+    }),
+    [allDiscountsQuery.data]
   );
 
-  const isFetching = isFiltered
-    ? isFilterLoading
-    : allDiscountsQuery.isFetching;
+  const isFetching = allDiscountsQuery.isFetching;
 
   const activeQueryError = allDiscountsQuery.error;
 
-  // ===== Filtering =====
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page: number,
-    size: number,
-    sort: string
-  ) => {
-    const params = { facilityId: facilityId as number, page, size, sort };
-
-    if (fieldName === 'code') {
-      return await fetchByCode({ ...params, value: String(value).trim() }).unwrap();
-    } else if (fieldName === 'name') {
-      return await fetchByName({ ...params, value: String(value).trim() }).unwrap();
-    } else if (fieldName === 'discountType') {
-      return await fetchByType({ ...params, discountType: value }).unwrap();
-    } else if (fieldName === 'value') {
-      return await fetchByValue({ ...params, value: Number(value) }).unwrap();
-    } else if (fieldName === 'applicableOn') {
-      return await fetchByApplicableOn({ ...params, applicableOn: value }).unwrap();
-    } else if (fieldName === 'requiresApproval') {
-      return await fetchByRequiresApproval({ ...params, value: toBoolean(value) }).unwrap();
-    } else if (fieldName === 'isDefault') {
-      return await fetchByDefault({ ...params, value: toBoolean(value) }).unwrap();
-    } else if (fieldName === 'active') {
-      return await fetchByActive({ ...params, value: toBoolean(value) }).unwrap();
-    }
-
-    return undefined;
+  // ===== Header filters =====
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
   };
 
-  // Reset to main list
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setActiveFilter(initialFilterState);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilterPagination(previous => ({ ...previous, page: 0 }));
-    setPaginationParams(previous => ({ ...previous, page: 0, timestamp: Date.now() }));
-  };
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(previous => ({ ...previous, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
-  // Apply/Clear filters
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!facilityId) {
-      return;
-    }
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
-    if (!fieldName || isEmptyFilterValue(value)) {
-      resetToUnfiltered();
-      return;
-    }
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
+  }, [statusFilter]);
 
-    setIsFilterLoading(true);
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setActiveFilter({ filter: fieldName, value });
-      setIsFiltered(true);
-      setFilterPagination(previous => ({ ...previous, page, size, sort }));
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: extractDiscountErrorMessage(error, 'Failed to load discounts.'),
-          sev: 'error'
-        })
-      );
-    } finally {
-      setIsFilterLoading(false);
-    }
-  };
-
-  // Reload whatever the table shows after add/edit/delete/default/activation changes
+  // Reload the table after add/edit/delete/default/activation changes
   const refetchActiveQuery =
     async () => {
-      if (isFiltered) {
-        await handleFilterChange(
-          activeFilter.filter,
-          activeFilter.value,
-          filterPagination.page
-        );
-        return;
-      }
-
       await allDiscountsQuery
         .refetch();
     };
@@ -456,13 +351,8 @@ React.FC = () => {
     };
   }, []);
 
+  // Another facility starts again from the first page
   useEffect(() => {
-    setRecordOfFilter(initialFilterState);
-    setActiveFilter(initialFilterState);
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-
     setSelectedDiscount({
       ...newDiscount
     });
@@ -505,13 +395,6 @@ React.FC = () => {
     activeQueryError,
     dispatch
   ]);
-
-  const handleSearch = () => {
-    handleFilterChange(
-      recordOfFilter.filter,
-      recordOfFilter.value
-    );
-  };
 
   const handleNew =
     () => {
@@ -782,15 +665,6 @@ React.FC = () => {
     newPage:
       number
   ) => {
-    if (isFiltered) {
-      handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        newPage
-      );
-      return;
-    }
-
     setPaginationParams(
       previous => ({
         ...previous,
@@ -812,16 +686,6 @@ React.FC = () => {
       Number(
         event.target.value
       );
-
-    if (isFiltered) {
-      handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        0,
-        newSize
-      );
-      return;
-    }
 
     setPaginationParams(
       previous => ({
@@ -853,17 +717,6 @@ React.FC = () => {
     setSortType(
       type
     );
-
-    if (isFiltered) {
-      handleFilterChange(
-        activeFilter.filter,
-        activeFilter.value,
-        0,
-        filterPagination.size,
-        `${column},${type}`
-      );
-      return;
-    }
 
     setPaginationParams(
       previous => ({
@@ -912,13 +765,15 @@ React.FC = () => {
       key:
         'code',
 
+      ...headerSearch('code'),
+
       title:
         <Translate>
           Code
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        130,
 
       sortable:
         true
@@ -927,13 +782,15 @@ React.FC = () => {
       key:
         'name',
 
+      ...headerSearch('name'),
+
       title:
         <Translate>
           Name
         </Translate>,
 
-      flexGrow:
-        3,
+      width:
+        180,
 
       sortable:
         true
@@ -942,13 +799,15 @@ React.FC = () => {
       key:
         'discountType',
 
+      ...headerSelect('discountType', discountTypeOptions ?? []),
+
       title:
         <Translate>
           Discount Type
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        160,
 
       sortable:
         true,
@@ -967,13 +826,15 @@ React.FC = () => {
       key:
         'value',
 
+      ...headerSearch('value', 'Value'),
+
       title:
         <Translate>
           Discount Value
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        130,
 
       render: (
         row:
@@ -993,13 +854,15 @@ React.FC = () => {
       key:
         'applicableOn',
 
+      ...headerSelect('applicableOn', applicableOnOptions ?? []),
+
       title:
         <Translate>
           Applicable On
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        170,
 
       sortable:
         true,
@@ -1018,13 +881,18 @@ React.FC = () => {
       key:
         'requiresApproval',
 
+      ...headerSelect('requiresApproval', [
+        { label: 'Required', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
+
       title:
         <Translate>
           Approval
         </Translate>,
 
       width:
-        100,
+        120,
 
       align:
         'center' as const,
@@ -1051,13 +919,18 @@ React.FC = () => {
       key:
         'isDefault',
 
+      ...headerSelect('isDefault', [
+        { label: 'Default', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
+
       title:
         <Translate>
           Default
         </Translate>,
 
       width:
-        95,
+        110,
 
       align:
         'center' as const,
@@ -1084,13 +957,23 @@ React.FC = () => {
       key:
         'active',
 
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+
       title:
         <Translate>
           Active
         </Translate>,
 
       width:
-        95,
+        120,
 
       align:
         'center' as const,
@@ -1224,105 +1107,6 @@ React.FC = () => {
     }
   ];
 
-  const renderFilterValueInput = () => {
-    const selectInput = (
-      options: { label: string; value: any }[]
-    ) => (
-      <MyInput
-        width={220}
-        fieldName="value"
-        fieldLabel=""
-        fieldType="select"
-        selectData={options}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        searchable={false}
-      />
-    );
-
-    switch (recordOfFilter.filter) {
-      case 'discountType':
-        return selectInput(discountTypeOptions ?? []);
-      case 'applicableOn':
-        return selectInput(applicableOnOptions ?? []);
-      case 'requiresApproval':
-        return selectInput([
-          { label: 'Required', value: true },
-          { label: 'No', value: false }
-        ]);
-      case 'isDefault':
-        return selectInput([
-          { label: 'Default', value: true },
-          { label: 'No', value: false }
-        ]);
-      case 'active':
-        return selectInput([
-          { label: 'Active', value: true },
-          { label: 'Inactive', value: false }
-        ]);
-      case 'value':
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="number"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        );
-      default:
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-            enterClick={handleSearch}
-          />
-        );
-    }
-  };
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: FilterState) =>
-          setRecordOfFilter({
-            filter: updated.filter,
-            value: ''
-          })
-        }
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {renderFilterValueInput()}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={handleSearch}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   const selectedRowClass = (
     row:
       Discount
@@ -1370,18 +1154,11 @@ React.FC = () => {
             row
           )
         }
-        filters={
-          filters()
-        }
         page={
-          isFiltered
-            ? filterPagination.page
-            : paginationParams.page
+          paginationParams.page
         }
         rowsPerPage={
-          isFiltered
-            ? filterPagination.size
-            : paginationParams.size
+          paginationParams.size
         }
         onPageChange={
           handlePageChange

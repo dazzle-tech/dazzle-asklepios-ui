@@ -32,6 +32,18 @@ export type DiscountPagedParams = {
   timestamp?: number;
 };
 
+/** Optional list filters (header filters on the Discount Setup table) */
+export type DiscountListFilters = {
+  code?: string;
+  name?: string;
+  discountType?: string;
+  value?: string | number;
+  applicableOn?: string;
+  requiresApproval?: boolean | string;
+  isDefault?: boolean | string;
+  active?: boolean;
+};
+
 export type DiscountTextFilterParams =
   DiscountPagedParams & {
     value: string;
@@ -213,27 +225,43 @@ export const discountService =
         getDiscountsByFacility:
           builder.query<
             PagedResult<Discount>,
-            DiscountPagedParams
+            DiscountPagedParams & { filters?: DiscountListFilters }
           >({
+            // Optional filters are ANDed by the backend; empty ones are left out
             query: ({
               facilityId,
               page,
               size,
-              sort = 'id,desc'
-            }) => ({
-              url:
-                '/api/setup/discount',
+              sort = 'id,desc',
+              filters
+            }) => {
+              const value = String(filters?.value ?? '').trim();
+              const bool = (v?: boolean | string) => (v === '' || v === undefined ? undefined : v);
 
-              method:
-                'GET',
+              return {
+                url:
+                  '/api/setup/discount',
 
-              params: {
-                facilityId,
-                page,
-                size,
-                sort
-              }
-            }),
+                method:
+                  'GET',
+
+                params: {
+                  facilityId,
+                  page,
+                  size,
+                  sort,
+                  code: filters?.code?.trim() || undefined,
+                  name: filters?.name?.trim() || undefined,
+                  discountType: filters?.discountType || undefined,
+                  // A value that is not a number would be rejected, so it is left out
+                  value: value && !isNaN(Number(value)) ? value : undefined,
+                  applicableOn: filters?.applicableOn || undefined,
+                  requiresApproval: bool(filters?.requiresApproval),
+                  isDefault: bool(filters?.isDefault),
+                  active: filters?.active
+                }
+              };
+            },
 
             transformResponse: (
               response:
