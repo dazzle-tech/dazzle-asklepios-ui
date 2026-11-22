@@ -18,6 +18,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
+import dayjs from 'dayjs';
+import { DatePicker } from 'rsuite';
 import './styles.less';
 import { useSelector } from 'react-redux';
 import Translate from '../Translate';
@@ -43,7 +45,7 @@ export interface ColumnConfig {
   searchable?: boolean;
   /**
    * 'select' renders a dropdown that applies on change (e.g. a status filter).
-   * 'date' renders a date picker that applies on change; the value is YYYY-MM-DD ('' when cleared).
+   * 'date' renders the rsuite date picker, applied on change; the value is YYYY-MM-DD ('' when cleared).
    */
   searchType?: 'text' | 'select' | 'date';
   searchOptions?: { label: string; value: string }[];
@@ -273,18 +275,28 @@ const MyTable: React.FC<MyTableProps> = ({
                           </select>
                         )}
                         {col.searchable && col.searchType === 'date' && (
-                          <input
-                            type="date"
-                            className="my-table-header-search-input"
-                            value={col.searchValue ?? ''}
+                          // Same rsuite calendar as MyInput, so it follows the app locale (not the browser's)
+                          <span
+                            className="my-table-header-search-date"
                             onClick={event => event.stopPropagation()}
                             onMouseDown={event => event.stopPropagation()}
                             onKeyDown={event => event.stopPropagation()}
-                            onChange={event => {
-                              col.onSearchChange?.(event.target.value);
-                              col.onSearchSubmit?.(event.target.value);
-                            }}
-                          />
+                          >
+                            <DatePicker
+                              size="xs"
+                              block
+                              oneTap
+                              format="dd-MM-yyyy"
+                              placeholder={col.searchPlaceholder ?? 'Date'}
+                              placement="autoVerticalStart"
+                              value={col.searchValue ? dayjs(col.searchValue).toDate() : null}
+                              onChange={(value: Date | null) => {
+                                const day = value ? dayjs(value).format('YYYY-MM-DD') : '';
+                                col.onSearchChange?.(day);
+                                col.onSearchSubmit?.(day);
+                              }}
+                            />
+                          </span>
                         )}
                         {col.searchable && col.searchType !== 'select' && col.searchType !== 'date' && (
                           <input
