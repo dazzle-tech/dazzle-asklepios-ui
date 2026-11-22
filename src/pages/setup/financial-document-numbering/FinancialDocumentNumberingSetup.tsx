@@ -4,7 +4,7 @@ import React, {
   useState
 } from 'react';
 
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 
 import {
   MdDelete,
@@ -17,7 +17,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -61,54 +60,37 @@ import {
 
 import './styles.less';
 
-type FilterState = {
-  filter: string;
-  value: any;
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// The page loads every configuration of the facility at once, so the filters are
+// combined with AND here.
+const emptyHeaderFilters = {
+  documentType: '',
+  prefix: '',
+  resetFrequency: '',
+  startingNumber: '',
+  status: ''
 };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+type StatusFilter = 'active' | 'inactive' | 'all';
 
-const initialFilterState: FilterState = {
-  filter: '',
-  value: ''
-};
-
-const filterFields = [
-  { label: 'Document Type', value: 'documentType' },
-  { label: 'Prefix', value: 'prefix' },
-  { label: 'Reset Frequency', value: 'resetFrequency' },
-  { label: 'Starting Number', value: 'startingNumber' },
-  { label: 'Status', value: 'status' },
-  { label: 'Active', value: 'active' }
-];
-
-const isEmptyFilterValue = (value: unknown) =>
-  value === null ||
-  value === undefined ||
-  (typeof value === 'string' && value.trim() === '');
-
-// The page loads every configuration of the facility at once, so filtering happens here
-const matchesFilter = (
+const matchesFilters = (
   row: FinancialDocumentNumbering,
-  { filter, value }: FilterState
+  filters: typeof emptyHeaderFilters,
+  statusFilter: StatusFilter
 ) => {
-  if (!filter || isEmptyFilterValue(value)) {
-    return true;
-  }
+  const prefix = filters.prefix.trim().toLowerCase();
+  const startingNumber = filters.startingNumber.trim();
 
-  switch (filter) {
-    case 'prefix':
-      return (row.prefix ?? '')
-        .toLowerCase()
-        .includes(String(value).trim().toLowerCase());
-    case 'startingNumber':
-      return Number(row.startingNumber) === Number(value);
-    case 'status':
-      return (row.status ?? 'DRAFT') === value;
-    case 'active':
-      return Boolean(row.active) === (value === true || value === 'true');
-    default:
-      return String(row[filter as keyof FinancialDocumentNumbering] ?? '').toUpperCase() ===
-        String(value).toUpperCase();
-  }
+  return (
+    (!filters.documentType ||
+      String(row.documentType ?? '').toUpperCase() === filters.documentType.toUpperCase()) &&
+    (!prefix || (row.prefix ?? '').toLowerCase().includes(prefix)) &&
+    (!filters.resetFrequency ||
+      String(row.resetFrequency ?? '').toUpperCase() === filters.resetFrequency.toUpperCase()) &&
+    (!startingNumber || Number(row.startingNumber) === Number(startingNumber)) &&
+    (!filters.status || (row.status ?? 'DRAFT') === filters.status) &&
+    (statusFilter === 'all' || Boolean(row.active) === (statusFilter === 'active'))
+  );
 };
 
 const FinancialDocumentNumberingSetup: React.FC = () => {
@@ -130,10 +112,9 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
   const [width, setWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
-  const [filters, setFilters] =
-    useState<FilterState>(initialFilterState);
-  const [appliedFilters, setAppliedFilters] =
-    useState<FilterState>(initialFilterState);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
 
   const documentTypeOptions = useFinancialDocumentTypeOptions();
   const resetFrequencyOptions = useEnumOptions('BillingResetFrequency') ?? [];
@@ -161,9 +142,9 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
   const tableData = useMemo(
     () =>
       configurations.filter(item =>
-        matchesFilter(item, appliedFilters)
+        matchesFilters(item, appliedFilters, statusFilter)
       ),
-    [appliedFilters, configurations]
+    [appliedFilters, statusFilter, configurations]
   );
 
   const usedDocumentTypes = useMemo(
@@ -191,9 +172,10 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
       window.removeEventListener('resize', resizeHandler);
   }, []);
 
+  // Another facility starts with empty filters
   useEffect(() => {
-    setFilters(initialFilterState);
-    setAppliedFilters(initialFilterState);
+    setHeaderFilters(emptyHeaderFilters);
+    setAppliedFilters(emptyHeaderFilters);
   }, [facilityId]);
 
   const handleNew = () => {
@@ -320,9 +302,26 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     }
   };
 
-  const handleSearch = () => {
-    setAppliedFilters({ ...filters });
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
   };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
   const handleSaveSuccess = async () => {
     setModalOpen(false);
@@ -331,97 +330,6 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     });
     await refetch();
   };
-
-  const renderFilterValueInput = () => {
-    const selectInput = (
-      options: { label: string; value: any }[]
-    ) => (
-      <MyInput
-        width={220}
-        fieldName="value"
-        fieldLabel=""
-        fieldType="select"
-        selectData={options}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filters}
-        setRecord={setFilters}
-        searchable={false}
-      />
-    );
-
-    switch (filters.filter) {
-      case 'documentType':
-        return selectInput(documentTypeOptions);
-      case 'resetFrequency':
-        return selectInput(resetFrequencyOptions);
-      case 'status':
-        return selectInput(statusOptions);
-      case 'active':
-        return selectInput([
-          { label: 'Active', value: true },
-          { label: 'Inactive', value: false }
-        ]);
-      case 'startingNumber':
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="number"
-            record={filters}
-            setRecord={setFilters}
-            showLabel={false}
-            placeholder="Enter Number"
-            width={220}
-          />
-        );
-      default:
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={filters}
-            setRecord={setFilters}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-            enterClick={handleSearch}
-          />
-        );
-    }
-  };
-
-  const filtersContent = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={filters}
-        setRecord={(updated: FilterState) =>
-          setFilters({
-            filter: updated.filter,
-            value: ''
-          })
-        }
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {renderFilterValueInput()}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={handleSearch}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
 
   const tableColumns = [
     {
@@ -438,7 +346,8 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     {
       key: 'documentType',
       title: <Translate>Document Type</Translate>,
-      flexGrow: 2,
+      width: 190,
+      ...headerSelect('documentType', documentTypeOptions),
       render: (row: FinancialDocumentNumbering) =>
         row.documentType
           ? formatEnumString(row.documentType)
@@ -447,14 +356,16 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     {
       key: 'prefix',
       title: <Translate>Prefix</Translate>,
-      flexGrow: 1,
+      width: 120,
+      ...headerSearch('prefix'),
       render: (row: FinancialDocumentNumbering) =>
         row.prefix ?? '-'
     },
     {
       key: 'resetFrequency',
       title: <Translate>Reset Frequency</Translate>,
-      flexGrow: 2,
+      width: 160,
+      ...headerSelect('resetFrequency', resetFrequencyOptions),
       render: (row: FinancialDocumentNumbering) =>
         row.resetFrequency
           ? formatEnumString(row.resetFrequency)
@@ -463,14 +374,16 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     {
       key: 'startingNumber',
       title: <Translate>Starting Number</Translate>,
-      width: 130,
+      width: 140,
+      ...headerSearch('startingNumber', 'Number'),
       render: (row: FinancialDocumentNumbering) =>
         row.startingNumber ?? '-'
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      width: 110,
+      width: 130,
+      ...headerSelect('status', statusOptions),
       render: (row: FinancialDocumentNumbering) => (
         <MyBadgeStatus
           contant={
@@ -491,7 +404,16 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
     {
       key: 'active',
       title: <Translate>Active</Translate>,
-      width: 90,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as StatusFilter),
       align: 'center' as const,
       render: (row: FinancialDocumentNumbering) => (
         <MyBadgeStatus
@@ -566,7 +488,6 @@ const FinancialDocumentNumberingSetup: React.FC = () => {
           isFetching || isDeleting || isChangingActivation
         }
         columns={tableColumns}
-        filters={filtersContent()}
         page={0}
         rowsPerPage={15}
         tableButtons={
