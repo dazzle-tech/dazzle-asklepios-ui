@@ -5,11 +5,31 @@ export const potintialService = createApi({
   reducerPath: 'potintialApi',
   baseQuery: BaseQuery,
   endpoints: builder => ({
+    // Optional filters are ANDed by the backend; empty ones are left out.
+    // A plain string is still accepted as the rule filter.
     getDuplicationCandidates: builder.query({
-      query: (role?: string) =>
-        role
-          ? `/api/setup/duplication-candidates?role=${role}`
-          : '/api/setup/duplication-candidates',
+      query: (
+        filters?:
+          | string
+          | {
+              role?: string;
+              isActive?: boolean;
+              /** Duplication fields that must be on / off */
+              fieldsTrue?: string[];
+              fieldsFalse?: string[];
+            }
+      ) => {
+        const f = typeof filters === 'string' ? { role: filters } : filters ?? {};
+        return {
+          url: '/api/setup/duplication-candidates',
+          params: {
+            role: f.role?.trim() || undefined,
+            isActive: f.isActive,
+            fieldsTrue: f.fieldsTrue?.length ? f.fieldsTrue.join(',') : undefined,
+            fieldsFalse: f.fieldsFalse?.length ? f.fieldsFalse.join(',') : undefined,
+          },
+        };
+      },
     }),
 
     // GET /api/setup/duplication-candidates/by-rule/{rule}

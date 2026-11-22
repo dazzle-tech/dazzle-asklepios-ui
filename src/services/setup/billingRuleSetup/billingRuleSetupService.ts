@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
+import dayjs from 'dayjs';
 
 import type {
   BillingItemType,
@@ -18,6 +19,11 @@ export type PagedParams = {
   timestamp?: number;
   billingItemType?: BillingItemType | '';
   name?: string;
+  paymentType?: string;
+  billingTrigger?: string;
+  isDefault?: boolean | string;
+  /** A day (YYYY-MM-DD): rules created on that day in the user's time zone */
+  createdDate?: string;
 };
 
 type FilterPageParams = {
@@ -103,50 +109,33 @@ export const billingRuleSetupService = createApi({
       PagedResult<BillingRule>,
       PagedParams
     >({
+      // One list endpoint; optional filters are ANDed by the backend, empty ones are left out
       query: ({
         page,
         size,
         sort = 'id,desc',
         billingItemType,
-        name
+        name,
+        paymentType,
+        billingTrigger,
+        isDefault,
+        createdDate
       }) => {
-        const trimmedName = name?.trim();
-
-        if (trimmedName) {
-          return {
-            url: `/api/setup/billing-rule/by-name/${encodeURIComponent(
-              trimmedName
-            )}`,
-            params: {
-              page,
-              size,
-              sort,
-              ...(billingItemType
-                ? { billingItemType }
-                : {})
-            }
-          };
-        }
-
-        if (billingItemType) {
-          return {
-            url: `/api/setup/billing-rule/search/by-item-type/${encodeURIComponent(
-              billingItemType
-            )}`,
-            params: {
-              page,
-              size,
-              sort
-            }
-          };
-        }
+        const dayStart = createdDate ? dayjs(createdDate).startOf('day') : null;
 
         return {
           url: '/api/setup/billing-rule',
           params: {
             page,
             size,
-            sort
+            sort,
+            name: name?.trim() || undefined,
+            billingItemType: billingItemType || undefined,
+            paymentType: paymentType || undefined,
+            billingTrigger: billingTrigger || undefined,
+            isDefault: isDefault === '' ? undefined : isDefault,
+            createdFrom: dayStart?.isValid() ? dayStart.toISOString() : undefined,
+            createdTo: dayStart?.isValid() ? dayStart.add(1, 'day').toISOString() : undefined
           }
         };
       },

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 import { formatEnumString } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -14,51 +12,37 @@ import './styles.less';
 import { prescriptionInstructions } from '@/types/model-types-new';
 import { newPrescriptionInstructions } from '@/types/model-types-constructor-new';
 import {
-  useGetAllPrescriptionInstructionsQuery,
-  useLazyGetPrescriptionInstructionsByCategoryQuery,
-  useLazyGetPrescriptionInstructionsByFrequencyQuery,
-  useLazyGetPrescriptionInstructionsByRouteQuery,
-  useLazyGetPrescriptionInstructionsByUnitQuery,
-  useLazyGetPrescriptionInstructionsByDoseQuery
+  useGetAllPrescriptionInstructionsQuery
 } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
-import { notify } from '@/utils/uiReducerActions';
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = { category: '', dose: '', unit: '', rout: '', frequency: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
 const PrescriptionInstructions = () => {
   const dispatch = useAppDispatch();
   const [prescriptionInstructions, setPrescriptionInstructions] =
     useState<prescriptionInstructions>({ ...newPrescriptionInstructions });
   const [popupOpen, setPopupOpen] = useState(false);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
-  const [fetchByCategory] = useLazyGetPrescriptionInstructionsByCategoryQuery();
-  const [fetchByUnit] = useLazyGetPrescriptionInstructionsByUnitQuery();
-  const [fetchByRoute] = useLazyGetPrescriptionInstructionsByRouteQuery();
-  const [fetchByFrequency] = useLazyGetPrescriptionInstructionsByFrequencyQuery();
-  const [fetchByDose] = useLazyGetPrescriptionInstructionsByDoseQuery();
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc'
-  });
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const [filteredList, setFilteredList] = useState<prescriptionInstructions[]>([]);
   // Fetch prescription instruction list response
   const {
     data: prescriptionInstructionListResponse,
     refetch: refetchPrescriotionInstructions,
     isFetching
-  } = useGetAllPrescriptionInstructionsQuery(paginationParams);
+  } = useGetAllPrescriptionInstructionsQuery({ ...paginationParams, ...appliedFilters });
 
   // Fetch enum lists for filter
   const categoryEnumList = useEnumOptions('AgeGroupType');
@@ -72,17 +56,29 @@ const PrescriptionInstructions = () => {
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
-  const [link, setLink] = useState({});
   const totalCount = prescriptionInstructionListResponse?.totalCount ?? 0;
 
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Category', value: 'category' },
-    { label: 'Dose', value: 'dose' },
-    { label: 'Unit', value: 'unit' },
-    { label: 'Rout', value: 'rout' },
-    { label: 'Frequency', value: 'frequency' }
-  ];
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
   // Header page setUp
   const divContent = 'Prescription Instructions';
@@ -106,18 +102,8 @@ const PrescriptionInstructions = () => {
   };
 
   // ──────────────────────────── PAGINATION ────────────────────────────
-  const handlePageChange = (event, newPage) => {
-    if (isFiltered) {
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    } else {
-      PaginationPerPage.handlePageChange(
-        event,
-        newPage,
-        paginationParams,
-        link,
-        setPaginationParams
-      );
-    }
+  const handlePageChange = (_event, newPage: number) => {
+    setPaginationParams(prev => ({ ...prev, page: newPage, timestamp: Date.now() }));
   };
 
   //_________________________SORT LOGIC______________________
@@ -127,160 +113,12 @@ const PrescriptionInstructions = () => {
 
     const sortValue = `${sortColumn},${sortType}`;
 
-    if (isFiltered) {
-      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-    } else {
-      setPaginationParams({
-        ...paginationParams,
-        sort: sortValue,
-        page: 0,
-        timestamp: Date.now()
-      });
-    }
-  };
-
-  // filters
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {recordOfFilter['filter'] == 'category' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={categoryEnumList ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      ) : recordOfFilter['filter'] == 'rout' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={routEnumList ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      ) : recordOfFilter['filter'] == 'unit' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={uomEnumList ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      ) : recordOfFilter['filter'] == 'frequency' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={frequencyEnumList ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      ) : recordOfFilter['filter'] == 'dose' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="number"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Dose"
-          width={220}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      )}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
-  // Handle filter change
-  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
-    try {
-      if (!field || !value) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-
-      const currentSize = size ?? filterPagination.size;
-
-      let response;
-      const params = {
-        page,
-        size: currentSize,
-        sort: filterPagination.sort
-      };
-
-      if (field === 'rout') {
-        response = await fetchByRoute({ route: value, ...params }).unwrap();
-      } else if (field === 'category') {
-        response = await fetchByCategory({ category: value, ...params }).unwrap();
-      } else if (field === 'unit') {
-        response = await fetchByUnit({ unit: value, ...params }).unwrap();
-      } else if (field === 'dose') {
-        response = await fetchByDose({ dose: value, ...params }).unwrap();
-      } else if (field === 'frequency') {
-        response = await fetchByFrequency({ frequency: value, ...params }).unwrap();
-      }
-
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size: currentSize });
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to filter Prescription Instructions', sev: 'error' }));
-      setIsFiltered(false);
-    }
+    setPaginationParams({
+      ...paginationParams,
+      sort: sortValue,
+      page: 0,
+      timestamp: Date.now()
+    });
   };
 
   // Icons column (Edit, reactive/Deactivate)
@@ -301,25 +139,35 @@ const PrescriptionInstructions = () => {
     {
       key: 'category',
       title: 'Category',
+      width: 170,
+      ...headerSelect('category', categoryEnumList ?? []),
       render: (row: any) => (row?.category ? formatEnumString(row?.category) : '')
     },
     {
       key: 'dose',
-      title: 'Dose'
+      title: 'Dose',
+      width: 120,
+      ...headerSearch('dose', 'Dose')
     },
     {
       key: 'unit',
       title: 'Unit',
+      width: 160,
+      ...headerSelect('unit', uomEnumList ?? []),
       render: (row: any) => (row?.unit ? formatEnumString(row?.unit) : '')
     },
     {
       key: 'rout',
       title: 'Rout',
+      width: 170,
+      ...headerSelect('rout', routEnumList ?? []),
       render: (row: any) => (row?.rout ? formatEnumString(row?.rout) : '')
     },
     {
       key: 'frequency',
       title: 'Frequency',
+      width: 200,
+      ...headerSelect('frequency', frequencyEnumList ?? []),
       render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '-')
     },
     {
@@ -335,12 +183,6 @@ const PrescriptionInstructions = () => {
     setPopupOpen(true);
   };
 
-  useEffect(() => {
-     if(!popupOpen && isFiltered){
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-     }
-  },[popupOpen]);
-
   // Effects
   // change the width variable when the size of window is changed
   useEffect(() => {
@@ -350,9 +192,6 @@ const PrescriptionInstructions = () => {
   }, []);
 
 
-  useEffect(() => {
-    setLink(prescriptionInstructionListResponse?.links);
-  }, [prescriptionInstructionListResponse?.links]);
 
               // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -364,32 +203,25 @@ const PrescriptionInstructions = () => {
     <Panel dir={dir}>
       <MyTable
         height={450}
-        totalCount={isFiltered ? filteredTotal : totalCount}
-        data={isFiltered ? filteredList : prescriptionInstructionListResponse?.data ?? []}
+        totalCount={totalCount}
+        data={prescriptionInstructionListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={rowData => {
           setPrescriptionInstructions(rowData);
         }}
-        page={isFiltered ? filterPagination.page : pageIndex}
-        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={e => {
           const newSize = Number(e.target.value);
-
-          if (isFiltered) {
-            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-          } else {
-            setPaginationParams({
-              ...paginationParams,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now()
-            });
-          }
+          setPaginationParams({
+            ...paginationParams,
+            size: newSize,
+            page: 0,
+            timestamp: Date.now()
+          });
         }}
         sortColumn={sortColumn}
         sortType={sortType}
