@@ -108,6 +108,7 @@ import { cptCodeService } from './services/setup/cptCodeService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { dentalChartAgeRuleService } from '@/services/setup/dental-chart-age-rule/dentalChartAgeRuleService';
 import { vitalSignRangeService } from '@/services/setup/vital-sign-range/vitalSignRangeService';
+import { childGrowthSetupService } from '@/services/setup/child-growth/childGrowthSetupService';
 import { dentalToothNumberingService } from '@/services/setup/dental-tooth-numbering/dentalToothNumberingService';
 import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDentalActionService';
 
@@ -569,6 +570,7 @@ export const store = configureStore({
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     [dentalChartAgeRuleService.reducerPath]: dentalChartAgeRuleService.reducer,
     [vitalSignRangeService.reducerPath]: vitalSignRangeService.reducer,
+    [childGrowthSetupService.reducerPath]: childGrowthSetupService.reducer,
     [dentalToothNumberingService.reducerPath]: dentalToothNumberingService.reducer,
 
     // procedures
@@ -894,6 +896,7 @@ export const store = configureStore({
         CdtDentalActionService.middleware,
         dentalChartAgeRuleService.middleware,
         vitalSignRangeService.middleware,
+        childGrowthSetupService.middleware,
         dentalToothNumberingService.middleware,
         vaccineService.middleware,
         vaccineBrandsService.middleware,

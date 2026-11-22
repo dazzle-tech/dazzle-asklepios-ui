@@ -196,6 +196,7 @@ const CPTSetup = lazy (() => import ( './pages/setup/cpt-setup'));
 const DentalActions = lazy (() => import ( './pages/setup/dental-actions-new'));
 const DentalChartSetup = lazy (() => import ( './pages/setup/dental-chart-setup'));
 const VitalSignSetup = lazy (() => import ( './pages/setup/vital-sign-setup'));
+const ChildGrowthSetup = lazy (() => import ( './pages/setup/child-growth-setup'));
 const DentalToothNumberingSetup = lazy (() => import ( './pages/setup/dental-tooth-numbering-setup'));
 const NewDepartments = lazy (() => import ( './pages/setup/departments-setup/Departments-new'));
 const Diagnostics = lazy (() => import ( './pages/setup/diagnostics-tests-definition-new'));
@@ -1003,6 +1004,7 @@ const App = () => {
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="dental-chart-setup" element={<DentalChartSetup />} />
               <Route path="vital-sign-setup" element={<VitalSignSetup />} />
+              <Route path="child-growth-setup" element={<ChildGrowthSetup />} />
               <Route path="dental-tooth-numbering-setup" element={<DentalToothNumberingSetup />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
               <Route path="icd10-setup" element={<ICD10Setup />} />

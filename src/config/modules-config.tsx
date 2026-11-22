@@ -239,6 +239,7 @@ export const MODULES: Module[] =
         { name: "Dental Chart Setup", code: "DENTAL_CHART_SETUP", description: "Age-based Adult / Pediatric / Mixed chart configuration", icon: "FaTeethOpen", viewOrder: 9, navPath: "dental-chart-setup" },
         { name: "Dental Tooth Numbering Setup", code: "DENTAL_TOOTH_NUMBERING_SETUP", description: "Named tooth-numbering methods and display labels", icon: "FaTeethOpen", viewOrder: 9, navPath: "dental-tooth-numbering-setup" },
         { name: "Vital Sign Setup", code: "VITAL_SIGN_SETUP", description: "Normal ranges for vital signs", icon: "FaHeartbeat", viewOrder: 9, navPath: "vital-sign-setup" },
+        { name: "Child Growth Setup", code: "CHILD_GROWTH_SETUP", description: "Growth chart types, age coverage and result ranges", icon: "FaBaby", viewOrder: 9, navPath: "child-growth-setup" },
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
         { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
