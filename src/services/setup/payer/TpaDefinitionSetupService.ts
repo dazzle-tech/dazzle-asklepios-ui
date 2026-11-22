@@ -42,11 +42,23 @@ export const TpaDefinitionService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['TpaDefinition', 'NphiesPayer'],
   endpoints: builder => ({
-    getAllTpaDefinitions: builder.query<PagedResult<TpaDefinition>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllTpaDefinitions: builder.query<
+      PagedResult<TpaDefinition>,
+      PagedParams & { tpaCode?: string; name?: string; guarantorType?: string; isActive?: boolean }
+    >({
+      query: ({ page, size, sort = 'id,asc', tpaCode, name, guarantorType, isActive }) => ({
         url: '/api/setup/tpa-definitions',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          tpaCode: tpaCode?.trim() || undefined,
+          name: name?.trim() || undefined,
+          guarantorType: guarantorType || undefined,
+          isActive
+        }
       }),
       transformResponse: (res: TpaDefinition[], meta) => toPagedResult(res, meta),
       providesTags: ['TpaDefinition']
