@@ -85,8 +85,9 @@ export const organizationHolidaysService = createApi({
         startDate?: string;
         endDate?: string;
         recurring?: boolean;
-        allFacilities?: boolean;
-        facilityId?: number;
+        allFacilities?: boolean | string;
+        facilityId?: number | string;
+        isActive?: boolean;
       }
     >({
       query: (params) => ({
