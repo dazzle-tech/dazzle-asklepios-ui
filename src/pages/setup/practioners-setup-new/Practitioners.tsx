@@ -1,6 +1,5 @@
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import MyButton from "@/components/MyButton/MyButton";
-import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from "@/components/Translate";
@@ -10,26 +9,19 @@ import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
 import {
   useCreatePractitionerMutation,
   useGetAllPractitionersQuery,
-  useLazyGetPractitionerByNameQuery,
-  useLazyGetPractitionersByFacilityQuery,
-  useLazyGetPractitionersByJobRoleQuery,
-  useLazyGetPractitionersByLinkedUserQuery,
-  useLazyGetPractitionersBySpecialtyQuery,
-  useLazyGetPractitionersByStatusQuery,
   useTogglePractitionerActiveMutation,
   useUpdatePractitionerMutation
 } from "@/services/setup/practitioner/PractitionerService";
 import { newPractitioner } from "@/types/model-types-constructor-new";
 import { Practitioner } from "@/types/model-types-new";
 import { formatEnumString } from "@/utils";
-import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { notify } from "@/utils/uiReducerActions";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import React, { useEffect, useState } from "react";
 import { FaUndo } from "react-icons/fa";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useDispatch } from "react-redux";
-import { Form, Panel, Tooltip, Whisper } from "rsuite";
+import { Panel, Tooltip, Whisper } from "rsuite";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import PolicyAssignmentManager from '@/components/PolicyAssignment';
@@ -59,24 +51,11 @@ const Practitioners = () => {
   const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
   const [selectedPractitionerForPolicyAssignment, setSelectedPractitionerForPolicyAssignment] =
     useState<Practitioner | null>(null);
-  const [recordOfFilter, setRecordOfFilter] = useState({
-    filter: "",
-    value: "",
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<Practitioner[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [valueSpecility, setValueSpecility] = useState({ specility: "" });
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
     sort: "id,asc",
     timestamp: Date.now(),
-  });
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: "id,asc",
   });
   const [sortColumn, setSortColumn] = useState("id");
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
@@ -84,23 +63,28 @@ const Practitioners = () => {
 
 
   // ──────────────────────────── DATA ────────────────────────────
-  const { data: practitionerListResponse, isFetching } =
-    useGetAllPractitionersQuery(paginationParams);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { facilityId: '', name: '', specialty: '', jobRole: '', linkedToUser: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
+
+  const { data: practitionerListResponse, isFetching } = useGetAllPractitionersQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [createPractitioner] = useCreatePractitionerMutation();
   const [updatePractitioner] = useUpdatePractitionerMutation();
   const [togglePractitionerActive] = useTogglePractitionerActiveMutation();
-  const [getPractitionersByFacility] = useLazyGetPractitionersByFacilityQuery();
-  const [getPractitionersBySpecialty] = useLazyGetPractitionersBySpecialtyQuery();
-  const [getPractitionersByJobRole] = useLazyGetPractitionersByJobRoleQuery();
-  const [getPractitionerByName] = useLazyGetPractitionerByNameQuery();
-  const [getPractitionersByLinkedUser] = useLazyGetPractitionersByLinkedUserQuery();
-  const [getPractitionersByStatus] = useLazyGetPractitionersByStatusQuery();
   const specility = useEnumOptions('Specialty');
   const jobRole = useEnumOptions('JobRole');
-  const [link, setLink] = useState({})
   const totalCount = practitionerListResponse?.totalCount ?? 0;
-  const links = practitionerListResponse?.links || {};
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
@@ -117,69 +101,41 @@ const Practitioners = () => {
     };
   }, [dispatch]);
 
+  // Changing the status filter starts again from the first page
   useEffect(() => {
-    setLink(practitionerListResponse?.links)
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
-  }, [practitionerListResponse?.links])
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ──────────────────────────── FILTER LOGIC ────────────────────────────
-  const filterFields = [
-    { label: "Specialty", value: "specialty" },
-    { label: "Facility", value: "facility" },
-    { label: "Name", value: "name" },
-    { label: "Job Role", value: "jobRole" },
-     { label: "Linked to User", value: "linkedToUser" },
-     { label: "Status", value: "status" },
-  ];
-  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
-    try {
-      if (!field || !value) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-
-      const currentSize = size ?? filterPagination.size;
-
-      let response;
-      const params = {
-        page,
-        size: currentSize,
-        sort: filterPagination.sort,
-      };
-
-      if (field === "specialty") {
-        response = await getPractitionersBySpecialty({ specialty: value, ...params }).unwrap();
-      } else if (field === "facility") {
-        response = await getPractitionersByFacility({ facilityId: value, ...params }).unwrap();
-      } else if (field === "jobRole") {
-        response = await getPractitionersByJobRole({ jobRole: value, ...params }).unwrap();
-      } else if (field === "name") {
-        response = await getPractitionerByName({ name: value, ...params }).unwrap();
-      }
-      else if (field === "linkedToUser") {
-        response = await getPractitionersByLinkedUser({ linked: value, ...params }).unwrap();
-      }
-      else if (field === "status") {
-        response = await getPractitionersByStatus({isActive: value, ...params, }).unwrap();
-      }
-
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setLink(response.links);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size: currentSize });
-    } catch (error) {
-      console.error("Error filtering practitioners:", error);
-      dispatch(notify({ msg: "Failed to filter practitioners", sev: "error" }));
-      setIsFiltered(false);
-    }
+  // ──────────────────────────── HEADER FILTERS ────────────────────────────
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  const facilityOptions = (allFacilities ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }));
 
   //_________________________SORT LOGIC______________________
   const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
@@ -188,17 +144,12 @@ const Practitioners = () => {
 
     const sortValue = `${sortColumn},${sortType}`;
 
-    if (isFiltered) {
-      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-    } else {
-      setPaginationParams({
-        ...paginationParams,
-        sort: sortValue,
-        page: 0,
-        timestamp: Date.now(),
-      });
-    }
+    setPaginationParams({
+      ...paginationParams,
+      sort: sortValue,
+      page: 0,
+      timestamp: Date.now(),
+    });
   };
 
   const PRACTITIONER_ERROR_MAP: Record<string, string> = {
@@ -464,16 +415,19 @@ if (!backendKey && typeof error === "string") {
 
   const tableColumns = [
     {
-      key: "facilityName", title: <Translate>Facility</Translate>, flexGrow: 4,
+      key: "facilityName", title: <Translate>Facility</Translate>, width: 200,
+      ...headerSelect('facilityId', facilityOptions),
       render: (rowData) => <p>{rowData?.facility?.name}</p>
 
     },
-    { key: "firstName", title: <Translate>First Name</Translate>, flexGrow: 3 },
+    // Name filter matches the first or the last name
+    { key: "firstName", title: <Translate>First Name</Translate>, width: 160, ...headerSearch('name', 'Name') },
     { key: "lastName", title: <Translate>Last Name</Translate>, flexGrow: 3 },
     {
       key: "specialty",
       title: <Translate>Specialty</Translate>,
-      flexGrow: 3,
+      width: 170,
+      ...headerSelect('specialty', specility ?? []),
       render: (rowData) => {
         const isSpecialist = rowData?.specialty === "SPECIALIST";
 
@@ -510,17 +464,31 @@ if (!backendKey && typeof error === "string") {
       },
     },
     {
-      key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
+      key: "jobRole", title: <Translate>Job Role</Translate>, width: 170,
+      ...headerSelect('jobRole', jobRole ?? []),
       render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
     },
     {
-      key: "userId", title: <Translate>Linked to User</Translate>, flexGrow: 3,
+      key: "userId", title: <Translate>Linked to User</Translate>, width: 140,
+      ...headerSelect('linkedToUser', [
+        { label: "Yes", value: "true" },
+        { label: "No", value: "false" },
+      ]),
       render: (rowData) => <p>{rowData?.userId ? "Yes" : "No"}</p>
     },
     {
       key: "isActive",
       title: <Translate>Status</Translate>,
-      flexGrow: 2,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: Practitioner) => (
         <p>{rowData?.isActive ? "Active" : "Inactive"}</p>
       ),
@@ -532,157 +500,6 @@ if (!backendKey && typeof error === "string") {
       render: (rowData: Practitioner) => iconsForActions(rowData),
     },
   ];
-
-  // ──────────────────────────── PAGINATION ────────────────────────────
-  const handlePageChange = (event, newPage) => {
-    if (isFiltered) {
-
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    } else {
-
-      PaginationPerPage.handlePageChange(
-        event,
-        newPage,
-        paginationParams,
-        link,
-        setPaginationParams
-      );
-    }
-  };
-
-
-  // ──────────────────────────── FILTER UI ────────────────────────────
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        fieldName="filter"
-        fieldType="select"
-        selectData={filterFields}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
-        placeholder="Select Filter"
-        showLabel={false}
-        width="180px"
-      />
-
-      {recordOfFilter.filter === "specialty" && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={specility ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Specialty"
-        />
-      )}
-
-      {recordOfFilter.filter === "jobRole" && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={jobRole ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          showLabel={false}
-          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          placeholder="Select Job Role"
-        />
-      )}
-
-      {recordOfFilter.filter === "facility" && (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={allFacilities ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          showLabel={false}
-          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          placeholder="Select Facility"
-        />
-      )}
-
-      {recordOfFilter.filter === "name" && (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Name"
-        />
-      )}
-      {recordOfFilter.filter === "linkedToUser" && (
-       <MyInput
-        fieldName="value"
-        fieldType="select"
-        selectData={[
-          { label: "Yes", value: "true" },
-          { label: "No", value: "false" },
-       ]}
-       selectDataLabel="label"
-       selectDataValue="value"
-       record={recordOfFilter}
-       setRecord={(u) =>
-         setRecordOfFilter({ ...recordOfFilter, value: u.value })
-       }
-       showLabel={false}
-       placeholder="Select Linked to User"
-      />
-    )}
-    {recordOfFilter.filter === "status" && (
-     <MyInput
-       fieldName="value"
-       fieldType="select"
-       selectData={[
-        { label: "Active", value: "true" },
-        { label: "Inactive", value: "false" },
-       ]}
-       selectDataLabel="label"
-       selectDataValue="value"
-       record={recordOfFilter}
-       setRecord={(u) =>
-       setRecordOfFilter({
-        ...recordOfFilter,
-        value: u.value,
-      })
-      }
-      showLabel={false}
-      placeholder="Select Status"
-    />
-   )}
-
-      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name" && recordOfFilter.filter !== "jobRole"
-        && recordOfFilter.filter !== "linkedToUser" && recordOfFilter.filter !== "status" &&(
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            placeholder="Enter Value"
-            showLabel={false}
-          />
-        )}
-
-
-
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
 
   // ──────────────────────────── RENDER ────────────────────────────
 
@@ -698,30 +515,25 @@ if (!backendKey && typeof error === "string") {
 
 
       <MyTable
-        data={isFiltered ? filteredList : practitionerListResponse?.data ?? []}
-        totalCount={isFiltered ? filteredTotal : totalCount}
+        data={practitionerListResponse?.data ?? []}
+        totalCount={totalCount}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={(rowData) => setPractitioner(rowData)}
-        filters={filters()}
         loading={isFetching}
-        page={isFiltered ? filterPagination.page : pageIndex}
-        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
-        onPageChange={handlePageChange}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        onPageChange={(_: unknown, newPage: number) => {
+          setPaginationParams(prev => ({ ...prev, page: newPage, timestamp: Date.now() }));
+        }}
         onRowsPerPageChange={(e) => {
           const newSize = Number(e.target.value);
-
-          if (isFiltered) {
-            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-          } else {
-            setPaginationParams({
-              ...paginationParams,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now(),
-            });
-          }
+          setPaginationParams({
+            ...paginationParams,
+            size: newSize,
+            page: 0,
+            timestamp: Date.now(),
+          });
         }}
         sortColumn={sortColumn}
         sortType={sortType}

@@ -23,11 +23,32 @@ export const PractitionerService = createApi({
   tagTypes: ['Practitioner'],
   endpoints: builder => ({
     // Get all practitioners
-    getAllPractitioners: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllPractitioners: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        isActive?: boolean;
+        facilityId?: number | string;
+        name?: string;
+        specialty?: string;
+        jobRole?: string;
+        linkedToUser?: boolean | string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, facilityId, name, specialty, jobRole, linkedToUser }) => ({
         url: '/api/setup/practitioner',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          name: name?.trim() || undefined,
+          specialty: specialty || undefined,
+          jobRole: jobRole || undefined,
+          linkedToUser: linkedToUser === '' ? undefined : linkedToUser
+        }
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
