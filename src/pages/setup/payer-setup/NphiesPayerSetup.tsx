@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './styles.less';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTab from '@/components/MyTab';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -22,13 +21,9 @@ import { approvalCoverageCompanyLabel } from '@/pages/setup/coverage-management/
 
 import {
   useGetAllNphiesPayersQuery,
-  useGetNphiesPayersByNphiesIdQuery,
-  useGetNphiesPayersByNameEnQuery,
-  useGetNphiesPayersByNameArQuery,
   useCreateNphiesPayerMutation,
   useUpdateNphiesPayerMutation,
-  useToggleNphiesPayerActiveMutation,
-  useGetNphiesPayersByStatusQuery
+  useToggleNphiesPayerActiveMutation
 } from '@/services/setup/payer/NphiesPayerSetupService';
 import {
   useCreatePayorMutation,
@@ -44,27 +39,10 @@ import InsuranceCompanyPolicyModal from './InsuranceCompanyPolicyModal';
 import InsuranceCompanyPoliciesPanel from './InsuranceCompanyPoliciesPanel';
 import { TpaDefinitionService } from '@/services/setup/payer/TpaDefinitionSetupService';
 
-type FilterCriteria = '' | 'nphiesId' | 'nameEn' | 'nameAr' | 'isActive';
-
-const filterCriteriaOptions = [
-  { label: 'Payer Company Code', value: 'nphiesId' },
-  { label: 'English Name', value: 'nameEn' },
-  { label: 'Arabic Name', value: 'nameAr' },
-  { label: 'Active', value: 'isActive' }
-];
-
-const ACTIVE_FILTER_OPTIONS = [
-  { label: 'Yes', value: 'true' },
-  { label: 'No', value: 'false' }
-];
-
-const initialNphiesPayerFilter = {
-  criteria: '' as FilterCriteria,
-  nphiesId: '',
-  nameEn: '',
-  nameAr: '',
-  isActive: ''
-};
+// Header filters: draft values typed in the inputs, applied on Enter.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = { nphiesId: '', nameEn: '', nameAr: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WEBSITE_PATTERN = /^https?:\/\/.+$/i;
@@ -110,80 +88,19 @@ const NphiesPayerSetup = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  const [payerFilter, setPayerFilter] = useState<{
-    criteria: FilterCriteria;
-    nphiesId: string;
-    nameEn: string;
-    nameAr: string;
-    isActive: string;
-  }>(initialNphiesPayerFilter);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  const [appliedPayerFilter, setAppliedPayerFilter] = useState<{
-    criteria: FilterCriteria;
-    nphiesId: string;
-    nameEn: string;
-    nameAr: string;
-    isActive: string;
-  }>(initialNphiesPayerFilter);
-
-  const hasNphiesIdFilter =
-    appliedPayerFilter.criteria === 'nphiesId' && !!appliedPayerFilter.nphiesId?.trim();
-
-  const hasNameEnFilter =
-    appliedPayerFilter.criteria === 'nameEn' && !!appliedPayerFilter.nameEn?.trim();
-
-  const hasNameArFilter =
-    appliedPayerFilter.criteria === 'nameAr' && !!appliedPayerFilter.nameAr?.trim();
-
-  const hasIsActiveFilter =
-    appliedPayerFilter.criteria === 'isActive' && !!appliedPayerFilter.isActive;
-
-  const allPayersQuery = useGetAllNphiesPayersQuery(
-    {
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    {
-      skip: hasNphiesIdFilter || hasNameEnFilter || hasNameArFilter || hasIsActiveFilter
-    }
-  );
-
-  const payersByNphiesIdQuery = useGetNphiesPayersByNphiesIdQuery(
-    {
-      nphiesId: appliedPayerFilter.nphiesId.trim(),
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    {
-      skip: !hasNphiesIdFilter
-    }
-  );
-
-  const payersByNameEnQuery = useGetNphiesPayersByNameEnQuery(
-    {
-      nameEn: appliedPayerFilter.nameEn.trim(),
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    {
-      skip: !hasNameEnFilter
-    }
-  );
-
-  const payersByNameArQuery = useGetNphiesPayersByNameArQuery(
-    {
-      nameAr: appliedPayerFilter.nameAr.trim(),
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    {
-      skip: !hasNameArFilter
-    }
-  );
+  const allPayersQuery = useGetAllNphiesPayersQuery({
+    page: paginationParams.page,
+    size: paginationParams.size,
+    sort: paginationParams.sort,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
 
   const [createNphiesPayer] = useCreateNphiesPayerMutation();
   const [updateNphiesPayer] = useUpdateNphiesPayerMutation();
@@ -235,34 +152,8 @@ const NphiesPayerSetup = () => {
     await createPayor(base).unwrap();
   };
 
-  const payersByStatusQuery = useGetNphiesPayersByStatusQuery(
-    {
-      isActive: appliedPayerFilter.isActive,
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort
-    },
-    {
-      skip: !hasIsActiveFilter
-    }
-  );
-
-  const activePayersResponse = hasNphiesIdFilter
-    ? payersByNphiesIdQuery.data
-    : hasNameEnFilter
-      ? payersByNameEnQuery.data
-      : hasNameArFilter
-        ? payersByNameArQuery.data
-        : hasIsActiveFilter
-          ? payersByStatusQuery.data
-          : allPayersQuery.data;
-
-  const isFetching =
-    allPayersQuery.isFetching ||
-    payersByNphiesIdQuery.isFetching ||
-    payersByNameEnQuery.isFetching ||
-    payersByNameArQuery.isFetching ||
-    payersByStatusQuery.isFetching;
+  const activePayersResponse = allPayersQuery.data;
+  const isFetching = allPayersQuery.isFetching;
 
   useEffect(() => {
     dispatch(setPageCode('NPHIES_PAYER'));
@@ -274,14 +165,10 @@ const NphiesPayerSetup = () => {
     };
   }, [dispatch]);
 
-  const handleResetFilter = () => {
-    setPayerFilter({ ...initialNphiesPayerFilter });
-    setAppliedPayerFilter({ ...initialNphiesPayerFilter });
-    setPaginationParams(prev => ({
-      ...prev,
-      page: 0
-    }));
-  };
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   const isSelected = (rowData: NphiesPayer) => {
     if (rowData && selectedPayer && rowData.id === selectedPayer.id) {
@@ -319,43 +206,21 @@ const NphiesPayerSetup = () => {
     }));
   };
 
-  const handleSearch = (nextFilter = payerFilter) => {
-    if (
-      !nextFilter.criteria ||
-      (nextFilter.criteria === 'nphiesId' && !nextFilter.nphiesId.trim()) ||
-      (nextFilter.criteria === 'nameEn' && !nextFilter.nameEn.trim()) ||
-      (nextFilter.criteria === 'nameAr' && !nextFilter.nameAr.trim()) ||
-      (nextFilter.criteria === 'isActive' && !nextFilter.isActive)
-    ) {
-      handleResetFilter();
-      return;
-    }
-
-    setAppliedPayerFilter({
-      criteria: nextFilter.criteria,
-      nphiesId: nextFilter.nphiesId,
-      nameEn: nextFilter.nameEn,
-      nameAr: nextFilter.nameAr,
-      isActive: nextFilter.isActive
-    });
-
-    setPaginationParams(prev => ({
-      ...prev,
-      page: 0
-    }));
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
   };
 
-  const applyHeaderSearch = (criteria: FilterCriteria, value: string) => {
-    const next = {
-      criteria,
-      nphiesId: criteria === 'nphiesId' ? value : '',
-      nameEn: criteria === 'nameEn' ? value : '',
-      nameAr: criteria === 'nameAr' ? value : '',
-      isActive: criteria === 'isActive' ? value : ''
-    };
-    setPayerFilter(next);
-    handleSearch(next);
-  };
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   const handleNew = () => {
     setSelectedPayer({ ...newNphiesPayer, tpaIds: [] });
@@ -617,53 +482,20 @@ const NphiesPayerSetup = () => {
     {
       key: 'nphiesId',
       title: <Translate>Payer Company Code</Translate>,
-      flexGrow: 2,
-      searchable: true,
-      searchPlaceholder: 'Search code',
-      searchValue: payerFilter.nphiesId,
-      onSearchChange: (value: string) =>
-        setPayerFilter(prev => ({
-          ...prev,
-          criteria: 'nphiesId',
-          nphiesId: value,
-          nameEn: '',
-          nameAr: ''
-        })),
-      onSearchSubmit: (value?: string) => applyHeaderSearch('nphiesId', value ?? payerFilter.nphiesId)
+      width: 170,
+      ...headerSearch('nphiesId', 'Search code')
     },
     {
       key: 'nameEn',
       title: <Translate>Name English</Translate>,
-      flexGrow: 3,
-      searchable: true,
-      searchPlaceholder: 'Search English name',
-      searchValue: payerFilter.nameEn,
-      onSearchChange: (value: string) =>
-        setPayerFilter(prev => ({
-          ...prev,
-          criteria: 'nameEn',
-          nameEn: value,
-          nphiesId: '',
-          nameAr: ''
-        })),
-      onSearchSubmit: (value?: string) => applyHeaderSearch('nameEn', value ?? payerFilter.nameEn)
+      width: 220,
+      ...headerSearch('nameEn', 'Search English name')
     },
     {
       key: 'nameAr',
       title: <Translate>Name Arabic</Translate>,
-      flexGrow: 3,
-      searchable: true,
-      searchPlaceholder: 'Search Arabic name',
-      searchValue: payerFilter.nameAr,
-      onSearchChange: (value: string) =>
-        setPayerFilter(prev => ({
-          ...prev,
-          criteria: 'nameAr',
-          nameAr: value,
-          nphiesId: '',
-          nameEn: ''
-        })),
-      onSearchSubmit: (value?: string) => applyHeaderSearch('nameAr', value ?? payerFilter.nameAr)
+      width: 220,
+      ...headerSearch('nameAr', 'Search Arabic name')
     },
     {
       key: 'facilityName',
@@ -681,7 +513,16 @@ const NphiesPayerSetup = () => {
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 1,
+      width: 140,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (rowData: NphiesPayer) =>
         rowData.isActive ? (
           <span>Active</span>
@@ -699,145 +540,6 @@ const NphiesPayerSetup = () => {
       render: (rowData: NphiesPayer) => iconsForActions(rowData)
     }
   ];
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        width="180px"
-        fieldName="criteria"
-        fieldType="select"
-        selectData={filterCriteriaOptions}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={payerFilter}
-        setRecord={(updated: any) => {
-          const next = typeof updated === 'function' ? updated(payerFilter) : updated;
-          const nextCriteria = (next?.criteria ?? '') as FilterCriteria;
-
-          if (!nextCriteria) {
-            handleResetFilter();
-            return;
-          }
-
-          setPayerFilter({
-            criteria: nextCriteria,
-            nphiesId: '',
-            nameEn: '',
-            nameAr: '',
-            isActive: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Criteria"
-        searchable={false}
-      />
-
-      {payerFilter.criteria === 'nphiesId' && (
-        <MyInput
-          width="220px"
-          fieldName="nphiesId"
-          fieldType="text"
-          record={payerFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(payerFilter) : updated;
-            const nextNphiesId = next?.nphiesId ?? '';
-
-            if (!nextNphiesId.trim()) {
-              handleResetFilter();
-              return;
-            }
-
-            setPayerFilter(prev => ({
-              ...prev,
-              nphiesId: nextNphiesId
-            }));
-          }}
-          showLabel={false}
-          placeholder="Search Payer Company Code"
-        />
-      )}
-
-      {payerFilter.criteria === 'nameEn' && (
-        <MyInput
-          width="220px"
-          fieldName="nameEn"
-          fieldType="text"
-          record={payerFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(payerFilter) : updated;
-            const nextNameEn = next?.nameEn ?? '';
-
-            if (!nextNameEn.trim()) {
-              handleResetFilter();
-              return;
-            }
-
-            setPayerFilter(prev => ({
-              ...prev,
-              nameEn: nextNameEn
-            }));
-          }}
-          showLabel={false}
-          placeholder="Search English Name"
-        />
-      )}
-
-      {payerFilter.criteria === 'nameAr' && (
-        <MyInput
-          width="220px"
-          fieldName="nameAr"
-          fieldType="text"
-          record={payerFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(payerFilter) : updated;
-            const nextNameAr = next?.nameAr ?? '';
-
-            if (!nextNameAr.trim()) {
-              handleResetFilter();
-              return;
-            }
-
-            setPayerFilter(prev => ({
-              ...prev,
-              nameAr: nextNameAr
-            }));
-          }}
-          showLabel={false}
-          placeholder="Search Arabic Name"
-        />
-      )}
-
-      {payerFilter.criteria === 'isActive' && (
-        <MyInput
-          width="220px"
-          fieldName="isActive"
-          fieldType="select"
-          selectData={ACTIVE_FILTER_OPTIONS}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={payerFilter}
-          setRecord={(updated: any) => {
-            const next = typeof updated === 'function' ? updated(payerFilter) : updated;
-            setPayerFilter(prev => ({
-              ...prev,
-              isActive: next?.isActive ?? ''
-            }));
-          }}
-          showLabel={false}
-          placeholder="Select Active"
-          searchable={false}
-        />
-      )}
-
-      <MyButton color="var(--deep-blue)" onClick={() => handleSearch()} width="80px">
-        Search
-      </MyButton>
-
-      <MyButton color="var(--primary-gray)" onClick={handleResetFilter} width="80px">
-        Clear
-      </MyButton>
-    </Form>
-  );
 
   const totalCount = activePayersResponse?.totalCount ?? 0;
   const pageIndex = paginationParams.page;
@@ -871,7 +573,6 @@ const NphiesPayerSetup = () => {
                       tpaIds: rowData.tpaIds ?? []
                     })
                   }
-                  filters={filters()}
                   page={pageIndex}
                   rowsPerPage={rowsPerPage}
                   onPageChange={handlePageChange}

@@ -33,11 +33,23 @@ export const NphiesPayerService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['NphiesPayer', 'TpaDefinition'],
   endpoints: builder => ({
-    getAllNphiesPayers: builder.query<PagedResult<NphiesPayer>, PagedParams>({
-      query: ({ page, size, sort = 'id,desc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllNphiesPayers: builder.query<
+      PagedResult<NphiesPayer>,
+      PagedParams & { nphiesId?: string; nameEn?: string; nameAr?: string; isActive?: boolean }
+    >({
+      query: ({ page, size, sort = 'id,desc', nphiesId, nameEn, nameAr, isActive }) => ({
         url: '/api/setup/nphies-payers',
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          nphiesId: nphiesId?.trim() || undefined,
+          nameEn: nameEn?.trim() || undefined,
+          nameAr: nameAr?.trim() || undefined,
+          isActive
+        }
       }),
       transformResponse: (res: any, meta) => {
         const h = meta?.response?.headers;
