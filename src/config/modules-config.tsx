@@ -254,6 +254,7 @@ export const MODULES: Module[] =
         { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+        { name: "Package Setup", code: "PACKAGE_SETUP", description: "Packages: a fixed price for a set of items with quantities", icon: "FaBoxesStacked", viewOrder: 11, navPath: "package-setup" },
         { name: "Tasks & Activities Setup", code: "ACTIVITY_SETUP", description: "Activity types, categories, due rules and teams", icon: "FaListCheck", viewOrder: 9, navPath: "activity-setup" },
         { name: "AI Services", code: "AI_SERVICES", description: "Setup for AI services", icon: "FaRobot", viewOrder: 9.5, navPath: "ai-services" },
         { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },

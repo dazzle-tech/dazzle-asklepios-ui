@@ -145,6 +145,7 @@ import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
+import { packageSetupService } from './services/setup/packageSetupService';
 
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
@@ -619,6 +620,8 @@ export const store = configureStore({
     // invoice report
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
+    // packages
+    [packageSetupService.reducerPath]: packageSetupService.reducer,
 
     // catalog
     [catalogService.reducerPath]: catalogService.reducer,
@@ -917,6 +920,7 @@ export const store = configureStore({
         resultReportApi.middleware,
         invoiceReportApi.middleware,
         visitDurationService.middleware,
+        packageSetupService.middleware,
         catalogService.middleware,
         catalogDiagnosticTestService.middleware,
         BillingService.middleware,

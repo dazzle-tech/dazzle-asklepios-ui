@@ -221,6 +221,7 @@ const SurgicalKitsSetup = lazy (() => import ( './pages/setup/surgical-kits-setu
 const UOMGroup = lazy (() => import ( './pages/setup/uom-group-new'));
 const Vaccine = lazy (() => import ( './pages/setup/vaccine-setup'));
 const VisitDurationSetup = lazy (() => import ( './pages/setup/visit-duration-setup'));
+const PackageSetup = lazy(() => import('./pages/setup/package-setup'));
 const ActivitySetup = lazy(() => import('./pages/setup/activity-setup'));
 const MyTasks = lazy(() => import('./pages/tasks/MyTasks'));
 const TeamTasks = lazy(() => import('./pages/tasks/TeamTasks'));
@@ -937,6 +938,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
+              <Route path="package-setup" element={<PackageSetup />} />
               <Route path="activity-setup" element={<ActivitySetup />} />
               <Route path="task-calendar" element={<TaskCalendarDashboard />} />
               <Route path="my-tasks" element={<MyTasks />} />
