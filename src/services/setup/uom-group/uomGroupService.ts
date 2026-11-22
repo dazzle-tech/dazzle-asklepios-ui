@@ -33,13 +33,16 @@ export const uomGroupService = createApi({
   tagTypes: ["UOMGroup"],
   endpoints: builder => ({
 
-    // 🔹 Get all practitioners (paginated)
+    // Paginated list; optional name / description filters are ANDed by the backend
     getAllUOMGroups: builder.query({
-      query: ({name , ...params }) => ({
-    //  query: () => ({
-        url: `/api/setup/uom-groups?name=${name}`,
+      query: ({ name, description, ...params }) => ({
+        url: "/api/setup/uom-groups",
         method: "GET",
-        params,
+        params: {
+          ...params,
+          name: name?.trim() || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
 
       transformResponse: (response: any[], meta) => {
