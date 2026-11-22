@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { useAppDispatch } from '@/hooks';
 import { HiDocumentDuplicate } from 'react-icons/hi2';
@@ -23,14 +23,9 @@ import {
   useReactivateDuplicationCandidateMutation,
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
-  useGetAvailableForRoleQuery,
-  useLazyGetDuplicationCandidatesByRuleQuery,
-  useLazyGetDuplicationCandidatesByStatusQuery,
-  useLazyGetDuplicationCandidatesByFieldQuery
 } from '@/services/potintialDuplicateService';
 import { newCandidate } from '@/types/model-types-constructor-new';
 import { Candidate } from '@/types/model-types-new';
-import MyInput from '@/components/MyInput';
 import { useEnumByName } from '@/services/enumsApi';
 
 const PotintialDuplicate = () => {
@@ -57,48 +52,25 @@ const PotintialDuplicate = () => {
   const [createCandidate] = useCreateDuplicationCandidateMutation();
   const [deactivateCandidate] = useDeactivateDuplicationCandidateMutation();
   const [reactivateCandidate] = useReactivateDuplicationCandidateMutation();
-  // Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<Candidate[]>([]);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Rule is text; each duplication field is '' (all) | 'true' | 'false'. Everything is ANDed by the backend.
+  const [headerFilters, setHeaderFilters] = useState<Record<string, string>>({ rule: '' });
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>({ rule: '' });
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(undefined);
-  const [getByRule] = useLazyGetDuplicationCandidatesByRuleQuery();
-  const [getByStatus] = useLazyGetDuplicationCandidatesByStatusQuery();
-  const [getByField] = useLazyGetDuplicationCandidatesByFieldQuery();
+  const { rule: appliedRule, ...appliedFieldFilters } = appliedFilters;
+  const { data: candidateList, isFetching, refetch } = useGetDuplicationCandidatesQuery({
+    role: appliedRule,
+    isActive: activeFilter,
+    fieldsTrue: Object.keys(appliedFieldFilters).filter(key => appliedFieldFilters[key] === 'true'),
+    fieldsFalse: Object.keys(appliedFieldFilters).filter(key => appliedFieldFilters[key] === 'false')
+  });
 
-  // ──────────────────────────── FILTER LOGIC ────────────────────────────
-  const handleFilterChange = async (field: string, value: string) => {
-    try {
-      if (!field || !value) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-
-      let response;
-      if (field === 'rule') {
-        response = await getByRule({ rule: value.trim() }).unwrap();
-      } else if (field === 'status') {
-        response = await getByStatus({ isActive: value }).unwrap();
-      } else {
-        response = await getByField({ field, value }).unwrap();
-      }
-
-      setFilteredList(response ?? []);
-      setIsFiltered(true);
-      setPageIndex(0);
-    } catch (error) {
-      console.error('Error filtering duplication rules:', error);
-      dispatch(notify({ msg: 'Failed to filter rules', sev: 'error' }));
-      setIsFiltered(false);
-    }
-  };
-
-  // Re-run the active filter after add/update/toggle so the filtered list stays in sync
+  // Reload the table after add/update/toggle
   const refreshList = () => {
     refetch();
-    if (isFiltered) handleFilterChange(recordOfFilter.filter, recordOfFilter.value);
   };
 
   // Header page setUp
@@ -170,18 +142,52 @@ useEffect(() => {
   // Table columns
   const duplicationFields = useEnumByName("DuplicationField") || [];
 
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: string, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPageIndex(0);
+  };
+
+  const headerSearch = (field: string, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field] ?? '',
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field] ?? '')
+  });
+
   const dynamicFieldColumns = duplicationFields.map(field => ({
     key: field,
     title: <Translate>{field.replace(/_/g, ' ')}</Translate>,
+    width: 150,
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [
+      { label: 'All', value: '' },
+      { label: 'True', value: 'true' },
+      { label: 'False', value: 'false' }
+    ],
     render: rowData => (rowData.fields?.[field] ? 'True' : 'False')
   }));
 
   const tableColumns = [
-    { key: 'role', title: <Translate>Rule</Translate>, render: rowData => rowData.rule },
+    { key: 'role', title: <Translate>Rule</Translate>, width: 160, ...headerSearch('rule', 'Rule'), render: rowData => rowData.rule },
     ...dynamicFieldColumns,
     {
       key: 'status',
       title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: rowData => (rowData.isActive ? 'active' : 'inactive')
     },
     {
@@ -204,17 +210,12 @@ useEffect(() => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPageIndex(0);
   };
-  // Available fields for filtering (one per table column)
-  const filterFields = [
-    { label: 'Rule', value: 'rule' },
-    ...duplicationFields.map(field => ({ label: field.replace(/_/g, ' '), value: field })),
-    { label: 'Status', value: 'status' }
-  ];
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPageIndex(0);
+  }, [statusFilter]);
 
-  const filteredData = React.useMemo(
-    () => (isFiltered ? filteredList : candidateList ?? []),
-    [isFiltered, filteredList, candidateList]
-  );
+  const filteredData = React.useMemo(() => candidateList ?? [], [candidateList]);
 
   const totalCount = filteredData.length;
 
@@ -335,88 +336,6 @@ useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const filters = () => {
-    const selectedFilter = recordOfFilter.filter;
-    let dynamicInput: React.ReactNode;
-
-    if (selectedFilter === 'status') {
-      dynamicInput = (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={[
-            { label: 'Active', value: 'true' },
-            { label: 'Inactive', value: 'false' }
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Status"
-          searchable={false}
-        />
-      );
-    } else if (selectedFilter && selectedFilter !== 'rule') {
-      dynamicInput = (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={[
-            { label: 'True', value: 'true' },
-            { label: 'False', value: 'false' }
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-          showLabel={false}
-          placeholder="Select Value"
-          searchable={false}
-        />
-      );
-    } else {
-      dynamicInput = (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder={selectedFilter === 'rule' ? 'Enter Rule' : 'Enter Value'}
-        />
-      );
-    }
-
-    return (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          fieldName="filter"
-          fieldType="select"
-          selectData={filterFields}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={u => setRecordOfFilter({ filter: u.filter, value: '' })}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="180px"
-        />
-
-        {dynamicInput}
-
-        <MyButton
-          color="var(--deep-blue)"
-          width="80px"
-          onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
-
               // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -427,10 +346,9 @@ useEffect(() => {
     <Panel dir={dir}>
 
       <MyTable
-        filters={filters()}
         height={450}
         data={paginatedData ?? []}
-        // loading={isFetching}
+        loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
