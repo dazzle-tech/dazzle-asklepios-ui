@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, InputNumber } from 'rsuite';
+import { Form, InputNumber, Toggle } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete } from 'react-icons/md';
@@ -36,7 +36,7 @@ const LOOKUP_PAGE_SIZE = 30;
 const emptyHeader = { code: '', name: '', price: '', description: '', isActive: true };
 
 /**
- * One screen for the whole package: the header (code, name, price) on top and its items with
+ * One screen for the whole package: the header (code, name, optional price) on top and its items with
  * quantities below. Everything is saved together with one Save.
  */
 const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
@@ -157,7 +157,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         sourceId: selected.sourceId,
         itemCode: selected.code,
         itemName: selected.name,
-        quantity
+        quantity,
+        isActive: true
       }
     ]);
     setSelected(null);
@@ -169,22 +170,30 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
     setItems(prev => prev.map((item, i) => (i === index ? { ...item, quantity } : item)));
   };
 
+  const toggleItem = (index: number, isActive: boolean) =>
+    setItems(prev => prev.map((item, i) => (i === index ? { ...item, isActive } : item)));
+
   const removeItem = (index: number) => setItems(prev => prev.filter((_, i) => i !== index));
 
   const handleSave = async () => {
     const code = String(header.code ?? '').trim();
     const name = String(header.name ?? '').trim();
-    const price = Number(header.price);
-    if (!code || !name || header.price === '' || header.price == null) {
-      dispatch(notify({ msg: 'Code, name and package price are required', sev: 'warning' }));
+    const hasPrice = header.price !== '' && header.price != null;
+    const price = hasPrice ? Number(header.price) : null;
+    if (!code || !name) {
+      dispatch(notify({ msg: 'Code and name are required', sev: 'warning' }));
       return;
     }
-    if (Number.isNaN(price) || price < 0) {
+    if (price != null && (Number.isNaN(price) || price < 0)) {
       dispatch(notify({ msg: 'Package price must be a valid number', sev: 'warning' }));
       return;
     }
     if (items.length === 0) {
       dispatch(notify({ msg: 'Add at least one item to the package', sev: 'warning' }));
+      return;
+    }
+    if (!items.some(i => i.isActive !== false)) {
+      dispatch(notify({ msg: 'At least one item must be active', sev: 'warning' }));
       return;
     }
 
@@ -194,7 +203,12 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       price,
       description: String(header.description ?? '').trim() || null,
       isActive: !!header.isActive,
-      items: items.map(i => ({ itemType: i.itemType, sourceId: i.sourceId, quantity: i.quantity }))
+      items: items.map(i => ({
+        itemType: i.itemType,
+        sourceId: i.sourceId,
+        quantity: i.quantity,
+        isActive: i.isActive !== false
+      }))
     };
 
     try {
@@ -213,17 +227,36 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
 
   const itemColumns = [
     {
+      key: 'index',
+      title: '#',
+      width: 50,
+      render: (_row: PackageSetupItem, index?: number) => <span className="pkg-muted">{(index ?? 0) + 1}</span>
+    },
+    {
       key: 'itemType',
       title: 'Type',
       width: 130,
-      render: (row: PackageSetupItem) => formatEnumString(row.itemType)
+      render: (row: PackageSetupItem) => (
+        <span className={`pkg-type pkg-type--${String(row.itemType).toLowerCase()}`}>
+          {formatEnumString(row.itemType)}
+        </span>
+      )
     },
-    { key: 'itemCode', title: 'Code', dataKey: 'itemCode', width: 140 },
-    { key: 'itemName', title: 'Item', dataKey: 'itemName', width: 340 },
+    {
+      key: 'itemName',
+      title: 'Item',
+      width: 380,
+      render: (row: PackageSetupItem) => (
+        <div className="pkg-item-cell" title={`${row.itemCode ?? ''} - ${row.itemName ?? ''}`}>
+          <span className="pkg-item-name">{row.itemName}</span>
+          <span className="pkg-muted">{row.itemCode}</span>
+        </div>
+      )
+    },
     {
       key: 'quantity',
       title: 'Qty',
-      width: 120,
+      width: 110,
       render: (row: PackageSetupItem, index?: number) => (
         <InputNumber
           size="sm"
@@ -231,7 +264,19 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
           step={1}
           value={row.quantity}
           onChange={value => updateQuantity(index ?? 0, value)}
-          className="package-item-qty"
+          className="pkg-qty"
+        />
+      )
+    },
+    {
+      key: 'isActive',
+      title: 'Active',
+      width: 90,
+      render: (row: PackageSetupItem, index?: number) => (
+        <Toggle
+          size="sm"
+          checked={row.isActive !== false}
+          onChange={checked => toggleItem(index ?? 0, checked)}
         />
       )
     },
@@ -244,7 +289,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
           <MdDelete
             className="icons-style"
             title="Remove"
-            size={22}
+            size={20}
             fill="var(--primary-pink)"
             onClick={() => removeItem(index ?? 0)}
           />
@@ -254,7 +299,9 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   ];
 
   const dir = (localStorage.getItem('direction') || 'LTR') === 'RTL' ? 'rtl' : 'ltr';
-  const totalUnits = items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+  const activeItems = items.filter(i => i.isActive !== false);
+  const totalUnits = activeItems.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
+  const inactiveCount = items.length - activeItems.length;
 
   return (
     <MyModal
@@ -268,52 +315,71 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       isDisabledActionBtn={isSaving || isLoadingExisting}
       actionButtonFunction={handleSave}
       content={
-        <Form fluid layout="vertical" className="package-setup-editor" dir={dir}>
-          <div className="package-header-row">
-            <MyInput width={180} fieldName="code" fieldLabel="Code" record={header} setRecord={setHeader} required />
-            <MyInput width={320} fieldName="name" fieldLabel="Name" record={header} setRecord={setHeader} required />
-            <MyInput
-              width={160}
-              fieldName="price"
-              fieldLabel="Package Price"
-              fieldType="number"
-              allowDecimal
-              min={0}
-              record={header}
-              setRecord={setHeader}
-              required
-            />
-            <MyInput
-              fieldName="isActive"
-              fieldLabel="Active"
-              fieldType="check"
-              showLabel={false}
-              record={header}
-              setRecord={setHeader}
-            />
-          </div>
-          <div className="package-header-row">
-            <MyInput
-              width="100%"
-              fieldName="description"
-              fieldLabel="Description"
-              fieldType="textarea"
-              record={header}
-              setRecord={setHeader}
-            />
-          </div>
-
-          <div className="package-items-section">
-            <div className="package-items-title">
-              <Translate>Package Items</Translate>
-              <span className="package-items-total">
-                {items.length} <Translate>items</Translate> / {totalUnits} <Translate>units</Translate>
+        <Form fluid layout="vertical" className="pkg-editor" dir={dir}>
+          <section className="pkg-card">
+            <div className="pkg-card-head">
+              <span className="pkg-card-title">
+                <Translate>Package Details</Translate>
               </span>
+              <MyInput
+                fieldName="isActive"
+                fieldLabel="Active"
+                fieldType="check"
+                showLabel={false}
+                record={header}
+                setRecord={setHeader}
+              />
+            </div>
+            <div className="pkg-details-grid">
+              <MyInput width="100%" fieldName="code" fieldLabel="Code" record={header} setRecord={setHeader} required />
+              <MyInput width="100%" fieldName="name" fieldLabel="Name" record={header} setRecord={setHeader} required />
+              <MyInput
+                width="100%"
+                fieldName="price"
+                fieldLabel="Package Price"
+                fieldType="number"
+                allowDecimal
+                min={0}
+                placeholder="Optional"
+                record={header}
+                setRecord={setHeader}
+              />
+              <div className="pkg-span-all">
+                <MyInput
+                  width="100%"
+                  fieldName="description"
+                  fieldLabel="Description"
+                  fieldType="textarea"
+                  record={header}
+                  setRecord={setHeader}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="pkg-card">
+            <div className="pkg-card-head">
+              <span className="pkg-card-title">
+                <Translate>Package Items</Translate>
+              </span>
+              <div className="pkg-stats">
+                <span className="pkg-stat">
+                  <b>{activeItems.length}</b> <Translate>active items</Translate>
+                </span>
+                <span className="pkg-stat">
+                  <b>{totalUnits}</b> <Translate>units</Translate>
+                </span>
+                {inactiveCount > 0 && (
+                  <span className="pkg-stat pkg-stat--muted">
+                    <b>{inactiveCount}</b> <Translate>inactive</Translate>
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="package-item-add-row">
+            <div className="pkg-add-bar">
               <MyInput
-                width={170}
+                width="100%"
                 fieldName="itemType"
                 fieldLabel="Item Type"
                 fieldType="select"
@@ -325,7 +391,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
               />
               <MyInput
                 key={`item-${draft.itemType}`}
-                width={380}
+                width="100%"
                 fieldName="sourceId"
                 fieldLabel="Item"
                 fieldType="selectPagination"
@@ -346,7 +412,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 placeholder={draft.itemType ? 'Search by name or code' : 'Choose the type first'}
               />
               <MyInput
-                width={100}
+                width="100%"
                 fieldName="quantity"
                 fieldLabel="Qty"
                 fieldType="number"
@@ -355,12 +421,28 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 setRecord={changeDraft}
               />
               <MyButton prefixIcon={() => <PlusIcon />} onClick={addItem} disabled={!selected}>
-                Add Item
+                Add
               </MyButton>
             </div>
 
-            <MyTable data={items} columns={itemColumns} height={260} loading={isLoadingExisting} />
-          </div>
+            {items.length === 0 && !isLoadingExisting ? (
+              <div className="pkg-empty">
+                <FontAwesomeIcon icon={faBoxesStacked} className="pkg-empty-icon" />
+                <span>
+                  <Translate>No items yet. Choose a type and an item above, then press Add.</Translate>
+                </span>
+              </div>
+            ) : (
+              <MyTable
+                data={items}
+                columns={itemColumns}
+                height={280}
+                loading={isLoadingExisting}
+                dontTranslateData
+                rowClassName={(row: PackageSetupItem) => (row.isActive === false ? 'pkg-row-inactive' : '')}
+              />
+            )}
+          </section>
         </Form>
       }
     />

@@ -12,7 +12,7 @@ import { formatEnumString } from '@/utils';
 import {
   PatientPackage,
   PatientPackageItem,
-  useGetPatientPackagesByPatientQuery,
+  useGetPatientPackagesByEncounterQuery,
   useOrderPackageDiagnosticsMutation,
   useOrderPatientPackageItemMutation
 } from '@/services/patient/patientPackageService';
@@ -75,9 +75,13 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   const [procedureItem, setProcedureItem] = useState<PatientPackageItem | null>(null);
   const [procedureWizard, setProcedureWizard] = useState<any>(newProcedureWizard());
 
-  const { data: packages = [], isFetching } = useGetPatientPackagesByPatientQuery(
-    { patientId: patientId as number, activeOnly: true },
-    { skip: !patientId }
+  // a package belongs to the visit it was chosen in; cancelled ones are hidden
+  const { data: encounterPackages, isFetching } = useGetPatientPackagesByEncounterQuery(encounterId as number, {
+    skip: !encounterId
+  });
+  const packages = useMemo(
+    () => (encounterPackages ?? []).filter(p => p.status !== 'CANCELLED'),
+    [encounterPackages]
   );
   const [orderItem, { isLoading: isOrderingItem }] = useOrderPatientPackageItemMutation();
   const [orderDiagnostics, { isLoading: isOrderingTests }] = useOrderPackageDiagnosticsMutation();

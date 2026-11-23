@@ -131,16 +131,20 @@ const PackageSetup: React.FC = () => {
       title: 'Items',
       dataKey: 'itemCount',
       width: 90,
-      render: (row: PackageSetupModel) => row.itemCount ?? row.items?.length ?? 0
+      render: (row: PackageSetupModel) => {
+        const total = row.itemCount ?? row.items?.length ?? 0;
+        const active = row.activeItemCount ?? total;
+        return active === total ? total : <span title={`${total - active} inactive`}>{active} / {total}</span>;
+      }
     },
     {
       key: 'contents',
       title: 'Contents',
       width: 360,
       exportValue: (row: PackageSetupModel) =>
-        (row.items ?? []).map(i => `${i.itemName} x${i.quantity}`).join(', '),
+        (row.items ?? []).filter(i => i.isActive !== false).map(i => `${i.itemName} x${i.quantity}`).join(', '),
       render: (row: PackageSetupModel) => {
-        const items = row.items ?? [];
+        const items = (row.items ?? []).filter(i => i.isActive !== false);
         const text = items.map(i => `${i.itemName} ×${i.quantity}`).join(', ');
         return <span title={text}>{text}</span>;
       }

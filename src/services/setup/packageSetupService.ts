@@ -23,6 +23,7 @@ export interface PackageSetupItem {
   itemCode?: string;
   itemName?: string;
   quantity: number;
+  isActive?: boolean;
 }
 
 export interface PackageSetup {
@@ -30,9 +31,10 @@ export interface PackageSetup {
   code: string;
   name: string;
   description?: string | null;
-  price: number | string;
+  price: number | string | null;
   isActive: boolean;
   itemCount?: number;
+  activeItemCount?: number;
   items: PackageSetupItem[];
 }
 
@@ -41,7 +43,7 @@ export interface PackageItemLookup {
   sourceId: number;
   code: string;
   name: string;
-  price?: number;
+  price?: number | null;
 }
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {

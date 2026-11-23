@@ -82,7 +82,7 @@ const RegistrationEncounter = ({
     () =>
       (activePackagesPage?.data ?? []).map(p => ({
         value: p.id,
-        label: `${p.code} - ${p.name} (${Number(p.price ?? 0).toFixed(2)})`
+        label: p.price != null ? `${p.code} - ${p.name} (${Number(p.price).toFixed(2)})` : `${p.code} - ${p.name}`
       })),
     [activePackagesPage?.data]
   );

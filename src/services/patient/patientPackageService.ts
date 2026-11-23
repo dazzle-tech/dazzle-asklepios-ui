@@ -24,7 +24,7 @@ export interface PatientPackage {
   packageSetupId: number;
   packageCode?: string;
   packageName?: string;
-  packagePrice: number;
+  packagePrice: number | null;
   status: PatientPackageStatus;
   cancelReason?: string | null;
   createdBy?: string;
