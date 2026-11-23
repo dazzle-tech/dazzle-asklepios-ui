@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Form, Loader, Tooltip, Whisper } from 'rsuite';
-import { FaBoxesStacked, FaChevronDown, FaCheck, FaLock, FaXmark } from 'react-icons/fa6';
+import { FaBoxesStacked, FaChevronDown, FaCheck, FaLock, FaXmark, FaTrashCan } from 'react-icons/fa6';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -20,6 +20,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useSortedLovQuery } from '../../encounter-component/procedure-new/useSortedLovQuery';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
+import CategoryTestPicker from './CategoryTestPicker';
 import './packagePanel.less';
 
 interface Props {
@@ -36,6 +37,16 @@ const DIAGNOSTIC_TYPES = ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'];
 /** Each one opens its own wizard (body part, schedule...). */
 const PROCEDURE_TYPES = ['PROCEDURE'];
 const SUPPORTED_TYPES = [...DIRECT_TYPES, ...DIAGNOSTIC_TYPES, ...PROCEDURE_TYPES];
+
+type PickedTest = { testId: number; name: string; code?: string };
+
+/** "Any Laboratory" for a category line, the item name otherwise. */
+const itemLabel = (item: PatientPackageItem) =>
+  item.isCategory ? `Any ${formatEnumString(item.itemType)}` : item.itemName ?? '';
+
+/** Category lines of these types are picked in the panel; the others are ordered from their usual screens. */
+const canOrderFromPanel = (item: PatientPackageItem) =>
+  item.isCategory ? DIAGNOSTIC_TYPES.includes(item.itemType) : SUPPORTED_TYPES.includes(item.itemType);
 
 // Same fields and sources as the procedure order screen (procedure-new/Details.tsx)
 const newProcedureWizard = () => ({
@@ -69,15 +80,20 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   const [selectedTestIds, setSelectedTestIds] = useState<number[]>([]);
   const [testsWizardOpen, setTestsWizardOpen] = useState(false);
   const [testsWizard, setTestsWizard] = useState<any>(newTestsWizard());
-  const [testReasons, setTestReasons] = useState<Record<number, string | null>>({});
+  /** keyed by item id for an item line, `c:<itemId>:<testId>` for a test picked under a category */
+  const [testReasons, setTestReasons] = useState<Record<string, string | null>>({});
+  const [categoryTests, setCategoryTests] = useState<Record<number, PickedTest[]>>({});
 
   // one procedure at a time
   const [procedureItem, setProcedureItem] = useState<PatientPackageItem | null>(null);
   const [procedureWizard, setProcedureWizard] = useState<any>(newProcedureWizard());
 
   // a package belongs to the visit it was chosen in; cancelled ones are hidden
+  // refreshed now and then: orders made on the usual screens are taken from the package too
   const { data: encounterPackages, isFetching } = useGetPatientPackagesByEncounterQuery(encounterId as number, {
-    skip: !encounterId
+    skip: !encounterId,
+    pollingInterval: 30000,
+    refetchOnFocus: true
   });
   const packages = useMemo(
     () => (encounterPackages ?? []).filter(p => p.status !== 'CANCELLED'),
@@ -98,6 +114,18 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     () => allItems.filter(i => selectedTestIds.includes(i.id) && i.quantityRemaining > 0),
     [allItems, selectedTestIds]
   );
+  const selectedItemTests = selectedTests.filter(t => !t.isCategory);
+  const selectedCategories = selectedTests.filter(t => t.isCategory);
+  const pickedCount = selectedCategories.reduce((sum, c) => sum + (categoryTests[c.id]?.length ?? 0), 0);
+  const orderCount = selectedItemTests.length + pickedCount;
+  // tests already in this order (greyed out in the pickers)
+  const testIdsInOrder = useMemo(
+    () => [
+      ...selectedItemTests.map(t => Number(t.sourceId)),
+      ...Object.values(categoryTests).flat().map(t => t.testId)
+    ],
+    [selectedItemTests, categoryTests]
+  );
 
   if (!patientId || (!isFetching && packages.length === 0)) {
     return null;
@@ -110,7 +138,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     setBusyItemId(item.id);
     try {
       await orderItem({ itemId: item.id, body: { encounterId: Number(encounterId), quantity: 1, ...extra } }).unwrap();
-      dispatch(notify({ msg: `${item.itemName} ordered from the package`, sev: 'success' }));
+      dispatch(notify({ msg: `${itemLabel(item)} ordered from the package`, sev: 'success' }));
       return true;
     } catch (err) {
       dispatch(notify({ msg: extractApiErrorMessage(err), sev: 'error' }));
@@ -140,21 +168,48 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     if (selectedTests.length === 0) return;
     setTestsWizard(newTestsWizard());
     setTestReasons({});
+    setCategoryTests({});
     setTestsWizardOpen(true);
   };
 
   const submitTests = async () => {
     if (!encounterId || selectedTests.length === 0) return;
+    const emptyCategory = selectedCategories.find(c => (categoryTests[c.id] ?? []).length === 0);
+    if (emptyCategory) {
+      dispatch(notify({ msg: `Add at least one test for ${itemLabel(emptyCategory)}`, sev: 'warning' }));
+      return;
+    }
+    const items = [
+      ...selectedItemTests.map(t => ({ itemId: t.id, reason: testReasons[String(t.id)] || null })),
+      ...selectedCategories.flatMap(c =>
+        (categoryTests[c.id] ?? []).map(t => ({
+          itemId: c.id,
+          testId: t.testId,
+          reason: testReasons[`c:${c.id}:${t.testId}`] || null
+        }))
+      )
+    ];
     try {
-      await orderDiagnostics({
+      const result = await orderDiagnostics({
         encounterId: Number(encounterId),
         isUrgent: !!testsWizard.isUrgent,
         notes: String(testsWizard.notes ?? '').trim() || null,
         icdDiagnosisId: testsWizard.icdDiagnosisId ?? null,
-        items: selectedTests.map(t => ({ itemId: t.id, reason: testReasons[t.id] || null }))
+        items
       }).unwrap();
-      dispatch(notify({ msg: `${selectedTests.length} test(s) ordered in one order`, sev: 'success' }));
+      const counted = result.countedTestIds?.length ?? 0;
+      const extra = items.length - counted;
+      dispatch(
+        notify({
+          msg:
+            extra > 0
+              ? `${items.length} test(s) ordered: ${counted} from the package, ${extra} charged as usual`
+              : `${items.length} test(s) ordered from the package in one order`,
+          sev: extra > 0 ? 'info' : 'success'
+        })
+      );
       setSelectedTestIds([]);
+      setCategoryTests({});
       setTestsWizardOpen(false);
     } catch (err) {
       dispatch(notify({ msg: extractApiErrorMessage(err), sev: 'error' }));
@@ -182,7 +237,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
 
   const renderItem = (item: PatientPackageItem) => {
     const done = item.quantityRemaining <= 0;
-    const supported = SUPPORTED_TYPES.includes(item.itemType);
+    const supported = canOrderFromPanel(item);
     const selected = selectedTestIds.includes(item.id) && !done;
     const disabled = readOnly || done || !supported || !encounterId || busy;
     const typeKey = String(item.itemType).toLowerCase();
@@ -206,8 +261,18 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
           ) : null}
         </span>
         <span className="pkgp-item-main">
-          <span className="pkgp-item-name" title={item.itemName}>{item.itemName}</span>
-          <span className={`pkgp-chip pkgp-chip--${typeKey}`}>{formatEnumString(item.itemType)}</span>
+          <span className="pkgp-item-name" title={itemLabel(item)}>{itemLabel(item)}</span>
+          <span className="pkgp-item-tags">
+            <span className={`pkgp-chip pkgp-chip--${typeKey}`}>{formatEnumString(item.itemType)}</span>
+            {item.isCategory && item.maxRepeat != null && (
+              <span className="pkgp-chip" title="How many times the same item can be counted">
+                ≤{item.maxRepeat}× <Translate>each</Translate>
+              </span>
+            )}
+            {item.discountPercent != null && Number(item.discountPercent) > 0 && (
+              <span className="pkgp-chip pkgp-chip--discount">-{Number(item.discountPercent)}%</span>
+            )}
+          </span>
         </span>
         <span className="pkgp-left">
           {done ? <Translate>Done</Translate> : <>{item.quantityRemaining}<small>/{item.quantityTotal}</small></>}
@@ -216,8 +281,11 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     );
 
     if (!supported && !done) {
+      const tip = item.isCategory
+        ? 'Order it from its usual screen: it is taken from the package automatically'
+        : 'Ordering this type from a package is not available yet';
       return (
-        <Whisper key={item.id} placement="top" speaker={<Tooltip>Ordering this type from a package is not available yet</Tooltip>}>
+        <Whisper key={item.id} placement="top" speaker={<Tooltip>{tip}</Tooltip>}>
           {row}
         </Whisper>
       );
@@ -243,6 +311,26 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   };
 
   const title = packages.length === 1 ? packages[0].packageName : null;
+
+  const reasonInput = (key: string) => (
+    <MyInput
+      width={200}
+      showLabel={false}
+      fieldName="reason"
+      fieldLabel="Reason"
+      placeholder="Reason"
+      fieldType="select"
+      selectData={reasonLov?.object ?? []}
+      selectDataLabel="lovDisplayVale"
+      selectDataValue="key"
+      disableByField="isValid"
+      record={{ reason: testReasons[key] ?? null }}
+      setRecord={(next: any) => {
+        const value = typeof next === 'function' ? next({ reason: testReasons[key] ?? null }) : next;
+        setTestReasons(prev => ({ ...prev, [key]: value?.reason ?? null }));
+      }}
+    />
+  );
 
   return (
     <>
@@ -292,44 +380,98 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
         steps={[{ title: 'Test details', icon: <FaBoxesStacked /> }]}
         size="52vw"
         position="right"
-        actionButtonLabel={isOrderingTests ? 'Ordering...' : `Submit (${selectedTests.length})`}
+        actionButtonLabel={isOrderingTests ? 'Ordering...' : `Submit (${orderCount})`}
         actionButtonLoading={isOrderingTests}
-        isDisabledActionBtn={isOrderingTests || selectedTests.length === 0}
+        isDisabledActionBtn={isOrderingTests || orderCount === 0}
         actionButtonFunction={submitTests}
         content={
           <Form fluid layout="vertical" className="pkgp-wizard">
-            <div className="pkgp-wizard-label">
-              <Translate>Tests</Translate> ({selectedTests.length})
-            </div>
-            <ul className="pkgp-wizard-tests">
-              {selectedTests.map(t => (
-                <li key={t.id}>
-                  <span className="pkgp-wizard-test-name">
-                    {t.itemName}
-                    <span className={`pkgp-chip pkgp-chip--${String(t.itemType).toLowerCase()}`}>
-                      {formatEnumString(t.itemType)}
+            {selectedItemTests.length > 0 && (
+              <>
+                <div className="pkgp-wizard-label">
+                  <Translate>Tests</Translate> ({selectedItemTests.length})
+                </div>
+                <ul className="pkgp-wizard-tests">
+                  {selectedItemTests.map(t => (
+                    <li key={t.id}>
+                      <span className="pkgp-wizard-test-name">
+                        {t.itemName}
+                        <span className={`pkgp-chip pkgp-chip--${String(t.itemType).toLowerCase()}`}>
+                          {formatEnumString(t.itemType)}
+                        </span>
+                      </span>
+                      {reasonInput(String(t.id))}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {selectedCategories.map(c => {
+              const picked = categoryTests[c.id] ?? [];
+              const over = picked.length - c.quantityRemaining;
+              return (
+                <div className="pkgp-wizard-category" key={c.id}>
+                  <div className="pkgp-wizard-label">
+                    {itemLabel(c)}
+                    <span className="pkgp-wizard-sub">
+                      {c.quantityRemaining} <Translate>left</Translate>
+                      {c.maxRepeat != null && (
+                        <>
+                          {' '}· <Translate>same test up to</Translate> {c.maxRepeat}×
+                        </>
+                      )}
                     </span>
-                  </span>
-                  <MyInput
-                    width={220}
-                    showLabel={false}
-                    fieldName="reason"
-                    fieldLabel="Reason"
-                    placeholder="Reason"
-                    fieldType="select"
-                    selectData={reasonLov?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    disableByField="isValid"
-                    record={{ reason: testReasons[t.id] ?? null }}
-                    setRecord={(next: any) => {
-                      const value = typeof next === 'function' ? next({ reason: testReasons[t.id] ?? null }) : next;
-                      setTestReasons(prev => ({ ...prev, [t.id]: value?.reason ?? null }));
-                    }}
+                  </div>
+                  <CategoryTestPicker
+                    itemType={c.itemType}
+                    excludeIds={testIdsInOrder}
+                    onPick={test =>
+                      setCategoryTests(prev => ({
+                        ...prev,
+                        [c.id]: [...(prev[c.id] ?? []), { testId: test.sourceId, name: test.name, code: test.code }]
+                      }))
+                    }
                   />
-                </li>
-              ))}
-            </ul>
+                  {picked.length > 0 && (
+                    <ul className="pkgp-wizard-tests">
+                      {picked.map((t, index) => (
+                        <li key={t.testId} className={index >= c.quantityRemaining ? 'is-extra' : ''}>
+                          <span className="pkgp-wizard-test-name">
+                            {t.name}
+                            {index >= c.quantityRemaining && (
+                              <span className="pkgp-chip pkgp-chip--extra">
+                                <Translate>Charged as usual</Translate>
+                              </span>
+                            )}
+                          </span>
+                          {reasonInput(`c:${c.id}:${t.testId}`)}
+                          <button
+                            type="button"
+                            className="pkgp-remove"
+                            title="Remove"
+                            onClick={() =>
+                              setCategoryTests(prev => ({
+                                ...prev,
+                                [c.id]: (prev[c.id] ?? []).filter(x => x.testId !== t.testId)
+                              }))
+                            }
+                          >
+                            <FaTrashCan />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {over > 0 && (
+                    <div className="pkgp-wizard-note">
+                      <Translate>Only the first</Translate> {c.quantityRemaining}{' '}
+                      <Translate>are taken from the package; the rest are charged as usual.</Translate>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             <MyInput
               fieldName="isUrgent"
@@ -366,7 +508,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
       <MyModal
         open={procedureItem != null}
         setOpen={open => !open && setProcedureItem(null)}
-        title={procedureItem?.itemName ?? 'Procedure'}
+        title={procedureItem ? itemLabel(procedureItem) : 'Procedure'}
         steps={[{ title: 'Procedure details', icon: <FaBoxesStacked /> }]}
         size="48vw"
         position="right"

@@ -19,11 +19,16 @@ export type PackageItemType =
 export interface PackageSetupItem {
   id?: number;
   itemType: PackageItemType;
-  sourceId: number;
+  /** Empty for a category line (a whole item type). */
+  sourceId: number | null;
   itemCode?: string;
   itemName?: string;
   quantity: number;
   isActive?: boolean;
+  isCategory?: boolean;
+  /** Category lines: how many times the same item can be counted; empty = no limit. */
+  maxRepeat?: number | null;
+  discountPercent?: number | null;
 }
 
 export interface PackageSetup {
@@ -33,6 +38,12 @@ export interface PackageSetup {
   description?: string | null;
   price: number | string | null;
   isActive: boolean;
+  /** 'YYYY-MM-DD'; empty = no limit on that side. */
+  validFrom?: string | null;
+  validTo?: string | null;
+  /** true = any department, otherwise only departmentIds. */
+  allDepartments?: boolean;
+  departmentIds?: number[];
   itemCount?: number;
   activeItemCount?: number;
   items: PackageSetupItem[];

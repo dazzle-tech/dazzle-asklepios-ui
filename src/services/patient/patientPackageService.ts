@@ -9,12 +9,17 @@ export interface PatientPackageItem {
   id: number;
   packageSetupItemId?: number | null;
   itemType: string;
-  sourceId: number;
+  /** Empty for a category line (any item of itemType). */
+  sourceId: number | null;
   itemCode?: string;
   itemName?: string;
   quantityTotal: number;
   quantityUsed: number;
   quantityRemaining: number;
+  isCategory?: boolean;
+  /** Category lines: how many times the same item can be counted; empty = no limit. */
+  maxRepeat?: number | null;
+  discountPercent?: number | null;
 }
 
 export interface PatientPackage {
@@ -74,15 +79,22 @@ export const patientPackageService = createApi({
       invalidatesTags: ['PatientPackage']
     }),
 
-    // Several package tests in ONE diagnostic order (submitted once); all or nothing
+    // Several tests in ONE diagnostic order (submitted once). Tests beyond the room left are still
+    // ordered but charged as usual; countedTestIds are the ones taken from the package.
     orderPackageDiagnostics: builder.mutation<
-      { diagnosticOrderId: number; diagnosticOrderTestIds: number[]; patientPackages: PatientPackage[] },
+      {
+        diagnosticOrderId: number;
+        diagnosticOrderTestIds: number[];
+        countedTestIds: number[];
+        patientPackages: PatientPackage[];
+      },
       {
         encounterId: number;
         isUrgent?: boolean;
         notes?: string | null;
         icdDiagnosisId?: number | null;
-        items: { itemId: number; reason?: string | null }[];
+        /** testId is needed for category lines (the test picked). */
+        items: { itemId: number; testId?: number | null; reason?: string | null }[];
       }
     >({
       query: body => ({ url: '/api/patient/patient-packages/order-diagnostics', method: 'POST', body }),

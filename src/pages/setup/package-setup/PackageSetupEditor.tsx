@@ -14,6 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { formatEnumString } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
   PackageItemLookup,
   PackageItemType,
@@ -33,11 +34,28 @@ interface Props {
 
 const LOOKUP_PAGE_SIZE = 30;
 
-const emptyHeader = { code: '', name: '', price: '', description: '', isActive: true };
+const emptyHeader = {
+  code: '',
+  name: '',
+  price: '',
+  description: '',
+  isActive: true,
+  validFrom: null as string | null,
+  validTo: null as string | null,
+  allDepartments: true,
+  departmentIds: [] as number[]
+};
+
+const emptyDraft = { itemType: '', sourceId: null, quantity: 1, isCategory: false, maxRepeat: null };
+
+/** Display name of a line: the item, or "Any <type>" for a category line. */
+export const packageItemLabel = (item: { isCategory?: boolean; itemType: string; itemName?: string | null }) =>
+  item.isCategory ? `Any ${formatEnumString(item.itemType)}` : item.itemName ?? '';
 
 /**
- * One screen for the whole package: the header (code, name, optional price) on top and its items with
- * quantities below. Everything is saved together with one Save.
+ * One screen for the whole package: details (code, name, optional price, validity, departments) on top
+ * and its items below. An item is either one item, or a whole category (any item of a type) with
+ * a quantity and an optional repeat limit for the same item. Everything is saved together.
  */
 const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const dispatch = useAppDispatch();
@@ -47,7 +65,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const [items, setItems] = useState<PackageSetupItem[]>([]);
 
   // "Add item" row
-  const [draft, setDraft] = useState<any>({ itemType: '', sourceId: null, quantity: 1 });
+  const [draft, setDraft] = useState<any>({ ...emptyDraft });
   const [selected, setSelected] = useState<PackageItemLookup | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -55,6 +73,11 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const [lookupOptions, setLookupOptions] = useState<PackageItemLookup[]>([]);
 
   const typeOptions = useEnumOptions('PriceListItemType');
+  const { data: departmentsPage } = useGetDepartmentsQuery({ page: 0, size: 10000, isActive: true });
+  const departmentOptions = useMemo(
+    () => (departmentsPage?.data ?? []).map((d: any) => ({ value: d.id, label: d.name })),
+    [departmentsPage?.data]
+  );
 
   const { data: existing, isFetching: isLoadingExisting } = useGetPackageQuery(packageId as number, {
     skip: !isEdit,
@@ -64,6 +87,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const [updatePackage, { isLoading: isUpdating }] = useUpdatePackageMutation();
   const isSaving = isAdding || isUpdating;
 
+  const hasPrice = header.price !== '' && header.price != null;
+
   // Fill the screen when editing
   useEffect(() => {
     if (isEdit && existing) {
@@ -72,7 +97,11 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         name: existing.name ?? '',
         price: existing.price ?? '',
         description: existing.description ?? '',
-        isActive: existing.isActive ?? true
+        isActive: existing.isActive ?? true,
+        validFrom: existing.validFrom ?? null,
+        validTo: existing.validTo ?? null,
+        allDepartments: existing.allDepartments ?? true,
+        departmentIds: existing.departmentIds ?? []
       });
       setItems((existing.items ?? []).map(i => ({ ...i })));
     }
@@ -96,7 +125,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       page: lookupPage,
       size: LOOKUP_PAGE_SIZE
     },
-    { skip: !draft.itemType }
+    { skip: !draft.itemType || draft.isCategory }
   );
 
   useEffect(() => {
@@ -108,7 +137,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
 
   // Items already in the package are greyed out in the picker
   const alreadyAdded = useMemo(
-    () => new Set(items.map(i => `${i.itemType}:${i.sourceId}`)),
+    () => new Set(items.map(i => (i.isCategory ? `${i.itemType}:ALL` : `${i.itemType}:${i.sourceId}`))),
     [items]
   );
 
@@ -125,20 +154,22 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
 
   const changeDraft = (next: any) => {
     const value = typeof next === 'function' ? next(draft) : next;
-    if (value.itemType !== draft.itemType) {
-      // another type: the picked item no longer applies
+    if (value.itemType !== draft.itemType || value.isCategory !== draft.isCategory) {
+      // another type or mode: the picked item no longer applies
       setSelected(null);
       setSearch('');
       setLookupOptions([]);
-      setDraft({ ...value, sourceId: null });
+      setDraft({ ...value, sourceId: null, maxRepeat: value.isCategory ? value.maxRepeat : null });
       return;
     }
     setDraft(value);
   };
 
+  const canAdd = !!draft.itemType && (draft.isCategory || !!selected);
+
   const addItem = () => {
     const quantity = Number(draft.quantity);
-    if (!draft.itemType || !selected) {
+    if (!draft.itemType || (!draft.isCategory && !selected)) {
       dispatch(notify({ msg: 'Choose the item type and the item', sev: 'warning' }));
       return;
     }
@@ -146,39 +177,57 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       dispatch(notify({ msg: 'Quantity must be a whole number of at least 1', sev: 'warning' }));
       return;
     }
-    if (alreadyAdded.has(`${selected.itemType}:${selected.sourceId}`)) {
-      dispatch(notify({ msg: 'This item is already in the package', sev: 'warning' }));
+    const repeat = draft.maxRepeat === '' || draft.maxRepeat == null ? null : Number(draft.maxRepeat);
+    if (repeat != null && (!Number.isInteger(repeat) || repeat < 1)) {
+      dispatch(notify({ msg: 'Repeat must be a whole number of at least 1', sev: 'warning' }));
+      return;
+    }
+    const key = draft.isCategory ? `${draft.itemType}:ALL` : `${selected!.itemType}:${selected!.sourceId}`;
+    if (alreadyAdded.has(key)) {
+      dispatch(
+        notify({
+          msg: draft.isCategory ? 'This category is already in the package' : 'This item is already in the package',
+          sev: 'warning'
+        })
+      );
       return;
     }
     setItems(prev => [
       ...prev,
-      {
-        itemType: selected.itemType,
-        sourceId: selected.sourceId,
-        itemCode: selected.code,
-        itemName: selected.name,
-        quantity,
-        isActive: true
-      }
+      draft.isCategory
+        ? {
+            itemType: draft.itemType,
+            sourceId: null,
+            quantity,
+            isActive: true,
+            isCategory: true,
+            maxRepeat: repeat,
+            discountPercent: null
+          }
+        : {
+            itemType: selected!.itemType,
+            sourceId: selected!.sourceId,
+            itemCode: selected!.code,
+            itemName: selected!.name,
+            quantity,
+            isActive: true,
+            isCategory: false,
+            maxRepeat: null,
+            discountPercent: null
+          }
     ]);
     setSelected(null);
-    setDraft((prev: any) => ({ ...prev, sourceId: null, quantity: 1 }));
+    setDraft((prev: any) => ({ ...prev, sourceId: null, quantity: 1, maxRepeat: null }));
   };
 
-  const updateQuantity = (index: number, value: number | string | null) => {
-    const quantity = Math.max(1, Math.floor(Number(value) || 1));
-    setItems(prev => prev.map((item, i) => (i === index ? { ...item, quantity } : item)));
-  };
-
-  const toggleItem = (index: number, isActive: boolean) =>
-    setItems(prev => prev.map((item, i) => (i === index ? { ...item, isActive } : item)));
+  const updateItem = (index: number, patch: Partial<PackageSetupItem>) =>
+    setItems(prev => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
 
   const removeItem = (index: number) => setItems(prev => prev.filter((_, i) => i !== index));
 
   const handleSave = async () => {
     const code = String(header.code ?? '').trim();
     const name = String(header.name ?? '').trim();
-    const hasPrice = header.price !== '' && header.price != null;
     const price = hasPrice ? Number(header.price) : null;
     if (!code || !name) {
       dispatch(notify({ msg: 'Code and name are required', sev: 'warning' }));
@@ -186,6 +235,14 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
     }
     if (price != null && (Number.isNaN(price) || price < 0)) {
       dispatch(notify({ msg: 'Package price must be a valid number', sev: 'warning' }));
+      return;
+    }
+    if (header.validFrom && header.validTo && header.validTo < header.validFrom) {
+      dispatch(notify({ msg: 'Valid To must be on or after Valid From', sev: 'warning' }));
+      return;
+    }
+    if (!header.allDepartments && (header.departmentIds ?? []).length === 0) {
+      dispatch(notify({ msg: 'Choose at least one department, or All Departments', sev: 'warning' }));
       return;
     }
     if (items.length === 0) {
@@ -196,6 +253,10 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       dispatch(notify({ msg: 'At least one item must be active', sev: 'warning' }));
       return;
     }
+    if (price != null && items.some(i => Number(i.discountPercent) > 0)) {
+      dispatch(notify({ msg: 'A package with a fixed price cannot also have item discounts', sev: 'warning' }));
+      return;
+    }
 
     const payload = {
       code,
@@ -203,11 +264,18 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       price,
       description: String(header.description ?? '').trim() || null,
       isActive: !!header.isActive,
+      validFrom: header.validFrom || null,
+      validTo: header.validTo || null,
+      allDepartments: !!header.allDepartments,
+      departmentIds: header.allDepartments ? [] : header.departmentIds ?? [],
       items: items.map(i => ({
         itemType: i.itemType,
-        sourceId: i.sourceId,
+        sourceId: i.isCategory ? null : i.sourceId,
         quantity: i.quantity,
-        isActive: i.isActive !== false
+        isActive: i.isActive !== false,
+        isCategory: !!i.isCategory,
+        maxRepeat: i.isCategory ? i.maxRepeat ?? null : null,
+        discountPercent: i.discountPercent ?? null
       }))
     };
 
@@ -227,15 +295,9 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
 
   const itemColumns = [
     {
-      key: 'index',
-      title: '#',
-      width: 50,
-      render: (_row: PackageSetupItem, index?: number) => <span className="pkg-muted">{(index ?? 0) + 1}</span>
-    },
-    {
       key: 'itemType',
       title: 'Type',
-      width: 130,
+      width: 120,
       render: (row: PackageSetupItem) => (
         <span className={`pkg-type pkg-type--${String(row.itemType).toLowerCase()}`}>
           {formatEnumString(row.itemType)}
@@ -245,45 +307,94 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
     {
       key: 'itemName',
       title: 'Item',
-      width: 380,
-      render: (row: PackageSetupItem) => (
-        <div className="pkg-item-cell" title={`${row.itemCode ?? ''} - ${row.itemName ?? ''}`}>
-          <span className="pkg-item-name">{row.itemName}</span>
-          <span className="pkg-muted">{row.itemCode}</span>
-        </div>
-      )
+      width: 300,
+      render: (row: PackageSetupItem) =>
+        row.isCategory ? (
+          <div className="pkg-item-cell">
+            <span className="pkg-item-name">
+              {packageItemLabel(row)} <span className="pkg-badge">Category</span>
+            </span>
+            <span className="pkg-muted">Any item of this type</span>
+          </div>
+        ) : (
+          <div className="pkg-item-cell" title={`${row.itemCode ?? ''} - ${row.itemName ?? ''}`}>
+            <span className="pkg-item-name">{row.itemName}</span>
+            <span className="pkg-muted">{row.itemCode}</span>
+          </div>
+        )
     },
     {
       key: 'quantity',
       title: 'Qty',
-      width: 110,
+      width: 100,
       render: (row: PackageSetupItem, index?: number) => (
         <InputNumber
           size="sm"
           min={1}
           step={1}
           value={row.quantity}
-          onChange={value => updateQuantity(index ?? 0, value)}
-          className="pkg-qty"
+          onChange={value => updateItem(index ?? 0, { quantity: Math.max(1, Math.floor(Number(value) || 1)) })}
+          className="pkg-num"
+        />
+      )
+    },
+    {
+      key: 'maxRepeat',
+      title: 'Repeat',
+      width: 100,
+      render: (row: PackageSetupItem, index?: number) =>
+        row.isCategory ? (
+          <InputNumber
+            size="sm"
+            min={1}
+            step={1}
+            value={row.maxRepeat ?? ''}
+            placeholder="Any"
+            onChange={value =>
+              updateItem(index ?? 0, {
+                maxRepeat: value === '' || value == null ? null : Math.max(1, Math.floor(Number(value) || 1))
+              })
+            }
+            className="pkg-num"
+          />
+        ) : (
+          <span className="pkg-muted">—</span>
+        )
+    },
+    {
+      key: 'discountPercent',
+      title: 'Discount %',
+      width: 110,
+      render: (row: PackageSetupItem, index?: number) => (
+        <InputNumber
+          size="sm"
+          min={0}
+          max={100}
+          step={1}
+          value={row.discountPercent ?? ''}
+          placeholder={hasPrice ? 'Fixed price' : '0'}
+          disabled={hasPrice}
+          onChange={value =>
+            updateItem(index ?? 0, {
+              discountPercent: value === '' || value == null ? null : Math.min(100, Math.max(0, Number(value) || 0))
+            })
+          }
+          className="pkg-num"
         />
       )
     },
     {
       key: 'isActive',
       title: 'Active',
-      width: 90,
+      width: 80,
       render: (row: PackageSetupItem, index?: number) => (
-        <Toggle
-          size="sm"
-          checked={row.isActive !== false}
-          onChange={checked => toggleItem(index ?? 0, checked)}
-        />
+        <Toggle size="sm" checked={row.isActive !== false} onChange={checked => updateItem(index ?? 0, { isActive: checked })} />
       )
     },
     {
       key: 'actions',
       title: '',
-      width: 60,
+      width: 50,
       render: (_row: PackageSetupItem, index?: number) => (
         <div className="container-of-icons">
           <MdDelete
@@ -309,7 +420,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       setOpen={setOpen}
       title={isEdit ? 'Edit Package' : 'New Package'}
       steps={[{ title: 'Package', icon: <FontAwesomeIcon icon={faBoxesStacked} /> }]}
-      size="70vw"
+      size="75vw"
       actionButtonLabel={isSaving ? 'Saving...' : 'Save'}
       actionButtonLoading={isSaving}
       isDisabledActionBtn={isSaving || isLoadingExisting}
@@ -344,6 +455,48 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 record={header}
                 setRecord={setHeader}
               />
+              <MyInput
+                width="100%"
+                fieldName="validFrom"
+                fieldLabel="Valid From"
+                fieldType="date"
+                record={header}
+                setRecord={setHeader}
+              />
+              <MyInput
+                width="100%"
+                fieldName="validTo"
+                fieldLabel="Valid To"
+                fieldType="date"
+                record={header}
+                setRecord={setHeader}
+              />
+              <div className="pkg-dept-cell">
+                <MyInput
+                  fieldName="allDepartments"
+                  fieldLabel="All Departments"
+                  fieldType="check"
+                  showLabel={false}
+                  record={header}
+                  setRecord={setHeader}
+                />
+              </div>
+              {!header.allDepartments && (
+                <div className="pkg-span-all">
+                  <MyInput
+                    width="100%"
+                    fieldName="departmentIds"
+                    fieldLabel="Departments"
+                    fieldType="multyPicker"
+                    selectData={departmentOptions}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={header}
+                    setRecord={setHeader}
+                    required
+                  />
+                </div>
+              )}
               <div className="pkg-span-all">
                 <MyInput
                   width="100%"
@@ -377,7 +530,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
               </div>
             </div>
 
-            <div className="pkg-add-bar">
+            <div className={`pkg-add-bar${draft.isCategory ? ' is-category' : ''}`}>
               <MyInput
                 width="100%"
                 fieldName="itemType"
@@ -389,28 +542,51 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 record={draft}
                 setRecord={changeDraft}
               />
-              <MyInput
-                key={`item-${draft.itemType}`}
-                width="100%"
-                fieldName="sourceId"
-                fieldLabel="Item"
-                fieldType="selectPagination"
-                selectData={pickerData}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={draft}
-                setRecord={changeDraft}
-                disabled={!draft.itemType}
-                loading={isLookingUp}
-                searchKeyWard={search}
-                setSearchKeyWard={setSearch}
-                hasMore={lookupHasMore}
-                onFetchMore={() => {
-                  if (lookupHasMore && !isLookingUp) setLookupPage(p => p + 1);
-                }}
-                onSelectItem={(item: any) => setSelected(item ?? null)}
-                placeholder={draft.itemType ? 'Search by name or code' : 'Choose the type first'}
-              />
+              <div className="pkg-mode-cell">
+                <MyInput
+                  fieldName="isCategory"
+                  fieldLabel="Whole category"
+                  fieldType="check"
+                  showLabel={false}
+                  record={draft}
+                  setRecord={changeDraft}
+                />
+              </div>
+              {draft.isCategory ? (
+                <MyInput
+                  width="100%"
+                  fieldName="maxRepeat"
+                  fieldLabel="Repeat (same item)"
+                  fieldType="number"
+                  min={1}
+                  placeholder="Any"
+                  record={draft}
+                  setRecord={changeDraft}
+                />
+              ) : (
+                <MyInput
+                  key={`item-${draft.itemType}`}
+                  width="100%"
+                  fieldName="sourceId"
+                  fieldLabel="Item"
+                  fieldType="selectPagination"
+                  selectData={pickerData}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={draft}
+                  setRecord={changeDraft}
+                  disabled={!draft.itemType}
+                  loading={isLookingUp}
+                  searchKeyWard={search}
+                  setSearchKeyWard={setSearch}
+                  hasMore={lookupHasMore}
+                  onFetchMore={() => {
+                    if (lookupHasMore && !isLookingUp) setLookupPage(p => p + 1);
+                  }}
+                  onSelectItem={(item: any) => setSelected(item ?? null)}
+                  placeholder={draft.itemType ? 'Search by name or code' : 'Choose the type first'}
+                />
+              )}
               <MyInput
                 width="100%"
                 fieldName="quantity"
@@ -420,16 +596,24 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 record={draft}
                 setRecord={changeDraft}
               />
-              <MyButton prefixIcon={() => <PlusIcon />} onClick={addItem} disabled={!selected}>
+              <MyButton prefixIcon={() => <PlusIcon />} onClick={addItem} disabled={!canAdd}>
                 Add
               </MyButton>
             </div>
+            {draft.isCategory && draft.itemType && (
+              <div className="pkg-hint">
+                <Translate>
+                  Any item of this type counts. Qty is how many are covered; Repeat is how many times the same item can be
+                  counted (empty = no limit). Extra ones are charged as usual.
+                </Translate>
+              </div>
+            )}
 
             {items.length === 0 && !isLoadingExisting ? (
               <div className="pkg-empty">
                 <FontAwesomeIcon icon={faBoxesStacked} className="pkg-empty-icon" />
                 <span>
-                  <Translate>No items yet. Choose a type and an item above, then press Add.</Translate>
+                  <Translate>No items yet. Choose a type and an item (or a whole category) above, then press Add.</Translate>
                 </span>
               </div>
             ) : (

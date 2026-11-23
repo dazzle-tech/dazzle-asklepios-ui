@@ -482,3 +482,72 @@
   width: 220px;
   margin-bottom: 0 !important;
 }
+
+/* ---------- Category lines ---------- */
+.pkgp-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pkgp-chip--discount {
+  color: #b91c1c;
+  background: #fdecec;
+}
+
+.pkgp-chip--extra {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.pkgp-wizard-category {
+  margin-bottom: 14px;
+  padding: 10px 12px 2px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+
+  .pkgp-wizard-label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .pkgp-wizard-tests {
+    margin-top: 8px;
+  }
+
+  .pkgp-wizard-tests li.is-extra .pkgp-wizard-test-name {
+    opacity: 0.75;
+  }
+}
+
+.pkgp-wizard-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.pkgp-wizard-note {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.pkgp-remove {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover {
+    color: #dc2626;
+    background: #fdecec;
+  }
+}

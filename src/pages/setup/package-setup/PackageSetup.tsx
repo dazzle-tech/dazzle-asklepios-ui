@@ -16,10 +16,17 @@ import {
   useGetPackagesQuery,
   useTogglePackageActiveMutation
 } from '@/services/setup/packageSetupService';
-import PackageSetupEditor from './PackageSetupEditor';
+import PackageSetupEditor, { packageItemLabel } from './PackageSetupEditor';
 import './style.less';
 
 type SortType = 'asc' | 'desc';
+
+const validityText = (row: { validFrom?: string | null; validTo?: string | null }) =>
+  !row.validFrom && !row.validTo
+    ? 'Always'
+    : `${row.validFrom ? row.validFrom.split('-').reverse().join('-') : '…'} → ${
+        row.validTo ? row.validTo.split('-').reverse().join('-') : '…'
+      }`;
 
 const formatPrice = (value: number | string | null | undefined) =>
   value == null || value === '' ? '' : Number(value).toFixed(2);
@@ -127,6 +134,13 @@ const PackageSetup: React.FC = () => {
       render: (row: PackageSetupModel) => formatPrice(row.price)
     },
     {
+      key: 'validity',
+      title: 'Valid',
+      width: 190,
+      exportValue: (row: PackageSetupModel) => validityText(row),
+      render: (row: PackageSetupModel) => validityText(row)
+    },
+    {
       key: 'itemCount',
       title: 'Items',
       dataKey: 'itemCount',
@@ -142,10 +156,10 @@ const PackageSetup: React.FC = () => {
       title: 'Contents',
       width: 360,
       exportValue: (row: PackageSetupModel) =>
-        (row.items ?? []).filter(i => i.isActive !== false).map(i => `${i.itemName} x${i.quantity}`).join(', '),
+        (row.items ?? []).filter(i => i.isActive !== false).map(i => `${packageItemLabel(i)} x${i.quantity}`).join(', '),
       render: (row: PackageSetupModel) => {
         const items = (row.items ?? []).filter(i => i.isActive !== false);
-        const text = items.map(i => `${i.itemName} ×${i.quantity}`).join(', ');
+        const text = items.map(i => `${packageItemLabel(i)} ×${i.quantity}`).join(', ');
         return <span title={text}>{text}</span>;
       }
     },

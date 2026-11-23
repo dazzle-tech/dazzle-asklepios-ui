@@ -78,14 +78,29 @@ const RegistrationEncounter = ({
     { page: 0, size: 500, sort: 'name,asc', isActive: 'true' },
     { skip: isReadOnly || isSavedEncounter }
   );
-  const packageOptions = useMemo(
-    () =>
-      (activePackagesPage?.data ?? []).map(p => ({
+  // only packages valid today and allowed in the visit's department
+  const packageDepartmentId = Number((localEncounter as any)?.departmentId ?? 0);
+  const packageOptions = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return (activePackagesPage?.data ?? [])
+      .filter(p => (!p.validFrom || p.validFrom <= today) && (!p.validTo || p.validTo >= today))
+      .filter(
+        p =>
+          p.allDepartments !== false ||
+          (packageDepartmentId > 0 && (p.departmentIds ?? []).map(Number).includes(packageDepartmentId))
+      )
+      .map(p => ({
         value: p.id,
         label: p.price != null ? `${p.code} - ${p.name} (${Number(p.price).toFixed(2)})` : `${p.code} - ${p.name}`
-      })),
-    [activePackagesPage?.data]
-  );
+      }));
+  }, [activePackagesPage?.data, packageDepartmentId]);
+  // a package chosen for another department is dropped when the department changes
+  useEffect(() => {
+    const chosen = (localEncounter as any)?.packageSetupId;
+    if (chosen && activePackagesPage?.data && !packageOptions.some(o => o.value === chosen)) {
+      setLocalEncounter((prev: any) => ({ ...prev, packageSetupId: null }));
+    }
+  }, [packageOptions]); // eslint-disable-line react-hooks/exhaustive-deps
   const { data: encounterPackages } = useGetPatientPackagesByEncounterQuery(
     (localEncounter as any)?.id,
     { skip: !isSavedEncounter }
