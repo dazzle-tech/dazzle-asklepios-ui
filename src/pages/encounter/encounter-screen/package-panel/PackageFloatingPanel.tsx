@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Form, Loader, Tooltip, Whisper } from 'rsuite';
-import { FaBoxesStacked, FaChevronDown, FaCheck, FaLock, FaXmark, FaTrashCan } from 'react-icons/fa6';
+import { FaBoxesStacked, FaChevronDown, FaCheck, FaWandMagicSparkles, FaXmark, FaTrashCan } from 'react-icons/fa6';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -43,6 +43,9 @@ type PickedTest = { testId: number; name: string; code?: string };
 /** "Any Laboratory" for a category line, the item name otherwise. */
 const itemLabel = (item: PatientPackageItem) =>
   item.isCategory ? `Any ${formatEnumString(item.itemType)}` : item.itemName ?? '';
+
+/** Given on their own screens (UCC medication orders, vaccinations) and taken from the package there. */
+const OWN_SCREEN_TYPES = ['MEDICATION', 'VACCINE'];
 
 /** Category lines of these types are picked in the panel; the others are ordered from their usual screens. */
 const canOrderFromPanel = (item: PatientPackageItem) =>
@@ -268,7 +271,8 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
           ) : done || selected ? (
             <FaCheck />
           ) : !supported ? (
-            <FaLock />
+            // taken from the package automatically when given on its own screen
+            <FaWandMagicSparkles />
           ) : null}
         </span>
         <span className="pkgp-item-main">
@@ -292,9 +296,14 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     );
 
     if (!supported && !done) {
-      const tip = item.isCategory
-        ? 'Order it from its usual screen: it is taken from the package automatically'
-        : 'Ordering this type from a package is not available yet';
+      const tip =
+        item.isCategory || OWN_SCREEN_TYPES.includes(item.itemType)
+          ? item.itemType === 'MEDICATION'
+            ? 'Give it from the UCC medication orders: it is taken from the package automatically'
+            : item.itemType === 'VACCINE'
+              ? 'Give it from the vaccinations: it is taken from the package automatically'
+              : 'Order it from its usual screen: it is taken from the package automatically'
+          : 'Ordering this type from a package is not available yet';
       return (
         <Whisper key={item.id} placement="top" speaker={<Tooltip>{tip}</Tooltip>}>
           {row}

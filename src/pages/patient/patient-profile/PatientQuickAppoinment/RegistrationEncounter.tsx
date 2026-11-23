@@ -32,6 +32,7 @@ import {
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetPackagesQuery } from '@/services/setup/packageSetupService';
+import { availablePackageOptions } from '@/pages/setup/package-setup/packageOptions';
 import { useGetPatientPackagesByEncounterQuery } from '@/services/patient/patientPackageService';
 
 import './style.less';
@@ -80,20 +81,10 @@ const RegistrationEncounter = ({
   );
   // only packages valid today and allowed in the visit's department
   const packageDepartmentId = Number((localEncounter as any)?.departmentId ?? 0);
-  const packageOptions = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return (activePackagesPage?.data ?? [])
-      .filter(p => (!p.validFrom || p.validFrom <= today) && (!p.validTo || p.validTo >= today))
-      .filter(
-        p =>
-          p.allDepartments !== false ||
-          (packageDepartmentId > 0 && (p.departmentIds ?? []).map(Number).includes(packageDepartmentId))
-      )
-      .map(p => ({
-        value: p.id,
-        label: p.price != null ? `${p.code} - ${p.name} (${Number(p.price).toFixed(2)})` : `${p.code} - ${p.name}`
-      }));
-  }, [activePackagesPage?.data, packageDepartmentId]);
+  const packageOptions = useMemo(
+    () => availablePackageOptions(activePackagesPage?.data, packageDepartmentId),
+    [activePackagesPage?.data, packageDepartmentId]
+  );
   // a package chosen for another department is dropped when the department changes
   useEffect(() => {
     const chosen = (localEncounter as any)?.packageSetupId;

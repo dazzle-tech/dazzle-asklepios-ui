@@ -31,6 +31,9 @@ import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/pa
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 import AppointmentLogsModal from "./AppointmentLogsModal";
 import CompletePatientProfileBeforeCheckInModal from "./CompletePatientProfileBeforeCheckInModal";
+import { useGetPackagesQuery } from "@/services/setup/packageSetupService";
+import { useAssignPatientPackageMutation } from "@/services/patient/patientPackageService";
+import { availablePackageOptions } from "@/pages/setup/package-setup/packageOptions";
 import { ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -221,6 +224,23 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       !isViewOnlyActionsStatus &&
       isCheckInEligibleStatus &&
       (!requireConfirmation || currentStatus === 'CONFIRMED');
+
+    // Package: optional, chosen before check-in and given to the visit once it is opened
+    const [checkInPackage, setCheckInPackage] = useState<any>({ packageSetupId: null });
+    const appointmentDepartmentId = useMemo(() => {
+      const appointmentData: any = appointment?.appointmentData || localAppointmentData || {};
+      const candidate = Number(appointmentData?.departmentId ?? appointmentData?.department?.id ?? 0);
+      return Number.isFinite(candidate) && candidate > 0 ? candidate : null;
+    }, [appointment?.appointmentData, localAppointmentData]);
+    const { data: activePackagesPage, isFetching: isLoadingPackages } = useGetPackagesQuery(
+      { page: 0, size: 500, sort: 'name,asc', isActive: 'true' },
+      { skip: !isActionsModalOpen || !canCheckIn }
+    );
+    const packageOptions = useMemo(
+      () => availablePackageOptions(activePackagesPage?.data, appointmentDepartmentId),
+      [activePackagesPage?.data, appointmentDepartmentId]
+    );
+    const [assignPatientPackage] = useAssignPatientPackageMutation();
     const isReasonViewOnly =
       Boolean(resonType) && (isDirectReasonStatus || isViewOnlyActionsStatus);
 
@@ -270,17 +290,39 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
       try {
         await checkInAppointment({ id }).unwrap();
+        let checkedInEncounterId: number | null = null;
         try {
           const encounterByAppointment = await getEncounterByAppointment({ appointmentId: id }).unwrap();
           if (typeof encounterByAppointment === 'string' && !isNaN(Number(encounterByAppointment))) {
             const encounterId = Number(encounterByAppointment);
+            checkedInEncounterId = encounterId;
             const fullEncounter = await getEncounterById({ id: encounterId }).unwrap();
             setCreatedEncounter(fullEncounter as PatientEncounter);
           } else if (encounterByAppointment && typeof encounterByAppointment === 'object') {
+            checkedInEncounterId = Number((encounterByAppointment as any)?.id) || null;
             setCreatedEncounter(encounterByAppointment as unknown as PatientEncounter);
           }
         } catch {
           // keep modal flow; encounter may still be available by background query.
+        }
+        // The chosen package goes to the new visit; if that fails the check-in stays.
+        const packageSetupId = checkInPackage?.packageSetupId;
+        if (packageSetupId && appointmentPatientId) {
+          if (!checkedInEncounterId) {
+            dispatch(notify({ msg: 'Checked in, but the package could not be added: visit not found', sev: 'warning' }));
+          } else {
+            try {
+              await assignPatientPackage({
+                patientId: appointmentPatientId,
+                encounterId: checkedInEncounterId,
+                packageSetupId: Number(packageSetupId)
+              }).unwrap();
+            } catch (error: any) {
+              const reason = extractErrorMessage(error) || 'unknown error';
+              dispatch(notify({ msg: `Checked in, but the package was not added: ${reason}`, sev: 'warning' }));
+            }
+          }
+          setCheckInPackage({ packageSetupId: null });
         }
         setLocalAppoitmentData((prev: any) => ({
           ...prev,
@@ -726,6 +768,23 @@ const handleCancel = async () => {
               }}
               className="appointment-logs-actions-grid"
             >
+            {canCheckIn && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <MyInput
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Package"
+                  fieldName="packageSetupId"
+                  selectData={packageOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={checkInPackage}
+                  setRecord={setCheckInPackage}
+                  loading={isLoadingPackages}
+                  placeholder="No package"
+                />
+              </div>
+            )}
             <MyButton
               width="100%"
               disabled={!canCheckIn}
