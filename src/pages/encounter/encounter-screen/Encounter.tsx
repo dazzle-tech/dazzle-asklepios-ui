@@ -51,6 +51,7 @@ import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
 import AiRecommendations from './ai-recommendations/AiRecommendations';
+import PackageFloatingPanel from './package-panel/PackageFloatingPanel';
 import AllergiesModal from './AllergiesModal';
 import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
@@ -1009,6 +1010,14 @@ const handleGoBack = () => {
 
         {!inModal && (
           <AiRecommendations patient={propsData?.patient} encounter={propsData?.encounter} />
+        )}
+
+        {!inModal && (
+          <PackageFloatingPanel
+            patientId={patientIdToFetch}
+            encounterId={encounterId}
+            readOnly={propsData?.viewMode === 'readOnly'}
+          />
         )}
 
         <div className="left-box">

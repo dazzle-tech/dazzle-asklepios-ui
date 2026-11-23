@@ -31,6 +31,8 @@ import {
 
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetPackagesQuery } from '@/services/setup/packageSetupService';
+import { useGetPatientPackagesByEncounterQuery } from '@/services/patient/patientPackageService';
 
 import './style.less';
 import clsx from 'clsx';
@@ -69,6 +71,34 @@ const RegistrationEncounter = ({
 
   const [validationResult] = useState({});
   const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
+
+  // Packages: reception may choose one when opening the visit; it is given to the patient after the visit is saved
+  const isSavedEncounter = Boolean((localEncounter as any)?.id);
+  const { data: activePackagesPage, isFetching: isLoadingPackages } = useGetPackagesQuery(
+    { page: 0, size: 500, sort: 'name,asc', isActive: 'true' },
+    { skip: isReadOnly || isSavedEncounter }
+  );
+  const packageOptions = useMemo(
+    () =>
+      (activePackagesPage?.data ?? []).map(p => ({
+        value: p.id,
+        label: `${p.code} - ${p.name} (${Number(p.price ?? 0).toFixed(2)})`
+      })),
+    [activePackagesPage?.data]
+  );
+  const { data: encounterPackages } = useGetPatientPackagesByEncounterQuery(
+    (localEncounter as any)?.id,
+    { skip: !isSavedEncounter }
+  );
+  const encounterPackagesRecord = useMemo(
+    () => ({
+      packagesLabel: (encounterPackages ?? [])
+        .filter(p => p.status !== 'CANCELLED')
+        .map(p => `${p.packageCode} - ${p.packageName}`)
+        .join(', ')
+    }),
+    [encounterPackages]
+  );
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT', 'ALL']
@@ -920,6 +950,33 @@ useEffect(() => {
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
       />
+
+      {isSavedEncounter ? (
+        <MyInput
+          column
+          disabled
+          fieldLabel="Package"
+          fieldName="packagesLabel"
+          record={encounterPackagesRecord}
+          setRecord={() => {}}
+        />
+      ) : (
+        <MyInput
+          vr={validationResult}
+          column
+          fieldType="select"
+          fieldLabel="Package"
+          fieldName="packageSetupId"
+          selectData={packageOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={localEncounter}
+          setRecord={setLocalEncounter}
+          disabled={isReadOnly}
+          loading={isLoadingPackages}
+          placeholder="No package"
+        />
+      )}
 
       <MyInput
         column
