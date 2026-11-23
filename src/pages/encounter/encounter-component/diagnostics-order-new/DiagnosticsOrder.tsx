@@ -185,6 +185,7 @@ const DiagnosticsOrder = (props: any) => {
         patient={vm.patient}
         departments={vm.departments}
         edit={vm.edit}
+        detailsLocked={vm.isSubmitDisabled}
       />
       </>
       )}
