@@ -112,11 +112,6 @@ export const packageSetupService = createApi({
       invalidatesTags: ['PackageSetup']
     }),
 
-    deletePackage: builder.mutation<void, { id: Id }>({
-      query: ({ id }) => ({ url: `/api/setup/packages/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['PackageSetup']
-    }),
-
     // Active items of one type, searched by name or code, from their own setup tables
     lookupPackageItems: builder.query<
       PagedResult<PackageItemLookup>,
@@ -138,6 +133,5 @@ export const {
   useAddPackageMutation,
   useUpdatePackageMutation,
   useTogglePackageActiveMutation,
-  useDeletePackageMutation,
   useLookupPackageItemsQuery
 } = packageSetupService;

@@ -20,7 +20,7 @@
   inset-inline-end: 20px;
   bottom: 80px;
   z-index: 1039;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.4;
   color: var(--pk-text);
 
@@ -99,8 +99,9 @@
 
 /* ---------- Open card ---------- */
 .pkgp-card {
-  width: 300px;
-  max-height: min(60vh, 520px);
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  max-height: min(70vh, 620px);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--pk-border);
@@ -231,8 +232,8 @@
 .pkgp-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
+  gap: 12px;
+  padding: 9px 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.12s;
@@ -550,4 +551,16 @@
     color: #dc2626;
     background: #fdecec;
   }
+}
+
+/* quantities changed while a wizard was open */
+.pkgp-wizard-alert {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
 }

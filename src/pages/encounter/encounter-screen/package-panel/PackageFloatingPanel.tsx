@@ -83,6 +83,8 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   /** keyed by item id for an item line, `c:<itemId>:<testId>` for a test picked under a category */
   const [testReasons, setTestReasons] = useState<Record<string, string | null>>({});
   const [categoryTests, setCategoryTests] = useState<Record<number, PickedTest[]>>({});
+  /** what was left on each chosen line when its wizard opened, to tell the user if it changed meanwhile */
+  const [openedRemaining, setOpenedRemaining] = useState<Record<number, number>>({});
 
   // one procedure at a time
   const [procedureItem, setProcedureItem] = useState<PatientPackageItem | null>(null);
@@ -90,7 +92,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
 
   // a package belongs to the visit it was chosen in; cancelled ones are hidden
   // refreshed now and then: orders made on the usual screens are taken from the package too
-  const { data: encounterPackages, isFetching } = useGetPatientPackagesByEncounterQuery(encounterId as number, {
+  const { data: encounterPackages, isFetching, refetch } = useGetPatientPackagesByEncounterQuery(encounterId as number, {
     skip: !encounterId,
     pollingInterval: 30000,
     refetchOnFocus: true
@@ -109,10 +111,15 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
 
   const allItems = useMemo(() => packages.flatMap(p => p.items), [packages]);
   const remaining = useMemo(() => allItems.reduce((sum, i) => sum + (i.quantityRemaining ?? 0), 0), [allItems]);
-  // drop ticks for items that are gone or used up (e.g. after a refetch)
+  // drop ticks for items that are gone or used up (e.g. after a refetch); while the wizard is open they stay,
+  // marked as charged as usual, so nothing disappears under the user's eyes
   const selectedTests = useMemo(
-    () => allItems.filter(i => selectedTestIds.includes(i.id) && i.quantityRemaining > 0),
-    [allItems, selectedTestIds]
+    () => allItems.filter(i => selectedTestIds.includes(i.id) && (testsWizardOpen || i.quantityRemaining > 0)),
+    [allItems, selectedTestIds, testsWizardOpen]
+  );
+  // lines that lost room since their wizard opened (ordered elsewhere in the meantime)
+  const changedLines = selectedTests.filter(
+    t => openedRemaining[t.id] != null && t.quantityRemaining < openedRemaining[t.id]
   );
   const selectedItemTests = selectedTests.filter(t => !t.isCategory);
   const selectedCategories = selectedTests.filter(t => t.isCategory);
@@ -156,7 +163,9 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     }
     if (PROCEDURE_TYPES.includes(item.itemType)) {
       setProcedureWizard(newProcedureWizard());
+      setOpenedRemaining({ [item.id]: item.quantityRemaining });
       setProcedureItem(item);
+      refetch(); // latest quantities before ordering
       return;
     }
     if (DIRECT_TYPES.includes(item.itemType)) {
@@ -169,7 +178,9 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     setTestsWizard(newTestsWizard());
     setTestReasons({});
     setCategoryTests({});
+    setOpenedRemaining(Object.fromEntries(selectedTests.map(t => [t.id, t.quantityRemaining])));
     setTestsWizardOpen(true);
+    refetch(); // latest quantities before ordering
   };
 
   const submitTests = async () => {
@@ -311,6 +322,9 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   };
 
   const title = packages.length === 1 ? packages[0].packageName : null;
+  // the procedure line as it is now (it may have been ordered elsewhere since the wizard opened)
+  const currentProcedureLine = procedureItem ? allItems.find(i => i.id === procedureItem.id) : undefined;
+  const procedureNoRoom = !!currentProcedureLine && currentProcedureLine.quantityRemaining <= 0;
 
   const reasonInput = (key: string) => (
     <MyInput
@@ -386,6 +400,15 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
         actionButtonFunction={submitTests}
         content={
           <Form fluid layout="vertical" className="pkgp-wizard">
+            {changedLines.length > 0 && (
+              <div className="pkgp-wizard-alert">
+                <Translate>The package changed since you opened this:</Translate>{' '}
+                {changedLines
+                  .map(l => `${itemLabel(l)} ${l.quantityRemaining} left (was ${openedRemaining[l.id]})`)
+                  .join(', ')}
+                . <Translate>Tests without room are charged as usual.</Translate>
+              </div>
+            )}
             {selectedItemTests.length > 0 && (
               <>
                 <div className="pkgp-wizard-label">
@@ -399,6 +422,11 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
                         <span className={`pkgp-chip pkgp-chip--${String(t.itemType).toLowerCase()}`}>
                           {formatEnumString(t.itemType)}
                         </span>
+                        {t.quantityRemaining <= 0 && (
+                          <span className="pkgp-chip pkgp-chip--extra">
+                            <Translate>Charged as usual</Translate>
+                          </span>
+                        )}
                       </span>
                       {reasonInput(String(t.id))}
                     </li>
@@ -514,10 +542,15 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
         position="right"
         actionButtonLabel={isOrderingItem ? 'Ordering...' : 'Submit'}
         actionButtonLoading={isOrderingItem}
-        isDisabledActionBtn={isOrderingItem}
+        isDisabledActionBtn={isOrderingItem || procedureNoRoom}
         actionButtonFunction={submitProcedure}
         content={
           <Form fluid layout="vertical" className="pkgp-wizard">
+            {procedureNoRoom && (
+              <div className="pkgp-wizard-alert">
+                <Translate>Nothing is left of this procedure in the package any more (it was ordered elsewhere).</Translate>
+              </div>
+            )}
             <div className="pkgp-wizard-row">
               <MyInput width="100%" fieldName="procedureLevel" fieldLabel="Level" fieldType="select"
                 selectData={procedureLevelOptions ?? []} selectDataLabel="label" selectDataValue="value"

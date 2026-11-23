@@ -289,6 +289,7 @@ import { billingTransactionService } from './services/billing/billingTransaction
 import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
 import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
+import { patientPackageRefreshMiddleware } from './services/patient/refreshPatientPackages';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -812,6 +813,7 @@ export const store = configureStore({
       .prepend(rtkDispatchLoopGuard)
       .prepend(resetApiCachesOnLogout)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(patientPackageRefreshMiddleware.middleware)
       .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,

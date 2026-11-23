@@ -2,21 +2,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Form, Panel } from 'rsuite';
 import PlusIcon from '@rsuite/icons/Plus';
-import { MdDelete, MdModeEdit, MdToggleOff, MdToggleOn } from 'react-icons/md';
+import { MdModeEdit, MdToggleOff, MdToggleOn } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   PackageSetup as PackageSetupModel,
-  useDeletePackageMutation,
   useGetPackagesQuery,
   useTogglePackageActiveMutation
 } from '@/services/setup/packageSetupService';
 import PackageSetupEditor, { packageItemLabel } from './PackageSetupEditor';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import './style.less';
 
 type SortType = 'asc' | 'desc';
@@ -49,15 +48,23 @@ const PackageSetup: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<PackageSetupModel | null>(null);
 
   const { data: pageData, isLoading, isFetching } = useGetPackagesQuery({
     ...paginationParams,
     ...appliedFilters
   });
   const [togglePackageActive, { isLoading: isToggling }] = useTogglePackageActiveMutation();
-  const [deletePackage, { isLoading: isDeleting }] = useDeletePackageMutation();
+
+  // department names for the Departments column
+  const { data: departmentsPage } = useGetDepartmentsQuery({ page: 0, size: 10000 });
+  const departmentNames = useMemo(
+    () => new Map<number, string>((departmentsPage?.data ?? []).map((d: any) => [Number(d.id), d.name])),
+    [departmentsPage?.data]
+  );
+  const departmentsText = (row: PackageSetupModel) =>
+    row.allDepartments !== false
+      ? 'All'
+      : (row.departmentIds ?? []).map(id => departmentNames.get(Number(id)) ?? `#${id}`).join(', ');
 
   const tableData: PackageSetupModel[] = useMemo(() => pageData?.data ?? [], [pageData?.data]);
   const totalCount = pageData?.totalCount ?? 0;
@@ -106,22 +113,6 @@ const PackageSetup: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (toDelete?.id == null) {
-      setDeleteOpen(false);
-      return;
-    }
-    try {
-      await deletePackage({ id: toDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Package deleted', sev: 'success' }));
-    } catch (err) {
-      dispatch(notify({ msg: extractApiErrorMessage(err), sev: 'error' }));
-    } finally {
-      setDeleteOpen(false);
-      setToDelete(null);
-    }
-  };
-
   const columns = [
     { key: 'code', title: 'Code', dataKey: 'code', width: 140, ...headerSearch('code') },
     { key: 'name', title: 'Name', dataKey: 'name', width: 260, ...headerSearch('name') },
@@ -132,6 +123,16 @@ const PackageSetup: React.FC = () => {
       width: 140,
       ...headerSearch('price', 'Price'),
       render: (row: PackageSetupModel) => formatPrice(row.price)
+    },
+    {
+      key: 'departments',
+      title: 'Departments',
+      width: 200,
+      exportValue: (row: PackageSetupModel) => departmentsText(row),
+      render: (row: PackageSetupModel) => {
+        const text = departmentsText(row);
+        return <span title={text}>{text}</span>;
+      }
     },
     {
       key: 'validity',
@@ -208,16 +209,6 @@ const PackageSetup: React.FC = () => {
               onClick={() => handleToggle(row)}
             />
           )}
-          <MdDelete
-            className="icons-style"
-            title="Delete"
-            size={22}
-            fill="var(--primary-pink)"
-            onClick={() => {
-              setToDelete(row);
-              setDeleteOpen(true);
-            }}
-          />
         </div>
       )
     }
@@ -248,7 +239,7 @@ const PackageSetup: React.FC = () => {
           </Form>
         }
         height={470}
-        loading={isLoading || isFetching || isToggling || isDeleting}
+        loading={isLoading || isFetching || isToggling}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => handleSortChange(col, type as SortType)}
@@ -261,14 +252,6 @@ const PackageSetup: React.FC = () => {
         }
         enableExport
         exportFileName="packages"
-      />
-
-      <DeletionConfirmationModal
-        open={deleteOpen}
-        setOpen={setDeleteOpen}
-        itemToDelete="Package"
-        actionButtonFunction={handleDelete}
-        actionType="delete"
       />
 
       {editorOpen && (
