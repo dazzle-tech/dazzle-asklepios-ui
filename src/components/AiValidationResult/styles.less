@@ -7,6 +7,7 @@
 @safe: #2e7d32;
 @warn: #b26a00;
 @amber: #ffa500;
+@ai: #8360bf;
 
 .mixin-tint(@color, @amount) {
   background: color-mix(in srgb, @color @amount, var(--rs-bg-card));
@@ -434,56 +435,153 @@
 }
 
 .mv-loading {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   padding: 10px 0;
-}
 
-.mv-orb {
-  align-self: center;
-  width: 84px;
-  height: 84px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 6px;
-  border-radius: 99px;
-  color: var(--primary-blue);
-  background: color-mix(in srgb, var(--primary-blue) 10%, var(--rs-bg-card));
-  animation: mv-pulse 1.6s ease-in-out infinite;
-}
-
-.mv-skeleton {
-  height: 64px;
-  border-radius: 8px;
-  background: linear-gradient(90deg, var(--rs-bg-well), color-mix(in srgb, var(--primary-blue) 8%, var(--rs-bg-card)), var(--rs-bg-well));
-  background-size: 200% 100%;
-  animation: mv-shimmer 1.4s linear infinite;
-
-  &--banner {
-    height: 56px;
+  &__progress {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, @ai, transparent);
+    background-size: 40% 100%;
+    background-repeat: no-repeat;
+    animation: mv-progress 1.1s linear infinite;
   }
 }
 
-@keyframes mv-pulse {
+// Only the sparkles move: a twinkle offset in time
+.mv-orb {
+  position: relative;
+  align-self: center;
+  width: 72px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin: 8px 0 2px;
+
+  &__core {
+    display: flex;
+    color: @ai;
+    animation: mv-twinkle 1.8s ease-in-out infinite;
+  }
+
+  &__mini {
+    position: absolute;
+    display: flex;
+    color: var(--primary-blue);
+    animation: mv-twinkle 1.8s ease-in-out 0.6s infinite;
+
+    &--1 {
+      top: 2px;
+      inset-inline-end: 6px;
+    }
+
+    &--2 {
+      bottom: 4px;
+      inset-inline-start: 8px;
+      color: @ai;
+      animation-delay: 1.1s;
+    }
+  }
+}
+
+// Skeleton that mirrors the final layout (banner + finding cards)
+.mv-shim {
+  background: linear-gradient(90deg, var(--rs-bg-well) 25%, color-mix(in srgb, @ai 14%, var(--rs-bg-card)) 50%, var(--rs-bg-well) 75%);
+  background-size: 200% 100%;
+  animation: mv-shimmer 1.4s linear infinite;
+}
+
+.mv-sk-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--rs-border-primary);
+  background: var(--rs-bg-card);
+}
+
+.mv-sk-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.mv-sk-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mv-sk-bar {
+  display: block;
+  height: 10px;
+  border-radius: 99px;
+}
+
+.mv-sk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--rs-border-primary);
+  border-inline-start: 4px solid var(--rs-border-primary);
+  background: var(--rs-bg-card);
+}
+
+.mv-sk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mv-sk-pill {
+  width: 64px;
+  height: 18px;
+  border-radius: 99px;
+  flex: none;
+}
+
+@keyframes mv-twinkle {
+  0%,
+  100% {
+    transform: scale(0.8) rotate(-8deg);
+    opacity: 0.55;
+  }
   50% {
-    transform: scale(1.06);
-    opacity: 0.8;
+    transform: scale(1.15) rotate(8deg);
+    opacity: 1;
   }
 }
 
 @keyframes mv-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes mv-progress {
   from {
-    background-position: 100% 0;
+    background-position: -60% 0;
   }
   to {
-    background-position: -100% 0;
+    background-position: 160% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mv-orb,
-  .mv-skeleton {
+  .mv-orb__core,
+  .mv-orb__mini,
+  .mv-shim,
+  .mv-loading__progress {
     animation: none;
   }
 }
