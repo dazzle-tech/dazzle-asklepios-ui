@@ -68,6 +68,9 @@ Record<string, string> = {
   minimumInvoiceAmount:
     'Minimum Invoice Amount',
 
+  maxUsagePerPatient:
+    'How Many Times Can Be Used by Patient',
+
   requiresReason:
     'Requires Reason',
 
@@ -84,7 +87,10 @@ Record<string, string> = {
     'Active',
 
   description:
-    'Description'
+    'Description',
+
+  departmentIds:
+    'Applicable Departments'
 };
 
 const discountErrorKeyMessages:
@@ -112,6 +118,24 @@ Record<string, string> = {
 
   'facility.invalid':
     'The selected facility is invalid.',
+
+  'department.notfound':
+    'One or more selected departments were not found.',
+
+  'department.facility.invalid':
+    'Selected departments must belong to the discount facility.',
+
+  'department.invalid':
+    'One or more selected departments are invalid.',
+
+  'service.notfound':
+    'One or more selected services were not found.',
+
+  'service.facility.invalid':
+    'Selected services must belong to the discount facility.',
+
+  'approval.user.invalid':
+    'Approval users must be active users of the discount facility.',
 
   'code.required':
     'Discount code is required.',
@@ -160,6 +184,12 @@ Record<string, string> = {
 
   'amount.invalid':
     'Amount cannot be negative.',
+
+  'max.usage.per.patient.required':
+    'How many times a patient can use this discount is required.',
+
+  'max.usage.per.patient.invalid':
+    'How many times a patient can use this discount must be a whole number of at least 1.',
 
   'default.inactive':
     'Inactive discount cannot be set as default. Activate it first.',

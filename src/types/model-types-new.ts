@@ -7325,6 +7325,9 @@ export type Discount = {
   minimumInvoiceAmount?:
     number | null;
 
+  maxUsagePerPatient?:
+    number | null;
+
   requiresReason?:
     boolean;
 
@@ -7342,6 +7345,15 @@ export type Discount = {
 
   description?:
     string | null;
+
+  departmentIds?:
+    number[] | null;
+
+  serviceIds?:
+    number[] | null;
+
+  approvalUserIds?:
+    number[] | null;
 };
 
 export type SaveDiscountRequest = {
@@ -7377,6 +7389,9 @@ export type SaveDiscountRequest = {
   minimumInvoiceAmount?:
     number | null;
 
+  maxUsagePerPatient?:
+    number | null;
+
   requiresReason?:
     boolean;
 
@@ -7394,6 +7409,9 @@ export type SaveDiscountRequest = {
 
   description?:
     string | null;
+
+  departmentIds?:
+    number[] | null;
 };
 export type BillingWalletStatus =
   | 'ACTIVE'

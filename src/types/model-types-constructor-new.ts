@@ -3894,6 +3894,9 @@ modelTypes.Discount= {
   minimumInvoiceAmount:
     null,
 
+  maxUsagePerPatient:
+    null,
+
   requiresReason:
     false,
 
@@ -3910,7 +3913,16 @@ modelTypes.Discount= {
     true,
 
   description:
-    null
+    null,
+
+  departmentIds:
+    [],
+
+  serviceIds:
+    [],
+
+  approvalUserIds:
+    []
 };
 
 

@@ -798,6 +798,66 @@ export const discountService =
             ]
           }),
 
+        updateDiscountServices:
+          builder.mutation<
+            Discount,
+            {
+              id: DiscountId;
+              serviceIds: number[];
+            }
+          >({
+            query: ({
+              id,
+              serviceIds
+            }) => ({
+              url:
+                `/api/setup/discount/${encodeURIComponent(
+                  String(id)
+                )}/services`,
+
+              method:
+                'PUT',
+
+              body: {
+                serviceIds
+              }
+            }),
+
+            invalidatesTags: [
+              'Discount'
+            ]
+          }),
+
+        updateDiscountApprovalUser:
+          builder.mutation<
+            Discount,
+            {
+              id: DiscountId;
+              approvalUserIds: number[];
+            }
+          >({
+            query: ({
+              id,
+              approvalUserIds
+            }) => ({
+              url:
+                `/api/setup/discount/${encodeURIComponent(
+                  String(id)
+                )}/approval-user`,
+
+              method:
+                'PUT',
+
+              body: {
+                approvalUserIds
+              }
+            }),
+
+            invalidatesTags: [
+              'Discount'
+            ]
+          }),
+
         deleteDiscount:
           builder.mutation<
             void,
@@ -869,6 +929,9 @@ export const {
   useToggleDiscountActiveMutation,
   useChangeDiscountActivationStatusMutation,
   useSetDefaultDiscountMutation,
+
+  useUpdateDiscountServicesMutation,
+  useUpdateDiscountApprovalUserMutation,
 
   useDeleteDiscountMutation
 } =

@@ -66,6 +66,14 @@ const MyModal = ({
   const mode = useSelector((state: any) => state.ui.mode);
   const computedPagesCount = steps.length > pagesCount ? steps.length : pagesCount;
   const modalClass = position === 'left' ? 'left-modal' : position === 'right' ? 'rigth-modal' : '';
+  const showFooter = Boolean(
+    footerButtons ||
+      !hideCancel ||
+      (!hideBack && activeStep > 0) ||
+      activeStep !== computedPagesCount - 1 ||
+      steps[activeStep]?.footer ||
+      (activeStep === computedPagesCount - 1 && !hideActionBtn)
+  );
   const handleNext = async () => {
     if (typeof onBeforeNext === 'function') {
       const ok = await Promise.resolve(onBeforeNext(activeStep));
@@ -128,14 +136,8 @@ const MyModal = ({
 
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}
       </Modal.Body>
-      {(footerButtons ||
-        !hideCancel ||
-        (!hideBack && activeStep > 0) ||
-        activeStep !== computedPagesCount - 1 ||
-        steps[activeStep]?.footer ||
-        (activeStep === computedPagesCount - 1 && !hideActionBtn && actionButtonFunction)) && (
-        <Divider className="divider-line" />
-      )}
+      {showFooter && <Divider className="divider-line" />}
+      {showFooter && (
       <Modal.Footer className="footer-modal">
         <Form className="footer-modal-content">
           {!hideCancel && (
@@ -179,6 +181,7 @@ const MyModal = ({
           {footerButtons}
         </Form>
       </Modal.Footer>
+      )}
     </Modal>
   );
 };
