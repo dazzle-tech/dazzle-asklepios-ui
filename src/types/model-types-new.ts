@@ -7289,6 +7289,11 @@ export type DiscountApplicableOn =
   | 'SERVICE'
   | 'PRODUCT';
 
+export type DiscountStatus =
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'EXPIRED';
+
 
 export type Discount = {
   id?: number;
@@ -7342,6 +7347,9 @@ export type Discount = {
 
   active?:
     boolean;
+
+  status?:
+    DiscountStatus;
 
   description?:
     string | null;

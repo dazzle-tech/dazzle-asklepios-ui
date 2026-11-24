@@ -215,8 +215,8 @@ React.FC = () => {
   const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
   const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
   // 'all' sends no active param
-  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
-  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'INACTIVE' | 'EXPIRED' | 'all'>('ACTIVE');
+  const statusQuery = statusFilter === 'all' ? undefined : statusFilter;
 
   // Discounts of the facility with the applied header filters
   const allDiscountsQuery =
@@ -227,7 +227,7 @@ React.FC = () => {
 
         filters: {
           ...appliedFilters,
-          active: activeFilter
+          status: statusQuery
         },
 
         page:
@@ -1038,16 +1038,18 @@ React.FC = () => {
       searchable: true,
       searchType: 'select' as const,
       searchOptions: [
-        { label: 'Active', value: 'active' },
-        { label: 'Inactive', value: 'inactive' },
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Inactive', value: 'INACTIVE' },
+        { label: 'Expired', value: 'EXPIRED' },
         { label: 'All', value: 'all' }
       ],
       searchValue: statusFilter,
-      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      onSearchChange: (value: string) =>
+        setStatusFilter(value as 'ACTIVE' | 'INACTIVE' | 'EXPIRED' | 'all'),
 
       title:
         <Translate>
-          Active
+          Status
         </Translate>,
 
       width:
@@ -1062,14 +1064,18 @@ React.FC = () => {
       ) => (
         <MyBadgeStatus
           contant={
-            row.active
-              ? 'Active'
-              : 'Inactive'
+            row.status === 'EXPIRED'
+              ? 'Expired'
+              : row.active
+                ? 'Active'
+                : 'Inactive'
           }
           color={
-            row.active
-              ? '#415be7'
-              : '#b1acac'
+            row.status === 'EXPIRED'
+              ? '#d97706'
+              : row.active
+                ? '#415be7'
+                : '#b1acac'
           }
         />
       )
@@ -1167,7 +1173,7 @@ React.FC = () => {
             }}
           />
 
-          {row.active ? (
+          {row.status === 'EXPIRED' ? null : row.active ? (
             <MdToggleOn
               className="icons-style"
               title="Deactivate"

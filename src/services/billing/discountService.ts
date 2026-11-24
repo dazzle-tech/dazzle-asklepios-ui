@@ -42,6 +42,7 @@ export type DiscountListFilters = {
   requiresApproval?: boolean | string;
   isDefault?: boolean | string;
   active?: boolean;
+  status?: string;
 };
 
 export type DiscountTextFilterParams =
@@ -258,7 +259,8 @@ export const discountService =
                   applicableOn: filters?.applicableOn || undefined,
                   requiresApproval: bool(filters?.requiresApproval),
                   isDefault: bool(filters?.isDefault),
-                  active: filters?.active
+                  active: filters?.active,
+                  status: filters?.status || undefined
                 }
               };
             },

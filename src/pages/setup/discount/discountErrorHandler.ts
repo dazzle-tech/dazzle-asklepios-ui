@@ -194,6 +194,9 @@ Record<string, string> = {
   'default.inactive':
     'Inactive discount cannot be set as default. Activate it first.',
 
+  'expired.activate':
+    'An expired discount cannot be activated. Update the valid to date first.',
+
   'default.invalid.period':
     'Future or expired discount cannot be set as default.',
 
