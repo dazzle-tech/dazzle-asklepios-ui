@@ -12,7 +12,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { practitionerDisplayName } from './TreatmentPlanHeaderModal';
-import { SURFACE_LABELS } from './TreatmentPlanModal';
+import { formatSurfaces } from './TreatmentPlanModal';
 import TreatmentRowActions from './TreatmentRowActions';
 import {
   toothDisplayLabel,
@@ -294,7 +294,7 @@ const TreatmentPlanHistory = ({
         render: (row: any) =>
           row._sessionHeader ? null : (
             <span className="ap-muted">
-              {SURFACE_LABELS[row.surface] || row.surface || EMPTY_VALUE}
+              {formatSurfaces(row) || EMPTY_VALUE}
             </span>
           )
       },

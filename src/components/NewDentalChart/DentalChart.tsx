@@ -585,7 +585,7 @@ const DentalChart = ({
       {!selectionOnly && (
         <MyModal
           open={actionModalOpen}
-          size="70vw"
+          size="60vw"
           position="right"
           setOpen={() => {
             setActionModalOpen(false);

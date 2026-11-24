@@ -21,7 +21,7 @@ import {
 
 import { useGetExistingChartByEncounterQuery } from '@/services/dental/dentalChartService';
 
-import { SURFACE_LABELS } from './TreatmentPlanModal';
+import { formatSurfaces } from './TreatmentPlanModal';
 import { EMPTY_VALUE, isGroupedScope } from './treatmentPlanShared';
 
 import './CompleteTreatmentModal.less';
@@ -266,7 +266,7 @@ const CompleteTreatmentModal = ({
                 <dt>
                   <Translate>Surface</Translate>
                 </dt>
-                <dd>{SURFACE_LABELS[treatment?.surface] ?? EMPTY_VALUE}</dd>
+                <dd>{formatSurfaces(treatment) || EMPTY_VALUE}</dd>
               </div>
               {cdt && (
                 <div className="ctm-summary-row">

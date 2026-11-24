@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -97,12 +98,13 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
     ? toothDisplayLabel(selectedTooth.toothNumber, numberingSystem, numberingLabels)
     : '—';
 
-  // Same renderer, tooth identity (ToothA–ToothT / Tooth1–Tooth32) and action state as the chart cell.
+  // Same renderer, tooth identity and action state as the chart cell.
   const renderToothArtwork = () => {
     const surfaceStates = getSurfaceStates(selectedTooth, dentalActionsMap);
     const hasCondition = Object.values(surfaceStates).includes('condition');
     const hasTreatment = Object.values(surfaceStates).includes('treatment');
     const upper = isUpperArchTooth(selectedTooth.toothNumber);
+
     const outer = (
       <div className="tst-tooth-outer">
         <Tooth
@@ -113,11 +115,16 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
         />
       </div>
     );
+
     const occlusal = (
       <div className="tst-tooth-occlusal">
-        <AdultOcclusal toothNumber={selectedTooth.toothNumber} surfaceStates={surfaceStates} />
+        <AdultOcclusal
+          toothNumber={selectedTooth.toothNumber}
+          surfaceStates={surfaceStates}
+        />
       </div>
     );
+
     return (
       <div className="tst-tooth-art" key={`${selectedTooth.id}-${selectedTooth.toothNumber}`}>
         {upper ? outer : occlusal}
@@ -236,7 +243,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
               <Translate>Action Details</Translate>
             </div>
 
-            <div className="tst-fields-grid">
+            <div className="tst-fields-grid tst-fields-grid--details">
               <div className="tst-field">
                 <MyInput
                   fieldLabel="Action"
@@ -359,7 +366,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                 )}
               </div>
 
-              <div className="tst-fields-grid">
+              <div className="tst-fields-grid tst-fields-grid--sessions">
                 <div className="tst-field">
                   <MyInput
                     fieldName="treatmentPlanId"
@@ -420,9 +427,10 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
               <Translate>Clinical Details</Translate>
             </div>
 
-            <div className="tst-fields-grid">
+            <div className="tst-fields-grid tst-fields-grid--clinical">
               <div className="tst-field">
                 <MyInput
+                  width="100%"
                   fieldName="anesthesiaUsed"
                   fieldLabel="Anesthesia Used"
                   fieldType="text"
@@ -434,6 +442,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
               <div className="tst-field">
                 <MyInput
+                  width="100%"
                   fieldName="dose"
                   fieldLabel="Dose"
                   fieldType="text"
@@ -445,6 +454,7 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
               <div className="tst-field tst-field--full">
                 <MyInput
+                  width="100%"
                   fieldLabel="Notes"
                   fieldName="note"
                   fieldType="text"
@@ -564,7 +574,10 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     existing={action.existing}
                     carriedForward={
                       action.carriedFromActionId
-                        ? { by: action.originalRecordedBy, at: action.originalRecordedAt }
+                        ? {
+                            by: action.originalRecordedBy,
+                            at: action.originalRecordedAt
+                          }
                         : null
                     }
                     anesthesiaUsed={action.anesthesiaUsed}

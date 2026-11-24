@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import TreatmentPlanModal from './TreatmentPlanModal';
+import TreatmentPlanModal, { normalizeSurfaces } from './TreatmentPlanModal';
 import PlanActionToolbar from './PlanActionToolbar';
 import {
   isExistingDocumentation,
@@ -93,7 +93,7 @@ const toViewForm = (row: any, tooth: any) => {
     dose: row.dose ?? null,
     unit: row.unit ?? null,
     fillingMaterial: row.fillingMaterial ?? '',
-    surface: isGroupedScope(scope) ? null : row.surface ?? null,
+    surfaces: isGroupedScope(scope) ? [] : normalizeSurfaces(row),
     sessionChoice:
       row.treatmentSessionId != null ? String(row.treatmentSessionId) : 'NEW',
     visitNumber: row.visitNumber ?? null,
