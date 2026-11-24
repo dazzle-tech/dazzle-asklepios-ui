@@ -29,6 +29,7 @@ export interface PackageSetupItem {
   /** Category lines: how many times the same item can be counted; empty = no limit. */
   maxRepeat?: number | null;
   discountPercent?: number | null;
+  discountId?: number | null;
 }
 
 export interface PackageSetup {
@@ -41,6 +42,9 @@ export interface PackageSetup {
   /** 'YYYY-MM-DD'; empty = no limit on that side. */
   validFrom?: string | null;
   validTo?: string | null;
+  discountId?: number | null;
+  discountCode?: string | null;
+  discountName?: string | null;
   /** true = any department, otherwise only departmentIds. */
   allDepartments?: boolean;
   departmentIds?: number[];

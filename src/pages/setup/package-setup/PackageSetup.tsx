@@ -125,6 +125,17 @@ const PackageSetup: React.FC = () => {
       render: (row: PackageSetupModel) => formatPrice(row.price)
     },
     {
+      key: 'discount',
+      title: 'Discount',
+      width: 200,
+      exportValue: (row: PackageSetupModel) =>
+        [row.discountCode, row.discountName].filter(Boolean).join(' - '),
+      render: (row: PackageSetupModel) => {
+        const text = [row.discountCode, row.discountName].filter(Boolean).join(' - ');
+        return <span title={text}>{text}</span>;
+      }
+    },
+    {
       key: 'departments',
       title: 'Departments',
       width: 200,

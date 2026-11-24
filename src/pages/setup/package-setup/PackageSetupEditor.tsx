@@ -24,6 +24,7 @@ import {
   useLookupPackageItemsQuery,
   useUpdatePackageMutation
 } from '@/services/setup/packageSetupService';
+import { useGetActiveDiscountsByFacilityQuery } from '@/services/billing/discountService';
 
 interface Props {
   open: boolean;
@@ -42,6 +43,7 @@ const emptyHeader = {
   isActive: true,
   validFrom: null as string | null,
   validTo: null as string | null,
+  discountId: null as number | null,
   allDepartments: true,
   departmentIds: [] as number[]
 };
@@ -73,6 +75,22 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const [lookupOptions, setLookupOptions] = useState<PackageItemLookup[]>([]);
 
   const typeOptions = useEnumOptions('PriceListItemType');
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const facilityId = tenant?.selectedFacility?.id as number | undefined;
+  const { data: discountsPage, isFetching: discountsLoading } = useGetActiveDiscountsByFacilityQuery(
+    { facilityId: facilityId as number, page: 0, size: 1000, sort: 'name,asc' },
+    { skip: !open || !facilityId }
+  );
+  const discountOptions = useMemo(
+    () =>
+      (discountsPage?.data ?? [])
+        .filter(discount => discount.id != null && discount.status !== 'EXPIRED')
+        .map(discount => ({
+          value: discount.id,
+          label: [discount.code, discount.name].filter(Boolean).join(' - ')
+        })),
+    [discountsPage?.data]
+  );
   const { data: departmentsPage } = useGetDepartmentsQuery({ page: 0, size: 10000, isActive: true });
   const departmentOptions = useMemo(
     () => (departmentsPage?.data ?? []).map((d: any) => ({ value: d.id, label: d.name })),
@@ -88,6 +106,23 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const isSaving = isAdding || isUpdating;
 
   const hasPrice = header.price !== '' && header.price != null;
+  const packageDiscountId =
+    header.discountId == null || header.discountId === '' ? null : Number(header.discountId);
+  const packageHasDiscount = packageDiscountId != null && !Number.isNaN(packageDiscountId);
+
+  useEffect(() => {
+    if (!packageHasDiscount) {
+      return;
+    }
+
+    setItems(previous => {
+      if (!previous.some(item => item.discountId != null || Number(item.discountPercent) > 0)) {
+        return previous;
+      }
+
+      return previous.map(item => ({ ...item, discountId: null, discountPercent: null }));
+    });
+  }, [packageHasDiscount]);
 
   // Fill the screen when editing
   useEffect(() => {
@@ -100,6 +135,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         isActive: existing.isActive ?? true,
         validFrom: existing.validFrom ?? null,
         validTo: existing.validTo ?? null,
+        discountId: existing.discountId ?? null,
         allDepartments: existing.allDepartments ?? true,
         departmentIds: existing.departmentIds ?? []
       });
@@ -202,7 +238,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
             isActive: true,
             isCategory: true,
             maxRepeat: repeat,
-            discountPercent: null
+            discountPercent: null,
+            discountId: null
           }
         : {
             itemType: selected!.itemType,
@@ -213,7 +250,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
             isActive: true,
             isCategory: false,
             maxRepeat: null,
-            discountPercent: null
+            discountPercent: null,
+            discountId: null
           }
     ]);
     setSelected(null);
@@ -266,6 +304,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       isActive: !!header.isActive,
       validFrom: header.validFrom || null,
       validTo: header.validTo || null,
+      discountId: header.discountId == null || header.discountId === '' ? null : Number(header.discountId),
       allDepartments: !!header.allDepartments,
       departmentIds: header.allDepartments ? [] : header.departmentIds ?? [],
       items: items.map(i => ({
@@ -275,7 +314,10 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         isActive: i.isActive !== false,
         isCategory: !!i.isCategory,
         maxRepeat: i.isCategory ? i.maxRepeat ?? null : null,
-        discountPercent: i.discountPercent ?? null
+        discountPercent: packageHasDiscount ? null : i.discountPercent ?? null,
+        discountId: packageHasDiscount || i.discountId == null || i.discountId === ('' as any)
+          ? null
+          : Number(i.discountId)
       }))
     };
 
@@ -362,6 +404,33 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         )
     },
     {
+      key: 'discountId',
+      title: 'Discount',
+      width: 220,
+      render: (row: PackageSetupItem, index?: number) => (
+        <MyInput
+          width="100%"
+          fieldName="discountId"
+          fieldType="select"
+          selectData={discountOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={{ discountId: row.discountId ?? null }}
+          setRecord={(value: { discountId?: number | string | null }) => {
+            const selected = value?.discountId;
+            updateItem(index ?? 0, {
+              discountId: selected == null || selected === '' ? null : Number(selected)
+            });
+          }}
+          showLabel={false}
+          searchable
+          placeholder={packageHasDiscount ? 'Uses package discount' : 'Optional'}
+          disabled={packageHasDiscount}
+          loading={discountsLoading}
+        />
+      )
+    },
+    {
       key: 'discountPercent',
       title: 'Discount %',
       width: 110,
@@ -372,8 +441,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
           max={100}
           step={1}
           value={row.discountPercent ?? ''}
-          placeholder={hasPrice ? 'Fixed price' : '0'}
-          disabled={hasPrice}
+          placeholder={packageHasDiscount ? 'Package' : hasPrice ? 'Fixed price' : '0'}
+          disabled={hasPrice || packageHasDiscount}
           onChange={value =>
             updateItem(index ?? 0, {
               discountPercent: value === '' || value == null ? null : Math.min(100, Math.max(0, Number(value) || 0))
@@ -454,6 +523,21 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 placeholder="Optional"
                 record={header}
                 setRecord={setHeader}
+              />
+              <MyInput
+                width="100%"
+                fieldName="discountId"
+                fieldLabel="Discount"
+                fieldType="select"
+                selectData={discountOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={header}
+                setRecord={setHeader}
+                placeholder="Optional"
+                searchable
+                loading={discountsLoading}
+                disabled={!facilityId}
               />
               <MyInput
                 width="100%"
