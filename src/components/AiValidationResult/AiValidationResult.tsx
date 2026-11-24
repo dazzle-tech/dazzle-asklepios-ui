@@ -10,8 +10,7 @@ import {
   LuChevronUp,
   LuCloudOff,
   LuInfo,
-  LuSparkle,
-  LuSparkles
+  LuSparkle
 } from 'react-icons/lu';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -21,6 +20,14 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AiTooltip from '@/components/AiTooltip/AiTooltip';
 import type { ValidationResponseDTO } from '@/types/model-types-new';
 import './styles.less';
+
+// Sparkle icon from the AI validation prototype
+const SparkIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M10 3l1.7 4.8L16.5 9.5l-4.8 1.7L10 16l-1.7-4.8L3.5 9.5l4.8-1.7L10 3Z" fill="currentColor" />
+    <path d="M18.5 14l.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8.8-2.1Z" fill="currentColor" />
+  </svg>
+);
 
 type Props = {
   // RTK Query mutation result of the validation call
@@ -157,13 +164,36 @@ const AiValidationResult: React.FC<Props> = ({
 
   if (validation.isLoading) {
     return (
-      <div className="mv-loading" role="status" aria-label={loadingLabel}>
+      <div className="mv-loading" role="status" aria-label={loadingLabel} aria-busy="true">
+        <span className="mv-loading__progress" />
         <div className="mv-orb">
-          <LuSparkles size={40} />
+          <span className="mv-orb__core">
+            <SparkIcon size={40} />
+          </span>
+          <span className="mv-orb__mini mv-orb__mini--1">
+            <SparkIcon size={18} />
+          </span>
+          <span className="mv-orb__mini mv-orb__mini--2">
+            <SparkIcon size={14} />
+          </span>
         </div>
-        <div className="mv-skeleton mv-skeleton--banner" />
-        <div className="mv-skeleton" />
-        <div className="mv-skeleton" />
+        <div className="mv-sk-banner">
+          <span className="mv-sk-circle mv-shim" />
+          <div className="mv-sk-lines">
+            <span className="mv-sk-bar mv-shim" style={{ width: '28%' }} />
+            <span className="mv-sk-bar mv-shim" style={{ width: '80%' }} />
+          </div>
+        </div>
+        {[0, 1].map(i => (
+          <div key={i} className="mv-sk-card">
+            <div className="mv-sk-row">
+              <span className="mv-sk-pill mv-shim" />
+              <span className="mv-sk-bar mv-shim" style={{ width: '42%' }} />
+            </div>
+            <span className="mv-sk-bar mv-shim" style={{ width: '92%' }} />
+            <span className="mv-sk-bar mv-shim" style={{ width: '70%' }} />
+          </div>
+        ))}
       </div>
     );
   }
