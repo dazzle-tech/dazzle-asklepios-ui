@@ -68,6 +68,11 @@ export const userDepartmentService = createApi({
       }),
     }),
 
+    getActiveUsersByFacility: builder.query<any[], number | string>({
+      query: facilityId => `/api/setup/user-departments/facility/${facilityId}/active-users`,
+      providesTags: ['UserDepartment']
+    }),
+
     // GET /api/user-departments/user/{userId}/active
     getActiveUserDepartmentsByUser: builder.query<
       UserDepartment[],
@@ -141,6 +146,7 @@ export const {
   useGetUserDepartmentsByUserQuery,
   useLazyGetUserDepartmentsByUserQuery,
   useExistsUfdQuery,
+  useGetActiveUsersByFacilityQuery,
   useGetActiveUserDepartmentsByUserQuery,
   useLazyGetActiveUserDepartmentsByUserQuery,
   useGetDefaultUserDepartmentByUserQuery,

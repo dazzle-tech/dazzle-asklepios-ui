@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react';
 
@@ -10,9 +11,9 @@ import {
 
 import {
   MdDelete,
+  MdMedicalServices,
   MdModeEdit,
-  MdStar,
-  MdStarBorder,
+  MdPerson,
   MdToggleOff,
   MdToggleOn
 } from 'react-icons/md';
@@ -48,14 +49,17 @@ import {
 } from '@/services/enumsApi';
 
 import {
+  useGetActiveDepartmentByFacilityListQuery
+} from '@/services/security/departmentService';
+
+import {
   useGetAllFacilitiesQuery
 } from '@/services/security/facilityService';
 
 import {
   useChangeDiscountActivationStatusMutation,
   useDeleteDiscountMutation,
-  useGetDiscountsByFacilityQuery,
-  useSetDefaultDiscountMutation
+  useGetDiscountsByFacilityQuery
 } from '@/services/billing/discountService';
 
 import type {
@@ -67,6 +71,8 @@ import {
 } from '@/types/model-types-constructor-new';
 
 import AddEditDiscount from './AddEditDiscount';
+import DiscountApprovalUserModal from './DiscountApprovalUserModal';
+import DiscountServicesModal from './DiscountServicesModal';
 
 import {
   extractDiscountErrorMessage
@@ -82,8 +88,7 @@ const emptyHeaderFilters = {
   discountType: '',
   value: '',
   applicableOn: '',
-  requiresApproval: '',
-  isDefault: ''
+  requiresApproval: ''
 };
 type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
@@ -125,9 +130,28 @@ React.FC = () => {
       ...newDiscount
     });
 
+  const savedApprovalUserIds = useRef<Record<number, number[]>>({});
+  const savedServiceIds = useRef<Record<number, number[]>>({});
+
   const [
     modalOpen,
     setModalOpen
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    servicesModalOpen,
+    setServicesModalOpen
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    approvalUserModalOpen,
+    setApprovalUserModalOpen
   ] =
     useState(
       false
@@ -230,6 +254,21 @@ React.FC = () => {
   } =
     useGetAllFacilitiesQuery({});
 
+  const {
+    data:
+      departmentList = []
+  } =
+    useGetActiveDepartmentByFacilityListQuery(
+      {
+        facilityId:
+          facilityId as number
+      },
+      {
+        skip:
+          !facilityId
+      }
+    );
+
   const [
     deleteDiscount,
     {
@@ -247,15 +286,6 @@ React.FC = () => {
     }
   ] =
     useChangeDiscountActivationStatusMutation();
-
-  const [
-    setDefaultDiscount,
-    {
-      isLoading:
-        isSettingDefault
-    }
-  ] =
-    useSetDefaultDiscountMutation();
 
   const activeResponse = useMemo(
     () => ({
@@ -585,54 +615,6 @@ React.FC = () => {
       }
     };
 
-  const handleSetDefault =
-    async (
-      row:
-        Discount
-    ) => {
-      if (
-        !row.id ||
-        row.isDefault
-      ) {
-        return;
-      }
-
-      try {
-        await setDefaultDiscount({
-          id:
-            row.id
-        }).unwrap();
-
-        dispatch(
-          notify({
-            msg:
-              'Default discount updated successfully',
-
-            sev:
-              'success'
-          })
-        );
-
-        await refetchActiveQuery();
-      } catch (
-        error:
-          any
-      ) {
-        dispatch(
-          notify({
-            msg:
-              extractDiscountErrorMessage(
-                error,
-                'Failed to set default discount'
-              ),
-
-            sev:
-              'error'
-          })
-        );
-      }
-    };
-
   const handleSaveSuccess =
     async () => {
       setModalOpen(
@@ -763,6 +745,23 @@ React.FC = () => {
     },
     {
       key:
+        'name',
+
+      ...headerSearch('name'),
+
+      title:
+        <Translate>
+          Name
+        </Translate>,
+
+      width:
+        180,
+
+      sortable:
+        true
+    },
+    {
+      key:
         'code',
 
       ...headerSearch('code'),
@@ -780,20 +779,41 @@ React.FC = () => {
     },
     {
       key:
-        'name',
-
-      ...headerSearch('name'),
+        'validFrom',
 
       title:
         <Translate>
-          Name
+          Valid From
         </Translate>,
 
       width:
-        180,
+        130,
 
-      sortable:
-        true
+      render: (
+        row:
+          Discount
+      ) =>
+        row.validFrom ||
+        '-'
+    },
+    {
+      key:
+        'validTo',
+
+      title:
+        <Translate>
+          Valid To
+        </Translate>,
+
+      width:
+        130,
+
+      render: (
+        row:
+          Discount
+      ) =>
+        row.validTo ||
+        '-'
     },
     {
       key:
@@ -858,7 +878,7 @@ React.FC = () => {
 
       title:
         <Translate>
-          Applicable On
+          Apply On
         </Translate>,
 
       width:
@@ -879,6 +899,102 @@ React.FC = () => {
     },
     {
       key:
+        'departmentIds',
+
+      title:
+        <Translate>
+          Applicable Departments
+        </Translate>,
+
+      flexGrow:
+        2,
+
+      render: (
+        row:
+          Discount
+      ) => {
+        const names =
+          (row.departmentIds ?? [])
+            .map(
+              id =>
+                departmentList.find(
+                  department =>
+                    Number(
+                      department.id
+                    ) ===
+                    Number(
+                      id
+                    )
+                )?.name ??
+                id
+            )
+            .join(
+              ', '
+            );
+
+        return names || '-';
+      }
+    },
+    {
+      key:
+        'maxUsagePerPatient',
+
+      title:
+        <Translate>
+          Uses per Patient
+        </Translate>,
+
+      width:
+        150,
+
+      render: (
+        row:
+          Discount
+      ) =>
+        row.maxUsagePerPatient ==
+          null ||
+        String(
+          row.maxUsagePerPatient
+        ).trim() ===
+          ''
+          ? '-'
+          : row.maxUsagePerPatient
+    },
+    {
+      key:
+        'requiresReason',
+
+      title:
+        <Translate>
+          Requires Reason
+        </Translate>,
+
+      width:
+        150,
+
+      align:
+        'center' as const,
+
+      render: (
+        row:
+          Discount
+      ) => (
+        <MyBadgeStatus
+          contant={
+            row.requiresReason
+              ? 'Yes'
+              : 'No'
+          }
+          color={
+            row.requiresReason
+              ? '#415be7'
+              : '#b1acac'
+          }
+        />
+      )
+    },
+    {
+      key:
         'requiresApproval',
 
       ...headerSelect('requiresApproval', [
@@ -888,11 +1004,11 @@ React.FC = () => {
 
       title:
         <Translate>
-          Approval
+          Needs Approval
         </Translate>,
 
       width:
-        120,
+        150,
 
       align:
         'center' as const,
@@ -909,44 +1025,6 @@ React.FC = () => {
           }
           color={
             row.requiresApproval
-              ? '#415be7'
-              : '#b1acac'
-          }
-        />
-      )
-    },
-    {
-      key:
-        'isDefault',
-
-      ...headerSelect('isDefault', [
-        { label: 'Default', value: 'true' },
-        { label: 'No', value: 'false' }
-      ]),
-
-      title:
-        <Translate>
-          Default
-        </Translate>,
-
-      width:
-        110,
-
-      align:
-        'center' as const,
-
-      render: (
-        row:
-          Discount
-      ) => (
-        <MyBadgeStatus
-          contant={
-            row.isDefault
-              ? 'Default'
-              : 'No'
-          }
-          color={
-            row.isDefault
               ? '#415be7'
               : '#b1acac'
           }
@@ -1006,7 +1084,7 @@ React.FC = () => {
         </Translate>,
 
       width:
-        185,
+        210,
 
       align:
         'center' as const,
@@ -1028,34 +1106,66 @@ React.FC = () => {
             }
           />
 
-          {row.isDefault ? (
-            <MdStar
-              className="icons-style"
-              title="Default Discount"
-              size={24}
-              fill="var(--deep-blue)"
-            />
-          ) : (
-            <MdStarBorder
-              className="icons-style"
-              title={
-                row.active
-                  ? 'Set as Default'
-                  : 'Activate discount first'
-              }
-              size={24}
-              fill={
-                row.active
-                  ? 'var(--primary-gray)'
-                  : '#b1acac'
-              }
-              onClick={() =>
-                handleSetDefault(
-                  row
-                )
-              }
-            />
-          )}
+          <MdMedicalServices
+            className="icons-style"
+            title="Applicable Services"
+            size={23}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              setSelectedDiscount(() => {
+                const override = savedServiceIds.current[Number(row.id)];
+                const rowIds = (row.serviceIds ?? []).map(id => Number(id));
+                const overrideMatchesRow =
+                  override != null &&
+                  override.length === rowIds.length &&
+                  override.every(id => rowIds.includes(id));
+
+                if (overrideMatchesRow && row.id != null) {
+                  delete savedServiceIds.current[Number(row.id)];
+                }
+
+                return {
+                  ...row,
+                  serviceIds: savedServiceIds.current[Number(row.id)] ?? row.serviceIds
+                };
+              });
+              setServicesModalOpen(
+                true
+              );
+            }}
+          />
+
+          <MdPerson
+            className="icons-style"
+            title="Approval Users"
+            size={23}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              setSelectedDiscount(() => {
+                const override = savedApprovalUserIds.current[Number(row.id)];
+                const rowIds = (row.approvalUserIds ?? []).map(id => Number(id));
+                const overrideMatchesRow =
+                  override != null &&
+                  override.length === rowIds.length &&
+                  override.every(id => rowIds.includes(id));
+
+                if (overrideMatchesRow && row.id != null) {
+                  delete savedApprovalUserIds.current[Number(row.id)];
+                }
+
+                return {
+                  ...row,
+                  approvalUserIds:
+                    savedApprovalUserIds.current[Number(row.id)] ?? row.approvalUserIds
+                };
+              });
+              setApprovalUserModalOpen(
+                true
+              );
+            }}
+          />
 
           {row.active ? (
             <MdToggleOn
@@ -1140,8 +1250,7 @@ React.FC = () => {
         loading={
           isFetching ||
           isDeleting ||
-          isChangingActivation ||
-          isSettingDefault
+          isChangingActivation
         }
         columns={
           tableColumns
@@ -1215,6 +1324,54 @@ React.FC = () => {
         onSaveSuccess={
           handleSaveSuccess
         }
+      />
+
+      <DiscountServicesModal
+        open={
+          servicesModalOpen
+        }
+        setOpen={
+          setServicesModalOpen
+        }
+        discount={
+          selectedDiscount
+        }
+        onSaved={saved => {
+          if (saved?.id != null) {
+            const serviceIds = saved.serviceIds ?? [];
+            savedServiceIds.current[Number(saved.id)] = serviceIds;
+            setSelectedDiscount(previous =>
+              previous?.id === saved.id
+                ? { ...previous, ...saved, serviceIds }
+                : previous
+            );
+          }
+          void refetchActiveQuery();
+        }}
+      />
+
+      <DiscountApprovalUserModal
+        open={
+          approvalUserModalOpen
+        }
+        setOpen={
+          setApprovalUserModalOpen
+        }
+        discount={
+          selectedDiscount
+        }
+        onSaved={saved => {
+          if (saved?.id != null) {
+            const approvalUserIds = saved.approvalUserIds ?? [];
+            savedApprovalUserIds.current[Number(saved.id)] = approvalUserIds;
+            setSelectedDiscount(previous =>
+              previous?.id === saved.id
+                ? { ...previous, ...saved, approvalUserIds }
+                : previous
+            );
+          }
+          void refetchActiveQuery();
+        }}
       />
 
       <DeletionConfirmationModal

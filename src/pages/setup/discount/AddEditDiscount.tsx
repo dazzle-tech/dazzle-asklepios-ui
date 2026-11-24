@@ -1,5 +1,6 @@
 import React, {
-  useEffect
+  useEffect,
+  useRef
 } from 'react';
 
 import {
@@ -24,6 +25,10 @@ import {
 import {
   useEnumOptions
 } from '@/services/enumsApi';
+
+import {
+  useGetActiveDepartmentByFacilityListQuery
+} from '@/services/security/departmentService';
 
 import {
   useGetAllFacilitiesQuery
@@ -106,10 +111,67 @@ React.FC<Props> = ({
       'DiscountApplicableOn'
     );
 
-  const currencyOptions =
-    useEnumOptions(
-      'Currency'
+  const {
+    data:
+      departmentList = []
+  } =
+    useGetActiveDepartmentByFacilityListQuery(
+      {
+        facilityId:
+          discount.facilityId as number
+      },
+      {
+        skip:
+          !discount.facilityId
+      }
     );
+
+  const previousFacilityId =
+    useRef<
+      number | undefined
+    >(
+      undefined
+    );
+
+  useEffect(() => {
+    if (!open) {
+      previousFacilityId.current =
+        undefined;
+
+      return;
+    }
+
+    if (
+      previousFacilityId.current ===
+        undefined
+    ) {
+      previousFacilityId.current =
+        discount.facilityId;
+
+      return;
+    }
+
+    if (
+      previousFacilityId.current !==
+        discount.facilityId
+    ) {
+      previousFacilityId.current =
+        discount.facilityId;
+
+      setDiscount(
+        previous => ({
+          ...previous,
+
+          departmentIds:
+            []
+        })
+      );
+    }
+  }, [
+    open,
+    discount.facilityId,
+    setDiscount
+  ]);
 
   const [
     addDiscount,
@@ -338,8 +400,11 @@ React.FC<Props> = ({
         return 'Fixed amount cannot be negative.';
       }
 
-      if (!discount.currency) {
-        return 'Currency is required.';
+      if (
+        !discount.currency &&
+        !selectedFacility?.defaultCurrency
+      ) {
+        return 'A facility currency is required for a fixed amount discount.';
       }
     }
 
@@ -358,6 +423,33 @@ React.FC<Props> = ({
         discount.validFrom
     ) {
       return 'Valid To cannot be before Valid From.';
+    }
+
+    if (
+      discount.maxUsagePerPatient ===
+        undefined ||
+      discount.maxUsagePerPatient ===
+        null ||
+      String(
+        discount.maxUsagePerPatient
+      ).trim() ===
+        ''
+    ) {
+      return 'How many times a patient can use this discount is required.';
+    }
+
+    const times =
+      Number(
+        discount.maxUsagePerPatient
+      );
+
+    if (
+      !Number.isInteger(
+        times
+      ) ||
+      times < 1
+    ) {
+      return 'How many times a patient can use this discount must be a whole number of at least 1.';
     }
 
     if (
@@ -459,6 +551,8 @@ React.FC<Props> = ({
           discount.discountType ===
             'FIXED_AMOUNT'
             ? discount.currency ??
+              selectedFacility
+                ?.defaultCurrency ??
               null
             : null,
 
@@ -502,6 +596,39 @@ React.FC<Props> = ({
             : Number(
                 discount.minimumInvoiceAmount
               ),
+
+        maxUsagePerPatient:
+          discount.maxUsagePerPatient ===
+            undefined ||
+          discount.maxUsagePerPatient ===
+            null ||
+          String(
+            discount.maxUsagePerPatient
+          ).trim() ===
+            ''
+            ? null
+            : Number(
+                discount.maxUsagePerPatient
+              ),
+
+        departmentIds:
+          Array.isArray(
+            discount.departmentIds
+          )
+            ? discount.departmentIds
+                .map(
+                  id =>
+                    Number(
+                      id
+                    )
+                )
+                .filter(
+                  id =>
+                    !Number.isNaN(
+                      id
+                    )
+                )
+            : [],
 
         requiresReason:
           discount.requiresReason ??
@@ -600,46 +727,30 @@ React.FC<Props> = ({
   const content =
     () => (
       <Form fluid>
-        <div className="discount-two-columns">
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Facility"
-            fieldType="select"
-            fieldName="facilityId"
-            selectData={
-              facilityListResponse ??
-              []
-            }
-            selectDataLabel="name"
-            selectDataValue="id"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-            placeholder="Select Facility"
-            searchable
-            disabled={
-              isEdit
-            }
-          />
-
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Discount Code"
-            fieldName="code"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-            placeholder="Enter Discount Code"
-          />
-        </div>
+        <MyInput
+          required
+          width="100%"
+          fieldLabel="Facility"
+          fieldType="select"
+          fieldName="facilityId"
+          selectData={
+            facilityListResponse ??
+            []
+          }
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={
+            discount
+          }
+          setRecord={
+            setDiscount
+          }
+          placeholder="Select Facility"
+          searchable
+          disabled={
+            isEdit
+          }
+        />
 
         <br />
 
@@ -647,7 +758,7 @@ React.FC<Props> = ({
           <MyInput
             required
             width="100%"
-            fieldLabel="Discount Name"
+            fieldLabel="Name"
             fieldName="name"
             record={
               discount
@@ -655,146 +766,22 @@ React.FC<Props> = ({
             setRecord={
               setDiscount
             }
-            placeholder="Enter Discount Name"
+            placeholder="Enter Name"
           />
 
           <MyInput
             required
             width="100%"
-            fieldLabel="Discount Type"
-            fieldType="select"
-            fieldName="discountType"
-            selectData={
-              discountTypeOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discount
-            }
-            setRecord={
-              handleDiscountTypeChange
-            }
-            placeholder="Select Discount Type"
-            searchable={false}
-          />
-        </div>
-
-        <br />
-
-        {discount.discountType ===
-        'FIXED_AMOUNT' ? (
-          <div className="discount-two-columns">
-            <MyInput
-              required
-              width="100%"
-              fieldLabel="Fixed Amount"
-              fieldType="number"
-              fieldName="fixedAmount"
-              record={
-                discount
-              }
-              setRecord={
-                setDiscount
-              }
-              placeholder="Enter Fixed Amount"
-            />
-
-            <MyInput
-              required
-              width="100%"
-              fieldLabel="Currency"
-              fieldType="select"
-              fieldName="currency"
-              selectData={
-                currencyOptions
-              }
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={
-                discount
-              }
-              setRecord={
-                setDiscount
-              }
-              placeholder="Select Currency"
-              searchable
-            />
-          </div>
-        ) : (
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Percentage"
-            fieldType="number"
-            fieldName="percentage"
+            fieldLabel="Code"
+            fieldName="code"
             record={
               discount
             }
             setRecord={
               setDiscount
             }
-            placeholder="Enter Percentage"
+            placeholder="Enter Code"
           />
-        )}
-
-        <br />
-
-        <div className="discount-two-columns">
-          <MyInput
-            required
-            width="100%"
-            fieldLabel="Applicable On"
-            fieldType="select"
-            fieldName="applicableOn"
-            selectData={
-              applicableOnOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-            placeholder="Select Applicable On"
-            searchable={false}
-          />
-
-          <MyInput
-            width="100%"
-            fieldLabel="Maximum Discount Amount"
-            fieldType="number"
-            fieldName="maximumDiscountAmount"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-            placeholder="Enter Maximum Amount"
-          />
-        </div>
-
-        <br />
-
-        <div className="discount-two-columns">
-          <MyInput
-            width="100%"
-            fieldLabel="Minimum Invoice Amount"
-            fieldType="number"
-            fieldName="minimumInvoiceAmount"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-            placeholder="Enter Minimum Invoice Amount"
-          />
-
-          <div />
         </div>
 
         <br />
@@ -830,7 +817,130 @@ React.FC<Props> = ({
 
         <br />
 
-        <div className="discount-three-columns">
+        <div className="discount-two-columns">
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Discount Type"
+            fieldType="select"
+            fieldName="discountType"
+            selectData={
+              discountTypeOptions
+            }
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={
+              discount
+            }
+            setRecord={
+              handleDiscountTypeChange
+            }
+            placeholder="Select Discount Type"
+            searchable={false}
+          />
+
+          {discount.discountType ===
+          'FIXED_AMOUNT' ? (
+            <MyInput
+              required
+              width="100%"
+              fieldLabel="Discount Value"
+              fieldType="number"
+              fieldName="fixedAmount"
+              record={
+                discount
+              }
+              setRecord={
+                setDiscount
+              }
+              placeholder="Enter Discount Value"
+            />
+          ) : (
+            <MyInput
+              required
+              width="100%"
+              fieldLabel="Discount Value"
+              fieldType="number"
+              fieldName="percentage"
+              record={
+                discount
+              }
+              setRecord={
+                setDiscount
+              }
+              placeholder="Enter Discount Value"
+            />
+          )}
+        </div>
+
+        <br />
+
+        <div className="discount-two-columns">
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="Apply On"
+            fieldType="select"
+            fieldName="applicableOn"
+            selectData={
+              applicableOnOptions
+            }
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={
+              discount
+            }
+            setRecord={
+              setDiscount
+            }
+            placeholder="Select Apply On"
+            searchable={false}
+          />
+
+          <MyInput
+            required
+            width="100%"
+            fieldLabel="How Many Times Can Be Used by Patient"
+            fieldType="number"
+            fieldName="maxUsagePerPatient"
+            record={
+              discount
+            }
+            setRecord={
+              setDiscount
+            }
+            placeholder="Enter Number of Uses"
+          />
+        </div>
+
+        <br />
+
+        <MyInput
+          width="100%"
+          fieldLabel="Applicable Departments"
+          fieldType="checkPicker"
+          fieldName="departmentIds"
+          selectData={
+            departmentList
+          }
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={
+            discount
+          }
+          setRecord={
+            setDiscount
+          }
+          placeholder="Select Departments"
+          searchable
+          disabled={
+            !discount.facilityId
+          }
+        />
+
+        <br />
+
+        <div className="discount-two-columns">
           <MyInput
             width="100%"
             fieldLabel="Requires Reason"
@@ -846,7 +956,7 @@ React.FC<Props> = ({
 
           <MyInput
             width="100%"
-            fieldLabel="Requires Approval"
+            fieldLabel="Needs Approval"
             fieldType="checkbox"
             fieldName="requiresApproval"
             record={
@@ -856,66 +966,7 @@ React.FC<Props> = ({
               setDiscount
             }
           />
-
-          <MyInput
-            width="100%"
-            fieldLabel="Combinable"
-            fieldType="checkbox"
-            fieldName="combinable"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-          />
         </div>
-
-        <br />
-
-        <div className="discount-two-columns">
-          <MyInput
-            width="100%"
-            fieldLabel="Default"
-            fieldType="checkbox"
-            fieldName="isDefault"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-          />
-
-          <MyInput
-            width="100%"
-            fieldLabel="Active"
-            fieldType="checkbox"
-            fieldName="active"
-            record={
-              discount
-            }
-            setRecord={
-              setDiscount
-            }
-          />
-        </div>
-
-        <br />
-
-        <MyInput
-          width="100%"
-          fieldLabel="Description"
-          fieldType="textarea"
-          fieldName="description"
-          record={
-            discount
-          }
-          setRecord={
-            setDiscount
-          }
-          placeholder="Enter Description"
-        />
       </Form>
     );
 
