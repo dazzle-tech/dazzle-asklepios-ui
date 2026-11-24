@@ -33,6 +33,8 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetPackagesQuery } from '@/services/setup/packageSetupService';
 import { availablePackageOptions } from '@/pages/setup/package-setup/packageOptions';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import { useGetPatientPackagesByEncounterQuery } from '@/services/patient/patientPackageService';
 
 import './style.less';
@@ -55,7 +57,9 @@ const RegistrationEncounter = ({
   isReadOnly,
   localPatient,
   localReferral,
-  openedFromReferral = false
+  openedFromReferral = false,
+  packageChoice,
+  setPackageChoice
 }: {
   localEncounter: PatientEncounter;
   setLocalEncounter: (updater: any) => void;
@@ -63,8 +67,12 @@ const RegistrationEncounter = ({
   localPatient: any;
   localReferral?: any;
   openedFromReferral?: boolean;
+  /** The package chosen for the visit; kept apart from the encounter record so no other field can drop it. */
+  packageChoice?: { packageSetupId: number | null };
+  setPackageChoice?: (next: any) => void;
 }) => {
   const authSlice = useSelector((state: any) => state.auth);
+  const dispatch = useAppDispatch();
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
@@ -85,13 +93,16 @@ const RegistrationEncounter = ({
     () => availablePackageOptions(activePackagesPage?.data, packageDepartmentId),
     [activePackagesPage?.data, packageDepartmentId]
   );
-  // a package chosen for another department is dropped when the department changes
+  // a package not allowed in a newly chosen department is dropped, and the user is told;
+  // while no department is set (e.g. the encounter type was just changed) the choice is kept
   useEffect(() => {
-    const chosen = (localEncounter as any)?.packageSetupId;
-    if (chosen && activePackagesPage?.data && !packageOptions.some(o => o.value === chosen)) {
-      setLocalEncounter((prev: any) => ({ ...prev, packageSetupId: null }));
+    const chosen = Number(packageChoice?.packageSetupId ?? 0);
+    if (!chosen || !packageDepartmentId || !activePackagesPage?.data) return;
+    if (!packageOptions.some(o => Number(o.value) === chosen)) {
+      setPackageChoice?.({ packageSetupId: null });
+      dispatch(notify({ msg: 'The chosen package is not available in this department and was removed', sev: 'warning' }));
     }
-  }, [packageOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [packageDepartmentId]); // eslint-disable-line react-hooks/exhaustive-deps
   const { data: encounterPackages } = useGetPatientPackagesByEncounterQuery(
     (localEncounter as any)?.id,
     { skip: !isSavedEncounter }
@@ -976,8 +987,8 @@ useEffect(() => {
           selectData={packageOptions}
           selectDataLabel="label"
           selectDataValue="value"
-          record={localEncounter}
-          setRecord={setLocalEncounter}
+          record={packageChoice ?? { packageSetupId: null }}
+          setRecord={(next: any) => setPackageChoice?.({ packageSetupId: next?.packageSetupId ?? null })}
           disabled={isReadOnly}
           loading={isLoadingPackages}
           placeholder="No package"

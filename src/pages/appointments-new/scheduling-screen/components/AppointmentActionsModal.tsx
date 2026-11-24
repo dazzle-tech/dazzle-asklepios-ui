@@ -306,20 +306,23 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
           // keep modal flow; encounter may still be available by background query.
         }
         // The chosen package goes to the new visit; if that fails the check-in stays.
+        // One message at the end: a later toast would hide an earlier one.
+        let checkInNotice = { msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' };
         const packageSetupId = checkInPackage?.packageSetupId;
         if (packageSetupId && appointmentPatientId) {
           if (!checkedInEncounterId) {
-            dispatch(notify({ msg: 'Checked in, but the package could not be added: visit not found', sev: 'warning' }));
+            checkInNotice = { msg: 'Checked in, but the package could not be added: visit not found', sev: 'warning' };
           } else {
             try {
-              await assignPatientPackage({
+              const given = await assignPatientPackage({
                 patientId: appointmentPatientId,
                 encounterId: checkedInEncounterId,
                 packageSetupId: Number(packageSetupId)
               }).unwrap();
+              checkInNotice = { msg: `Checked in with package ${given?.packageName ?? ''}`, sev: 'success' };
             } catch (error: any) {
               const reason = extractErrorMessage(error) || 'unknown error';
-              dispatch(notify({ msg: `Checked in, but the package was not added: ${reason}`, sev: 'warning' }));
+              checkInNotice = { msg: `Checked in, but the package was not added: ${reason}`, sev: 'warning' };
             }
           }
           setCheckInPackage({ packageSetupId: null });
@@ -329,7 +332,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
           appointmentStatus: 'CHECKEDIN',
           status: 'CHECKEDIN'
         }));
-        dispatch(notify({ msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' }));
+        dispatch(notify(checkInNotice as any));
         onStatusChange();
       } catch (error: any) {
         const errorMsg = extractErrorMessage(error) || 'Save Failed';
