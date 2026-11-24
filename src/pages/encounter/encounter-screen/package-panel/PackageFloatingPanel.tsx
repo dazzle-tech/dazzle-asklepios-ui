@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Form, Loader, Tooltip, Whisper } from 'rsuite';
-import { FaBoxesStacked, FaChevronDown, FaCheck, FaWandMagicSparkles, FaXmark, FaTrashCan } from 'react-icons/fa6';
+import { FaBoxesStacked, FaChevronDown, FaCheck, FaClockRotateLeft, FaWandMagicSparkles, FaXmark, FaTrashCan } from 'react-icons/fa6';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -21,6 +21,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useSortedLovQuery } from '../../encounter-component/procedure-new/useSortedLovQuery';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 import CategoryTestPicker from './CategoryTestPicker';
+import PackageHistoryModal from './PackageHistoryModal';
 import './packagePanel.less';
 
 interface Props {
@@ -77,6 +78,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   const dispatch = useAppDispatch();
   const mode = useSelector((state: any) => state.ui?.mode);
   const [collapsed, setCollapsed] = useState(false);
+  const [historyPackageId, setHistoryPackageId] = useState<number | null>(null);
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
 
   // tests ticked for one order
@@ -323,6 +325,14 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
           <span className="pkgp-pkg-meta">
             {used}/{pkg.quantityTotal} <Translate>used</Translate>
           </span>
+          <button
+            type="button"
+            className="pkgp-history"
+            title="History"
+            onClick={() => setHistoryPackageId(pkg.id)}
+          >
+            <FaClockRotateLeft />
+          </button>
         </div>
         <div className="pkgp-progress"><span style={{ width: `${Math.round((used / total) * 100)}%` }} /></div>
         <ul className="pkgp-items">{pkg.items.map(renderItem)}</ul>
@@ -540,6 +550,8 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
           </Form>
         }
       />
+
+      <PackageHistoryModal patientPackageId={historyPackageId} onClose={() => setHistoryPackageId(null)} />
 
       {/* Procedure: its own wizard */}
       <MyModal

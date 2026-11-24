@@ -39,6 +39,39 @@ export interface PatientPackage {
   items: PatientPackageItem[];
 }
 
+/** One order counted against a package; RETURNED when the order was cancelled and the unit given back. */
+export interface PackageUsageRow {
+  id: number;
+  itemId: number;
+  itemType?: string | null;
+  fromCategory?: boolean;
+  /** the package line, e.g. "CBC" or "Any Laboratory" */
+  lineName?: string | null;
+  orderedItemId?: number | null;
+  orderedItemCode?: string | null;
+  orderedItemName?: string | null;
+  quantity: number;
+  /** LABORATORY / RADIOLOGY / PATHOLOGY / PROCEDURE / PACKAGE (panel service) / SERVICE (services, UCC, vaccination) */
+  orderSource?: string | null;
+  orderId?: number | null;
+  status: 'COUNTED' | 'RETURNED';
+  countedBy?: string | null;
+  countedDate?: string | null;
+  returnedBy?: string | null;
+  returnedDate?: string | null;
+}
+
+export interface PatientPackageHistory {
+  patientPackageId: number;
+  packageCode?: string | null;
+  packageName?: string | null;
+  status?: string | null;
+  givenBy?: string | null;
+  givenDate?: string | null;
+  cancelReason?: string | null;
+  usages: PackageUsageRow[];
+}
+
 export const patientPackageService = createApi({
   reducerPath: 'patientPackageApi',
   baseQuery: BaseQuery,
@@ -63,6 +96,12 @@ export const patientPackageService = createApi({
 
     getPatientPackagesByEncounter: builder.query<PatientPackage[], Id>({
       query: encounterId => ({ url: `/api/patient/patient-packages/by-encounter/${encounterId}` }),
+      providesTags: ['PatientPackage']
+    }),
+
+    // When the package was given and every order counted against it or returned, newest first
+    getPatientPackageHistory: builder.query<PatientPackageHistory, Id>({
+      query: id => ({ url: `/api/patient/patient-packages/${id}/history` }),
       providesTags: ['PatientPackage']
     }),
 
@@ -117,6 +156,7 @@ export const {
   useAssignPatientPackageMutation,
   useGetPatientPackagesByPatientQuery,
   useGetPatientPackagesByEncounterQuery,
+  useGetPatientPackageHistoryQuery,
   useCancelPatientPackageMutation,
   useOrderPatientPackageItemMutation,
   useOrderPackageDiagnosticsMutation

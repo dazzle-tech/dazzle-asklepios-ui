@@ -147,6 +147,8 @@ const PatientQuickAppointment = ({
   });
 
   const [isReadOnly] = useState(isDisabeld);
+  // package chosen for the walk-in visit; given to the patient once the visit is saved
+  const [packageChoice, setPackageChoice] = useState<{ packageSetupId: number | null }>({ packageSetupId: null });
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
   const [isPatientAgeAllowed, setIsPatientAgeAllowed] = useState(false);
   const [isCheckingPatientAge, setIsCheckingPatientAge] = useState(false);
@@ -400,23 +402,24 @@ const PatientQuickAppointment = ({
       setIsEncounterSaved(true);
 
       // The visit is saved; now give the chosen package to the patient. A failure here does not undo the visit.
-      const packageSetupId = Number((localEncounter as any)?.packageSetupId ?? 0);
-      if (packageSetupId && createdEncounterId) {
+      // one message at the end: a later toast would hide an earlier one
+      let savedNotice = { msg: 'Quick appointment saved successfully', sev: 'success' };
+      const packageSetupId = Number(packageChoice?.packageSetupId ?? 0);
+      if (packageSetupId && !createdEncounterId) {
+        savedNotice = { msg: 'Visit saved, but the package was not added: the visit id was not returned', sev: 'warning' };
+      } else if (packageSetupId) {
         try {
-          await assignPatientPackage({
+          const given = await assignPatientPackage({
             patientId,
             encounterId: createdEncounterId,
             packageSetupId
           }).unwrap();
+          savedNotice = { msg: `Visit saved with package ${given?.packageName ?? ''}`, sev: 'success' };
         } catch (packageErr: any) {
-          dispatch(
-            notify({
-              msg: `Visit saved, but the package was not added: ${
-                extractErrorMessage(packageErr) || 'unexpected error'
-              }`,
-              sev: 'warning'
-            })
-          );
+          savedNotice = {
+            msg: `Visit saved, but the package was not added: ${extractErrorMessage(packageErr) || 'unexpected error'}`,
+            sev: 'warning'
+          };
         }
       }
 
@@ -429,7 +432,7 @@ const PatientQuickAppointment = ({
         didAcceptReferralRef.current = true;
       }
 
-      dispatch(notify({ msg: 'Quick appointment saved successfully', sev: 'success' }));
+      dispatch(notify(savedNotice as any));
 
       if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {
@@ -451,6 +454,7 @@ const PatientQuickAppointment = ({
   };
 
   const handleClear = () => {
+    setPackageChoice({ packageSetupId: null });
     setLocalEncounter({
       ...newPatientEncounter,
       patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
@@ -529,6 +533,8 @@ const PatientQuickAppointment = ({
             localPatient={localPatient}
             localReferral={localReferral}
             openedFromReferral={openedFromReferral}
+            packageChoice={packageChoice}
+            setPackageChoice={setPackageChoice}
           />
         );
       case 1:
