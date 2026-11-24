@@ -1,0 +1,566 @@
+/*
+ * Floating package checklist on the encounter screen.
+ * Own colour tokens (like the AI widget): the theme's --white is grey, so it is not used here.
+ * It sits on the end side just above the AI button (48px at bottom 20px), clear of the left menu.
+ */
+.pkgp {
+  --pk-accent: #1d6fd8;
+  --pk-accent-soft: #e8f1fc;
+  --pk-surface: #ffffff;
+  --pk-subtle: #f7f9fc;
+  --pk-text: #1e293b;
+  --pk-muted: #64748b;
+  --pk-border: #e2e8f0;
+  --pk-box: #cbd5e1;
+  --pk-done: #16a34a;
+  --pk-done-soft: #ecfdf3;
+  --pk-shadow: 0 10px 30px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+
+  position: fixed;
+  inset-inline-end: 20px;
+  bottom: 80px;
+  z-index: 1039;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--pk-text);
+
+  &.dark {
+    --pk-accent: #60a5fa;
+    --pk-accent-soft: #1e2a3a;
+    --pk-surface: #1a2028;
+    --pk-subtle: #20272f;
+    --pk-text: #e8eef5;
+    --pk-muted: #9aa8b8;
+    --pk-border: #2c3540;
+    --pk-box: #475569;
+    --pk-done: #4ade80;
+    --pk-done-soft: #12301f;
+    --pk-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  button {
+    font: inherit;
+  }
+}
+
+/* ---------- Minimised ---------- */
+.pkgp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 6px 0 4px;
+  border: 1px solid var(--pk-border);
+  border-radius: 999px;
+  background: var(--pk-surface);
+  color: var(--pk-text);
+  box-shadow: var(--pk-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.pkgp-pill-ico,
+.pkgp-head-ico {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pk-accent-soft);
+  color: var(--pk-accent);
+  font-size: 14px;
+}
+
+.pkgp-pill-txt {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.pkgp-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 12px;
+  background: var(--pk-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* ---------- Open card ---------- */
+.pkgp-card {
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  max-height: min(70vh, 620px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--pk-border);
+  border-radius: 14px;
+  background: var(--pk-surface);
+  box-shadow: var(--pk-shadow);
+  overflow: hidden;
+  animation: pkgp-in 0.18s ease-out;
+}
+
+@keyframes pkgp-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pkgp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 10px 14px;
+  border-bottom: 1px solid var(--pk-border);
+
+  .pkgp-head-txt {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    b {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    small {
+      font-size: 12px;
+      color: var(--pk-muted);
+    }
+  }
+}
+
+.pkgp-min {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pk-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--pk-subtle);
+    color: var(--pk-text);
+  }
+}
+
+.pkgp-body {
+  position: relative;
+  overflow-y: auto;
+  min-height: 64px;
+  padding: 4px 0 6px;
+}
+
+/* ---------- One package ---------- */
+.pkgp-pkg {
+  padding: 10px 14px 4px;
+
+  & + & {
+    border-top: 1px solid var(--pk-border);
+  }
+}
+
+.pkgp-pkg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pkgp-pkg-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--pk-muted);
+}
+
+.pkgp-pkg-meta {
+  flex: none;
+  font-size: 11px;
+  color: var(--pk-muted);
+}
+
+.pkgp-progress {
+  height: 4px;
+  margin: 6px 0 6px;
+  border-radius: 2px;
+  background: var(--pk-subtle);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--pk-accent);
+    transition: width 0.25s ease;
+  }
+}
+
+.pkgp-items {
+  list-style: none;
+  margin: 0 -8px;
+  padding: 0;
+}
+
+/* ---------- One item ---------- */
+.pkgp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover:not(.is-disabled) {
+    background: var(--pk-subtle);
+
+    .pkgp-box {
+      border-color: var(--pk-accent);
+    }
+  }
+
+  &.is-disabled {
+    cursor: default;
+  }
+
+  &.is-done {
+    .pkgp-box {
+      border-color: var(--pk-done);
+      background: var(--pk-done);
+      color: #fff;
+    }
+
+    .pkgp-item-name {
+      color: var(--pk-muted);
+      text-decoration: line-through;
+    }
+
+    .pkgp-left {
+      color: var(--pk-done);
+      background: var(--pk-done-soft);
+    }
+  }
+
+  &.is-disabled:not(.is-done) {
+    .pkgp-item-name {
+      color: var(--pk-muted);
+    }
+
+    .pkgp-box {
+      color: var(--pk-muted);
+      background: var(--pk-subtle);
+    }
+  }
+}
+
+.pkgp-box {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--pk-box);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.pkgp-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.pkgp-item-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.pkgp-chip {
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--pk-muted);
+  background: var(--pk-subtle);
+
+  &--laboratory {
+    color: #0f766e;
+    background: #e6f6f4;
+  }
+
+  &--radiology {
+    color: #6d28d9;
+    background: #f1ebfe;
+  }
+
+  &--pathology {
+    color: #be185d;
+    background: #fdecf4;
+  }
+
+  &--procedure {
+    color: #b45309;
+    background: #fdf3e3;
+  }
+
+  &--service {
+    color: #1d4ed8;
+    background: #e9effd;
+  }
+}
+
+.dark .pkgp-chip {
+  background: var(--pk-subtle);
+}
+
+.pkgp-left {
+  flex: none;
+  min-width: 34px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--pk-accent);
+  background: var(--pk-accent-soft);
+
+  small {
+    font-weight: 400;
+    opacity: 0.7;
+  }
+}
+
+/* ---------- Wizard (modal) ---------- */
+/* MyInput wraps each field in a Form.Group of auto width, so width="100%" alone stays narrow:
+   make every group fill its cell, and lay paired fields out in two equal columns. */
+.pkgp-wizard {
+  .my-input-container {
+    width: 100%;
+    margin-bottom: 14px !important;
+  }
+
+  .my-input-container .rs-picker,
+  .my-input-container .rs-picker-toggle,
+  .my-input-container .rs-input-group,
+  .my-input-container .rs-input {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .pkgp-wizard-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    align-items: end;
+  }
+
+  .pkgp-wizard-label {
+    margin: 4px 0 8px;
+    font-weight: 600;
+  }
+}
+
+/* ---------- Ticked tests ---------- */
+.pkgp-item.is-selected {
+  background: var(--pk-accent-soft);
+
+  .pkgp-box {
+    border-color: var(--pk-accent);
+    background: var(--pk-accent);
+    color: #fff;
+  }
+}
+
+.pkgp-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--pk-border);
+  background: var(--pk-surface);
+}
+
+.pkgp-clear {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--pk-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pk-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pk-text);
+    background: var(--pk-subtle);
+  }
+}
+
+.pkgp-order {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: var(--pk-accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.pkgp-wizard-tests {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+
+    & + li {
+      border-top: 1px solid #e2e8f0;
+    }
+  }
+
+  .pkgp-wizard-test-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+}
+
+/* the per-test Reason sits inline in the tests list: fixed width, no bottom gap */
+.pkgp-wizard .pkgp-wizard-tests .my-input-container {
+  flex: none;
+  width: 220px;
+  margin-bottom: 0 !important;
+}
+
+/* ---------- Category lines ---------- */
+.pkgp-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pkgp-chip--discount {
+  color: #b91c1c;
+  background: #fdecec;
+}
+
+.pkgp-chip--extra {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.pkgp-wizard-category {
+  margin-bottom: 14px;
+  padding: 10px 12px 2px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+
+  .pkgp-wizard-label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .pkgp-wizard-tests {
+    margin-top: 8px;
+  }
+
+  .pkgp-wizard-tests li.is-extra .pkgp-wizard-test-name {
+    opacity: 0.75;
+  }
+}
+
+.pkgp-wizard-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.pkgp-wizard-note {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.pkgp-remove {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover {
+    color: #dc2626;
+    background: #fdecec;
+  }
+}
+
+/* quantities changed while a wizard was open */
+.pkgp-wizard-alert {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}

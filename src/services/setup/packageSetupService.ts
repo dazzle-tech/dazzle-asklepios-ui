@@ -19,10 +19,16 @@ export type PackageItemType =
 export interface PackageSetupItem {
   id?: number;
   itemType: PackageItemType;
-  sourceId: number;
+  /** Empty for a category line (a whole item type). */
+  sourceId: number | null;
   itemCode?: string;
   itemName?: string;
   quantity: number;
+  isActive?: boolean;
+  isCategory?: boolean;
+  /** Category lines: how many times the same item can be counted; empty = no limit. */
+  maxRepeat?: number | null;
+  discountPercent?: number | null;
 }
 
 export interface PackageSetup {
@@ -30,9 +36,16 @@ export interface PackageSetup {
   code: string;
   name: string;
   description?: string | null;
-  price: number | string;
+  price: number | string | null;
   isActive: boolean;
+  /** 'YYYY-MM-DD'; empty = no limit on that side. */
+  validFrom?: string | null;
+  validTo?: string | null;
+  /** true = any department, otherwise only departmentIds. */
+  allDepartments?: boolean;
+  departmentIds?: number[];
   itemCount?: number;
+  activeItemCount?: number;
   items: PackageSetupItem[];
 }
 
@@ -41,7 +54,7 @@ export interface PackageItemLookup {
   sourceId: number;
   code: string;
   name: string;
-  price?: number;
+  price?: number | null;
 }
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
@@ -99,11 +112,6 @@ export const packageSetupService = createApi({
       invalidatesTags: ['PackageSetup']
     }),
 
-    deletePackage: builder.mutation<void, { id: Id }>({
-      query: ({ id }) => ({ url: `/api/setup/packages/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['PackageSetup']
-    }),
-
     // Active items of one type, searched by name or code, from their own setup tables
     lookupPackageItems: builder.query<
       PagedResult<PackageItemLookup>,
@@ -125,6 +133,5 @@ export const {
   useAddPackageMutation,
   useUpdatePackageMutation,
   useTogglePackageActiveMutation,
-  useDeletePackageMutation,
   useLookupPackageItemsQuery
 } = packageSetupService;

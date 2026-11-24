@@ -31,6 +31,9 @@ import {
 
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetPackagesQuery } from '@/services/setup/packageSetupService';
+import { availablePackageOptions } from '@/pages/setup/package-setup/packageOptions';
+import { useGetPatientPackagesByEncounterQuery } from '@/services/patient/patientPackageService';
 
 import './style.less';
 import clsx from 'clsx';
@@ -69,6 +72,39 @@ const RegistrationEncounter = ({
 
   const [validationResult] = useState({});
   const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
+
+  // Packages: reception may choose one when opening the visit; it is given to the patient after the visit is saved
+  const isSavedEncounter = Boolean((localEncounter as any)?.id);
+  const { data: activePackagesPage, isFetching: isLoadingPackages } = useGetPackagesQuery(
+    { page: 0, size: 500, sort: 'name,asc', isActive: 'true' },
+    { skip: isReadOnly || isSavedEncounter }
+  );
+  // only packages valid today and allowed in the visit's department
+  const packageDepartmentId = Number((localEncounter as any)?.departmentId ?? 0);
+  const packageOptions = useMemo(
+    () => availablePackageOptions(activePackagesPage?.data, packageDepartmentId),
+    [activePackagesPage?.data, packageDepartmentId]
+  );
+  // a package chosen for another department is dropped when the department changes
+  useEffect(() => {
+    const chosen = (localEncounter as any)?.packageSetupId;
+    if (chosen && activePackagesPage?.data && !packageOptions.some(o => o.value === chosen)) {
+      setLocalEncounter((prev: any) => ({ ...prev, packageSetupId: null }));
+    }
+  }, [packageOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { data: encounterPackages } = useGetPatientPackagesByEncounterQuery(
+    (localEncounter as any)?.id,
+    { skip: !isSavedEncounter }
+  );
+  const encounterPackagesRecord = useMemo(
+    () => ({
+      packagesLabel: (encounterPackages ?? [])
+        .filter(p => p.status !== 'CANCELLED')
+        .map(p => `${p.packageCode} - ${p.packageName}`)
+        .join(', ')
+    }),
+    [encounterPackages]
+  );
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
     exclude: ['DAYCASE', 'INPATIENT', 'ALL']
@@ -920,6 +956,33 @@ useEffect(() => {
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
       />
+
+      {isSavedEncounter ? (
+        <MyInput
+          column
+          disabled
+          fieldLabel="Package"
+          fieldName="packagesLabel"
+          record={encounterPackagesRecord}
+          setRecord={() => {}}
+        />
+      ) : (
+        <MyInput
+          vr={validationResult}
+          column
+          fieldType="select"
+          fieldLabel="Package"
+          fieldName="packageSetupId"
+          selectData={packageOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={localEncounter}
+          setRecord={setLocalEncounter}
+          disabled={isReadOnly}
+          loading={isLoadingPackages}
+          placeholder="No package"
+        />
+      )}
 
       <MyInput
         column

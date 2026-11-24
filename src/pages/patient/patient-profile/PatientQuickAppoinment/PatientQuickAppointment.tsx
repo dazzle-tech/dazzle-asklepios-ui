@@ -30,6 +30,7 @@ import {
 } from '@/services/security/departmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
 import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
+import { useAssignPatientPackageMutation } from '@/services/patient/patientPackageService';
 import * as modelTypes from '@/types/model-types-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -166,6 +167,7 @@ const PatientQuickAppointment = ({
   const [checkPatientAgeAllowed] = useLazyIsPatientAgeAllowedQuery();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
   const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
+  const [assignPatientPackage] = useAssignPatientPackageMutation();
   const selectedDepartmentId = Number(localEncounter?.departmentId ?? 0);
   const { data: selectedDepartment } = useGetDepartmentByIdQuery(selectedDepartmentId, {
     skip: !selectedDepartmentId
@@ -396,6 +398,27 @@ const PatientQuickAppointment = ({
         setValidationResult((prev: any) => ({ ...prev, appointmentFromTemplate: returnedAppointment }));
       }
       setIsEncounterSaved(true);
+
+      // The visit is saved; now give the chosen package to the patient. A failure here does not undo the visit.
+      const packageSetupId = Number((localEncounter as any)?.packageSetupId ?? 0);
+      if (packageSetupId && createdEncounterId) {
+        try {
+          await assignPatientPackage({
+            patientId,
+            encounterId: createdEncounterId,
+            packageSetupId
+          }).unwrap();
+        } catch (packageErr: any) {
+          dispatch(
+            notify({
+              msg: `Visit saved, but the package was not added: ${
+                extractErrorMessage(packageErr) || 'unexpected error'
+              }`,
+              sev: 'warning'
+            })
+          );
+        }
+      }
 
       if (
         openedFromReferral &&

@@ -2,24 +2,30 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Form, Panel } from 'rsuite';
 import PlusIcon from '@rsuite/icons/Plus';
-import { MdDelete, MdModeEdit, MdToggleOff, MdToggleOn } from 'react-icons/md';
+import { MdModeEdit, MdToggleOff, MdToggleOn } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   PackageSetup as PackageSetupModel,
-  useDeletePackageMutation,
   useGetPackagesQuery,
   useTogglePackageActiveMutation
 } from '@/services/setup/packageSetupService';
-import PackageSetupEditor from './PackageSetupEditor';
+import PackageSetupEditor, { packageItemLabel } from './PackageSetupEditor';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import './style.less';
 
 type SortType = 'asc' | 'desc';
+
+const validityText = (row: { validFrom?: string | null; validTo?: string | null }) =>
+  !row.validFrom && !row.validTo
+    ? 'Always'
+    : `${row.validFrom ? row.validFrom.split('-').reverse().join('-') : '…'} → ${
+        row.validTo ? row.validTo.split('-').reverse().join('-') : '…'
+      }`;
 
 const formatPrice = (value: number | string | null | undefined) =>
   value == null || value === '' ? '' : Number(value).toFixed(2);
@@ -42,15 +48,23 @@ const PackageSetup: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<PackageSetupModel | null>(null);
 
   const { data: pageData, isLoading, isFetching } = useGetPackagesQuery({
     ...paginationParams,
     ...appliedFilters
   });
   const [togglePackageActive, { isLoading: isToggling }] = useTogglePackageActiveMutation();
-  const [deletePackage, { isLoading: isDeleting }] = useDeletePackageMutation();
+
+  // department names for the Departments column
+  const { data: departmentsPage } = useGetDepartmentsQuery({ page: 0, size: 10000 });
+  const departmentNames = useMemo(
+    () => new Map<number, string>((departmentsPage?.data ?? []).map((d: any) => [Number(d.id), d.name])),
+    [departmentsPage?.data]
+  );
+  const departmentsText = (row: PackageSetupModel) =>
+    row.allDepartments !== false
+      ? 'All'
+      : (row.departmentIds ?? []).map(id => departmentNames.get(Number(id)) ?? `#${id}`).join(', ');
 
   const tableData: PackageSetupModel[] = useMemo(() => pageData?.data ?? [], [pageData?.data]);
   const totalCount = pageData?.totalCount ?? 0;
@@ -99,22 +113,6 @@ const PackageSetup: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (toDelete?.id == null) {
-      setDeleteOpen(false);
-      return;
-    }
-    try {
-      await deletePackage({ id: toDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Package deleted', sev: 'success' }));
-    } catch (err) {
-      dispatch(notify({ msg: extractApiErrorMessage(err), sev: 'error' }));
-    } finally {
-      setDeleteOpen(false);
-      setToDelete(null);
-    }
-  };
-
   const columns = [
     { key: 'code', title: 'Code', dataKey: 'code', width: 140, ...headerSearch('code') },
     { key: 'name', title: 'Name', dataKey: 'name', width: 260, ...headerSearch('name') },
@@ -127,21 +125,42 @@ const PackageSetup: React.FC = () => {
       render: (row: PackageSetupModel) => formatPrice(row.price)
     },
     {
+      key: 'departments',
+      title: 'Departments',
+      width: 200,
+      exportValue: (row: PackageSetupModel) => departmentsText(row),
+      render: (row: PackageSetupModel) => {
+        const text = departmentsText(row);
+        return <span title={text}>{text}</span>;
+      }
+    },
+    {
+      key: 'validity',
+      title: 'Valid',
+      width: 190,
+      exportValue: (row: PackageSetupModel) => validityText(row),
+      render: (row: PackageSetupModel) => validityText(row)
+    },
+    {
       key: 'itemCount',
       title: 'Items',
       dataKey: 'itemCount',
       width: 90,
-      render: (row: PackageSetupModel) => row.itemCount ?? row.items?.length ?? 0
+      render: (row: PackageSetupModel) => {
+        const total = row.itemCount ?? row.items?.length ?? 0;
+        const active = row.activeItemCount ?? total;
+        return active === total ? total : <span title={`${total - active} inactive`}>{active} / {total}</span>;
+      }
     },
     {
       key: 'contents',
       title: 'Contents',
       width: 360,
       exportValue: (row: PackageSetupModel) =>
-        (row.items ?? []).map(i => `${i.itemName} x${i.quantity}`).join(', '),
+        (row.items ?? []).filter(i => i.isActive !== false).map(i => `${packageItemLabel(i)} x${i.quantity}`).join(', '),
       render: (row: PackageSetupModel) => {
-        const items = row.items ?? [];
-        const text = items.map(i => `${i.itemName} ×${i.quantity}`).join(', ');
+        const items = (row.items ?? []).filter(i => i.isActive !== false);
+        const text = items.map(i => `${packageItemLabel(i)} ×${i.quantity}`).join(', ');
         return <span title={text}>{text}</span>;
       }
     },
@@ -190,16 +209,6 @@ const PackageSetup: React.FC = () => {
               onClick={() => handleToggle(row)}
             />
           )}
-          <MdDelete
-            className="icons-style"
-            title="Delete"
-            size={22}
-            fill="var(--primary-pink)"
-            onClick={() => {
-              setToDelete(row);
-              setDeleteOpen(true);
-            }}
-          />
         </div>
       )
     }
@@ -230,7 +239,7 @@ const PackageSetup: React.FC = () => {
           </Form>
         }
         height={470}
-        loading={isLoading || isFetching || isToggling || isDeleting}
+        loading={isLoading || isFetching || isToggling}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => handleSortChange(col, type as SortType)}
@@ -243,14 +252,6 @@ const PackageSetup: React.FC = () => {
         }
         enableExport
         exportFileName="packages"
-      />
-
-      <DeletionConfirmationModal
-        open={deleteOpen}
-        setOpen={setDeleteOpen}
-        itemToDelete="Package"
-        actionButtonFunction={handleDelete}
-        actionType="delete"
       />
 
       {editorOpen && (

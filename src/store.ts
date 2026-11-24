@@ -146,6 +146,7 @@ import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { packageSetupService } from './services/setup/packageSetupService';
+import { patientPackageService } from './services/patient/patientPackageService';
 
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
@@ -288,6 +289,7 @@ import { billingTransactionService } from './services/billing/billingTransaction
 import { invoiceGenerationService } from './services/billing/invoiceGenerationService';
 import { financialDocumentAdjustmentService } from './services/billing/financialDocumentAdjustmentService';
 import { patientBillingSidebarRefreshMiddleware } from './services/billing/refreshPatientBillingSidebar';
+import { patientPackageRefreshMiddleware } from './services/patient/refreshPatientPackages';
 import { PointOfSaleConfigurationService } from '@/services/point-of-sale/PointOfSaleConfigurationService';
 import { pointOfSaleWebhookLogService } from '@/services/point-of-sale/pointOfSaleWebhookLogService';
 import { patientTimelineService } from './services/patients/patientTimelineService';
@@ -622,6 +624,7 @@ export const store = configureStore({
     [visitDurationService.reducerPath]: visitDurationService.reducer,
     // packages
     [packageSetupService.reducerPath]: packageSetupService.reducer,
+    [patientPackageService.reducerPath]: patientPackageService.reducer,
 
     // catalog
     [catalogService.reducerPath]: catalogService.reducer,
@@ -810,6 +813,7 @@ export const store = configureStore({
       .prepend(rtkDispatchLoopGuard)
       .prepend(resetApiCachesOnLogout)
       .prepend(patientBillingSidebarRefreshMiddleware.middleware)
+      .prepend(patientPackageRefreshMiddleware.middleware)
       .prepend(preAuthorizationMissingFieldsListener.middleware)
       .concat(
         idParsingService.middleware,
@@ -921,6 +925,7 @@ export const store = configureStore({
         invoiceReportApi.middleware,
         visitDurationService.middleware,
         packageSetupService.middleware,
+        patientPackageService.middleware,
         catalogService.middleware,
         catalogDiagnosticTestService.middleware,
         BillingService.middleware,
