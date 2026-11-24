@@ -14,9 +14,18 @@ type PayorModalProps = {
   payor: Payor;
   setPayor: React.Dispatch<React.SetStateAction<Payor>>;
   onSave: () => void;
+  /** Opened from an insurance company: identity and contact come from the company and are read-only. */
+  linkedToCompany?: boolean;
 };
 
-const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor, onSave }) => {
+const PayorModal: React.FC<PayorModalProps> = ({
+  open,
+  setOpen,
+  payor,
+  setPayor,
+  onSave,
+  linkedToCompany = false
+}) => {
   const payorCategories = useEnumOptions('PayorCategory');
 
   const { data: nphiesPayerListResponse, isFetching: isNphiesPayersLoading } =
@@ -34,7 +43,13 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={payor.id ? 'Edit Payor' : 'Add Payor'}
+      title={
+        linkedToCompany
+          ? `Payor Settings${payor.name ? ` — ${payor.name}` : ''}`
+          : payor.id
+            ? 'Edit Payor'
+            : 'Add Payor'
+      }
       size="80vw"
       actionButtonLabel="Save"
       actionButtonFunction={onSave}
@@ -49,6 +64,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 <div className="flex-row-payor-modal-in-sections">
                   <MyInput
                     fieldName="code"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Payor Code"
                     record={payor}
@@ -58,6 +74,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                   />
                   <MyInput
                     fieldName="name"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Payor Name"
                     record={payor}
@@ -67,6 +84,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                   />
                   <MyInput
                     fieldName="category"
+                    disabled={linkedToCompany}
                     fieldType="select"
                     fieldLabel="Category"
                     selectData={payorCategories ?? []}
@@ -87,6 +105,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 <div className="flex-row-payor-modal-in-sections">
                   <MyInput
                     fieldName="nphiesId"
+                    disabled={linkedToCompany}
                     fieldType="select"
                     fieldLabel="NPHIES ID"
                     selectData={nphiesPayersList}
@@ -134,38 +153,6 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 </div>
               }
             />
-            {/* Section: Contract Period */}
-            <SectionContainer
-              title="Contract Period"
-              content={
-                <div className="flex-row-payor-modal-in-sections">
-                  <MyInput
-                    fieldName="startDate"
-                    fieldType="date"
-                    fieldLabel="Start Date"
-                    record={payor}
-                    setRecord={setPayor}
-                    width="12vw"
-                    required
-                  />
-                  <MyInput
-                    fieldName="expiryDate"
-                    fieldType="date"
-                    fieldLabel="Expiry Date"
-                    record={payor}
-                    setRecord={setPayor}
-                    width="12vw"
-                  />
-                  <MyInput
-                    fieldName="renewable"
-                    fieldType="checkbox"
-                    fieldLabel="Renewable"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                </div>
-              }
-            />
 
             {/* Section: Contact */}
             <SectionContainer
@@ -174,6 +161,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                 <div className="flex-row-payor-modal-in-sections">
                   <MyInput
                     fieldName="address"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Address"
                     record={payor}
@@ -182,6 +170,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                   />
                   <MyInput
                     fieldName="phone"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Phone"
                     record={payor}
@@ -191,6 +180,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                   />
                   <MyInput
                     fieldName="email"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Email"
                     record={payor}
@@ -199,6 +189,7 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
                   />
                   <MyInput
                     fieldName="contractManagerContact"
+                    disabled={linkedToCompany}
                     fieldType="text"
                     fieldLabel="Contract Manager Contact"
                     record={payor}
@@ -209,57 +200,6 @@ const PayorModal: React.FC<PayorModalProps> = ({ open, setOpen, payor, setPayor,
               }
             />
 
-            {/* Section: Rules */}
-
-            <SectionContainer
-              title="Rules"
-              content={
-                <div className="flex-row-payor-modal-in-sections rules-grid">
-                  <MyInput
-                    fieldName="allowPartialCoverage"
-                    fieldType="checkbox"
-                    fieldLabel="Allow partial coverage"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                  <MyInput
-                    fieldName="acceptCopay"
-                    fieldType="checkbox"
-                    fieldLabel="Accept co-pay"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                  <MyInput
-                    fieldName="acceptDeductibles"
-                    fieldType="checkbox"
-                    fieldLabel="Accept deductibles"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                  <MyInput
-                    fieldName="allowPackagePricing"
-                    fieldType="checkbox"
-                    fieldLabel="Allow package pricing"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                  <MyInput
-                    fieldName="allowDrgBilling"
-                    fieldType="checkbox"
-                    fieldLabel="Allow DRG billing"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                  <MyInput
-                    fieldName="forcePreApproval"
-                    fieldType="checkbox"
-                    fieldLabel="Force pre-approval"
-                    record={payor}
-                    setRecord={setPayor}
-                  />
-                </div>
-              }
-            />
           </div>
         </Form>
       }

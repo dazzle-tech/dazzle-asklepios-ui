@@ -22,7 +22,6 @@ import {
   useUpdatePayorMutation,
   useTogglePayorActiveMutation
 } from '@/services/setup/payer/PayorService';
-import { formatDateWithoutSeconds } from '@/utils';
 import PayorModal from './PayorModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -55,8 +54,6 @@ const PayorSetup = () => {
     category: null,
     name: '',
     code: '',
-    startDate: null,
-    expiryDate: null,
     nphiesId: null,
     isWaseelEnabled: null,
     isActive: null
@@ -66,8 +63,6 @@ const PayorSetup = () => {
     category: string | null;
     name: string;
     code: string;
-    startDate: string | null;
-    expiryDate: string | null;
     nphiesId: string | null;
     isWaseelEnabled: string | null;
     isActive: string | null;
@@ -77,8 +72,6 @@ const PayorSetup = () => {
     category?: string | null;
     name?: string;
     code?: string;
-    startDate?: string;
-    expiryDate?: string;
     nphiesId?: string;
     isWaseelEnabled?: string;
     isActive?: string;
@@ -92,8 +85,6 @@ const PayorSetup = () => {
     ...(appliedFilters.category ? { category: appliedFilters.category } : {}),
     ...(appliedFilters.name ? { name: appliedFilters.name } : {}),
     ...(appliedFilters.code ? { code: appliedFilters.code } : {}),
-    ...(appliedFilters.startDate ? { startDate: appliedFilters.startDate } : {}),
-    ...(appliedFilters.expiryDate ? { expiryDate: appliedFilters.expiryDate } : {}),
     ...(appliedFilters.nphiesId ? { nphiesId: appliedFilters.nphiesId } : {}),
     ...(appliedFilters.isWaseelEnabled ? { isWaseelEnabled: appliedFilters.isWaseelEnabled } : {}),
     ...(appliedFilters.isActive ? { isActive: appliedFilters.isActive } : {})
@@ -171,7 +162,6 @@ const PayorSetup = () => {
     if (!payor.code?.trim()) errors.push('Payor Code is required');
     if (!payor.name?.trim()) errors.push('Payor Name is required');
     if (!payor.category) errors.push('Category is required');
-    if (!payor.startDate) errors.push('Start Date is required');
     if (!payor.phone?.trim()) errors.push('Phone is required');
     if (errors.length > 0) {
       dispatch(
@@ -333,17 +323,6 @@ const PayorSetup = () => {
       flexGrow: 2
     },
     {
-      key: 'startDate',
-      title: <Translate>Start Date</Translate>,
-      flexGrow: 2,
-      render: (rowData: Payor) =>
-        rowData.startDate ? (
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.startDate)}</span>
-        ) : (
-          ''
-        )
-    },
-    {
       key: 'nphiesId',
       title: <Translate>NPHIES Payer</Translate>,
       flexGrow: 2,
@@ -357,17 +336,6 @@ const PayorSetup = () => {
       title: <Translate>Waseel</Translate>,
       flexGrow: 1,
       render: (rowData: Payor) => <span>{rowData.isWaseelEnabled ? 'Yes' : 'No'}</span>
-    },
-    {
-      key: 'expiryDate',
-      title: <Translate>Contract Expiry Date</Translate>,
-      flexGrow: 2,
-      render: (rowData: Payor) =>
-        rowData.expiryDate ? (
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.expiryDate)}</span>
-        ) : (
-          ''
-        )
     },
     {
       key: 'actions',
@@ -438,20 +406,6 @@ const PayorSetup = () => {
         content={
           <div className="advanced-filters">
             <div className="dissss">
-              <MyInput
-                width="10vw"
-                fieldName="startDate"
-                fieldType="date"
-                record={searchFilters}
-                setRecord={updated =>
-                  setSearchFilters(prev => ({
-                    ...prev,
-                    startDate: updated.startDate
-                  }))
-                }
-                showLabel={false}
-                placeholder="Start Date"
-              />
 
               <MyInput
                 width="10vw"
@@ -493,20 +447,6 @@ const PayorSetup = () => {
                 searchable={false}
               />
 
-              <MyInput
-                width="10vw"
-                fieldName="expiryDate"
-                fieldType="date"
-                record={searchFilters}
-                setRecord={updated =>
-                  setSearchFilters(prev => ({
-                    ...prev,
-                    expiryDate: updated.expiryDate
-                  }))
-                }
-                showLabel={false}
-                placeholder="Contract Expiry Date"
-              />
 
               <MyInput
                 width="10vw"
@@ -546,8 +486,6 @@ const PayorSetup = () => {
         category: searchFilters.category || undefined,
         name: searchFilters.name?.trim() || undefined,
         code: searchFilters.code?.trim() || undefined,
-        startDate: searchFilters.startDate || undefined,
-        expiryDate: searchFilters.expiryDate || undefined,
         nphiesId: searchFilters.nphiesId || undefined,
         isWaseelEnabled: searchFilters.isWaseelEnabled || undefined,
         isActive: searchFilters.isActive || undefined
