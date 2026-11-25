@@ -42,6 +42,9 @@ const DATE_PARAM_NAMES = new Set([
 
 const PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 const QUERY_PARAM_RE = /[?&]([A-Za-z_][A-Za-z0-9_]*)=/g;
+const SQL_PARAM_RE = /@([A-Za-z_][A-Za-z0-9_]*)/g;
+const COMMAND_FIELD_RE =
+  /^(sqlcommand|command|commandtext|selectcommand|query|sql|pathdata|path|url|connectionstring)$/i;
 const DATE_QUERY_TOKEN_RE =
   /(?:[?&]|\{|%7B)(date|startDate|endDate|fromDate|toDate)(?:[=\}%]|")/gi;
 const DATE_VARIABLE_NAME_RE =
@@ -144,12 +147,34 @@ const resetGlobalRegex = (regex: RegExp) => {
   regex.lastIndex = 0;
 };
 
+const looksLikeSql = (value: string) =>
+  /\bselect\b[\s\S]{0,8000}\bfrom\b/i.test(value);
+
+const collectSqlParameters = (sql: string, names: string[]) => {
+  if (!sql || !sql.includes('@')) return;
+  resetGlobalRegex(SQL_PARAM_RE);
+  sql.replace(SQL_PARAM_RE, (_match, name: string) => {
+    addName(names, name);
+    return _match;
+  });
+};
+
+const collectCommandParameters = (
+  value: string,
+  names: string[],
+  hints: Record<string, ParamHint> = {}
+) => {
+  if (!value || value.length > 20000) return;
+  collectFromDataPath(value, names, hints);
+  if (looksLikeSql(value)) collectSqlParameters(value, names);
+};
+
 const collectFromDataPath = (
   path: string,
   names: string[],
   hints: Record<string, ParamHint> = {}
 ) => {
-  if (!path || path.length > 4000) return;
+  if (!path || path.length > 20000) return;
   const decoded = path
     .replace(/&amp;/g, '&')
     .replace(/%3D/gi, '=')
@@ -172,45 +197,79 @@ const collectFromDataPath = (
   applyPathParamHints(decoded, names, hints);
 };
 
+const rememberType = (
+  typeHints: Record<string, string>,
+  name: string,
+  typeName: unknown
+) => {
+  if (typeof typeName !== 'string' || !typeName.trim()) return;
+  typeHints[name] = typeName;
+  typeHints[name.toLowerCase()] = typeName;
+};
+
+const isDataParameter = (record: Record<string, unknown>, ident: string) => {
+  if (/DataParameter$/i.test(ident)) return true;
+  return (
+    typeof (record.Name ?? record.name) === 'string' &&
+    typeof (record.Size ?? record.size) === 'number' &&
+    typeof (record.Type ?? record.type) === 'number'
+  );
+};
+
 const collectFromValue = (
   value: unknown,
   names: string[],
   hints: Record<string, ParamHint> = {},
+  typeHints: Record<string, string> = {},
   depth = 0
 ) => {
-  if (depth > 18) return;
+  if (depth > 32) return;
   if (typeof value === 'string') {
+    if (value.length > 20000) return;
     if (
-      value.length <= 4000 &&
-      (/\/api\//i.test(value) || /[?&][A-Za-z_]+=/.test(value) || /daily-visits/i.test(value))
+      /\/api\//i.test(value) ||
+      /[?&][A-Za-z_]+=/.test(value) ||
+      /daily-visits/i.test(value) ||
+      looksLikeSql(value)
     ) {
-      collectFromDataPath(value, names, hints);
+      collectCommandParameters(value, names, hints);
     }
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach(item => collectFromValue(item, names, hints, depth + 1));
+    value.forEach(item => collectFromValue(item, names, hints, typeHints, depth + 1));
     return;
   }
   const record = asRecord(value);
   if (!record) return;
 
   const ident = String(record.Ident ?? record.ident ?? '');
-  if (ident === 'StiVariable' || ident.endsWith('Variable')) {
-    const name = String(record.Name ?? record.name ?? '').trim();
-    if (
-      name &&
-      shouldKeepParam(name) &&
-      (isTrue(record.RequestFromUser ?? record.requestFromUser) || isKnownDateName(name))
-    ) {
-      addName(names, name);
-    }
+  const name = String(record.Name ?? record.name ?? '').trim();
+  const requestFromUser = isTrue(
+    record.RequestFromUser ??
+      record.requestFromUser ??
+      record.ShowOnParametersPanel ??
+      record.showOnParametersPanel
+  );
+  const isVariable = ident === 'StiVariable' || ident.endsWith('Variable');
+  if (
+    name &&
+    shouldKeepParam(name) &&
+    (requestFromUser || (isVariable && isKnownDateName(name)))
+  ) {
+    addName(names, name);
+    rememberType(typeHints, name, record.Type ?? record.type);
+  } else if (name && isDataParameter(record, ident)) {
+    addName(names, name);
   }
 
   Object.entries(record).forEach(([key, child]) => {
     const lower = key.toLowerCase();
     if (lower === 'image' || lower === 'bytes' || lower === 'watermark') return;
-    collectFromValue(child, names, hints, depth + 1);
+    if (typeof child === 'string' && COMMAND_FIELD_RE.test(key)) {
+      collectCommandParameters(child, names, hints);
+    }
+    collectFromValue(child, names, hints, typeHints, depth + 1);
   });
 };
 
@@ -338,9 +397,9 @@ export const extractReportPrintParameters = (
   const parsed = parseTemplateJson(text);
   const typeHints: Record<string, string> = {};
   if (parsed && typeof parsed !== 'string') {
-    collectFromValue(parsed, names, enumHints);
+    collectFromValue(parsed, names, enumHints, typeHints);
   } else {
-    collectFromDataPath(text.slice(0, 20000), names, enumHints);
+    collectCommandParameters(text.slice(0, 20000), names, enumHints);
   }
 
   return toParameters(names, typeHints, enumHints);
@@ -373,7 +432,7 @@ export const extractReportPrintParametersFromStimulsoftReport = (
     collectFromDataPath(path, names, enumHints);
   });
   stimCollection(report?.dictionary?.dataSources).forEach((source: any) => {
-    collectFromDataPath(
+    collectCommandParameters(
       String(
         source?.sqlCommand ||
           source?.command ||
@@ -384,15 +443,21 @@ export const extractReportPrintParametersFromStimulsoftReport = (
       names,
       enumHints
     );
+    stimCollection(source?.parameters).forEach((parameter: any) => {
+      addName(names, parameter?.name || parameter?.Name);
+    });
   });
 
   stimCollection(report?.dictionary?.variables).forEach((variable: any) => {
     const name = String(variable?.name || variable?.alias || '').trim();
     if (!name || !shouldKeepParam(name)) return;
     const hint = String(variable?.type || variable?.typeName || '');
-    typeHints[name] = hint;
+    rememberType(typeHints, name, hint);
     const requestFromUser = isTrue(
-      variable?.requestFromUser ?? variable?.RequestFromUser
+      variable?.requestFromUser ??
+        variable?.RequestFromUser ??
+        variable?.showOnParametersPanel ??
+        variable?.ShowOnParametersPanel
     );
     if (requestFromUser || isKnownDateName(name) || names.includes(name)) {
       addName(names, name);
