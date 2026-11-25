@@ -1079,6 +1079,7 @@ export interface Procedure {
   currency?: string | null;
   price?: number | null;
   billingRuleId?: number | null;
+  relatedSurfaces?: string[];
 }
 // DiagnosticTest matches the domain entity fields (incl. raw DB strings + transient lists)
 

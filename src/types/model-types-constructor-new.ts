@@ -346,6 +346,7 @@ export const newProcedure: modelTypes.Procedure = {
   currency: null,
   price: null,
   billingRuleId: null,
+  relatedSurfaces: [],
 };
 
 // ------------------- Allergen -------------------

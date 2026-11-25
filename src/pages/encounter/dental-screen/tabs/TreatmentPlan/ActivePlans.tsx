@@ -14,7 +14,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 
 import { practitionerDisplayName } from './TreatmentPlanHeaderModal';
-import { SURFACE_LABELS } from './TreatmentPlanModal';
+import { formatSurfaces } from './TreatmentPlanModal';
 import TreatmentRowActions from './TreatmentRowActions';
 
 import {
@@ -315,7 +315,7 @@ const ActivePlans = ({
         width: 105,
         render: (row: any) => (
           <span className="ap-muted">
-            {SURFACE_LABELS[row.surface] || row.surface || EMPTY_VALUE}
+            {formatSurfaces(row) || EMPTY_VALUE}
           </span>
         )
       },

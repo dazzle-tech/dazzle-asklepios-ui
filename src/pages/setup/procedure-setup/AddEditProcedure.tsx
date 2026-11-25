@@ -51,6 +51,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');
+  const surfaceOptions = useEnumOptions('ToothSurface');
 
   const priceListPrompt = usePriceListPrompt();
 
@@ -154,6 +155,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
           contraindications: 'Contraindications',
           preparationInstructions: 'Preparation Instructions',
           recoveryNotes: 'Recovery Notes',
+          relatedSurfaces: 'Related Surfaces',
           currency: 'Currency',
           price: 'Price'
         };
@@ -214,7 +216,8 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         notfound: 'Procedure not found.',
         facilityrequired: 'Facility id is required.',
         'unique.facility.name': 'Procedure name already exists in this facility.',
-        'fk.facility.notfound': 'Facility not found.'
+        'fk.facility.notfound': 'Facility not found.',
+        'relatedSurfaces.invalid': 'One or more of the selected surfaces is not valid.'
       };
 
       let humanMsg: string;
@@ -350,6 +353,24 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                 />
               </div>
             </div>
+
+            {procedure?.categoryType === 'DENTAL_PROCEDURE' && (
+              <div className="container-of-two-fields-service">
+                <div className="container-of-field-service">
+                  <MyInput
+                    width="100%"
+                    fieldLabel="Related Surfaces"
+                    fieldType="multyPicker"
+                    fieldName="relatedSurfaces"
+                    selectData={surfaceOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={procedure}
+                    setRecord={setProcedure}
+                  />
+                </div>
+              </div>
+            )}
 
             <Form className="container-of-appointable">
               <MyInput

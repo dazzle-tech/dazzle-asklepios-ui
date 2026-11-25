@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { Button, Form } from 'rsuite';
 
@@ -30,9 +30,49 @@ export const SURFACE_OPTIONS = [
   { key: 'LINGUAL', lovDisplayVale: 'Lingual' },
   { key: 'OCCLUSAL', lovDisplayVale: 'Occlusal' },
   { key: 'INCISAL', lovDisplayVale: 'Incisal' },
+  { key: 'LABIAL', lovDisplayVale: 'Labial' },
+  { key: 'PALATAL', lovDisplayVale: 'Palatal' },
   { key: 'FACIAL', lovDisplayVale: 'Facial' },
   { key: 'WHOLE_TOOTH', lovDisplayVale: 'Whole Tooth' }
 ];
+
+const LEGACY_SURFACE_KEYS = ['FACIAL', 'WHOLE_TOOTH'];
+
+const SELECTABLE_SURFACE_OPTIONS = SURFACE_OPTIONS.filter(
+  option => !LEGACY_SURFACE_KEYS.includes(option.key)
+);
+
+export const normalizeSurfaces = (source: any): string[] => {
+  const raw = Array.isArray(source?.surfaces)
+    ? source.surfaces
+    : source?.surface
+      ? [source.surface]
+      : [];
+  const known = new Set(SURFACE_OPTIONS.map(option => option.key));
+
+  return SURFACE_OPTIONS.map(option => option.key).filter(
+    key => known.has(key) && raw.includes(key)
+  );
+};
+
+export const formatSurfaces = (source: any): string => {
+  const keys = normalizeSurfaces(source);
+
+  return keys.map(key => SURFACE_LABELS[key] ?? key).join(', ');
+};
+
+export const surfacesForProcedure = (procedure: any): string[] => {
+  const related: string[] = Array.isArray(procedure?.relatedSurfaces)
+    ? procedure.relatedSurfaces
+    : [];
+  const wanted = new Set(
+    related.map(value => String(value).trim().toUpperCase())
+  );
+
+  return SELECTABLE_SURFACE_OPTIONS.map(option => option.key).filter(key =>
+    wanted.has(key)
+  );
+};
 
 export const SURFACE_LABELS = SURFACE_OPTIONS.reduce<Record<string, string>>(
   (result, option) => {
@@ -123,7 +163,7 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   dentalServicesMap,
   servicesLoading,
   dentalProceduresList,
-  dentalProceduresMap: _dentalProceduresMap,
+  dentalProceduresMap,
   proceduresLoading,
   dentalActionsList,
   dentalActionsMap,
@@ -300,11 +340,33 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
   const handleProcedureChange = (next: any) => {
     clinicalDirtyRef.current = false;
 
+    const procedureChanged =
+      (next?.procedureId ?? null) !== (form?.procedureId ?? null);
+
     setForm({
       ...next,
+      ...(procedureChanged
+        ? {
+            surfaces: surfacesForProcedure(
+              next?.procedureId != null
+                ? dentalProceduresMap?.[next.procedureId]
+                : null
+            )
+          }
+        : {}),
       _autoPrice: true
     });
   };
+
+  const surfaceOptions = useMemo(() => {
+    const selected = normalizeSurfaces(form);
+    const legacy = selected.filter(key => LEGACY_SURFACE_KEYS.includes(key));
+
+    return [
+      ...SELECTABLE_SURFACE_OPTIONS,
+      ...SURFACE_OPTIONS.filter(option => legacy.includes(option.key))
+    ];
+  }, [form?.surfaces, form?.surface]);
 
   const lineNetDisplay = formatLineNet(
     form?.price,
@@ -682,23 +744,6 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                         disabled
                       />
                     </div>
-
-                    <div className="tpm-field">
-                      <MyInput
-                        width="100%"
-                        required
-                        fieldName="surface"
-                        fieldLabel="Surface"
-                        fieldType="select"
-                        selectData={SURFACE_OPTIONS}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        searchable={false}
-                        record={form}
-                        setRecord={setForm}
-                        disabled={surfaceDisabled}
-                      />
-                    </div>
                   </div>
 
                   {viewOnly && isGroupedScope && (
@@ -806,8 +851,27 @@ const TreatmentPlanModal: React.FC<TreatmentPlanModalProps> = ({
                         setRecord={handleProcedureChange}
                         disabled={inputsDisabled || proceduresLoading}
                       />
-                    </div>
+                      <MyInput
+                        width="100%"
+                        required
+                        fieldName="surfaces"
+                        fieldLabel="Surface"
+                        fieldType="multyPicker"
+                        height="auto"
+                        selectData={surfaceOptions}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        // Portal the popup into the modal body (position: relative) so it scrolls
+                        // with the input instead of staying fixed in <body>.
+                        container={() =>
+                          document.querySelector('.treatment-plan-modal .rs-modal-body') as HTMLElement
+                        }
+                        record={form}
+                        setRecord={setForm}
+                        disabled={surfaceDisabled}
+                      />
                   </div>
+                </div>
                 </section>
 
                 <section className="tpm-section">
