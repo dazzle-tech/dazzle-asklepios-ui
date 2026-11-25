@@ -145,11 +145,11 @@ const DiagnosticsOrder = (props: any) => {
         diagTypeResponse={vm.diagTypeResponse ?? []}
         labCategoriesLovResponse={vm.labCategoriesLovResponse}
         radCategoriesLovResponse={vm.radCategoriesLovResponse}
-        setOrders={vm.setOrders}
         handleClearSelection={vm.handleClearSelection}
         handleSelectOrder={vm.handleSelectOrder}
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
+        handleToggleUrgent={vm.handleToggleUrgent}
         setOpenTestsModal={vm.setOpenTestsModal}
         setOpenValidationSummaryModal={setOpenValidationSummaryModal}
         OpenConfirmDeleteModel={vm.OpenConfirmDeleteModel}

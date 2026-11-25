@@ -51,11 +51,11 @@ type Props = {
   radCategoriesLovResponse: any;
 
   // actions
-  setOrders: (v: any) => void;
   handleClearSelection: () => void;
   handleSelectOrder: (item: any) => void;
   handleSaveOrders: () => void;
   handleSubmitPres: () => void;
+  handleToggleUrgent: () => void;
 
   setOpenTestsModal: (v: boolean) => void;
   setOpenValidationSummaryModal: (v: boolean) => void;
@@ -88,11 +88,11 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     labCategoriesLovResponse,
     radCategoriesLovResponse,
 
-    setOrders,
     handleClearSelection,
     handleSelectOrder,
     handleSaveOrders,
     handleSubmitPres,
+    handleToggleUrgent,
 
     setOpenTestsModal,
     setOpenValidationSummaryModal,
@@ -281,12 +281,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}
-                onClick={() => {
-                  setOrders({
-                    ...orders,
-                    isUrgent: !(orders?.isUrgent ?? false)
-                  });
-                }}
+                onClick={handleToggleUrgent}
                 backgroundColor={orders?.isUrgent ? 'var(--primary-orange)' : 'var(--primary-blue)'}
                 disabled={
                   edit ||
