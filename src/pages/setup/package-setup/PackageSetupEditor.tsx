@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, InputNumber, Toggle } from 'rsuite';
+import { Form, InputNumber, Radio, RadioGroup, Toggle } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons';
 import { MdDelete } from 'react-icons/md';
@@ -45,8 +45,11 @@ const emptyHeader = {
   validTo: null as string | null,
   discountId: null as number | null,
   allDepartments: true,
-  departmentIds: [] as number[]
+  departmentIds: [] as number[],
+  overrideDefaultService: false
 };
+
+type PricingOption = 'PRICE' | 'PACKAGE_DISCOUNT' | 'ITEM_DISCOUNT';
 
 const emptyDraft = { itemType: '', sourceId: null, quantity: 1, isCategory: false, maxRepeat: null };
 
@@ -105,24 +108,23 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
   const [updatePackage, { isLoading: isUpdating }] = useUpdatePackageMutation();
   const isSaving = isAdding || isUpdating;
 
-  const hasPrice = header.price !== '' && header.price != null;
-  const packageDiscountId =
-    header.discountId == null || header.discountId === '' ? null : Number(header.discountId);
-  const packageHasDiscount = packageDiscountId != null && !Number.isNaN(packageDiscountId);
+  // A package is priced one way only: a fixed price, a discount for the whole package, or discounts on its items
+  const [pricing, setPricing] = useState<PricingOption>('PRICE');
+  const hasPrice = pricing === 'PRICE' && header.price !== '' && header.price != null;
+  const packageHasDiscount = pricing === 'PACKAGE_DISCOUNT' && header.discountId != null && header.discountId !== '';
 
-  useEffect(() => {
-    if (!packageHasDiscount) {
-      return;
+  const choosePricing = (next: PricingOption) => {
+    setPricing(next);
+    // the other options' values are cleared so only the chosen one is saved
+    setHeader((prev: any) => ({
+      ...prev,
+      price: next === 'PRICE' ? prev.price : '',
+      discountId: next === 'PACKAGE_DISCOUNT' ? prev.discountId : null
+    }));
+    if (next !== 'ITEM_DISCOUNT') {
+      setItems(prev => (prev.some(i => i.discountId != null) ? prev.map(i => ({ ...i, discountId: null })) : prev));
     }
-
-    setItems(previous => {
-      if (!previous.some(item => item.discountId != null || Number(item.discountPercent) > 0)) {
-        return previous;
-      }
-
-      return previous.map(item => ({ ...item, discountId: null, discountPercent: null }));
-    });
-  }, [packageHasDiscount]);
+  };
 
   // Fill the screen when editing
   useEffect(() => {
@@ -137,9 +139,19 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         validTo: existing.validTo ?? null,
         discountId: existing.discountId ?? null,
         allDepartments: existing.allDepartments ?? true,
-        departmentIds: existing.departmentIds ?? []
+        departmentIds: existing.departmentIds ?? [],
+        overrideDefaultService: !!existing.overrideDefaultService
       });
       setItems((existing.items ?? []).map(i => ({ ...i })));
+      setPricing(
+        existing.price != null
+          ? 'PRICE'
+          : existing.discountId != null
+          ? 'PACKAGE_DISCOUNT'
+          : (existing.items ?? []).some(i => i.discountId != null)
+          ? 'ITEM_DISCOUNT'
+          : 'PRICE'
+      );
     }
   }, [isEdit, existing]);
 
@@ -238,7 +250,6 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
             isActive: true,
             isCategory: true,
             maxRepeat: repeat,
-            discountPercent: null,
             discountId: null
           }
         : {
@@ -250,7 +261,6 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
             isActive: true,
             isCategory: false,
             maxRepeat: null,
-            discountPercent: null,
             discountId: null
           }
     ]);
@@ -291,8 +301,16 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       dispatch(notify({ msg: 'At least one item must be active', sev: 'warning' }));
       return;
     }
-    if (price != null && items.some(i => Number(i.discountPercent) > 0)) {
-      dispatch(notify({ msg: 'A package with a fixed price cannot also have item discounts', sev: 'warning' }));
+    if (pricing === 'PRICE' && price == null) {
+      dispatch(notify({ msg: 'Enter the package price', sev: 'warning' }));
+      return;
+    }
+    if (pricing === 'PACKAGE_DISCOUNT' && !packageHasDiscount) {
+      dispatch(notify({ msg: 'Choose the discount for the package', sev: 'warning' }));
+      return;
+    }
+    if (pricing === 'ITEM_DISCOUNT' && !items.some(i => i.discountId != null)) {
+      dispatch(notify({ msg: 'Link at least one item to a discount', sev: 'warning' }));
       return;
     }
 
@@ -304,9 +322,10 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       isActive: !!header.isActive,
       validFrom: header.validFrom || null,
       validTo: header.validTo || null,
-      discountId: header.discountId == null || header.discountId === '' ? null : Number(header.discountId),
+      discountId: packageHasDiscount ? Number(header.discountId) : null,
       allDepartments: !!header.allDepartments,
       departmentIds: header.allDepartments ? [] : header.departmentIds ?? [],
+      overrideDefaultService: !!header.overrideDefaultService,
       items: items.map(i => ({
         itemType: i.itemType,
         sourceId: i.isCategory ? null : i.sourceId,
@@ -314,8 +333,7 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
         isActive: i.isActive !== false,
         isCategory: !!i.isCategory,
         maxRepeat: i.isCategory ? i.maxRepeat ?? null : null,
-        discountPercent: packageHasDiscount ? null : i.discountPercent ?? null,
-        discountId: packageHasDiscount || i.discountId == null || i.discountId === ('' as any)
+        discountId: pricing !== 'ITEM_DISCOUNT' || i.discountId == null || i.discountId === ('' as any)
           ? null
           : Number(i.discountId)
       }))
@@ -424,31 +442,9 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
           }}
           showLabel={false}
           searchable
-          placeholder={packageHasDiscount ? 'Uses package discount' : 'Optional'}
-          disabled={packageHasDiscount}
+          placeholder={pricing === 'ITEM_DISCOUNT' ? 'Optional' : 'Not used'}
+          disabled={pricing !== 'ITEM_DISCOUNT'}
           loading={discountsLoading}
-        />
-      )
-    },
-    {
-      key: 'discountPercent',
-      title: 'Discount %',
-      width: 110,
-      render: (row: PackageSetupItem, index?: number) => (
-        <InputNumber
-          size="sm"
-          min={0}
-          max={100}
-          step={1}
-          value={row.discountPercent ?? ''}
-          placeholder={packageHasDiscount ? 'Package' : hasPrice ? 'Fixed price' : '0'}
-          disabled={hasPrice || packageHasDiscount}
-          onChange={value =>
-            updateItem(index ?? 0, {
-              discountPercent: value === '' || value == null ? null : Math.min(100, Math.max(0, Number(value) || 0))
-            })
-          }
-          className="pkg-num"
         />
       )
     },
@@ -513,32 +509,52 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
             <div className="pkg-details-grid">
               <MyInput width="100%" fieldName="code" fieldLabel="Code" record={header} setRecord={setHeader} required />
               <MyInput width="100%" fieldName="name" fieldLabel="Name" record={header} setRecord={setHeader} required />
-              <MyInput
-                width="100%"
-                fieldName="price"
-                fieldLabel="Package Price"
-                fieldType="number"
-                allowDecimal
-                min={0}
-                placeholder="Optional"
-                record={header}
-                setRecord={setHeader}
-              />
-              <MyInput
-                width="100%"
-                fieldName="discountId"
-                fieldLabel="Discount"
-                fieldType="select"
-                selectData={discountOptions}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={header}
-                setRecord={setHeader}
-                placeholder="Optional"
-                searchable
-                loading={discountsLoading}
-                disabled={!facilityId}
-              />
+              <div className="pkg-span-all">
+                <label className="pkg-pricing-label">
+                  <Translate>Pricing</Translate>
+                </label>
+                <RadioGroup inline value={pricing} onChange={value => choosePricing(value as PricingOption)}>
+                  <Radio value="PRICE">
+                    <Translate>Fixed price</Translate>
+                  </Radio>
+                  <Radio value="PACKAGE_DISCOUNT">
+                    <Translate>Discount on the whole package</Translate>
+                  </Radio>
+                  <Radio value="ITEM_DISCOUNT">
+                    <Translate>Discount on each item</Translate>
+                  </Radio>
+                </RadioGroup>
+              </div>
+              {pricing === 'PRICE' && (
+                <MyInput
+                  width="100%"
+                  fieldName="price"
+                  fieldLabel="Package Price"
+                  fieldType="number"
+                  allowDecimal
+                  min={0}
+                  record={header}
+                  setRecord={setHeader}
+                  required
+                />
+              )}
+              {pricing === 'PACKAGE_DISCOUNT' && (
+                <MyInput
+                  width="100%"
+                  fieldName="discountId"
+                  fieldLabel="Discount"
+                  fieldType="select"
+                  selectData={discountOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={header}
+                  setRecord={setHeader}
+                  searchable
+                  loading={discountsLoading}
+                  disabled={!facilityId}
+                  required
+                />
+              )}
               <MyInput
                 width="100%"
                 fieldName="validFrom"
@@ -559,6 +575,16 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
                 <MyInput
                   fieldName="allDepartments"
                   fieldLabel="All Departments"
+                  fieldType="check"
+                  showLabel={false}
+                  record={header}
+                  setRecord={setHeader}
+                />
+              </div>
+              <div className="pkg-dept-cell" title="The visit's default service is cancelled when this package is given">
+                <MyInput
+                  fieldName="overrideDefaultService"
+                  fieldLabel="Override Default Service"
                   fieldType="check"
                   showLabel={false}
                   record={header}

@@ -17,6 +17,7 @@ import {
   useOrderPatientPackageItemMutation
 } from '@/services/patient/patientPackageService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetActiveDepartmentByTypeAndFacilityQuery } from '@/services/security/departmentService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useSortedLovQuery } from '../../encounter-component/procedure-new/useSortedLovQuery';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
@@ -27,6 +28,8 @@ import './packagePanel.less';
 interface Props {
   patientId?: number | string | null;
   encounterId?: number | string | null;
+  /** The visit's facility: its lab / radiology / pathology departments receive the tests. */
+  facilityId?: number | string | null;
   /** View-only encounters show the panel without the checkboxes. */
   readOnly?: boolean;
 }
@@ -74,7 +77,7 @@ const newTestsWizard = () => ({
  * Tests are ticked together and ordered in one diagnostic order; a procedure opens its own wizard;
  * a service is ordered with one click. Every order takes its quantity from the package.
  */
-const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnly = false }) => {
+const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, facilityId, readOnly = false }) => {
   const dispatch = useAppDispatch();
   const mode = useSelector((state: any) => state.ui?.mode);
   const [collapsed, setCollapsed] = useState(false);
@@ -88,6 +91,8 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   /** keyed by item id for an item line, `c:<itemId>:<testId>` for a test picked under a category */
   const [testReasons, setTestReasons] = useState<Record<string, string | null>>({});
   const [categoryTests, setCategoryTests] = useState<Record<number, PickedTest[]>>({});
+  /** department that receives each test, same keys as testReasons */
+  const [testDepartments, setTestDepartments] = useState<Record<string, number | null>>({});
   /** what was left on each chosen line when its wizard opened, to tell the user if it changed meanwhile */
   const [openedRemaining, setOpenedRemaining] = useState<Record<number, number>>({});
 
@@ -109,6 +114,28 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
   const [orderItem, { isLoading: isOrderingItem }] = useOrderPatientPackageItemMutation();
   const [orderDiagnostics, { isLoading: isOrderingTests }] = useOrderPackageDiagnosticsMutation();
   const { data: reasonLov } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
+  // the departments that receive tests, as on the order screen (Received Lab)
+  const departmentsSkip = !facilityId || !testsWizardOpen;
+  const { data: labDepartments } = useGetActiveDepartmentByTypeAndFacilityQuery(
+    { type: 'LABORATORY', facilityId: facilityId as number },
+    { skip: departmentsSkip }
+  );
+  const { data: radDepartments } = useGetActiveDepartmentByTypeAndFacilityQuery(
+    { type: 'RADIOLOGY', facilityId: facilityId as number },
+    { skip: departmentsSkip }
+  );
+  const { data: pathDepartments } = useGetActiveDepartmentByTypeAndFacilityQuery(
+    { type: 'PATHOLOGY', facilityId: facilityId as number },
+    { skip: departmentsSkip }
+  );
+  const departmentsFor = (itemType: string): any[] =>
+    (itemType === 'RADIOLOGY' ? radDepartments : itemType === 'PATHOLOGY' ? pathDepartments : labDepartments) ?? [];
+  /** the chosen department, or the only one there is */
+  const departmentOf = (key: string, itemType: string): number | null => {
+    if (testDepartments[key] != null) return testDepartments[key];
+    const options = departmentsFor(itemType);
+    return options.length === 1 ? Number(options[0].id) : null;
+  };
   const procedureLevelOptions = useEnumOptions('ProcedureLevel');
   const priorityOptions = useEnumOptions('Priority');
   const { data: bodyPartLov } = useSortedLovQuery('BODY_PARTS');
@@ -182,6 +209,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
     if (selectedTests.length === 0) return;
     setTestsWizard(newTestsWizard());
     setTestReasons({});
+    setTestDepartments({});
     setCategoryTests({});
     setOpenedRemaining(Object.fromEntries(selectedTests.map(t => [t.id, t.quantityRemaining])));
     setTestsWizardOpen(true);
@@ -196,15 +224,24 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
       return;
     }
     const items = [
-      ...selectedItemTests.map(t => ({ itemId: t.id, reason: testReasons[String(t.id)] || null })),
+      ...selectedItemTests.map(t => ({
+        itemId: t.id,
+        reason: testReasons[String(t.id)] || null,
+        receivedDepartmentId: departmentOf(String(t.id), t.itemType)
+      })),
       ...selectedCategories.flatMap(c =>
         (categoryTests[c.id] ?? []).map(t => ({
           itemId: c.id,
           testId: t.testId,
-          reason: testReasons[`c:${c.id}:${t.testId}`] || null
+          reason: testReasons[`c:${c.id}:${t.testId}`] || null,
+          receivedDepartmentId: departmentOf(`c:${c.id}:${t.testId}`, c.itemType)
         }))
       )
     ];
+    if (items.some(i => i.receivedDepartmentId == null)) {
+      dispatch(notify({ msg: 'Choose the department that receives each test', sev: 'warning' }));
+      return;
+    }
     try {
       const result = await orderDiagnostics({
         encounterId: Number(encounterId),
@@ -286,8 +323,10 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
                 ≤{item.maxRepeat}× <Translate>each</Translate>
               </span>
             )}
-            {item.discountPercent != null && Number(item.discountPercent) > 0 && (
-              <span className="pkgp-chip pkgp-chip--discount">-{Number(item.discountPercent)}%</span>
+            {item.discountId != null && (
+              <span className="pkgp-chip pkgp-chip--discount">
+                <Translate>Discount</Translate>
+              </span>
             )}
           </span>
         </span>
@@ -361,6 +400,27 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
       setRecord={(next: any) => {
         const value = typeof next === 'function' ? next({ reason: testReasons[key] ?? null }) : next;
         setTestReasons(prev => ({ ...prev, [key]: value?.reason ?? null }));
+      }}
+    />
+  );
+
+  const departmentInput = (key: string, itemType: string) => (
+    <MyInput
+      width={170}
+      showLabel={false}
+      fieldName="departmentId"
+      fieldLabel="Department"
+      placeholder="Department"
+      fieldType="select"
+      selectData={departmentsFor(itemType)}
+      selectDataLabel="name"
+      selectDataValue="id"
+      searchable
+      record={{ departmentId: departmentOf(key, itemType) }}
+      setRecord={(next: any) => {
+        const value = typeof next === 'function' ? next({ departmentId: departmentOf(key, itemType) }) : next;
+        const id = value?.departmentId;
+        setTestDepartments(prev => ({ ...prev, [key]: id == null || id === '' ? null : Number(id) }));
       }}
     />
   );
@@ -447,6 +507,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
                           </span>
                         )}
                       </span>
+                      {departmentInput(String(t.id), t.itemType)}
                       {reasonInput(String(t.id))}
                     </li>
                   ))}
@@ -492,6 +553,7 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, readOnl
                               </span>
                             )}
                           </span>
+                          {departmentInput(`c:${c.id}:${t.testId}`, c.itemType)}
                           {reasonInput(`c:${c.id}:${t.testId}`)}
                           <button
                             type="button"

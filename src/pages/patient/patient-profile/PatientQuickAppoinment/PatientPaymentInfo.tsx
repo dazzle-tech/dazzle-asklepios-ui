@@ -164,6 +164,7 @@ import {
 } from './defaultBillingRows';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
+import { useGetPatientPackagesByEncounterQuery } from '@/services/patient/patientPackageService';
 
 type DefaultServiceRow = {
   id: string;
@@ -790,8 +791,17 @@ const PatientPaymentInfo =
         ) == null &&
         isFetchingPreviousFollowUp;
 
+      // a package given at the first save may replace the visit's default service
+      const { data: visitPackages } = useGetPatientPackagesByEncounterQuery(encounterId as number, {
+        skip: !encounterId
+      });
+      const packageReplacingDefaultService = (visitPackages ?? []).find(
+        p => p.overrideDefaultService && p.status !== 'CANCELLED'
+      );
+
       const suppressDefaultServices =
         skipDefaultServicesForReview ||
+        Boolean(packageReplacingDefaultService) ||
         followUpReviewDecisionPending;
 
       const {
@@ -3150,6 +3160,7 @@ const PatientPaymentInfo =
 
       const defaultServicesLoaded =
         skipDefaultServicesForReview ||
+        Boolean(packageReplacingDefaultService) ||
         (!followUpReviewDecisionPending &&
           !isLoadingDefaultItems &&
           departmentId != null);
@@ -6375,6 +6386,10 @@ const PatientPaymentInfo =
                     <Tag size="sm" color="blue">
                       Follow-up review
                     </Tag>
+                  ) : packageReplacingDefaultService ? (
+                    <Tag size="sm" color="blue">
+                      Package
+                    </Tag>
                   ) : (
                     <Tag size="sm">
                       Select services to prepare
@@ -6388,6 +6403,11 @@ const PatientPaymentInfo =
             <Message type="info" showIcon>
               This follow-up is within 14 days of the previous visit, so it is
               treated as a review and default services are not billed.
+            </Message>
+          ) : packageReplacingDefaultService ? (
+            <Message type="info" showIcon>
+              The visit's package ({packageReplacingDefaultService.packageName}) replaces the default services, so they
+              are not billed.
             </Message>
           ) : null}
           <div className="payment-info__table-wrapper">

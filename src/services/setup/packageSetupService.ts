@@ -28,7 +28,7 @@ export interface PackageSetupItem {
   isCategory?: boolean;
   /** Category lines: how many times the same item can be counted; empty = no limit. */
   maxRepeat?: number | null;
-  discountPercent?: number | null;
+  /** The discount setup record the line is linked to (the item-discount pricing option). */
   discountId?: number | null;
 }
 
@@ -48,6 +48,8 @@ export interface PackageSetup {
   /** true = any department, otherwise only departmentIds. */
   allDepartments?: boolean;
   departmentIds?: number[];
+  /** true = the visit's default service is cancelled when the package is given. */
+  overrideDefaultService?: boolean;
   itemCount?: number;
   activeItemCount?: number;
   items: PackageSetupItem[];

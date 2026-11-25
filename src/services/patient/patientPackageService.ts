@@ -19,7 +19,8 @@ export interface PatientPackageItem {
   isCategory?: boolean;
   /** Category lines: how many times the same item can be counted; empty = no limit. */
   maxRepeat?: number | null;
-  discountPercent?: number | null;
+  /** The discount setup record the line was linked to. */
+  discountId?: number | null;
 }
 
 export interface PatientPackage {
@@ -30,6 +31,8 @@ export interface PatientPackage {
   packageCode?: string;
   packageName?: string;
   packagePrice: number | null;
+  /** true = the visit's default service is left out (the package replaces it). */
+  overrideDefaultService?: boolean;
   status: PatientPackageStatus;
   cancelReason?: string | null;
   createdBy?: string;
@@ -53,6 +56,8 @@ export interface PackageUsageRow {
   quantity: number;
   /** LABORATORY / RADIOLOGY / PATHOLOGY / PROCEDURE / PACKAGE (panel service) / SERVICE (services, UCC, vaccination) */
   orderSource?: string | null;
+  /** Ordered from the package panel rather than the item's own screen. */
+  fromPanel?: boolean;
   orderId?: number | null;
   status: 'COUNTED' | 'RETURNED';
   countedBy?: string | null;

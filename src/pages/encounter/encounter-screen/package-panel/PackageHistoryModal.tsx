@@ -12,14 +12,24 @@ interface Props {
   onClose: () => void;
 }
 
-/** Where an order came from, from its usage's order_source. */
+/**
+ * What was ordered, from its usage's order_source. Tests and procedures are the same whether they were
+ * ordered from the package panel or from their own screen; services ordered from the panel are marked.
+ */
 const SOURCE_LABELS: Record<string, string> = {
-  LABORATORY: 'Laboratory order',
-  RADIOLOGY: 'Radiology order',
-  PATHOLOGY: 'Pathology order',
-  PROCEDURE: 'Procedure order',
+  LABORATORY: 'Laboratory test',
+  RADIOLOGY: 'Radiology test',
+  PATHOLOGY: 'Pathology test',
+  PROCEDURE: 'Procedure',
   PACKAGE: 'Package panel',
   SERVICE: 'Services / UCC / Vaccination'
+};
+
+/** "Package panel · Laboratory test" for an order made from the panel, "Laboratory test" from its own screen. */
+const fromLabel = (row: PackageUsageRow) => {
+  const what = SOURCE_LABELS[row.orderSource ?? ''] ?? row.orderSource ?? '';
+  if (row.orderSource === 'PACKAGE') return what;
+  return row.fromPanel ? `Package panel · ${what}` : what;
 };
 
 /**
@@ -67,8 +77,8 @@ const PackageHistoryModal: React.FC<Props> = ({ patientPackageId, onClose }) => 
       key: 'source',
       title: 'From',
       width: 190,
-      exportValue: (row: PackageUsageRow) => SOURCE_LABELS[row.orderSource ?? ''] ?? row.orderSource ?? '',
-      render: (row: PackageUsageRow) => SOURCE_LABELS[row.orderSource ?? ''] ?? row.orderSource ?? '-'
+      exportValue: (row: PackageUsageRow) => fromLabel(row),
+      render: (row: PackageUsageRow) => fromLabel(row) || '-'
     },
     {
       key: 'counted',

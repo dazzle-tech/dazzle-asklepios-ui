@@ -1016,6 +1016,7 @@ const handleGoBack = () => {
           <PackageFloatingPanel
             patientId={patientIdToFetch}
             encounterId={encounterId}
+            facilityId={propsData?.encounter?.facilityId}
             readOnly={propsData?.viewMode === 'readOnly'}
           />
         )}
