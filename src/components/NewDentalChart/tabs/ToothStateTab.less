@@ -267,3 +267,148 @@
     }
   }
 }
+
+
+
+
+
+/*
+ * Scoped layout refinements for ToothStateTab.
+ * Kept separate from ToothStateTab.less so existing tooth artwork,
+ * action cards, and other component styling remain untouched.
+ */
+
+.tst-page {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  .tst-form-panel,
+  .tst-applied-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .tst-form-panel {
+    .rs-panel-body {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+  }
+
+  .tst-form {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .tst-form-section {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .tst-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: clamp(16px, 2.2vw, 28px);
+    row-gap: 18px;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .tst-field {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+
+    > * {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .rs-form-group,
+    .rs-form-control-wrapper,
+    .rs-picker,
+    .rs-input,
+    .rs-input-group,
+    .rs-input-number {
+      width: 100% !important;
+      max-width: none;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .rs-form-control-wrapper {
+      display: block;
+    }
+  }
+
+  .tst-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .tst-section-title {
+    margin-bottom: 16px;
+  }
+
+  .tst-fields-grid + .tst-existing {
+    margin-top: 14px;
+  }
+
+  .tst-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    margin-top: 22px;
+    box-sizing: border-box;
+  }
+
+  .tst-remove-action {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .tst-page {
+    .tst-fields-grid {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 14px;
+    }
+
+    .tst-field--full {
+      grid-column: auto;
+    }
+
+    .tst-form-actions {
+      justify-content: flex-end;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tst-page {
+    .tst-fields-grid {
+      row-gap: 12px;
+    }
+
+    .tst-form-actions {
+      gap: 8px;
+    }
+  }
+}

@@ -8,7 +8,7 @@ import MyTab from '@/components/MyTab';
 import MyModal from '@/components/MyModal/MyModal';
 import CancellationModal from '@/components/CancellationModal/CancellationModal';
 
-import TreatmentPlanModal from './TreatmentPlanModal';
+import TreatmentPlanModal, { normalizeSurfaces } from './TreatmentPlanModal';
 import TreatmentPlanHeaderModal, {
   toPractitionerOptions
 } from './TreatmentPlanHeaderModal';
@@ -576,7 +576,7 @@ const TreatmentPlanTab = ({
       dose: row.dose ?? null,
       unit: row.unit ?? null,
       fillingMaterial: row.fillingMaterial ?? '',
-      surface: row.surface ?? null,
+      surfaces: normalizeSurfaces(row),
       sessionChoice:
         row.treatmentSessionId != null
           ? String(row.treatmentSessionId)
@@ -687,7 +687,7 @@ const TreatmentPlanTab = ({
         : teethForTreatmentScope(originalChart?.teeth, scope);
 
     applyToothSelection(teeth, scope);
-    setForm(previous => ({ ...previous, surface: null }));
+    setForm(previous => ({ ...previous, surfaces: [] }));
   };
 
   const handleSelectedTooth = (tooth: any) => {
@@ -778,7 +778,7 @@ const TreatmentPlanTab = ({
       treatmentScope: scope,
       coveredToothIds: grouped ? coveredIds : null,
       note: treatment.note ?? null,
-      surface: treatment.surface ?? null,
+      surfaces: normalizeSurfaces(treatment),
       insurance: treatment.insurance ?? 0,
       serviceId: treatment.serviceId ?? null,
       procedureId: treatment.procedureId ?? null,
@@ -840,7 +840,7 @@ const TreatmentPlanTab = ({
     const missing: string[] = [];
 
     if (!form.procedureId) missing.push('Dental Procedure');
-    if (!form.surface) missing.push('Surface');
+    if (!normalizeSurfaces(form).length) missing.push('Surface');
 
     if (toothCount < 1) {
       missing.push(isGroupedScope(scope) ? 'Treatment Area' : 'Tooth');
@@ -941,7 +941,7 @@ const TreatmentPlanTab = ({
           cdtCodeId: body.cdtCodeId,
           toothIds: teeth.map((tooth: any) => tooth.id),
           note: body.note,
-          surface: body.surface,
+          surfaces: body.surfaces,
           insurance: body.insurance,
           procedureId: body.procedureId,
           serviceId: body.serviceId,

@@ -100,7 +100,7 @@ type MyInputProps = {
   showLabel?: boolean;
   className?: string;
   width?: number | string;
-  height?: number;
+  height?: number | 'auto';
   inputColor?: string;
   disabled?: boolean;
   placeholder?: string;
@@ -184,6 +184,7 @@ const MyInput = ({
   const [portaledSelectBox, setPortaledSelectBox] = useState({ top: 0, left: 0, width: 0 });
   const portaledSelectMenuRef = useRef<HTMLDivElement | null>(null);
   const selectOpenGuardRef = useRef(0);
+  const multyToggleCloseRef = useRef(0);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
   const dateOpenGuardRef = useRef(0);
@@ -2124,15 +2125,35 @@ virtualized={shouldVirtualizePicker(dataList.length)}
         );
 
         return (
-          <div ref={pickerRef}>
+          <div
+            ref={pickerRef}
+            // RSuite's TagPicker uses trigger="active", which only ever opens on click, and it also
+            // re-opens on input focus. Close it explicitly when the open input is clicked again,
+            // and swallow the open requests that same click would otherwise fire.
+            onMouseDownCapture={event => {
+              if (!isMultyPickerOpen || props.disabled) return;
+              const target = event.target as Element | null;
+              if (!target || !pickerRef.current?.contains(target)) return;
+              if (target.closest?.('.rs-tag-icon-close, .rs-picker-toggle-clean')) return;
+              multyToggleCloseRef.current = Date.now();
+              setIsMultyPickerOpen(false);
+            }}
+            onClick={() => {
+              multyToggleCloseRef.current = 0;
+            }}
+          >
             <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30,
+                ...(props?.height === 'auto' ? { minHeight: 30 } : {})
+              }}
               block
               disabled={props.disabled}
               accepter={TagPicker}
               container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
               name={fieldName}
               data={dataList}
               labelKey={props?.selectDataLabel ?? ''}
@@ -2155,6 +2176,7 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               onKeyDown={focusNextField}
               open={isMultyPickerOpen}
               onOpen={() => {
+                if (Date.now() - multyToggleCloseRef.current < 1000) return;
                 setPlacement(calculatePlacement());
                 setIsMultyPickerOpen(true);
                 focusPickerSearch();
