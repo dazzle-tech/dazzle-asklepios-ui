@@ -324,7 +324,29 @@ submitUccMedicationOrderGroup: builder.mutation<
         'UccMedicationOrder',
       ],
     }),
-   
+
+    // All doses of one medication, so the doctor can see the status of each dose
+    getUccMedicationOrdersByGroup: builder.query<modelTypes.PatientUccMedicationOrder[], Id>({
+      query: orderGroupId => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}`,
+        method: 'GET',
+      }),
+      providesTags: ['UccMedicationOrder'],
+    }),
+
+    // Doctor cancel of a whole medication: given doses stay, the rest are discarded
+    cancelUccMedicationOrderGroup: builder.mutation<
+      modelTypes.PatientUccMedicationOrder[],
+      { orderGroupId: Id; cancellationReason: string }
+    >({
+      query: ({ orderGroupId, cancellationReason }) => ({
+        url: `/api/patient/urgent-care-medication-orders/group/${orderGroupId}/cancel`,
+        method: 'POST',
+        body: { cancellationReason },
+      }),
+      invalidatesTags: ['UccMedicationOrder'],
+    }),
+
     updateUccMedicationOrderGroup: builder.mutation<
       modelTypes.PatientUccMedicationOrder[],
       {
@@ -363,4 +385,6 @@ export const {
   useDoubleCheckUccMedicationOrderMutation,
   useDiscardUccMedicationOrderMutation,
   useCancelUccMedicationOrderMutation,
+  useCancelUccMedicationOrderGroupMutation,
+  useGetUccMedicationOrdersByGroupQuery,
 } = uccMedicationOrderService;

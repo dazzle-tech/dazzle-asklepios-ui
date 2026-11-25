@@ -6091,10 +6091,18 @@ export type CurrentMedicationForm = CurrentMedication & {
       | 'CANCELLED'
       | 'DISCARDED'
       | 'NEW'
-      | 'SUBMITTED';
+      | 'SUBMITTED'
+      // Doses with mixed statuses
+      | 'PARTIALLY';
 
     submittedDate?: string | Date | null;
     submittedBy?: string | null;
+
+    cancelledBy?: string | null;
+    cancelledDate?: string | null;
+    cancellationReason?: string | null;
+    // True while some dose is still NEW or SUBMITTED
+    hasOpenDoses?: boolean | null;
 
     createdBy?: string | null;
     createdDate?: string | Date | null;

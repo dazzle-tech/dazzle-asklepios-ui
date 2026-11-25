@@ -10,7 +10,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import { Checkbox, Tooltip, Whisper } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faListUl, faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useLocation } from 'react-router-dom';
 import { useIsAmendmentOpen } from '@/pages/encounter/useIsAmendmentOpen';
@@ -19,7 +19,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import {
   useFilterGroupedUccMedicationOrdersQuery,
   useSubmitUccMedicationOrderGroupMutation,
-  useCancelUccMedicationOrderMutation,
+  useCancelUccMedicationOrderGroupMutation,
   useCreateUccMedicationOrderMutation,
   useUpdateUccMedicationOrderGroupMutation,
   useSubmitUccMedicationOrderMutation
@@ -28,6 +28,7 @@ import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients
 import { formatEnumString } from '@/utils';
 import clsx from 'clsx';
 import './styles.less';
+import UccMedicationDosesModal from './UccMedicationDosesModal';
 import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 const UccMedicationOrder = (props: any) => {
@@ -42,6 +43,7 @@ const UccMedicationOrder = (props: any) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openCancel, setOpenCancel] = useState(false);
+  const [dosesRow, setDosesRow] = useState<any>(null);
   const [selectedCancelId, setSelectedCancelId] = useState<number | null>(null);
   const [editRow, setEditRow] = useState<any>(null);
 
@@ -75,7 +77,7 @@ const {
 );
   const [submitOrderGroup] = useSubmitUccMedicationOrderGroupMutation();
   const [submitOrder] = useSubmitUccMedicationOrderMutation();
-  const [cancelOrder] = useCancelUccMedicationOrderMutation();
+  const [cancelOrderGroup] = useCancelUccMedicationOrderGroupMutation();
   const [createOrder] = useCreateUccMedicationOrderMutation();
   const [updateOrderGroup] = useUpdateUccMedicationOrderGroupMutation();
 
@@ -182,14 +184,18 @@ const {
     }
 
     try {
-      await cancelOrder({
-        id: selectedCancelId,
+      const doses = await cancelOrderGroup({
+        orderGroupId: selectedCancelId,
         cancellationReason: cancelObject.cancelReason.trim()
       }).unwrap();
 
+      // Some doses were already given: they stay and the rest are discarded
+      const keptGiven = (doses ?? []).some((d: any) => d?.status === 'DISCARDED');
       dispatch(
         notify({
-          msg: 'Medication Cancelled Successfully',
+          msg: keptGiven
+            ? 'Medication cancelled. Administered doses were kept and the remaining doses were discarded'
+            : 'Medication Cancelled Successfully',
           sev: 'success'
         })
       );
@@ -197,10 +203,13 @@ const {
       setSelectedCancelId(null);
       setCancelObject({ cancelReason: '' });
       await refetch();
-    } catch {
-      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+    } catch (error: any) {
+      dispatch(notify({ msg: error?.data?.detail || error?.data?.title || 'Cancel failed', sev: 'error' }));
     }
   };
+
+  // The doctor can cancel before submit, and after submit while some dose was not given yet
+  const canCancel = (row: any) => !edit && (row?.status === 'NEW' || !!row?.hasOpenDoses);
 
   const selectableRows = rows.filter((r: any) => r?.status === 'NEW');
   const selectableIds = selectableRows.map((r: any) => r.id);
@@ -321,29 +330,6 @@ const {
       )
     },
     {
-      key: 'discardByAt',
-      title: <Translate>DISCARD BY/AT</Translate>,
-      flexGrow: 2,
-      expandable: true,
-      render: (row: any) => (
-        <div>
-          <div>{row?.discardedByFullName || row?.discardedBy || '-'}</div>
-          <div className="text-muted small">
-            {row?.discardedDate
-              ? new Date(row.discardedDate).toLocaleString()
-              : '-'}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'discardReason',
-      title: <Translate>DISCARD REASON</Translate>,
-      flexGrow: 2,
-      expandable: true,
-      render: (row: any) => row?.discardReason || '-'
-    },
-    {
       key: 'cancelByAt',
       title: <Translate>CANCEL BY/AT</Translate>,
       flexGrow: 2,
@@ -370,9 +356,24 @@ const {
       key: 'actions',
       title: <Translate>ACTIONS</Translate>,
       align: 'center',
-      width: 120,
+      width: 150,
       render: (row: any) => (
         <div style={{ display: 'flex', gap: 10 }}>
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>View Doses</Translate>
+              </Tooltip>
+            }
+          >
+            <FontAwesomeIcon
+              icon={faListUl}
+              className="ucc-medication-order-icons-size icons-style"
+              onClick={() => setDosesRow(row)}
+            />
+          </Whisper>
+
           <Whisper
             placement="top"
             speaker={
@@ -431,12 +432,12 @@ const {
             <WarningRoundIcon
             className="ucc-medication-order-icons-size"
             style={{
-              cursor: edit || row?.status !== 'NEW' ? 'not-allowed' :'pointer' ,
-                opacity:edit || row?.status !== 'NEW' ? 0.4 : 1
+              cursor: canCancel(row) ? 'pointer' : 'not-allowed',
+              opacity: canCancel(row) ? 1 : 0.4
             }}
             onClick={() => {
-              if (edit || row?.status !== 'NEW') return;
-              setSelectedCancelId(row.id);
+              if (!canCancel(row)) return;
+              setSelectedCancelId(row.orderGroupId);
               setOpenCancel(true);
             }}
           />
@@ -489,6 +490,13 @@ const {
         encounter={encounter}
         patient={patient}
         editRow={editRow}
+      />
+
+      <UccMedicationDosesModal
+        open={!!dosesRow}
+        setOpen={open => !open && setDosesRow(null)}
+        orderGroupId={dosesRow?.orderGroupId}
+        medicationName={ingredientMap[dosesRow?.activeIngredientId]?.name}
       />
 
       <CancellationModal
