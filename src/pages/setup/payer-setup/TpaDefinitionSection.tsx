@@ -181,6 +181,7 @@ const TpaDefinitionSection = ({ hideTitle = false }: { hideTitle?: boolean }) =>
 
       const payload = {
         tpaCode: selectedTpa.tpaCode.trim(),
+        nphiesId: selectedTpa.nphiesId?.trim() || null,
         name: selectedTpa.name.trim(),
         guarantorType: selectedTpa.guarantorType,
         activationDate: selectedTpa.activationDate,
