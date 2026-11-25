@@ -5,7 +5,7 @@ import { useValidateTestsMutation } from '@/services/medicationTestOrdersValidat
 import type { TestValidationRequestDTO } from '@/types/model-types-new';
 
 type Props = {
-  aiPayload?: { patientId?: number; encounterId?: number; orderNumber?: number } | null;
+  aiPayload?: { patientId?: number; encounterId?: number; orderNumber?: string } | null;
   onReadyChange?: (ready: boolean) => void;
   onContinueWithoutAi?: () => void;
   onEditOrder?: () => void;
@@ -24,7 +24,7 @@ const PatientHistorySummary: React.FC<Props> = ({
     const patientId = Number(aiPayload?.patientId);
     const encounterId = Number(aiPayload?.encounterId);
     // The backend reads the tests from this order; without it the AI gets an empty list
-    const orderNumber = Number(aiPayload?.orderNumber) || undefined;
+    const orderNumber = aiPayload?.orderNumber || undefined;
     if (!patientId || !encounterId) return null;
     return { patientId, encounterId, orderNumber };
   }, [aiPayload]);
