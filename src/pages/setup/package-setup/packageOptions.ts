@@ -5,7 +5,9 @@ import type { PackageSetup } from '@/services/setup/packageSetupService';
  * (packages for all departments always show). The backend checks the same when the package is given.
  */
 export const availablePackageOptions = (packages: PackageSetup[] | undefined, departmentId?: number | null) => {
-  const today = new Date().toISOString().slice(0, 10);
+  // today's local date (toISOString would give the UTC date, a day behind just after midnight)
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const department = Number(departmentId ?? 0);
   return (packages ?? [])
     .filter(p => (!p.validFrom || p.validFrom <= today) && (!p.validTo || p.validTo >= today))

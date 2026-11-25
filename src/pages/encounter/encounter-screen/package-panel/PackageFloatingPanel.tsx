@@ -12,6 +12,7 @@ import { formatEnumString } from '@/utils';
 import {
   PatientPackage,
   PatientPackageItem,
+  useGetPatientPackageHistoryQuery,
   useGetPatientPackagesByEncounterQuery,
   useOrderPackageDiagnosticsMutation,
   useOrderPatientPackageItemMutation
@@ -166,11 +167,50 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, facilit
     [selectedItemTests, categoryTests]
   );
 
+  // how many times each test was already taken from a category line, to warn about the "same test up to N×" limit
+  const categoryPackageId = useMemo(() => {
+    const first = selectedCategories[0];
+    return first ? packages.find(p => p.items.some(i => i.id === first.id))?.id : undefined;
+  }, [selectedCategories, packages]);
+  const { data: categoryHistory } = useGetPatientPackageHistoryQuery(categoryPackageId as number, {
+    skip: !testsWizardOpen || !categoryPackageId
+  });
+  const takenBefore = useMemo(() => {
+    const taken: Record<string, number> = {};
+    (categoryHistory?.usages ?? []).forEach(row => {
+      if (row.status === 'COUNTED' && row.orderedItemId != null) {
+        const key = `${row.itemId}:${row.orderedItemId}`;
+        taken[key] = (taken[key] ?? 0) + (row.quantity ?? 1);
+      }
+    });
+    return taken;
+  }, [categoryHistory]);
+
   if (!patientId || (!isFetching && packages.length === 0)) {
     return null;
   }
 
   const busy = busyItemId != null || isOrderingTests;
+
+  /**
+   * Which tests picked under a category are taken from the package, in the order they were picked
+   * (as the server counts them): a test already taken maxRepeat times is charged as usual, and so is
+   * every test once the line has no room left.
+   */
+  const categoryPlan = (c: PatientPackageItem) => {
+    let room = c.quantityRemaining;
+    return (categoryTests[c.id] ?? []).map(t => {
+      const before = takenBefore[`${c.id}:${t.testId}`] ?? 0;
+      if (c.maxRepeat != null && before >= c.maxRepeat) {
+        return { counted: false, repeatFull: true, before };
+      }
+      if (room > 0) {
+        room -= 1;
+        return { counted: true, repeatFull: false, before };
+      }
+      return { counted: false, repeatFull: false, before };
+    });
+  };
 
   const orderOne = async (item: PatientPackageItem, extra: Record<string, any> = {}) => {
     if (!encounterId) return false;
@@ -517,7 +557,9 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, facilit
 
             {selectedCategories.map(c => {
               const picked = categoryTests[c.id] ?? [];
-              const over = picked.length - c.quantityRemaining;
+              const plan = categoryPlan(c);
+              const overRoom = plan.filter(x => !x.counted && !x.repeatFull).length;
+              const repeatFullNames = picked.filter((_, index) => plan[index]?.repeatFull).map(t => t.name);
               return (
                 <div className="pkgp-wizard-category" key={c.id}>
                   <div className="pkgp-wizard-label">
@@ -544,13 +586,19 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, facilit
                   {picked.length > 0 && (
                     <ul className="pkgp-wizard-tests">
                       {picked.map((t, index) => (
-                        <li key={t.testId} className={index >= c.quantityRemaining ? 'is-extra' : ''}>
+                        <li key={t.testId} className={plan[index]?.counted ? '' : 'is-extra'}>
                           <span className="pkgp-wizard-test-name">
                             {t.name}
-                            {index >= c.quantityRemaining && (
-                              <span className="pkgp-chip pkgp-chip--extra">
-                                <Translate>Charged as usual</Translate>
+                            {plan[index]?.repeatFull ? (
+                              <span className="pkgp-chip pkgp-chip--extra" title="Already taken the most times allowed for the same test">
+                                <Translate>Already taken</Translate> {plan[index].before}× · <Translate>charged as usual</Translate>
                               </span>
+                            ) : (
+                              !plan[index]?.counted && (
+                                <span className="pkgp-chip pkgp-chip--extra">
+                                  <Translate>Charged as usual</Translate>
+                                </span>
+                              )
                             )}
                           </span>
                           {departmentInput(`c:${c.id}:${t.testId}`, c.itemType)}
@@ -572,7 +620,13 @@ const PackageFloatingPanel: React.FC<Props> = ({ patientId, encounterId, facilit
                       ))}
                     </ul>
                   )}
-                  {over > 0 && (
+                  {repeatFullNames.length > 0 && (
+                    <div className="pkgp-wizard-note">
+                      {repeatFullNames.join(', ')}: <Translate>already taken</Translate> {c.maxRepeat}×,{' '}
+                      <Translate>the most for the same test; charged as usual.</Translate>
+                    </div>
+                  )}
+                  {overRoom > 0 && (
                     <div className="pkgp-wizard-note">
                       <Translate>Only the first</Translate> {c.quantityRemaining}{' '}
                       <Translate>are taken from the package; the rest are charged as usual.</Translate>

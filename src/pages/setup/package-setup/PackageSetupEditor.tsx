@@ -319,7 +319,8 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
       name,
       price,
       description: String(header.description ?? '').trim() || null,
-      isActive: !!header.isActive,
+      // a new package starts active; it is turned on and off from the list, so editing keeps it as it is
+      isActive: isEdit ? null : true,
       validFrom: header.validFrom || null,
       validTo: header.validTo || null,
       discountId: packageHasDiscount ? Number(header.discountId) : null,
@@ -497,14 +498,6 @@ const PackageSetupEditor: React.FC<Props> = ({ open, setOpen, packageId }) => {
               <span className="pkg-card-title">
                 <Translate>Package Details</Translate>
               </span>
-              <MyInput
-                fieldName="isActive"
-                fieldLabel="Active"
-                fieldType="check"
-                showLabel={false}
-                record={header}
-                setRecord={setHeader}
-              />
             </div>
             <div className="pkg-details-grid">
               <MyInput width="100%" fieldName="code" fieldLabel="Code" record={header} setRecord={setHeader} required />
