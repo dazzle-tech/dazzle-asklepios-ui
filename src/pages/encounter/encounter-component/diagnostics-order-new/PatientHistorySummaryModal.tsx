@@ -8,7 +8,7 @@ interface Props {
   patient?: any;
   encounter?: any;
   handleSave?: any;
-  payload?: { patientId?: number; encounterId?: number; orderNumber?: string } | null;
+  payload?: { patientId?: number; encounterId?: number; orderNumber?: number } | null;
 }
 
 const PatientHistorySummaryModal: React.FC<Props> = ({ open, setOpen, handleSave, payload }) => {

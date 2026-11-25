@@ -957,24 +957,6 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     }
   };
 
-  // Saves Urgent right away, so the AI validation (run before submit) reads the real priority
-  const handleToggleUrgent = async () => {
-    const _orderId = orders?.id;
-    if (!_orderId) return;
-    // The value after the click: the button flips the current one
-    const nextIsUrgent = !(orders?.isUrgent ?? false);
-    try {
-      await updateOrder({
-        id: _orderId,
-        body: { id: _orderId, patientId, encounterId, isUrgent: nextIsUrgent }
-      }).unwrap();
-      setOrders({ ...orders, isUrgent: nextIsUrgent });
-      dispatch(notify({ msg: nextIsUrgent ? 'Order marked as urgent' : 'Order marked as regular', sev: 'success' }));
-    } catch {
-      dispatch(notify({ msg: 'Failed to update urgent', sev: 'error' }));
-    }
-  };
-
   const handleSubmitPres = async () => {
 
     const _orderId = orders?.id;
@@ -1345,7 +1327,6 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     handleSaveTests,
     handleSaveTest,
     handleSubmitPres,
-    handleToggleUrgent,
     OpenConfirmDeleteModel,
     CloseConfirmDeleteModel,
     handleCancle,

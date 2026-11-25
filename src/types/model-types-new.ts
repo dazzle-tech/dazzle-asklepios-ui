@@ -6526,7 +6526,7 @@ export interface MedicationValidationRequestDTO {
 export interface TestValidationRequestDTO {
   patientId: number;
   encounterId: number;
-  orderNumber?: string;
+  orderNumber?: number;
   // [k: string]: any;
 }
 
