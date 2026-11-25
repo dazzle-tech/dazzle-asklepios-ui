@@ -1515,16 +1515,7 @@ export const newPayor: modelTypes.Payor = {
   email: '',
   contractManagerContact: '',
 
-  startDate: null,
-  expiryDate: null,
-  renewable: false,
 
-  allowPartialCoverage: false,
-  acceptCopay: false,
-  acceptDeductibles: false,
-  allowPackagePricing: false,
-  allowDrgBilling: false,
-  forcePreApproval: false,
 
   // Waseel / NPHIES
   nphiesId: '',

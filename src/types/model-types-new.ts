@@ -2506,16 +2506,7 @@ export interface Payor {
   email?: string;
   contractManagerContact?: string;
 
-  startDate?: Date | string | null;
-  expiryDate?: Date | string | null;
-  renewable: boolean;
 
-  allowPartialCoverage: boolean;
-  acceptCopay: boolean;
-  acceptDeductibles: boolean;
-  allowPackagePricing: boolean;
-  allowDrgBilling: boolean;
-  forcePreApproval: boolean;
 
   // Waseel / NPHIES
   nphiesId?: string;

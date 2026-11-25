@@ -7,7 +7,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTab from '@/components/MyTab';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdAssignment, MdLink, MdModeEdit, MdDelete } from 'react-icons/md';
+import { MdAssignment, MdLink, MdModeEdit, MdDelete, MdTune } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import DeactivationReasonModal from '@/components/DeactivationReasonModal';
@@ -15,7 +15,7 @@ import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
-import { NphiesPayer } from '@/types/model-types-new';
+import { NphiesPayer, Payor } from '@/types/model-types-new';
 import { newNphiesPayer, newPayor } from '@/types/model-types-constructor-new';
 import { approvalCoverageCompanyLabel } from '@/pages/setup/coverage-management/coverageHelpers';
 
@@ -27,10 +27,12 @@ import {
 } from '@/services/setup/payer/NphiesPayerSetupService';
 import {
   useCreatePayorMutation,
+  useEnsurePayorFromNphiesMutation,
   useLazyGetAllPayorsQuery,
   useUpdatePayorMutation
 } from '@/services/setup/payer/PayorService';
 import NphiesPayerModal from './NphiesPayerModal';
+import PayorModal from './PayorModal';
 import PayerLinkTpasModal from './PayerLinkTpasModal';
 import TpaDefinitionSection from './TpaDefinitionSection';
 import PayerRelationshipDashboard from './PayerRelationshipDashboard';
@@ -46,13 +48,6 @@ type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WEBSITE_PATTERN = /^https?:\/\/.+$/i;
-
-const localToday = () => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${month}-${day}`;
-};
 
 const NphiesPayerSetup = () => {
   const dispatch = useAppDispatch();
@@ -108,6 +103,63 @@ const NphiesPayerSetup = () => {
   const [fetchPayors] = useLazyGetAllPayorsQuery();
   const [createPayor] = useCreatePayorMutation();
   const [updatePayor] = useUpdatePayorMutation();
+  const [ensurePayorFromNphies] = useEnsurePayorFromNphiesMutation();
+
+  // Payor settings of the selected company (Waseel enabled, Waseel / TPA ids).
+  // The payor row is the one Waseel flows create automatically; it is created here if missing.
+  const [linkedPayor, setLinkedPayor] = useState<Payor>({ ...newPayor });
+  const [openPayorModal, setOpenPayorModal] = useState(false);
+
+  const openPayorSettings = async (company: NphiesPayer) => {
+    const nphiesId = company.nphiesId?.trim();
+    if (!nphiesId) {
+      dispatch(notify({ msg: 'The insurance company has no NPHIES ID', sev: 'warning' }));
+      return;
+    }
+    try {
+      dispatch(showSystemLoader());
+      const payor = await ensurePayorFromNphies(nphiesId).unwrap();
+      setLinkedPayor({ ...newPayor, ...payor });
+      setOpenPayorModal(true);
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: String(
+            err?.data?.message || err?.data?.detail || 'Could not load the payor settings'
+          ).replace(/^error\./i, ''),
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleSavePayorSettings = async () => {
+    try {
+      dispatch(showSystemLoader());
+      const payload: Partial<Payor> = { ...linkedPayor };
+      delete payload.createdDate;
+      delete payload.lastModifiedDate;
+      await updatePayor(payload).unwrap();
+      dispatch(notify({ msg: 'Payor settings saved successfully', sev: 'success' }));
+      setOpenPayorModal(false);
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: String(
+            err?.data?.properties?.message ||
+              err?.data?.message ||
+              err?.data?.detail ||
+              'Failed to save payor settings'
+          ).replace(/^error\./i, ''),
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
 
   const syncLinkedPayor = async (company: NphiesPayer) => {
     const code = company.nphiesId?.trim();
@@ -139,7 +191,6 @@ const NphiesPayerSetup = () => {
       address: company.headOfficeAddress?.trim() || linked?.address || '',
       contractManagerContact:
         company.contactPerson?.trim() || linked?.contractManagerContact || 'N/A',
-      startDate: linked?.startDate || localToday(),
       nphiesId: code,
       isActive: company.isActive !== false
     };
@@ -434,6 +485,16 @@ const NphiesPayerSetup = () => {
           setOpenPolicyModal(true);
         }}
       />
+      <MdTune
+        className="icons-style"
+        title="Payor Settings (Waseel)"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={event => {
+          event.stopPropagation();
+          openPayorSettings(rowData);
+        }}
+      />
       <MdLink
         className="icons-style"
         title="Link TPAs"
@@ -632,6 +693,15 @@ const NphiesPayerSetup = () => {
         payer={selectedPayer}
         setPayer={setSelectedPayer}
         onSave={handleSave}
+      />
+
+      <PayorModal
+        open={openPayorModal}
+        setOpen={setOpenPayorModal}
+        payor={linkedPayor}
+        setPayor={setLinkedPayor}
+        onSave={handleSavePayorSettings}
+        linkedToCompany
       />
 
       <PayerLinkTpasModal
