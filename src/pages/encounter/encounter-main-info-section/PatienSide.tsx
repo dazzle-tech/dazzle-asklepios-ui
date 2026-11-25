@@ -38,6 +38,7 @@ import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
+import dayjs from 'dayjs';
 import {
   useGetEncounterCoverageQuery
 } from '@/services/encounters/patientEncounterService';
@@ -606,7 +607,7 @@ const coverageTypeLabel =
             <span className="info-label">
               DOB:{' '}
               {textOr(
-                patient?.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '-'
+                patient?.dateOfBirth ? dayjs(patient.dateOfBirth).format('DD-MM-YYYY') : '-'
               )}
             </span>
           </div>
