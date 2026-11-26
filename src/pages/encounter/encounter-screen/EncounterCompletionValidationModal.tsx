@@ -49,13 +49,6 @@ const medicalSheetDefinitions = [
     ]
   },
   {
-    code: 'PROGRESS_NOTES',
-    id: 3,
-    name: 'Progress Notes / Additional Notes',
-    path: '/progress-notes',
-    codes: ['PROGRESS_NOTES']
-  },
-  {
     code: 'OBSERVATION',
     id: 4,
     name: 'Observation',

@@ -58,8 +58,6 @@ export type PatientEncounterCompletionValidation = {
   hospitalizations: boolean;
   currentMedication: boolean;
 
-  progressNotes: boolean;
-
   vitalSigns: boolean;
   bodyMeasurements: boolean;
   /** False when a Waseel insurance visit without investigations has no reason why none was done. */
