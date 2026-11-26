@@ -52,7 +52,9 @@ import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
 import AiRecommendations from './ai-recommendations/AiRecommendations';
 import AllergiesModal from './AllergiesModal';
-import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
+import EncounterCompletionValidationModal, {
+  buildCompletionValidationItems
+} from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
 import './styles.less';
 import {
@@ -81,6 +83,7 @@ export interface CompletionValidationItem {
   medicalSheetName?: string;
   medicalSheetPath?: string;
   missingItems?: string[];
+  completedItems?: string[];
 }
 
 type EncounterModalProps = {
@@ -384,7 +387,10 @@ const handleGoBack = () => {
       };
 
       const backendMessage = err?.data?.message;
-      const msg = errorMap[backendMessage] || 'Error completing encounter';
+      const msg =
+        err?.data?.messageKey === 'error.encounter.insuranceRequirements.missing'
+          ? backendMessage
+          : errorMap[backendMessage] || 'Error completing encounter';
 
       dispatch(notify({ msg, sev: 'error' }));
     }
@@ -467,106 +473,6 @@ const handleGoBack = () => {
   // };
 
 
-  const medicalSheetDefinitions = [
-    {
-      code: 'CLINICAL_VISIT',
-      name: 'Clinical Visit',
-      path: '/clinical-visit',
-      items: [
-        'Chief Complaint',
-        'History Of Present Illness',
-        'Physical Examination Summary',
-        'Patient Diagnosis',
-        'Assessment',
-        'Treatment Plan / Management'
-      ]
-    },
-    {
-      code: 'PATIENT_HISTORY',
-      name: 'Patient History',
-      path: '/patient-history',
-      items: [
-        "Patient's Problems",
-        'Family History',
-        'Hospitalizations',
-        'Current Medication',
-        'Surgical History',
-        'Social History'
-      ]
-    },
-    {
-      code: 'PROGRESS_NOTES',
-      name: 'Progress Notes / Additional Notes',
-      path: '/progress-notes',
-      items: ['Progress Notes']
-    },
-    {
-      code: 'OBSERVATION',
-      name: 'Observation',
-      path: '/observations',
-      items: [
-        'Body Measurements',
-        'Vital Signs',
-        'Vital Signs & Measurements'
-      ]
-    }
-  ];
-
-  const buildMedicalSheetValidationItems = (
-    missing: string[]
-  ): CompletionValidationItem[] => {
-    const normalizedMissing = missing.map(item =>
-      String(item).trim()
-    );
-
-    const usedMissing = new Set<string>();
-
-    const result: CompletionValidationItem[] = [];
-
-    medicalSheetDefinitions.forEach(sheet => {
-      const sheetMissingItems = normalizedMissing.filter(missingItem => {
-        const normalizedMissingItem = missingItem.toLowerCase();
-
-        const matched = sheet.items.some(sheetItem => {
-          const normalizedSheetItem = sheetItem.toLowerCase();
-
-          return (
-            normalizedMissingItem === normalizedSheetItem ||
-            normalizedMissingItem.includes(normalizedSheetItem) ||
-            normalizedSheetItem.includes(normalizedMissingItem)
-          );
-        });
-
-        if (matched) {
-          usedMissing.add(missingItem);
-        }
-
-        return matched;
-      });
-
-      if (sheetMissingItems.length > 0) {
-        result.push({
-          id: sheet.code === 'CLINICAL_VISIT'
-            ? 1
-            : sheet.code === 'PATIENT_HISTORY'
-              ? 2
-              : sheet.code === 'PROGRESS_NOTES'
-                ? 3
-                : 4,
-          type: 'MEDICAL_SHEET',
-          referenceNumber: sheet.code,
-          medicalSheetCode: sheet.code,
-          medicalSheetName: sheet.name,
-          medicalSheetPath: sheet.path,
-          missingItems: sheetMissingItems,
-          status: 'INCOMPLETE'
-        });
-      }
-    });
-
-    return result;
-  };
-
   const handleSubmitEncounter = async () => {
     const items: CompletionValidationItem[] = [];
     let investigationReasonRequired = false;
@@ -590,37 +496,12 @@ const handleGoBack = () => {
           completionValidation?.insuranceVisit &&
           !completionValidation?.canComplete
         ) {
-          const missingItems = Array.isArray(
-            completionValidation?.missing
-          )
-            ? completionValidation.missing
-            : [];
-
-          const medicalSheetItems =
-            buildMedicalSheetValidationItems(missingItems);
-
-          items.push(...medicalSheetItems);
-
-          const handledMissing = new Set(
-            medicalSheetItems.flatMap(
-              item => item.missingItems ?? []
+          items.push(
+            ...buildCompletionValidationItems(
+              completionValidation?.requirements ?? [],
+              Number(encounterId)
             )
           );
-
-          const remainingMissing = missingItems.filter(
-            (missingItem: string) =>
-              !handledMissing.has(missingItem)
-          );
-
-          if (remainingMissing.length > 0) {
-            items.push({
-              id: Number(encounterId),
-              type: 'INSURANCE',
-              referenceNumber: String(encounterId),
-              status: 'INVALID',
-              details: remainingMissing.join(', ')
-            });
-          }
         }
       } catch (error) {
         console.error(

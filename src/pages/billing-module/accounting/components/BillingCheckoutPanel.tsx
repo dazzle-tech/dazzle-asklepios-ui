@@ -14,6 +14,12 @@ import PayInvoiceBalanceModal from '@/pages/billing-module/invoices/PayInvoiceBa
 
 import InsuranceCheckoutValidationModal from './InsuranceCheckoutValidationModal';
 
+import EncounterCompletionValidationModal, {
+  buildCompletionValidationItems
+} from '@/pages/encounter/encounter-screen/EncounterCompletionValidationModal';
+
+import type { CompletionValidationItem } from '@/pages/encounter/encounter-screen/Encounter';
+
 import { useCheckoutBillingChargeMutation } from '@/services/billing/billingTransactionService';
 
 import {
@@ -143,6 +149,10 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
   const [validationOpen, setValidationOpen] = useState(false);
 
+  const [completionItems, setCompletionItems] = useState<CompletionValidationItem[]>([]);
+
+  const [completionOpen, setCompletionOpen] = useState(false);
+
   const [checkoutValidation, setCheckoutValidation] =
     useState<PatientEncounterCompletionValidation | null>(null);
 
@@ -258,7 +268,22 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
 
         const diagnosticApprovals = validation.diagnosticApprovals ?? [];
 
-        if (!validation.canComplete || diagnosticApprovals.length > 0) {
+        if (!validation.canComplete) {
+
+          // Same requirement mapping and modal as the visit's Complete action
+          setCompletionItems(
+            buildCompletionValidationItems(validation.requirements ?? [], Number(encounterId))
+          );
+
+          setCompletionOpen(true);
+
+          setCheckoutStatus(null);
+
+          return;
+
+        }
+
+        if (diagnosticApprovals.length > 0) {
 
           setCheckoutValidation(validation);
 
@@ -727,6 +752,12 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
         </div>
 
       )}
+
+      <EncounterCompletionValidationModal
+        open={completionOpen}
+        setOpen={setCompletionOpen}
+        items={completionItems}
+      />
 
       <InsuranceCheckoutValidationModal
         open={validationOpen}
