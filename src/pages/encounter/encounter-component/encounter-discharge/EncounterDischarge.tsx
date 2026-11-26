@@ -88,6 +88,20 @@ const EncounterDischarge = ({
         return;
       }
 
+      // Insurance visits: re-check the current persisted data right before discharging
+      const latestValidation = await validateEncounterCompletion({
+        encounterId: numericId
+      }).unwrap();
+      if (latestValidation?.insuranceVisit && !latestValidation.canComplete) {
+        dispatch(
+          notify({
+            msg: `Insurance visit cannot be discharged. Missing: ${(latestValidation.missing ?? []).join(', ')}`,
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
       const investigationNotPerformedReason = localEncounter.investigationNotPerformedReason?.trim();
       if (reasonRequired && !investigationNotPerformedReason) {
         dispatch(

@@ -29,6 +29,13 @@ export type DiagnosticCheckoutApproval = {
   results?: DiagnosticCheckoutResultLine[] | null;
 };
 
+/** One backend completion requirement; `code` is the stable identifier (CHIEF_COMPLAINT, VITAL_SIGNS, ...). */
+export type CompletionRequirement = {
+  code: string;
+  label: string;
+  completed: boolean;
+};
+
 export type PatientEncounterCompletionValidation = {
   encounterId: number;
   coverageType: 'SELF_PAY' | 'INSURANCE' | null;
@@ -46,12 +53,18 @@ export type PatientEncounterCompletionValidation = {
   surgicalHistory: boolean;
   socialHistory: boolean;
 
+  patientProblems: boolean;
+  familyHistory: boolean;
+  hospitalizations: boolean;
+  currentMedication: boolean;
+
   vitalSigns: boolean;
   bodyMeasurements: boolean;
   /** False when a Waseel insurance visit without investigations has no reason why none was done. */
   investigationNotPerformedReason: boolean;
   canComplete: boolean;
   missing: string[];
+  requirements: CompletionRequirement[];
   diagnosticApprovals?: DiagnosticCheckoutApproval[];
 };
 
