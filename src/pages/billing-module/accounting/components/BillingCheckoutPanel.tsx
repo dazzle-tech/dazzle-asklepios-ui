@@ -271,6 +271,8 @@ const BillingCheckoutPanel: React.FC<BillingCheckoutPanelProps> = ({
         if (!validation.canComplete) {
 
           // Same requirement mapping and modal as the visit's Complete action
+          setCheckoutValidation(validation);
+
           setCompletionItems(
             buildCompletionValidationItems(validation.requirements ?? [], Number(encounterId))
           );
