@@ -126,6 +126,13 @@ export const userService = createApi({
         },
       }),
     }),
+    forgotPassword: builder.mutation<{ maskedEmail: string | null }, string>({
+      query: (login) => ({
+        url: '/api/account/forgot-password',
+        method: 'POST',
+        body: { login },
+      }),
+    }),
     getAccount: builder.query({
       query: () => ({
         url: '/api/account',
@@ -277,6 +284,7 @@ export const {
   useUpdateUserMutation,
   useSearchUsersQuery,
   useRequestPasswordResetMutation,
+  useForgotPasswordMutation,
   useGetAccountQuery,
   useSaveAccountMutation,
   useFinishPasswordResetMutation,

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
@@ -13,12 +12,8 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { PolicyDefinition } from '@/types/model-types-new';
 import { newPolicyDefinition } from '@/types/model-types-constructor-new';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
 import {
   useGetAllPolicyDefinitionsQuery,
-  useLazyGetPolicyDefinitionsByFacilityQuery,
-  useLazyGetPolicyDefinitionsByCodeQuery,
-  useLazyGetPolicyDefinitionsByNameQuery,
   useTogglePolicyDefinitionActiveMutation
 } from '@/services/setup/policyDefinition/policyDefinitionService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -40,33 +35,30 @@ const PolicyDefinitions = () => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc'
-  });
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const [link, setLink] = useState({});
 
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState<boolean>(false);
-  const [filteredList, setFilteredList] = useState<PolicyDefinition[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { facilityId: '', name: '', code: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   const {
     data: policyDefinitionListResponse,
     isFetching,
     refetch
-  } = useGetAllPolicyDefinitionsQuery(paginationParams);
+  } = useGetAllPolicyDefinitionsQuery({
+    ...paginationParams,
+    ...appliedFilters,
+    isActive: activeFilter
+  });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
-  const [fetchByFacility] = useLazyGetPolicyDefinitionsByFacilityQuery();
-  const [fetchByCode] = useLazyGetPolicyDefinitionsByCodeQuery();
-  const [fetchByName] = useLazyGetPolicyDefinitionsByNameQuery();
   const [togglePolicyActive] = useTogglePolicyDefinitionActiveMutation();
 
   useEffect(() => {
@@ -78,72 +70,53 @@ const PolicyDefinitions = () => {
     };
   }, [dispatch]);
 
-  useEffect(() => {
-    setLink(policyDefinitionListResponse?.links ?? {});
-  }, [policyDefinitionListResponse?.links]);
-
   const isSelected = (rowData: PolicyDefinition) =>
     rowData && policy && rowData.id === policy.id ? 'selected-row' : '';
 
   const handlePageChange = (event: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    } else {
-      PaginationPerPage.handlePageChange(
-        event,
-        newPage,
-        paginationParams,
-        link,
-        setPaginationParams
-      );
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = Number(e.target.value);
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
   };
 
   const handleSortChange = (column: string, type: 'asc' | 'desc') => {
     setSortColumn(column);
     setSortType(type);
     const sortValue = `${column},${type}`;
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        sort: sortValue,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0, timestamp: Date.now() }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   const handleNew = () => {
     setPolicy({ ...newPolicyDefinition });
     setOpenAddEditPolicyModal(true);
   };
 
+  // After a save, reload the list with the current filters
   const handleAfterSave = (_action: 'create' | 'update') => {
-    setIsFiltered(false);
-    setFilteredList([]);
-    setFilteredTotal(0);
-    setRecordOfFilter({ filter: '', value: '' });
-    setFilterPagination(prev => ({ ...prev, page: 0 }));
-    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
     refetch();
   };
 
@@ -153,6 +126,7 @@ const PolicyDefinitions = () => {
       dispatch(showSystemLoader());
       await togglePolicyActive(policy.id).unwrap();
       setOpenConfirmTogglePolicy(false);
+      refetch();
       dispatch(
         notify({
           msg:
@@ -217,19 +191,40 @@ const PolicyDefinitions = () => {
   const tableColumns = [
     {
       key: 'facilityName',
-      title: <Translate>Facility</Translate>
+      title: <Translate>Facility</Translate>,
+      width: 200,
+      ...headerSearch('facilityId'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }))
+      ]
     },
     {
       key: 'name',
-      title: <Translate>Name</Translate>
+      title: <Translate>Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name')
     },
     {
       key: 'code',
-      title: <Translate>Code</Translate>
+      title: <Translate>Code</Translate>,
+      width: 160,
+      ...headerSearch('code', 'Search code')
     },
     {
       key: 'status',
       title: 'Status',
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (row: PolicyDefinition) => (row.isActive ? 'Active' : 'Inactive')
     },
     {
@@ -239,100 +234,6 @@ const PolicyDefinitions = () => {
     }
   ];
 
-  const filterFields = [
-    { label: 'Facility', value: 'facilityId' },
-    { label: 'Code', value: 'code' },
-    { label: 'Name', value: 'name' }
-  ];
-
-  const handleFilterChange = async (field: string, value: any, page = 0, size?: number) => {
-    try {
-      if (!field || value === '' || value == null) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        setFilteredTotal(0);
-        return;
-      }
-
-      const currentSize = size ?? filterPagination.size;
-      const params = {
-        page,
-        size: currentSize,
-        sort: filterPagination.sort
-      };
-
-      let response: any;
-      if (field === 'facilityId') {
-        response = await fetchByFacility({ facilityId: value, ...params }).unwrap();
-      } else if (field === 'code') {
-        response = await fetchByCode({ code: value, ...params }).unwrap();
-      } else if (field === 'name') {
-        response = await fetchByName({ name: value, ...params }).unwrap();
-      }
-
-      setFilteredList(response?.data ?? []);
-      setFilteredTotal(response?.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size: currentSize }));
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to filter policies', sev: 'error' }));
-      setIsFiltered(false);
-    }
-  };
-
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord =>
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          })
-        }
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      {recordOfFilter.filter === 'facilityId' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          menuMaxHeight={150}
-          showLabel={false}
-          searchable={false}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   const totalCount = policyDefinitionListResponse?.totalCount ?? 0;
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
@@ -340,15 +241,14 @@ const PolicyDefinitions = () => {
   return (
     <Panel>
       <MyTable
-        data={isFiltered ? filteredList : policyDefinitionListResponse?.data ?? []}
-        totalCount={isFiltered ? filteredTotal : totalCount}
+        data={policyDefinitionListResponse?.data ?? []}
+        totalCount={totalCount}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setPolicy(rowData)}
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : pageIndex}
-        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}

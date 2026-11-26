@@ -409,7 +409,14 @@ const AddActiveIngredient = ({ open, setOpen, brandMedication, onSaved }) => {
               data={BrandActiveIngrediant ?? []}
               columns={tableActiveIngredientColumns}
               rowClassName={isSelected}
-              onRowClick={(rowData) => setBrandActive(rowData)}
+              onRowClick={(rowData) => {
+                setBrandActive(rowData);
+                // the paginated list may not hold this ingredient -> add it so the field shows its name
+                const id = String(rowData?.activeIngredientId ?? "");
+                setSelectedActiveIngredient(
+                  activeIngredientMap[id] ? { id: rowData.activeIngredientId, name: activeIngredientMap[id] } : null
+                );
+              }}
             />
           </Form>
         </div>

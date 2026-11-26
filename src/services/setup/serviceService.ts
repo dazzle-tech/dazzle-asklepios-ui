@@ -5,7 +5,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 
 type Id = number | string;
 type WithFacility = { facilityId: Id };
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number; isActive?: boolean };
 
 type LinkMap = {
   next?: string | null;
@@ -38,10 +38,34 @@ export const serviceService = createApi({
 
     // ===== SERVICES (Paginated) =====
     // GET /api/setup/service  -> all services (no facility filter)
-    getAllServices: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllServices: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        facilityId?: number | string;
+        category?: string;
+        name?: string;
+        abbreviation?: string;
+        code?: string;
+        price?: number | string;
+        currency?: string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, facilityId, category, name, abbreviation, code, price, currency }) => ({
         url: '/api/setup/service',
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          category: category || undefined,
+          name: name?.trim() || undefined,
+          abbreviation: abbreviation?.trim() || undefined,
+          code: code?.trim() || undefined,
+          price: String(price ?? '').trim() || undefined,
+          currency: currency || undefined,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -72,9 +96,9 @@ export const serviceService = createApi({
 
     // GET /api/setup/service/by-facility/{facilityId}
     getServices: builder.query<PagedResult<any>, WithFacility & PagedParams>({
-      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+      query: ({ facilityId, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-facility/${encodeURIComponent(String(facilityId))}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -105,9 +129,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { category: string } & PagedParams
     >({
-      query: ({ category, page, size, sort = 'id,asc' }) => ({
+      query: ({ category, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-category/${encodeURIComponent(category)}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -130,9 +154,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { code: string } & PagedParams
     >({
-      query: ({ code, page, size, sort = 'id,asc' }) => ({
+      query: ({ code, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-code/${encodeURIComponent(code)}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -143,9 +167,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { abbreviation: string } & PagedParams
     >({
-      query: ({ abbreviation, page, size, sort = 'id,asc' }) => ({
+      query: ({ abbreviation, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-abbreviation/${encodeURIComponent(String(abbreviation))}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -156,9 +180,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { price: number } & PagedParams
     >({
-      query: ({ price, page, size, sort = 'id,asc' }) => ({
+      query: ({ price, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-price/${encodeURIComponent(String(price))}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -169,9 +193,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { currency: string } & PagedParams
     >({
-      query: ({ currency, page, size, sort = 'id,asc' }) => ({
+      query: ({ currency, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-currency/${encodeURIComponent(String(currency))}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
@@ -182,9 +206,9 @@ export const serviceService = createApi({
       PagedResult<any>,
       { name: string } & PagedParams
     >({
-      query: ({ name, page, size, sort = 'id,asc' }) => ({
+      query: ({ name, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/service/by-name/${encodeURIComponent(name)}`,
-        params: { page, size, sort },
+        params: { page, size, sort, isActive },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],

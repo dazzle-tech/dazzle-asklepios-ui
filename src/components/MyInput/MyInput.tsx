@@ -100,7 +100,7 @@ type MyInputProps = {
   showLabel?: boolean;
   className?: string;
   width?: number | string;
-  height?: number;
+  height?: number | 'auto';
   inputColor?: string;
   disabled?: boolean;
   placeholder?: string;
@@ -119,7 +119,7 @@ type MyInputProps = {
   loading?: boolean;
   defaultSelectValue?: any;
   virtualized?: boolean;
-  menuMaxHeight?: number;
+  menuMaxHeight?: number | string;
   menuClassName?: string;
   hasMore?: boolean;
   onFetchMore?: () => void;
@@ -184,6 +184,7 @@ const MyInput = ({
   const [portaledSelectBox, setPortaledSelectBox] = useState({ top: 0, left: 0, width: 0 });
   const portaledSelectMenuRef = useRef<HTMLDivElement | null>(null);
   const selectOpenGuardRef = useRef(0);
+  const multyToggleCloseRef = useRef(0);
   const loadMoreClickedRef = useRef(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
   const dateOpenGuardRef = useRef(0);
@@ -573,7 +574,8 @@ const MyInput = ({
 
   // Keeps long option labels from stretching the dropdown past the screen edge.
   const getPickerMenuStyle = (): React.CSSProperties => ({
-    minWidth: props?.width ?? '12vw',
+    // A percentage would resolve against the page, since the menu is portaled to the body
+    minWidth: String(props?.width).endsWith('%') ? undefined : props?.width ?? '12vw',
     width: 'auto',
     maxWidth: 'min(420px, calc(100vw - 32px))'
   });
@@ -2123,15 +2125,35 @@ virtualized={shouldVirtualizePicker(dataList.length)}
         );
 
         return (
-          <div ref={pickerRef}>
+          <div
+            ref={pickerRef}
+            // RSuite's TagPicker uses trigger="active", which only ever opens on click, and it also
+            // re-opens on input focus. Close it explicitly when the open input is clicked again,
+            // and swallow the open requests that same click would otherwise fire.
+            onMouseDownCapture={event => {
+              if (!isMultyPickerOpen || props.disabled) return;
+              const target = event.target as Element | null;
+              if (!target || !pickerRef.current?.contains(target)) return;
+              if (target.closest?.('.rs-tag-icon-close, .rs-picker-toggle-clean')) return;
+              multyToggleCloseRef.current = Date.now();
+              setIsMultyPickerOpen(false);
+            }}
+            onClick={() => {
+              multyToggleCloseRef.current = 0;
+            }}
+          >
             <Form.Control
-              style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+              style={{
+                width: props?.width ?? 145,
+                height: props?.height ?? 30,
+                ...(props?.height === 'auto' ? { minHeight: 30 } : {})
+              }}
               block
               disabled={props.disabled}
               accepter={TagPicker}
               container={resolveContainer()}
-              placement={placement}
-              preventOverflow={pickerPreventOverflow}
+              placement={props.placement ?? placement}
+              preventOverflow={false}
               name={fieldName}
               data={dataList}
               labelKey={props?.selectDataLabel ?? ''}
@@ -2145,14 +2167,16 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               searchBy={pickerSearchBy}
               renderMenuItem={
                 props.renderMenuItem ??
-                ((label: any, item: any) => (
+                wrapMenuItem((label: any, item: any) => (
                   <Translate>{String(item?.[props?.selectDataLabel ?? ''] ?? '')}</Translate>
                 ))
               }
+              menuStyle={{ maxWidth: 'min(26.25rem, calc(100vw - 2rem))' }}
               menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
               onKeyDown={focusNextField}
               open={isMultyPickerOpen}
               onOpen={() => {
+                if (Date.now() - multyToggleCloseRef.current < 1000) return;
                 setPlacement(calculatePlacement());
                 setIsMultyPickerOpen(true);
                 focusPickerSearch();
@@ -2209,7 +2233,13 @@ virtualized={shouldVirtualizePicker(dataList.length)}
               disabled={props.disabled}
               accepter={CheckPicker}
               searchable={isPickerSearchable}
-              searchBy={pickerSearchBy}
+              searchBy={props.setSearchKeyWard ? () => true : pickerSearchBy}
+              onSearch={
+                props.setSearchKeyWard
+                  ? (keyword: string) => props.setSearchKeyWard?.(keyword)
+                  : undefined
+              }
+              loading={props.loading ?? false}
               name={fieldName}
               data={dataList}
               labelKey={primaryLabelKey}
@@ -3173,8 +3203,9 @@ const inputControl = props.allowDecimal ? (
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const rawValue = record ? record[fieldName] : '';
-        const displayValue =
+        const formattedValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
+        const displayValue = formattedValue ?? '';
 
         const isPassword = fieldType === 'password';
 

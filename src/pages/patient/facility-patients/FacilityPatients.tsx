@@ -9,7 +9,7 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
 import { useGetFacilityPatientsQuery } from '@/services/patient/patientService';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
 import './styles.less';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -52,7 +52,11 @@ const FacilityPatients = () => {
     const [appliedFilters, setAppliedFilters] = useState({
         registrationDateFrom: today,
         registrationDateTo: today,
-        patientName: undefined,
+        patientName: undefined as string | undefined,
+        mrn: undefined as string | undefined,
+        primaryMobileNumber: undefined as string | undefined,
+        documentNumber: undefined as string | undefined,
+        dateOfBirth: undefined as string | undefined,
         insuranceId: undefined,
         page: 0,
         size: 15,
@@ -78,10 +82,10 @@ const FacilityPatients = () => {
 
     const requestedDocumentsRef = useRef<Set<number>>(new Set());
 
-    const { data: payors } = useGetAllPayorsQuery({
+    const { data: payors } = useGetAllNphiesPayersQuery({
         page: 0,
         size: 1000,
-        sort: 'name,asc'
+        sort: 'nameEn,asc'
     });
 
     useEffect(() => {
@@ -306,8 +310,8 @@ const FacilityPatients = () => {
     );
 
     const handleSearch = () => {
-        const patientName =
-            String(filterRecord.patientName ?? '').trim();
+        const searchText = String(patientSearch?.patientName ?? '').trim();
+        const field = patientSearch?.searchByField;
 
         setPage(0);
 
@@ -320,12 +324,18 @@ const FacilityPatients = () => {
             registrationDateTo:
                 filterRecord.registrationDateTo || today,
 
-            patientName:
-                patientName || undefined,
+            patientName: field === 'fullName' ? searchText || undefined : undefined,
+            mrn: field === 'patientMrn' ? searchText || undefined : undefined,
+            primaryMobileNumber:
+                field === 'phoneNumber' ? searchText || undefined : undefined,
+            documentNumber:
+                field === 'documentNumber' ? searchText || undefined : undefined,
+            dateOfBirth: field === 'dob' ? searchText || undefined : undefined,
 
             insuranceId:
                 filterRecord.insuranceId || undefined,
 
+            page: 0,
             size: rowsPerPage,
         }));
     };
@@ -352,8 +362,13 @@ const FacilityPatients = () => {
             registrationDateFrom: today,
             registrationDateTo: today,
             patientName: undefined,
+            mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: undefined,
             insuranceId: undefined,
 
+            page: 0,
             size: rowsPerPage,
         }));
 
@@ -416,13 +431,7 @@ const FacilityPatients = () => {
                                 <SearchPatientCriteria
                                     record={patientSearch}
                                     setRecord={setPatientSearch}
-                                    liveSearchMinLength={3}
-                                    onSearchClick={() => {
-                                        setFilterRecord(prev => ({
-                                            ...prev,
-                                            patientName: patientSearch.patientName
-                                        }));
-                                    }}
+                                    liveSearchMinLength={0}
                                 />
                             </div>
 
@@ -432,8 +441,8 @@ const FacilityPatients = () => {
                                 record={filterRecord}
                                 setRecord={setFilterRecord}
                                 width={"12vw"}
-                                selectData={payors?.data ?? []}
-                                selectDataLabel="name"
+                                selectData={(payors?.data ?? []).filter(payer => payer?.isActive !== false)}
+                                selectDataLabel="nameEn"
                                 selectDataValue="id"
                             />
                         </Form>

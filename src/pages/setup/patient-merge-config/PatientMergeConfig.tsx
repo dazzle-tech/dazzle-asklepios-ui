@@ -39,6 +39,18 @@ const emptyConfig = {
   availableColumns: []
 };
 
+// Filters that pick a value from a list instead of typing it
+const filterSelectOptions: Record<string, { label: string; value: string }[]> = {
+  mergeCategory: [
+    { label: 'MASTER', value: 'MASTER' },
+    { label: 'EMR', value: 'EMR' }
+  ],
+  enabled: [
+    { label: 'Enabled', value: 'true' },
+    { label: 'Disabled', value: 'false' }
+  ]
+};
+
 const PatientMergeConfig = () => {
   const dispatch = useAppDispatch();
 
@@ -77,8 +89,8 @@ const PatientMergeConfig = () => {
     { label: 'Entity Name', value: 'entityName' },
     { label: 'Category', value: 'mergeCategory' },
     { label: 'Status', value: 'enabled' },
-    { label: 'Auto Fields', value: 'autoDiscoverFields' },
-    { label: 'Sort', value: 'sortOrder' }
+    { label: 'Match Keys', value: 'matchKeyColumns' },
+    { label: 'Excluded Columns', value: 'excludedColumns' }
   ];
 
   useEffect(() => {
@@ -106,15 +118,19 @@ const PatientMergeConfig = () => {
     let result = [...tableConfigs];
 
     const filterKey = recordOfFilter.filter;
-    const filterValue = recordOfFilter.value?.trim().toLowerCase();
+    const filterValue = String(recordOfFilter.value ?? '').trim().toLowerCase();
 
     if (filterKey && filterValue) {
       result = result.filter((item: any) => {
         const itemValue = item?.[filterKey];
 
-        if (typeof itemValue === 'boolean') {
-          const displayValue = itemValue ? 'enabled yes true' : 'disabled no false';
-          return displayValue.includes(filterValue);
+        // An empty status counts as Disabled, the same as the table shows it
+        if (filterKey === 'enabled') {
+          return Boolean(itemValue) === (filterValue === 'true');
+        }
+
+        if (filterSelectOptions[filterKey]) {
+          return String(itemValue ?? '').toLowerCase() === filterValue;
         }
 
         if (Array.isArray(itemValue)) {
@@ -287,14 +303,29 @@ const PatientMergeConfig = () => {
         searchable={false}
       />
 
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
+      {filterSelectOptions[recordOfFilter.filter] ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={filterSelectOptions[recordOfFilter.filter]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Select"
+          searchable={false}
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Search"
+        />
+      )}
     </Form>
   );
 
@@ -333,12 +364,6 @@ const PatientMergeConfig = () => {
       render: (rowData: any) => (rowData.enabled ? 'Enabled' : 'Disabled')
     },
     {
-      key: 'autoDiscoverFields',
-      title: <Translate>Auto Fields</Translate>,
-      flexGrow: 3,
-      render: (rowData: any) => (rowData.autoDiscoverFields ? 'Yes' : 'No')
-    },
-    {
       key: 'matchKeyColumns',
       title: <Translate>Match Keys</Translate>,
       flexGrow: 4,
@@ -351,11 +376,6 @@ const PatientMergeConfig = () => {
       flexGrow: 4,
       render: (rowData: any) =>
         rowData.excludedColumns?.length ? rowData.excludedColumns.join(', ') : '-'
-    },
-    {
-      key: 'sortOrder',
-      title: <Translate>Sort</Translate>,
-      flexGrow: 2
     },
     {
       key: 'icons',

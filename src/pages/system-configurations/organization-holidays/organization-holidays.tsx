@@ -1,10 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { Panel, Form, Whisper, Tooltip } from 'rsuite';
+import { Panel, Whisper, Tooltip } from 'rsuite';
 import './styles.less';
 
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
@@ -16,7 +15,6 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import AddEditHoliday from './AddEditOrganizationHoliday';
 import {
-  useGetAllOrganizationHolidaysQuery,
   useSearchOrganizationHolidaysQuery,
   useToggleOrganizationHolidayMutation
 } from '@/services/system-configurations/organizationHolidaysService';
@@ -30,6 +28,24 @@ import { newOrganizationDefinition, newOrganizationHolidayResponseVM } from '@/t
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to the search endpoint and combined with AND.
+const emptyHeaderFilters = {
+  name: '',
+  holidayType: '',
+  startDate: '',
+  endDate: '',
+  recurring: '',
+  allFacilities: '',
+  facilityId: ''
+};
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
+
+const yesNoOptions = [
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' }
+];
+
 const OrganizationHolidays = () => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
@@ -40,30 +56,24 @@ const OrganizationHolidays = () => {
   const [stateOfActivationModal, setStateOfActivationModal] =
     useState<string>("deactivate");
   const [selectedHoliday, setSelectedHoliday] = useState<OrganizationHolidayResponseVM>({...newOrganizationHolidayResponseVM});
-  const [isFiltered, setIsFiltered] = useState(false);
   const [organization, setOrganization] = useState<OrganizationDefinitionType>({ ...newOrganizationDefinition });
 
-  const [filtersState, setFiltersState] = useState({
-    name: '',
-    holidayType: '',
-    startDate: '',
-    endDate: '',
-    recurring: undefined,
-    allFacilities: undefined,
-    facilityId: undefined
-  });
-
-  const [searchParams, setSearchParams] = useState<any>(null);
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
   // ───────────── API ─────────────
-  const { data, isFetching, refetch } = useGetAllOrganizationHolidaysQuery();
+  // Empty filters are left out, so with none set this returns every holiday
+  const searchParams = Object.fromEntries(
+    Object.entries({ ...appliedFilters, isActive: activeFilter }).filter(
+      ([, v]) => v !== '' && v !== null && v !== undefined
+    )
+  );
+  const { data, isFetching, refetch } = useSearchOrganizationHolidaysQuery(searchParams);
   const { data: organizations } = useGetAllOrganizationDefinitionsQuery({});
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-
-  const { data: filteredData } =
-    useSearchOrganizationHolidaysQuery(searchParams, {
-      skip: !searchParams
-    });
 
   const [toggleActive] = useToggleOrganizationHolidayMutation();
 
@@ -94,33 +104,28 @@ const OrganizationHolidays = () => {
     }
   }, [organizations]);
 
-  const cleanParams = (obj: any) => {
-    return Object.fromEntries(
-      Object.entries(obj).filter(
-        ([_, v]) => v !== '' && v !== null && v !== undefined
-      )
-    );
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
   };
 
-  const handleSearch = () => {
-    const cleaned = cleanParams(filtersState);
-    setSearchParams(cleaned);
-    setIsFiltered(true);
-  };
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
-  const handleReset = () => {
-    setFiltersState({
-      name: '',
-      holidayType: '',
-      startDate: '',
-      endDate: '',
-      recurring: undefined,
-      allFacilities: undefined,
-      facilityId: undefined
-    });
-    setSearchParams(null);
-    setIsFiltered(false);
-  };
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  const facilityOptions = ((facilityListResponse as any[]) ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }));
 
   const handleToggle = async (id: number) => {
     try {
@@ -213,33 +218,53 @@ const OrganizationHolidays = () => {
 
   // ───────────── TABLE COLUMNS ─────────────
   const columns = [
-    { key: 'name', title: 'Name' },
+    { key: 'name', title: 'Name', width: 180, ...headerSearch('name') },
     {
-      key: 'holidayType', title: 'Type', render: (rowData: OrganizationHolidayResponseVM) => (
+      key: 'holidayType', title: 'Type', width: 150, ...headerSelect('holidayType', holidayTypeEnum ?? []),
+      render: (rowData: OrganizationHolidayResponseVM) => (
         <span>{formatEnumString(rowData.holidayType)}</span>
       ),
     },
-    { key: 'startDate', title: 'Start Date' },
-    { key: 'endDate', title: 'End Date' },
+    // From this date on / up to this date (same as the old search)
+    { key: 'startDate', title: 'Start Date', width: 160, ...headerSearch('startDate'), searchType: 'date' as const },
+    { key: 'endDate', title: 'End Date', width: 160, ...headerSearch('endDate'), searchType: 'date' as const },
     {
       key: 'recurring',
       title: 'Recurring',
+      width: 110,
+      ...headerSelect('recurring', yesNoOptions),
       render: (row: OrganizationHolidayResponseVM) => (row.recurring ? 'Yes' : 'No')
     },
     {
       key: 'appliesTo',
       title: 'Applies To',
+      width: 140,
+      ...headerSelect('allFacilities', [
+        { label: 'All Facilities', value: 'true' },
+        { label: 'Selected', value: 'false' }
+      ]),
       render: (row: OrganizationHolidayResponseVM) => (row.allFacilities ? 'All Facilities' : 'Selected')
     },
     {
       key: 'facilities',
       title: 'Facilities',
       width: 200,
+      ...headerSelect('facilityId', facilityOptions),
       render: (row: OrganizationHolidayResponseVM) => <span>{getFacilitiesLabel(row)}</span>
     },
     {
       key: 'status',
       title: 'Status',
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (row: OrganizationHolidayResponseVM) => (row.isActive ? 'Active' : 'Inactive')
     },
     {
@@ -258,94 +283,6 @@ const OrganizationHolidays = () => {
     }
   ];
 
-  // ───────────── FILTER UI ─────────────
-  const filters = () => (
-    <Form layout="inline" fluid className='container-of-filters-organization-holidays'>
-      <MyInput
-        fieldName="name"
-        fieldType="text"
-        placeholder="Name"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="holidayType"
-        fieldType="select"
-        selectData={holidayTypeEnum}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="startDate"
-        fieldType="date"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="endDate"
-        fieldType="date"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="recurring"
-        fieldType="select"
-        selectData={[
-          { label: 'Yes', value: true },
-          { label: 'No', value: false }
-        ]}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="allFacilities"
-        fieldType="select"
-        selectData={[
-          { label: 'Yes', value: true },
-          { label: 'No', value: false }
-        ]}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={filtersState}
-        setRecord={setFiltersState}
-        column
-      />
-
-      <MyInput
-        fieldName="facilityId"
-        fieldType="select"
-        fieldLabel="Facility"
-        selectData={facilityListResponse}
-        selectDataLabel="name"
-        selectDataValue="id"
-        record={filtersState}
-        setRecord={setFiltersState}
-        disabled={filtersState.allFacilities}
-        width={"15vw"}
-        column
-      />
-
-      <MyButton onClick={handleSearch}>Search</MyButton>
-      <MyButton onClick={handleReset} color="red">
-        Reset
-      </MyButton>
-    </Form>
-  );
-
       // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -357,10 +294,9 @@ const OrganizationHolidays = () => {
       <MyTable
         height={500}
         rowClassName={isSelected}
-        data={isFiltered ? filteredData ?? [] : data ?? []}
+        data={data ?? []}
         loading={isFetching}
         columns={columns}
-        filters={filters()}
         onRowClick={row => setSelectedHoliday(row)}
         tableButtons={
           <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={handleNew}>

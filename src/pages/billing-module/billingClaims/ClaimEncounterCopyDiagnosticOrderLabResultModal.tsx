@@ -5,7 +5,9 @@ import { faFlask } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
+import UserDateCell from '@/components/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -30,6 +32,8 @@ interface ClaimEncounterCopyDiagnosticOrderLabResultModalProps {
   orderTest: any;
   testName?: string;
   existingCopies: any[];
+  /** Set for tests ordered from Service & Products; results link to it instead of an order test. */
+  patientServiceProductId?: number;
 }
 
 const getResultType = (profile?: any) =>
@@ -44,7 +48,8 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
   claimEncounterCopyId,
   orderTest,
   testName,
-  existingCopies
+  existingCopies,
+  patientServiceProductId
 }: ClaimEncounterCopyDiagnosticOrderLabResultModalProps) => {
   const dispatch = useAppDispatch();
 
@@ -149,48 +154,59 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
     );
   };
 
-  const handleSaveProfile = async (profile: any) => {
-    const existing = copyByProfileId.get(profile.id);
+  const toResultValue = (profile: any) => {
     const value = form[profile.id] ?? {};
+    const isTextual = isLovProfile(profile) || isTextProfile(profile);
 
-    const isLov = isLovProfile(profile);
-    const isText = isTextProfile(profile);
+    return {
+      resultValueNumber: isTextual ? null : value.resultValueNumber ?? null,
+      resultValueText: isTextual ? value.resultValueText || null : null
+    };
+  };
 
-    const resultValueNumber =
-      isLov || isText ? null : value.resultValueNumber;
+  const hasValue = ({ resultValueNumber, resultValueText }: ReturnType<typeof toResultValue>) =>
+    resultValueNumber != null || !!resultValueText;
 
-    const resultValueText =
-      isLov || isText ? value.resultValueText : null;
+  const isChanged = (existing: any, value: ReturnType<typeof toResultValue>) =>
+    (existing.resultValueNumber ?? null) !== value.resultValueNumber ||
+    (existing.resultValueText ?? null) !== value.resultValueText;
 
-    if (resultValueNumber == null && !resultValueText) {
-      dispatch(
-        notify({ msg: 'Result value is required', sev: 'warning' })
-      );
+  const saveProfileResult = (profile: any) => {
+    const existing = copyByProfileId.get(profile.id);
+    const value = toResultValue(profile);
+
+    if (existing) {
+      return isChanged(existing, value)
+        ? updateResult({ id: existing.id, data: value }).unwrap()
+        : Promise.resolve();
+    }
+
+    return createResult({
+      claimEncounterCopyId,
+      data: {
+        ...(patientServiceProductId != null
+          ? { patientServiceProductId }
+          : { orderTestId: orderTest.id }),
+        profileTestId: profile.id,
+        ...value,
+        resultTypeAtEntry: getResultType(profile)
+      }
+    }).unwrap();
+  };
+
+  const handleSaveAll = async () => {
+    const filledProfiles = profiles.filter(profile => hasValue(toResultValue(profile)));
+
+    if (filledProfiles.length === 0) {
+      dispatch(notify({ msg: 'Result value is required', sev: 'warning' }));
       return;
     }
 
     try {
-      if (existing) {
-        await updateResult({
-          id: existing.id,
-          data: { resultValueNumber, resultValueText }
-        }).unwrap();
-      } else {
-        await createResult({
-          claimEncounterCopyId,
-          data: {
-            orderTestId: orderTest.id,
-            profileTestId: profile.id,
-            resultValueNumber,
-            resultValueText,
-            resultTypeAtEntry: getResultType(profile)
-          }
-        }).unwrap();
-      }
+      await Promise.all(filledProfiles.map(saveProfileResult));
 
-      dispatch(
-        notify({ msg: 'Result saved successfully', sev: 'success' })
-      );
+      dispatch(notify({ msg: 'Results saved successfully', sev: 'success' }));
+      setOpen(false);
     } catch (error: any) {
       const data = error?.data ?? {};
 
@@ -200,12 +216,29 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
             data?.detail ||
             data?.message ||
             data?.title ||
-            'Failed to save result',
+            'Failed to save results',
           sev: 'error'
         })
       );
     }
   };
+
+  const AUDIT_COLUMN_WIDTH = 170;
+
+  const auditHeaderStyle: React.CSSProperties = {
+    width: AUDIT_COLUMN_WIDTH,
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--rs-text-secondary)'
+  };
+
+  // Each profile result is its own copy record, so its audit is shown per row
+  const renderAuditCell = (login?: string, date?: string) => (
+    <div style={{ width: AUDIT_COLUMN_WIDTH, fontSize: 13 }}>
+      {login || date ? <UserDateCell login={login} date={date} /> : '-'}
+    </div>
+  );
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
@@ -215,8 +248,9 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
         open={open}
         setOpen={setOpen}
         title="Laboratory Results"
-        size="50vw"
-        hideActionBtn
+        size="85vw"
+        actionButtonFunction={handleSaveAll}
+        isDisabledActionBtn={isCreating || isUpdating || profiles.length === 0}
         steps={[
           { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
         ]}
@@ -227,11 +261,38 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
               header={<strong>{testName || `Test #${orderTest?.testId}`}</strong>}
             >
               <Form fluid>
-                {profiles.map(profile => {
-                  const existing = copyByProfileId.get(profile.id);
+                {profiles.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '4px 0 8px',
+                      borderBottom: '1px solid var(--rs-border-primary)'
+                    }}
+                  >
+                    <div style={{ ...auditHeaderStyle, width: 180 }}>
+                      <Translate>PARAMETER</Translate>
+                    </div>
+                    <div style={{ ...auditHeaderStyle, flex: 1, minWidth: 220 }}>
+                      <Translate>RESULT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>ORIGINAL CREATED BY / AT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>COPIED BY / AT</Translate>
+                    </div>
+                    <div style={auditHeaderStyle}>
+                      <Translate>COPY UPDATED BY / AT</Translate>
+                    </div>
+                  </div>
+                )}
 
+                {profiles.map(profile => {
                   const isLov = isLovProfile(profile);
                   const isText = isTextProfile(profile);
+                  const existing = copyByProfileId.get(profile.id);
 
                   const rowRecord = form[profile.id] ?? {
                     resultValueNumber: null,
@@ -253,6 +314,15 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                         {profile.name}
                       </div>
 
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 220,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12
+                        }}
+                      >
                       <MyInput
                         fieldName={isLov || isText ? 'resultValueText' : 'resultValueNumber'}
                         fieldType={isLov ? 'select' : isText ? 'text' : 'number'}
@@ -276,14 +346,18 @@ const ClaimEncounterCopyDiagnosticOrderLabResultModal = ({
                           {resolveUnitLabel(profile)}
                         </span>
                       )}
+                      </div>
 
-                      <MyButton
-                        size="sm"
-                        disabled={isCreating || isUpdating}
-                        onClick={() => handleSaveProfile(profile)}
-                      >
-                        Save
-                      </MyButton>
+                      {/* No original means the result was added in the claim, not in the visit */}
+                      {renderAuditCell(existing?.originalCreatedBy, existing?.originalCreatedDate)}
+                      {existing ? (
+                        <div style={{ width: AUDIT_COLUMN_WIDTH, fontSize: 13 }}>
+                          <CopiedAuditCell row={existing} />
+                        </div>
+                      ) : (
+                        renderAuditCell()
+                      )}
+                      {renderAuditCell(existing?.lastModifiedBy, existing?.lastModifiedDate)}
                     </div>
                   );
                 })}

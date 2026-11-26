@@ -28,6 +28,10 @@ type PagedResult<T> = {
 
 type FacilityPatientsParams = PagedParams & {
   patientName?: string;
+  mrn?: string;
+  primaryMobileNumber?: string;
+  documentNumber?: string;
+  dateOfBirth?: string;
   registrationDateFrom?: string;
   registrationDateTo?: string;
   insuranceId?: number;
@@ -87,6 +91,10 @@ export const newPatientService = createApi({
         size,
         sort = 'id,asc',
         patientName,
+        mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         registrationDateFrom,
         registrationDateTo,
         insuranceId
@@ -97,6 +105,10 @@ export const newPatientService = createApi({
           size,
           sort,
           patientName,
+          mrn,
+          primaryMobileNumber,
+          documentNumber,
+          dateOfBirth,
           registrationDateFrom,
           registrationDateTo,
           insuranceId

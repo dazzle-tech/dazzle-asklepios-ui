@@ -92,7 +92,7 @@ export const useCreditCardMachinePayment = () => {
     transactionId: number
   ): Promise<Partial<PointOfSaleTransactionDTO>> => {
 
-    const maxAttempts = 20;
+    const maxAttempts = 12;
 
     for (
       let attempt = 0;

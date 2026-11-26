@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form } from 'rsuite';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useLocation } from 'react-router-dom';
@@ -13,6 +13,9 @@ import {
 import { useEvaluateBillingRuleMutation } from '@/services/billing/billingTransactionService';
 import { usePreviewCatalogItemPricingMutation } from '@/services/billing/financialDocumentAdjustmentService';
 import { notify } from '@/utils/uiReducerActions';
+import { isHeldForPreAuthorization } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
+import { formatEnumString } from '@/utils';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import {
   buildBillingRuleEvaluationRequest,
@@ -37,9 +40,12 @@ import {
 } from '@/services/setup/serviceService';
 
 import {
+  useGetBrandMedicationByIdQuery,
   useGetBrandMedicationsByIsActiveQuery,
   useGetBrandMedicationsByNameQuery
 } from '@/services/setup/brandmedication/BrandMedicationService';
+import { useGetAllUnitsByGroupIdQuery } from '@/services/setup/uom-group/uomGroupService';
+import { useSearchActiveVaccineBrandsQuery } from '@/services/vaccine/vaccineBrandsService';
 
 import {
   useGetActiveDiagnosticTestsByTypeQuery,
@@ -55,19 +61,30 @@ const AddEditPatientServiceAndProduct = ({
   open,
   setOpen,
   patientServiceAndProduct,
-  setPatientServiceAndProduct
+  setPatientServiceAndProduct,
+  patient: patientProp,
+  encounter: encounterProp,
+  createItem
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   patientServiceAndProduct: PatientServiceAndProduct;
   setPatientServiceAndProduct: (patientServiceAndProduct: PatientServiceAndProduct) => void;
+  /** Screens outside the encounter page pass these instead of the route state. */
+  patient?: any;
+  encounter?: any;
+  /** Replaces the default create call, e.g. to add the item from a procedure. */
+  createItem?: (dto: PatientServiceProductCreateDTO) => Promise<unknown>;
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<
+    { patientServiceProductId?: number | null; label: string }[] | null
+  >(null);
   const location = useLocation();
 
-  const patient = location.state?.patient;
-  const encounter = location.state?.encounter;
+  const patient = patientProp ?? location.state?.patient;
+  const encounter = encounterProp ?? location.state?.encounter;
 
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
@@ -328,6 +345,22 @@ const AddEditPatientServiceAndProduct = ({
     );
 
 
+    // All active vaccine brands; the same query lists and searches (by name or code)
+    const {
+      data: vaccineBrandsResponse,
+      isFetching: isFetchingVaccineBrands
+    } = useSearchActiveVaccineBrandsQuery(
+      {
+        name: debouncedSelectSearch || undefined,
+        page: selectPage,
+        size: 20,
+        sort: 'name,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'VACCINE'
+      }
+    );
+
     const getSearchData = (response: any) => {
   return (response?.data ?? []).filter(
     (item: any) => item?.isActive === true
@@ -366,6 +399,9 @@ const AddEditPatientServiceAndProduct = ({
             ? proceduresSearchResponse
             : proceduresResponse;
 
+        case 'VACCINE':
+          return vaccineBrandsResponse;
+
         default:
           return null;
       }
@@ -389,7 +425,9 @@ const AddEditPatientServiceAndProduct = ({
       servicesSearchResponse,
 
       proceduresResponse,
-      proceduresSearchResponse
+      proceduresSearchResponse,
+
+      vaccineBrandsResponse
     ]);
 
     useEffect(() => {
@@ -433,12 +471,112 @@ const AddEditPatientServiceAndProduct = ({
   const [evaluateBillingRule] = useEvaluateBillingRuleMutation();
   const [previewCatalogItemPricing] = usePreviewCatalogItemPricingMutation();
 
-  const resolveUnitPrice = async (
-    nextRecord: PatientServiceAndProduct,
-    setupFallbackPrice: number
-  ) => {
+  const isMedication = patientServiceAndProduct?.billingItemType === 'MEDICATION';
+
+  // Units of the selected brand's UOM group; its price is per its price base unit
+  const { data: selectedBrand } = useGetBrandMedicationByIdQuery(
+    patientServiceAndProduct?.brandMedicationId,
+    { skip: !open || !isMedication || !patientServiceAndProduct?.brandMedicationId }
+  );
+  const brandUomGroupId =
+    selectedBrand?.id === patientServiceAndProduct?.brandMedicationId
+      ? selectedBrand?.uomGroupId
+      : undefined;
+
+  const { data: uomUnits } = useGetAllUnitsByGroupIdQuery(brandUomGroupId ?? 0, {
+    skip: !brandUomGroupId
+  });
+
+  const uomUnitOptions = useMemo(
+    () => (uomUnits ?? []).map((unit: any) => ({ label: formatEnumString(unit.uom), value: unit.id })),
+    [uomUnits]
+  );
+
+  // A medication line without a unit is charged in the brand's price base unit
+  useEffect(() => {
+    if (
+      open &&
+      isMedication &&
+      brandUomGroupId &&
+      patientServiceAndProduct?.uomGroupUnitId == null &&
+      selectedBrand?.priceBaseUomId
+    ) {
+      setPatientServiceAndProduct({
+        ...patientServiceAndProduct,
+        uomGroupUnitId: selectedBrand.priceBaseUomId
+      });
+    }
+  }, [open, isMedication, brandUomGroupId, selectedBrand, patientServiceAndProduct?.uomGroupUnitId]);
+
+  const [pricing, setPricing] = useState<{
+    unitPrice: number;
+    price: number;
+    netAmount: number;
+    currency?: string | null;
+  } | null>(null);
+  const [isPricing, setIsPricing] = useState(false);
+  const pricingRequestRef = useRef(0);
+
+  const selectedItemId =
+    patientServiceAndProduct?.brandMedicationId ??
+    patientServiceAndProduct?.diagnosticTestId ??
+    patientServiceAndProduct?.serviceId ??
+    patientServiceAndProduct?.procedureId ??
+    patientServiceAndProduct?.vaccineBrandId;
+
+  // Unit price (in the picked UOM unit for medications) and price for the quantity
+  useEffect(() => {
+    if (!open || !patientServiceAndProduct?.billingItemType || !selectedItemId) {
+      setPricing(null);
+      return;
+    }
+
+    const quantity = Number(patientServiceAndProduct?.quantity);
+    if (!quantity || quantity <= 0) {
+      setPricing(null);
+      return;
+    }
+
+    const requestId = ++pricingRequestRef.current;
+    const timer = setTimeout(async () => {
+      setIsPricing(true);
+      const preview = await previewItemPricing(patientServiceAndProduct);
+
+      // A newer item / unit / quantity was picked meanwhile
+      if (requestId !== pricingRequestRef.current) {
+        return;
+      }
+
+      setIsPricing(false);
+      setPricing(
+        preview
+          ? {
+              unitPrice: Number(preview.unitPrice ?? preview.setupUnitPrice ?? 0),
+              price: Number(preview.grossAmount ?? 0),
+              netAmount: Number(preview.netAmount ?? preview.grossAmount ?? 0),
+              currency: preview.currency ?? patientServiceAndProduct?.currency
+            }
+          : null
+      );
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [
+    open,
+    patientServiceAndProduct?.billingItemType,
+    selectedItemId,
+    patientServiceAndProduct?.uomGroupUnitId,
+    patientServiceAndProduct?.quantity
+  ]);
+
+  const formatMoney = (amount: number | null | undefined) =>
+    amount == null
+      ? ''
+      : `${Number(amount).toFixed(2)} ${pricing?.currency ?? patientServiceAndProduct?.currency ?? ''}`.trim();
+
+  const previewItemPricing = async (nextRecord: PatientServiceAndProduct) => {
     if (!patient?.id || !encounter?.id || !selectedFacilityId) {
-      return setupFallbackPrice;
+      return null;
     }
 
     const billingItemType = String(nextRecord.billingItemType ?? '');
@@ -468,7 +606,11 @@ const AddEditPatientServiceAndProduct = ({
           billingItemType === 'PROCEDURE' ? nextRecord.procedureId ?? undefined : undefined,
         quantity: Number(nextRecord.quantity ?? 1),
         coverageType: 'SELF_PAY',
-        patientInsuranceId: null
+        patientInsuranceId: null,
+        uomGroupUnitId:
+          billingItemType === 'MEDICATION' ? nextRecord.uomGroupUnitId ?? null : null,
+        vaccineBrandId:
+          billingItemType === 'VACCINE' ? nextRecord.vaccineBrandId ?? undefined : undefined
       }).unwrap();
 
       if (preview.requiresCashConfirmation) {
@@ -483,10 +625,10 @@ const AddEditPatientServiceAndProduct = ({
         setCoverageWarning(null);
       }
 
-      return Number(preview.unitPrice ?? preview.setupUnitPrice ?? setupFallbackPrice ?? 0);
+      return preview;
     } catch {
       setCoverageWarning(null);
-      return setupFallbackPrice;
+      return null;
     }
   };
 
@@ -547,6 +689,13 @@ const AddEditPatientServiceAndProduct = ({
       !patientServiceAndProduct?.procedureId
     ) {
       errorMsg += errorMsg ? ', Procedure can`t be empty' : 'Procedure can`t be empty';
+    }
+
+    if (
+      patientServiceAndProduct?.billingItemType === 'VACCINE' &&
+      !patientServiceAndProduct?.vaccineBrandId
+    ) {
+      errorMsg += errorMsg ? ', Vaccine brand can`t be empty' : 'Vaccine brand can`t be empty';
     }
 
     if (!patientServiceAndProduct?.quantity || Number(patientServiceAndProduct?.quantity) <= 0) {
@@ -675,6 +824,18 @@ const AddEditPatientServiceAndProduct = ({
             currentSelectResponse?.links?.next != null
         };
 
+      case 'VACCINE':
+        return {
+          fieldName: 'vaccineBrandId',
+          fieldLabel: 'Vaccine Brand',
+          selectData,
+          selectDataLabel: 'displayName',
+          selectDataValue: 'id',
+          loading: isFetchingVaccineBrands,
+          hasMore:
+            currentSelectResponse?.links?.next != null
+        };
+
       default:
         return null;
     }
@@ -699,7 +860,9 @@ const AddEditPatientServiceAndProduct = ({
     isFetchingServicesSearch,
 
     isFetchingProcedures,
-    isFetchingProceduresSearch
+    isFetchingProceduresSearch,
+
+    isFetchingVaccineBrands
   ]);
 
   const handleFetchMore = () => {
@@ -715,7 +878,8 @@ const AddEditPatientServiceAndProduct = ({
       isFetchingServices ||
       isFetchingServicesSearch ||
       isFetchingProcedures ||
-      isFetchingProceduresSearch
+      isFetchingProceduresSearch ||
+      isFetchingVaccineBrands
     ) {
       return;
     }
@@ -726,26 +890,34 @@ const AddEditPatientServiceAndProduct = ({
   };
 
   const handleSelectSearch = (value: string) => {
+    // Closing the list clears the search; when it was already empty the cached page is not
+    // fetched again, so clearing the loaded items here would leave the list empty
+    if (value === selectSearch) {
+      return;
+    }
+
     setSelectSearch(value);
     setSelectPage(0);
     setSelectData([]);
   };
 
   const selectDataWithSelectedItem = useMemo(() => {
-    if (!selectedSelectItem?.id) {
-      return selectData;
+    const withSelected =
+      !selectedSelectItem?.id ||
+      selectData.some(item => String(item?.id) === String(selectedSelectItem.id))
+        ? selectData
+        : [selectedSelectItem, ...selectData];
+
+    if (patientServiceAndProduct?.billingItemType !== 'VACCINE') {
+      return withSelected;
     }
 
-    const exists = selectData.some(
-      item => String(item?.id) === String(selectedSelectItem.id)
-    );
-
-    if (exists) {
-      return selectData;
-    }
-
-    return [selectedSelectItem, ...selectData];
-  }, [selectData, selectedSelectItem]);
+    // Brand names can repeat between vaccines/facilities, so the code is shown with the name
+    return withSelected.map(brand => ({
+      ...brand,
+      displayName: brand?.code ? `${brand.name} - ${brand.code}` : brand?.name ?? ''
+    }));
+  }, [selectData, selectedSelectItem, patientServiceAndProduct?.billingItemType]);
 
   const handleSave = async () => {
     const validationError = getValidationError();
@@ -789,20 +961,38 @@ const AddEditPatientServiceAndProduct = ({
               ? patientServiceAndProduct.procedureId ?? null
               : null,
 
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
+              : null,
+
           quantity: Number(patientServiceAndProduct.quantity),
-          unitPrice: patientServiceAndProduct.unitPrice ?? 0,
+          unitPrice: pricing?.unitPrice ?? patientServiceAndProduct.unitPrice ?? 0,
           currency: patientServiceAndProduct.currency,
-          acceptUncoveredAsCash: Boolean(coverageWarning)
+          acceptUncoveredAsCash: Boolean(coverageWarning),
+          uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null
         };
 
-        await createPatientServiceAndProduct(createDTO).unwrap();
+        // A procedure adds the item through its own endpoint, which returns the same row
+        const created = await (createItem
+          ? createItem(createDTO)
+          : createPatientServiceAndProduct(createDTO).unwrap());
+        const createdRow = ((created as any)?.object ?? created) as PatientServiceAndProduct;
 
-        dispatch(
-          notify({
-            msg: 'Billing Item Added Successfully',
-            sev: 'success'
-          })
-        );
+        if (isHeldForPreAuthorization(createdRow)) {
+          setPreAuthAlert([
+            {
+              patientServiceProductId: createdRow?.id ?? null,
+              label:
+                (createdRow as any)?.serviceName ||
+                (createdRow as any)?.name ||
+                (selectedSelectItem as any)?.name ||
+                'Service'
+            }
+          ]);
+        } else {
+          dispatch(notify({ msg: 'Billing Item Added Successfully', sev: 'success' }));
+        }
       } else {
         const updateDTO: PatientServiceProductUpdateDTO = {
           ...newPatientServiceProductUpdateDTO,
@@ -830,8 +1020,14 @@ const AddEditPatientServiceAndProduct = ({
               ? patientServiceAndProduct.procedureId ?? null
               : null,
 
+          vaccineBrandId:
+            patientServiceAndProduct.billingItemType === 'VACCINE'
+              ? patientServiceAndProduct.vaccineBrandId ?? null
+              : null,
+
           quantity: Number(patientServiceAndProduct.quantity),
-          unitPrice: patientServiceAndProduct.unitPrice ?? 0,
+          unitPrice: pricing?.unitPrice ?? patientServiceAndProduct.unitPrice ?? 0,
+          uomGroupUnitId: isMedication ? patientServiceAndProduct.uomGroupUnitId ?? null : null,
           discountAmount: patientServiceAndProduct.discountAmount ?? 0,
           exemptionAmount: patientServiceAndProduct.exemptionAmount ?? 0,
           taxAmount: patientServiceAndProduct.taxAmount ?? 0,
@@ -889,6 +1085,8 @@ const AddEditPatientServiceAndProduct = ({
             diagnosticTestId: null,
             serviceId: null,
             procedureId: null,
+            vaccineBrandId: null,
+            uomGroupUnitId: null,
             unitPrice: 0,
             currency: ''
           });
@@ -921,33 +1119,38 @@ const AddEditPatientServiceAndProduct = ({
           hasMore={itemSelectConfig.hasMore}
           onFetchMore={handleFetchMore}
 
-          onSelectItem={async selectedItem => {
+          onSelectItem={selectedItem => {
             setSelectedSelectItem(selectedItem);
 
-            const setupFallbackPrice =
-              Number(selectedItem?.price ?? 0);
-
-            const nextRecord = {
+            // Priced by the pricing effect once the item (and unit) is set
+            setPatientServiceAndProduct({
               ...patientServiceAndProduct,
               [itemSelectConfig.fieldName]:
                 selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
+              uomGroupUnitId: isMedication ? selectedItem?.priceBaseUomId ?? null : null,
               unitPrice: 0,
               currency:
                 selectedItem?.currency ??
                 authSlice?.tenant?.selectedFacility?.defaultCurrency ??
                 'SAR'
-            };
-
-            const unitPrice = await resolveUnitPrice(
-              nextRecord,
-              setupFallbackPrice
-            );
-
-            setPatientServiceAndProduct({
-              ...nextRecord,
-              unitPrice
             });
           }}
+        />
+      )}
+
+      {isMedication && patientServiceAndProduct?.brandMedicationId && (
+        <MyInput
+          required
+          fieldName="uomGroupUnitId"
+          fieldLabel="UOM"
+          fieldType="select"
+          selectData={uomUnitOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={patientServiceAndProduct}
+          setRecord={setPatientServiceAndProduct}
+          searchable={false}
+          width="100%"
         />
       )}
 
@@ -960,22 +1163,60 @@ const AddEditPatientServiceAndProduct = ({
         setRecord={setPatientServiceAndProduct}
         width="100%"
       />
+
+      {selectedItemId && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+          <MyInput
+            disabled
+            fieldName="unitPrice"
+            fieldLabel="Unit Price"
+            fieldType="text"
+            record={{ unitPrice: isPricing ? '...' : formatMoney(pricing?.unitPrice) }}
+            setRecord={() => undefined}
+            width="100%"
+          />
+
+          <MyInput
+            disabled
+            fieldName="price"
+            fieldLabel="Price"
+            fieldType="text"
+            record={{ price: isPricing ? '...' : formatMoney(pricing?.price) }}
+            setRecord={() => undefined}
+            width="100%"
+          />
+        </div>
+      )}
+
+      {!isPricing && pricing && pricing.netAmount !== pricing.price && (
+        <div style={{ fontSize: 12, opacity: 0.75 }}>
+          Net after discount / tax: {formatMoney(pricing.netAmount)}
+        </div>
+      )}
     </Form>
   );
 
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
-      actionButtonLabel="Save"
-      actionButtonFunction={handleSave}
-      actionButtonLoading={isCreating || isUpdating}
-      position="right"
-      size="30vw"
-      bodyheight="80vh"
-      content={modalContent}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={patientServiceAndProduct?.id ? 'Edit Billing Item' : 'Add Billing Item'}
+        actionButtonLabel="Save"
+        actionButtonFunction={handleSave}
+        actionButtonLoading={isCreating || isUpdating}
+        position="right"
+        size="30vw"
+        bodyheight="80vh"
+        content={modalContent}
+      />
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
+      />
+    </>
   );
 };
 

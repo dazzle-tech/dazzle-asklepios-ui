@@ -3,12 +3,14 @@ import { Panel } from 'rsuite';
 import { Col, Divider, Row, Form, Text } from 'rsuite';
 import './styles.less';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import { useEncounterPatientContext } from '@/pages/medical-component/vital-signs/useEncounterPatientContext';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPostOperationRecovery } from '@/types/model-types';
 import { newApPostOperationRecovery } from '@/types/model-types-constructor';
 import Translate from '@/components/Translate';
 const PostOperationRecovery = () => {
+    const { encounter, patientId, encounterId } = useEncounterPatientContext();
     const [postOperationAssessment, setPostOperationAssessment] = useState<ApPostOperationRecovery>({ ...newApPostOperationRecovery });
 
     const [vital, setVital] = useState({
@@ -118,7 +120,7 @@ const PostOperationRecovery = () => {
                                     <Text><Translate>Vitals on Admission</Translate></Text>
                                 </div>
                                 <Divider />
-                                <VitalSigns object={vital} setObject={setVital} />
+                                <VitalSigns patientId={patientId as number} encounterId={encounterId as number} encounter={encounter} />
                             </div>
                         </Row>
                         <Row>

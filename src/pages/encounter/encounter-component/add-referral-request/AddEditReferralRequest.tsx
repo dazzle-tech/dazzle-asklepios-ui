@@ -10,12 +10,14 @@ import { useAppSelector } from '@/hooks';
 import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
-const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, handleSave }) => {
+const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, encounter, handleSave }) => {
   const referralTypeOptions = useEnumOptions('ReferralType');
   const priorityOptions = useEnumOptions('ReferralPriority');
 
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
+  const fromFacilityId = encounter?.facilityId || selectedFacility?.id;
+  const fromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
 
   const { data: facilityResponse } = useGetActiveFacilitiesQuery({});
 
@@ -87,12 +89,12 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
   );
 
   useEffect(() => {
-    if (!selectedFacility?.id || !open) return;
+    if (!fromFacilityId || !open) return;
 
     setReferral(prev => ({
       ...prev,
-      fromFacilityId: Number(selectedFacility.id),
-      fromDepartmentId: selectedDepartment?.departmentId ?? null,
+      fromFacilityId: Number(fromFacilityId),
+      fromDepartmentId: fromDepartmentId ?? null,
       toFacilityId:
         prev?.referralType === 'INTERNAL' ? Number(selectedFacility.id) : prev?.toFacilityId ?? null
     }));
@@ -100,7 +102,8 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
     open,
     referral?.referralType,
     selectedFacility?.id,
-    selectedDepartment?.departmentId,
+    fromFacilityId,
+    fromDepartmentId,
     setReferral
   ]);
 
@@ -157,7 +160,7 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
       d =>
         !(
           Number(referral?.toFacilityId) === Number(selectedFacility?.id) &&
-          Number(d.id) === Number(selectedDepartment?.departmentId)
+          Number(d.id) === Number(fromDepartmentId)
         )
     )
     .map(d => ({

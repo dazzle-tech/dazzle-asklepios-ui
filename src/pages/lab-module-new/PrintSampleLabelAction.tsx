@@ -4,6 +4,10 @@ import { faBarcode } from '@fortawesome/free-solid-svg-icons';
 import { Whisper, Tooltip, InputNumber, Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import {
+  PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE,
+  isSampleBlockedByPreAuthorization
+} from '@/utils/preAuthorizationSampleLock';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 
@@ -20,8 +24,14 @@ export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
  const [selectedLang, setSelectedLang] = useState<{ lang: 'en' | 'ar' }>({
     lang: 'en'
   });
+  const blockedByPreAuthorization = isSampleBlockedByPreAuthorization(rowData);
+
   const handleOpenModal = (e: any) => {
     e.stopPropagation();
+    if (blockedByPreAuthorization) {
+      dispatch(notify({ msg: PRE_AUTHORIZATION_SAMPLE_LOCK_MESSAGE, sev: 'warning' }));
+      return;
+    }
     setCopies({ copies: 1 } as any);
     setOpenPrintModal(true);
   };
@@ -92,8 +102,8 @@ export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
             className="icon-laboratory-size"
             style={{
               fontSize: '1em',
-              cursor: isFetching ? 'wait' : 'pointer',
-              opacity: isFetching ? 0.6 : 1,
+              cursor: blockedByPreAuthorization ? 'not-allowed' : isFetching ? 'wait' : 'pointer',
+              opacity: blockedByPreAuthorization || isFetching ? 0.6 : 1,
             }}
             onClick={handleOpenModal}
           />

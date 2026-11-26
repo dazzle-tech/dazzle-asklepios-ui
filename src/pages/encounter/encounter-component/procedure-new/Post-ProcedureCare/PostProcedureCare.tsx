@@ -1,83 +1,72 @@
-import MyButton from '@/components/MyButton/MyButton';
-import React, { useRef } from 'react';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { useAppDispatch } from '@/hooks';
+import {
+  useGetProcedurePostCareQuery,
+  useSaveProcedurePostCareMutation
+} from '@/services/patients/patientProcedureService';
+import { notify } from '@/utils/uiReducerActions';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import '../styles.less';
+import { ProcedureStepHandle, useStepForm } from '../useStepForm';
 import Diagnosis from './Diagnosis';
-import ProcedureVitals from './ProcedureVitals';
-import AdministeredMedications from './AdministeredMedications ';
 import PostProcedureAnesthesia from './PostProcedureAnesthesia';
 import PostProcedureChecklist from './PostProcedureChecklist';
-import {
-  useGetProcedureAdministeredMedicationsQuery,
-  useSaveProcedureAdministeredMedicationsMutation
-} from '@/services/procedureService';
-import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
-import { newApProcedureAdministeredMedications } from '@/types/model-types-constructor';
-import '../styles.less';
+import ProcedureMedications from './ProcedureMedications';
+import ProcedurePainScore from './ProcedurePainScore';
+import ProcedureVitals from './ProcedureVitals';
 
-const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
-  const diagRef = useRef(null);
-  const vitalRef = useRef(null);
-  const checklistRef = useRef(null);
-  const anesthesiaRef = useRef(null);
-  // get all save function from all component use ref
-  const handleSaveDiagnosisClick = () => {
-    diagRef.current?.handleSave();
-    vitalRef.current?.handleSave();
-    checklistRef.current?.handleSave();
-    anesthesiaRef.current?.handleSave();
-  };
+const PostProcedureCare = forwardRef<ProcedureStepHandle, any>(
+  ({ procedure, onDirtyChange }, ref) => {
+    const dispatch = useAppDispatch();
+    const medicationsRef = useRef<ProcedureStepHandle | null>(null);
+    const [medicationsDirty, setMedicationsDirty] = useState(false);
+    const { data: savedPostCare } = useGetProcedurePostCareQuery(procedure?.id, {
+      skip: !procedure?.id
+    });
+    const [savePostCare] = useSaveProcedurePostCareMutation();
+    const { form, setForm, isDirty, markSaved } = useStepForm(savedPostCare);
 
-  return (
-    <>
-      <Row gutter={15} className="r">
-        <Col md={12}>
-          {/* Procedure Care */}
-          <Row>
-            <Col md={24}>
-              <Diagnosis ref={diagRef} procedure={procedure} user={user}  />
-            </Col>
-          </Row>
+    useEffect(() => {
+      onDirtyChange?.(isDirty || medicationsDirty);
+    }, [isDirty, medicationsDirty, onDirtyChange]);
 
-          <AdministeredMedications
-            title="Administered Medications"
-            parentKey={procedure?.key}
-            filterFieldName="procedureKey"
-            medicationService={{
-              useGetQuery: useGetProcedureAdministeredMedicationsQuery,
-              useSaveMutation: useSaveProcedureAdministeredMedicationsMutation
-            }}
-            newMedicationTemplate={newApProcedureAdministeredMedications}
-          />
+    useImperativeHandle(ref, () => ({
+      save: async () => {
+        try {
+          if (isDirty || !savedPostCare?.id) {
+            await savePostCare({ id: procedure.id, body: form }).unwrap();
+            markSaved();
+          }
+          const medicationsSaved = await medicationsRef.current?.save();
+          if (medicationsSaved === false) return false;
+          dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+          return true;
+        } catch {
+          dispatch(notify({ msg: 'Save failed', sev: 'error' }));
+          return false;
+        }
+      }
+    }));
 
-          <Row>
-            <Col md={24}>
-              <PostProcedureAnesthesia ref={anesthesiaRef} procedure={procedure} user={user} />
-            </Col>
-          </Row>
-        </Col>
-        <Col md={12}>
-          <Row>
-            <Col md={24}>
-              <ProcedureVitals ref={vitalRef} procedure={procedure} user={user} />
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={24}>
-              <PostProcedureChecklist ref={checklistRef} procedure={procedure} user={user} />
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-
-      <div className="bt-div">
-        <div className="bt-right">
-          <MyButton onClick={handleSaveDiagnosisClick}>Save</MyButton>
-          <MyButton>Create Follow-up</MyButton>
-          <MyButton onClick={() => setActiveTab('5')}>Complete and Next</MyButton>
+    return (
+      <div className="perform-step-body">
+        <Diagnosis record={form} setRecord={setForm} />
+        <div className="perform-columns">
+          <div className="perform-step-body">
+            <ProcedureVitals record={form} setRecord={setForm} />
+            <ProcedurePainScore record={form} setRecord={setForm} />
+            <PostProcedureAnesthesia record={form} setRecord={setForm} />
+          </div>
+          <div className="perform-step-body">
+            <ProcedureMedications
+              ref={medicationsRef}
+              procedureId={procedure?.id}
+              onDirtyChange={setMedicationsDirty}
+            />
+            <PostProcedureChecklist record={form} setRecord={setForm} />
+          </div>
         </div>
       </div>
-    </>
-  );
-};
+    );
+  }
+);
 export default PostProcedureCare;

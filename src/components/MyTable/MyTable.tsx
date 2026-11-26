@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import {
   TableContainer,
   Table,
@@ -18,9 +18,13 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
+import dayjs from 'dayjs';
+import { DatePicker } from 'rsuite';
 import './styles.less';
 import { useSelector } from 'react-redux';
 import Translate from '../Translate';
+import TableExportButton from './TableExportButton';
+import { useGetConfig } from '@/utils/getConfig';
 
 export interface ColumnConfig {
   key: string;
@@ -32,12 +36,29 @@ export interface ColumnConfig {
   expandable?: boolean;
   isLink?: boolean;
   onLinkClick?: (rowData: any) => void;
+  /** Set false to leave this column out of PDF, Excel, and Word exports. */
+  exportable?: boolean;
+  /** Plain header used in exports when the visible title is not text. */
+  exportTitle?: string;
+  /** Plain cell value used in exports when the rendered cell is not text. */
+  exportValue?: (rowData: any, rowIndex?: number) => ReactNode;
+  searchable?: boolean;
+  /**
+   * 'select' renders a dropdown that applies on change (e.g. a status filter).
+   * 'date' renders the rsuite date picker, applied on change; the value is YYYY-MM-DD ('' when cleared).
+   */
+  searchType?: 'text' | 'select' | 'date';
+  searchOptions?: { label: string; value: string }[];
+  searchPlaceholder?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  onSearchSubmit?: (value?: string) => void;
 }
 
 interface MyTableProps {
   data: any[];
   columns: ColumnConfig[];
-  height?: number;
+  height?: number | string;
   loadingHeight?: number | string;
   loading?: boolean;
   onRowClick?: (rowData: any) => void;
@@ -53,7 +74,10 @@ interface MyTableProps {
   totalCount?: number;
   onPageChange?: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  dontTranslateData?: boolean
+  dontTranslateData?: boolean;
+  /** Shows PDF, Excel, and Word export when ENABLE_EXPORT_TABLE_DATA is on. */
+  enableExport?: boolean;
+  exportFileName?: string;
 }
 
 const MyTable: React.FC<MyTableProps> = ({
@@ -76,7 +100,8 @@ const MyTable: React.FC<MyTableProps> = ({
   onPageChange,
   onRowsPerPageChange,
   dontTranslateData,
-  ...props
+  enableExport = true,
+  exportFileName
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
@@ -84,10 +109,42 @@ const MyTable: React.FC<MyTableProps> = ({
   const isRTL = direction === 'RTL';
 
   const mode = useSelector((state: any) => state.ui.mode);
+  const lang = useSelector((state: any) => state.ui.lang);
+  const translations = useSelector((state: any) => state.ui.translations);
+  // <option> can only hold text, so translate labels here instead of using <Translate>
+  const translateText = (text: string) => {
+    const key = text.normalize('NFD').replace(/\s+/g, '_').toUpperCase();
+    return (lang && translations?.[lang]?.[key]) || text;
+  };
+  const auth = useSelector((state: any) => state.auth);
+  const currentUserId = useMemo(() => {
+    const rawUser = auth?.user;
+    const id = Number(rawUser?.id ?? rawUser?.userId ?? rawUser?.key ?? NaN);
+    return Number.isFinite(id) ? id : null;
+  }, [auth?.user]);
+  const facilityId = useMemo(() => {
+    const raw =
+      auth?.tenant?.selectedFacility?.id ?? auth?.selectedDepartment?.facilityId ?? null;
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }, [auth?.tenant?.selectedFacility, auth?.selectedDepartment]);
+  const { enabled: exportConfigEnabled } = useGetConfig({
+    key: 'ENABLE_EXPORT_TABLE_DATA',
+    userId: currentUserId,
+    facilityId,
+    skip: !enableExport
+  });
+  const showExport = enableExport && exportConfigEnabled;
   const processedColumns = columns.map(col => ({
     ...col,
     align: col.align ?? (isRTL ? 'right' : 'left')
   }));
+
+  // With filters in the header, swapping rows for a spinner collapses the column
+  // widths and the header inputs jump. Keep the old rows (dimmed) until data arrives.
+  const hasHeaderFilters = columns.some(col => col.searchable);
+  const keepRowsWhileLoading = !!loading && hasHeaderFilters && data?.length > 0;
+  const showLoadingRow = !!loading && !keepRowsWhileLoading;
 
   const visibleColumns = processedColumns.filter(col => !col.expandable);
   const expandableColumns = processedColumns.filter(col => col.expandable);
@@ -118,11 +175,20 @@ const MyTable: React.FC<MyTableProps> = ({
 
       {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}
       <Box className="my-table-content-wrapper">
+        {showExport && (
+          <TableExportButton
+            columns={columns}
+            data={data}
+            totalCount={totalCount}
+            fileName={exportFileName}
+            disabled={loading || !data?.length}
+          />
+        )}
         <TableContainer
           component={Paper}
           sx={{
             maxHeight: height,
-            height: loading ? loadingHeight ?? height : 'auto',
+            height: showLoadingRow ? loadingHeight ?? height : 'auto',
             overflowY: 'auto'
           }}
           className="my-table-container"
@@ -132,7 +198,7 @@ const MyTable: React.FC<MyTableProps> = ({
               <TableRow>
                 {expandableColumns.length > 0 && <TableCell />}
                 {visibleColumns.map(col => {
-                  const isSortable = !!onSortChange;
+                  const isSortable = !!onSortChange && col.key !== 'actions' && col.key !== 'icons';
                   const isActive = sortColumn === col.key;
                   const nextDirection = isActive && sortType === 'asc' ? 'desc' : 'asc';
 
@@ -150,8 +216,8 @@ const MyTable: React.FC<MyTableProps> = ({
                     <TableCell
                       key={col.key}
                       align={col.align}
-                      sx={{
-                        whiteSpace: 'nowrap',
+                        sx={{
+                        whiteSpace: col.searchable ? 'normal' : 'nowrap',
                         cursor: isSortable ? 'pointer' : 'default',
                         width: col.width ? `${col.width}px` : 'auto',
                         minWidth: col.width ? `${col.width}px` : 'auto'
@@ -160,38 +226,106 @@ const MyTable: React.FC<MyTableProps> = ({
                     >
                       <Box
                         display="flex"
-                        alignItems="center"
-                        justifyContent={
+                        flexDirection="column"
+                        alignItems={
                           col.align === 'center'
                             ? 'center'
                             : col.align === 'right'
                               ? 'flex-end'
                               : 'flex-start'
                         }
-                        sx={{
-                          gap: '4px',
-                          flexDirection:
-                            col.align === 'center'
-                              ? 'row'
-                              : isRTL
-                                ? 'row-reverse'
-                                : 'row'
-                        }}
+                        sx={{ gap: '6px' }}
                       >
-                        {typeof col.title === 'string' || typeof col.title === 'number' ? (
-                          <Translate>{col.title}</Translate>
-                        ) : (
-                          col.title
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          sx={{
+                            gap: '4px',
+                            flexDirection:
+                              col.align === 'center'
+                                ? 'row'
+                                : isRTL
+                                  ? 'row-reverse'
+                                  : 'row'
+                          }}
+                        >
+                          {typeof col.title === 'string' || typeof col.title === 'number' ? (
+                            <Translate>{col.title}</Translate>
+                          ) : (
+                            col.title
+                          )}
+                          {sortIcon}
+                        </Box>
+                        {col.searchable && col.searchType === 'select' && (
+                          <select
+                            className="my-table-header-search-input"
+                            value={col.searchValue ?? ''}
+                            onClick={event => event.stopPropagation()}
+                            onMouseDown={event => event.stopPropagation()}
+                            onChange={event => {
+                              col.onSearchChange?.(event.target.value);
+                              col.onSearchSubmit?.(event.target.value);
+                            }}
+                          >
+                            {(col.searchOptions ?? []).map(option => (
+                              <option key={option.value} value={option.value}>
+                                {translateText(option.label)}
+                              </option>
+                            ))}
+                          </select>
                         )}
-                        {sortIcon}
+                        {col.searchable && col.searchType === 'date' && (
+                          // Same rsuite calendar as MyInput, so it follows the app locale (not the browser's)
+                          <span
+                            className="my-table-header-search-date"
+                            onClick={event => event.stopPropagation()}
+                            onMouseDown={event => event.stopPropagation()}
+                            onKeyDown={event => event.stopPropagation()}
+                          >
+                            <DatePicker
+                              size="xs"
+                              block
+                              oneTap
+                              format="dd-MM-yyyy"
+                              placeholder={col.searchPlaceholder ?? 'Date'}
+                              placement="autoVerticalStart"
+                              value={col.searchValue ? dayjs(col.searchValue).toDate() : null}
+                              onChange={(value: Date | null) => {
+                                const day = value ? dayjs(value).format('YYYY-MM-DD') : '';
+                                col.onSearchChange?.(day);
+                                col.onSearchSubmit?.(day);
+                              }}
+                            />
+                          </span>
+                        )}
+                        {col.searchable && col.searchType !== 'select' && col.searchType !== 'date' && (
+                          <input
+                            className="my-table-header-search-input"
+                            value={col.searchValue ?? ''}
+                            placeholder={col.searchPlaceholder ?? 'Search'}
+                            onClick={event => event.stopPropagation()}
+                            onMouseDown={event => event.stopPropagation()}
+                            onChange={event => col.onSearchChange?.(event.target.value)}
+                            onKeyDown={event => {
+                              event.stopPropagation();
+                              if (event.key === 'Enter') {
+                                col.onSearchSubmit?.(event.currentTarget.value);
+                              }
+                            }}
+                          />
+                        )}
                       </Box>
                     </TableCell>
                   );
                 })}
               </TableRow>
             </TableHead>
-            <TableBody>
-              {loading ? (
+            <TableBody
+              sx={
+                keepRowsWhileLoading ? { opacity: 0.5, pointerEvents: 'none' } : undefined
+              }
+            >
+              {showLoadingRow ? (
                 <TableRow>
                   <TableCell
                     colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}

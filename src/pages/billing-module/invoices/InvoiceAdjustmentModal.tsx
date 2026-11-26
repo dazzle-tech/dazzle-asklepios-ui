@@ -20,6 +20,7 @@ import {
   projectInvoiceLineNetAfterChange,
   resolvePricingBreakdown
 } from './invoiceLinePricingUtils';
+import { roundMoney } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 import './styles.less';
 
 type AdjustmentKind = 'CREDIT_NOTE' | 'DEBIT_NOTE';
@@ -284,7 +285,7 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
         if (draft.action === 'PARTIAL_CREDIT') {
           const amount = Number(draft.amount ?? 0);
           const maxLineCredit = Number(line.netAmount ?? line.remainingAmount ?? 0);
-          return amount > 0.0001 && amount <= maxLineCredit + 0.0001;
+          return roundMoney(amount) > 0 && roundMoney(amount) <= roundMoney(maxLineCredit);
         }
 
         if (draft.action === 'REDUCE') {
@@ -397,7 +398,8 @@ const InvoiceAdjustmentModal: React.FC<InvoiceAdjustmentModalProps> = ({
   const totalAmount = kind === 'CREDIT_NOTE' ? selectedCreditTotal : selectedDebitTotal;
   const maxCredit = Number(summary?.outstandingBalance ?? 0);
   const creditExceedsOutstanding =
-    kind === 'CREDIT_NOTE' && selectedCreditOutstandingReduction > maxCredit + 0.0001;
+    kind === 'CREDIT_NOTE' &&
+    roundMoney(selectedCreditOutstandingReduction) > roundMoney(maxCredit);
   const creditWithinLimit =
     kind !== 'CREDIT_NOTE' ||
     (!creditExceedsOutstanding && creditWithinLineLimits);

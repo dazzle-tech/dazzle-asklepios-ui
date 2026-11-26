@@ -8,6 +8,7 @@ import BodyMeasurements from './BodyMeasurements';
 import PatientObservationsComplaints from './PatientObservationsComplaints';
 import PainAssessment from './PainAssessment';
 import AdditionalMeasurements from './AdditionalMeasurements';
+import RandomBloodSugar from './RandomBloodSugar';
 import { Patient, PatientEncounter } from '@/types/model-types-new';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
@@ -74,9 +75,10 @@ console.log(localPatient);
                 <VitalSigns
                   width="28vw"
                   disabled={isEncounterStatusClosed || readOnly || edit}
-                  patientId={Number(localPatient.id)}
+                  patientId={Number(patient?.id ?? localPatient.id)}
                   encounterId={Number(localEncounter.id)}
                   encounter={localEncounter}
+                  showHistoryButton
                 />
               </Col>
             </Row>
@@ -105,6 +107,17 @@ console.log(localPatient);
                 />
               </Col>
             </Row>
+            
+            <Row>
+            <Col md={24}>
+              <RandomBloodSugar
+                width="100%"
+                disabled={isEncounterStatusClosed || readOnly || edit}
+                patientId={Number(localPatient.id)}
+                encounterId={Number(localEncounter.id)}
+              />
+            </Col>
+          </Row>
             <Row>
               <Col md={24}>
                 <AdditionalMeasurements

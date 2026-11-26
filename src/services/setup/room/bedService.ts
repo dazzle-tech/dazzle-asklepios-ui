@@ -15,12 +15,17 @@ type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
 type BedStatus = 'READY' | 'OCCUPIED' | 'IN_CLEANING' | 'OUT_OF_SERVICE';
 
-type EncounterAssignToBed = {
-  id: number;
+/** Matches backend EncounterAssignToBedBedManagementVM from active-list/by-beds. */
+type EncounterAssignToBedBedManagementVM = {
+  id?: number;
   bedId: number;
-  roomId: number;
-  departmentId: number;
-  isActive: boolean;
+  encounterId?: number | null;
+  patientId?: number | null;
+  patientName?: string | null;
+  // legacy/entity-shaped fields (other callers may still receive nested objects)
+  roomId?: number;
+  departmentId?: number;
+  isActive?: boolean;
   patient?: {
     id: number;
     firstName?: string;
@@ -28,6 +33,7 @@ type EncounterAssignToBed = {
     thirdName?: string;
     lastName?: string;
   };
+  encounter?: { id?: number } | number | null;
 };
 
 const mapPaged = (response: Bed[], meta: any): PagedResult<Bed> => {
@@ -139,7 +145,7 @@ export const bedService = createApi({
     }),
 
     getActiveAssignmentsByBedIds: builder.query<
-      EncounterAssignToBed[],
+      EncounterAssignToBedBedManagementVM[],
       { bedIds: Id[] }
     >({
       query: ({ bedIds }) => ({

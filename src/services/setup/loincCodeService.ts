@@ -46,11 +46,22 @@ export const loincCodeService = createApi({
   tagTypes: ["LOINC"],
 
   endpoints: (builder) => ({
-    getAllLoinc: builder.query<PagedResult<LoincCode>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllLoinc: builder.query<
+      PagedResult<LoincCode>,
+      PagedParams & { category?: string; code?: string; description?: string }
+    >({
+      query: ({ page, size, sort = "id,asc", category, code, description }) => ({
         url: "/api/setup/loinc/all",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          category: category || undefined,
+          code: code?.trim() || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ["LOINC"],
@@ -94,6 +105,24 @@ export const loincCodeService = createApi({
       providesTags: ["LOINC"],
     }),
 
+    createLoinc: builder.mutation<LoincCode, { code: string; category: LioncCategory; description: string }>({
+      query: (body) => ({
+        url: "/api/setup/loinc",
+        method: "POST",
+            body,
+      }),
+      invalidatesTags: ["LOINC"],
+    }),
+
+    updateLoinc: builder.mutation<LoincCode, { id: number; code: string; category: LioncCategory; description: string }>({
+      query: ({ id, ...body }) => ({
+        url: `/api/setup/loinc/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["LOINC"],
+    }),
+
     importLoinc: builder.mutation<ImportResult, { file: File; overwrite?: boolean }>({
       query: ({ file, overwrite = false }) => {
         const formData = new FormData();
@@ -122,5 +151,7 @@ export const {
   useLazyGetLoincByCodeQuery,
   useGetLoincByDescriptionQuery,
   useLazyGetLoincByDescriptionQuery,
+  useCreateLoincMutation,
+  useUpdateLoincMutation,
   useImportLoincMutation,
 } = loincCodeService;

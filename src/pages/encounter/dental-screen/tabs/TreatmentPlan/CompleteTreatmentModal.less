@@ -1,0 +1,141 @@
+.ctm {
+  --ctm-border: var(--rs-border-primary, #e3e9f0);
+  --ctm-soft: var(--rs-bg-well, #f7f9fc);
+  --ctm-text: var(--rs-text-primary, #27364b);
+  --ctm-muted: var(--rs-text-secondary, #78869a);
+
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+  color: var(--ctm-text);
+
+  .ctm-tooth-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px 10px;
+    border: 1px solid var(--ctm-border);
+    border-radius: 7px;
+    background: var(--ctm-soft);
+    direction: ltr;
+    min-height: 190px;
+    justify-content: center;
+  }
+
+  .ctm-tooth-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ctm-tooth-art {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ctm-tooth-outer {
+    width: 56px;
+
+    .adult-outer-img,
+    svg {
+      width: 100%;
+      height: auto;
+      max-height: 96px;
+      object-fit: contain;
+    }
+  }
+
+  .ctm-tooth-occlusal {
+    width: 44px;
+
+    .adult-occlusal-img,
+    svg {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+  }
+
+  .ctm-tooth-label,
+  .ctm-tooth-scope {
+    max-width: 100%;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .ctm-tooth-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .ctm-tooth-chip {
+    padding: 2px 7px;
+    border: 1px solid var(--ctm-border);
+    border-radius: 5px;
+    background: var(--rs-bg-card, #fff);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .ctm-tooth-missing {
+    margin: 0;
+    color: var(--ctm-muted);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .ctm-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .ctm-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .ctm-summary-row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 10px;
+    font-size: 12px;
+
+    dt {
+      color: var(--ctm-muted);
+      font-weight: 500;
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .ctm-action {
+    width: 100%;
+    min-width: 0;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

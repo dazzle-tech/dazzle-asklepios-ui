@@ -21,6 +21,7 @@ import {
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import {
@@ -36,10 +37,16 @@ import {
 import {
   useEnumOptions
 } from '@/services/enumsApi';
+import {
+  useLazyGetUserByLoginQuery
+} from '@/services/userService';
 
 import {
   BILLING_PAYMENT_METHOD_LABELS,
-  mergeBillingPaymentMethodOptions
+  capPaymentToBalance,
+  isHeldForPreAuthorization,
+  mergeBillingPaymentMethodOptions,
+  roundMoney
 } from '@/pages/billing-module/accounting/utils/billingAccountingUtils';
 
 import {
@@ -58,21 +65,29 @@ import {
 } from '@/services/setup/serviceService';
 
 import {
+  useGetProceduresByDepartmentQuery
+} from '@/services/setup/procedure/procedureService';
+
+import {
   useGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
 
 import {
   useGetInsurancesByPatientQuery
 } from '@/services/patients/patientInsurancesService';
+import { useGetPayorByIdQuery } from '@/services/setup/payer/PayorService';
 
 import { extractPatientInsurancesList,
   getTodayServiceDate,
   resolveDisplayedEligibilityStatus,
+  resolveExpirationEligibilityStatus,
   shouldShowCheckEligibilityAction
 } from '../cchiMappers';
+import { useResolveCoverageContractQuery } from '@/services/setup/coverageManagement/coverageManagementService';
 import { patientInsuranceRecordId, pickDefaultPatientInsurance } from '../insuranceDisplayUtils';
 
 import { useCheckEligibilityMutation } from '@/services/waseel-integration/eligibilityService';
+import CoverageContractTermsSummary from './CoverageContractTermsSummary';
 
 import {
   useCreateAdvancePaymentMutation,
@@ -120,6 +135,7 @@ import type {
 import {
   notify
 } from '@/utils/uiReducerActions';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 
 import './style.less';
 
@@ -134,15 +150,25 @@ import {
   isDefaultServicePayable,
   isEncounterFullyPaid,
   resolveBillingItemName,
+  resolvePatientTaxAmount,
   resolvePatientOutstandingAmount,
   type PaymentReceiptData
 } from './paymentPreviewUtils';
+import {
+  defaultRowKey,
+  isBilledItemOfRow,
+  pricedResultKey,
+  summaryItemKey,
+  toDefaultBillingRequestItems,
+  type DefaultBillingItemType
+} from './defaultBillingRows';
 import { formatEnumString, extractEligibilityErrorMessage } from '@/utils';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
 type DefaultServiceRow = {
-  id: number;
-  serviceId: number;
+  id: string;
+  billingItemType: DefaultBillingItemType;
+  itemId: number;
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -162,6 +188,8 @@ type DefaultServiceRow = {
   requiresCashConfirmation?: boolean;
   cashUnitPrice?: number | null;
   notCoveredReason?: string | null;
+  preAuthorizationRequired?: boolean;
+  contractCashReason?: string | null;
 };
 
 type BillingFormState = {
@@ -456,21 +484,13 @@ const normalizeError =
       error ??
       {};
 
-    const traceId =
-      data?.traceId ??
-      data?.requestId ??
-      data?.correlationId;
-
-    const message =
+    return (
       data?.detail ??
       data?.message ??
       data?.title ??
       error?.error ??
-      'Unexpected billing error';
-
-    return traceId
-      ? `${message}\nTrace ID: ${traceId}`
-      : message;
+      'Unexpected billing error'
+    );
   };
 
 type MetricVariant =
@@ -584,6 +604,12 @@ const WorkflowStep = ({
   </div>
 );
 
+/** The backend marks a payer rejection (or an expired plan) with notEligible. */
+const isNotEligibleRejection = (
+  error: any
+): boolean =>
+  error?.data?.notEligible === true;
+
 const PatientPaymentInfo =
   forwardRef<
     PatientPaymentInfoHandle,
@@ -620,6 +646,27 @@ const PatientPaymentInfo =
         useAppSelector(
           state =>
             state.auth
+        );
+
+      const [
+        getCurrentUserByLogin,
+        { data: currentUser }
+      ] = useLazyGetUserByLoginQuery();
+
+      useEffect(() => {
+        if (authSlice?.user?.login) {
+          getCurrentUserByLogin(
+            authSlice.user.login
+          );
+        }
+      }, [
+        authSlice?.user?.login,
+        getCurrentUserByLogin
+      ]);
+
+      const canCollectZeroPayment =
+        Boolean(
+          currentUser?.canCollectZeroPayment
         );
 
       const patientId =
@@ -846,6 +893,14 @@ const PatientPaymentInfo =
         );
 
       const [
+        preAuthAlert,
+        setPreAuthAlert
+      ] =
+        useState<
+          { patientServiceProductId?: number | null; label: string }[] | null
+        >(null);
+
+      const [
         receiptPreview,
         setReceiptPreview
       ] =
@@ -870,6 +925,11 @@ const PatientPaymentInfo =
         setEligibilityRefreshKey
       ] =
         useState(0);
+
+      const [
+        pricingPreviewError,
+        setPricingPreviewError
+      ] = useState<string | null>(null);
 
       const [
         pricingPreviewLoading,
@@ -1164,6 +1224,74 @@ const PatientPaymentInfo =
           summary
         );
 
+      const { data: selectedPayor } =
+        useGetPayorByIdQuery(
+          Number(
+            patientInsurance?.payorId
+          ),
+          {
+            skip:
+              !patientInsurance?.payorId
+          }
+        );
+
+      const isWaseelCoverage =
+        selectedPayor?.isWaseelEnabled !==
+        false;
+
+      const resolvedPayerNphiesId =
+        (patientInsurance?.payerNphiesId
+          ? String(patientInsurance.payerNphiesId)
+          : '') ||
+        (selectedPayor?.nphiesId
+          ? String(selectedPayor.nphiesId)
+          : '');
+
+      const canResolveContract = Boolean(
+        formState.coverageType === 'INSURANCE' &&
+          patientInsurance?.id &&
+          patientInsurance.policyNumber &&
+          resolvedPayerNphiesId
+      );
+
+      const resolvedContract =
+        useResolveCoverageContractQuery(
+          {
+            payerNphiesId:
+              resolvedPayerNphiesId || undefined,
+            tpaName:
+              patientInsurance?.tpaName || undefined,
+            policyNumber:
+              patientInsurance?.policyNumber
+                ? String(patientInsurance.policyNumber)
+                : undefined,
+            className:
+              patientInsurance?.policyClassName || undefined,
+            encounterType:
+              localEncounter?.encounterType || undefined,
+            facilityId:
+              facilityId || undefined,
+            departmentId:
+              departmentId || undefined
+          },
+          { skip: !canResolveContract }
+        );
+
+      const contractDrivesShare =
+        String(
+          resolvedContract.data?.contract?.approvalCoverageCompany || ''
+        ).toUpperCase() === 'NPHIES';
+
+      const waitingForContractDecision =
+        canResolveContract &&
+        resolvedContract.isFetching &&
+        !resolvedContract.data;
+
+      const requiresWaseelEligibility =
+        isWaseelCoverage &&
+        !contractDrivesShare &&
+        !waitingForContractDecision;
+
       const {
         data: waseelCoverage,
         isFetching:
@@ -1181,10 +1309,13 @@ const PatientPaymentInfo =
           },
           {
             skip:
+              !requiresWaseelEligibility ||
               !patientId ||
               formState.coverageType !==
                 'INSURANCE' ||
-              !formState.patientInsuranceId
+              !formState.patientInsuranceId ||
+              selectedPayor?.isWaseelEnabled ===
+                false
           }
         );
 
@@ -1257,6 +1388,34 @@ const PatientPaymentInfo =
           }
         );
 
+      const proceduresResponse =
+        useGetProceduresByDepartmentQuery(
+          {
+            sourceId:
+              departmentId as number,
+            specialty:
+              encounterSpecialty,
+            page:
+              0,
+            size:
+              200,
+            sort:
+              'id,asc'
+          },
+          {
+            skip:
+              suppressDefaultServices ||
+              !departmentId ||
+              !encounterSpecialty,
+            refetchOnMountOrArgChange:
+              true
+          }
+        );
+
+      const isLoadingDefaultItems =
+        servicesResponse.isFetching ||
+        proceduresResponse.isFetching;
+
       const insuranceResponse =
         useGetInsurancesByPatientQuery(
           {
@@ -1283,6 +1442,12 @@ const PatientPaymentInfo =
         }
       ] =
         useCheckEligibilityMutation();
+
+      // Set when an eligibility check from this screen finds the patient not eligible.
+      const [
+        selfPayPromptReason,
+        setSelfPayPromptReason
+      ] = useState<string | null>(null);
 
       const enumPaymentMethods =
         useEnumOptions(
@@ -1341,11 +1506,16 @@ const PatientPaymentInfo =
       const displayedEligibilityStatus =
         useMemo(
           () =>
-            resolveDisplayedEligibilityStatus(
-              patientInsurance ??
-                null
-            ),
+            contractDrivesShare
+              ? resolveExpirationEligibilityStatus(
+                  patientInsurance ?? null
+                )
+              : resolveDisplayedEligibilityStatus(
+                  patientInsurance ??
+                    null
+                ),
           [
+            contractDrivesShare,
             patientInsurance
           ]
         );
@@ -1353,6 +1523,7 @@ const PatientPaymentInfo =
       const showCheckEligibilityButton =
         useMemo(
           () =>
+            requiresWaseelEligibility &&
             shouldShowCheckEligibilityAction(
               patientInsurance ??
                 null
@@ -1360,6 +1531,7 @@ const PatientPaymentInfo =
             !isLocked &&
             !isViewOnlyMode,
           [
+            requiresWaseelEligibility,
             patientInsurance,
             isLocked,
             isViewOnlyMode
@@ -1436,7 +1608,9 @@ const PatientPaymentInfo =
                 insuranceShare: null,
                 requiresCashConfirmation: false,
                 cashUnitPrice: null,
-                notCoveredReason: null
+                notCoveredReason: null,
+                preAuthorizationRequired: false,
+                contractCashReason: null
               }))
             );
             setEligibilityRefreshKey(previous => previous + 1);
@@ -1458,13 +1632,31 @@ const PatientPaymentInfo =
                     : 'info'
               })
             );
+
+            if (result.eligible === false) {
+              setSelfPayPromptReason(
+                result.notEligibleReason ||
+                  'The patient is not eligible.'
+              );
+            }
           } catch (error: any) {
+            const message =
+              extractEligibilityErrorMessage(error);
+
             dispatch(
               notify({
-                msg: extractEligibilityErrorMessage(error),
+                msg: message,
                 sev: 'error'
               })
             );
+
+            if (
+              isNotEligibleRejection(error)
+            ) {
+              setSelfPayPromptReason(
+                message
+              );
+            }
           }
         }, [
           patientId,
@@ -1482,20 +1674,19 @@ const PatientPaymentInfo =
             servicesArePrepared
         );
 
-      const billedSourceIds =
+      const billedRowKeys =
         useMemo(
           () =>
             new Set(
               (summary.items ?? [])
                 .map(
-                  item =>
-                    item.sourceId
+                  summaryItemKey
                 )
                 .filter(
                   (
-                    id
-                  ): id is number =>
-                    id != null
+                    key
+                  ): key is string =>
+                    key != null
                 )
             ),
           [
@@ -1518,6 +1709,57 @@ const PatientPaymentInfo =
             insuranceResponse.data
           ]
         );
+
+      const applyCoverageChange =
+        useCallback(
+          (updatedForm: BillingFormState) => {
+            userTouchedCoverageRef.current =
+              true;
+            coverageHydratedEncounterIdRef.current =
+              encounterId;
+
+            const nextCoverage =
+              updatedForm.coverageType;
+
+            const pickedInsuranceId =
+              nextCoverage ===
+                'INSURANCE' &&
+              !updatedForm.patientInsuranceId
+                ? patientInsuranceRecordId(
+                    pickDefaultPatientInsurance(
+                      patientInsurances
+                    )
+                  )
+                : null;
+
+            setFormState({
+              ...updatedForm,
+              patientInsuranceId:
+                nextCoverage === 'INSURANCE'
+                  ? updatedForm.patientInsuranceId ??
+                    pickedInsuranceId
+                  : null
+            });
+          },
+          [
+            encounterId,
+            patientInsurances
+          ]
+        );
+
+      // Same as picking "Self Pay" in Coverage Type.
+      const handleSwitchToSelfPay =
+        useCallback(() => {
+          setSelfPayPromptReason(null);
+          applyCoverageChange({
+            ...formState,
+            coverageType:
+              'SELF_PAY'
+          });
+        }, [
+          applyCoverageChange,
+          formState
+        ]);
 
       useEffect(() => {
         if (
@@ -1888,88 +2130,115 @@ const PatientPaymentInfo =
       useEffect(() => {
         if (
           suppressDefaultServices ||
-          !servicesResponse.data
+          !servicesResponse.data ||
+          proceduresResponse.isFetching
         ) {
           return;
         }
 
-        const list =
-          extractResponseList(
+        const defaultItems: Array<{
+          billingItemType: DefaultBillingItemType;
+          source: any;
+        }> = [
+          ...extractResponseList(
             servicesResponse.data
-          );
+          ).map(service => ({
+            billingItemType:
+              'SERVICE' as const,
+            source: service
+          })),
+          ...extractResponseList(
+            proceduresResponse.data
+          ).map(procedure => ({
+            billingItemType:
+              'PROCEDURE' as const,
+            source: procedure
+          }))
+        ];
 
         const mapped:
         DefaultServiceRow[] =
-          list.map(
+          defaultItems.map(
             (
-              service: any,
+              {
+                billingItemType,
+                source: service
+              },
               index: number
-            ) => ({
-              id:
+            ) => {
+              const itemId =
                 toNumber(
                   service?.id ??
                     service?.serviceId
-                ),
+                );
 
-              serviceId:
-                toNumber(
-                  service?.id ??
-                    service?.serviceId
-                ),
+              return {
+                id:
+                  defaultRowKey({
+                    billingItemType,
+                    itemId
+                  }),
 
-              serviceType:
-                String(
-                  service?.serviceType ??
-                    service?.type ??
-                    service?.category ??
-                    'SERVICE'
-                ),
+                billingItemType,
 
-              serviceName:
-                String(
-                  service?.name ??
-                    service?.serviceName ??
-                    ''
-                ),
+                itemId,
 
-              selected:
-                service?.selected == null
-                  ? true
-                  : Boolean(
-                      service.selected
-                    ),
+                serviceType:
+                  billingItemType === 'PROCEDURE'
+                    ? 'PROCEDURE'
+                    : String(
+                        service?.serviceType ??
+                          service?.type ??
+                          service?.category ??
+                          'SERVICE'
+                      ),
 
-              isExempted:
-                Boolean(
-                  service?.isExempted
-                ),
+                serviceName:
+                  String(
+                    service?.name ??
+                      service?.serviceName ??
+                      ''
+                  ),
 
-              quantity:
-                1,
+                selected:
+                  service?.selected == null
+                    ? true
+                    : Boolean(
+                        service.selected
+                      ),
 
-              sequence:
-                index + 1,
+                isExempted:
+                  Boolean(
+                    service?.isExempted
+                  ),
 
-              setupPrice:
-                toNumber(
-                  service?.price
-                ) ?? null,
+                quantity:
+                  1,
 
-              calculatedPrice:
-                null,
+                sequence:
+                  index + 1,
 
-              priceSource:
-                null,
+                setupPrice:
+                  toNumber(
+                    service?.price
+                  ) ?? null,
 
-              priceListItemCode:
-                null,
+                calculatedPrice:
+                  null,
 
-              patientShare:
-                null,
+                priceSource:
+                  null,
 
-              insuranceShare:
-                null
-            })
+                priceListItemCode:
+                  null,
+
+                patientShare:
+                  null,
+
+                insuranceShare:
+                  null
+              };
+            }
           );
 
         setDefaultServiceRows(
@@ -1978,7 +2247,7 @@ const PatientPaymentInfo =
               new Map(
                 previous.map(
                   row => [
-                    row.serviceId,
+                    row.id,
                     row
                   ]
                 )
@@ -1988,7 +2257,7 @@ const PatientPaymentInfo =
               row => {
                 const old =
                   oldMap.get(
-                    row.serviceId
+                    row.id
                   );
 
                 return old
@@ -2010,7 +2279,9 @@ const PatientPaymentInfo =
         );
       }, [
         suppressDefaultServices,
-        servicesResponse.data
+        servicesResponse.data,
+        proceduresResponse.data,
+        proceduresResponse.isFetching
       ]);
 
       useEffect(() => {
@@ -2046,7 +2317,7 @@ const PatientPaymentInfo =
           return;
         }
 
-        const billedBySourceId =
+        const billedByRowKey =
           new Map(
             summary.items
               .filter(
@@ -2056,7 +2327,7 @@ const PatientPaymentInfo =
               )
               .map(
                 item => [
-                  item.sourceId as number,
+                  summaryItemKey(item),
                   item
                 ]
               )
@@ -2067,8 +2338,8 @@ const PatientPaymentInfo =
             previous.map(
               row => {
                 const billed =
-                  billedBySourceId.get(
-                    row.serviceId
+                  billedByRowKey.get(
+                    row.id
                   );
 
                 if (
@@ -2118,7 +2389,7 @@ const PatientPaymentInfo =
               row => {
                 if (
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 ) {
@@ -2217,6 +2488,27 @@ const PatientPaymentInfo =
       const hasUncoveredDefaultServices =
         uncoveredDefaultServices.length > 0;
 
+      // Services the coverage contract holds for pre-authorization: nothing is collected now.
+      const preAuthorizationServiceNames =
+        useMemo(() => {
+          if (!isInsurance) {
+            return [];
+          }
+
+          const rowsToCheck =
+            payableSelectedRows.length > 0
+              ? payableSelectedRows
+              : selectedRows;
+
+          return rowsToCheck
+            .filter(row => row.preAuthorizationRequired)
+            .map(row => row.serviceName);
+        }, [
+          isInsurance,
+          payableSelectedRows,
+          selectedRows
+        ]);
+
       const summaryIsCalculated =
         useMemo(
           () =>
@@ -2254,8 +2546,8 @@ const PatientPaymentInfo =
               items:
                 rowsToPrice.map(
                   row => ({
-                    serviceId:
-                      row.serviceId,
+                    rowKey:
+                      row.id,
                     quantity:
                       row.quantity,
                     isExempted:
@@ -2318,6 +2610,29 @@ const PatientPaymentInfo =
         >();
 
       const lastConfirmPayZeroNowRef = useRef(false);
+
+      /*
+       * The pre-authorization alert must be closed by the user (the close is saved).
+       * Closing the walk-in window waits until then, otherwise the alert unmounts unseen.
+       */
+      const preAuthAlertPendingRef = useRef(false);
+      const afterPreAuthAlertRef = useRef<(() => void) | null>(null);
+
+      const finishAfterPreAuthAlert = (finish: () => void) => {
+        if (preAuthAlertPendingRef.current) {
+          afterPreAuthAlertRef.current = finish;
+          return;
+        }
+        finish();
+      };
+
+      const handlePreAuthAlertClosed = () => {
+        setPreAuthAlert(null);
+        preAuthAlertPendingRef.current = false;
+        const finish = afterPreAuthAlertRef.current;
+        afterPreAuthAlertRef.current = null;
+        finish?.();
+      };
 
       useEffect(() => {
         lastPricingPreviewKeyRef.current =
@@ -2557,26 +2872,14 @@ const PatientPaymentInfo =
                                 previewContext.patientInsuranceId
                               )
                             : null,
-                        items:
-                          previewContext.rowsToPrice.map(
-                            (
-                              row,
-                              index
-                            ) => ({
-                              serviceId:
-                                row.serviceId,
-                              quantity:
-                                row.quantity,
-                              sequence:
-                                index +
-                                1,
-                              isExempted:
-                                row.isExempted
-                            })
-                          )
+                        ...toDefaultBillingRequestItems(
+                          previewContext.rowsToPrice
+                        )
                       }
                     }
                   ).unwrap();
+
+                setPricingPreviewError(null);
 
                 if (
                   result.coverageType ===
@@ -2616,11 +2919,14 @@ const PatientPaymentInfo =
                   });
                 }
 
-                const pricedByServiceId =
+                const pricedByRowKey =
                   new Map(
-                    result.items.map(
+                    [
+                      ...result.items,
+                      ...(result.procedures ?? [])
+                    ].map(
                       item => [
-                        item.serviceId,
+                        pricedResultKey(item),
                         item
                       ]
                     )
@@ -2631,8 +2937,8 @@ const PatientPaymentInfo =
                     previous.map(
                       row => {
                         const priced =
-                          pricedByServiceId.get(
-                            row.serviceId
+                          pricedByRowKey.get(
+                            row.id
                           );
 
                         if (
@@ -2663,6 +2969,10 @@ const PatientPaymentInfo =
                             cashUnitPrice:
                               null,
                             notCoveredReason:
+                              null,
+                            preAuthorizationRequired:
+                              false,
+                            contractCashReason:
                               null
                           };
                         }
@@ -2701,13 +3011,27 @@ const PatientPaymentInfo =
                             null,
                           notCoveredReason:
                             priced.notCoveredReason ??
+                            null,
+                          preAuthorizationRequired:
+                            Boolean(
+                              priced.preAuthorizationRequired
+                            ),
+                          contractCashReason:
+                            priced.contractCashReason ??
                             null
                         };
                       }
                     )
                 );
-              } catch {
-                // Keep setup prices when price-list preview is unavailable.
+              } catch (error: any) {
+                // Keep setup prices when price-list preview is unavailable, and say so:
+                // without a preview the whole amount shows on the patient.
+                setPricingPreviewError(
+                  error?.data?.detail ??
+                    error?.data?.message ??
+                    error?.data?.title ??
+                    'Pricing preview failed.'
+                );
               } finally {
                 setPricingPreviewLoading(
                   false
@@ -2807,15 +3131,27 @@ const PatientPaymentInfo =
           summary
         );
 
+      const displayedPatientDue =
+        Math.round(
+          (Number(
+            previewTotals.patientOutstandingAmount
+          ) +
+            Number.EPSILON) *
+            100
+        ) / 100;
+
       const hasPayableBalance =
         resolvedOutstanding > 0 ||
-        previewTotals.patientOutstandingAmount >
-          0;
+        displayedPatientDue > 0;
+
+      const patientDueIsZero =
+        !amountsLoading &&
+        displayedPatientDue <= 0;
 
       const defaultServicesLoaded =
         skipDefaultServicesForReview ||
         (!followUpReviewDecisionPending &&
-          !servicesResponse.isFetching &&
+          !isLoadingDefaultItems &&
           departmentId != null);
 
       const hasNoDefaultServices =
@@ -2835,7 +3171,7 @@ const PatientPaymentInfo =
 
       const paymentFieldsDisabled =
         isLocked ||
-        !hasPayableBalance ||
+        patientDueIsZero ||
         formState.payZeroNow;
 
       useEffect(() => {
@@ -3032,7 +3368,12 @@ const PatientPaymentInfo =
 
                 patientShare: toNumber(
                   item.patientResponsibilityAmount
-                )
+                ),
+
+                taxAmount:
+                  resolvePatientTaxAmount(
+                    item
+                  )
               })
             ),
 
@@ -3079,7 +3420,7 @@ const PatientPaymentInfo =
           if (
             onReceiptClosed
           ) {
-            onReceiptClosed();
+            finishAfterPreAuthAlert(onReceiptClosed);
           }
         };
 
@@ -3149,18 +3490,7 @@ const PatientPaymentInfo =
             !hasNothingToBill
           ) {
             if (
-              resolvedOutstanding <=
-                0 &&
-              previewTotals.patientOutstandingAmount <=
-                0
-            ) {
-              reject(
-                'services',
-                'All services are already paid for this encounter'
-              );
-            }
-
-            if (
+              !patientDueIsZero &&
               !formState.payZeroNow
             ) {
               if (
@@ -3183,8 +3513,8 @@ const PatientPaymentInfo =
               }
 
               if (
-                formState.paymentAmount >
-                previewTotals.patientOutstandingAmount
+                roundMoney(formState.paymentAmount) >
+                roundMoney(previewTotals.patientOutstandingAmount)
               ) {
                 reject(
                   'paymentAmount',
@@ -3194,6 +3524,7 @@ const PatientPaymentInfo =
             }
 
             if (
+              !patientDueIsZero &&
               !formState.payZeroNow &&
               formState.paymentAmount < 0
             ) {
@@ -3235,9 +3566,28 @@ const PatientPaymentInfo =
             Object.keys(details)
               .length > 0
           ) {
+            const messages =
+              Object.values(
+                details
+              )
+                .flat()
+                .map(
+                  item =>
+                    String(
+                      item?.message ??
+                        ''
+                    )
+                )
+                .filter(
+                  Boolean
+                );
+
             dispatch(
               notify({
                 msg:
+                  messages.join(
+                    '\n'
+                  ) ||
                   'Please review the billing fields.',
 
                 sev:
@@ -3250,6 +3600,27 @@ const PatientPaymentInfo =
 
           return true;
         };
+
+      const rememberPreAuthorization = (result: any) => {
+        const message = String(result?.message ?? '');
+        if (!message.toLowerCase().includes('pre-authorization')) {
+          return;
+        }
+        const items = (result?.items ?? [])
+          .filter((item: any) =>
+            String(item?.billingResult?.message ?? message)
+              .toLowerCase()
+              .includes('pre-authorization')
+          )
+          .map((item: any) => ({
+            patientServiceProductId: item.patientServiceProductId ?? null,
+            label:
+              defaultServiceRows.find(row => row.itemId === item.serviceId)?.serviceName ||
+              `Service ${item.serviceId}`
+          }));
+        preAuthAlertPendingRef.current = true;
+        setPreAuthAlert(items.length ? items : [{ label: 'Service' }]);
+      };
 
       const prepareServices =
         async () => {
@@ -3333,6 +3704,7 @@ const PatientPaymentInfo =
                 result.message ??
                   'Encounter billing completed. No default services to bill.'
               );
+              rememberPreAuthorization(result);
 
               await refetchSummary();
 
@@ -3355,9 +3727,108 @@ const PatientPaymentInfo =
               );
             }
 
-            throw new Error(
-              'All services are already paid for this encounter.'
+            const zeroDueBody:
+            PrepareDefaultServicesRequest = {
+              patientId,
+
+              facilityId,
+
+              currency:
+                summary.currency ??
+                facilityCurrency,
+
+              coverageType:
+                formState.coverageType,
+
+              patientInsuranceId:
+                isInsurance
+                  ? formState.patientInsuranceId
+                  : null,
+
+              ...toDefaultBillingRequestItems(
+                selectedRows
+              ),
+
+              requestId:
+                makeRequestId(
+                  'PREPARE-DEFAULT-SERVICES'
+                ),
+
+              payZeroNow:
+                null,
+
+              acceptUncoveredAsCash:
+                isInsurance
+                  ? true
+                  : null
+            };
+
+            const zeroDueResult =
+              await prepareDefaultServices(
+                {
+                  encounterId,
+                  body:
+                    zeroDueBody
+                }
+              ).unwrap();
+
+            const zeroDueFailed =
+              (zeroDueResult.items ??
+                [])
+                .filter(
+                  item =>
+                    !item.billingResult
+                      ?.processed
+                );
+
+            if (
+              zeroDueBody.items
+                .length >
+                0 &&
+              zeroDueFailed.length >
+                0
+            ) {
+              throw new Error(
+                zeroDueFailed
+                  .map(
+                    item =>
+                      `Service ${item.serviceId}: ${
+                        item.billingResult
+                          ?.message ??
+                        'Not processed'
+                      }`
+                  )
+                  .join('\n') ||
+                  'Some services were not processed'
+              );
+            }
+
+            setPrepareResultMessage(
+              zeroDueResult.message ??
+                'No patient amount is due. Coverage was saved and the visit is open.'
             );
+            rememberPreAuthorization(zeroDueResult);
+
+            await refetchSummary();
+
+            return {
+              ids:
+                zeroDueResult.items
+                  ?.map(
+                    item =>
+                      item.patientServiceProductId
+                  )
+                  .filter(
+                    (
+                      id
+                    ): id is number =>
+                      id != null
+                  ) ??
+                [],
+              message:
+                zeroDueResult.message ??
+                'No patient amount is due. Coverage was saved and the visit is open.'
+            };
           }
 
           const body:
@@ -3378,25 +3849,9 @@ const PatientPaymentInfo =
                 ? formState.patientInsuranceId
                 : null,
 
-            items:
-              payableSelectedRows.map(
-                (
-                  row,
-                  index
-                ) => ({
-                  serviceId:
-                    row.serviceId,
-
-                  quantity:
-                    row.quantity,
-
-                  sequence:
-                    index + 1,
-
-                  isExempted:
-                    row.isExempted
-                })
-              ),
+            ...toDefaultBillingRequestItems(
+              payableSelectedRows
+            ),
 
             requestId:
               makeRequestId(
@@ -3422,8 +3877,25 @@ const PatientPaymentInfo =
               }
             ).unwrap();
 
+          const preparedItems = [
+            ...result.items.map(
+              item => ({
+                ...item,
+                label:
+                  `Service ${item.serviceId}`
+              })
+            ),
+            ...(result.procedures ?? []).map(
+              procedure => ({
+                ...procedure,
+                label:
+                  `Procedure ${procedure.procedureId}`
+              })
+            )
+          ];
+
           const successful =
-            result.items
+            preparedItems
               .filter(
                 item =>
                   item.billingResult
@@ -3440,10 +3912,10 @@ const PatientPaymentInfo =
 
           if (
             successful.length !==
-            result.items.length
+            preparedItems.length
           ) {
             const failed =
-              result.items.filter(
+              preparedItems.filter(
                 item =>
                   !item.billingResult
                     ?.processed
@@ -3453,7 +3925,7 @@ const PatientPaymentInfo =
               failed
                 .map(
                   item =>
-                    `Service ${item.serviceId}: ${
+                    `${item.label}: ${
                       item.billingResult
                         ?.message ??
                       'Not processed'
@@ -3467,11 +3939,19 @@ const PatientPaymentInfo =
             );
           }
 
+          // Services held for pre-authorization are not paid now.
           const ids =
-            successful.map(
-              item =>
-                item.patientServiceProductId
-            );
+            successful
+              .filter(
+                item =>
+                  !isHeldForPreAuthorization(
+                    item.billingResult
+                  )
+              )
+              .map(
+                item =>
+                  item.patientServiceProductId
+              );
 
           setPreparedPspIds(
             ids
@@ -3481,6 +3961,7 @@ const PatientPaymentInfo =
             result.message ??
               'Default services prepared and priced successfully.'
           );
+          rememberPreAuthorization(result);
 
           await refetchSummary();
 
@@ -3525,7 +4006,7 @@ const PatientPaymentInfo =
           }
 
           const paymentAmount =
-            Math.min(
+            capPaymentToBalance(
               formState.paymentAmount,
               outstanding
             );
@@ -3774,15 +4255,20 @@ const PatientPaymentInfo =
                     previous + 1
                 );
 
-                dispatch(
-                  notify({
-                    msg:
-                      preparedMessage ??
-                      'Encounter billing completed. No default services to bill.',
-                    sev:
-                      'success'
-                  })
-                );
+                if (
+                  !String(preparedMessage ?? '')
+                    .toLowerCase()
+                    .includes('pre-authorization')
+                ) {
+                  dispatch(
+                    notify({
+                      msg:
+                        preparedMessage ??
+                        'Encounter billing completed. No default services to bill.',
+                      sev: 'success'
+                    })
+                  );
+                }
 
                 if (
                   onPaymentSaved
@@ -3790,19 +4276,15 @@ const PatientPaymentInfo =
                   await onPaymentSaved();
                 }
 
-                if (
-                  onPaymentDeferred
-                ) {
-                  onPaymentDeferred();
-                } else if (
-                  onNothingToPay
-                ) {
-                  onNothingToPay();
-                } else if (
-                  onReceiptClosed
-                ) {
-                  onReceiptClosed();
-                }
+                finishAfterPreAuthAlert(() => {
+                  if (onPaymentDeferred) {
+                    onPaymentDeferred();
+                  } else if (onNothingToPay) {
+                    onNothingToPay();
+                  } else if (onReceiptClosed) {
+                    onReceiptClosed();
+                  }
+                });
 
                 return true;
               } catch (
@@ -3821,21 +4303,6 @@ const PatientPaymentInfo =
 
                 return false;
               }
-            }
-
-            if (
-              !hasPayableBalance
-            ) {
-              dispatch(
-                notify({
-                  msg:
-                    'All services for this encounter are already paid.',
-                  sev:
-                    'info'
-                })
-              );
-
-              return false;
             }
 
             try {
@@ -3874,9 +4341,34 @@ const PatientPaymentInfo =
                 ? payableIds
                 : ids;
 
+            const refreshedOutstanding =
+              resolvePatientOutstandingAmount(
+                billingSummary
+              );
+
+            const confirmedPatientDueIsZero =
+              Math.round(
+                (Number(
+                  previewTotals.patientOutstandingAmount
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0 &&
+              Math.round(
+                (Number(
+                  refreshedOutstanding
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0;
+
             if (
               paymentTargetIds.length ===
-              0
+                0 &&
+              !confirmedPatientDueIsZero &&
+              !formState.payZeroNow
             ) {
               dispatch(
                 notify({
@@ -3889,40 +4381,13 @@ const PatientPaymentInfo =
               return false;
             }
 
-            const refreshedOutstanding =
-              resolvePatientOutstandingAmount(
-                billingSummary
-              );
-
-            const effectiveOutstanding =
-              Math.max(
-                refreshedOutstanding,
-                previewTotals.patientOutstandingAmount,
-                formState.payZeroNow
-                  ? 0
-                  : formState.paymentAmount
-              );
-
-            if (
-              effectiveOutstanding <= 0 &&
-              !formState.payZeroNow &&
-              paymentTargetIds.length === 0
-            ) {
-              dispatch(
-                notify({
-                  msg:
-                    'All services for this encounter are already paid.',
-                  sev: 'info'
-                })
-              );
-
-              return false;
-            }
-
             const payZeroNow =
               formState.payZeroNow;
 
-            if (payZeroNow) {
+            if (
+              payZeroNow ||
+              confirmedPatientDueIsZero
+            ) {
               setSummaryRefreshKey(
                 previous =>
                   previous + 1
@@ -3937,11 +4402,13 @@ const PatientPaymentInfo =
               dispatch(
                 notify({
                   msg:
-                    preparedMessage ??
-                    `Services prepared. ${formatMoney(
-                      remainingAmount,
-                      activeCurrency
-                    )} remains to be collected from the patient.`,
+                    confirmedPatientDueIsZero
+                      ? 'No patient amount is due. Coverage was saved and the visit is open.'
+                      : preparedMessage ??
+                        `Services prepared. ${formatMoney(
+                          remainingAmount,
+                          activeCurrency
+                        )} remains to be collected from the patient.`,
                   sev: 'success'
                 })
               );
@@ -3952,23 +4419,46 @@ const PatientPaymentInfo =
                 await onPaymentSaved();
               }
 
-              if (
-                onPaymentDeferred
-              ) {
-                onPaymentDeferred();
-              } else if (
-                onNothingToPay
-              ) {
-                onNothingToPay();
-              } else               if (
-                onReceiptClosed
-              ) {
-                onReceiptClosed();
-              }
+              finishAfterPreAuthAlert(() => {
+                if (onPaymentDeferred) {
+                  onPaymentDeferred();
+                } else if (onNothingToPay) {
+                  onNothingToPay();
+                } else if (onReceiptClosed) {
+                  onReceiptClosed();
+                }
+              });
 
               lastConfirmPayZeroNowRef.current = true;
 
               return true;
+            }
+
+            if (
+              Math.round(
+                (Number(
+                  previewTotals.patientOutstandingAmount
+                ) +
+                  Number.EPSILON) *
+                  100
+              ) / 100 <=
+                0 &&
+              refreshedOutstanding >
+                0
+            ) {
+              dispatch(
+                notify({
+                  msg:
+                    `Patient amount due is ${formatMoney(
+                      refreshedOutstanding,
+                      activeCurrency
+                    )}. Select a payment method to continue.`,
+                  sev:
+                    'warning'
+                })
+              );
+
+              return false;
             }
 
             const creditCardCharge =
@@ -4293,7 +4783,7 @@ const PatientPaymentInfo =
 
       const updateServiceRow =
         (
-          serviceId: number,
+          rowKey: string,
           partial:
             Partial<DefaultServiceRow>
         ) => {
@@ -4322,8 +4812,8 @@ const PatientPaymentInfo =
               previous.map(
                 row => {
                   if (
-                    row.serviceId !==
-                    serviceId
+                    row.id !==
+                    rowKey
                   ) {
                     return shouldRefreshPricing
                       ? {
@@ -4430,7 +4920,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       selected:
                         checked
@@ -4440,7 +4930,7 @@ const PatientPaymentInfo =
                 disabled={
                   areServicesLocked ||
                   !isDefaultServicePayable(
-                    row.serviceId,
+                    row,
                     summary
                   )
                 }
@@ -4692,7 +5182,7 @@ const PatientPaymentInfo =
                   checked
                 ) =>
                   updateServiceRow(
-                    row.serviceId,
+                    row.id,
                     {
                       isExempted:
                         checked
@@ -4728,14 +5218,16 @@ const PatientPaymentInfo =
                 DefaultServiceRow
             ) => {
               const isPrepared =
-                billedSourceIds.has(
-                  row.serviceId
+                billedRowKeys.has(
+                  row.id
                 );
               const billedItem =
                 (summary.items ?? []).find(
                   item =>
-                    item.sourceId ===
-                    row.serviceId
+                    isBilledItemOfRow(
+                      item,
+                      row
+                    )
                 );
               const lineDue =
                 billedItem
@@ -5172,15 +5664,21 @@ const PatientPaymentInfo =
                   } =
                     await prepareServices();
 
-                  dispatch(
-                    notify({
-                      msg:
-                        preparedMessage,
+                  if (
+                    !String(preparedMessage ?? '')
+                      .toLowerCase()
+                      .includes('pre-authorization')
+                  ) {
+                    dispatch(
+                      notify({
+                        msg:
+                          preparedMessage,
 
-                      sev:
-                        'success'
-                    })
-                  );
+                        sev:
+                          'success'
+                      })
+                    );
+                  }
                 } catch (
                   error: any
                 ) {
@@ -5216,6 +5714,13 @@ const PatientPaymentInfo =
                 if (
                   isReadOnly
                 ) {
+                  return;
+                }
+
+                if (
+                  patientDueIsZero
+                ) {
+                  await handleConfirm();
                   return;
                 }
 
@@ -5539,35 +6044,7 @@ const PatientPaymentInfo =
               record={
                 formState
               }
-              setRecord={(updatedForm: BillingFormState) => {
-                userTouchedCoverageRef.current =
-                  true;
-                coverageHydratedEncounterIdRef.current =
-                  encounterId;
-
-                const nextCoverage =
-                  updatedForm.coverageType;
-
-                const pickedInsuranceId =
-                  nextCoverage ===
-                    'INSURANCE' &&
-                  !updatedForm.patientInsuranceId
-                    ? patientInsuranceRecordId(
-                        pickDefaultPatientInsurance(
-                          patientInsurances
-                        )
-                      )
-                    : null;
-
-                setFormState({
-                  ...updatedForm,
-                  patientInsuranceId:
-                    nextCoverage === 'INSURANCE'
-                      ? updatedForm.patientInsuranceId ??
-                        pickedInsuranceId
-                      : null
-                });
-              }}
+              setRecord={applyCoverageChange}
               disabled={
                 isLocked
               }
@@ -5809,6 +6286,32 @@ const PatientPaymentInfo =
                   ) : null}
                 </div>
 
+                {isInsurance ? (
+                  <CoverageContractTermsSummary
+                    insurance={
+                      displayedPatientInsurance ??
+                      patientInsurance ??
+                      null
+                    }
+                    encounterType={
+                      localEncounter?.encounterType
+                    }
+                    facilityId={facilityId}
+                    departmentId={departmentId}
+                    cashServices={selectedRows.filter(
+                      row =>
+                        row.contractCashReason
+                    )}
+                    pricingError={pricingPreviewError}
+                    isWaseelEnabled={
+                      selectedPayor?.isWaseelEnabled
+                    }
+                    payerNphiesId={
+                      selectedPayor?.nphiesId
+                    }
+                  />
+                ) : null}
+
                 <MyInput
                   column
                   disabled
@@ -5826,7 +6329,8 @@ const PatientPaymentInfo =
               </div>
             ) : null}
 
-            {isInsurance ? (
+            {isInsurance &&
+            requiresWaseelEligibility ? (
               <Panel
                 bordered
                 className="payment-info__panel payment-info__panel--nested"
@@ -5895,7 +6399,7 @@ const PatientPaymentInfo =
                 defaultServiceColumns
               }
               loading={
-                servicesResponse.isFetching ||
+                isLoadingDefaultItems ||
                 followUpReviewDecisionPending
               }
               height={
@@ -6012,6 +6516,13 @@ const PatientPaymentInfo =
           >
           {hasUncoveredDefaultServices ? (
             <UncoveredInsuranceWarning items={uncoveredDefaultServices} />
+          ) : null}
+          {preAuthorizationServiceNames.length > 0 ? (
+            <Message showIcon type="warning">
+              Pre-authorization required: {preAuthorizationServiceNames.join(', ')}.
+              Nothing is collected for these services now. They are billed after the
+              payer decision.
+            </Message>
           ) : null}
           {lastPaymentResult ? (
             <div className="payment-info__payment-success">
@@ -6160,6 +6671,14 @@ const PatientPaymentInfo =
               >
                 No default services are configured for this department. Confirm to complete billing and continue.
               </Message>
+            ) : patientDueIsZero ? (
+              <Message
+                showIcon
+                type="info"
+                className="payment-info__message"
+              >
+                No patient amount is due. Confirm to save the selected coverage and open the visit.
+              </Message>
             ) : null}
 
             <div className="payment-info__field-grid payment-info__field-grid--single">
@@ -6170,7 +6689,7 @@ const PatientPaymentInfo =
               column
               required={
                 !formState.payZeroNow &&
-                hasPayableBalance
+                !patientDueIsZero
               }
               fieldLabel="Payment Method"
               fieldType="select"
@@ -6210,7 +6729,7 @@ const PatientPaymentInfo =
               column
               required={
                 !formState.payZeroNow &&
-                hasPayableBalance
+                !patientDueIsZero
               }
               fieldLabel="Payment Amount"
               fieldType="number"
@@ -6227,7 +6746,7 @@ const PatientPaymentInfo =
             </div>
 
             {!paymentMethodSelected &&
-            hasPayableBalance &&
+            !patientDueIsZero &&
             !formState.payZeroNow ? (
               <div className="payment-info__field-note">
                 Select a payment method first to enter the amount.
@@ -6385,6 +6904,19 @@ const PatientPaymentInfo =
                     isLocked
                   }
                   onChange={checked => {
+                    if (
+                      checked &&
+                      !canCollectZeroPayment
+                    ) {
+                      dispatch(
+                        notify({
+                          msg: 'You do not have permission to collect zero now.',
+                          sev: 'warning'
+                        })
+                      );
+                      return;
+                    }
+
                     setFormState(
                       previous => ({
                         ...previous,
@@ -6431,6 +6963,41 @@ const PatientPaymentInfo =
               autoPrint
             />
           ) : null}
+          <MyModal
+            open={
+              Boolean(selfPayPromptReason) &&
+              isInsurance &&
+              !isLocked
+            }
+            setOpen={(open: boolean) => {
+              if (!open) {
+                setSelfPayPromptReason(null);
+              }
+            }}
+            title="Patient Not Eligible"
+            size="28vw"
+            bodyheight="auto"
+            position="center"
+            actionButtonLabel="Switch to Self Pay"
+            actionButtonFunction={handleSwitchToSelfPay}
+            cancelButtonLabel="Keep Insurance"
+            content={
+              <div>
+                <p>{selfPayPromptReason}</p>
+                <p>
+                  <Translate>
+                    Do you want to switch this visit to Self Pay?
+                  </Translate>
+                </p>
+              </div>
+            }
+          />
+          <PreAuthorizationAlertModal
+            open={Boolean(preAuthAlert?.length)}
+            encounterId={encounterId}
+            items={preAuthAlert ?? []}
+            onClosed={handlePreAuthAlertClosed}
+          />
         </Form>
       );
     }

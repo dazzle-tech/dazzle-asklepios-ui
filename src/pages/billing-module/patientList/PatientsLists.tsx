@@ -8,7 +8,6 @@ import {
   faFileWaveform,
   faRectangleXmark,
   faEye,
-  faRotateLeft,
   faMoneyBillWave,
   faFlag,
   faPause,
@@ -50,8 +49,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import {
   useGetEncounterListQuery,
   useStartEncounterMutation,
-  useCancelEncounterMutation,
-  useReopenEncounterMutation
+  useCancelEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 import { useAppSelector } from '@/hooks';
@@ -75,7 +73,16 @@ const toISODate = (value: Date | string | null | undefined): string | undefined 
   return value.toISOString().slice(0, 10);
 };
 
-const uniqueNonEmpty = (arr?: any[]): string[] | undefined => {
+const MAX_DATE_RANGE_MONTHS = 2;
+
+const addMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  result.setMonth(result.getMonth() + months);
+  return result;
+};
+
+const uniqueNonEmpty =(arr?: any[]): string[] | undefined => {
   if (!arr) return undefined;
   const cleaned = arr
     .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
@@ -454,7 +461,6 @@ const PatientsLists = () => {
   const [getPatientById, getPatientState] = useLazyGetPatientByIdQuery();
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
-  const [reopenEncounter, { isLoading: reopening }] = useReopenEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const [startTriageEncounter, { isLoading: isStartTriageEncounterLoading }] =
     useStartTriageEncounterMutation();
@@ -718,18 +724,6 @@ const PatientsLists = () => {
     });
   };
 
-  const handleReopen = async (id: number) => {
-    try {
-      await reopenEncounter({ id }).unwrap();
-      dispatch(notify({ msg: 'Encounter reopened successfully', sev: 'success' }));
-      refetch();
-    } catch (error: any) {
-      dispatch(
-        notify({ msg: error?.data?.message ?? 'Unable to reopen encounter', sev: 'warning' })
-      );
-    }
-  };
-
   const handleCancel = async () => {
     if (!selectedEncounter) return;
     try {
@@ -776,6 +770,23 @@ const PatientsLists = () => {
   };
 
   const handleSearch = () => {
+    if (dateFilter.fromDate && dateFilter.toDate) {
+      const from = new Date(dateFilter.fromDate);
+      const to = new Date(dateFilter.toDate);
+
+      if (to < from) {
+        dispatch(notify({ msg: 'Encounter Date To cannot be before Encounter Date From', sev: 'warning' }));
+        return;
+      }
+
+      if (to > addMonths(from, MAX_DATE_RANGE_MONTHS)) {
+        dispatch(
+          notify({ msg: `Date range cannot exceed ${MAX_DATE_RANGE_MONTHS} months`, sev: 'warning' })
+        );
+        return;
+      }
+    }
+
     setPage(0);
 
     setAppliedFilters({
@@ -792,6 +803,21 @@ const PatientsLists = () => {
         patientSearchApplied?.searchByField === 'patientMrn'
           ? patientSearchApplied?.patientName?.trim() || undefined
           : filters.mrnFilter.trim() || undefined,
+
+      primaryMobileNumber:
+        patientSearchApplied?.searchByField === 'phoneNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      documentNumber:
+        patientSearchApplied?.searchByField === 'documentNumber'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
+
+      dateOfBirth:
+        patientSearchApplied?.searchByField === 'dob'
+          ? patientSearchApplied?.patientName?.trim() || undefined
+          : undefined,
 
       encounterType: filters.encounterType,
 
@@ -854,7 +880,8 @@ const PatientsLists = () => {
 
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const canSeeNurseStation = jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
-  const canSeeDoctorVisit = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
+  const canSeeDoctorVisit =
+    jobRole === 'PHYSICIAN' || jobRole === 'DENTIST' || Boolean(authSlice.user?.admin);
   const canSeeEMR = jobRole === 'PHYSICIAN' || Boolean(authSlice.user?.admin);
   const canSeePrint =
     jobRole === 'PHYSICIAN' || jobRole === 'NURSE' || Boolean(authSlice.user?.admin);
@@ -879,12 +906,31 @@ const PatientsLists = () => {
     [practitionersResponse]
   );
 
-  const minEncounterDate = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() - 31);
-    return date;
-  }, []);
+  const maxEncounterToDate = useMemo(
+    () => (dateFilter.fromDate ? addMonths(new Date(dateFilter.fromDate), MAX_DATE_RANGE_MONTHS) : undefined),
+    [dateFilter.fromDate]
+  );
+
+  const handleDateFilterChange = (value: any) => {
+    const next = typeof value === 'function' ? value(dateFilter) : value;
+    const fromChanged = String(next?.fromDate) !== String(dateFilter.fromDate);
+
+    if (fromChanged && next?.fromDate) {
+      const from = new Date(next.fromDate);
+      const maxTo = addMonths(from, MAX_DATE_RANGE_MONTHS);
+      const to = next?.toDate ? new Date(next.toDate) : null;
+
+      if (!to || to < from || to > maxTo) {
+        const today = new Date();
+        const clampedTo = today < from ? from : today > maxTo ? maxTo : today;
+        setDateFilter({ ...next, toDate: clampedTo });
+        setDateFilterKey(prev => prev + 1);
+        return;
+      }
+    }
+
+    setDateFilter(next);
+  };
 
   const mainSearchFilters = (
     <div style={{ marginTop: 15 }}>
@@ -897,8 +943,7 @@ const PatientsLists = () => {
           fieldLabel="Encounter Date From"
           fieldName="fromDate"
           record={dateFilter}
-          setRecord={setDateFilter}
-          minDate={minEncounterDate}
+          setRecord={handleDateFilterChange}
         />
 
         <MyInput
@@ -909,7 +954,9 @@ const PatientsLists = () => {
           fieldLabel="Encounter Date To"
           fieldName="toDate"
           record={dateFilter}
-          setRecord={setDateFilter}
+          setRecord={handleDateFilterChange}
+          minDate={dateFilter.fromDate}
+          maxDate={maxEncounterToDate}
         />
 
         <div style={{ marginTop: 8 }}>
@@ -1633,13 +1680,6 @@ const PatientsLists = () => {
             isEmergencyListWorkflow &&
             canSeeEMR;
 
-          const showEmergencyListReopen =
-            isEmergencyListWorkflow &&
-            (
-              isCompleted ||
-              isDischarged
-            );
-
           const showEmergencyListCancel =
             isEmergencyListWorkflow &&
             canSeeCancel &&
@@ -1674,13 +1714,6 @@ const clinicViewOnly =
             canSeeCancel &&
             isNew &&
             !row?.isObserved;
-
-          const showClinicReopen =
-            isClinic &&
-            (
-              isCompleted ||
-              isDischarged
-            );
 
           const showClinicPrint =
             isClinic &&
@@ -2060,29 +2093,6 @@ const clinicViewOnly =
                 </Whisper>
               )}
 
-              {showEmergencyListReopen && (
-                <Whisper
-                  trigger="hover"
-                  placement="top"
-                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
-                >
-                  <div>
-                    <MyButton
-                      size="small"
-                      backgroundColor="#0d6efd"
-                      loading={reopening}
-                      onClick={() => {
-                        void handleReopen(row.id);
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faRotateLeft}
-                      />
-                    </MyButton>
-                  </div>
-                </Whisper>
-              )}
-
               {showEmergencyListCancel && (
                 <Whisper
                   trigger="hover"
@@ -2236,29 +2246,6 @@ const clinicViewOnly =
                 </Whisper>
               )}
 
-              {showClinicReopen && (
-                <Whisper
-                  trigger="hover"
-                  placement="top"
-                  speaker={<Tooltip>Reopen Encounter</Tooltip>}
-                >
-                  <div>
-                    <MyButton
-                      size="small"
-                      backgroundColor="#0d6efd"
-                      loading={reopening}
-                      onClick={() => {
-                        void handleReopen(row.id);
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faRotateLeft}
-                      />
-                    </MyButton>
-                  </div>
-                </Whisper>
-              )}
-
               {showClinicPrint && (
                 <div>
                   <VisitReportPrintButton row={row} />
@@ -2278,7 +2265,6 @@ const clinicViewOnly =
       canSeeEMR,
       canSeeNurseStation,
       canSeePrint,
-      reopening,
       EncounterPriorityEnum,
       priorityDotColor,
       handleUpdateEncounterPriority,

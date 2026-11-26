@@ -200,8 +200,10 @@ export const MODULES: Module[] =
       viewOrder: 0.5,
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
+        { name: "Configurations", code: "CONFIGURATIONS", description: "", icon: "FaSliders", viewOrder: 2, navPath: "configurations" },
         { name: "Email Settings", code: "EMAIL_SETTINGS", description: "", icon: "FaEnvelope", viewOrder: 0.5, navPath: "email-settings" },
         { name: "WhatsApp Settings", code: "WHATSAPP_SETTINGS", description: "", icon: "FaWhatsapp", viewOrder: 0.6, navPath: "whatsapp-settings" },
+        { name: "Mobile App Configuration", code: "MOBILE_APP_CONFIG", description: "Keys and values used by the mobile application", icon: "FaMobileScreen", viewOrder: 0.7, navPath: "mobile-app-configuration" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
@@ -234,6 +236,9 @@ export const MODULES: Module[] =
         { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
         { name: "Metadata", code: "METADATA", description: "", icon: "FaTags", viewOrder: 0, navPath: "metadata" },
         { name: "Dental Actions", code: "DENTAL_ACTIONS", description: "", icon: "FaTeeth", viewOrder: 9, navPath: "dental-actions" },
+        { name: "Dental Chart Setup", code: "DENTAL_CHART_SETUP", description: "Age-based Adult / Pediatric / Mixed chart configuration", icon: "FaTeethOpen", viewOrder: 9, navPath: "dental-chart-setup" },
+        { name: "Dental Tooth Numbering Setup", code: "DENTAL_TOOTH_NUMBERING_SETUP", description: "Named tooth-numbering methods and display labels", icon: "FaTeethOpen", viewOrder: 9, navPath: "dental-tooth-numbering-setup" },
+        { name: "Vital Sign Setup", code: "VITAL_SIGN_SETUP", description: "Normal ranges for vital signs", icon: "FaHeartbeat", viewOrder: 9, navPath: "vital-sign-setup" },
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
         { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
@@ -249,14 +254,8 @@ export const MODULES: Module[] =
         { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
         { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
         { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
-        {
-          name: "Patient Satisfaction Survey Responses",
-          code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",
-          description: "View submitted patient satisfaction survey responses",
-          icon: "FaClipboardQuestion",
-          viewOrder: 6,
-          navPath: "patient-satisfaction-survey-responses"
-        },
+        { name: "Tasks & Activities Setup", code: "ACTIVITY_SETUP", description: "Activity types, categories, due rules and teams", icon: "FaListCheck", viewOrder: 9, navPath: "activity-setup" },
+        { name: "AI Services", code: "AI_SERVICES", description: "Setup for AI services", icon: "FaRobot", viewOrder: 9.5, navPath: "ai-services" },
         { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },
         { name: "Clinical Protocols Setup", code: "CLINICAL_PROTOCOLS_SETUP", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "" },
         { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
@@ -266,7 +265,7 @@ export const MODULES: Module[] =
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
         { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
-        { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
+        { name: "Payor Setup", code: "PAYER", description: "Insurance companies", icon: "FaGlobe", viewOrder: 21, navPath: "nphies-payers?tab=insurance" },
         {
           name: "Supportive Document Setup",
           code: "SUPPORTIVE_DOCUMENT_SETUP",
@@ -301,9 +300,9 @@ export const MODULES: Module[] =
           navPath: 'patient-merge-config'
         },
         {
-          name: "NPHIES Payers",
+          name: "Payer Companies",
           code: "NPHIES_PAYER",
-          description: "NPHIES Payers",
+          description: "Payer Companies",
           icon: "FaBuilding",
           viewOrder: 24,
           navPath: "nphies-payers"
@@ -323,6 +322,14 @@ export const MODULES: Module[] =
           icon: "FaListAlt",
           viewOrder: 26,
           navPath: "price-list-setup"
+        },
+        {
+          name: "Item Price Dashboard",
+          code: "PRICE_LIST_SETUP",
+          description: "Compare item prices across facility price lists",
+          icon: "FaListAlt",
+          viewOrder: 26.5,
+          navPath: "price-list-item-dashboard"
         },
         {
           name: "Billing Rule Setup",
@@ -399,6 +406,31 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Patient Survey and Complaints",
+      description: "Patient satisfaction survey and patient complaints",
+      icon: "FaClipboardQuestion",
+      viewOrder: 0.7,
+      screens: [
+        { name: "Survey Questions Setup", code: "SURVEY_QUESTIONS_SETUP", description: "Survey sections, questions and page texts", icon: "FaListCheck", viewOrder: 0, navPath: "survey-questions-setup" },
+        {
+          name: "Patient Satisfaction Survey Responses",
+          code: "PATIENT_SATISFACTION_SURVEY_RESPONSES",
+          description: "View submitted patient satisfaction survey responses",
+          icon: "FaClipboardQuestion",
+          viewOrder: 1,
+          navPath: "patient-satisfaction-survey-responses"
+        },
+        {
+          name: "Patient Complaints",
+          code: "PATIENT_COMPLAINTS",
+          description: "Register, assign, and resolve patient complaints",
+          icon: "FaComments",
+          viewOrder: 2,
+          navPath: "patient-complaints",
+        },
+      ],
+    },
+    {
       name: "Coding Module",
       description: "Coding Module",
       icon: "FaCodepen",
@@ -409,6 +441,18 @@ export const MODULES: Module[] =
         { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
         { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
         { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
+      ],
+    },
+    {
+      name: "Tasks",
+      description: "Follow-up tasks across patients: yours, your team's and everyone's",
+      icon: "FaListCheck",
+      viewOrder: 2,
+      screens: [
+        { name: "Task Calendar", code: "TASK_CALENDAR", description: "Month, week and agenda of follow-up tasks. Drag a task to reschedule it.", icon: "FaCalendarDays", viewOrder: 0, navPath: "task-calendar" },
+        { name: "My Tasks", code: "MY_TASKS", description: "Tasks assigned to you", icon: "FaUserCheck", viewOrder: 1, navPath: "my-tasks" },
+        { name: "Team Tasks", code: "TEAM_TASKS", description: "Tasks for your job role", icon: "FaUsers", viewOrder: 2, navPath: "team-tasks" },
+        { name: "All Tasks", code: "ALL_TASKS", description: "Every task, for supervisors", icon: "FaListCheck", viewOrder: 3, navPath: "all-tasks" },
       ],
     },
     {
@@ -558,6 +602,23 @@ export const MODULES: Module[] =
       },
         moduleReportsScreen("DAY_CASE"),
 
+      ],
+    },
+    {
+      name: "Clinical Dashboard",
+      description: "",
+      icon: "FaChartBar",
+      viewOrder: 5.5,
+      departmentTypes: ["EMERGENCY_ROOM"],
+      screens: [
+        {
+          name: "ER Bed Board",
+          code: "ER_BED_BOARD",
+          description: "",
+          icon: "FaBed",
+          viewOrder: 0,
+          navPath: "ER-bed-board",
+        },
       ],
     },
     {

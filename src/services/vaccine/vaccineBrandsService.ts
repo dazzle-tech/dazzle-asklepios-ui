@@ -35,11 +35,12 @@ export const vaccineBrandsService = createApi({
   endpoints: builder => ({
     getVaccineBrandsByVaccine: builder.query<
       PagedResult<modelTypes.VaccineBrand>,
-      { vaccineId: Id } & PagedParams
+      // isActive: true = active only, false = inactive only, omitted = all
+      { vaccineId: Id; isActive?: boolean } & PagedParams
     >({
-      query: ({ vaccineId, page, size, sort = 'id,asc' }) => ({
+      query: ({ vaccineId, isActive, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine-brands/by-vaccine/${vaccineId}`,
-        params: { page, size, sort }
+        params: { page, size, sort, ...(isActive === undefined ? {} : { isActive }) }
       }),
       transformResponse: mapPaged,
       providesTags: (_res, _err, { vaccineId }) => [
@@ -55,6 +56,19 @@ export const vaccineBrandsService = createApi({
       }),
       transformResponse: mapPaged,
       providesTags: (_res, _err, _args) => ['VaccineBrand']
+    }),
+
+    // Active brands of all vaccines, optionally filtered by name or code (price lists, SBS mapping)
+    searchActiveVaccineBrands: builder.query<
+      PagedResult<modelTypes.VaccineBrand>,
+      { name?: string } & PagedParams
+    >({
+      query: ({ name, page, size, sort = 'name,asc' }) => ({
+        url: `/api/setup/vaccine-brands/search`,
+        params: { name: name || undefined, page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['VaccineBrand']
     }),
 
     getVaccineBrandsByIds: builder.query<modelTypes.VaccineBrand[], { ids: Id[] }>({
@@ -122,6 +136,7 @@ export const vaccineBrandsService = createApi({
 export const {
   useGetVaccineBrandsByVaccineQuery,
   useGetVaccineBrandsQuery,
+  useSearchActiveVaccineBrandsQuery,
   useLazyGetVaccineBrandsByVaccineQuery,
   useAddVaccineBrandMutation,
   useUpdateVaccineBrandMutation,

@@ -79,6 +79,7 @@ import EligibilitySnapshotPanel from './invoices/EligibilitySnapshotPanel';
 import InvoiceDetailPanel from './invoices/InvoiceDetailPanel';
 
 import InvoiceAdjustmentModal from './invoices/InvoiceAdjustmentModal';
+import InvestigationReasonModal from './invoices/InvestigationReasonModal';
 import DiscountCreditNoteModal from './invoices/DiscountCreditNoteModal';
 
 import InvoicePrintModal from './invoices/InvoicePrintModal';
@@ -149,7 +150,9 @@ import {
 
   extractApiErrorMessage,
 
-  INVOICE_GENERATION_ERROR_MAP
+  INVOICE_GENERATION_ERROR_MAP,
+
+  parseErrorKey
 
 } from '@/utils/apiErrorMessage';
 
@@ -436,6 +439,8 @@ const Invoices: React.FC<InvoicesProps> = ({
   }>({ open: false, kind: 'CREDIT_NOTE' });
 
   const [discountCreditModalOpen, setDiscountCreditModalOpen] = useState(false);
+
+  const [investigationReasonOpen, setInvestigationReasonOpen] = useState(false);
 
   const [invoicePrintModal, setInvoicePrintModal] = useState<{
 
@@ -941,7 +946,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
 
 
-  const handleFinancialClose = async () => {
+  const handleFinancialClose = async (investigationNotPerformedReason?: string) => {
 
     if (selectedEncounterId == null || facilityId == null) return;
 
@@ -955,9 +960,13 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         facilityId,
 
-        requestId: makeRequestId('invoice-close')
+        requestId: makeRequestId('invoice-close'),
+
+        investigationNotPerformedReason
 
       }).unwrap();
+
+      setInvestigationReasonOpen(false);
 
 
 
@@ -988,6 +997,15 @@ const Invoices: React.FC<InvoicesProps> = ({
       ]);
 
     } catch (error: any) {
+
+      // The server asks for the reason when a Waseel insurance visit has no investigation
+      if (
+        parseErrorKey(error?.data ?? error?.error?.data) ===
+        'encounter.investigationNotPerformedReason.required'
+      ) {
+        setInvestigationReasonOpen(true);
+        return;
+      }
 
       dispatch(
 
@@ -2340,7 +2358,7 @@ const Invoices: React.FC<InvoicesProps> = ({
 
                 loading={closingFinancially}
 
-                onClick={handleFinancialClose}
+                onClick={() => handleFinancialClose()}
 
               >
 
@@ -2679,6 +2697,13 @@ const Invoices: React.FC<InvoicesProps> = ({
 
         onSubmit={handleCreateDiscountCreditNote}
 
+      />
+
+      <InvestigationReasonModal
+        open={investigationReasonOpen}
+        loading={closingFinancially}
+        onClose={() => setInvestigationReasonOpen(false)}
+        onSubmit={reason => handleFinancialClose(reason)}
       />
 
 

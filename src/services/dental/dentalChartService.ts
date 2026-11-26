@@ -2,6 +2,9 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery as baseQuery, onQueryStarted } from '../../newApi';
 
 import type {
+  ChartInventoryAuditDTO,
+  ChartInventoryResultDTO,
+  ChartInventoryUpdateDTO,
   ChartUpdateDTO,
   DentalChartResponseDTO,
   ProgressNoteDTO,
@@ -15,9 +18,17 @@ import type {
 export const dentalChartService = createApi({
   reducerPath: 'dentalChartApi',
   baseQuery: baseQuery,
-  tagTypes: ['DentalChart', 'ProgressNote'],
+  tagTypes: ['DentalChart', 'ProgressNote', 'InventoryHistory'],
 
   endpoints: builder => ({
+    getExistingChartByEncounter: builder.query<DentalChartResponseDTO | null, number>({
+      query: (encounterId: number) => ({
+        url: `/api/patient/dental/charts/by-encounter/${encounterId}/existing`
+      }),
+      transformResponse: (response: DentalChartResponseDTO | null) =>
+        response && response.id ? response : null
+    }),
+
     getOrCreateChartForEncounter: builder.query<DentalChartResponseDTO, number>({
       query: (encounterId: number) => ({
         url: `/api/patient/dental/charts/by-encounter/${encounterId}`
@@ -47,6 +58,28 @@ export const dentalChartService = createApi({
       invalidatesTags: ['DentalChart'],
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => response
+    }),
+
+    saveChartInventory: builder.mutation<
+      ChartInventoryResultDTO,
+      { chartId: number; body: ChartInventoryUpdateDTO }
+    >({
+      query: ({ chartId, body }) => ({
+        url: `/api/patient/dental/charts/${chartId}/inventory`,
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['DentalChart', 'InventoryHistory'],
+      onQueryStarted: onQueryStarted
+    }),
+
+    getChartInventoryHistory: builder.query<ChartInventoryAuditDTO[], number>({
+      query: (chartId: number) => ({
+        url: `/api/patient/dental/charts/${chartId}/inventory-history`
+      }),
+      providesTags: ['InventoryHistory'],
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 0
     }),
 
     saveToothAction: builder.mutation<DentalChartResponseDTO, ToothActionSaveDTO>({
@@ -135,9 +168,12 @@ export const dentalChartService = createApi({
 });
 
 export const {
+  useGetExistingChartByEncounterQuery,
   useGetOrCreateChartForEncounterQuery,
   useGetChartByIdQuery,
   useUpdateChartMutation,
+  useSaveChartInventoryMutation,
+  useGetChartInventoryHistoryQuery,
   useSaveToothActionMutation,
   useCancelToothActionMutation,
   useSaveToothServiceMutation,

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { notify } from '@/utils/uiReducerActions';
 import { isUncoveredCashCancelled } from '@/utils/uncoveredInsuranceConfirm';
 import { useCheckInsurancePriceListCoverageMutation } from '@/services/billing/billingTransactionService';
+import { useLazyGetNahdiSyncStatusQuery } from '@/services/patients/Prescription/patientPrescriptionService';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 
 type Params = {
@@ -58,6 +59,7 @@ export const usePrescriptionActions = ({
     isCanceledStatus
 }: Params) => {
     const [checkInsuranceCoverage] = useCheckInsurancePriceListCoverageMutation();
+    const [fetchNahdiSyncStatus] = useLazyGetNahdiSyncStatusQuery();
 
     const handleCancle = async () => {
         const rowsToCancel = selectedRows.length
@@ -68,6 +70,12 @@ export const usePrescriptionActions = ({
 
         if (!rowsToCancel.length) {
             dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
+            return;
+        }
+
+        // Medications the pharmacy already dispensed cannot be cancelled.
+        if (rowsToCancel.some((r: any) => r?.dispensed)) {
+            dispatch(notify({ msg: 'Dispensed medications cannot be cancelled', type: 'warning' } as any));
             return;
         }
 
@@ -161,12 +169,34 @@ export const usePrescriptionActions = ({
             await preRefetch();
             await medicRefetch();
 
-            dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
+            // The prescription is sent to the pharmacy within the submit request, so its result is known now.
+            let pharmacy: any = null;
+            try {
+                pharmacy = await fetchNahdiSyncStatus(Number(submittedPrescriptionId)).unwrap();
+            } catch {
+                pharmacy = null;
+            }
 
+            if (pharmacy?.integrationEnabled && pharmacy?.lastAttemptStatus === 'FAILED') {
+                dispatch(notify({
+                    msg: 'Prescription submitted, but it did not reach the pharmacy. Press Resend.',
+                    type: 'warning'
+                } as any));
+            } else {
+                dispatch(notify({
+                    msg: pharmacy?.integrationEnabled && pharmacy?.lastSentAt
+                        ? `Submitted and sent to pharmacy${pharmacy.orderNumber ? ` (Order ${pharmacy.orderNumber})` : ''}`
+                        : 'Submitted successfully',
+                    type: 'success'
+                } as any));
+            }
+
+            // The submitted prescription stays selected (as if it was picked from the list), so the doctor sees
+            // its pharmacy status right away. "Clear Selection" starts a new prescription.
             setSummaryModalOpen(false);
             setOpenCancellation(false);
-            setCurrentPrescription(null);
-            setPreKeyRecord({ preKey: null });
+            setCurrentPrescription({ ...currentPrescription, status: 'SUBMITTED' } as any);
+            setPreKeyRecord({ preKey: Number(submittedPrescriptionId) });
             setSelectedRows([]);
             setSelectedPreviewMedication(null);
 
@@ -215,16 +245,7 @@ export const usePrescriptionActions = ({
             }
         }
 
-        if (String(prescription?.status ?? '').toUpperCase() === 'SUBMITTED') {
-            dispatch(
-                notify({
-                    msg: 'Cannot add medication to submitted prescription',
-                    type: 'warning'
-                } as any)
-            );
-            return;
-        }
-
+        // Medications can be added to a submitted prescription too; they are sent on the next resend.
         setPatientPrescriptionMedicationObject({
             ...newPatientPrescriptionMedication,
             prescriptionHeaderId: prescription.id

@@ -121,7 +121,10 @@ export const emergencyTriageService = createApi({
       query: encounterIds => ({
         url: '/api/patient/emergency-triage/bulk-byEncounter',
         method: 'GET',
-        params: { encounterIds }
+        // Spring List<Long> accepts CSV (same pattern as active-list/by-beds).
+        params: {
+          encounterIds: (encounterIds ?? []).map(String).join(',')
+        }
       })
     }),
   })

@@ -1,20 +1,25 @@
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import SickLeaveReportModal from '@/components/SickLeaveReportModal/SickLeaveReportModal';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
-import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
+import ExternalResultModal from './external-results/ExternalResultModal';
+import ScanDocumentButton from './external-results/ScanDocumentButton';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useLazyFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   MissingSupportiveDocumentRequirement,
   useCompleteEncounterMutation,
-  useLazyGetEncounterCompletionValidationQuery
+  useLazyGetEncounterCompletionValidationQuery,
+  useSaveInvestigationNotPerformedReasonMutation
 } from '@/services/encounters/patientEncounterService';
 import { extractApiErrorMessage } from '@/utils/apiErrorMessage';
+import InvestigationReasonModal from '@/pages/billing-module/invoices/InvestigationReasonModal';
 
 import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useOpenAmendmentSession } from '../useIsAmendmentOpen';
@@ -29,14 +34,11 @@ import {
   faCheckDouble,
   faClockRotateLeft,
   faFileLines,
-  faIdCard,
-  faRobot,
+  faPaperclip,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import { newPatient } from '@/types/model-types-constructor-new';
-import { Patient } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
@@ -50,7 +52,7 @@ import ConsultationPopup from '../encounter-component/patient-summary/Consultati
 import VisitReportPrintButton from '../encounter-list/VisitReportPrintButton';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
-import AiAssistantPopup from './AiAssistantPopup';
+import AiRecommendations from './ai-recommendations/AiRecommendations';
 import AllergiesModal from './AllergiesModal';
 import EncounterCompletionValidationModal from './EncounterCompletionValidationModal';
 import SideSummaryScreen from './SideSummaryScreen';
@@ -153,14 +155,17 @@ const Encounter = ({
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [openScanDocumentModal, setOpenScanDocumentModal] = useState(false);
-  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+  const [openExternalResultModal, setOpenExternalResultModal] = useState(false);
+  const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [openSickLeaveModal, setOpenSickLeaveModal] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
+  const [investigationReasonOpen, setInvestigationReasonOpen] = useState(false);
+  const [saveInvestigationReason, { isLoading: savingInvestigationReason }] =
+    useSaveInvestigationNotPerformedReasonMutation();
   const [showValidationModal, setShowValidationModal] = useState(false);
 
   const [validationItems, setValidationItems] = useState<
@@ -191,19 +196,6 @@ const Encounter = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
   // const buttonRef = useRef<HTMLDivElement>(null);
-
-  const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
-
-  const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 95 : 95,
-    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
-  });
-
-  const [isAiDragging, setIsAiDragging] = useState(false);
-  const [aiDragOffset, setAiDragOffset] = useState({ x: 0, y: 0 });
-  const [aiHasMoved, setAiHasMoved] = useState(false);
-
-  const aiButtonRef = useRef<HTMLDivElement>(null);
 
   // const handleMouseDown = (e: any) => {
   //   setIsDragging(true);
@@ -305,12 +297,6 @@ const Encounter = ({
   // useEffect(() => {
   //   setEdit(propsData?.viewMode === 'readOnly' || propsData?.readOnly === true);
   // }, [propsData?.viewMode, propsData?.readOnly]);
-  useEffect(() => {
-    if (patientToSend) {
-      setLocalPatient({ ...newPatient, ...patientToSend });
-    }
-  }, [patientToSend]);
-
   useEffect(() => {
 
     const encounterStatus = String(propsData?.encounter?.status ?? localEncounter?.status ?? '').toUpperCase();
@@ -809,6 +795,7 @@ const handleGoBack = () => {
 
   const handleSubmitEncounter = async () => {
     const items: CompletionValidationItem[] = [];
+    let investigationReasonRequired = false;
 
     // =====================================================
     // INSURANCE VALIDATION
@@ -820,6 +807,10 @@ const handleGoBack = () => {
           await validateEncounterCompletion({
             encounterId
           }).unwrap();
+
+        investigationReasonRequired =
+          completionValidation?.insuranceVisit === true &&
+          completionValidation?.investigationNotPerformedReason === false;
 
         if (
           completionValidation?.insuranceVisit &&
@@ -1056,50 +1047,35 @@ const handleGoBack = () => {
       return;
     }
 
+    // Emergency visits enter the reason on Disposition
+    if (investigationReasonRequired) {
+      setInvestigationReasonOpen(true);
+      return;
+    }
+
     await completeEncounterNow();
   };
 
+  const handleSaveInvestigationReason = async (reason: string) => {
+    if (!encounterId) return;
 
-  const handleAiMouseDown = (e: any) => {
-    setIsAiDragging(true);
-    setAiHasMoved(false);
-    setAiDragOffset({
-      x: e.clientX - aiButtonPosition.x,
-      y: e.clientY - aiButtonPosition.y
-    });
-    e.preventDefault();
-  };
-
-  const handleAiMouseMove = (e: any) => {
-    if (!isAiDragging) return;
-
-    if (!aiHasMoved) {
-      const movedDistance = Math.sqrt(
-        Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+    try {
+      await saveInvestigationReason({
+        id: encounterId,
+        investigationNotPerformedReason: reason
+      }).unwrap();
+      setInvestigationReasonOpen(false);
+      await completeEncounterNow();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.message || error?.data?.detail || 'Failed to save the reason',
+          sev: 'error'
+        })
       );
-
-      if (movedDistance > 5) setAiHasMoved(true);
-    }
-
-    setAiButtonPosition({
-      x: e.clientX - aiDragOffset.x,
-      y: e.clientY - aiDragOffset.y
-    });
-  };
-
-  const handleAiMouseUp = () => {
-    if (!aiHasMoved && !isAiDragging) {
-      setOpenAiPopup(true);
-    }
-    setIsAiDragging(false);
-  };
-
-  const handleAiClick = () => {
-    if (!aiHasMoved && !isAiDragging) {
-      setOpenAiPopup(true);
     }
   };
+
 
   const allowedSheetCodes = React.useMemo(
     () => new Set((departmentSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -1156,18 +1132,6 @@ const handleGoBack = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    if (isAiDragging) {
-      document.addEventListener('mousemove', handleAiMouseMove);
-      document.addEventListener('mouseup', handleAiMouseUp);
-
-      return () => {
-        document.removeEventListener('mousemove', handleAiMouseMove);
-        document.removeEventListener('mouseup', handleAiMouseUp);
-      };
-    }
-  }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
   const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
   const allowCrossDepartmentFromPatientsLists =
@@ -1236,24 +1200,7 @@ const handleGoBack = () => {
         </div> */}
 
         {!inModal && (
-          <div
-            ref={aiButtonRef}
-            className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
-            style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
-            onMouseDown={handleAiMouseDown}
-            onClick={handleAiClick}
-          >
-            <button
-              type="button"
-              className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
-              title="AI Assistant"
-            >
-              <FontAwesomeIcon icon={faRobot} />
-              <span className="ai-badge-2">AI</span>
-            </button>
-
-            {!isAiDragging && <div className="draggable-pulse" />}
-          </div>
+          <AiRecommendations patient={propsData?.patient} encounter={propsData?.encounter} />
         )}
 
         <div className="left-box">
@@ -1305,14 +1252,15 @@ const handleGoBack = () => {
                       Create Follow-up
                     </MyButton>
 
+                    <ScanDocumentButton disabled={edit} onClick={() => setOpenExternalResultModal(true)} />
+
                     <MyButton
-                      disabled={edit}
-                      prefixIcon={() => <FontAwesomeIcon icon={faIdCard} />}
+                      prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
                       onClick={() => {
-                        setOpenScanDocumentModal(true);
+                        setOpenAttachmentsModal(true);
                       }}
                     >
-                      Scan Document
+                      <Translate>Attachments</Translate>
                     </MyButton>
 
                     <MyButton
@@ -1545,17 +1493,35 @@ const handleGoBack = () => {
         selectedSlot={undefined}
       />
 
-      <ScanDocumentModal
-        open={openScanDocumentModal}
-        setOpen={setOpenScanDocumentModal}
-        patientId={
-          localPatient?.id ??
-          (patientToSend as any)?.id ??
-          (patientToSend as any)?.key ??
-          patientIdToFetch
+      <ExternalResultModal
+        open={openExternalResultModal}
+        setOpen={setOpenExternalResultModal}
+        patient={patientToSend}
+        encounter={propsData?.encounter}
+      />
+
+      <MyModal
+        open={openAttachmentsModal}
+        setOpen={setOpenAttachmentsModal}
+        title={<Translate>Attachments</Translate>}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={localEncounter ?? propsData?.encounter}
+            patientId={
+              (patientToSend as any)?.id ??
+              (patientToSend as any)?.key ??
+              (localEncounter as any)?.patientId ??
+              patientIdToFetch
+            }
+            allSources={true}
+            source="NURSE_STATION_ATTACHMENT"
+            edit={edit}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
         }
-        localPatient={localPatient}
-        setLocalPatient={setLocalPatient}
       />
 
       <PatientHistorySummaryModal
@@ -1606,6 +1572,14 @@ const handleGoBack = () => {
         }}
       />
 
+      <InvestigationReasonModal
+        open={investigationReasonOpen}
+        loading={savingInvestigationReason}
+        actionLabel="Save & Complete"
+        onClose={() => setInvestigationReasonOpen(false)}
+        onSubmit={handleSaveInvestigationReason}
+      />
+
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
@@ -1620,13 +1594,6 @@ const handleGoBack = () => {
       <ConsultationPopup
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
-        patient={propsData?.patient}
-        encounter={propsData?.encounter}
-      />
-
-      <AiAssistantPopup
-        open={openAiPopup}
-        setOpen={setOpenAiPopup}
         patient={propsData?.patient}
         encounter={propsData?.encounter}
       />

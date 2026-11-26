@@ -17,11 +17,22 @@ export const dentalActionService = createApi({
   tagTypes: ["DentalAction"],
   endpoints: (builder) => ({
     // 🔹 Get all DentalActions (paginated)
-    getAllDentalActions: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllDentalActions: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; type?: string; description?: string }
+    >({
+      query: ({ page, size, sort = "id,asc", isActive, type, description }) => ({
         url: "/api/setup/dental-actions",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          type: type || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;

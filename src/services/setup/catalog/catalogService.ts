@@ -24,10 +24,21 @@ export const catalogService = createApi({
   tagTypes: ['Catalog'],
   endpoints: (builder) => ({
     // GET /api/setup/catalog?page=&size=&sort=
-    getCatalogs: builder.query<PagedResult<CatalogResponseVM>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getCatalogs: builder.query<
+      PagedResult<CatalogResponseVM>,
+      PagedParams & { name?: string; type?: string; departmentId?: number | string }
+    >({
+      query: ({ page, size, sort = 'id,asc', name, type, departmentId }) => ({
         url: '/api/setup/catalog',
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          name: name?.trim() || undefined,
+          type: type || undefined,
+          departmentId: departmentId || undefined,
+        },
       }),
       transformResponse: (response: CatalogResponseVM[], meta): PagedResult<CatalogResponseVM> => {
         const headers = meta?.response?.headers;

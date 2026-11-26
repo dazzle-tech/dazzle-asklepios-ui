@@ -9,6 +9,7 @@ import {
 import type {
   BillingCancellationRequest,
   BillingCancellationResult,
+  ServiceCancellationBeforeInvoiceRequest,
   BillingCheckoutRequest,
   BillingCheckoutResult,
   BillingPaymentResult,
@@ -52,6 +53,28 @@ export type BillingPaymentSummaryDTO = {
   paymentDate?: string | null;
   receiptNumber?: string | null;
   externalReference?: string | null;
+  notes?: string | null;
+};
+
+export type PatientWalletMovement = {
+  ledgerId: number;
+  transactionDate?: string | null;
+  movement: 'ADDITION' | 'DEDUCTION' | string;
+  transactionType?: string | null;
+  amount: number;
+  currency?: string | null;
+  balanceAfter?: number | null;
+  description?: string | null;
+  reason?: string | null;
+  receiptNumber?: string | null;
+  paymentNumber?: string | null;
+  paymentCategory?: string | null;
+  paymentMethod?: string | null;
+  encounterNumber?: string | null;
+  encounterId?: number | null;
+  serviceName?: string | null;
+  serviceCode?: string | null;
+  referenceNumber?: string | null;
   notes?: string | null;
 };
 
@@ -309,6 +332,58 @@ export const billingTransactionService =
             ]
           }),
 
+        getPatientWalletMovements:
+          builder.query<
+            {
+              data: PatientWalletMovement[];
+              totalCount: number;
+            },
+            {
+              patientId: BillingId;
+              page?: number;
+              size?: number;
+            }
+          >({
+            query:
+              ({
+                patientId,
+                page = 0,
+                size = 10
+              }) => ({
+                url:
+                  `/api/patient/billing/wallet/by-patient/${patientId}/movements`,
+                params: {
+                  page,
+                  size
+                }
+              }),
+
+            transformResponse: (
+              response: PatientWalletMovement[],
+              meta
+            ) => {
+              const rows = Array.isArray(response)
+                ? response
+                : [];
+              const headerCount =
+                meta?.response?.headers?.get(
+                  'X-Total-Count'
+                );
+
+              return {
+                data: rows,
+                totalCount:
+                  headerCount == null
+                    ? rows.length
+                    : Number(headerCount)
+              };
+            },
+
+            providesTags: [
+              'BillingWallet'
+            ]
+          }),
+
         createAdvancePayment:
           builder.mutation<
             BillingPaymentResult,
@@ -471,6 +546,30 @@ export const billingTransactionService =
             ]
           }),
 
+        cancelServiceBeforeInvoice:
+          builder.mutation<
+            void,
+            ServiceCancellationBeforeInvoiceRequest
+          >({
+            query:
+              body => ({
+                url:
+                  '/api/patient/billing/cancel-service-before-invoice',
+
+                method:
+                  'POST',
+
+                body
+              }),
+
+            invalidatesTags: [
+              'BillingCheckout',
+              'BillingWallet',
+              'EncounterBillingSummary',
+              'PatientLedgerSummary'
+            ]
+          }),
+
         refundBillingPayment:
           builder.mutation<
             BillingRefundResult,
@@ -487,10 +586,19 @@ export const billingTransactionService =
                 body
               }),
 
-            invalidatesTags: [
+            invalidatesTags: (
+              _result,
+              _error,
+              arg
+            ) => [
               'BillingRefund',
               'BillingPayment',
               'BillingWallet',
+              'PatientFinancialInvoices',
+              {
+                type: 'EncounterBillingSummary',
+                id: String(arg.encounterId ?? '')
+              },
               'EncounterBillingSummary'
             ]
           }),
@@ -538,6 +646,22 @@ export const billingTransactionService =
           >({
             query: body => ({
               url: '/api/patient/insurance-coverage/price-list-check',
+              method: 'POST',
+              body
+            })
+          }),
+
+        closePreAuthorizationAlert:
+          builder.mutation<
+            unknown,
+            {
+              encounterId: number;
+              message: string;
+              items: { patientServiceProductId?: number | null; label?: string | null }[];
+            }
+          >({
+            query: body => ({
+              url: '/api/patient/pre-authorization-alerts/close',
               method: 'POST',
               body
             })
@@ -629,6 +753,9 @@ export const {
   useGetPaymentsByPatientQuery,
   useLazyGetPaymentsByPatientQuery,
 
+  useGetPatientWalletMovementsQuery,
+  useLazyGetPatientWalletMovementsQuery,
+
   useGetBillingPaymentByIdQuery,
   useLazyGetBillingPaymentByIdQuery,
 
@@ -636,12 +763,15 @@ export const {
 
   useCancelBillingServiceMutation,
 
+  useCancelServiceBeforeInvoiceMutation,
+
   useRefundBillingPaymentMutation,
 
   useReverseBillingRefundMutation,
 
   useEvaluateBillingRuleMutation,
   useCheckInsurancePriceListCoverageMutation,
+  useClosePreAuthorizationAlertMutation,
 
   useSearchRegistrationPendingItemsQuery,
   useLazySearchRegistrationPendingItemsQuery,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
@@ -17,13 +17,18 @@ import {
   useGetAllUOMGroupsQuery
 } from '@/services/setup/uom-group/uomGroupService';
 import { uomGroup } from '@/types/model-types-new';
-import MyInput from '@/components/MyInput';
+
+// Header filters: draft values typed in the inputs, applied on Enter.
+// Both are sent to one endpoint and combined with AND.
+const emptyHeaderFilters = { name: '', description: '' };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const UOMGroup = () => {
   const dispatch = useAppDispatch();
   const [uomGroup, setUomGroup] = useState<uomGroup>({ ...newUOMGroup });
   const [uomGrpupOpen, setUomGroupOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState({ value: '' });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
   const [openConfirmDeleteUOMGroupModal, setOpenConfirmDeleteUOMGroupModal] =
     useState<boolean>(false);
   // Pagination values
@@ -40,11 +45,12 @@ const UOMGroup = () => {
     data: uomGroupsListResponse,
     refetch: refetchUomGroups,
     isFetching
-  } = useGetAllUOMGroupsQuery({ name: searchTerm['value'], ...paginationParams });
+  } = useGetAllUOMGroupsQuery({ ...paginationParams, ...appliedFilters });
   // delete group
   const [deleteUomGroup] = useDeleteUOMGroupMutation();
   // number of all groups
   const totalCount = uomGroupsListResponse?.totalCount ?? 0;
+  const tableData = uomGroupsListResponse?.data ?? [];
   // Header page setUp
   const divContent = 'UOM Groups';
 
@@ -58,6 +64,28 @@ useEffect(() => {
     dispatch(setDivContent(''));
   };
 }, [dispatch]);
+
+  // ===== Header filters =====
+  // Applying one header filter also applies whatever is typed in the other
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Reload the table after add/edit/delete
+  const refreshList = () => {
+    refetchUomGroups();
+  };
 
   // class name for selected row
   const isSelected = rowData => {
@@ -78,7 +106,7 @@ const handleDeleteUomGroup = async () => {
   try {
     await deleteUomGroup(uomGroup?.id).unwrap();
 
-    refetchUomGroups();
+    refreshList();
 
     dispatch(
       notify({
@@ -108,6 +136,16 @@ const handleDeleteUomGroup = async () => {
   // ──────────────────────────── PAGINATION ────────────────────────────
   const handlePageChange = (event, newPage) => {
     setPaginationParams({ ...paginationParams, page: newPage });
+  };
+
+  const handleRowsPerPageChange = e => {
+    const newSize = Number(e.target.value);
+    setPaginationParams({
+      ...paginationParams,
+      size: newSize,
+      page: 0,
+      timestamp: Date.now()
+    });
   };
 
   //_________________________SORT LOGIC______________________
@@ -153,12 +191,14 @@ const handleDeleteUomGroup = async () => {
     {
       key: 'name',
       title: 'Group Name',
-      flexGrow: 4
+      width: 260,
+      ...headerSearch('name')
     },
     {
       key: 'description',
       title: 'Description',
-      flexGrow: 4
+      width: 360,
+      ...headerSearch('description')
     },
     {
       key: 'icons',
@@ -167,24 +207,6 @@ const handleDeleteUomGroup = async () => {
       render: () => iconsForActions()
     }
   ];
-
-  // filters
-  const filters = () => (
-    <div className="container-of-header-actions-medication-matrix">
-      <Form layout="inline" className="form-medication-matrix">
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={searchTerm}
-          setRecord={setSearchTerm}
-          showLabel={false}
-          placeholder="Search by Name"
-          width="220px"
-          height={32}
-        />
-      </Form>
-    </div>
-  );
 
   // Effects
 
@@ -200,26 +222,17 @@ const handleDeleteUomGroup = async () => {
       <MyTable
         height={450}
         totalCount={totalCount}
-        data={uomGroupsListResponse?.data ?? []}
+        data={tableData}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={rowData => {
           setUomGroup(rowData);
         }}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={e => {
-          const newSize = Number(e.target.value);
-          setPaginationParams({
-            ...paginationParams,
-            size: newSize,
-            page: 0,
-            timestamp: Date.now()
-          });
-        }}
+        onRowsPerPageChange={handleRowsPerPageChange}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={handleSortChange}
@@ -243,7 +256,7 @@ const handleDeleteUomGroup = async () => {
         setOpen={setUomGroupOpen}
         uom={uomGroup}
         setUom={setUomGroup}
-        refetchUomGroups={refetchUomGroups}
+        refetchUomGroups={refreshList}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteUOMGroupModal}

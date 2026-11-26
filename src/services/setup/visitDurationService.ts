@@ -22,10 +22,25 @@ export const visitDurationService = createApi({
   tagTypes: ['VisitDuration'],
   endpoints: builder => ({
 
-    getVisitDurations: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getVisitDurations: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        visitType?: string;
+        durationInMinutes?: number | string;
+        resourceSpecific?: boolean | string;
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', visitType, durationInMinutes, resourceSpecific }) => ({
         url: '/api/setup/visit-duration',
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          visitType: visitType || undefined,
+          durationInMinutes: String(durationInMinutes ?? '').trim() || undefined,
+          resourceSpecific: resourceSpecific === '' ? undefined : resourceSpecific,
+        },
       }),
       transformResponse: mapPaged,
       providesTags: ['VisitDuration'],

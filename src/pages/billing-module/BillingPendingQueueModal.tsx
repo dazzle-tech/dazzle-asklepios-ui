@@ -86,6 +86,21 @@ const BillingPendingQueueModal: React.FC<BillingPendingQueueModalProps> = ({
                     ? searchRecord.patientName || undefined
                     : undefined,
 
+            primaryMobileNumber:
+                searchRecord.searchByField === 'phoneNumber'
+                    ? searchRecord.patientName || undefined
+                    : undefined,
+
+            documentNumber:
+                searchRecord.searchByField === 'documentNumber'
+                    ? searchRecord.patientName || undefined
+                    : undefined,
+
+            dateOfBirth:
+                searchRecord.searchByField === 'dob'
+                    ? searchRecord.patientName || undefined
+                    : undefined,
+
             encounterNumber:
                 searchRecord.encounterNumber || undefined,
 

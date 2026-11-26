@@ -32,10 +32,14 @@ export const analyzerService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Analyzer'],
   endpoints: builder => ({
-    getAnalyzers: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAnalyzers: builder.query<
+      PagedResult<any>,
+      PagedParams & { isActive?: boolean; type?: string; code?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, type, code }) => ({
         url: '/api/setup/analyzer',
-        params: { page, size, sort }
+        params: { page, size, sort, isActive, type: type || undefined, code: code?.trim() || undefined }
       }),
       transformResponse: mapPaged,
       providesTags: ['Analyzer']

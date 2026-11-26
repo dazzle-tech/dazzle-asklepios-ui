@@ -3,12 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
-import { Carousel, Form, Panel } from 'rsuite';
+import { Carousel, Panel } from 'rsuite';
 import {
   useGetActiveIngredientsQuery,
-  useGetActiveIngredientsByNameQuery,
-  useGetActiveIngredientsByDrugClassQuery,
-  useGetActiveIngredientsByAtcCodeQuery,
   useToggleActiveIngredientIsActiveMutation
 } from '@/services/setup/activeIngredients/activeIngredientsService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -21,10 +18,8 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyInput from '@/components/MyInput';
 import { useGetAllMedicationCategoriesQuery } from '@/services/setup/medication-categories/MedicationCategoriesService';
-import { useGetAllMedicationCategoriesClassesQuery, useGetAllMedicationCategoryClassesByCategoryQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { ActiveIngredient } from '@/types/model-types-new';
 const ActiveIngredientsSetup = () => {
   const dispatch = useAppDispatch();
@@ -35,11 +30,15 @@ const ActiveIngredientsSetup = () => {
   const [activeIngredient, setActiveIngredient] = useState<ActiveIngredientRow | null>(null);
   const [openConfirmDeleteActiveIngredient, setOpenConfirmDeleteActiveIngredient] =
     useState<boolean>(false);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [appliedFilter, setAppliedFilter] = useState<{ filter: string; value: string }>({
-    filter: '',
-    value: ''
-  });
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { name: '', medicalCategory: '', drugClass: '', atcCode: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [stateOfDeleteActiveIngredient, setStateOfDeleteActiveIngredient] =
     useState<string>('delete');
@@ -50,181 +49,49 @@ const ActiveIngredientsSetup = () => {
     size: 15,
     timestamp: Date.now()
   });
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    timestamp: Date.now()
-  });
-  const [linksState, setLinksState] = useState<Record<string, string | null>>({});
-
-  const normalizedFilterValue =
-    typeof appliedFilter.value === 'string' ? appliedFilter.value.trim() : '';
-  const hasFilterValue =
-    appliedFilter.filter === 'medicalCategory'
-      ? Boolean(appliedFilter.value)
-      : normalizedFilterValue.length > 0;
-  const hasFilter = Boolean(appliedFilter.filter && hasFilterValue);
-  const isNameFilter = hasFilter && appliedFilter.filter === 'name';
-  const isMedicalCategoryFilter = hasFilter && appliedFilter.filter === 'medicalCategory';
-  const isDrugClassFilter = hasFilter && appliedFilter.filter === 'drugClass';
-  const isAtcFilter = hasFilter && appliedFilter.filter === 'atcCode';
-  const isAllQuery = !hasFilter;
-
-  const isFiltered = hasFilter;
-  const currentPage = isFiltered ? filterPagination.page : paginationParams.page;
-  const currentPageSize = isFiltered ? filterPagination.size : paginationParams.size;
-  const currentTimestamp = isFiltered
-    ? filterPagination.timestamp
-    : paginationParams.timestamp;
 
   const queryParams = useMemo(
     () => ({
-      page: currentPage,
-      size: currentPageSize,
+      page: paginationParams.page,
+      size: paginationParams.size,
       sort: sortColumn ? `${sortColumn},${sortType ?? 'asc'}` : undefined,
-      timestamp: currentTimestamp
+      timestamp: paginationParams.timestamp
     }),
-    [currentPage, currentPageSize, sortColumn, sortType, currentTimestamp]
+    [paginationParams, sortColumn, sortType]
   );
 
   const { data: medicationCategories } = useGetAllMedicationCategoriesQuery(undefined);
-  const { data: appliedMedicationClasses } = useGetAllMedicationCategoryClassesByCategoryQuery(
-    isMedicalCategoryFilter && appliedFilter.value ? { id: appliedFilter.value } : undefined,
-    {
-      skip: !isMedicalCategoryFilter || !appliedFilter.value
+  const { data: medClassList } = useGetAllMedicationCategoriesClassesQuery({});
+
+  // Category and class both narrow the drug classes: the category expands to its classes,
+  // and with both chosen only the class inside that category is kept (none -> no rows).
+  const drugClassIds = useMemo(() => {
+    const { medicalCategory, drugClass } = appliedFilters;
+    if (!medicalCategory && !drugClass) return undefined;
+    let ids: string[] = drugClass ? [drugClass] : [];
+    if (medicalCategory) {
+      const inCategory = (medClassList ?? [])
+        .filter((c: any) => String(c.medicationCategoriesId) === String(medicalCategory))
+        .map((c: any) => String(c.id));
+      ids = drugClass ? ids.filter(id => inCategory.includes(id)) : inCategory;
     }
-  );
-
-  const effectiveDrugClassIds = useMemo(() => {
-    if (isMedicalCategoryFilter) {
-      return (appliedMedicationClasses ?? [])
-        .map(item => (item?.id !== undefined && item?.id !== null ? String(item.id) : null))
-        .filter((id): id is string => Boolean(id));
-    }
-    if (isDrugClassFilter) {
-      return normalizedFilterValue
-        .split(',')
-        .map(value => value.trim())
-        .filter(Boolean);
-    }
-    return [];
-  }, [isMedicalCategoryFilter, appliedMedicationClasses, isDrugClassFilter, normalizedFilterValue]);
-
-  const noClassAvailable =
-    isMedicalCategoryFilter &&
-    appliedMedicationClasses !== undefined &&
-    effectiveDrugClassIds.length === 0;
-
-  const shouldRunDrugClassQuery =
-    (isDrugClassFilter && effectiveDrugClassIds.length > 0) ||
-    (isMedicalCategoryFilter &&
-      appliedMedicationClasses !== undefined &&
-      effectiveDrugClassIds.length > 0);
-
-  const nameQueryParams = useMemo(
-    () => ({
-      ...queryParams,
-      name: normalizedFilterValue
-    }),
-    [queryParams, normalizedFilterValue]
-  );
-
-  const drugClassQueryParams = useMemo(
-    () => ({
-      ...queryParams,
-      drugClassIds: effectiveDrugClassIds
-    }),
-    [queryParams, effectiveDrugClassIds]
-  );
-
-  const atcQueryParams = useMemo(
-    () => ({
-      ...queryParams,
-      atcCode: normalizedFilterValue
-    }),
-    [queryParams, normalizedFilterValue]
-  );
+    return ids.length ? ids : ['-1'];
+  }, [appliedFilters, medClassList]);
 
   const {
-    data: activeIngredientsAll,
-    refetch: refetchActiveIngredientsAll,
-    isFetching: isFetchingAll
-  } = useGetActiveIngredientsQuery(queryParams, { skip: !isAllQuery });
-
-  const {
-    data: activeIngredientsByName,
-    refetch: refetchActiveIngredientsByName,
-    isFetching: isFetchingByName
-  } = useGetActiveIngredientsByNameQuery(nameQueryParams, { skip: !isNameFilter });
-
-  const {
-    data: activeIngredientsByDrugClass,
-    refetch: refetchActiveIngredientsByDrugClass,
-    isFetching: isFetchingByDrugClass
-  } = useGetActiveIngredientsByDrugClassQuery(drugClassQueryParams, {
-    skip: !shouldRunDrugClassQuery
+    data: activeIngredientListResponse,
+    refetch: activeIngredientRefetch,
+    isFetching
+  } = useGetActiveIngredientsQuery({
+    ...queryParams,
+    isActive: activeFilter,
+    name: appliedFilters.name,
+    atcCode: appliedFilters.atcCode,
+    drugClassIds
   });
-
-  const {
-    data: activeIngredientsByAtcCode,
-    refetch: refetchActiveIngredientsByAtcCode,
-    isFetching: isFetchingByAtcCode
-  } = useGetActiveIngredientsByAtcCodeQuery(atcQueryParams, { skip: !isAtcFilter });
-
-  const {
-    data: medClassList,
-  } = useGetAllMedicationCategoriesClassesQuery({});
 
   const [toggleActiveIngredient, toggleActiveIngredientMutation] =
     useToggleActiveIngredientIsActiveMutation();
-
-  const emptyDrugClassResponse = useMemo(
-    () =>
-      noClassAvailable
-        ? {
-            data: [],
-            totalCount: 0
-          }
-        : null,
-    [noClassAvailable]
-  );
-
-  const activeIngredientListResponse =
-    emptyDrugClassResponse ||
-    (isAllQuery && activeIngredientsAll) ||
-    (isNameFilter && activeIngredientsByName) ||
-    (shouldRunDrugClassQuery && activeIngredientsByDrugClass) ||
-    (isAtcFilter && activeIngredientsByAtcCode) ||
-    activeIngredientsAll;
-
-  const activeIngredientRefetch =
-    emptyDrugClassResponse
-      ? async () => {}
-      : (isAllQuery && refetchActiveIngredientsAll) ||
-        (isNameFilter && refetchActiveIngredientsByName) ||
-        (shouldRunDrugClassQuery && refetchActiveIngredientsByDrugClass) ||
-        (isAtcFilter && refetchActiveIngredientsByAtcCode) ||
-        refetchActiveIngredientsAll;
-
-  const activeIngredientLinks = useMemo(() => {
-    if (emptyDrugClassResponse) {
-      return {};
-    }
-    return (
-      (activeIngredientListResponse as { links?: Record<string, string | null> })?.links ?? {}
-    );
-  }, [activeIngredientListResponse, emptyDrugClassResponse]);
-
-  useEffect(() => {
-    setLinksState(activeIngredientLinks);
-  }, [activeIngredientLinks]);
-
-  const isFetching =
-    (isAllQuery && isFetchingAll) ||
-    (isNameFilter && isFetchingByName) ||
-    (shouldRunDrugClassQuery && isFetchingByDrugClass) ||
-    (isAtcFilter && isFetchingByAtcCode) ||
-    isFetchingAll;
 
   const tableData: ActiveIngredientRow[] = useMemo(() => {
     const raw = activeIngredientListResponse?.data ?? [];
@@ -240,17 +107,30 @@ const ActiveIngredientsSetup = () => {
   }, [activeIngredientListResponse]);
 
   // Pagination values
-  const pageIndex = currentPage;
-  const rowsPerPage = currentPageSize;
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
   const totalCount = activeIngredientListResponse?.totalCount ?? 0;
 
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Active Ingredients Name', value: 'name' },
-    { label: 'Medical Category', value: 'medicalCategory' },
-    { label: 'Medication Class', value: 'drugClass' },
-    { label: 'ATC Code', value: 'atcCode' }
-  ];
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+  }, [statusFilter]);
 
   const medicalCategoryOptions = useMemo(
     () => medicationCategories ?? [],
@@ -315,131 +195,42 @@ const ActiveIngredientsSetup = () => {
   );
   };
 
-  // Filter table
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      {recordOfFilter.filter === 'medicalCategory' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={medicalCategoryOptions}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Select Medical Category"
-        />
-      ) : (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-          placeholder={
-            recordOfFilter.filter === 'drugClass'
-              ? 'Enter class IDs (comma separated)'
-              : 'Search'
-          }
-        />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        width="100px"
-        onClick={() => {
-          const trimmedValue =
-            typeof recordOfFilter.value === 'string'
-              ? recordOfFilter.value.trim()
-              : recordOfFilter.value;
-
-          const resetState = () => {
-            setAppliedFilter({ filter: '', value: '' });
-            setFilterPagination(prev => ({
-              ...prev,
-              page: 0,
-              timestamp: Date.now()
-            }));
-            setPaginationParams(prev => ({
-              ...prev,
-              page: 0,
-              timestamp: Date.now()
-            }));
-          };
-
-          if (!recordOfFilter.filter || !trimmedValue) {
-            resetState();
-            return;
-          }
-
-          const touchFilterPagination = () => {
-            setFilterPagination(prev => ({
-              ...prev,
-              page: 0,
-              timestamp: Date.now()
-            }));
-          };
-
-          switch (recordOfFilter.filter) {
-            case 'medicalCategory':
-              setAppliedFilter({ filter: 'medicalCategory', value: String(trimmedValue) });
-              touchFilterPagination();
-              break;
-            case 'drugClass': {
-              const ids = String(trimmedValue)
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean);
-              setAppliedFilter({ filter: 'drugClass', value: ids.join(',') });
-              touchFilterPagination();
-              break;
-            }
-            case 'name':
-              setAppliedFilter({ filter: 'name', value: String(trimmedValue) });
-              touchFilterPagination();
-              break;
-            case 'atcCode':
-              setAppliedFilter({ filter: 'atcCode', value: String(trimmedValue) });
-              touchFilterPagination();
-              break;
-            default:
-              resetState();
-              break;
-          }
-        }}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   //Table columns
   const tableColumns = [
     {
       key: 'name',
-      title: <Translate>Active Ingredients Name</Translate>
+      title: <Translate>Active Ingredients Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name')
+    },
+    {
+      key: 'medicalCategory',
+      title: <Translate>Medical Category</Translate>,
+      width: 190,
+      ...headerSearch('medicalCategory'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...medicalCategoryOptions.map((c: any) => ({ label: c.name, value: String(c.id) }))
+      ],
+      render: rowData => {
+        const medClass = medClassList?.find(item => item.id === rowData.drugClassId);
+        const category = medicalCategoryOptions.find(
+          (c: any) => c.id === medClass?.medicationCategoriesId
+        );
+        return category?.name ?? '';
+      }
     },
     {
       key: 'drugClassId',
       title: <Translate>Medication Class</Translate>,
+      width: 200,
+      ...headerSearch('drugClass'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(medClassList ?? []).map((c: any) => ({ label: c.name, value: String(c.id) }))
+      ],
       render: rowData => {
                 const medClass = medClassList?.find(
                  item => item.id === rowData.drugClassId
@@ -449,11 +240,23 @@ const ActiveIngredientsSetup = () => {
     },
     {
       key: 'atcCode',
-      title: <Translate>ATC Code</Translate>
+      title: <Translate>ATC Code</Translate>,
+      width: 140,
+      ...headerSearch('atcCode', 'Search ATC')
     },
     {
-      key: '',
+      key: 'isActive',
       title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: rowData => ((rowData.isActive ?? rowData.isValid) ? 'Active' : 'Inactive')
     },
     {
@@ -473,61 +276,16 @@ const ActiveIngredientsSetup = () => {
     setCarouselActiveIndex(1);
   };
 
-  // Handle page change in navigation
   const handlePageChange = (event: unknown, newPage: number) => {
-    const hasPaginationLinks =
-      !emptyDrugClassResponse && Object.values(linksState ?? {}).some(link => Boolean(link));
-
-    const updatePagination = isFiltered ? setFilterPagination : setPaginationParams;
-    const currentPagination = isFiltered ? filterPagination : paginationParams;
-
-    if (!hasPaginationLinks) {
-      updatePagination(prev => ({
-        ...prev,
-        page: newPage,
-        timestamp: Date.now()
-      }));
-      return;
-    }
-
-    PaginationPerPage.handlePageChange(
-      event,
-      newPage,
-      currentPagination,
-      linksState,
-      updated => {
-        const { page, size, timestamp } = updated ?? {};
-        updatePagination(prev => ({
-          ...prev,
-          page: page ?? prev.page,
-          size: size ?? prev.size,
-          timestamp: timestamp ?? Date.now()
-        }));
-      }
-    );
+    setPaginationParams(prev => ({ ...prev, page: newPage, timestamp: Date.now() }));
   };
 
-  // Handle change rows per page in navigation
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
     if (Number.isNaN(newSize) || newSize <= 0) {
       return;
     }
-    if (isFiltered) {
-      setFilterPagination(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
   };
 
   const handleToggleActiveIngredient = () => {
@@ -546,20 +304,7 @@ const ActiveIngredientsSetup = () => {
     toggleActiveIngredient({ id })
       .unwrap()
       .then(() => {
-        if (activeIngredientRefetch) {
         activeIngredientRefetch();
-        }
-        if (isFiltered) {
-          setFilterPagination(prev => ({
-            ...prev,
-            timestamp: Date.now()
-          }));
-        } else {
-          setPaginationParams(prev => ({
-            ...prev,
-            timestamp: Date.now()
-          }));
-        }
         dispatch(
           notify({
             msg:
@@ -595,26 +340,15 @@ const ActiveIngredientsSetup = () => {
 
   useEffect(() => {
     if (toggleActiveIngredientMutation.isSuccess) {
-      if (isFiltered) {
-        setFilterPagination(prev => ({
-          ...prev,
-          timestamp: Date.now()
-        }));
-      } else {
-        setPaginationParams(prev => ({
-          ...prev,
-          timestamp: Date.now()
-        }));
-      }
+      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
     }
-  }, [toggleActiveIngredientMutation.isSuccess, isFiltered]);
+  }, [toggleActiveIngredientMutation.isSuccess]);
 
   // update list when filter is changed
+  // Reload the list when coming back from the add/edit view
   useEffect(() => {
-    if (activeIngredientRefetch) {
-      activeIngredientRefetch();
-    }
-  }, [carouselActiveIndex, activeIngredientRefetch]);
+    activeIngredientRefetch();
+  }, [carouselActiveIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
@@ -637,7 +371,6 @@ const ActiveIngredientsSetup = () => {
           loading={isFetching}
           columns={tableColumns}
           rowClassName={isSelected}
-          filters={filters()}
           onRowClick={rowData => {
             setActiveIngredient(rowData as ActiveIngredientRow);
           }}
@@ -647,19 +380,7 @@ const ActiveIngredientsSetup = () => {
             if (sortBy) {
               setSortColumn(sortBy);
               setSortType((sortType ?? 'asc') as 'asc' | 'desc');
-              if (isFiltered) {
-                setFilterPagination(prev => ({
-                  ...prev,
-                  page: 0,
-                  timestamp: Date.now()
-                }));
-              } else {
-                setPaginationParams(prev => ({
-                  ...prev,
-                  page: 0,
-                  timestamp: Date.now()
-                }));
-              }
+              setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
             }
           }}
           page={pageIndex}

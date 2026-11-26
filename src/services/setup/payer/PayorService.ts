@@ -39,9 +39,22 @@ export const PayorService = createApi({
         category?: PayorCategory;
         name?: string;
         code?: string;
+        nphiesId?: string;
+        isWaseelEnabled?: string;
+        isActive?: string;
       }
     >({
-      query: ({ page, size, sort = 'id,asc', category, name, code }) => ({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        category,
+        name,
+        code,
+        nphiesId,
+        isWaseelEnabled,
+        isActive
+      }) => ({
         url: '/api/setup/payor',
         method: 'GET',
         params: {
@@ -50,7 +63,10 @@ export const PayorService = createApi({
           sort,
           ...(category ? { category } : {}),
           ...(name ? { name } : {}),
-          ...(code ? { code } : {})
+          ...(code ? { code } : {}),
+          ...(nphiesId ? { nphiesId } : {}),
+          ...(isWaseelEnabled ? { isWaseelEnabled } : {}),
+          ...(isActive ? { isActive } : {})
         }
       }),
       transformResponse: (response: Payor[], meta) => {
@@ -94,6 +110,16 @@ export const PayorService = createApi({
         body?.id ? [{ type: 'Payor', id: body.id }, 'Payor'] : ['Payor']
     }),
 
+    // Payor linked to an insurance company: returns the existing one, or creates it from the
+    // NPHIES payer (same call the patient service makes when Waseel returns a new payer).
+    ensurePayorFromNphies: builder.mutation<Payor, string>({
+      query: nphiesId => ({
+        url: `/api/setup/payor/ensure-from-nphies/${encodeURIComponent(nphiesId)}`,
+        method: 'POST'
+      }),
+      invalidatesTags: ['Payor']
+    }),
+
     // 🔹 Toggle active status
     togglePayorActive: builder.mutation<Payor, number | string>({
       query: id => ({
@@ -129,6 +155,7 @@ export const {
   useGetPayorByIdQuery,
   useCreatePayorMutation,
   useUpdatePayorMutation,
+  useEnsurePayorFromNphiesMutation,
   useTogglePayorActiveMutation,
   useGetAllActivePayorsQuery,
   useLazyGetAllActivePayorsQuery

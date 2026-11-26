@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Checkbox, Col, Form, Row } from 'rsuite';
+import { Checkbox, Form } from 'rsuite';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,10 +9,14 @@ import { MdAttachFile } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTab from '@/components/MyTab/MyTab';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 import CancellationModal from '@/components/CancellationModal';
+import PreAuthorizationAlertModal, {
+  type PreAuthorizationAlertItem
+} from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import CdtCodeSearch from '@/components/CdtCodeSearch/CdtCodeSearch';
 
@@ -35,12 +39,40 @@ import {
 import { newDentalProcedure } from '@/types/model-types-constructor-new';
 import { DentalProcedureResponseVM } from '@/types/model-types-new';
 import './styles.less';
-import { useEnumOptions } from '@/services/enumsApi';
+import ToothNumberField from './ToothNumberField';
+import ToothApprovalList from './ToothApprovalList';
+import { formatStoredToothNumber } from './toothChart';
+import SectionContainer from '@/components/SectionsoContainer';
+import MedicalHistory from '@/pages/encounter/encounter-component/patient-history/MedicalHistory/MedicalHistory';
+import PainAssessment from '@/pages/encounter/encounter-pre-observations-new/observations/PainAssessment';
+import PatientDiagnosis from '@/pages/encounter/medical-notes-and-assessments/patient-diagnosis';
+import PatientPlan from '@/pages/encounter/medical-notes-and-assessments/patient-plan/PatientPlan';
+import ChiefComplaintSection from './ChiefComplaintSection';
+import DentalHistorySection from './DentalHistorySection';
+import PatientFamilyEducationSection from './PatientFamilyEducationSection';
+import DentalSheetActions from './DentalSheetActions';
+import { readMissingFields } from '@/reducers/preAuthorizationMissingFieldsSlice';
 
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
+const resolveToothNumbers = (row: any): string[] => {
+  if (Array.isArray(row?.toothNumbers)) {
+    return row.toothNumbers.filter(Boolean);
+  }
+  if (row?.toothNumber) {
+    return [row.toothNumber];
+  }
+  return [];
+};
+
+const formatToothNumbers = (row: any) => {
+  const labels = resolveToothNumbers(row).map(formatStoredToothNumber);
+  return labels.length ? labels.join(', ') : '-';
+};
+
 const FIELD_LABELS: Record<string, string> = {
   toothNumber: 'tooth number',
+  toothNumbers: 'tooth number',
   surface: 'surface',
   procedureId: 'procedure',
   serviceId: 'service',
@@ -51,7 +83,9 @@ const FIELD_LABELS: Record<string, string> = {
   unit: 'unit',
   anesthesiaUsed: 'anesthesia used',
   fillingMaterial: 'filling material',
-  notes: 'notes'
+  notes: 'notes',
+  informedConsentObtained: 'informed consent obtained',
+  treatmentOutcome: 'treatment outcome'
 };
 
 const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
@@ -70,7 +104,9 @@ const DENTAL_PROCEDURE_ERROR_MAP: Record<string, string> = {
   procedureAlreadyBilled: 'Cannot modify this procedure because it has already been billed.',
   serviceAlreadyBilled: 'Cannot modify this procedure because the service has already been billed.',
   alreadyCancelled: 'This dental procedure is already cancelled.',
-  cancellationReasonRequired: 'Cancellation reason is required.'
+  cancellationReasonRequired: 'Cancellation reason is required.',
+  toothNumbersRequired: 'At least one tooth number is required.',
+  toothNumberNotAllowedForAge: "This tooth number does not match the patient's age."
 };
 
 const normalizeMsg = (msg: string) => {
@@ -82,7 +118,8 @@ const normalizeMsg = (msg: string) => {
 };
 
 const handleCrudError = (error: any, dispatch: any) => {
-  if (isUncoveredCashCancelled(error)) {
+  // Missing pre-authorization fields open their own dialog (preAuthorizationMissingFieldsSlice).
+  if (isUncoveredCashCancelled(error) || readMissingFields(error)) {
     return;
   }
 
@@ -150,8 +187,8 @@ const handleCrudError = (error: any, dispatch: any) => {
 const buildValidationError = (form: any) => {
   const fieldErrors: { field: string; message: string }[] = [];
 
-  if (!form.toothNumber) {
-    fieldErrors.push({ field: 'toothNumber', message: 'must not be null' });
+  if (resolveToothNumbers(form).length === 0) {
+    fieldErrors.push({ field: 'toothNumbers', message: 'must not be null' });
   }
 
   if (!form.surface) {
@@ -174,7 +211,9 @@ const emptyForm = {
   anesthesiaUsed: '',
   dose: '',
   fillingMaterial: '',
-  notes: ''
+  notes: '',
+  informedConsentObtained: false,
+  treatmentOutcome: ''
 };
 
 const DentalProcedures = props => {
@@ -197,6 +236,7 @@ const DentalProcedures = props => {
   const [modalKey, setModalKey] = useState(0);
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
 
@@ -247,8 +287,6 @@ const DentalProcedures = props => {
     size: 1000
   });
 
-  const ToothEnum = useEnumOptions('ToothNumber');
-
   const { data: proceduresData, isLoading } = useGetDentalProceduresByPatientQuery(
     { patientId: patient?.id ?? patient?.key, showCancelled, page, size },
     { skip: !patient?.id && !patient?.key }
@@ -257,6 +295,12 @@ const DentalProcedures = props => {
   const [saveProcedure, saveMutation] = useSaveDentalProcedureMutation();
   const [updateProcedure, updateMutation] = useUpdateDentalProcedureMutation();
   const [cancelProcedure, cancelMutation] = useCancelDentalProcedureMutation();
+
+  const showPreAuthAlertWhenPending = (result: { preAuthorizationPending?: boolean } | null) => {
+    if (result?.preAuthorizationPending) {
+      setPreAuthAlert([{ patientServiceProductId: null, label: 'Dental procedure' }]);
+    }
+  };
 
   const rows: DentalProcedureResponseVM[] = Array.isArray(proceduresData) ? proceduresData : [];
   const totalCount = rows.length;
@@ -295,17 +339,13 @@ const DentalProcedures = props => {
   useEffect(() => {
     if (saveMutation.isSuccess) {
       dispatch(notify({ msg: 'Dental procedure saved successfully', sev: 'success' }));
-      setFormModalOpen(false);
       setForm({ ...emptyForm });
-      setModalKey(prev => prev + 1);
     }
   }, [saveMutation.isSuccess]);
 
   useEffect(() => {
     if (updateMutation.isSuccess) {
       dispatch(notify({ msg: 'Dental procedure updated successfully', sev: 'success' }));
-      setFormModalOpen(false);
-      setForm({ ...emptyForm });
     }
   }, [updateMutation.isSuccess]);
 
@@ -352,12 +392,15 @@ const DentalProcedures = props => {
   const openEditModal = (row: DentalProcedureResponseVM) => {
     setForm({
       ...row,
+      toothNumbers: resolveToothNumbers(row),
       procedureId: (row as any).procedureId ?? null,
       serviceId: row.serviceId ?? null,
       anesthesiaUsed: row.anesthesiaUsed ?? '',
       dose: row.dose ?? '',
       fillingMaterial: row.fillingMaterial ?? '',
-      notes: row.notes ?? ''
+      notes: row.notes ?? '',
+      informedConsentObtained: Boolean(row.informedConsentObtained),
+      treatmentOutcome: row.treatmentOutcome ?? ''
     });
 
     setFormMode('edit');
@@ -373,12 +416,14 @@ const DentalProcedures = props => {
       return;
     }
 
+    const toothNumbers = resolveToothNumbers(form);
+
     if (formMode === 'add') {
       try {
         const createPayload = {
           patientId: patient?.id,
           encounterId: encounter?.id,
-          toothNumber: form.toothNumber,
+          toothNumbers,
           surface: form.surface,
           anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
@@ -388,10 +433,13 @@ const DentalProcedures = props => {
           serviceId: form.serviceId || null,
           cdtCodeId: form.cdtCodeId || null,
           notes: form.notes?.trim() || null,
+          informedConsentObtained: Boolean(form.informedConsentObtained),
+          treatmentOutcome: form.treatmentOutcome?.trim() || null,
           acceptUncoveredAsCash: requiresCashConfirmation
         };
 
-        await saveProcedure(createPayload).unwrap();
+        const saved = await saveProcedure(createPayload).unwrap();
+        showPreAuthAlertWhenPending(saved);
       } catch (error) {
         handleCrudError(error, dispatch);
       }
@@ -401,7 +449,7 @@ const DentalProcedures = props => {
       try {
         const body = {
           id: form.id,
-          toothNumber: form.toothNumber,
+          toothNumbers,
           surface: form.surface,
           anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
@@ -410,10 +458,13 @@ const DentalProcedures = props => {
           procedureId: form.procedureId,
           serviceId: form.serviceId || null,
           cdtCodeId: form.cdtCodeId || null,
-          notes: form.notes?.trim() || null
+          notes: form.notes?.trim() || null,
+          informedConsentObtained: Boolean(form.informedConsentObtained),
+          treatmentOutcome: form.treatmentOutcome?.trim() || null
         };
 
-        await updateProcedure({ id: form.id, body }).unwrap();
+        const updated = await updateProcedure({ id: form.id, body }).unwrap();
+        showPreAuthAlertWhenPending(updated);
       } catch (error) {
         handleCrudError(error, dispatch);
       }
@@ -440,11 +491,15 @@ const DentalProcedures = props => {
   const tableColumns = useMemo(
     () => [
       {
-        key: 'toothNumber',
+        key: 'toothNumbers',
         title: <Translate>Tooth Number</Translate>,
         flexGrow: 1,
         render: (row: DentalProcedureResponseVM) =>
-          ToothEnum?.find((t: any) => t.value === row.toothNumber)?.label ?? row.toothNumber ?? '-'
+          row.toothApprovals?.length ? (
+            <ToothApprovalList approvals={row.toothApprovals} />
+          ) : (
+            formatToothNumbers(row)
+          )
       },
       {
         key: 'surface',
@@ -562,6 +617,19 @@ const DentalProcedures = props => {
         render: (row: DentalProcedureResponseVM) => row.notes ?? '-'
       },
       {
+        key: 'informedConsentObtained',
+        title: <Translate>Informed Consent</Translate>,
+        flexGrow: 1,
+        render: (row: DentalProcedureResponseVM) => (row.informedConsentObtained ? 'Yes' : 'No')
+      },
+      {
+        key: 'treatmentOutcome',
+        title: <Translate>Treatment Outcome</Translate>,
+        flexGrow: 2,
+        expandable: true,
+        render: (row: DentalProcedureResponseVM) => row.treatmentOutcome ?? '-'
+      },
+      {
         key: 'status',
         title: <Translate>Status</Translate>,
         flexGrow: 1,
@@ -605,14 +673,16 @@ const DentalProcedures = props => {
         expandable: true
       },
     ],
-    [serviceList, procedureList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
+    [serviceList, procedureList, toothSurfData, cdtMap, valueUnitData]
   );
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
+  const patientId = Number(patient?.id ?? patient?.key);
+  const encounterId = Number(encounter?.id);
 
   return (
-    <div dir={dir}>
+    <div className="dental-procedure-sheet" dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
@@ -668,166 +738,225 @@ const DentalProcedures = props => {
         open={formModalOpen}
         setOpen={setFormModalOpen}
         title={formMode === 'add' ? 'Add Dental Procedure' : 'Edit Dental Procedure'}
-        size="500px"
+        size="92vw"
+        bodyheight="82vh"
         position="right"
-        steps={[{ title: 'Procedure Details' }]}
-        actionButtonLabel={formMode === 'add' ? 'Save' : 'Update'}
-        actionButtonFunction={handleSubmit}
-        isDisabledActionBtn={isMutating}
+        hideActionBtn
         content={() => (
-          <Form fluid className="fields-container">
-            <UncoveredInsuranceWarning items={uncoveredItems} />
-            <Row>
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="toothNumber"
-                    fieldLabel="Tooth Number"
-                    fieldType="select"
-                    required
-                    selectData={ToothEnum}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={form}
-                    setRecord={setForm}
+          <div className="dental-procedure-modal">
+            <MyTab
+              data={[
+                {
+                  title: 'Treatment Plan',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
+            <SectionContainer
+              collapsible
+              title={<Translate>Dental Procedure</Translate>}
+              action={
+                <MyButton size="small" onClick={handleSubmit} disabled={edit || isMutating}>
+                  {formMode === 'add' ? 'Save' : 'Update'}
+                </MyButton>
+              }
+              content={
+                <Form fluid className="dental-procedure-fields">
+                  <UncoveredInsuranceWarning items={uncoveredItems} />
+                  <ToothNumberField
+                    patient={patient}
+                    value={resolveToothNumbers(form)}
+                    disabled={edit}
+                    onChange={toothNumbers => setForm(prev => ({ ...prev, toothNumbers }))}
                   />
-                </Col>
+                  <div className="dental-procedure-fields__grid">
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="surface"
+                      fieldLabel="Surface"
+                      fieldType="select"
+                      required
+                      selectData={toothSurfData?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={form}
+                      setRecord={setForm}
+                      disableByField="isValid"
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="anesthesiaUsed"
+                      fieldLabel="Anesthesia Used"
+                      fieldType="text"
+                      record={form}
+                      setRecord={setForm}
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="dose"
+                      fieldLabel="Dose"
+                      fieldType="number"
+                      record={form}
+                      setRecord={setForm}
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="unit"
+                      fieldLabel="Unit"
+                      fieldType="select"
+                      selectData={valueUnitData?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={form}
+                      setRecord={setForm}
+                      disableByField="isValid"
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="fillingMaterial"
+                      fieldLabel="Filling Material"
+                      fieldType="text"
+                      record={form}
+                      setRecord={setForm}
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="procedureId"
+                      fieldLabel="Procedure"
+                      fieldType="select"
+                      required
+                      selectData={procedureList?.data ?? []}
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      record={form}
+                      setRecord={setForm}
+                    />
+                    <MyInput
+                      width="100%"
+                      column
+                      fieldName="serviceId"
+                      fieldLabel="Service"
+                      fieldType="select"
+                      selectData={serviceList?.data ?? []}
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      record={form}
+                      setRecord={setForm}
+                    />
+                    <div className="dental-procedure-fields__full">
+                      <MyInput
+                        width="100%"
+                        column
+                        fieldName="informedConsentObtained"
+                        fieldLabel="Informed Consent Obtained"
+                        fieldType="checkbox"
+                        record={form}
+                        setRecord={setForm}
+                      />
+                    </div>
+                    <div className="dental-procedure-fields__full">
+                      <MyInput
+                        width="100%"
+                        column
+                        fieldName="notes"
+                        fieldLabel="Note"
+                        fieldType="textarea"
+                        record={form}
+                        setRecord={setForm}
+                      />
+                    </div>
+                    <div className="dental-procedure-fields__full">
+                      <MyInput
+                        width="100%"
+                        column
+                        fieldName="treatmentOutcome"
+                        fieldLabel="Treatment Outcome"
+                        fieldType="textarea"
+                        record={form}
+                        setRecord={setForm}
+                      />
+                    </div>
+                    <div className="dental-procedure-fields__full">
+                      <CdtCodeSearch
+                        cdtCodeId={form.cdtCodeId}
+                        setCdtCodeId={id => setForm(prev => ({ ...prev, cdtCodeId: id }))}
+                      />
+                    </div>
+                  </div>
+                </Form>
+              }
+            />
 
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="surface"
-                    fieldLabel="Surface"
-                    fieldType="select"
-                    required
-                    selectData={toothSurfData?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={form}
-                    setRecord={setForm}
-                    disableByField='isValid'
+            <PatientFamilyEducationSection patient={patient} encounter={encounter} disabled={edit} />
+                    </div>
+                  )
+                },
+                {
+                  title: 'Clinical Documentation',
+                  content: (
+                    <div className="dental-procedure-modal__tab">
+                      <DentalSheetActions patient={patient} encounter={encounter} disabled={edit} />
 
-                  />
+                      <div className="dental-procedure-modal__sections">
+                        <ChiefComplaintSection encounter={encounter} disabled={edit} />
 
-                </Col>
-              </Row>
+                        <div>
+                          <DentalHistorySection patient={patient} encounter={encounter} disabled={edit} />
+                        </div>
 
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="anesthesiaUsed"
-                    fieldLabel="Anesthesia Used"
-                    fieldType="text"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
+                        <PatientPlan
+                          patient={patient}
+                          localEncounter={encounter}
+                          disabled={edit}
+                          title="Plan of Care"
+                        />
 
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="dose"
-                    fieldLabel="Dose"
-                    fieldType="number"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
-              </Row>
+                        {patientId && encounterId ? (
+                          <Form fluid>
+                            <PainAssessment
+                              patientId={patientId}
+                              encounterId={encounterId}
+                              encounter={encounter}
+                              disabled={edit}
+                              title="Pain Assessment"
+                            />
+                          </Form>
+                        ) : (
+                          <div />
+                        )}
 
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="unit"
-                    fieldLabel="Unit"
-                    fieldType="select"
-                    selectData={valueUnitData?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={form}
-                    setRecord={setForm}
-                    disableByField='isValid'
-                  />
-                </Col>
+                        <SectionContainer
+                          collapsible
+                          title={<Translate>Medical History</Translate>}
+                          content={
+                            <MedicalHistory
+                              patient={patient}
+                              encounter={encounter}
+                              edit={edit}
+                              toShowData={false}
+                              showFreeText
+                            />
+                          }
+                        />
 
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="fillingMaterial"
-                    fieldLabel="Filling Material"
-                    fieldType="text"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="procedureId"
-                    fieldLabel="Procedure"
-                    fieldType="select"
-                    required
-                    selectData={procedureList?.data ?? []}
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
-
-                <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="serviceId"
-                    fieldLabel="Service"
-                    fieldType="select"
-                    selectData={serviceList?.data ?? []}
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={24}>
-                  <MyInput
-                    width="100%"
-                    column
-                    fieldName="notes"
-                    fieldLabel="Note"
-                    fieldType="textarea"
-                    record={form}
-                    setRecord={setForm}
-                  />
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={16}>
-                  <CdtCodeSearch
-                    cdtCodeId={form.cdtCodeId}
-                    setCdtCodeId={id => setForm(prev => ({ ...prev, cdtCodeId: id }))}
-                  />
-                </Col>
-              </Row>
-            </Row>
-          </Form>
+                        <PatientDiagnosis
+                          patient={patient}
+                          encounter={encounter}
+                          disabled={edit}
+                          title="Patient Diagnosis"
+                          hidePreviousVisits
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+              ]}
+            />
+          </div>
         )}
       />
 
@@ -858,6 +987,13 @@ const DentalProcedures = props => {
             setRefetchAttachmentList={() => { }}
           />
         }
+      />
+
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
       />
     </div>
   );

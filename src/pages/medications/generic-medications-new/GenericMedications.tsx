@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Panel, Form, Whisper, Tooltip } from "rsuite";
+import { Panel, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { MdCheckCircle } from "react-icons/md";
+import { MdCheckCircle, MdLocalOffer } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -12,21 +12,13 @@ import {
   useUpdateBrandMedicationMutation,
   useGetAllBrandMedicationsQuery,
   useToggleBrandMedicationActiveMutation,
-  useLazyGetBrandMedicationsByNameQuery,
-  useLazyGetBrandMedicationsByManufacturerQuery,
-  useLazyGetBrandMedicationsByDosageFormQuery,
-  useLazyGetBrandMedicationsByUsageInstructionsQuery,
-  useLazyGetBrandMedicationsByRoaQuery,
-  useLazyGetBrandMedicationsByExpiresAfterOpeningQuery,
-  useLazyGetBrandMedicationsByUseSinglePatientQuery,
-  useLazyGetBrandMedicationsByIsActiveQuery,
 } from "@/services/setup/brandmedication/BrandMedicationService";
 
 import MyTable from "@/components/MyTable";
-import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import AddEditBrandMedication from "./AddEditBrandMedication";
+import PriceListPrompt, { usePriceListPrompt } from "@/components/PriceListPrompt";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import Translate from "@/components/Translate";
 import { MdModeEdit, MdDelete } from "react-icons/md";
@@ -241,13 +233,26 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
     const [openSubstitute, setOpenSubstitute] = useState(false);
     const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+    const priceListPrompt = usePriceListPrompt();
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
 
-    const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
-    const [isFiltered, setIsFiltered] = useState(false);
-    const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
-    const [filteredTotal, setFilteredTotal] = useState(0);
+    // Header filters: draft values typed in the inputs, applied on Enter / select change.
+    // Everything is sent to one endpoint and combined with AND.
+    const emptyHeaderFilters = {
+      name: "",
+      manufacturer: "",
+      dosageForm: "",
+      roa: "",
+      expiresAfterOpening: "",
+      useSinglePatient: "",
+    };
+    type HeaderFilterField = keyof typeof emptyHeaderFilters;
+    const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+    const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+    // 'all' sends no isActive param
+    const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | "all">("active");
+    const activeFilter = statusFilter === "all" ? undefined : statusFilter === "active";
 
     const isSelected = (rowData: BrandMedication) =>
       rowData?.id === brandMedication?.id ? "selected-row" : "";
@@ -263,7 +268,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
     const { data: allMedications, isFetching, refetch } =
-      useGetAllBrandMedicationsQuery(paginationParams);
+      useGetAllBrandMedicationsQuery({ ...paginationParams, ...appliedFilters, isActive: activeFilter });
 
     const totalCount = allMedications?.totalCount ?? 0;
 
@@ -279,14 +284,10 @@ const prettifyInlineBackendMessage = (message: string): string => {
     const [updateBrandMedication] = useUpdateBrandMedicationMutation();
     const [toggleActive] = useToggleBrandMedicationActiveMutation();
 
-    const [getByName] = useLazyGetBrandMedicationsByNameQuery();
-    const [getByManufacturer] = useLazyGetBrandMedicationsByManufacturerQuery();
-    const [getByDosageForm] = useLazyGetBrandMedicationsByDosageFormQuery();
-    const [getByUsageInstructions] = useLazyGetBrandMedicationsByUsageInstructionsQuery();
-    const [getByRoa] = useLazyGetBrandMedicationsByRoaQuery();
-    const [getByExpiresAfterOpening] = useLazyGetBrandMedicationsByExpiresAfterOpeningQuery();
-    const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
-    const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
+    // Changing the status filter starts again from the first page
+    useEffect(() => {
+      setPaginationParams((prev) => ({ ...prev, page: 0 }));
+    }, [statusFilter]);
 
     useEffect(() => {
       dispatch(setPageCode("Brand_Medications"));
@@ -300,15 +301,26 @@ const prettifyInlineBackendMessage = (message: string): string => {
 
     const handleSave = async () => {
       try {
+        let saved: any;
         if (brandMedication.id) {
           const { hasActiveIngredient, ...updatePayload } = brandMedication;
-          await updateBrandMedication(updatePayload).unwrap();
+          saved = await updateBrandMedication(updatePayload).unwrap();
           dispatch(notify({ msg: "Updated successfully", sev: "success" }));
         } else {
           const { hasActiveIngredient, ...payload } = brandMedication;
-          await addBrandMedication(payload).unwrap();
+          saved = await addBrandMedication(payload).unwrap();
           dispatch(notify({ msg: "Added successfully", sev: "success" }));
         }
+
+        priceListPrompt.prompt({
+          itemType: "MEDICATION",
+          sourceId: saved?.id ?? brandMedication.id,
+          itemCode: saved?.code ?? brandMedication.code,
+          itemName: saved?.name ?? brandMedication.name,
+          unitPrice: saved?.price ?? brandMedication.price,
+          facilityId: saved?.facilityId ?? brandMedication.facilityId,
+          currency: saved?.currency ?? brandMedication.currency,
+        });
 
         setOpenAddEditPopup(false);
         refetch();
@@ -337,78 +349,9 @@ const prettifyInlineBackendMessage = (message: string): string => {
         ...prev,
         hasActiveIngredient: true,
        }));
-       if (isFiltered) {
-        setFilteredList((prev) =>
-        prev.map((item) =>
-          item.id === brandMedication.id
-            ? { ...item, hasActiveIngredient: true }
-            : item
-                )
-                );
-       }
       } catch (error) {
       }
     };
-    const normalizeBool = (v: any) => (v === true || v === "true" ? true : false);
-
-    const handleFilterChange = async (field: string, value: string) => {
-      if (!field || value === undefined || value === null || value === "") {
-        setIsFiltered(false);
-        setFilteredList([]);
-        setFilteredTotal(0);
-        return;
-      }
-
-      try {
-        const params = { page: 0, size: 15, sort: "id,asc" };
-        let response;
-
-        switch (field) {
-          case "name":
-            response = await getByName({ name: value, ...params }).unwrap();
-            break;
-          case "manufacturer":
-            response = await getByManufacturer({ manufacturer: value, ...params }).unwrap();
-            break;
-          case "dosageForm":
-            response = await getByDosageForm({ dosageForm: value, ...params }).unwrap();
-            break;
-          case "usageInstructions":
-            response = await getByUsageInstructions({ usageInstructions: value, ...params }).unwrap();
-            break;
-          case "roa":
-            response = await getByRoa({ roa: value, ...params }).unwrap();
-            break;
-          case "expiresAfterOpening":
-            response = await getByExpiresAfterOpening({
-              expiresAfterOpening: normalizeBool(value),
-              ...params,
-            }).unwrap();
-            break;
-          case "useSinglePatient":
-            response = await getByUseSinglePatient({
-              useSinglePatient: normalizeBool(value),
-              ...params,
-            }).unwrap();
-            break;
-          case "isActive":
-            response = await getByIsActive({
-              isActive: normalizeBool(value),
-              ...params,
-            }).unwrap();
-            break;
-          default:
-            return;
-        }
-
-        setFilteredList(response.data ?? []);
-        setFilteredTotal(response.totalCount ?? 0);
-        setIsFiltered(true);
-      } catch (error: any) {
-        handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
-      }
-    };
-
     const handleSortChange = (col: string, type: "asc" | "desc") => {
       setSortColumn(col);
       setSortType(type);
@@ -421,120 +364,35 @@ const prettifyInlineBackendMessage = (message: string): string => {
       });
     };
 
-    const renderFilterValueInput = () => {
-      switch (recordOfFilter.filter) {
-        case "manufacturer":
-          return (
-            <MyInput
-              fieldName="value"
-              fieldType="select"
-              selectData={brandMedicationLovQueryResponse?.object ?? []}
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-              selectDataValue="key"
-              record={recordOfFilter}
-              showLabel={false}
-              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-              placeholder="Select Manufacturer"
-            />
-          );
-
-        case "dosageForm":
-          return (
-            <MyInput
-              fieldName="value"
-              fieldType="select"
-              selectData={doseageFormLovQueryResponse?.object ?? []}
-               selectDataLabel="lovDisplayVale"
- disableByField='isValid'
-
-              selectDataValue="key"
-              record={recordOfFilter}
-              showLabel={false}
-              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-              placeholder="Select Dosage Form"
-            />
-          );
-
-        case "roa":
-          return (
-            <MyInput
-              fieldType="select"
-              fieldName="roa"
-              selectData={roaEnumOptions ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={recordOfFilter}
-              showLabel={false}
-              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-              placeholder="Select Roa"
-            />
-          );
-
-        case "expiresAfterOpening":
-        case "isActive":
-        case "useSinglePatient":
-          return (
-            <MyInput
-              fieldName="value"
-              fieldType="checkbox"
-              record={recordOfFilter}
-              setRecord={setRecordOfFilter}
-              showLabel={false}
-              placeholder="Search"
-            />
-          );
-
-        default:
-          return (
-            <MyInput
-              fieldName="value"
-              fieldType="text"
-              record={recordOfFilter}
-              setRecord={setRecordOfFilter}
-              showLabel={false}
-              placeholder="Search"
-            />
-          );
-      }
+    // Applying one header filter also applies whatever is typed in the others
+    const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+      const next = { ...headerFilters, [field]: value };
+      setHeaderFilters(next);
+      setAppliedFilters(next);
+      setPaginationParams((prev) => ({ ...prev, page: 0 }));
     };
 
-    const filters = () => (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          fieldName="filter"
-          fieldType="select"
-          selectData={[
-            { label: "Brand Name", value: "name" },
-            { label: "Manufacturer", value: "manufacturer" },
-            { label: "Dosage Form", value: "dosageForm" },
-            { label: "ROA", value: "roa" },
-            { label: "Expires After Opening", value: "expiresAfterOpening" },
-            { label: "Single Patient Use", value: "useSinglePatient" },
-            { label: "Active", value: "isActive" },
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={(r) =>
-            setRecordOfFilter({ ...recordOfFilter, filter: r.filter, value: "" })
-          }
-          showLabel={false}
-          placeholder="Select Filter"
-        />
+    const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+      searchable: true,
+      searchPlaceholder: placeholder,
+      searchValue: headerFilters[field],
+      onSearchChange: (value: string) => setHeaderFilters((prev) => ({ ...prev, [field]: value })),
+      onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field]),
+    });
 
-        {renderFilterValueInput()}
+    const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+      ...headerSearch(field),
+      searchType: "select" as const,
+      searchOptions: [{ label: "All", value: "" }, ...options],
+    });
 
-        <MyButton
-          color="var(--deep-blue)"
-          width="80px"
-          onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
+    const lovOptions = (lov: any) =>
+      (lov?.object ?? []).map((o: any) => ({ label: o.lovDisplayVale, value: String(o.key) }));
+
+    const YES_NO = [
+      { label: "Yes", value: "true" },
+      { label: "No", value: "false" },
+    ];
 
     const iconsForActions = (row: BrandMedication) => (
       <div className="container-of-icons">
@@ -546,6 +404,22 @@ const prettifyInlineBackendMessage = (message: string): string => {
             setBrandMedication(row);
             setOpenAddEditPopup(true);
           }}
+        />
+        <MdLocalOffer
+          className="icons-style"
+          title="Price Lists"
+          size={22}
+          onClick={() =>
+            priceListPrompt.view({
+              itemType: "MEDICATION",
+              sourceId: row.id,
+              itemCode: row.code,
+              itemName: row.name,
+              unitPrice: row.price,
+              facilityId: row.facilityId,
+              currency: row.currency
+            })
+          }
         />
 
         {row.isActive ? (
@@ -617,11 +491,17 @@ const prettifyInlineBackendMessage = (message: string): string => {
     );
 
     const columns = [
-      { key: "name", title: <Translate>Brand Name</Translate>, flexGrow: 4 },
+      {
+        key: "name",
+        title: <Translate>Brand Name</Translate>,
+        width: 220,
+        ...headerSearch("name", "Search name"),
+      },
       {
         key: "manufacturer",
         title: <Translate>Manufacturer</Translate>,
-        flexGrow: 4,
+        width: 190,
+        ...headerSelect("manufacturer", lovOptions(brandMedicationLovQueryResponse)),
         render: (rowData: BrandMedication) =>
           conjureValueBasedOnKeyFromList(
             brandMedicationLovQueryResponse?.object,
@@ -632,7 +512,8 @@ const prettifyInlineBackendMessage = (message: string): string => {
       {
         key: "dosageForm",
         title: <Translate>Dosage Form</Translate>,
-        flexGrow: 4,
+        width: 170,
+        ...headerSelect("dosageForm", lovOptions(doseageFormLovQueryResponse)),
         render: (rowData: BrandMedication) =>
           conjureValueBasedOnKeyFromList(
             doseageFormLovQueryResponse?.object,
@@ -643,13 +524,37 @@ const prettifyInlineBackendMessage = (message: string): string => {
       {
         key: "roa",
         title: <Translate>ROA</Translate>,
-        flexGrow: 3,
+        width: 150,
+        ...headerSelect("roa", roaEnumOptions ?? []),
         render: (rowData: BrandMedication) => <p>{formatEnumString(rowData?.roa)}</p>,
+      },
+      {
+        key: "expiresAfterOpening",
+        title: <Translate>Expires After Opening</Translate>,
+        width: 130,
+        ...headerSelect("expiresAfterOpening", YES_NO),
+        render: (r: BrandMedication) => (r.expiresAfterOpening ? "Yes" : "No"),
+      },
+      {
+        key: "useSinglePatient",
+        title: <Translate>Single Patient Use</Translate>,
+        width: 130,
+        ...headerSelect("useSinglePatient", YES_NO),
+        render: (r: BrandMedication) => (r.useSinglePatient ? "Yes" : "No"),
       },
       {
         key: "isActive",
         title: <Translate>Status</Translate>,
-        flexGrow: 2,
+        width: 120,
+        searchable: true,
+        searchType: "select" as const,
+        searchOptions: [
+          { label: "Active", value: "active" },
+          { label: "Inactive", value: "inactive" },
+          { label: "All", value: "all" },
+        ],
+        searchValue: statusFilter,
+        onSearchChange: (value: string) => setStatusFilter(value as "active" | "inactive" | "all"),
         render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive"),
       },
       { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
@@ -669,11 +574,10 @@ const prettifyInlineBackendMessage = (message: string): string => {
       <Panel dir={dir}>
         <MyTable
           height={500}
-          data={isFiltered ? filteredList : allMedications?.data ?? []}
-          totalCount={isFiltered ? filteredTotal : totalCount}
+          data={allMedications?.data ?? []}
+          totalCount={totalCount}
           loading={isFetching}
           columns={columns}
-          filters={filters()}
           rowClassName={isSelected}
           sortColumn={sortColumn}
           sortType={sortType}
@@ -712,6 +616,7 @@ const prettifyInlineBackendMessage = (message: string): string => {
           setBrandMedication={setBrandMedication}
           handleSave={handleSave}
         />
+        <PriceListPrompt prompt={priceListPrompt} />
 
         <DeletionConfirmationModal
           open={openConfirmModal}

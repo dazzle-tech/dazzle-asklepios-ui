@@ -10,6 +10,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import BillingRuleSelect from '@/components/BillingRuleSelect/BillingRuleSelect';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 
 import {
   useAddProcedureMutation,
@@ -50,6 +51,9 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const currencyOptions = useEnumCapitalized('Currency');
+  const surfaceOptions = useEnumOptions('ToothSurface');
+
+  const priceListPrompt = usePriceListPrompt();
 
   const isLoading = isAdding || isUpdating || actionLoading;
 
@@ -100,8 +104,9 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         return;
       }
 
+      let saved: any;
       if (isUpdate) {
-        await updateProcedure({
+        saved = await updateProcedure({
           facilityId: procedure.facilityId,
           id: procedure.id,
           ...payload
@@ -109,13 +114,23 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
         dispatch(notify({ msg: 'Procedure updated successfully', sev: 'success' }));
       } else {
-        await addProcedure({
+        saved = await addProcedure({
           facilityId: procedure.facilityId,
           ...payload
         }).unwrap();
 
         dispatch(notify({ msg: 'Procedure added successfully', sev: 'success' }));
       }
+
+      priceListPrompt.prompt({
+        itemType: 'PROCEDURE',
+        sourceId: saved?.id ?? procedure.id,
+        itemCode: payload.code,
+        itemName: payload.name,
+        unitPrice: payload.price,
+        facilityId: procedure.facilityId,
+        currency: payload.currency
+      });
 
       onSaveSuccess?.();
     } catch (err: any) {
@@ -140,6 +155,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
           contraindications: 'Contraindications',
           preparationInstructions: 'Preparation Instructions',
           recoveryNotes: 'Recovery Notes',
+          relatedSurfaces: 'Related Surfaces',
           currency: 'Currency',
           price: 'Price'
         };
@@ -200,7 +216,8 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         notfound: 'Procedure not found.',
         facilityrequired: 'Facility id is required.',
         'unique.facility.name': 'Procedure name already exists in this facility.',
-        'fk.facility.notfound': 'Facility not found.'
+        'fk.facility.notfound': 'Facility not found.',
+        'relatedSurfaces.invalid': 'One or more of the selected surfaces is not valid.'
       };
 
       let humanMsg: string;
@@ -301,6 +318,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   width="100%"
                   fieldLabel="Price"
                   fieldType="number"
+                  allowDecimal
                   fieldName="price"
                   record={procedure}
                   setRecord={setProcedure}
@@ -335,6 +353,24 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                 />
               </div>
             </div>
+
+            {procedure?.categoryType === 'DENTAL_PROCEDURE' && (
+              <div className="container-of-two-fields-service">
+                <div className="container-of-field-service">
+                  <MyInput
+                    width="100%"
+                    fieldLabel="Related Surfaces"
+                    fieldType="multyPicker"
+                    fieldName="relatedSurfaces"
+                    selectData={surfaceOptions ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={procedure}
+                    setRecord={setProcedure}
+                  />
+                </div>
+              </div>
+            )}
 
             <Form className="container-of-appointable">
               <MyInput
@@ -407,18 +443,21 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
     console.log(procedure.categoryType);
   }, [procedure.categoryType]);
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title={isEdit ? 'Edit Procedure' : 'New Procedure'}
-      position="right"
-      content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
-      actionButtonLabel={isEdit ? 'Save' : 'Create'}
-      actionButtonFunction={handleSave}
-      isDisabledActionBtn={isLoading}
-      steps={[{ title: 'Procedure Info', icon: <FaStar /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
-    />
+    <>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={isEdit ? 'Edit Procedure' : 'New Procedure'}
+        position="right"
+        content={stepNumber => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
+        actionButtonLabel={isEdit ? 'Save' : 'Create'}
+        actionButtonFunction={handleSave}
+        isDisabledActionBtn={isLoading}
+        steps={[{ title: 'Procedure Info', icon: <FaStar /> }]}
+        size={width > 600 ? '36vw' : '70vw'}
+      />
+      <PriceListPrompt prompt={priceListPrompt} />
+    </>
   );
 };
 

@@ -1,11 +1,10 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
-import { MdModeEdit, MdDelete, MdLink } from 'react-icons/md';
+import { Panel } from 'rsuite';
+import { MdModeEdit, MdDelete, MdLink, MdMedicalServices, MdLocalOffer } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -13,27 +12,25 @@ import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useEnumOptions } from '@/services/enumsApi';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import {
   useGetProceduresQuery,
   useToggleProcedureIsActiveMutation,
-  useLazyGetProceduresByCategoryQuery,
-  useLazyGetProceduresByCodeQuery,
-  useLazyGetProceduresByNameQuery,
-  useLazyGetProceduresByFacilityQuery,
 } from '@/services/setup/procedure/procedureService';
 import type { Procedure } from '@/types/model-types-new';
 import { newProcedure } from '@/types/model-types-constructor-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
+import PriceListPrompt, { usePriceListPrompt } from '@/components/PriceListPrompt';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
 import LinkProcedureDocumentAssignment from './LinkProcedureDocumentAssignment';
+import LinkProcedureItems from './LinkProcedureItems';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
+  const priceListView = usePriceListPrompt();
 
   // Facility context (used to default new procedure)
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -54,31 +51,25 @@ const ProcedureSetup: React.FC = () => {
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
 
   const [linkDocumentOpen, setLinkDocumentOpen] = useState(false);
+
+  const [linkItemsOpen, setLinkItemsOpen] = useState(false);
+  const [linkItemsProcedure, setLinkItemsProcedure] = useState<Procedure | null>(null);
   const [linkDocumentProcedureId, setLinkDocumentProcedureId] = useState<number | null>(null);
 
-  // Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: '',
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { facilityId: '', categoryType: '', name: '', code: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  // Pagination state when list is filtered
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc',
-  });
-
-  // Pagination state for main (unfiltered) list
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc',
-    timestamp: Date.now(),
   });
 
   const categoryOptions = useEnumOptions('ProcedureCategory');
@@ -88,29 +79,16 @@ const ProcedureSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
+    isActive: activeFilter,
+    ...appliedFilters,
   });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
-  // Mutations and lazy filter queries
   const [toggleProcedureIsActive] = useToggleProcedureIsActiveMutation();
-  const [fetchByCategory] = useLazyGetProceduresByCategoryQuery();
-  const [fetchByCode] = useLazyGetProceduresByCodeQuery();
-  const [fetchByName] = useLazyGetProceduresByNameQuery();
-  const [fetchByFacility] = useLazyGetProceduresByFacilityQuery();
 
-  // Derived data
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : proceduresPage?.totalCount ?? 0),
-    [isFiltered, filteredTotal, proceduresPage?.totalCount]
-  );
-
-  const links = (isFiltered ? filteredLinks : proceduresPage?.links) || {};
-
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : proceduresPage?.data ?? []),
-    [isFiltered, filteredData, proceduresPage?.data]
-  );
+  const totalCount = proceduresPage?.totalCount ?? 0;
+  const tableData = useMemo(() => proceduresPage?.data ?? [], [proceduresPage?.data]);
 
   // Page header
   useEffect(() => {
@@ -131,14 +109,6 @@ const ProcedureSetup: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Available filters
-  const filterFields = [
-    { label: 'Facility', value: 'facilityId' },
-    { label: 'Category', value: 'categoryType' },
-    { label: 'Name', value: 'name' },
-    { label: 'Code', value: 'code' },
-  ];
-
   // Open modal for new procedure
   const handleNew = () => {
     setProcedure({ ...newProcedure, facilityId });
@@ -150,108 +120,9 @@ const ProcedureSetup: React.FC = () => {
     setLinkDocumentOpen(true);
   };
 
-  /**
-   * Reset table to unfiltered mode and refetch main list.
-   */
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0 }));
-    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    refetch();
-  };
-
-  /**
-   * Run filter query for given field and value.
-   */
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size
-  ) => {
-    if (value === null || value === undefined || value === '') return undefined;
-
-    const common = { page, size, sort: paginationParams.sort };
-
-    if (fieldName === 'categoryType') {
-      return await fetchByCategory({
-        categoryType: value,
-        ...common,
-      }).unwrap();
-    } else if (fieldName === 'code') {
-      return await fetchByCode({
-        code: value,
-        ...common,
-      }).unwrap();
-    } else if (fieldName === 'name') {
-      return await fetchByName({
-        name: value,
-        ...common,
-      }).unwrap();
-    } else if (fieldName === 'facilityId') {
-      return await fetchByFacility({
-        facilityId: value,
-        ...common,
-      }).unwrap();
-    }
-
-    return undefined;
-  };
-
-  /**
-   * Apply or clear filter.
-   */
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size
-  ) => {
-    if (value === null || value === undefined || value === '') {
-      resetToUnfiltered();
-      return;
-    }
-
-    try {
-      const resp =
-        (await runFilterQuery(fieldName, value, page, size)) as
-        | { data: any[]; totalCount: number; links?: any }
-        | undefined;
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size }));
-    } catch {
-      resetToUnfiltered();
-    }
-  };
-
-  /**
-   * Called by AddEditProcedure after a successful save.
-   * Clears filter and goes back to unfiltered mode.
-   */
+  // After a save, reload the list with the current filters
   const handleSaveSuccess = () => {
-    setRecordOfFilter({ filter: '', value: '' });
-    resetToUnfiltered();
-  };
-
-  /**
-   * Update a row locally in filteredData to reflect toggle.
-   * Uses String comparison for id to avoid type mismatches.
-   */
-  const applyToggleLocally = (toggledId: number | string, newIsActive: boolean) => {
-    if (!isFiltered) return;
-
-    setFilteredData(prev =>
-      prev.map((row: any) =>
-        String(row.id) === String(toggledId) ? { ...row, isActive: newIsActive } : row
-      )
-    );
+    refetch();
   };
 
   /**
@@ -267,18 +138,10 @@ const ProcedureSetup: React.FC = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Procedure deactivated successfully', sev: 'success' }));
-
-        // Reflect immediately in state when filtered
-        applyToggleLocally(id, false);
-
-        if (!isFiltered) {
-          refetch();
-        } else {
-          // Also update local selected procedure state
-          setProcedure(prev =>
-            prev && String(prev.id) === String(id) ? { ...prev, isActive: false } : prev
-          );
-        }
+        setProcedure(prev =>
+          prev && String(prev.id) === String(id) ? { ...prev, isActive: false } : prev
+        );
+        refetch();
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to deactivate procedure', sev: 'error' }));
@@ -298,78 +161,45 @@ const ProcedureSetup: React.FC = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Procedure reactivated successfully', sev: 'success' }));
-
-        // Reflect immediately in state when filtered
-        applyToggleLocally(id, true);
-
-        if (!isFiltered) {
-          refetch();
-        } else {
-          setProcedure(prev =>
-            prev && String(prev.id) === String(id) ? { ...prev, isActive: true } : prev
-          );
-        }
+        setProcedure(prev =>
+          prev && String(prev.id) === String(id) ? { ...prev, isActive: true } : prev
+        );
+        refetch();
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to reactivate procedure', sev: 'error' }));
       });
   };
 
-  /**
-   * Pagination change handler.
-   */
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size
-      );
-      return;
-    }
-
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now(),
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  /**
-   * Rows per page change handler.
-   */
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-      }));
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now(),
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field]),
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   // Selected row class
   const isSelected = (rowData: any) => (rowData?.id === procedure?.id ? 'selected-row' : '');
@@ -379,7 +209,13 @@ const ProcedureSetup: React.FC = () => {
     {
       key: 'facilityId',
       title: <Translate>Facility Name</Translate>,
-      flexGrow: 3,
+      width: 180,
+      ...headerSearch('facilityId'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) })),
+      ],
       render: (row: any) => (
         <span>
           {conjureValueBasedOnIDFromList(
@@ -390,12 +226,25 @@ const ProcedureSetup: React.FC = () => {
         </span>
       ),
     },
-    { key: 'name', title: <Translate>Procedure Name</Translate>, flexGrow: 4 },
-    { key: 'code', title: <Translate>Code</Translate>, flexGrow: 3 },
+    {
+      key: 'name',
+      title: <Translate>Procedure Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name'),
+    },
+    {
+      key: 'code',
+      title: <Translate>Code</Translate>,
+      width: 150,
+      ...headerSearch('code', 'Search code'),
+    },
     {
       key: 'categoryType',
       title: <Translate>Category</Translate>,
-      flexGrow: 3,
+      width: 170,
+      ...headerSearch('categoryType'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(categoryOptions ?? [])],
       render: (row: any) => row?.categoryType ? formatEnumString(row.categoryType) : '',
     },
     {
@@ -407,7 +256,16 @@ const ProcedureSetup: React.FC = () => {
     {
       key: 'isActive',
       title: <Translate>Status</Translate>,
-      width: 100,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' },
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
       render: (row: any) => (
         <MyBadgeStatus
           contant={row?.isActive ? 'Active' : 'Inactive'}
@@ -459,6 +317,16 @@ const ProcedureSetup: React.FC = () => {
       flexGrow: 3,
       render: (row: any) => (
         <div className="container-of-icons">
+          <MdMedicalServices
+            className="icons-style"
+            title="Linked Items"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setLinkItemsProcedure(row);
+              setLinkItemsOpen(true);
+            }}
+          />
           <MdModeEdit
             className="icons-style"
             title="Edit"
@@ -468,6 +336,23 @@ const ProcedureSetup: React.FC = () => {
               setProcedure(row);
               setPopupOpen(true);
             }}
+          />
+          <MdLocalOffer
+            className="icons-style"
+            title="Price Lists"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() =>
+              priceListView.view({
+                itemType: 'PROCEDURE',
+                sourceId: row.id,
+                itemCode: row.code,
+                itemName: row.name,
+                unitPrice: row.price,
+                facilityId: row.facilityId,
+                currency: row.currency
+              })
+            }
           />
           {row?.isActive ? (
             <MdDelete
@@ -499,84 +384,6 @@ const ProcedureSetup: React.FC = () => {
     },
   ];
 
-  // Filters UI
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-      {recordOfFilter.filter === 'categoryType' ? (
-        <MyInput
-          showLabel={false}
-          width="100%"
-          fieldType="select"
-          fieldLabel="Category Type"
-          selectData={categoryOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          fieldName="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      ) : recordOfFilter.filter === 'facilityId' ? (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={220}
-        />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() =>
-          handleFilterChange(
-            recordOfFilter.filter,
-            recordOfFilter.value,
-            0,
-            filterPagination.size
-          )
-        }
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
-  // Auto reset when filter value is cleared
-  useEffect(() => {
-    if ((recordOfFilter.value === null || recordOfFilter.value === '') && isFiltered) {
-      resetToUnfiltered();
-    }
-  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
-
               // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -592,9 +399,8 @@ const ProcedureSetup: React.FC = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={row => setProcedure(row)}
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         tableButtons={
@@ -628,6 +434,7 @@ const ProcedureSetup: React.FC = () => {
         onSaveSuccess={handleSaveSuccess}
         actionLoading={isFetching}
       />
+      <PriceListPrompt prompt={priceListView} />
 
       <DeletionConfirmationModal
         open={openConfirmToggleActive}
@@ -653,6 +460,13 @@ const ProcedureSetup: React.FC = () => {
         open={linkDocumentOpen}
         setOpen={setLinkDocumentOpen}
         defaultProcedureId={linkDocumentProcedureId}
+      />
+
+      <LinkProcedureItems
+        open={linkItemsOpen}
+        setOpen={setLinkItemsOpen}
+        procedureId={linkItemsProcedure?.id ?? 0}
+        facilityId={linkItemsProcedure?.facilityId ?? 0}
       />
     </Panel>
   );

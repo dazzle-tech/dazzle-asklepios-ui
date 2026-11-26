@@ -22,8 +22,14 @@ import { useLazyGetServicesBulkByIdsQuery } from '@/services/setup/serviceServic
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
 import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetVaccineBrandsByIdsQuery } from '@/services/vaccine/vaccineBrandsService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useAddProcedureEquipmentMutation,
+  useDeleteProcedureEquipmentMutation,
+  useGetProcedureEquipmentQuery
+} from '@/services/patients/patientProcedureService';
 
 const LOCKED_PAYMENT_STATUSES = new Set([
   'RESERVED',
@@ -36,25 +42,47 @@ const LOCKED_PAYMENT_STATUSES = new Set([
   'CANCELLED'
 ]);
 
-const ServiceAndProductsTab = ({ edit: propEdit }) => {
+type ServiceAndProductsTabProps = {
+  edit?: boolean;
+  /** Given outside the encounter page, where the route state has no encounter. */
+  encounter?: any;
+  patient?: any;
+  /** Shows and adds only the items that come from this procedure. */
+  procedureId?: number;
+};
+
+const ServiceAndProductsTab = ({
+  edit: propEdit,
+  encounter: encounterProp,
+  patient,
+  procedureId
+}: ServiceAndProductsTabProps) => {
   const location = useLocation();
-  const encounter = location.state?.encounter;
+  const encounter = encounterProp ?? location.state?.encounter;
   const dispatch = useAppDispatch();
+  const [addProcedureItem] = useAddProcedureEquipmentMutation();
+  const [deleteProcedureItem] = useDeleteProcedureEquipmentMutation();
 
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 15, sort: 'id,asc', });
 
   const [deletePatientServiceProduct] = useDeletePatientServiceOrProductMutation();
 
-  const { data: patientServiceProductListResponse, refetch, isLoading } =
-    useGetPatientServicesAndProductsByEncounterQuery(
-      {
-        encounterId: encounter?.id,
-        ...paginationParams
-      },
-      {
-        skip: !encounter?.id,
-      }
-    );
+  const encounterItems = useGetPatientServicesAndProductsByEncounterQuery(
+    {
+      encounterId: encounter?.id,
+      ...paginationParams
+    },
+    {
+      skip: !encounter?.id || Boolean(procedureId),
+    }
+  );
+  const procedureItems = useGetProcedureEquipmentQuery(procedureId as number, {
+    skip: !procedureId
+  });
+  const patientServiceProductListResponse = procedureId
+    ? { data: procedureItems.data ?? [], totalCount: procedureItems.data?.length ?? 0 }
+    : encounterItems.data;
+  const { refetch, isLoading } = procedureId ? procedureItems : encounterItems;
 
   const { data: billingSummary } = useGetEncounterBillingSummaryQuery(
     { encounterId: encounter?.id as number },
@@ -169,15 +197,29 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     [rows]
   );
 
+  const vaccineBrandIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter(row => row.billingItemType === 'VACCINE' && row.vaccineBrandId != null)
+            .map(row => row.vaccineBrandId)
+        )
+      ),
+    [rows]
+  );
+
   const [fetchServicesBulk] = useLazyGetServicesBulkByIdsQuery();
   const [fetchDiagnosticTestsBulk] = useLazyGetDiagnosticTestsByIdsQuery();
   const [fetchBrandMedicationsBulk] = useLazyGetBrandMedicationsByIdsQuery();
   const [fetchProcedureById] = useLazyGetProcedureByIdQuery();
+  const [fetchVaccineBrandsBulk] = useLazyGetVaccineBrandsByIdsQuery();
 
   const [servicesMap, setServicesMap] = useState<Record<number | string, any>>({});
   const [medicationsMap, setMedicationsMap] = useState<Record<number | string, any>>({});
   const [diagnosticTestsMap, setDiagnosticTestsMap] = useState<Record<number | string, any>>({});
   const [proceduresMap, setProceduresMap] = useState<Record<number | string, any>>({});
+  const [vaccineBrandsMap, setVaccineBrandsMap] = useState<Record<number | string, any>>({});
 
   const lookupKey = useMemo(
     () =>
@@ -185,9 +227,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         serviceIds,
         medicationIds,
         diagnosticTestIds,
-        procedureIds
+        procedureIds,
+        vaccineBrandIds
       }),
-    [serviceIds, medicationIds, diagnosticTestIds, procedureIds]
+    [serviceIds, medicationIds, diagnosticTestIds, procedureIds, vaccineBrandIds]
   );
 
   useEffect(() => {
@@ -199,6 +242,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
+        setVaccineBrandsMap({});
         return;
       }
 
@@ -206,7 +250,8 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         serviceIds.length > 0 ||
         medicationIds.length > 0 ||
         diagnosticTestIds.length > 0 ||
-        procedureIds.length > 0;
+        procedureIds.length > 0 ||
+        vaccineBrandIds.length > 0;
 
       if (!hasLookupTargets) {
         return;
@@ -234,12 +279,17 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
           )
           : Promise.resolve([]);
 
-        const [servicesData, medicationsData, diagnosticTestsData, proceduresData] =
+        const vaccineBrandsPromise = vaccineBrandIds.length
+          ? fetchVaccineBrandsBulk({ ids: vaccineBrandIds }, true).unwrap()
+          : Promise.resolve([]);
+
+        const [servicesData, medicationsData, diagnosticTestsData, proceduresData, vaccineBrandsData] =
           await Promise.all([
             servicesPromise,
             medicationsPromise,
             diagnosticTestsPromise,
             proceduresPromise,
+            vaccineBrandsPromise,
           ]);
 
         if (cancelled) {
@@ -265,6 +315,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setProceduresMap(
           Object.fromEntries((proceduresData ?? []).map((item: any) => [item.id, item]))
         );
+
+        setVaccineBrandsMap(
+          Object.fromEntries((vaccineBrandsData ?? []).map((item: any) => [item.id, item]))
+        );
       } catch (error) {
         if (cancelled) {
           return;
@@ -274,6 +328,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setMedicationsMap({});
         setDiagnosticTestsMap({});
         setProceduresMap({});
+        setVaccineBrandsMap({});
       }
     };
 
@@ -295,10 +350,17 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     if (patientServiceAndProduct?.id === undefined) return;
 
     try {
-      await deletePatientServiceProduct({
-        id: patientServiceAndProduct?.id,
-        encounterId: encounter?.id
-      }).unwrap();
+      if (procedureId) {
+        await deleteProcedureItem({
+          id: procedureId,
+          equipmentId: patientServiceAndProduct.id as number
+        }).unwrap();
+      } else {
+        await deletePatientServiceProduct({
+          id: patientServiceAndProduct?.id,
+          encounterId: encounter?.id
+        }).unwrap();
+      }
 
       dispatch(
         notify({ msg: 'Deleted Successfully', sev: 'success' })
@@ -335,6 +397,9 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
 
       case 'PROCEDURE':
         return proceduresMap[rowData.procedureId!]?.name ?? '-';
+
+      case 'VACCINE':
+        return vaccineBrandsMap[rowData.vaccineBrandId!]?.name ?? '-';
 
       default:
         return '-';
@@ -422,7 +487,14 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     setOpenModal(false);
   }, [billingFinalized]);
 
+  // Edits go through the shared endpoint, which does not refresh the procedure's list
   useEffect(() => {
+    if (procedureId && !popupOpen) refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popupOpen]);
+
+  useEffect(() => {
+    if (procedureId) return;
     dispatch(setPageCode('serviceandproducts'));
     dispatch(setDivContent('Service and Products'));
 
@@ -474,6 +546,13 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         setOpen={setPopupOpen}
         patientServiceAndProduct={patientServiceAndProduct}
         setPatientServiceAndProduct={setPatientServiceAndProduct}
+        patient={patient}
+        encounter={encounter}
+        createItem={
+          procedureId
+            ? dto => addProcedureItem({ id: procedureId, body: dto }).unwrap()
+            : undefined
+        }
       />
 
       <DeletionConfirmationModal

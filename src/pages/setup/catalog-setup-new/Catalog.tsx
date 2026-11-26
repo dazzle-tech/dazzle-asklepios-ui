@@ -5,8 +5,6 @@ import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
@@ -22,20 +20,21 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
 import {
   useDeleteCatalogMutation,
-  useGetCatalogsQuery,
-  useLazyGetCatalogByDepartmentQuery,
-  useLazyGetCatalogByNameQuery,
-  useLazyGetCatalogByTypeQuery
+  useGetCatalogsQuery
 } from '@/services/setup/catalog/catalogService';
 import { CatalogResponseVM } from '@/types/model-types-new';
 import { newCatalogResponseVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 
 const Catalog = () => {
   const dispatch = useAppDispatch();
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND (catalogs have no active flag).
+  const emptyHeaderFilters = { name: '', type: '', departmentId: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
   const [popupOpen, setPopupOpen] = useState(false);
   const [openTestsPopup, setOpenTestsPopup] = useState<boolean>(false);
   const [openPolicyAssignmentModal, setOpenPolicyAssignmentModal] = useState<boolean>(false);
@@ -43,7 +42,6 @@ const Catalog = () => {
     useState<CatalogResponseVM | null>(null);
   const [openConfirmDeleteCatalog, setOpenConfirmDeleteCatalog] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [isFiltered, setIsFiltered] = useState<boolean>(false);
   const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] =
     useState<CatalogResponseVM>({ ...newCatalogResponseVM });
   const [paginationParams, setPaginationParams] = useState({
@@ -52,21 +50,13 @@ const Catalog = () => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 5,
-    sort: 'id,asc'
-  });
   //Fetch diagnostics test catalog header list Response
   const {
     data: diagnosticsTestCatalogHeaderListResponse,
     refetch,
     isFetching
-  } = useGetCatalogsQuery(paginationParams);
+  } = useGetCatalogsQuery({ ...paginationParams, ...appliedFilters });
   const { data: departmentListResponse } = useGetAllDepartmentsWithoutPaginationQuery({});
-  const [fetchByDepartment] = useLazyGetCatalogByDepartmentQuery();
-  const [fetchByName] = useLazyGetCatalogByNameQuery();
-  const [fetchByType] = useLazyGetCatalogByTypeQuery();
   const [deleteCatalog] = useDeleteCatalogMutation();
 
   const testTypeEnum = useEnumOptions('TestType');
@@ -86,19 +76,25 @@ const Catalog = () => {
   // Pagination values
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
-  const [link, setLink] = useState({});
   const totalCount = diagnosticsTestCatalogHeaderListResponse?.totalCount ?? 0;
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const [filteredList, setFilteredList] = useState<CatalogResponseVM[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
 
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Catalog Name', value: 'name' },
-    { label: 'Type', value: 'type' },
-    { label: 'Department', value: 'departmentId' }
-  ];
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   // class name for selected row
   const isSelected = rowData => {
@@ -162,16 +158,29 @@ const Catalog = () => {
   const tableColumns = [
     {
       key: 'name',
-      title: 'Catalog Name'
+      title: 'Catalog Name',
+      width: 220,
+      ...headerSearch('name', 'Search name')
     },
     {
       key: 'type',
       title: 'Type',
+      width: 170,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(testTypeEnum ?? [])],
       render: (row: any) => (row?.type ? formatEnumString(row?.type) : '')
     },
     {
       key: 'departmentName',
-      title: 'Department'
+      title: 'Department',
+      width: 200,
+      ...headerSearch('departmentId'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(departmentListResponse ?? []).map((d: any) => ({ label: d.name ?? '', value: String(d.id) }))
+      ]
     },
     {
       key: 'description',
@@ -185,71 +194,6 @@ const Catalog = () => {
     }
   ];
 
-  // Filter table
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      {recordOfFilter['filter'] == 'departmentId' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={departmentListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          menuMaxHeight={150}
-          showLabel={false}
-          searchable={false}
-        />
-      ) : recordOfFilter['filter'] == 'type' ? (
-        <MyInput
-          fieldName="value"
-          fieldType="select"
-          selectData={testTypeEnum ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          searchable={false}
-          showLabel={false}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
   // handle click on add new button (open the pop up of add/edit catalog)
   const handleNew = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
@@ -258,17 +202,7 @@ const Catalog = () => {
 
   // ──────────────────────────── PAGINATION ────────────────────────────
   const handlePageChange = (event, newPage) => {
-    if (isFiltered) {
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    } else {
-      PaginationPerPage.handlePageChange(
-        event,
-        newPage,
-        paginationParams,
-        link,
-        setPaginationParams
-      );
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   //_________________________SORT LOGIC______________________
@@ -276,17 +210,7 @@ const Catalog = () => {
     setSortColumn(sortColumn);
     setSortType(sortType);
     const sortValue = `${sortColumn},${sortType}`;
-    if (isFiltered) {
-      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
-      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-    } else {
-      setPaginationParams({
-        ...paginationParams,
-        sort: sortValue,
-        page: 0,
-        timestamp: Date.now()
-      });
-    }
+    setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0, timestamp: Date.now() }));
   };
 
   // handle delete catalog
@@ -313,41 +237,6 @@ const Catalog = () => {
       });
   };
 
-  // Handle filter change
-  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
-    try {
-      if (!field || !value) {
-        setIsFiltered(false);
-        setFilteredList([]);
-        return;
-      }
-      const currentSize = size ?? filterPagination.size;
-
-      let response;
-      const params = {
-        page,
-        size: currentSize,
-        sort: filterPagination.sort
-      };
-
-      if (field === 'type') {
-        response = await fetchByType({ type: value, ...params }).unwrap();
-      } else if (field === 'departmentId') {
-        response = await fetchByDepartment({ departmentId: value, ...params }).unwrap();
-      } else if (field === 'name') {
-        response = await fetchByName({ name: value, ...params }).unwrap();
-      }
-
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setIsFiltered(true);
-      setFilterPagination({ ...filterPagination, page, size: currentSize });
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to filter Catalog', sev: 'error' }));
-      setIsFiltered(false);
-    }
-  };
-
   // Effects
   // change the width variable when the size of window is changed
   useEffect(() => {
@@ -356,9 +245,6 @@ const Catalog = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    setLink(diagnosticsTestCatalogHeaderListResponse?.links);
-  }, [diagnosticsTestCatalogHeaderListResponse?.links]);
 
 
             // Direction handling for RTL/LTR
@@ -371,12 +257,11 @@ const Catalog = () => {
     <Panel dir={dir}>
       <MyTable
         height={450}
-        totalCount={isFiltered ? filteredTotal : totalCount}
-        data={isFiltered ? filteredList : diagnosticsTestCatalogHeaderListResponse?.data ?? []}
+        totalCount={totalCount}
+        data={diagnosticsTestCatalogHeaderListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={rowData => {
           setDiagnosticsTestCatalogHeader(rowData);
         }}
@@ -388,18 +273,7 @@ const Catalog = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={e => {
           const newSize = Number(e.target.value);
-
-          if (isFiltered) {
-            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-          } else {
-            setPaginationParams({
-              ...paginationParams,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now()
-            });
-          }
+          setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
         }}
         tableButtons={
           <div className="container-of-add-new-button">

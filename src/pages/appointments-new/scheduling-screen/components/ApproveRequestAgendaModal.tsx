@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Calendar as RsCalendar, DatePicker, Stack, Text, TimePicker } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
-import { useLazySearchAppointmentsQuery } from '@/services/appointment/appointmentService';
+import { useLazyGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery } from '@/services/appointment/appointmentService';
 import { useAppSelector } from '@/hooks';
 
 type Props = {
@@ -22,7 +22,8 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
   const [dateFrom, setDateFrom] = useState<Date>(new Date());
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<'agenda'>('agenda');
-  const [searchAppointments, { isFetching }] = useLazySearchAppointmentsQuery();
+  const [fetchAppointmentsByStatusAndDates, { isFetching }] =
+    useLazyGetAppointmentsByStatusBetweenDatesWithoutPaginationQuery();
   const [slots, setSlots] = useState<any[]>([]);
   const dateRangeInvalid = dateFrom != null && dateTo != null && dateTo < dateFrom;
 
@@ -61,32 +62,17 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
         const rangeStart = normalizeLocalDayStart(dateFrom);
         const rangeEnd = normalizeLocalDayEnd(dateTo);
 
-        const res = await searchAppointments({
-          filter: {
-            facility: Number(facilityId),
-            departmentIds: departmentId != null ? [Number(departmentId)] : null,
-            resourceType: null,
-            resourceId: null,
-            status: null,
-            bookingMode: null,
-            patientId: null
-          },
-          page: 0,
-          size: 1000,
-          sort: 'id,asc'
+        const rows = await fetchAppointmentsByStatusAndDates({
+          status: ['NEW'],
+          startDatetime: rangeStart.toISOString(),
+          endDatetime: rangeEnd.toISOString()
         }).unwrap();
 
-        const nextSlots = (res?.data ?? [])
+        const nextSlots = (rows ?? [])
           .filter((a: any) => {
-            const status = String(a?.appointmentStatus ?? a?.status ?? '').toUpperCase();
-            return status === 'NEW' || status === 'NEW-APPOINTMENT' || status === 'NEW_APPOINTMENT';
-          })
-          .filter((a: any) => {
-            const startRaw =
-              a?.appointmentStart ?? a?.appointment_start ?? a?.startDatetime ?? a?.start_datetime;
-            const d = startRaw ? new Date(startRaw) : null;
-            if (!d || Number.isNaN(d.getTime())) return false;
-            return d >= rangeStart && d <= rangeEnd;
+            const rowFacility = Number(a?.facilityId ?? a?.facility_id);
+            const rowDepartment = Number(a?.departmentId ?? a?.department_id);
+            return rowFacility === Number(facilityId) && rowDepartment === Number(departmentId);
           })
           .sort((x: any, y: any) => {
             const xs = new Date(x?.appointmentStart ?? x?.startDatetime ?? 0).getTime();
@@ -101,7 +87,7 @@ const ApproveRequestAgendaModal = ({ open, setOpen, request, onSelectAppointment
     };
 
     void load();
-  }, [open, facilityId, departmentId, dateFrom, dateTo, dateRangeInvalid, searchAppointments]);
+  }, [open, facilityId, departmentId, dateFrom, dateTo, dateRangeInvalid, fetchAppointmentsByStatusAndDates]);
 
 
   // Dark mode color tokens

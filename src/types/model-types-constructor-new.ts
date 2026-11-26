@@ -30,6 +30,9 @@ export const newApUser: modelTypes.ApUser = {
   canUnDischargeUrgentCare: false,
   canUnCompleteEncounter: false,
   canReturnClaimForResubmit: false,
+  canCancelServiceBeforeInvoice: false,
+  canEditSubmittedPrescription: false,
+  canCollectZeroPayment: false,
 };
 
 // ------------------- Candidate -------------------
@@ -65,6 +68,7 @@ export const newDepartment: modelTypes.Department = {
   requirePractitioner: true,
   requireBilling: false,
   requirePreAssessment: false,
+  assignPractitionerOnVisitStart: false,
   ageSpecific: false,
   fromAge: null,
   fromAgeUnit: null,
@@ -94,6 +98,7 @@ export const newFacility: modelTypes.Facility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Create Facility -------------------
@@ -116,6 +121,7 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   districtId: null,
   streetAddress: null,
   postalCode: null,
+  defaultPhoneCountry: null,
 };
 
 // ------------------- Role -------------------
@@ -236,6 +242,15 @@ export const newService: modelTypes.Service = {
 };
 
 // ------------------- Service Item -------------------
+export const newProcedureItem: modelTypes.ProcedureItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  specialty: undefined,
+  procedureId: undefined,
+  isActive: true
+};
+
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
   type: 'DEPARTMENTS',
@@ -331,6 +346,7 @@ export const newProcedure: modelTypes.Procedure = {
   currency: null,
   price: null,
   billingRuleId: null,
+  relatedSurfaces: [],
 };
 
 // ------------------- Allergen -------------------
@@ -615,6 +631,26 @@ export const newDentalAction: modelTypes.DentalAction = {
   isActive: true
 };
 
+export const newDentalChartAgeRule: modelTypes.DentalChartAgeRule = {
+  id: null,
+  name: '',
+  ageFrom: null,
+  ageTo: null,
+  chartType: null,
+  numberingSystem: 'UNIVERSAL',
+  numberingMethodId: null,
+  toothNumbers: [],
+  isActive: true
+};
+
+export const newDentalToothNumberingMethod: modelTypes.DentalToothNumberingMethod = {
+  id: null,
+  name: '',
+  description: '',
+  toothLabels: {},
+  isActive: false
+};
+
 // ------------------- Test Normal Range -------------------
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,
@@ -736,6 +772,7 @@ export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
   atcCode: '',
+  code: '',
   type: '',
   roa: '',
   siteOfAdministration: '',
@@ -758,10 +795,14 @@ export const newVaccineBrand: modelTypes.VaccineBrand = {
   id: undefined,
   vaccineId: undefined,
   name: '',
+  code: '',
   manufacture: '',
   volume: 0,
   unit: '',
   marketingAuthorizationHolder: '',
+  facilityId: null,
+  price: null,
+  currency: null,
   isActive: true,
   createdBy: '',
   createdDate: null,
@@ -1474,16 +1515,7 @@ export const newPayor: modelTypes.Payor = {
   email: '',
   contractManagerContact: '',
 
-  startDate: null,
-  expiryDate: null,
-  renewable: false,
 
-  allowPartialCoverage: false,
-  acceptCopay: false,
-  acceptDeductibles: false,
-  allowPackagePricing: false,
-  allowDrgBilling: false,
-  forcePreApproval: false,
 
   // Waseel / NPHIES
   nphiesId: '',
@@ -1519,10 +1551,64 @@ export const newNphiesPayer: modelTypes.NphiesPayer = {
   nphiesId: '',
   nameEn: '',
   nameAr: null,
+  shortName: null,
+
+  facilityId: null,
+  facilityName: null,
+
+  insuranceAuthorityLicenseNo: null,
+  commercialRegistrationNo: null,
+  vatRegistrationNo: null,
+  unifiedNationalNo: null,
+
+  headOfficeAddress: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  postalCode: null,
+  contactPerson: null,
+  phone: null,
+  mobile: null,
+  email: null,
+  website: null,
 
   isActive: true,
 
+  approvalCoverageCompany: null,
+  validFrom: null,
+  validTo: null,
+
+  tpaIds: [],
+  tpas: [],
+
   createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newTpaDefinition: modelTypes.TpaDefinition = {
+  id: undefined,
+  tpaCode: '',
+  nphiesId: null,
+  name: '',
+  guarantorType: 'TPA',
+  activationDate: null,
+  isActive: true,
+  approvalCoverageCompany: null,
+  taxRegistrationNo: null,
+  countryId: null,
+  countryName: null,
+  cityId: null,
+  cityName: null,
+  address: null,
+  phone: null,
+  email: null,
+  insuranceCompanyIds: [],
+  insuranceCompanies: [],
+  linkedInsuranceCount: 0,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
   lastModifiedDate: null
 };
 
@@ -1872,6 +1958,8 @@ export const newPatientInsurance: modelTypes.PatientInsurance = {
 
   payerName: null,
   payerNphiesId: null,
+  tpaNphiesId: null,
+  tpaName: null,
 
   policyHolderId: null,
 
@@ -2920,7 +3008,6 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
-  fastingBloodGlucose: null,
 
   fluidStatus: null,
   edema: null,
@@ -2934,6 +3021,16 @@ export const newVitalSigns: modelTypes.VitalSigns = {
   createdDate: null,
   lastModifiedDate: null
 };
+export const newRandomBloodSugar: modelTypes.RandomBloodSugar = {
+  id: undefined,
+  patientId: 0,
+  encounterId: 0,
+  randomBloodGlucose: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 export const newBodyMeasurements: modelTypes.BodyMeasurements = {
   id: undefined,
 
@@ -3085,6 +3182,44 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
 
   acceptedDate: null,
   acceptedBy: null
+};
+
+export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: true
+};
+
+export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
+  id: undefined,
+  facilityId: undefined,
+  userId: undefined,
+  userIds: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+};
+
+export const newConfiguration: modelTypes.Configuration = {
+  id: undefined,
+  scopeType: undefined,
+  facility: undefined,
+  users: [],
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
 };
 
 export const newPolicyDefinition: modelTypes.PolicyDefinition = {
@@ -3286,7 +3421,7 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
 export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  toothNumber: undefined,
+  toothNumbers: [],
   surface: '',
   anesthesiaUsed: null,
   dose: null,
@@ -3295,6 +3430,8 @@ export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
   serviceId: undefined,
   cdtCodeId: null,
   notes: null,
+  informedConsentObtained: false,
+  treatmentOutcome: null
 };
 export const newGlasgowComaScaleAssessment: modelTypes.GlasgowComaScaleAssessment = {
   id: undefined,
@@ -3523,6 +3660,12 @@ export type WaseelSbsSearchParams = {
   search?: string;
   sort?: string;
   activeOnly?: boolean;
+  waseelItemType?: string;
+  sbsCode?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  updateType?: string;
+  isActive?: string;
 };
 
 export type WaseelItemMappingSearchParams = {
@@ -3533,6 +3676,8 @@ export type WaseelItemMappingSearchParams = {
   itemName?: string;
   itemCode?: string;
   sbsCode?: string;
+  sbsDescription?: string;
+  isActive?: string;
   activeOnly?: boolean;
   refreshToken?: number;
 };
@@ -3547,8 +3692,11 @@ export const newPriceListSetup: modelTypes.PriceListSetup = {
 
   payerId: undefined,
   payerName: undefined,
+  nphiesPayerId: undefined,
+  nphiesPayerName: undefined,
 
   name: undefined,
+  shortName: undefined,
   description: undefined,
 
   versionNumber: 1,
@@ -3805,7 +3953,8 @@ export const newEncounterBillingSummary: modelTypes.EncounterBillingSummary = {
   invoiceOutstandingAmount: 0,
   items: [],
   coverageType: null,
-  patientInsuranceId: null
+  patientInsuranceId: null,
+  encounterWalletAmount: 0
 };
 
 export const newCreateAdvancePaymentRequest: modelTypes.CreateAdvancePaymentRequest = {
@@ -3858,9 +4007,10 @@ export const newBillingCancellationRequest: modelTypes.BillingCancellationReques
 export const newBillingRefundRequest: modelTypes.BillingRefundRequest = {
   patientId: 0,
   encounterId: null,
+  facilityId: null,
   originalPaymentId: null,
   originalPaymentTransactionId: null,
-  refundSourceType: 'AVAILABLE_WALLET',
+  refundSourceType: 'WALLET_AVAILABLE',
   requestedAmount: 0,
   refundMethodCode: '',
   refundMethodId: 0,
@@ -4095,4 +4245,32 @@ export const newTimelineResponse: modelTypes.TimelineResponse = {
     input_fields_count: 0,
     timeline_event_count: 0
   }
-}
+};
+
+export const newMobileAppConfigResponseVM: modelTypes.MobileAppConfigResponseVM = {
+  id: undefined,
+  configKey: '',
+  configType: '',
+  configValue: '',
+  configValues: [],
+  description: ''
+};
+
+export const newMobileAppConfigCreateDTO: modelTypes.MobileAppConfigCreateDTO = {
+  configKey: '',
+  configType: '',
+  configValues: [''],
+  description: ''
+};
+
+// ------------------- External Results (Scan Document) -------------------
+
+export const newExternalLabResultEntry: modelTypes.ExternalLabResultEntry = {
+  testName: '',
+  resultDate: null,
+  resultValue: null,
+  unit: null,
+  normalRangeValue: null,
+  marker: 'UNKNOWN',
+  physicianName: null
+};

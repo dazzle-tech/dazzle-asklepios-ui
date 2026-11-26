@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Panel, SelectPicker, Loader, Message, Form } from 'rsuite';
+import { Panel, SelectPicker, Loader, Message, Form, Tabs } from 'rsuite';
 import { Link } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -20,6 +20,7 @@ import {
   valuesFromParameters,
 } from '@/reports/stimulsoft/reportPrintParameters';
 import './styles.less';
+import DashboardMyTasks, { TasksTabTitle } from './DashboardMyTasks';
 
 const StimulsoftViewerHost = React.lazy(
   () =>
@@ -48,6 +49,8 @@ const Dashboard = () => {
   const [appliedParams, setAppliedParams] = useState<Record<string, string>>(
     {}
   );
+  const [tab, setTab] = useState('reports');
+  const [tasksReady, setTasksReady] = useState(false);
 
   const { data: dashboards = [], isFetching } =
     useGetViewableStimulsoftDashboardsQuery(
@@ -233,6 +236,17 @@ const Dashboard = () => {
   }));
 
   return (
+    <Tabs
+      activeKey={tab}
+      appearance="subtle"
+      className="dashboard-tabs"
+      onSelect={key => {
+        const next = String(key);
+        setTab(next);
+        if (next === 'tasks') setTasksReady(true);
+      }}
+    >
+    <Tabs.Tab eventKey="reports" title={<Translate>Dashboard</Translate>}>
     <Panel
       className={`stimulsoft-dashboard-page${mode === 'dark' ? ' dashboard-dark' : ''}`}
     >
@@ -366,6 +380,11 @@ const Dashboard = () => {
         </Message>
       )}
     </Panel>
+    </Tabs.Tab>
+    <Tabs.Tab eventKey="tasks" title={<TasksTabTitle />}>
+      {tasksReady && <DashboardMyTasks />}
+    </Tabs.Tab>
+    </Tabs>
   );
 };
 

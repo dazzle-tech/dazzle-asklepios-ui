@@ -28,6 +28,21 @@ export type TaxPagedParams = {
   timestamp?: number;
 };
 
+/** Optional list filters (header filters on the Tax Setup table) */
+export type TaxListFilters = {
+  code?: string;
+  name?: string;
+  taxType?: string;
+  value?: string | number;
+  calculationType?: string;
+  applicableOn?: string;
+  citizenCategory?: string;
+  applyOnPatientCopayment?: boolean | string;
+  applyOnClaimShare?: boolean | string;
+  isDefault?: boolean | string;
+  active?: boolean;
+};
+
 export type TaxTextFilterParams =
   TaxPagedParams & {
     value: string;
@@ -170,6 +185,25 @@ const mapPagedResponse = <T,>(
   };
 };
 
+// Table column filters: /api/setup/tax/{path}/{value}?facilityId=...
+export type TaxColumnFilterParams =
+  TaxPagedParams & {
+    value: string | number | boolean;
+  };
+
+const taxColumnFilterQuery =
+  (path: string) =>
+  ({ facilityId, value, page, size, sort = 'id,desc' }: TaxColumnFilterParams) => ({
+    url: `/api/setup/tax/${path}/${encodeURIComponent(String(value))}`,
+    method: 'GET',
+    params: { facilityId, page, size, sort }
+  });
+
+const toTaxPage = (
+  response: Tax[] | SpringPageResponse<Tax>,
+  meta: any
+) => mapPagedResponse<Tax>(response, meta);
+
 export const taxService =
   createApi({
     reducerPath:
@@ -187,27 +221,46 @@ export const taxService =
         getTaxesByFacility:
           builder.query<
             PagedResult<Tax>,
-            TaxPagedParams
+            TaxPagedParams & { filters?: TaxListFilters }
           >({
+            // Optional filters are ANDed by the backend; empty ones are left out
             query: ({
               facilityId,
               page,
               size,
-              sort = 'id,desc'
-            }) => ({
-              url:
-                '/api/setup/tax',
+              sort = 'id,desc',
+              filters
+            }) => {
+              const value = String(filters?.value ?? '').trim();
+              const bool = (v?: boolean | string) => (v === '' || v === undefined ? undefined : v);
 
-              method:
-                'GET',
+              return {
+                url:
+                  '/api/setup/tax',
 
-              params: {
-                facilityId,
-                page,
-                size,
-                sort
-              }
-            }),
+                method:
+                  'GET',
+
+                params: {
+                  facilityId,
+                  page,
+                  size,
+                  sort,
+                  code: filters?.code?.trim() || undefined,
+                  name: filters?.name?.trim() || undefined,
+                  taxType: filters?.taxType || undefined,
+                  // A value that is not a number would be rejected, so it is left out
+                  value: value && !isNaN(Number(value)) ? value : undefined,
+                  calculationType: filters?.calculationType || undefined,
+                  applicableOn: filters?.applicableOn || undefined,
+                  citizenCategory: filters?.citizenCategory || undefined,
+                  applyOnPatientCopayment: bool(filters?.applyOnPatientCopayment),
+                  applyOnClaimShare: bool(filters?.applyOnClaimShare),
+                  isDefault: bool(filters?.isDefault),
+                  active: filters?.active
+                }
+              };
+            },
 
             transformResponse: (
               response:
@@ -451,6 +504,55 @@ export const taxService =
             providesTags: [
               'Tax'
             ]
+          }),
+
+        getTaxesByValue:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-value'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByApplicableOn:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-applicable-on'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByCitizenCategory:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-citizen-category'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByPatientCopayment:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-patient-copayment'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByClaimShare:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-claim-share'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByDefault:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-default'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
+          }),
+
+        getTaxesByActive:
+          builder.query<PagedResult<Tax>, TaxColumnFilterParams>({
+            query: taxColumnFilterQuery('by-active'),
+            transformResponse: toTaxPage,
+            providesTags: ['Tax']
           }),
 
         getTaxesByCalculationType:
@@ -735,6 +837,14 @@ export const {
 
   useGetTaxesByCalculationTypeQuery,
   useLazyGetTaxesByCalculationTypeQuery,
+
+  useLazyGetTaxesByValueQuery,
+  useLazyGetTaxesByApplicableOnQuery,
+  useLazyGetTaxesByCitizenCategoryQuery,
+  useLazyGetTaxesByPatientCopaymentQuery,
+  useLazyGetTaxesByClaimShareQuery,
+  useLazyGetTaxesByDefaultQuery,
+  useLazyGetTaxesByActiveQuery,
 
   useGetEffectiveTaxesQuery,
   useLazyGetEffectiveTaxesQuery,

@@ -1,0 +1,327 @@
+import { useEffect, useState } from 'react';
+import { notify } from '@/utils/uiReducerActions';
+import { formatEnumString } from '@/utils';
+import type { CoverageLookupItem, PagedResult } from '@/services/setup/coverageManagement/coverageManagementService';
+
+type QueryResult = {
+  data?: PagedResult<CoverageLookupItem>;
+  isFetching: boolean;
+};
+
+type UsePagedLookupArgs = {
+  result: QueryResult;
+  page: number;
+  setPage: (updater: number | ((prev: number) => number)) => void;
+  search: string;
+  setSearch: (value: string) => void;
+  resetToken?: string | number;
+};
+
+export function useDebouncedSearch(value: string, delay = 300) {
+  const [applied, setApplied] = useState(value);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setApplied(value.trim()), delay);
+    return () => clearTimeout(timeout);
+  }, [value, delay]);
+
+  return applied;
+}
+
+export function usePagedLookupCache({
+  result,
+  page,
+  setPage,
+  search,
+  setSearch,
+  resetToken
+}: UsePagedLookupArgs) {
+  const [cache, setCache] = useState<CoverageLookupItem[]>([]);
+
+  useEffect(() => {
+    setPage(0);
+    setCache([]);
+  }, [resetToken, setPage]);
+
+  useEffect(() => {
+    const rows = result.data?.data ?? [];
+    setCache(previous => {
+      if (page === 0) {
+        return rows;
+      }
+      const seen = new Set(previous.map(item => item.id));
+      return [...previous, ...rows.filter(item => !seen.has(item.id))];
+    });
+  }, [result.data, result.isFetching, page]);
+
+  const hasMore = Boolean(result.data?.links?.next) || Number(result.data?.totalCount ?? 0) > cache.length;
+
+  return {
+    options: cache,
+    search,
+    setSearch,
+    loading: result.isFetching,
+    hasMore,
+    fetchMore: () => {
+      if (!result.isFetching && hasMore) {
+        setPage(prev => prev + 1);
+      }
+    }
+  };
+}
+
+export const APPROVAL_COVERAGE_COMPANY_LABELS: Record<string, string> = {
+  WASEEL: 'Wasel',
+  NPHIES: 'NPHIES'
+};
+
+export const APPROVAL_COVERAGE_COMPANY_OPTIONS = [
+  { value: 'WASEEL', label: 'Wasel' },
+  { value: 'NPHIES', label: 'NPHIES' }
+];
+
+export function approvalCoverageCompanyOptions(enumOptions: { value: string; label: string }[]) {
+  return enumOptions.length ? enumOptions : APPROVAL_COVERAGE_COMPANY_OPTIONS;
+}
+
+export function formatLinkedInsuranceLabel(company?: {
+  nphiesId?: string | null;
+  nameEn?: string | null;
+  nameAr?: string | null;
+  name?: string | null;
+} | null) {
+  if (!company) {
+    return '';
+  }
+  const code = String(company.nphiesId ?? '').trim();
+  const name = String(company.nameEn ?? company.name ?? company.nameAr ?? '').trim();
+  if (code && name) {
+    return `${code} — ${name}`;
+  }
+  return name || code;
+}
+
+export function approvalCoverageCompanyLabel(value?: string | null) {
+  if (!value) {
+    return '-';
+  }
+  return APPROVAL_COVERAGE_COMPANY_LABELS[value] ?? value;
+}
+
+export const ALL_LOOKUP_OPTION: CoverageLookupItem = {
+  id: 0,
+  code: 'ALL',
+  name: 'All'
+};
+
+export function withAllOption(options: CoverageLookupItem[]) {
+  return [ALL_LOOKUP_OPTION, ...options.filter(item => item.id !== 0)];
+}
+
+const isAllDepartments = (departmentId?: number | string | null) => !departmentId || Number(departmentId) === 0;
+
+/** Maps the department picker value (empty or the "All" option) to the API's department scope. */
+export function departmentScope(departmentId?: number | string | null) {
+  const allDepartments = isAllDepartments(departmentId);
+  return { allDepartments, departmentId: allDepartments ? null : departmentId };
+}
+
+/** Maps a saved row back to the department picker value, showing "All" for all-departments rules. */
+export function departmentPickerValue(row: { allDepartments?: boolean | null; departmentId?: number | null }) {
+  return row.allDepartments || !row.departmentId ? ALL_LOOKUP_OPTION.id : row.departmentId;
+}
+
+export const MAX_PERCENTAGE = 100;
+
+export const percentageMax = (isPercentage: boolean) => (isPercentage ? MAX_PERCENTAGE : undefined);
+
+export function exceedsPercentage(isPercentage: boolean, value?: number | string | null) {
+  return isPercentage && Number(value) > MAX_PERCENTAGE;
+}
+
+export function formatLookupLabel(item: CoverageLookupItem) {
+  const base =
+    item.code && item.name && item.code !== item.name
+      ? `${item.code} — ${item.name}`
+      : item.name || item.code || '';
+  const extras: string[] = [];
+  const insuranceName = item.relatedName ?? item.payerName;
+  if (insuranceName && insuranceName !== item.name) {
+    extras.push(insuranceName);
+  }
+  const startDate = item.startDate ?? item.effectiveFrom;
+  const endDate = item.endDate ?? item.effectiveTo;
+  if (startDate || endDate) {
+    extras.push([startDate, endDate].filter(Boolean).join(' → '));
+  }
+  return extras.length ? `${base} (${extras.join(' · ')})` : base;
+}
+
+export function useStatusFilter() {
+  const [isActive, setIsActive] = useState(true);
+  return {
+    isActive,
+    setIsActive,
+    options: [
+      { label: 'Active', value: true },
+      { label: 'Inactive', value: false }
+    ]
+  };
+}
+
+export function coverageHeaderName(contract?: {
+  companyName?: string | null;
+  insurancePayerName?: string | null;
+} | null) {
+  return String(contract?.companyName || contract?.insurancePayerName || '').trim();
+}
+
+export function emptyContract(): any {
+  return {
+    guarantorType: '',
+    companyId: undefined,
+    coverageBasis: 'GROSS',
+    insurancePayerId: undefined,
+    priceListSetupId: undefined,
+    parentPayerId: undefined,
+    parentPayerName: '',
+    approvalCoverageCompany: '',
+    isActive: true,
+    startDate: null,
+    endDate: null
+  };
+}
+
+const COVERAGE_ERROR_MESSAGES: Record<string, string> = {
+  activeContractPeriodOverlap:
+    'This insurance company already has an active contract for this period. Only one active contract is allowed for the same dates.',
+  parentSameAsInsurance: 'Parent insurance cannot be the same insurance company.'
+};
+
+function readableProblemText(value: unknown) {
+  const text = String(value ?? '').trim();
+  if (!text || text.toLowerCase() === 'bad request' || text.startsWith('400 ')) {
+    return '';
+  }
+  if (/^error\.[A-Za-z0-9.]+$/.test(text) || /^[a-z][A-Za-z0-9.]*$/.test(text)) {
+    return '';
+  }
+  return text;
+}
+
+export function coverageApiError(error: any, fallback: string) {
+  const data = error?.data ?? error?.error?.data ?? {};
+  const messageProp = String(data?.properties?.message || data?.message || '');
+  const errorKey = messageProp.replace(/^error\./i, '').trim();
+  if (errorKey && COVERAGE_ERROR_MESSAGES[errorKey]) {
+    return COVERAGE_ERROR_MESSAGES[errorKey];
+  }
+  return (
+    readableProblemText(data?.title) ||
+    readableProblemText(data?.detail) ||
+    readableProblemText(messageProp) ||
+    fallback
+  );
+}
+
+export function notifySuccess(dispatch: any, msg: string) {
+  dispatch(notify({ msg, sev: 'success' }));
+}
+
+export function notifyWarning(dispatch: any, msg: string) {
+  dispatch(notify({ msg, sev: 'warning' }));
+}
+
+export function notifyError(dispatch: any, error: any, fallback: string) {
+  dispatch(notify({ msg: coverageApiError(error, fallback), sev: 'error' }));
+}
+
+export function discountCategoryLabel(row: any) {
+  if (row?.billingItemType) {
+    return formatEnumString(row.billingItemType);
+  }
+  if (row?.targetType === 'ALL') {
+    return 'All';
+  }
+  return formatEnumString(row?.targetType) || '-';
+}
+
+export function discountItemLabel(row: any) {
+  if (row?.categoryScope === 'SUBCATEGORY' || row?.targetType === 'SUBCATEGORY') {
+    return '-';
+  }
+  if (row?.serviceName) {
+    return row.serviceName;
+  }
+  if (row?.billingItemType) {
+    return `All ${formatEnumString(row.billingItemType)}`;
+  }
+  if (row?.targetType === 'ALL') {
+    return 'All';
+  }
+  return '-';
+}
+
+export function exclusionTypeLabel(row: any) {
+  return row?.exclusionType === 'DIAGNOSIS' ? 'Diagnosis' : 'Category';
+}
+
+export function diagnosisIdsOf(row: any): number[] {
+  const fromList = Array.isArray(row?.diagnoses)
+    ? row.diagnoses
+        .map((item: any) => Number(item?.diagnosisId ?? item))
+        .filter((id: number) => Number.isFinite(id))
+    : [];
+  if (fromList.length) {
+    return Array.from(new Set(fromList));
+  }
+  if (Array.isArray(row?.diagnosisIds)) {
+    return Array.from(
+      new Set(row.diagnosisIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id)))
+    );
+  }
+  if (row?.diagnosisId != null && row.diagnosisId !== '') {
+    return [Number(row.diagnosisId)];
+  }
+  return [];
+}
+
+export function diagnosisLabel(row: any): string {
+  if (row?.allDiagnoses) {
+    return 'All diagnoses';
+  }
+  const names = Array.isArray(row?.diagnoses)
+    ? row.diagnoses
+        .map((item: any) => item?.diagnosisCode || item?.diagnosisName)
+        .filter(Boolean)
+    : [];
+  if (names.length) {
+    return names.join(', ');
+  }
+  return row?.diagnosisName || row?.diagnosisCode || '-';
+}
+
+export function withSelectedDiagnoses(record: any, ids: number[]) {
+  return {
+    ...record,
+    diagnosisIds: ids,
+    diagnoses: ids.map(diagnosisId => ({ diagnosisId })),
+    diagnosisId: ids[0] ?? null
+  };
+}
+
+export function exclusionResultLabel(row: any) {
+  if (row?.exclusionType === 'DIAGNOSIS') {
+    return diagnosisLabel(row);
+  }
+  if (row?.serviceName) {
+    return row.serviceName;
+  }
+  if (row?.billingItemType) {
+    return `All ${formatEnumString(row.billingItemType)}`;
+  }
+  if (row?.exclusionType === 'ALL') {
+    return 'All';
+  }
+  return '-';
+}

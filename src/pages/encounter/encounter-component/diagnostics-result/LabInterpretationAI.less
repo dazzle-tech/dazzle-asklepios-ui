@@ -1,0 +1,456 @@
+@ai-tint: color-mix(in srgb, var(--primary-blue) 10%, var(--rs-bg-card));
+@ai-border: color-mix(in srgb, var(--primary-blue) 35%, var(--rs-border-primary));
+@danger: #f44336;
+@amber: #ffa500;
+@ok: #2e7d32;
+@warn-bg: color-mix(in srgb, @amber 14%, var(--rs-bg-card));
+
+.lab-ai {
+  margin-top: 12px;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 8px;
+  background: var(--rs-bg-card);
+  overflow: hidden;
+  color: var(--rs-text-primary);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rs-border-primary);
+
+    h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 16px;
+    }
+  }
+
+  &__spark {
+    color: var(--primary-blue);
+    fill: currentColor;
+
+    &.spinning {
+      animation: lab-ai-spin 1.6s linear infinite;
+    }
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 99px;
+    color: var(--primary-blue);
+    background: @ai-tint;
+    border: 1.5px solid @ai-border;
+
+    svg {
+      fill: currentColor;
+    }
+  }
+
+  &__body {
+    padding: 12px;
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+
+    // rsuite adds a bottom margin to each form group, which pushed the button below the date inputs
+    .rs-form-group.my-input-container {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  &__cta-wrap {
+    position: relative;
+    display: inline-flex;
+    margin-inline-start: 4px;
+  }
+
+  // Same size as the system buttons (MyButton "small")
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    color: var(--primary-blue);
+    background: var(--rs-bg-card);
+    border: 2px solid var(--primary-blue);
+
+    &:hover:not(:disabled) {
+      background: @ai-tint;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &.working .lab-ai__cta-icon {
+      animation: lab-ai-spin 1.8s linear infinite;
+    }
+  }
+
+  &__cta-badge {
+    position: absolute;
+    top: -5px;
+    inset-inline-end: -5px;
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    font-size: 7px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    border-radius: 99px;
+    color: var(--primary-blue);
+    background: var(--rs-bg-card);
+    border: 1.5px solid var(--primary-blue);
+  }
+
+  &__muted {
+    font-size: 12px;
+    color: var(--rs-text-secondary);
+  }
+
+  &__hint {
+    margin: 8px 0 0;
+  }
+
+  &__full {
+    width: 100%;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 2px solid var(--primary-blue);
+    color: #fff;
+    background: var(--primary-blue);
+
+    &.sm {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    &.outline {
+      color: var(--primary-blue);
+      background: var(--rs-bg-card);
+    }
+  }
+
+  &__working {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--rs-border-primary);
+  }
+
+  &__working-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &__progress {
+    height: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: @ai-tint;
+
+    i {
+      display: block;
+      width: 35%;
+      height: 100%;
+      border-radius: 99px;
+      background: var(--primary-blue);
+      animation: lab-ai-indeterminate 1.2s ease-in-out infinite;
+    }
+  }
+
+  &__skeleton {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+
+    div {
+      height: 36px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--rs-bg-well), @ai-tint, var(--rs-bg-well));
+      background-size: 200% 100%;
+      animation: lab-ai-shimmer 1.4s linear infinite;
+    }
+  }
+
+  &__working-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  &__alert {
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+
+    &.empty {
+      background: @ai-tint;
+      border: 1px solid @ai-border;
+    }
+
+    &.error {
+      color: @danger;
+      background: color-mix(in srgb, @danger 8%, var(--rs-bg-card));
+      border: 1px solid color-mix(in srgb, @danger 30%, var(--rs-border-primary));
+    }
+
+    .lab-ai__actions {
+      margin-top: 8px;
+      margin-inline-start: 0;
+    }
+  }
+
+  &__stale {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+    background: @warn-bg;
+    border: 1px solid color-mix(in srgb, @amber 35%, var(--rs-border-primary));
+  }
+
+  &__out-of-date {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: darken(@amber, 20%);
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 10px;
+    font-size: 12px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-inline-start: auto;
+  }
+
+  &__severity {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 12px;
+    font-size: 12px;
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 99px;
+    color: #fff;
+
+    // Own modifier names: a global .critical rule elsewhere turned the text red
+    &--critical,
+    &--high {
+      background: @danger;
+    }
+
+    &--moderate {
+      color: #212121;
+      background: @amber;
+    }
+
+    &--low {
+      background: @ok;
+    }
+
+    &--review {
+      color: darken(@amber, 25%);
+      background: @warn-bg;
+      border: 1px solid color-mix(in srgb, @amber 40%, var(--rs-border-primary));
+    }
+  }
+
+  &__section {
+    margin-top: 14px;
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+
+  &__findings {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+    border: 1px solid var(--rs-border-primary);
+
+    th {
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: start;
+      text-transform: uppercase;
+      color: var(--rs-text-secondary);
+      background: @ai-tint;
+    }
+
+    td {
+      padding: 8px 10px;
+      vertical-align: top;
+      border-top: 1px solid var(--rs-border-primary);
+    }
+
+    tbody tr:nth-child(even) td {
+      background: var(--rs-bg-well);
+    }
+  }
+
+  &__test-name {
+    display: block;
+    font-weight: 600;
+  }
+
+  &__test-date {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--rs-text-secondary);
+  }
+
+  &__flag {
+    font-weight: 700;
+
+    &--crit {
+      color: @danger;
+    }
+
+    &--high {
+      color: #c2410c;
+    }
+
+    &--low {
+      color: #1d4ed8;
+    }
+
+    &--ok {
+      color: @ok;
+    }
+  }
+
+  &__box {
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    background: var(--rs-bg-well);
+    border: 1px solid var(--rs-border-primary);
+  }
+
+  &__follow {
+    margin: 0;
+    padding-inline-start: 18px;
+    // The global reset removes list markers, the template shows bullets
+    list-style: disc;
+
+    li {
+      display: list-item;
+      margin: 4px 0;
+      font-size: 13px;
+    }
+  }
+
+  &__disclaimer {
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--rs-text-secondary);
+  }
+}
+
+@keyframes lab-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lab-ai-indeterminate {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(320%);
+  }
+}
+
+@keyframes lab-ai-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-ai__spark.spinning,
+  .lab-ai__cta.working .lab-ai__cta-icon,
+  .lab-ai__progress i,
+  .lab-ai__skeleton div {
+    animation: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .lab-ai__cta {
+    height: 29px;
+    font-size: 11px;
+  }
+}

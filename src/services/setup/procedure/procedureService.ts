@@ -1,9 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
+import type { ProcedureItemCreate, ProcedureItemUpdate } from '@/types/model-types-new';
 
 type Id = number | string;
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number; isActive?: boolean };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -24,13 +25,26 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 export const procedureSetupService = createApi({
   reducerPath: 'procedureSetupService',
   baseQuery: BaseQuery,
-  tagTypes: ['Procedure'],
+  tagTypes: ['Procedure', 'ProcedureItemsByProcedure'],
   endpoints: builder => ({
     // ===== PROCEDURES (Paginated) =====
-    getProcedures: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getProcedures: builder.query<
+      PagedResult<any>,
+      PagedParams & { facilityId?: number | string; categoryType?: string; name?: string; code?: string }
+    >({
+      query: ({ page, size, sort = 'id,asc', isActive, facilityId, categoryType, name, code }) => ({
         url: '/api/setup/procedure',
-        params: { page, size, sort }
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          categoryType: categoryType || undefined,
+          name: name?.trim() || undefined,
+          code: code?.trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
@@ -40,27 +54,27 @@ export const procedureSetupService = createApi({
       PagedResult<any>,
       { categoryType: string } & PagedParams
     >({
-      query: ({ categoryType, page, size, sort = 'id,asc' }) => ({
+      query: ({ categoryType, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-category/${encodeURIComponent(categoryType)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
     }),
 
     getProceduresByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
-      query: ({ code, page, size, sort = 'id,asc' }) => ({
+      query: ({ code, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-code/${encodeURIComponent(code)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
     }),
 
     getProceduresByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
-      query: ({ name, page, size, sort = 'id,asc' }) => ({
+      query: ({ name, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-name/${encodeURIComponent(name)}`,
-        params: { page, size, sort }
+        params: { page, size, sort, isActive }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
@@ -96,9 +110,9 @@ export const procedureSetupService = createApi({
       PagedResult<any>,
       { facilityId: Id; category?: Id } & PagedParams
     >({
-      query: ({ facilityId, category, page, size, sort = 'id,asc' }) => ({
+      query: ({ facilityId, category, page, size, sort = 'id,asc', isActive }) => ({
         url: `/api/setup/procedure/by-facility/${encodeURIComponent(String(facilityId))}`,
-        params: { page, size, sort, ...(category ? { category } : {}) }
+        params: { page, size, sort, isActive, ...(category ? { category } : {}) }
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
@@ -172,6 +186,80 @@ export const procedureSetupService = createApi({
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure']
+    }),
+
+    // GET /api/setup/procedure/by-department?sourceId=...&specialty=...
+    // Default procedures of a visit department/specialty.
+    getProceduresByDepartment: builder.query<
+      PagedResult<any>,
+      { sourceId: Id; specialty?: string | null } & PagedParams
+    >({
+      query: ({ sourceId, specialty, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/procedure/by-department',
+        params: {
+          sourceId,
+          ...(specialty != null && specialty !== '' ? { specialty } : {}),
+          page,
+          size,
+          sort
+        }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure', 'ProcedureItemsByProcedure']
+    }),
+
+    // ===== PROCEDURE ITEMS (procedure -> department + specialty links) =====
+    getProcedureItemsByProcedure: builder.query<
+      PagedResult<any>,
+      { procedureId: Id } & PagedParams
+    >({
+      query: ({ procedureId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/procedure-items/by-procedure/${encodeURIComponent(String(procedureId))}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: (_result, _error, args) => [
+        { type: 'ProcedureItemsByProcedure', id: `LIST_${args.procedureId}` }
+      ]
+    }),
+
+    addProcedureItem: builder.mutation<any, ProcedureItemCreate>({
+      query: body => ({
+        url: '/api/setup/procedure-items',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: (_result, _error, body) => [
+        { type: 'ProcedureItemsByProcedure', id: `LIST_${body.procedureId}` }
+      ]
+    }),
+
+    updateProcedureItem: builder.mutation<any, ProcedureItemUpdate>({
+      query: ({ id, ...rest }) => ({
+        url: `/api/setup/procedure-items/${id}`,
+        method: 'PUT',
+        body: { id, ...rest }
+      }),
+      invalidatesTags: (_result, _error, body) => [
+        { type: 'ProcedureItemsByProcedure', id: `LIST_${body.procedureId}` }
+      ]
+    }),
+
+    toggleProcedureItemIsActive: builder.mutation<any, { id: Id; procedureId: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/procedure-items/${id}/toggle-active`,
+        method: 'PATCH'
+      }),
+      invalidatesTags: (_result, _error, { procedureId }) => [
+        { type: 'ProcedureItemsByProcedure', id: `LIST_${procedureId}` }
+      ]
+    }),
+
+    getProcedureItemSourcesByFacility: builder.query<any[], { type: string; facilityId: Id }>({
+      query: ({ type, facilityId }) => ({
+        url: '/api/setup/procedure-items/sources/by-facility',
+        params: { type, facilityId }
+      })
     })
   })
 });
@@ -198,5 +286,12 @@ export const {
   useGetActiveProceduresByFacilityAndCategoryQuery,
   useLazyGetActiveProceduresByFacilityAndCategoryQuery,
   useGetActiveProceduresByFacilityAndCategorySearchQuery,
-  useLazyGetActiveProceduresByFacilityAndCategorySearchQuery
+  useLazyGetActiveProceduresByFacilityAndCategorySearchQuery,
+  useGetProceduresByDepartmentQuery,
+  useLazyGetProceduresByDepartmentQuery,
+  useGetProcedureItemsByProcedureQuery,
+  useAddProcedureItemMutation,
+  useUpdateProcedureItemMutation,
+  useToggleProcedureItemIsActiveMutation,
+  useLazyGetProcedureItemSourcesByFacilityQuery
 } = procedureSetupService;

@@ -34,6 +34,24 @@ export const facilityService = createApi({
       })
     }),
 
+    // Facilities screen: same list with optional filters ANDed by the backend; empty ones are left out
+    searchFacilities: builder.query<
+      any[],
+      { code?: string; name?: string; type?: string; emailAddress?: string; isActive?: boolean }
+    >({
+      query: ({ code, name, type, emailAddress, isActive }) => ({
+        url: '/api/setup/facility',
+        method: 'GET',
+        params: {
+          code: code?.trim() || undefined,
+          name: name?.trim() || undefined,
+          type: type || undefined,
+          emailAddress: emailAddress?.trim() || undefined,
+          isActive
+        }
+      })
+    }),
+
     getFacilityById: builder.query({
       query: facilityId => ({
         url: `/api/setup/facility/${facilityId}`,
@@ -67,6 +85,7 @@ export const {
   useDeleteFacilityMutation,
   useUpdateFacilityMutation,
   useGetAllFacilitiesQuery,
+  useSearchFacilitiesQuery,
   useGetFacilityByIdQuery,
   useLazyGetFacilityByIdQuery,
   useGetFacilityTypesQuery,

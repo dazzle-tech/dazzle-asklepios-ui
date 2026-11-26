@@ -36,6 +36,7 @@ import { Form, Modal, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MedicationAdministrationModal from './MedicationAdministrationModal';
 import MedicationAdministrationLogs from './MedicationAdministrationLogs';
+import ActiveIngredientLink from '@/components/ActiveIngredientLink';
 
 type MedicationOrderRow = {
   id: number;
@@ -583,8 +584,13 @@ const MedicationRecord = () => {
         key: 'medicationName',
         title: <Translate>MEDICATION NAME</Translate>,
         minWidth: 180,
-        render: (row: MedicationOrderRow) =>
-          activeIngredientMap[row?.activeIngredientId || 0]?.name || '-'
+        render: (row: MedicationOrderRow) => (
+          <ActiveIngredientLink
+            activeIngredientId={row?.activeIngredientId}
+            activeIngredient={activeIngredientMap[row?.activeIngredientId || 0]}
+            label={activeIngredientMap[row?.activeIngredientId || 0]?.name}
+          />
+        )
       },
       {
         key: 'class',

@@ -20,6 +20,8 @@ import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import Translate from '@/components/Translate';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
+import '@/components/AiValidationResult/styles.less';
 import { useAppSelector } from '@/hooks';
 import { formatDateWithoutSeconds } from '@/utils';
 
@@ -50,7 +52,8 @@ type Props = {
 
   // actions
   setOrders: (v: any) => void;
-  handleClearDiagnostics: () => void;
+  handleClearSelection: () => void;
+  handleSelectOrder: (item: any) => void;
   handleSaveOrders: () => void;
   handleSubmitPres: () => void;
 
@@ -86,7 +89,8 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     radCategoriesLovResponse,
 
     setOrders,
-    handleClearDiagnostics,
+    handleClearSelection,
+    handleSelectOrder,
     handleSaveOrders,
     handleSubmitPres,
 
@@ -98,6 +102,8 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
     setOpenRequestTestModal,
     setRecallFavoriteModal
   } = props;
+
+  const hasSelection = orders?.id != null;
 
   const orderId = orders?.id ?? null;
 
@@ -161,9 +167,16 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               <span className="orders-list-header-title">
                 <Translate>Orders</Translate>
               </span>
-              <span className="orders-list-count-badge">
-                {displayedOrdersList.length}
-              </span>
+              <div className="orders-list-header-actions">
+                {hasSelection && (
+                  <MyButton appearance="ghost" size="xs" onClick={handleClearSelection}>
+                    Clear Selection
+                  </MyButton>
+                )}
+                <span className="orders-list-count-badge">
+                  {displayedOrdersList.length}
+                </span>
+              </div>
             </div>
 
             <div className="orders-compact-list">
@@ -193,10 +206,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                     <div
                       key={item?.id ?? index}
                       className={`order-compact-card ${isSelected ? 'active' : ''}`}
-                      onClick={() => {
-                        setOrders(item ?? {});
-                        handleClearDiagnostics();
-                      }}
+                      onClick={() => handleSelectOrder(item)}
                     >
                       <div className="order-compact-card-left">
                         <div className="order-compact-icon">
@@ -249,13 +259,25 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
                 <FontAwesomeIcon icon={faStar} /> <Translate>Add Favorite Test</Translate>
               </MyButton>
 
-              <MyButton
-                onClick={() => setOpenValidationSummaryModal(true)}
-                disabled={isSubmitDisabled || isNurse || edit}
-                prefixIcon={() => <CheckIcon />}
+              <AiTooltip
+                title="AI test order validation"
+                body="Before the order is signed, AI checks these tests against the patient's age, gender and diagnosis, and suggests better options. It does not order anything."
+                chips={['Duplicates', 'Appropriateness', 'Contraindications']}
+                foot="Nothing changes without your review."
               >
-                Sign &amp; Submit
-              </MyButton>
+                <span className="mv-submit">
+                  <MyButton
+                    onClick={() => setOpenValidationSummaryModal(true)}
+                    disabled={isSubmitDisabled || isNurse || edit}
+                    prefixIcon={() => <CheckIcon />}
+                  >
+                    Sign &amp; Submit
+                  </MyButton>
+                  <span className="mv-submit__badge" aria-hidden="true">
+                    AI
+                  </span>
+                </span>
+              </AiTooltip>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}

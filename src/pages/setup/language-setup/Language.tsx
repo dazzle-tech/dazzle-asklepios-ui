@@ -5,13 +5,19 @@ import './styles.less';
 import {
   useAddLanguageMutation,
   useGetAllLanguagesQuery,
+  useLazyGetLanguagesByNameQuery,
+  useLazyGetLanguagesByCodeQuery,
+  useLazyGetLanguagesByDirectionQuery,
   useUpdateLanguageMutation
 } from '@/services/setup/languageService';
 
 import {
   useAddTranslationMutation,
   useGetTranslationsByLangQuery,
-  useGetTranslationsQuery,
+  useLazyGetTranslationsQuery,
+  useLazyGetTranslationsByKeyQuery,
+  useLazyGetTranslationsByVerifiedQuery,
+  useLazyGetTranslationsByTranslatedQuery,
   useLazyGetDictionaryQuery,
   useUpdateTranslationMutation
 } from '@/services/setup/translationService';
@@ -43,13 +49,21 @@ const LanguagesSetup: React.FC = () => {
   });
   const [valueModalOpen, setValueModalOpen] = useState(false);
 
-  // Search + debounce
-  const [searchTerm, setSearchTerm] = useState({ search: '' });
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  useEffect(() => {
-    const h = setTimeout(() => setDebouncedSearch(searchTerm.search.trim()), 300);
-    return () => clearTimeout(h);
-  }, [searchTerm.search]);
+  // ------------------ State: Filters ------------------
+  const [recordOfLanguageFilter, setRecordOfLanguageFilter] = useState({
+    filter: '',
+    value: ''
+  });
+  const [isLanguageFiltered, setIsLanguageFiltered] = useState(false);
+  const [filteredLanguages, setFilteredLanguages] = useState<Language[]>([]);
+
+  const [recordOfFilter, setRecordOfFilter] = useState({
+    filter: '',
+    value: ''
+  });
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredList, setFilteredList] = useState<LanguageTranslation[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
 
   // Paging/sorting
   const [pageIndex, setPageIndex] = useState(0);
@@ -67,6 +81,15 @@ const LanguagesSetup: React.FC = () => {
 
   const directionOptions = useEnumCapitalized('Direction');
 
+  const [getLanguagesByName] = useLazyGetLanguagesByNameQuery();
+  const [getLanguagesByCode] = useLazyGetLanguagesByCodeQuery();
+  const [getLanguagesByDirection] = useLazyGetLanguagesByDirectionQuery();
+
+  const [getTranslationsByKey] = useLazyGetTranslationsByKeyQuery();
+  const [getTranslationsByValue] = useLazyGetTranslationsQuery();
+  const [getTranslationsByVerified] = useLazyGetTranslationsByVerifiedQuery();
+  const [getTranslationsByTranslated] = useLazyGetTranslationsByTranslatedQuery();
+
   // ------------------ Mutations ------------------
   const [addLanguage, addLanguageState] = useAddLanguageMutation();
   const [updateLanguage, updateLanguageState] = useUpdateLanguageMutation();
@@ -83,43 +106,23 @@ const LanguagesSetup: React.FC = () => {
     else dispatch(hideSystemLoader());
   }, [addLanguageState.isLoading, updateLanguageState.isLoading, dispatch]);
 
-  // ------------------ Decide which translation query to use ------------------
+  // ------------------ Translations of the selected language ------------------
   const langKey = languages?.langKey ?? '';
-  const usePaged = Boolean(langKey) && debouncedSearch.length > 0;
 
-  // Server-side: paged + filtered + sorted
-  const {
-    data: pagedData,
-    isFetching: pagedFetching,
-    refetch: refetchPaged
-  } = useGetTranslationsQuery(
-    usePaged
-      ? {
-        lang: langKey,
-        value: debouncedSearch,
-        page: pageIndex,
-        size: rowsPerPage,
-        sort: `${sortBy},${sortType}`
-      }
-      : undefined,
-    { skip: !usePaged }
-  );
-
-  // Unpaged fallback by language
   const {
     data: transData = [],
     isFetching: unpagedFetching,
     refetch: refetchTrans
   } = useGetTranslationsByLangQuery(langKey, {
-    skip: !langKey || usePaged
+    skip: !langKey || isFiltered
   });
 
   // Loading flag for right table
-  const translationsLoading = usePaged ? pagedFetching : unpagedFetching;
+  const translationsLoading = unpagedFetching;
 
-  // ------------------ Local sorting/pagination (only for unpaged mode) ------------------
+  // ------------------ Local sorting/pagination (only when not filtered) ------------------
   const locallySorted = useMemo(() => {
-    if (usePaged) return [];
+    if (isFiltered) return [];
     const arr = [...(transData ?? [])];
     if (!sortBy) return arr;
     return arr.sort((a: any, b: any) => {
@@ -132,17 +135,105 @@ const LanguagesSetup: React.FC = () => {
       }
       return sortType === 'asc' ? (va as any) - (vb as any) : (vb as any) - (va as any);
     });
-  }, [usePaged, transData, sortBy, sortType]);
+  }, [isFiltered, transData, sortBy, sortType]);
 
   const locallyPaged = useMemo(() => {
-    if (usePaged) return [];
+    if (isFiltered) return [];
     const start = pageIndex * rowsPerPage;
     return locallySorted.slice(start, start + rowsPerPage);
-  }, [usePaged, locallySorted, pageIndex, rowsPerPage]);
+  }, [isFiltered, locallySorted, pageIndex, rowsPerPage]);
 
   // ------------------ Rows + total for table ------------------
-  const rows: LanguageTranslation[] = usePaged ? pagedData?.data ?? [] : locallyPaged;
-  const totalCount: number = usePaged ? pagedData?.totalCount ?? 0 : transData?.length ?? 0;
+  const rows: LanguageTranslation[] = isFiltered ? filteredList : locallyPaged;
+  const totalCount: number = isFiltered ? filteredTotal : transData?.length ?? 0;
+
+  // ------------------ Filter logic: Languages ------------------
+  const languageFilterFields = [
+    { label: 'Language Name', value: 'name' },
+    { label: 'Language Code', value: 'code' },
+    { label: 'Direction', value: 'direction' }
+  ];
+
+  const handleLanguageFilterChange = async (field: string, value: string) => {
+    try {
+      if (!field || !value) {
+        setIsLanguageFiltered(false);
+        setFilteredLanguages([]);
+        return;
+      }
+
+      let response;
+
+      if (field === 'name') {
+        response = await getLanguagesByName(value).unwrap();
+      } else if (field === 'code') {
+        response = await getLanguagesByCode(value).unwrap();
+      } else if (field === 'direction') {
+        response = await getLanguagesByDirection(value).unwrap();
+      }
+
+      setFilteredLanguages(response ?? []);
+      setIsLanguageFiltered(true);
+    } catch (error) {
+      console.error('Error filtering languages:', error);
+      dispatch(notify({ msg: 'Failed to filter languages', sev: 'error' }));
+      setIsLanguageFiltered(false);
+    }
+  };
+
+  // ------------------ Filter logic: Translations ------------------
+  const filterFields = [
+    { label: 'Key', value: 'key' },
+    { label: 'Value', value: 'value' },
+    { label: 'Verify', value: 'verified' },
+    { label: 'Translate', value: 'translated' }
+  ];
+
+  const handleFilterChange = async (
+    field: string,
+    value: string,
+    page = 0,
+    size?: number,
+    sort?: string
+  ) => {
+    try {
+      if (!langKey || !field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
+
+      const currentSize = size ?? rowsPerPage;
+
+      let response;
+      const params = {
+        lang: langKey,
+        page,
+        size: currentSize,
+        sort: sort ?? `${sortBy},${sortType}`
+      };
+
+      if (field === 'key') {
+        response = await getTranslationsByKey({ key: value, ...params }).unwrap();
+      } else if (field === 'value') {
+        response = await getTranslationsByValue({ value, ...params }).unwrap();
+      } else if (field === 'verified') {
+        response = await getTranslationsByVerified({ verified: value, ...params }).unwrap();
+      } else if (field === 'translated') {
+        response = await getTranslationsByTranslated({ translated: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response?.data ?? []);
+      setFilteredTotal(response?.totalCount ?? 0);
+      setIsFiltered(true);
+      setPageIndex(page);
+      setRowsPerPage(currentSize);
+    } catch (error) {
+      console.error('Error filtering translations:', error);
+      dispatch(notify({ msg: 'Failed to filter translations', sev: 'error' }));
+      setIsFiltered(false);
+    }
+  };
 
   // ------------------ Handlers ------------------
   const handleAddLanguage = () => {
@@ -161,6 +252,10 @@ const LanguagesSetup: React.FC = () => {
     setLanguages(rowData);
     setValueForm({ ...newLanguageTranslation, langKey: rowData.langKey });
     setPageIndex(0);
+    // The translation filter belongs to the previous language
+    setRecordOfFilter({ filter: '', value: '' });
+    setIsFiltered(false);
+    setFilteredList([]);
   };
 
   const handleAddValue = () => {
@@ -200,6 +295,9 @@ const LanguagesSetup: React.FC = () => {
         );
       }
       refetchLangs();
+      if (isLanguageFiltered) {
+        handleLanguageFilterChange(recordOfLanguageFilter.filter, recordOfLanguageFilter.value);
+      }
     } catch {
       dispatch(
         notify({
@@ -233,7 +331,7 @@ const LanguagesSetup: React.FC = () => {
           })
         );
       }
-      if (usePaged) refetchPaged();
+      if (isFiltered) handleFilterChange(recordOfFilter.filter, recordOfFilter.value, pageIndex);
       else refetchTrans();
     } catch {
       dispatch(
@@ -246,15 +344,30 @@ const LanguagesSetup: React.FC = () => {
   };
 
   // table controls
-  const handlePageChange = (_: unknown, newPage: number) => setPageIndex(newPage);
+  const handlePageChange = (_: unknown, newPage: number) => {
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    } else {
+      setPageIndex(newPage);
+    }
+  };
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(e.target.value, 10));
-    setPageIndex(0);
+    const newSize = parseInt(e.target.value, 10);
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+    } else {
+      setRowsPerPage(newSize);
+      setPageIndex(0);
+    }
   };
   const handleSortChange = (column: string, type: 'asc' | 'desc') => {
     setSortBy(column);
     setSortType(type);
-    setPageIndex(0);
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, rowsPerPage, `${column},${type}`);
+    } else {
+      setPageIndex(0);
+    }
   };
 
   const handleRefreshCache = async () => {
@@ -314,18 +427,106 @@ const LanguagesSetup: React.FC = () => {
   dispatch
 ]);
 
-  // ------------------ Filters UI (search box) ------------------
-  const filters = (
-    <Form layout="inline" fluid className="date-filter-form">
+  // ------------------ Filters UI: Languages ------------------
+  const languageFilters = (
+    <Form fluid className="form-of-filters-set-up">
       <MyInput
-        column
-        width="14vw"
+        fieldName="filter"
+        fieldType="select"
+        selectData={languageFilterFields}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={recordOfLanguageFilter}
+        setRecord={u => setRecordOfLanguageFilter({ filter: u.filter, value: '' })}
+        placeholder="Select Filter"
         showLabel={false}
-        fieldName="search"
-        record={searchTerm}
-        setRecord={setSearchTerm}
-        placeholder="Search by Value"
+        width="180px"
       />
+
+      {recordOfLanguageFilter.filter === 'direction' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={directionOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfLanguageFilter}
+          setRecord={u => setRecordOfLanguageFilter({ ...recordOfLanguageFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Direction"
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfLanguageFilter}
+          setRecord={setRecordOfLanguageFilter}
+          placeholder="Enter Value"
+          showLabel={false}
+        />
+      )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        width="80px"
+        onClick={() =>
+          handleLanguageFilterChange(recordOfLanguageFilter.filter, recordOfLanguageFilter.value)
+        }
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
+
+  // ------------------ Filters UI: Translations ------------------
+  const filters = (
+    <Form fluid className="form-of-filters-set-up">
+      <MyInput
+        fieldName="filter"
+        fieldType="select"
+        selectData={filterFields}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={recordOfFilter}
+        setRecord={u => setRecordOfFilter({ filter: u.filter, value: '' })}
+        placeholder="Select Filter"
+        showLabel={false}
+        width="180px"
+      />
+
+      {recordOfFilter.filter === 'verified' || recordOfFilter.filter === 'translated' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={[
+            { label: 'Yes', value: 'true' },
+            { label: 'No', value: 'false' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder={recordOfFilter.filter === 'verified' ? 'Select Verify' : 'Select Translate'}
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          placeholder="Enter Value"
+          showLabel={false}
+        />
+      )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        width="80px"
+        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+      >
+        Search
+      </MyButton>
     </Form>
   );
 
@@ -351,8 +552,9 @@ const LanguagesSetup: React.FC = () => {
         </div>
         {/* Languages Section */}
         <LanguagesSection
+          filters={languageFilters}
           selectedLanguage={languages}
-          languages={langData ?? []}
+          languages={isLanguageFiltered ? filteredLanguages : langData ?? []}
           loading={langsFetching || langsLoading}
           onRowClick={handleLanguageRowClick}
           onAdd={handleAddLanguage}

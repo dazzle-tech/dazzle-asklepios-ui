@@ -118,11 +118,21 @@ export const diagnosticOrderTestService = createApi({
       PagedResult<DiagnosticOrderTest>,
       DiagnosticOrderTestFilterParams & PageableParams
     >({
-      query: params => ({
-        url: '/api/patient/diagnostic-order-tests',
-        method: 'GET',
-        params,
-      }),
+      query: params => {
+        const serialized: Record<string, any> = {};
+
+        Object.entries(params ?? {}).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+          // Spring List params accept CSV (same pattern as active-list/by-beds).
+          serialized[key] = Array.isArray(value) ? value.join(',') : value;
+        });
+
+        return {
+          url: '/api/patient/diagnostic-order-tests',
+          method: 'GET',
+          params: serialized
+        };
+      },
       transformResponse: (
         response: DiagnosticOrderTest[],
         meta

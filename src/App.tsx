@@ -17,8 +17,10 @@ import enGB from 'rsuite/locales/en_GB';
 import Frame from './components/Frame';
 import SystemLoader from './components/Loaders/SystemLoader';
 import MyToast from './components/MyToast/MyToast';
+import PreAuthorizationMissingFieldsModal from './components/PreAuthorizationMissingFieldsModal/PreAuthorizationMissingFieldsModal';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
+import IdleTimeoutManager from './components/IdleTimeoutManager/IdleTimeoutManager';
 import Translate from './components/Translate';
 import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
@@ -137,6 +139,7 @@ const ERDashboardsNew = lazy (() => import ( './pages/encounter/ER-triage-new/Er
 const ERTabsDepartmentAndWaitingListNew = lazy (() => import ( './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList'));
 const ERStartTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERStartTriage'));
 const ERTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ERTriage'));
+const ERBedBoard = lazy (() => import ( './pages/encounter/ER-triage-new/ER-bed-board'));
 const QuickVisitNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/QuickVisit'));
 const ViewTriageNew = lazy (() => import ( './pages/encounter/ER-triage-new/Triage/ViewTriage'));
 const NeonatesPainAssessment = lazy (() => import ( './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment'));
@@ -181,6 +184,7 @@ const Questionnaire = lazy (() => import ( './pages/questionnaire-setup/Question
 const Rad = lazy (() => import ( './pages/rad-module/RadiologyMain'));
 const Recovery = lazy (() => import ( './pages/recovery'));
 const ResetPassword = lazy (() => import ( './pages/reset-password/ResetPassword'));
+const ForgotPassword = lazy (() => import ( './pages/forgot-password/ForgotPassword'));
 const AccessRoles = lazy (() => import ( './pages/setup/access-roles'));
 const AgeGroupSetup = lazy (() => import ( './pages/setup/age-group'));
 const Allergens = lazy (() => import ( './pages/setup/allergens-setup'));
@@ -190,6 +194,9 @@ const Catalog = lazy (() => import ( './pages/setup/catalog-setup-new'));
 const CDTSetup = lazy (() => import ( './pages/setup/cdt-setup'));
 const CPTSetup = lazy (() => import ( './pages/setup/cpt-setup'));
 const DentalActions = lazy (() => import ( './pages/setup/dental-actions-new'));
+const DentalChartSetup = lazy (() => import ( './pages/setup/dental-chart-setup'));
+const VitalSignSetup = lazy (() => import ( './pages/setup/vital-sign-setup'));
+const DentalToothNumberingSetup = lazy (() => import ( './pages/setup/dental-tooth-numbering-setup'));
 const NewDepartments = lazy (() => import ( './pages/setup/departments-setup/Departments-new'));
 const Diagnostics = lazy (() => import ( './pages/setup/diagnostics-tests-definition-new'));
 const DVM = lazy (() => import ( './pages/setup/dvm-setup'));
@@ -214,9 +221,17 @@ const SurgicalKitsSetup = lazy (() => import ( './pages/setup/surgical-kits-setu
 const UOMGroup = lazy (() => import ( './pages/setup/uom-group-new'));
 const Vaccine = lazy (() => import ( './pages/setup/vaccine-setup'));
 const VisitDurationSetup = lazy (() => import ( './pages/setup/visit-duration-setup'));
+const ActivitySetup = lazy(() => import('./pages/setup/activity-setup'));
+const MyTasks = lazy(() => import('./pages/tasks/MyTasks'));
+const TeamTasks = lazy(() => import('./pages/tasks/TeamTasks'));
+const AllTasks = lazy(() => import('./pages/tasks/AllTasks'));
+const TaskCalendarDashboard = lazy(() => import('./pages/tasks/TaskCalendarDashboard'));
+const AiServices = lazy(() => import('./pages/setup/ai-services'));
 const PatientSatisfactionSurveyResponses = lazy(
   () => import('./pages/setup/patient-satisfaction-survey-responses')
 );
+const SurveyQuestionsSetup = lazy(() => import('./pages/setup/survey-questions-setup'));
+const SurveyResponses = lazy(() => import('./pages/setup/survey-responses'));
 const WarehouseItemsSetup = lazy (() => import ( './pages/setup/warehouse-Items-setup'));
 const WarehouseSetup = lazy (() => import ( './pages/setup/warehouse-setup/WarehouseSetup'));
 const Facilities = lazy (() => import ( './pages/system-configurations/facilities-setup'));
@@ -249,6 +264,12 @@ const UrgentCareListMain = lazy (() => import ( './pages/encounter/urgent-care/U
 const FormTemplates = lazy (() => import ( './pages/form-template/FormTemplate'));
 const FormTemplateBuilderPage = lazy (() => import ( './pages/form-template/FormTemplateBuilderPage'));
 const PatientSatisfactionSurveyPage = lazy(() => import('./pages/patient-satisfaction-survey/PatientSatisfactionSurveyPage'));
+const SubmitPatientComplaintPage = lazy(
+  () => import('./pages/patient-complaints/SubmitPatientComplaintPage')
+);
+const PatientComplaintsPage = lazy(() => import('./pages/patient-complaints/PatientComplaintsPage'));
+const SurveyPage = lazy(() => import('./pages/survey/SurveyPage'));
+const VerifyReportPage = lazy(() => import('./pages/verify-report/VerifyReportPage'));
 const IncidentPortal = lazy (() => import ( './pages/Incident/IncidentPortal'));
 const InventoryManagementDepartmentStock = lazy (() => import ( './pages/inventory-management/departmentStock'));
 const InventoryManagementTransaction = lazy (() => import ( './pages/inventory-management/inventory-transaction/inventory-transaction-new'));
@@ -266,7 +287,6 @@ const CountrySetup = React.lazy(() =>
 const CountryDistrictPage = lazy (() => import ( './pages/setup/country-setup/district-country/CountryDistrictPage'));
 const Enums = lazy (() => import ( './pages/setup/Enums'));
 const LanguagesSetup = lazy (() => import ( './pages/setup/language-setup/Language'));
-const PayerSetup = lazy (() => import ( './pages/setup/payer-setup'));
 const SupportiveDocumentSetup = lazy (() => import ( './pages/setup/supportive-document-setup'));
 const PolicyDefinitions = lazy (() => import ( './pages/setup/policy-definition'));
 const DocumentManagement = lazy (() => import ( './pages/setup/document-management'));
@@ -275,6 +295,8 @@ const OrganizationDefinition = lazy (() => import ( './pages/system-configuratio
 const EmailSettings = lazy (() => import ( './pages/system-configurations/email-settings'));
 const WhatsAppSettings = lazy (() => import ( './pages/system-configurations/whatsapp-settings'));
 const OrganizationHolidays = lazy (() => import ( './pages/system-configurations/organization-holidays'));
+const MobileAppConfiguration = lazy (() => import ( './pages/system-configurations/mobile-app-configuration'));
+const Configurations = lazy (() => import ( './pages/system-configurations/configuration/SystemConfiguration'));
 const NotificationRule = lazy (() => import ( './pages/notification-management/notification-rule'));
 const EmailNotification = lazy (() => import ( './pages/notification-management/email-notification'));
 const SmsNotification = lazy (() => import ( './pages/notification-management/sms-notification'));
@@ -291,6 +313,7 @@ import SystemConfiguration from './pages/system-configurations/system-configurat
 import WaseelSbsSetup from '@/pages/setup/waseel-sbs-setup/WaseelSbsSetup';
 import NphiesPayerSetup from './pages/setup/payer-setup/NphiesPayerSetup';
 import PriceListSetup from './pages/setup/price-list-setup/PriceListSetup';
+import { PriceListItemDashboardPage } from './pages/setup/price-list-setup/PriceListItemDashboard';
 import BillingRuleSetup from './pages/setup/billing-rule-setup/BillingRuleSetup';
 import BillingConfigurationSetup from './pages/setup/billing-configuration/BillingConfigurationSetup';
 import FinancialDocumentNumberingSetup from './pages/setup/financial-document-numbering/FinancialDocumentNumberingSetup';
@@ -635,7 +658,9 @@ const App = () => {
       </div>
 
       <MyToast />
+      <PreAuthorizationMissingFieldsModal />
       <SessionExpiredBackdrop />
+      <IdleTimeoutManager />
 
       <CustomProvider locale={enGB}>
       <Suspense fallback={<SystemLoader open />}>
@@ -710,6 +735,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="ER-bed-board" element={<ERBedBoard />} />
               <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
               <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
@@ -719,9 +745,11 @@ const App = () => {
               <Route path="tax-setup" element={<TaxSetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
+              <Route path="configurations" element={<Configurations />} />
               <Route path="email-settings" element={<EmailSettings />} />
               <Route path="whatsapp-settings" element={<WhatsAppSettings />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
+              <Route path="mobile-app-configuration" element={<MobileAppConfiguration />} />
               <Route path="notification-rule" element={<NotificationRule />} />
               <Route path="email-notification" element={<EmailNotification />} />
               <Route path="sms-notification" element={<SmsNotification />} />
@@ -813,6 +841,7 @@ const App = () => {
               <Route path="facility-patients" element={<FacilityPatients />} />
               <Route path="encounter-status-management" element={<EncounterStatusManagement />} />
               <Route path="patients-encounters-list" element={<PatientsEncounters />} />
+              <Route path="patient-complaints" element={<PatientComplaintsPage />} />
               <Route path="price-list" element={<PriceLists />} />
               <Route path="patients-list" element={<PatientsLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -826,6 +855,10 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="discount-setup" element={<DiscountSetup />} />
+              <Route
+                path="coverage-management"
+                element={<Navigate to="/nphies-payers?tab=coverage" replace />}
+              />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
@@ -905,10 +938,17 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
+              <Route path="activity-setup" element={<ActivitySetup />} />
+              <Route path="task-calendar" element={<TaskCalendarDashboard />} />
+              <Route path="my-tasks" element={<MyTasks />} />
+              <Route path="team-tasks" element={<TeamTasks />} />
+              <Route path="all-tasks" element={<AllTasks />} />
+              <Route path="ai-services" element={<AiServices />} />
               <Route
                 path="patient-satisfaction-survey-responses"
-                element={<PatientSatisfactionSurveyResponses />}
+                element={<SurveyResponses />}
               />
+              <Route path="survey-questions-setup" element={<SurveyQuestionsSetup />} />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="shift-setup" element={<Shifts />} />
               <Route
@@ -962,6 +1002,9 @@ const App = () => {
               <Route path="med-frequency-setup" element={<MedFrequencySetup />} />
               <Route path="brand-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />
+              <Route path="dental-chart-setup" element={<DentalChartSetup />} />
+              <Route path="vital-sign-setup" element={<VitalSignSetup />} />
+              <Route path="dental-tooth-numbering-setup" element={<DentalToothNumberingSetup />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
               <Route path="icd10-setup" element={<ICD10Setup />} />
               <Route path="cpt-setup" element={<CPTSetup />} />
@@ -982,6 +1025,7 @@ const App = () => {
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />
               <Route path="/price-list-setup" element={<PriceListSetup />} />
+              <Route path="/price-list-item-dashboard" element={<PriceListItemDashboardPage />} />
               <Route path="/billing-rule-setup" element={<BillingRuleSetup />} />
                <Route path="/billing-configuration" element={<BillingConfigurationSetup />} />
                <Route path="/financial-document-numbering" element={<FinancialDocumentNumberingSetup />} />
@@ -1003,8 +1047,11 @@ const App = () => {
               <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path="enums" element={<Enums />} />
-              <Route path="payor-setup" element={<PayerSetup />} />
               <Route path="supportive-document-setup" element={<SupportiveDocumentSetup />} />
+              <Route
+                path="payor-setup"
+                element={<Navigate to="/nphies-payers?tab=insurance" replace />}
+              />
               <Route path="nphies-payers" element={<NphiesPayerSetup />} />
               <Route
                 path="inventory-management-product-setup"
@@ -1052,9 +1099,12 @@ const App = () => {
           </Route>
 
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="create-password" element={<CreatePassword />} />
           <Route path="create-patient-password" element={<CreatePatientPassword />} />
-          <Route path="patient-satisfaction-survey" element={<PatientSatisfactionSurveyPage />} />
+          <Route path="patient-satisfaction-survey" element={<SurveyPage />} />
+          <Route path="submit-patient-complaint" element={<SubmitPatientComplaintPage />} />
+          <Route path="verify-report" element={<VerifyReportPage />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

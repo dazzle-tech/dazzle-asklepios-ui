@@ -37,9 +37,8 @@ import type { PatientEncounter } from '@/types/model-types-new';
 import Translate from '@/components/Translate';
 import HistoryOfPresentIllnessSection from './HistoryOfPresentIllnessSection';
 import FieldAuditHistoryModal from './FieldAuditHistory';
-import { useAutoPopulateMutation } from '@/services/auto-Population/autoPopulationService';
 import Allergies from '../../encounter-pre-observations-new/AllergiesNurse';
-import AutoPopulationSection from './AutoPopulationSection';
+import AmbientScribe from './AmbientScribe';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -384,38 +383,22 @@ const SOAP = props => {
         // style={edit ? { pointerEvents: 'none', opacity: 0.6 } : {}}
         >
           <div className="top-section">
-             <AutoPopulationSection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              patient={patient}
-              edit={edit}
-             />
+            <AmbientScribe
+              disabled={edit}
+              patientId={patient?.id}
+              encounter={localEncounter}
+              onEncounterSaved={setLocalEncounter}
+              encounterId={localEncounter?.id || encounterId}
+              facilityId={localEncounter?.facilityId}
+              departmentId={localEncounter?.departmentId}
+              patientLine={[
+                [patient?.firstName, patient?.secondName, patient?.lastName].filter(Boolean).join(' '),
+                patient?.medicalRecordNumber ? `# ${patient.medicalRecordNumber}` : '',
+                patient?.sexAtBirth || ''
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
             <div style={{ marginBottom: '16px' }}>
               <SectionContainer
                 collapsible

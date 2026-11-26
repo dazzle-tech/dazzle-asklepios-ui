@@ -19,6 +19,7 @@ import ClaimEncounterProgressNotes from './ClaimEncounterProgressNotes';
 import MyButton from '@/components/MyButton/MyButton';
 import PatientHistory from './PatientHistory';
 import ClaimEncounterCopyDiagnosticOrders from './ClaimEncounterCopyDiagnosticOrders';
+import ClaimEncounterCopyServiceProductTests from './ClaimEncounterCopyServiceProductTests';
 
 const EditEncounterDetailsModal = ({
     open,
@@ -29,7 +30,8 @@ const EditEncounterDetailsModal = ({
     const [record, setRecord] = useState({});
 
     const {
-        data: encounterCopy,
+        // currentData only holds this encounter's copy, never the previously opened one
+        currentData: encounterCopy,
         isLoading,
         isFetching
     } = useGetClaimEncounterCopyQuery(
@@ -45,9 +47,8 @@ const EditEncounterDetailsModal = ({
         useUpdateClaimEncounterCopyMutation();
 
     useEffect(() => {
-        if (encounterCopy) {
-            setRecord(encounterCopy);
-        }
+        // An encounter without a copy must open empty, not keep the last record
+        setRecord(encounterCopy ?? {});
     }, [encounterCopy]);
 
     const handleSave = async () => {
@@ -69,7 +70,8 @@ const EditEncounterDetailsModal = ({
                     bloodPressureSystolic: record.bloodPressureSystolic,
                     bloodPressureDiastolic: record.bloodPressureDiastolic,
                     height: record.height,
-                    weight: record.weight
+                    weight: record.weight,
+                    investigationNotPerformedReason: record.investigationNotPerformedReason
                 }
             }).unwrap();
 
@@ -144,6 +146,14 @@ const EditEncounterDetailsModal = ({
             <MyInput
                 fieldName="treatmentPlan"
                 fieldLabel="Treatment Plan"
+                fieldType="textarea"
+                record={record}
+                setRecord={setRecord}
+                width="100%"
+            />
+            <MyInput
+                fieldName="investigationNotPerformedReason"
+                fieldLabel="Reason Investigations Not Performed"
                 fieldType="textarea"
                 record={record}
                 setRecord={setRecord}
@@ -258,6 +268,7 @@ const EditEncounterDetailsModal = ({
         <ClaimEncounterProgressNotes
             encounter={encounter}
             claimEncounterCopyId={encounterCopy?.id}
+            allowEdit={false}
         />
     );
 
@@ -280,10 +291,11 @@ const EditEncounterDetailsModal = ({
                         title: 'Diagnoses',
                         content: diagnosesContent()
                     },
-                    {
-                        title: 'Progress Notes',
-                        content: progressNotesContent()
-                    },
+                    // Progress Notes tab hidden for now
+                    // {
+                    //     title: 'Progress Notes',
+                    //     content: progressNotesContent()
+                    // },
                     {
                         title: 'Patient History',
                         content: (
@@ -296,6 +308,15 @@ const EditEncounterDetailsModal = ({
                         title: 'Diagnostic Orders',
                         content: (
                             <ClaimEncounterCopyDiagnosticOrders
+                                claimEncounterCopyId={encounterCopy?.id}
+                                encounterId={encounter?.id}
+                            />
+                        )
+                    },
+                    {
+                        title: 'Service & Product Tests',
+                        content: (
+                            <ClaimEncounterCopyServiceProductTests
                                 claimEncounterCopyId={encounterCopy?.id}
                                 encounterId={encounter?.id}
                             />

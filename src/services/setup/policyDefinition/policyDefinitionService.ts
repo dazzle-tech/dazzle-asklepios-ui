@@ -53,11 +53,23 @@ export const PolicyDefinitionService = createApi({
   endpoints: (builder) => ({
 
     // List all (paginated)
-    getAllPolicyDefinitions: builder.query<PagedResult<PolicyDefinition>, PagedParams>({
-      query: ({ page, size, sort = "id,desc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllPolicyDefinitions: builder.query<
+      PagedResult<PolicyDefinition>,
+      PagedParams & { isActive?: boolean; facilityId?: number | string; code?: string; name?: string }
+    >({
+      query: ({ page, size, sort = "id,desc", isActive, facilityId, code, name }) => ({
         url: "/api/setup/policy-definition",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          facilityId: facilityId || undefined,
+          code: code?.trim() || undefined,
+          name: name?.trim() || undefined,
+        },
       }),
       transformResponse: (response: PolicyDefinition[], meta) => {
         const headers = meta?.response?.headers;
@@ -158,6 +170,26 @@ export const PolicyDefinitionService = createApi({
       providesTags: ["PolicyDefinition"],
     }),
 
+    getPolicyDefinitionsByStatus: builder.query<
+      PagedResult<PolicyDefinition>,
+      { isActive: boolean | string } & PagedParams
+    >({
+      query: ({ isActive, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/by-status",
+        method: "GET",
+        params: { isActive, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+
     // Get by id
     getPolicyDefinitionById: builder.query<PolicyDefinition, number>({
       query: (id) => ({
@@ -213,6 +245,7 @@ export const {
   useLazyGetPolicyDefinitionsByCodeQuery,
   useGetPolicyDefinitionsByNameQuery,
   useLazyGetPolicyDefinitionsByNameQuery,
+  useLazyGetPolicyDefinitionsByStatusQuery,
   useGetPolicyDefinitionByIdQuery,
   useLazyGetPolicyDefinitionByIdQuery,
   useCreatePolicyDefinitionMutation,

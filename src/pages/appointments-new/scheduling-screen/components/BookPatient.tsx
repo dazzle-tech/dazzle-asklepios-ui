@@ -46,6 +46,8 @@ type BookPatientProps = {
   onBooked?: () => Promise<void> | void;
   /** When true, shows the same flow read-only (opened from View action on an existing appointment). */
   readOnly?: boolean;
+  /** Optional registered patient to preselect on a new booking (e.g. when opened from an encounter). */
+  initialPatient?: any;
 };
 
 const normalizeAppointmentStatusKey = (raw: unknown): string =>
@@ -119,7 +121,8 @@ const BookPatient = ({
   practitioners: _practitioners = [],
   services: _services = [],
   onBooked,
-  readOnly = false
+  readOnly = false,
+  initialPatient = null
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
   const mode = useAppSelector((state: any) => state.ui.mode);
@@ -257,6 +260,15 @@ const BookPatient = ({
       setPatientSidebarOpen(false);
     }
   }, [open, appointmentData, readOnly]);
+
+  // Runs after the reset above, so a supplied registered patient stays selected on a new booking.
+  useEffect(() => {
+    if (!open || readOnly || !initialPatient) return;
+    const pid = Number(initialPatient?.id ?? initialPatient?.key);
+    if (!Number.isFinite(pid) || pid <= 0) return;
+    setSelectedPatient(initialPatient);
+    setRecord((prev: any) => ({ ...prev, patientId: pid }));
+  }, [open, readOnly, initialPatient, appointmentData]);
 
   useEffect(() => {
     if (open) return;

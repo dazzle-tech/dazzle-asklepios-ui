@@ -34,7 +34,8 @@ import {
 import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
-import { extractErrorMessage, normalizeAllowedServices } from './utils';
+import { useBranding } from '@/hooks/useBranding';
+import { extractErrorMessage, normalizeAllowedServices, toTemplateColor } from './utils';
 import './styles.less';
 import './AddResourceModal.less';
 import { AvailabilityTemplateCreateDTO, AvailabilityTemplateUpdateDTO } from '@/types/model-types-new';
@@ -52,6 +53,8 @@ type Props = {
 
 const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRecord, selectedFacility, readOnly }) => {
   const dispatch = useAppDispatch();
+  const { primaryColor } = useBranding();
+  const defaultColor = toTemplateColor(primaryColor);
   const [record, setRecord] = useState<AvailabilityTemplateCreateDTO | AvailabilityTemplateUpdateDTO>({ ...newAvailabilityTemplateCreateDTO });
 
   // Becomes true when the user actively picks a resource (or changes templateType).
@@ -357,6 +360,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId,
       parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
+      templateColor: defaultColor,
     });
     applyWorkingDays(mainTemplate?.workingDays ?? []);
   }, [open, editRecord, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
@@ -738,7 +742,7 @@ const AddResourceModal: React.FC<Props> = ({ mainTemplate, open, setOpen, editRe
                     <div className="color-picker-row">
                       <input
                         type="color"
-                        value={record?.templateColor ?? '#6982F0'}
+                        value={record?.templateColor ?? defaultColor}
                         onChange={e => setRecord(prev => ({ ...prev, templateColor: e.target.value }))}
                       />
                     </div>

@@ -994,13 +994,16 @@ const isSelectedRelation = rowData => {
     setSearchResultVisible(true);
 
     if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
+      const criterion =
+        selectedCriterion === 'documentNumber' ? 'documentNo' : selectedCriterion;
+      const operator = selectedCriterion === 'dob' ? 'equals' : 'containsIgnoreCase';
       setListRequest({
         ...listRequest,
         ignore: false,
         filters: [
           {
-            fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
+            fieldName: fromCamelCaseToDBName(criterion),
+            operator,
             value: searchKeyword
           }
         ]

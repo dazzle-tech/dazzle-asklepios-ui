@@ -7,6 +7,7 @@ import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import PreAuthorizationStatusBadge from '@/components/PreAuthorizationStatusBadge/PreAuthorizationStatusBadge';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -50,6 +51,8 @@ type Props = {
   patient: any;
   departments: any[];
   edit?: boolean;
+  // order already submitted: details are locked (editing them would rewrite the test row)
+  detailsLocked?: boolean;
 };
 
 const DiagnosticsOrderTable: React.FC<Props> = props => {
@@ -82,6 +85,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     patient,
     departments,
     edit,
+    detailsLocked,
   } = props;
 
   const resolveReceivedDepartmentName = (rowData: any) => {
@@ -197,6 +201,16 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       render: (rowData: any) => <>{formatEnumString(rowData.processingStatus)}</>
     },
     {
+      key: 'preAuthorizationStatus',
+      dataKey: 'preAuthorizationStatus',
+      title: <Translate>PRE-AUTH</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => (
+        <PreAuthorizationStatusBadge status={rowData.preAuthorizationStatus} />
+      )
+    },
+    {
       key: 'receivedDepartmentId',
       dataKey: 'receivedDepartmentId',
       title: <Translate>RECEIVED Department</Translate>,
@@ -254,17 +268,24 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
         const isRescheduled = rowStatus.includes('RESCHEDULE');
         const actionColor = isRescheduled ? '#b9c0cc' : 'var(--primary-gray)';
         const actionCursor = isRescheduled ? 'not-allowed' : 'pointer';
+        const editDisabled = isRescheduled || !!detailsLocked;
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Whisper placement="top" speaker={<Tooltip>Edit</Tooltip>}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', cursor: actionCursor }}>
+            <Whisper placement="top" speaker={<Tooltip>{detailsLocked ? 'Order submitted' : 'Edit'}</Tooltip>}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  cursor: editDisabled ? 'not-allowed' : 'pointer'
+                }}
+              >
                 <MdModeEdit
                   onClick={() => {
-                    if (isRescheduled || edit) return;
+                    if (editDisabled || edit) return;
                     handleEdit(rowData);
                   }}
                   className="icons-styles"
-                  color={actionColor}
+                  color={editDisabled ? '#b9c0cc' : 'var(--primary-gray)'}
                 />
               </span>
             </Whisper>

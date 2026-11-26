@@ -10,6 +10,7 @@ import MyTable from '@/components/MyTable';
 import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import UserDateCell from '@/components/UserDateCell/UserDateCell';
+import CopiedAuditCell from './CopiedAuditCell';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
 import Translate from '@/components/Translate';
 
@@ -302,24 +303,33 @@ const ClaimEncounterCopySocialHistory = ({
               : 'No'
       },
       {
-        key: 'createdDate',
+        key: 'originalCreatedDate',
         title: (
           <Translate>
-            CREATED AT / BY
+            ORIGINAL CREATED BY / AT
           </Translate>
         ),
-        expandable: true,
         render: (row: any) => (
           <UserDateCell
-            login={row?.createdBy}
-            date={row?.createdDate}
+            login={row?.originalCreatedBy}
+            date={row?.originalCreatedDate}
           />
         )
       },
       {
+        key: 'createdDate',
+        title: (
+          <Translate>
+            COPIED BY / AT
+          </Translate>
+        ),
+        render: (row: any) => (
+          <CopiedAuditCell row={row} />
+        )
+      },
+      {
         key: 'lastModifiedDate',
-        title: 'UPDATED AT / BY',
-        expandable: true,
+        title: 'COPY UPDATED BY / AT',
         render: (row: any) => (
           <UserDateCell
             login={row?.lastModifiedBy}
@@ -331,7 +341,7 @@ const ClaimEncounterCopySocialHistory = ({
         key: 'cancelledDate',
         title: (
           <Translate>
-            CANCELLED AT / BY
+            CANCELLED BY / AT
           </Translate>
         ),
         expandable: true,

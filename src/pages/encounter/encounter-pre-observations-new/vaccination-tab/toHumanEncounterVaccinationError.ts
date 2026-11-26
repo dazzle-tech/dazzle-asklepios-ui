@@ -102,6 +102,11 @@ export const toHumanEncounterVaccinationError = (
     'reviewedAt.required': 'ReviewedAt is required when status is REVIEW.',
     'reviewedBy.required': 'ReviewedById is required when status is REVIEW.',
 
+    'vaccination.paid': 'This vaccination is already paid and cannot be cancelled.',
+    'vaccination.paid.edit': 'This vaccination is already paid and cannot be edited.',
+    'vaccine.locked':
+      'The vaccine and the brand cannot be changed. Cancel the vaccination and add a new one.',
+
     'db.constraint': 'Database constraint violated while saving encounter vaccination.'
   };
 

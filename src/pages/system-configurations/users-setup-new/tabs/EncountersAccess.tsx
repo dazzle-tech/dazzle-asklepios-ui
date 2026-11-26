@@ -21,6 +21,9 @@ type EncountersAccessRecord = {
   canUnDischargeUrgentCare: boolean;
   canUnCompleteEncounter: boolean;
   canReturnClaimForResubmit: boolean;
+  canCancelServiceBeforeInvoice: boolean;
+  canEditSubmittedPrescription: boolean;
+  canCollectZeroPayment: boolean;
 };
 
 const EncountersAccess = ({ user }: EncountersAccessProps) => {
@@ -32,6 +35,9 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
     canUnDischargeUrgentCare: false,
     canUnCompleteEncounter: false,
     canReturnClaimForResubmit: false,
+    canCancelServiceBeforeInvoice: false,
+    canEditSubmittedPrescription: false,
+    canCollectZeroPayment: false,
   });
 
   const {
@@ -62,6 +68,9 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         canUnDischargeUrgentCare: false,
         canUnCompleteEncounter: false,
         canReturnClaimForResubmit: false,
+        canCancelServiceBeforeInvoice: false,
+        canEditSubmittedPrescription: false,
+        canCollectZeroPayment: false,
       });
       return;
     }
@@ -75,6 +84,12 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
           encountersAccess.canUnCompleteEncounter ?? false,
         canReturnClaimForResubmit:
           encountersAccess.canReturnClaimForResubmit ?? false,
+        canCancelServiceBeforeInvoice:
+          encountersAccess.canCancelServiceBeforeInvoice ?? false,
+        canEditSubmittedPrescription:
+          encountersAccess.canEditSubmittedPrescription ?? false,
+        canCollectZeroPayment:
+          encountersAccess.canCollectZeroPayment ?? false,
       });
     }
   }, [userId, encountersAccess]);
@@ -162,6 +177,35 @@ const EncountersAccess = ({ user }: EncountersAccessProps) => {
         fieldType="checkbox"
         fieldName="canReturnClaimForResubmit"
         fieldLabel="Can return claims for resubmit"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canCancelServiceBeforeInvoice"
+        fieldLabel="Can cancel services before invoice"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      {/* Add, edit or cancel medications on a submitted prescription and resend it to the pharmacy. */}
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canEditSubmittedPrescription"
+        fieldLabel="Can Edit Submitted Prescription"
+        record={record}
+        setRecord={setRecord}
+        disabled={isLoadingAccess}
+      />
+
+      {/* Use "Collect zero now" on the payment screen; the amount stays on the remaining balance. */}
+      <MyInput
+        fieldType="checkbox"
+        fieldName="canCollectZeroPayment"
+        fieldLabel="Can Collect Zero Now"
         record={record}
         setRecord={setRecord}
         disabled={isLoadingAccess}

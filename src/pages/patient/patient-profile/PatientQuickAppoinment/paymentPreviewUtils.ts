@@ -1,8 +1,11 @@
 import type { EncounterBillingItemSummary, EncounterBillingSummary } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
+import {
+  isBilledItemOfRow,
+  type DefaultBillingRowIdentity
+} from './defaultBillingRows';
 
-export type PreviewServiceRow = {
-  serviceId: number;
+export type PreviewServiceRow = DefaultBillingRowIdentity & {
   serviceType: string;
   serviceName: string;
   selected: boolean;
@@ -61,6 +64,31 @@ const isGenericItemLabel = (
 };
 
 /** Technical codes such as SERVICE-1500 or MEDICATION - 172 are not display names. */
+/**
+ * Tax carried by the patient share of a charge line. Lines billed before the
+ * Patient Copayment / Claim Share toggles have no party split, so their tax is
+ * shared in proportion to the patient share.
+ */
+export const resolvePatientTaxAmount = (
+  item: Pick<
+    EncounterBillingItemSummary,
+    'taxAmount' | 'netAmount' | 'patientResponsibilityAmount' | 'patientTaxAmount'
+  >
+): number => {
+  if (item.patientTaxAmount != null) {
+    return toAmount(item.patientTaxAmount);
+  }
+
+  const netAmount = toAmount(item.netAmount);
+  const taxAmount = toAmount(item.taxAmount);
+
+  if (netAmount <= 0 || taxAmount <= 0) {
+    return 0;
+  }
+
+  return (taxAmount * toAmount(item.patientResponsibilityAmount)) / netAmount;
+};
+
 export const isTechnicalBillingLabel = (
   value: string | null | undefined,
   billingItemType?: string | null | undefined
@@ -90,7 +118,7 @@ export const resolveBillingItemName = (
   serviceRows: PreviewServiceRow[] = []
 ): string => {
   const matchedService = serviceRows.find(
-    row => row.serviceId === item.sourceId
+    row => isBilledItemOfRow(item, row)
   );
 
   if (
@@ -227,11 +255,11 @@ export const isEncounterFullyPaid = (
 };
 
 export const isDefaultServicePayable = (
-  serviceId: number,
+  row: DefaultBillingRowIdentity,
   summary: EncounterBillingSummary
 ): boolean => {
   const billed = (summary.items ?? []).find(
-    item => item.sourceId === serviceId
+    item => isBilledItemOfRow(item, row)
   );
 
   if (!billed) {
@@ -245,7 +273,7 @@ export const filterPayableServiceRows = <T extends PreviewServiceRow>(
   rows: T[],
   summary: EncounterBillingSummary
 ): T[] =>
-  rows.filter(row => isDefaultServicePayable(row.serviceId, summary));
+  rows.filter(row => isDefaultServicePayable(row, summary));
 
 export const computePreviewBillingTotals = (
   summary: EncounterBillingSummary,
@@ -402,7 +430,7 @@ export const buildPreviewChargeLines = (
       patientServiceProductId: null,
       chargeLineId: -(index + 1),
       billingItemType: row.serviceType,
-      sourceId: row.serviceId,
+      sourceId: row.itemId,
       itemCode: null,
       itemName: row.serviceName,
       quantity,
@@ -450,6 +478,7 @@ export type PaymentReceiptData = {
     unitPrice: number;
     netAmount: number;
     patientShare: number;
+    taxAmount?: number;
   }>;
   totals: PreviewBillingTotals;
   notes?: string;

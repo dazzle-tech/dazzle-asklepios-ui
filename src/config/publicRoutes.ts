@@ -1,9 +1,12 @@
 export const PUBLIC_AUTH_FREE_PATHS = [
   '/login',
   '/reset-password',
+  '/forgot-password',
   '/create-password',
   '/create-patient-password',
-  '/patient-satisfaction-survey'
+  '/patient-satisfaction-survey',
+  '/submit-patient-complaint',
+  '/verify-report'
 ] as const;
 
 export const PUBLIC_PERMISSION_BYPASS_PATHS = new Set<string>([

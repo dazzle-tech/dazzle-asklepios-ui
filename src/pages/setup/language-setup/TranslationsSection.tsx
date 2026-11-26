@@ -108,13 +108,15 @@ export const TranslationsSection: React.FC<TranslationsSectionProps> = ({
               key: 'verified',
               title: 'Verify',
               dataKey: 'verified',
-              width: 80
+              width: 80,
+              render: (rowData: LanguageTranslation) => <span>{rowData.verified ? 'Yes' : 'No'}</span>
             },
             {
               key: 'translated',
               title: 'Translate',
               dataKey: 'translated',
-              width: 80
+              width: 80,
+              render: (rowData: LanguageTranslation) => <span>{rowData.translated ? 'Yes' : 'No'}</span>
             }
           ]}
           onRowClick={onRowClick}

@@ -4,10 +4,25 @@ import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 import type {
+  ClonePriceListSetupRequest,
+  PriceListDataCheckKey,
+  PriceListDataCheckPage,
+  PriceListDataCheckSummary,
+  PriceListItemDashboard,
+  PriceListItemDashboardCard,
+  PriceListItemDashboardPage,
   PriceListItemType,
   PriceListSetup,
-  PriceListSetupItem
+  PriceListSetupItem,
+  PriceListSetupItemImportResult
 } from '@/types/model-types-new';
+
+export type PriceListItemDashboardQuery = {
+  search?: string;
+  itemType?: PriceListItemType;
+  page?: number;
+  size?: number;
+};
 
 export type Id = number | string;
 
@@ -112,22 +127,58 @@ export const priceListSetupService = createApi({
      * ======================================================
      */
 
+    // Optional filters are ANDed by the backend; empty ones are left out
     getPriceListSetups: builder.query<
       PagedResult<PriceListSetup>,
-      PagedParams
+      PagedParams & {
+        facilityId?: number | string;
+        name?: string;
+        type?: string;
+        payerId?: number | string;
+        versionNumber?: number | string;
+        /** YYYY-MM-DD */
+        effectiveFrom?: string;
+        /** YYYY-MM-DD */
+        effectiveTo?: string;
+        currency?: string;
+        status?: string;
+      }
     >({
       query: ({
         page,
         size,
-        sort = 'id,asc'
-      }) => ({
-        url: '/api/setup/price-list-setups',
-        params: {
-          page,
-          size,
-          sort
-        }
-      }),
+        sort = 'id,asc',
+        facilityId,
+        name,
+        type,
+        payerId,
+        versionNumber,
+        effectiveFrom,
+        effectiveTo,
+        currency,
+        status
+      }) => {
+        const version = String(versionNumber ?? '').trim();
+
+        return {
+          url: '/api/setup/price-list-setups',
+          params: {
+            page,
+            size,
+            sort,
+            facilityId: facilityId || undefined,
+            name: name?.trim() || undefined,
+            type: type || undefined,
+            payerId: payerId || undefined,
+            // A version that is not a whole number would be rejected, so it is left out
+            versionNumber: /^\d+$/.test(version) ? version : undefined,
+            effectiveFrom: effectiveFrom || undefined,
+            effectiveTo: effectiveTo || undefined,
+            currency: currency || undefined,
+            status: status || undefined
+          }
+        };
+      },
 
       transformResponse: (
         response:
@@ -160,6 +211,123 @@ export const priceListSetupService = createApi({
                 id: 'LIST'
               }
             ]
+    }),
+
+    getPriceListSetupsByFacility: builder.query<
+      PagedResult<PriceListSetup>,
+      { facilityId: Id } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByName: builder.query<
+      PagedResult<PriceListSetup>,
+      { name: string } & PagedParams
+    >({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-name/${encodeURIComponent(name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByType: builder.query<
+      PagedResult<PriceListSetup>,
+      { type: string } & PagedParams
+    >({
+      query: ({ type, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-type/${encodeURIComponent(type)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByPayer: builder.query<
+      PagedResult<PriceListSetup>,
+      { payerId: Id } & PagedParams
+    >({
+      query: ({ payerId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-payer/${encodeURIComponent(String(payerId))}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByVersion: builder.query<
+      PagedResult<PriceListSetup>,
+      { versionNumber: Id } & PagedParams
+    >({
+      query: ({ versionNumber, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-version/${encodeURIComponent(String(versionNumber))}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByEffectiveFrom: builder.query<
+      PagedResult<PriceListSetup>,
+      { effectiveFrom: string } & PagedParams
+    >({
+      query: ({ effectiveFrom, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-effective-from/${encodeURIComponent(effectiveFrom)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByEffectiveTo: builder.query<
+      PagedResult<PriceListSetup>,
+      { effectiveTo: string } & PagedParams
+    >({
+      query: ({ effectiveTo, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-effective-to/${encodeURIComponent(effectiveTo)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByCurrency: builder.query<
+      PagedResult<PriceListSetup>,
+      { currency: string } & PagedParams
+    >({
+      query: ({ currency, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-currency/${encodeURIComponent(currency)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
+    }),
+
+    getPriceListSetupsByStatus: builder.query<
+      PagedResult<PriceListSetup>,
+      { status: string } & PagedParams
+    >({
+      query: ({ status, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/price-list-setups/by-status/${encodeURIComponent(status)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: PriceListSetup[], meta) =>
+        mapPagedResponse<PriceListSetup>(response, meta),
+      providesTags: [{ type: 'PriceListSetup' as const, id: 'LIST' }]
     }),
 
     getPriceListSetupsByLoggedInFacility: builder.query<
@@ -310,6 +478,29 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    clonePriceListSetup: builder.mutation<
+      PriceListSetup,
+      {
+        id: Id;
+        data: ClonePriceListSetupRequest;
+      }
+    >({
+      query: ({ id, data }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(id)
+        )}/clone`,
+        method: 'POST',
+        body: data
+      }),
+
+      invalidatesTags: [
+        {
+          type: 'PriceListSetup',
+          id: 'LIST'
+        }
+      ]
+    }),
+
     deletePriceListSetup: builder.mutation<
       void,
       { id: Id }
@@ -442,6 +633,29 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    // Items of one catalog item (item type + source id) across all price lists:
+    // active only, or inactive ones too with includeInactive
+    getPriceListSetupItemsBySource: builder.query<
+      PriceListSetupItem[],
+      {
+        itemType: PriceListItemType;
+        sourceId: Id;
+        includeInactive?: boolean;
+      }
+    >({
+      query: ({ itemType, sourceId, includeInactive }) => ({
+        url: '/api/setup/price-list-setup-items/by-source',
+        params: { itemType, sourceId, ...(includeInactive ? { includeInactive: true } : {}) }
+      }),
+
+      providesTags: (_result, _error, { itemType, sourceId }) => [
+        {
+          type: 'PriceListSetupItem',
+          id: `SOURCE-${itemType}-${sourceId}`
+        }
+      ]
+    }),
+
     addPriceListSetupItem: builder.mutation<
       PriceListSetupItem,
       {
@@ -517,6 +731,72 @@ export const priceListSetupService = createApi({
       ]
     }),
 
+    downloadPriceListSetupItemsTemplate: builder.query<
+      Blob,
+      { priceListSetupId: Id }
+    >({
+      query: ({ priceListSetupId }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(priceListSetupId)
+        )}/items/template`,
+        responseHandler: (response: Response) =>
+          response.blob()
+      })
+    }),
+
+    exportPriceListSetupItems: builder.query<
+      Blob,
+      { priceListSetupId: Id }
+    >({
+      query: ({ priceListSetupId }) => ({
+        url: `/api/setup/price-list-setups/${encodeURIComponent(
+          String(priceListSetupId)
+        )}/items/export`,
+        responseHandler: (response: Response) =>
+          response.blob()
+      })
+    }),
+
+    importPriceListSetupItems: builder.mutation<
+      PriceListSetupItemImportResult,
+      {
+        priceListSetupId: Id;
+        file: File;
+      }
+    >({
+      query: ({
+        priceListSetupId,
+        file
+      }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return {
+          url: `/api/setup/price-list-setups/${encodeURIComponent(
+            String(priceListSetupId)
+          )}/items/import`,
+          method: 'POST',
+          body: formData,
+          formData: true
+        };
+      },
+
+      invalidatesTags: (
+        _result,
+        _error,
+        { priceListSetupId }
+      ) => [
+        {
+          type: 'PriceListSetupItem',
+          id: `LIST-${priceListSetupId}`
+        },
+        {
+          type: 'PriceListSetup',
+          id: priceListSetupId
+        }
+      ]
+    }),
+
     deletePriceListSetupItem: builder.mutation<
       void,
       {
@@ -557,6 +837,115 @@ export const priceListSetupService = createApi({
           id: priceListSetupId
         }
       ]
+    }),
+
+    getPriceListItemDashboard: builder.query<PriceListItemDashboard, void>({
+      query: () => ({
+        url: '/api/setup/price-list-setups/item-dashboard',
+        method: 'GET'
+      }),
+      transformResponse: (res: any): PriceListItemDashboard => {
+        const body =
+          res?.summary || Array.isArray(res?.priceLists) ? res : (res?.data ?? {});
+        return {
+          summary: body.summary ?? null,
+          priceLists: Array.isArray(body.priceLists) ? body.priceLists : []
+        };
+      },
+      providesTags: ['PriceListSetup', 'PriceListSetupItem']
+    }),
+
+    getPriceListItemDashboardItems: builder.query<
+      PriceListItemDashboardPage,
+      PriceListItemDashboardQuery
+    >({
+      query: (params = {}) => ({
+        url: '/api/setup/price-list-setups/item-dashboard/items',
+        method: 'GET',
+        params: {
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+          ...(params.search ? { search: params.search } : {}),
+          ...(params.itemType ? { itemType: params.itemType } : {})
+        }
+      }),
+      transformResponse: (res: any): PriceListItemDashboardPage => {
+        const body = Array.isArray(res?.content) ? res : (res?.data ?? {});
+        return {
+          content: Array.isArray(body.content) ? body.content : [],
+          page: Number(body.page ?? 0),
+          size: Number(body.size ?? 20),
+          totalElements: Number(body.totalElements ?? 0),
+          totalPages: Number(body.totalPages ?? 0)
+        };
+      },
+      providesTags: ['PriceListSetupItem']
+    }),
+
+    getPriceListItemDashboardCard: builder.query<
+      PriceListItemDashboardCard,
+      { itemType: PriceListItemType; sourceId: number }
+    >({
+      query: ({ itemType, sourceId }) => ({
+        url: `/api/setup/price-list-setups/item-dashboard/items/${encodeURIComponent(
+          itemType
+        )}/${encodeURIComponent(String(sourceId))}`,
+        method: 'GET'
+      }),
+      transformResponse: (res: any) => (res?.itemType && res?.sourceId != null ? res : res?.data),
+      providesTags: ['PriceListSetupItem']
+    }),
+
+    // Data checks of the facility price lists: one count per check
+    getPriceListDataCheckSummary: builder.query<
+      PriceListDataCheckSummary,
+      { itemType?: PriceListItemType }
+    >({
+      query: ({ itemType } = {}) => ({
+        url: '/api/setup/price-list-setups/item-dashboard/checks',
+        method: 'GET',
+        params: itemType ? { itemType } : {}
+      }),
+      transformResponse: (res: any): PriceListDataCheckSummary => {
+        const body = Array.isArray(res?.checks) ? res : (res?.data ?? {});
+        return { checks: Array.isArray(body.checks) ? body.checks : [] };
+      },
+      providesTags: ['PriceListSetup', 'PriceListSetupItem']
+    }),
+
+    // Rows of one data check (size up to 10000 for the export)
+    getPriceListDataCheckRows: builder.query<
+      PriceListDataCheckPage,
+      {
+        check: PriceListDataCheckKey;
+        itemType?: PriceListItemType;
+        search?: string;
+        page?: number;
+        size?: number;
+      }
+    >({
+      query: ({ check, itemType, search, page = 0, size = 20 }) => ({
+        url: `/api/setup/price-list-setups/item-dashboard/checks/${encodeURIComponent(check)}`,
+        method: 'GET',
+        params: {
+          page,
+          size,
+          ...(itemType ? { itemType } : {}),
+          ...(search ? { search } : {})
+        }
+      }),
+      transformResponse: (res: any, _meta, arg): PriceListDataCheckPage => {
+        const body = Array.isArray(res?.content) ? res : (res?.data ?? {});
+        return {
+          key: body.key ?? arg.check,
+          content: Array.isArray(body.content) ? body.content : [],
+          page: Number(body.page ?? 0),
+          size: Number(body.size ?? 20),
+          totalElements: Number(body.totalElements ?? 0),
+          totalPages: Number(body.totalPages ?? 0)
+        };
+      },
+      providesTags: ['PriceListSetupItem']
     })
   })
 });
@@ -564,6 +953,15 @@ export const priceListSetupService = createApi({
 export const {
   useGetPriceListSetupsQuery,
   useLazyGetPriceListSetupsQuery,
+  useLazyGetPriceListSetupsByFacilityQuery,
+  useLazyGetPriceListSetupsByNameQuery,
+  useLazyGetPriceListSetupsByTypeQuery,
+  useLazyGetPriceListSetupsByPayerQuery,
+  useLazyGetPriceListSetupsByVersionQuery,
+  useLazyGetPriceListSetupsByEffectiveFromQuery,
+  useLazyGetPriceListSetupsByEffectiveToQuery,
+  useLazyGetPriceListSetupsByCurrencyQuery,
+  useLazyGetPriceListSetupsByStatusQuery,
   useGetPriceListSetupsByLoggedInFacilityQuery,
   useLazyGetPriceListSetupsByLoggedInFacilityQuery,
 
@@ -573,6 +971,7 @@ export const {
   useAddPriceListSetupMutation,
   useUpdatePriceListSetupMutation,
   useActivatePriceListSetupMutation,
+  useClonePriceListSetupMutation,
   useDeletePriceListSetupMutation,
 
   useGetPriceListSetupItemsQuery,
@@ -581,7 +980,21 @@ export const {
   useGetPriceListSetupItemByIdQuery,
   useLazyGetPriceListSetupItemByIdQuery,
 
+  useGetPriceListSetupItemsBySourceQuery,
+  useLazyGetPriceListSetupItemsBySourceQuery,
+
   useAddPriceListSetupItemMutation,
   useUpdatePriceListSetupItemMutation,
-  useDeletePriceListSetupItemMutation
+  useDeletePriceListSetupItemMutation,
+
+  useLazyDownloadPriceListSetupItemsTemplateQuery,
+  useLazyExportPriceListSetupItemsQuery,
+  useImportPriceListSetupItemsMutation,
+
+  useGetPriceListItemDashboardQuery,
+  useGetPriceListItemDashboardItemsQuery,
+  useGetPriceListItemDashboardCardQuery,
+  useGetPriceListDataCheckSummaryQuery,
+  useGetPriceListDataCheckRowsQuery,
+  useLazyGetPriceListDataCheckRowsQuery
 } = priceListSetupService;

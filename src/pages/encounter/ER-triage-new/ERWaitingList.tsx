@@ -58,21 +58,69 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw) {
-    return { patientName: undefined as string | undefined, mrn: undefined as string | undefined };
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
   }
 
   if (searchByField === 'patientMrn') {
-    return { patientName: undefined, mrn: raw };
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
   }
 
-  return { patientName: raw, mrn: undefined };
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
 };
 
 const ERWaitingList = () => {
@@ -179,7 +227,7 @@ const ERWaitingList = () => {
       uniqueNonEmpty(priorities) ??
       uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
 
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+    const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } = derivePatientFilters(patientSearchApplied);
 
     return {
       departmentId,
@@ -188,6 +236,9 @@ const ERWaitingList = () => {
       statusIn: normalizedStatusIn,
       patientName,
       mrn,
+      primaryMobileNumber,
+      documentNumber,
+      dateOfBirth,
       encounterReasons: normalizedEncounterReasons,
       chiefComplaint,
       priorities: normalizedPriorities,

@@ -13,6 +13,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import RandomBloodSugar from '@/pages/encounter/encounter-pre-observations-new/observations/RandomBloodSugar';
 import GeneralAssessmentTriage from './component/GeneralAssessmentTriage';
 import ChiefComplainTriage from './component/ChiefComplainTriage';
 import EyeAssessmentHPI from './component/EyeAssessmentHPI';
@@ -160,6 +161,16 @@ const ViewTriage = () => {
               isTriage
               disabled
               title="Vital Signs"
+            />
+          )}
+        </Row>
+
+        <Row gutter={30}>
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <RandomBloodSugar
+              patientId={patientId}
+              encounterId={encounterId}
+              disabled
             />
           )}
         </Row>

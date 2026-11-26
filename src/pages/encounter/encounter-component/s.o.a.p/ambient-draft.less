@@ -1,0 +1,440 @@
+.ambient-draft-modal .bt.rs-btn-ghost,
+.ambient-draft-modal .bt.rs-btn-ghost svg,
+.ambient-draft-modal .bt.rs-btn-ghost .svg-inline--fa {
+  color: var(--primary-blue) !important;
+  border-color: var(--primary-blue) !important;
+}
+
+.ambient-draft-modal .bt.rs-btn-primary {
+  background-color: var(--primary-blue) !important;
+  border-color: var(--primary-blue) !important;
+}
+
+.ambient-draft-modal {
+  .rs-modal-dialog {
+    width: min(1180px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+  }
+
+  .rs-modal-title {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    width: 100%;
+  }
+
+  .divider-line,
+  .rs-modal-footer {
+    display: none !important;
+  }
+
+  .rs-modal-body {
+    background: #f6f7fb;
+    padding: 0 18px 18px !important;
+  }
+}
+
+.ambient-draft-top {
+  padding-right: 28px;
+}
+
+.ambient-draft-crumb {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2430;
+}
+
+.ambient-draft-patient {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.ambient-draft-soon {
+  display: inline-flex;
+  pointer-events: auto;
+
+  .bt {
+    pointer-events: none;
+  }
+}
+
+.ambient-draft.is-locked .ambient-draft-footer,
+.ambient-draft.is-locked .ambient-draft-orders .bt,
+.ambient-draft.is-locked .ambient-draft-table .bt,
+.ambient-draft.is-locked .ambient-draft-transcript .bt {
+  pointer-events: none;
+}
+
+.ambient-draft-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f3edff;
+  color: #3b2f63;
+  font-size: 13px;
+}
+
+.ambient-draft-banner > div:first-child {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ambient-draft-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.ambient-draft-progress-track {
+  width: 92px;
+  height: 8px;
+  border-radius: 99px;
+  background: #e4d9fb;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: #6d4cff;
+  }
+}
+
+.ambient-draft-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+  align-items: start;
+}
+
+.ambient-draft-main,
+.ambient-draft-transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ambient-draft-card,
+.ambient-draft-transcript {
+  background: #fff;
+  border: 1px solid #e7e9f0;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.ambient-draft-card.is-accepted {
+  border-color: #b7ebc9;
+}
+
+.ambient-draft-card.is-pending {
+  border-color: #ddd4fb;
+}
+
+.ambient-draft-card.is-rejected {
+  opacity: 0.72;
+}
+
+.ambient-draft-card-head,
+.ambient-draft-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ambient-draft-card h3,
+.ambient-draft-transcript h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #1f2430;
+}
+
+.ambient-draft-card-head p,
+.ambient-draft-evidence {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #8b93a1;
+}
+
+.ambient-draft-copy {
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2a3140;
+  white-space: pre-wrap;
+}
+
+.ambient-draft-badge {
+  flex: none;
+  border-radius: 99px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ambient-draft-badge.is-accepted {
+  background: #e8f8ee;
+  color: #157a3a;
+}
+
+.ambient-draft-badge.is-pending {
+  background: #f3edff;
+  color: #6d4cff;
+}
+
+.ambient-draft-badge.is-rejected {
+  background: #fdecec;
+  color: #b42318;
+}
+
+.ambient-draft-observation-form {
+  margin-top: 8px;
+}
+
+.ambient-draft-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ambient-draft-editor {
+  width: 100%;
+  min-height: 96px;
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #d5dae3;
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+}
+
+.ambient-draft-diagnosis-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ambient-diagnosis-edit-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.ambient-diagnosis-edit-modal {
+  .rs-modal-dialog {
+    width: min(640px, calc(100vw - 32px));
+  }
+
+  .rs-modal-content,
+  .rs-modal-body {
+    overflow: visible;
+  }
+
+  .icd10-search__dropdown {
+    z-index: 3000;
+  }
+}
+
+.ambient-draft-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 8px 6px;
+    text-align: left;
+    border-bottom: 1px solid #eef0f4;
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8b93a1;
+  }
+}
+
+.ambient-draft-chip {
+  display: inline-flex;
+  margin: 2px 4px 2px 0;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ambient-draft-chip.is-warn {
+  background: #fff6e8;
+  color: #b45309;
+}
+
+.ambient-draft-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ambient-draft-order {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.ambient-draft-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ambient-order-edit-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: flex-end;
+}
+
+.ambient-order-edit-icd {
+  width: 100%;
+}
+
+.ambient-order-edit-label {
+  margin-bottom: 6px;
+  font-size: 13px;
+
+  .required-asterisk {
+    color: #b42318;
+  }
+}
+
+.ambient-order-edit-modal {
+  .rs-modal-dialog {
+    width: min(760px, calc(100vw - 32px));
+  }
+
+  .rs-modal-body {
+    overflow: auto;
+    height: auto !important;
+    max-height: 70vh;
+  }
+}
+
+.ambient-draft-order-kind {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.ambient-draft-order-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ambient-draft-instructions {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #2a3140;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ambient-draft-transcript {
+  position: sticky;
+  top: 0;
+}
+
+.ambient-draft-transcript-list {
+  max-height: 640px;
+  margin: 12px 0;
+  overflow: auto;
+}
+
+.ambient-draft-segment {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.ambient-draft-segment.is-flagged {
+  background: #f6f1ff;
+}
+
+.ambient-draft-segment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6d4cff;
+}
+
+.ambient-draft-segment.is-patient .ambient-draft-segment-meta {
+  color: #0f766e;
+}
+
+.ambient-draft-segment p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #2a3140;
+}
+
+.ambient-draft-segment-note {
+  color: #7c3aed !important;
+  font-size: 12px !important;
+}
+
+.ambient-draft-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-top: 14px;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  > div {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 980px) {
+  .ambient-draft-layout,
+  .ambient-draft-order,
+  .ambient-draft-banner,
+  .ambient-draft-footer,
+  .ambient-draft-card-foot {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

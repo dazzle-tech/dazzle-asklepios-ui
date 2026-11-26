@@ -1,11 +1,11 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditAllergens from './AddEditAllergens';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -18,11 +18,8 @@ import {
   useGetAllergensQuery,
   useAddAllergenMutation,
   useUpdateAllergenMutation,
-  useToggleAllergenIsActiveMutation,
-  useLazyGetAllergensByTypeQuery,
-  useLazyGetAllergensByNameQuery
+  useToggleAllergenIsActiveMutation
 } from '@/services/setup/allergensService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Allergen } from '@/types/model-types-new';
 import { newAllergen } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -45,29 +42,20 @@ const Allergens: React.FC = () => {
   >('delete');
    const [showTranslationModal, setShowTranslationModal] = useState<boolean>(false);
     
-  // Filters state
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<Allergen[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { name: '', type: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  // Pagination (unfiltered list via Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // Pagination for filtered mode
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
+    sort: 'id,asc'
   });
 
   // API hooks
@@ -78,86 +66,20 @@ const Allergens: React.FC = () => {
   } = useGetAllergensQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort
+    sort: paginationParams.sort,
+    isActive: activeFilter,
+    ...appliedFilters
   });
 
   const [addAllergen] = useAddAllergenMutation();
   const [updateAllergen] = useUpdateAllergenMutation();
   const [toggleAllergenIsActive] = useToggleAllergenIsActiveMutation();
 
-  const [fetchByType] = useLazyGetAllergensByTypeQuery();
-  const [fetchByName] = useLazyGetAllergensByNameQuery();
-
   // Enum options for type filter
   const allergenTypeOptions = useEnumOptions('AllergenType');
 
-  // Derived data
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : allergensPage?.totalCount ?? 0),
-    [isFiltered, filteredTotal, allergensPage?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : allergensPage?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : allergensPage?.data ?? []),
-    [isFiltered, filteredData, allergensPage?.data]
-  );
-
-  // Filter fields
-  const filterFields = [
-    { label: 'Allergens Type', value: 'type' },
-    { label: 'Allergens Name', value: 'name' }
-  ];
-
-  // Helpers
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0 }));
-    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
-    refetch();
-  };
-
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value && value !== 0) return undefined;
-
-    if (fieldName === 'type') {
-      return await fetchByType({ type: String(value), page, size, sort }).unwrap();
-    } else if (fieldName === 'name') {
-      return await fetchByName({ name: String(value), page, size, sort }).unwrap();
-    }
-    return undefined;
-  };
-
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value) {
-      resetToUnfiltered();
-      return;
-    }
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch {
-      resetToUnfiltered();
-    }
-  };
+  const totalCount = allergensPage?.totalCount ?? 0;
+  const tableData = useMemo(() => allergensPage?.data ?? [], [allergensPage?.data]);
 
   // CRUD handlers
   const handleNew = () => {
@@ -181,53 +103,16 @@ const Allergens: React.FC = () => {
         const updated = await updateAllergen({ id: allergens.id!, ...payload }).unwrap();
         dispatch(notify({ msg: 'Allergen updated successfully', sev: 'success' }));
         setShowTranslationModal(true);
-        if (isFiltered) {
-          // Update the row in filtered list
-          setFilteredData(prev => prev.map(row => (row.id === updated.id ? updated : row)));
-        } else {
-          // Unfiltered: refetch
-          setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-          refetch();
-        }
+        setAllergens(prev => (prev?.id === updated?.id ? { ...prev, ...updated } : prev));
+        refetch();
       } else {
         // Create
         const created = await addAllergen(payload).unwrap();
         dispatch(notify({ msg: 'Allergen added successfully', sev: 'success' }));
         setShowTranslationModal(true);
-        if (isFiltered) {
-          // نتحقق إذا الـ allergen الجديد يطابق شروط الفلتر
-          const filterField = recordOfFilter.filter;
-          const filterValue = recordOfFilter.value;
-          let matchesFilter = false;
-
-          if (filterField === 'type') {
-            matchesFilter = created.type === String(filterValue);
-          } else if (filterField === 'name') {
-            matchesFilter = (created.name ?? '')
-              .toLowerCase()
-              .includes(String(filterValue).toLowerCase());
-          }
-
-          if (matchesFilter) {
-            // نضيف الـ allergen الجديد في أول القائمة المفلترة
-            setFilteredData(prev => [created, ...prev]);
-            setFilteredTotal(prev => prev + 1);
-            // نرجع لأول صفحة عشان نشوف الـ allergen الجديد
-            setFilterPagination(prev => ({ ...prev, page: 0 }));
-          } else {
-            // إذا ما بطابق الفلتر، نعلم المستخدم
-            dispatch(
-              notify({
-                msg: 'Allergen added but does not match current filter',
-                sev: 'info'
-              })
-            );
-          }
-        } else {
-          // Unfiltered: back to first page and refetch
-          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-          refetch();
-        }
+        setAllergens(created);
+        // Reload the list with the current filters
+        refetch();
       }
     } catch (err: any) {
       const data = err?.data ?? {};
@@ -309,13 +194,7 @@ const Allergens: React.FC = () => {
         prev && prev.id === toggledId ? { ...prev, isActive: newIsActive } : prev
       );
 
-      if (isFiltered) {
-        setFilteredData(prev =>
-          prev.map(row => (row.id === toggledId ? { ...row, isActive: newIsActive } : row))
-        );
-      } else {
-        refetch();
-      }
+      refetch();
 
       dispatch(
         notify({
@@ -353,59 +232,34 @@ const Allergens: React.FC = () => {
 
   // Pagination handlers
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      // Filtered mode: re-run same filter with new page
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-
-    // Unfiltered mode: use Link headers
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-        timestamp: Date.now()
-      }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
 
   // Row selection style
   const isSelected = (rowData: any) =>
@@ -413,14 +267,42 @@ const Allergens: React.FC = () => {
 
   // Columns
   const tableColumns = [
-    { key: 'name', title: <Translate>Allergens Name</Translate>, flexGrow: 4 },
+    {
+      key: 'name',
+      title: <Translate>Allergens Name</Translate>,
+      width: 220,
+      ...headerSearch('name', 'Search name')
+    },
     {
       key: 'type',
       title: <Translate>Allergens Type</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(allergenTypeOptions ?? [])],
       render: (rowData: any) => formatEnumString(rowData.type)
     },
     { key: 'description', title: <Translate>Description</Translate>, flexGrow: 4 },
+    {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: (rowData: any) => (
+        <MyBadgeStatus
+          contant={rowData?.isActive ? 'Active' : 'Inactive'}
+          color={rowData?.isActive ? '#415be7' : '#b1acacff'}
+        />
+      )
+    },
     {
       key: 'icons',
       title: <Translate></Translate>,
@@ -467,77 +349,6 @@ const Allergens: React.FC = () => {
     }
   ];
 
-  // Filters UI
-  const filters = () => {
-    const selected = recordOfFilter.filter;
-
-    const dynamicInput =
-      selected === 'type' ? (
-        <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={allergenTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          searchable={false}
-        />
-      ) : (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-          width={220}
-        />
-      );
-
-    return (
-      <Form fluid className="form-of-filters-set-up">
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(updatedRecord: any) => {
-            setRecordOfFilter({ filter: updatedRecord.filter, value: '' });
-          }}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="180px"
-        />
-        {dynamicInput}
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
-              resetToUnfiltered();
-            } else {
-              handleFilterChange(
-                recordOfFilter.filter,
-                recordOfFilter.value,
-                0,
-                filterPagination.size,
-                filterPagination.sort
-              );
-            }
-          }}
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
-
   // Effects
   useEffect(() => {
     dispatch(setPageCode('Allergens'));
@@ -556,13 +367,6 @@ const Allergens: React.FC = () => {
     }
   }, []);
 
-  // If user clears value manually, revert to unfiltered list
-  useEffect(() => {
-    if (!recordOfFilter.value && isFiltered) {
-      resetToUnfiltered();
-    }
-  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
-
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -577,10 +381,9 @@ const Allergens: React.FC = () => {
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        filters={filters()}
         onRowClick={(rowData: any) => setAllergens(rowData)}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}

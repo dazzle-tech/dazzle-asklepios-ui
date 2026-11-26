@@ -8,11 +8,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Badge, Form, Modal, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import CancellationModal from '@/components/CancellationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import PatientSearch from '@/components/PatientSearch';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useAppSelector } from '@/hooks';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -48,6 +48,19 @@ import 'react-tabs/style/react-tabs.css';
 import PatientWritBandPrintLabelButton from '../../urgent-care/triage-urgent-care/PatientWritBandPrintLabelButton';
 import '../styles.less';
 import SendToModal from './component/SendToModal';
+
+const CANCEL_ENCOUNTER_ERRORS: Record<string, string> = {
+  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW, WAITING TRIAGE, or PENDING PAYMENT.',
+  'cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations.'
+};
+
+const getCancelEncounterErrorMessage = (error: any): string => {
+  const message = error?.data?.message;
+  if (typeof message === 'string' && message.trim()) {
+    return CANCEL_ENCOUNTER_ERRORS[message] ?? message;
+  }
+  return 'An error occurred while canceling the encounter';
+};
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -98,6 +111,80 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
   );
 };
 
+const EMPTY_PATIENT_SEARCH = { searchByField: 'fullName', patientName: '' };
+
+const derivePatientFilters = (appliedSearch: any) => {
+  const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
+  const rawValue = appliedSearch?.patientName ?? appliedSearch?.searchText ?? '';
+  const raw =
+    rawValue instanceof Date
+      ? (() => {
+          const y = rawValue.getFullYear();
+          const m = String(rawValue.getMonth() + 1).padStart(2, '0');
+          const d = String(rawValue.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        })()
+      : String(rawValue ?? '').trim();
+
+  if (!raw) {
+    return {
+      patientName: undefined as string | undefined,
+      mrn: undefined as string | undefined,
+      primaryMobileNumber: undefined as string | undefined,
+      documentNumber: undefined as string | undefined,
+      dateOfBirth: undefined as string | undefined
+    };
+  }
+
+  if (searchByField === 'patientMrn') {
+    return {
+      patientName: undefined,
+      mrn: raw,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'phoneNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: raw,
+      documentNumber: undefined,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'documentNumber') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: raw,
+      dateOfBirth: undefined
+    };
+  }
+
+  if (searchByField === 'dob') {
+    return {
+      patientName: undefined,
+      mrn: undefined,
+      primaryMobileNumber: undefined,
+      documentNumber: undefined,
+      dateOfBirth: raw
+    };
+  }
+
+  return {
+    patientName: raw,
+    mrn: undefined,
+    primaryMobileNumber: undefined,
+    documentNumber: undefined,
+    dateOfBirth: undefined
+  };
+};
+
 const ERTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'COMPLETED';
@@ -134,6 +221,28 @@ const ERTriage = () => {
     const minutes = totalMinutes % 60;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
+  };
+
+  const ENDED_ENCOUNTER_STATUSES = new Set([
+    'COMPLETED',
+    'DISCHARGED',
+    'CANCELLED',
+    'CANCELED',
+    'CLOSED'
+  ]);
+
+  const formatLengthOfStay = (row: any, nowMs: number): string => {
+    const start = toDateSafe(row?.createdAt);
+    if (!start) return '';
+
+    const statusUpper = String(row?.status ?? row?.treatmentStatus ?? '').toUpperCase();
+    const isEnded = ENDED_ENCOUNTER_STATUSES.has(statusUpper);
+    const end = isEnded
+      ? toDateSafe(row?.dischargeAt ?? row?.completedAt)
+      : new Date(nowMs);
+
+    if (!end) return '';
+    return formatDuration(end.getTime() - start.getTime());
   };
 
   const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
@@ -219,6 +328,7 @@ const ERTriage = () => {
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
   const [open, setOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>(() => ({
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
@@ -250,13 +360,19 @@ const ERTriage = () => {
     toDate: new Date()
   });
 
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [patientSearchResetToken, setPatientSearchResetToken] = useState(0);
+  const [patientSearchDraft, setPatientSearchDraft] = useState<any>({ ...EMPTY_PATIENT_SEARCH });
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
   const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
   const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
+
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentRow, setPaymentRow] = useState<any>(null);
@@ -266,7 +382,7 @@ const ERTriage = () => {
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
-  const selectedPatientRef = useRef<any>(selectedPatient);
+  const patientSearchRef = useRef<any>(patientSearchDraft);
 
   const setDateFilterSafe = (next: any) => {
     dateFilterRef.current = next;
@@ -276,9 +392,10 @@ const ERTriage = () => {
     encounterStatusRef.current = next;
     setEncounterStatus(next);
   };
-  const setSelectedPatientSafe = (next: any) => {
-    selectedPatientRef.current = next;
-    setSelectedPatient(next);
+  const setPatientSearchSafe = (next: any) => {
+    const value = typeof next === 'function' ? next(patientSearchRef.current) : next;
+    patientSearchRef.current = value;
+    setPatientSearchDraft(value);
   };
 
   const divContent = 'ER Triage';
@@ -305,19 +422,13 @@ const ERTriage = () => {
 
     const df = dateFilterRef.current;
     const es = encounterStatusRef.current;
-    const sp = selectedPatientRef.current;
+    const { patientName, mrn, primaryMobileNumber, documentNumber, dateOfBirth } =
+      derivePatientFilters(patientSearchRef.current);
 
     const fromDateObj = toDateSafe(df?.fromDate);
     const toDateObj = toDateSafe(df?.toDate);
     const fromDate = fromDateObj ? formatDate(fromDateObj) : undefined;
     const toDate = toDateObj ? formatDate(toDateObj) : undefined;
-
-    const patientName =
-      sp?.firstName || sp?.lastName
-        ? `${sp.firstName ?? ''} ${sp.lastName ?? ''}`.trim()
-        : undefined;
-
-    const mrn = sp?.medicalRecordNumber || undefined;
 
     const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
       String(v ?? '').toUpperCase()
@@ -331,6 +442,9 @@ const ERTriage = () => {
       statuses: statusesCsv,
       patientName,
       mrn,
+      primaryMobileNumber,
+      documentNumber,
+      dateOfBirth,
       practitionerId: undefined,
       page,
       size: pageSize,
@@ -552,17 +666,18 @@ const ERTriage = () => {
   };
 
   const handleCancelEncounter = async () => {
+    const id = encounter?.id ?? encounter?.key;
+    const reason = cancelReason.trim();
+    if (!id || !reason) return;
     try {
-      const id = encounter?.id ?? encounter?.key;
-      if (id) {
-        await cancelEncounter({ id }).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
+      await cancelEncounter({ id, cancellationReason: reason }).unwrap();
+      refetchEncounter();
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      setOpen(false);
+      setCancelReason('');
     } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+      console.error('Encounter cancel error:', error);
+      dispatch(notify({ msg: getCancelEncounterErrorMessage(error), sev: 'error' }));
     }
   };
 
@@ -866,8 +981,7 @@ const ERTriage = () => {
 
     setDateFilterSafe(nextDateFilter);
     setEncounterStatusSafe(nextEncounterStatus);
-    setSelectedPatientSafe(null);
-    setPatientSearchResetToken(v => v + 1);
+    setPatientSearchSafe({ ...EMPTY_PATIENT_SEARCH });
 
     triggerSearch();
   };
@@ -1080,6 +1194,12 @@ const ERTriage = () => {
           }
         />
       )
+    },
+    {
+      key: 'lengthOfStay',
+      title: <Translate>Length of Stay</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatLengthOfStay(rowData, nowMs)
     },
     {
       key: 'actions',
@@ -1342,10 +1462,10 @@ const ERTriage = () => {
               record={dateFilter}
               setRecord={setDateFilterSafe}
             />
-            <PatientSearch
-              value={selectedPatient}
-              onChange={setSelectedPatientSafe}
-              resetToken={patientSearchResetToken}
+            <SearchPatientCriteria
+              record={patientSearchDraft}
+              setRecord={setPatientSearchSafe}
+              liveSearchMinLength={0}
             />
 
             <MyInput
@@ -1402,8 +1522,18 @@ const ERTriage = () => {
             setExpand={setPatientSidebarOpen}
             windowHeight={windowHeight}
             setLocalPatient={(p: any) => {
-              setSelectedPatientSafe(p);
+              const mrn = p?.medicalRecordNumber ?? p?.patientMrn ?? '';
+              const fullName = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+              setPatientSearchSafe(
+                mrn
+                  ? { searchByField: 'patientMrn', patientName: String(mrn) }
+                  : { searchByField: 'fullName', patientName: fullName }
+              );
               setPatientSidebarOpen(false);
+              triggerSearch();
             }}
             refetchData={refetchPatientSidebar}
             setRefetchData={setRefetchPatientSidebar}
@@ -1437,14 +1567,19 @@ const ERTriage = () => {
           triage={sendToEmergencyTriageNew}
           refetch={refetchEncounter}
         />
-        <DeletionConfirmationModal
+        <CancellationModal
+          title="Cancel Encounter"
+          fieldLabel="Cancellation Reason"
           open={open}
-          setOpen={setOpen}
-          actionButtonFunction={handleCancelEncounter}
-          actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter ?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
+          setOpen={(value: boolean) => {
+            setOpen(value);
+            if (!value) setCancelReason('');
+          }}
+          object={{ cancellationReason: cancelReason }}
+          setObject={(object: any) => setCancelReason(object?.cancellationReason || '')}
+          handleCancle={handleCancelEncounter}
+          fieldName="cancellationReason"
+          required
         />
         <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />

@@ -19,6 +19,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 import './styles.less';
 import NumericSlider from '@/components/NumericSlider';
+import { getPainTrackColor } from '@/components/NumericSlider/getPainTrackColor';
 import FacesSlider from '@/components/FacesSlider';
 import FlaccComponent from '@/components/PatientFlaccComponent';
 import { useGetLatestActiveFLACCPainScaleByEncounterQuery } from '@/services/encounters/flaccPainSacoreService';
@@ -30,6 +31,8 @@ type PainAssessmentProps = {
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
+  prefill?: Partial<PainAssessmentModel> | null;
+  onSaved?: (saved?: PainAssessmentModel) => void;
 };
 
 const PainAssessment: React.FC<PainAssessmentProps> = ({
@@ -38,7 +41,9 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   encounter,
   disabled = false,
   width = '100%',
-  title = 'Pain Assessment'
+  title = 'Pain Assessment',
+  prefill = null,
+  onSaved
 }) => {
   const dispatch = useAppDispatch();
   const skipFlaccSyncRef = useRef(false);
@@ -104,8 +109,10 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   // Local state
   const [record, setRecord] = useState<PainAssessmentModel>({
     ...newPainAssessment,
+    ...(prefill ?? {}),
     patientId,
-    encounterId
+    encounterId,
+    painLevel: (prefill as any)?.painLevel ?? null
   });
 
   const painLevelValue = useMemo(() => {
@@ -117,13 +124,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     const m = String(painLevel).match(/LEVEL_(\d+)/);
     return m ? Number(m[1]) : minLevel;
   }, [(record as any)?.painLevel, painLevelSteps, minLevel]);
-
-  const getTrackColor = (value: number): string => {
-    if (value === 0) return 'transparent';
-    if (value >= 1 && value <= 3) return '#28a745';
-    if (value >= 4 && value <= 7) return 'orange';
-    return 'red';
-  };
 
   const getSeverityFromPainLevel = (painLevel: string | null | undefined): string | null => {
     if (!painLevel) return null;
@@ -187,7 +187,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   ]);
 
   useEffect(() => {
-    if (!latestByEncounter) return;
+    if (prefill || !latestByEncounter) return;
 
     if ((latestByEncounter as any)?.painAssessmentType === 'FLACC') {
       skipFlaccSyncRef.current = true;
@@ -204,7 +204,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           ? (latestByEncounter as any).isActive
           : true
     }));
-  }, [latestByEncounter, patientId, encounterId]);
+  }, [latestByEncounter, patientId, encounterId, prefill]);
 
 
   const createPayload = useMemo(() => {
@@ -326,6 +326,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       }));
 
       dispatch(notify({ msg: 'Pain assessment saved successfully', sev: 'success' }));
+      onSaved?.(created);
     } catch (err: any) {
       showApiError(err);
     }
@@ -421,7 +422,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   max={maxLevel}
                   required
                   disabled={disabled}
-                  getTrackColor={getTrackColor}
+                  getTrackColor={getPainTrackColor}
                   onChange={value => {
                     const enumItem = painLevelSteps.find(x => x.n === value);
                     const enumValue = enumItem?.value ?? `LEVEL_${value}`;
@@ -441,7 +442,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   title={`Pain Level (${painLevelValue}-${maxLevel})`}
                   value={painLevelValue}
                   disabled={disabled}
-                  getTrackColor={getTrackColor}
+                  getTrackColor={getPainTrackColor}
                   onChange={value => {
                     const enumItem = painLevelSteps.find(x => x.n === value);
                     const enumValue = enumItem?.value ?? `LEVEL_${value}`;

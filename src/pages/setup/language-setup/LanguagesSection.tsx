@@ -8,6 +8,7 @@ import { faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Language } from '@/types/model-types-new';
 
 interface LanguagesSectionProps {
+  filters: React.ReactNode;
   languages: Language[];
   selectedLanguage: Language;
   loading: boolean;
@@ -17,6 +18,7 @@ interface LanguagesSectionProps {
 }
 
 export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
+  filters,
   languages,
   selectedLanguage,
   loading,
@@ -55,6 +57,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
       }
       content={<div dir={dir}>
         <MyTable
+          filters={filters}
           data={languages ?? []}
           columns={[
             {

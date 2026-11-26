@@ -13,6 +13,10 @@ type LinkMap = {
 };
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
+export type RoomFilterCriteria = 'facility' | 'floor' | 'type' | 'gender' | 'status' | 'parallelCapacity';
+/** Gender filter value for rooms that are not gender specific */
+export const ROOM_NOT_GENDER_SPECIFIC = 'NONE';
+
 const mapPaged = (response: Room[], meta: any): PagedResult<Room> => {
   const headers = meta?.response?.headers;
   return {
@@ -27,10 +31,50 @@ export const roomService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Room'],
   endpoints: builder => ({
-    getRooms: builder.query<PagedResult<Room>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out.
+    // gender: a Gender value, or ROOM_NOT_GENDER_SPECIFIC for rooms that are not gender specific.
+    getRooms: builder.query<
+      PagedResult<Room>,
+      PagedParams & {
+        isActive?: boolean;
+        name?: string;
+        facilityId?: number | string;
+        floor?: string;
+        departmentId?: number | string;
+        type?: string;
+        gender?: string;
+        parallelCapacityValue?: number | string;
+      }
+    >({
+      query: ({
+        page,
+        size,
+        sort = 'id,asc',
+        timestamp,
+        isActive,
+        name,
+        facilityId,
+        floor,
+        departmentId,
+        type,
+        gender,
+        parallelCapacityValue
+      }) => ({
         url: '/api/setup',
-        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+        params: {
+          page,
+          size,
+          sort,
+          ...(timestamp ? { timestamp } : {}),
+          isActive,
+          name: name?.trim() || undefined,
+          facilityId: facilityId || undefined,
+          floor: floor?.trim() || undefined,
+          departmentId: departmentId || undefined,
+          type: type || undefined,
+          gender: gender || undefined,
+          parallelCapacityValue: String(parallelCapacityValue ?? '').trim() || undefined
+        }
       }),
       transformResponse: mapPaged,
       providesTags: ['Room']
@@ -41,6 +85,40 @@ export const roomService = createApi({
         url: `/api/setup/search/by-name/${encodeURIComponent(name)}`,
         params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
       }),
+      transformResponse: mapPaged,
+      providesTags: ['Room']
+    }),
+
+    // One query for the column filters: the URL is picked from the filter criteria
+    // (facility, floor, type, gender, status, parallel capacity)
+    getRoomsByFilter: builder.query<
+      PagedResult<Room>,
+      { criteria: RoomFilterCriteria; value: string } & PagedParams
+    >({
+      query: ({ criteria, value, page, size, sort = 'id,asc', timestamp }) => {
+        const params: Record<string, any> = { page, size, sort, ...(timestamp ? { timestamp } : {}) };
+        const encoded = encodeURIComponent(value);
+
+        switch (criteria) {
+          case 'facility':
+            return { url: `/api/setup/room/search/by-facility/${encoded}`, params };
+          case 'floor':
+            return { url: `/api/setup/room/search/by-floor/${encoded}`, params };
+          case 'type':
+            return { url: `/api/setup/room/search/by-type/${encoded}`, params };
+          case 'gender':
+            // NONE = not gender specific (no gender param)
+            return {
+              url: '/api/setup/room/search/by-gender',
+              params: value === ROOM_NOT_GENDER_SPECIFIC ? params : { ...params, gender: value }
+            };
+          case 'status':
+            return { url: `/api/setup/room/search/by-status/${encoded}`, params };
+          case 'parallelCapacity':
+          default:
+            return { url: `/api/setup/room/search/by-parallel-capacity/${encoded}`, params };
+        }
+      },
       transformResponse: mapPaged,
       providesTags: ['Room']
     }),
@@ -134,6 +212,7 @@ export const {
   useLazyGetRoomsByNameQuery,
   useGetRoomsByDepartmentIdQuery,
   useLazyGetRoomsByDepartmentIdQuery,
+  useGetRoomsByFilterQuery,
   useGetRoomByIdQuery,
   useLazyGetRoomByIdQuery,
   useAddRoomMutation,

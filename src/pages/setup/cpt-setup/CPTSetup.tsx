@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
@@ -6,56 +6,28 @@ import MyModal from '@/components/MyModal/MyModal';
 import {
   useGetAllCptQuery,
   useImportCptMutation,
-  useLazyGetCptByMainCategoryQuery,
-  useLazyGetCptByServiceCategoryQuery,
-  useLazyGetCptByCodeQuery,
-  useLazyGetCptByDescriptionQuery,
   type ImportResult,
   type Conflict
 } from '@/services/setup/cptCodeService';
 import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 
 const CPTSetup: React.FC = () => {
   const dispatch = useDispatch();
 
-  // Unfiltered pagination (Link header)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
+    sort: 'id,asc'
   });
 
-  // Filtered pagination (client-driven)
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
-  });
-
-  // A nonce to bust cache for filtered queries
-  const [filterTs, setFilterTs] = useState<number>(Date.now());
-
-  // Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
-
-  // Lazy queries
-  const [fetchByMainCategory] = useLazyGetCptByMainCategoryQuery();
-  const [fetchByServiceCategory] = useLazyGetCptByServiceCategoryQuery();
-  const [fetchByCode] = useLazyGetCptByCodeQuery();
-  const [fetchByDescription] = useLazyGetCptByDescriptionQuery();
+  // Header filters: draft values typed in the inputs, applied on Enter.
+  // Everything is sent to one endpoint and combined with AND (CPT codes have no active flag).
+  const emptyHeaderFilters = { code: '', serviceCategory: '', mainCategory: '', description: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   // Import modal (conflicts)
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
@@ -65,18 +37,13 @@ const CPTSetup: React.FC = () => {
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
 
   // Main list
-  const { data: cptListResponse, isFetching, refetch } = useGetAllCptQuery(paginationParams);
+  const { data: cptListResponse, isFetching, refetch } = useGetAllCptQuery({
+    ...paginationParams,
+    ...appliedFilters
+  });
 
-  // Derived values
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : cptListResponse?.totalCount ?? 0),
-    [isFiltered, filteredTotal, cptListResponse?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : cptListResponse?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : cptListResponse?.data ?? []),
-    [isFiltered, filteredData, cptListResponse?.data]
-  );
+  const totalCount = cptListResponse?.totalCount ?? 0;
+  const tableData = useMemo(() => cptListResponse?.data ?? [], [cptListResponse?.data]);
 
   // Header
   useEffect(() => {
@@ -88,141 +55,37 @@ const CPTSetup: React.FC = () => {
     };
   }, [dispatch]);
 
-  // Reset to unfiltered
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0, sort: prev.sort || 'id,desc' }));
-    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
-    refetch();
-  };
-
-  // Sort helper to show newest first
-  const nextFilteredSort = (current?: string) => {
-    if (!current) return 'id,desc';
-    return current.toLowerCase().startsWith('id,asc') ? 'id,desc' : current;
-  };
-
-  // Check row matches current filter
-  const matchesCurrentFilter = useCallback(
-    (row: any) => {
-      const f = recordOfFilter.filter;
-      const v = recordOfFilter.value;
-      if (!f || v === undefined || v === null || v === '') return true;
-      if (f === 'mainCategory')
-        return String(row?.mainCategory ?? '')
-          .toLowerCase()
-          .includes(String(v).toLowerCase());
-      if (f === 'serviceCategory')
-        return String(row?.serviceCategory ?? '')
-          .toLowerCase()
-          .includes(String(v).toLowerCase());
-      if (f === 'code')
-        return String(row?.code ?? '')
-          .toLowerCase()
-          .includes(String(v).toLowerCase());
-      if (f === 'description')
-        return String(row?.description ?? '')
-          .toLowerCase()
-          .includes(String(v).toLowerCase());
-      return true;
-    },
-    [recordOfFilter]
-  );
-
-  // Optimistic prepend while filtered
-  const applyImmediatePrepend = useCallback(
-    (items: any[]) => {
-      if (!isFiltered) return false;
-      const visible = (items || []).filter(matchesCurrentFilter);
-      if (visible.length === 0) return false;
-      const sort = nextFilteredSort(filterPagination.sort);
-      setFilterPagination(p => ({ ...p, page: 0, sort }));
-      setFilteredData(prev => [...visible, ...prev]);
-      setFilteredTotal(prev => prev + visible.length);
-      return true;
-    },
-    [isFiltered, matchesCurrentFilter, filterPagination.sort]
-  );
-
-  // Global event to refresh after external add
+  // Reload the list with the current filters (after imports, also from other screens)
   useEffect(() => {
-    const onAdded = async (e: any) => {
-      const raw = e?.detail;
-      const items = Array.isArray(raw?.items) ? raw.items : raw ? [raw.item ?? raw] : [];
-      const clean = items.filter(Boolean);
-      applyImmediatePrepend(clean);
-      if (isFiltered) {
-        const sort = nextFilteredSort(filterPagination.sort);
-        setFilterTs(Date.now());
-        await handleFilterChange(
-          recordOfFilter.filter,
-          recordOfFilter.value,
-          0,
-          filterPagination.size,
-          sort,
-          true
-        );
-      } else {
-        setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-        refetch();
-      }
-    };
-    window.addEventListener('cpt:added', onAdded as any);
-    return () => window.removeEventListener('cpt:added', onAdded as any);
-  }, [
-    isFiltered,
-    filterPagination.size,
-    filterPagination.sort,
-    recordOfFilter.filter,
-    recordOfFilter.value,
-    applyImmediatePrepend,
-    refetch
-  ]);
+    const onAdded = () => refetch();
+    window.addEventListener('cpt:added', onAdded);
+    return () => window.removeEventListener('cpt:added', onAdded);
+  }, [refetch]);
 
-  // Page change
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  // Rows per page
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      setFilterTs(Date.now());
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   const [importCpt, { isLoading: isImporting }] = useImportCptMutation();
 
@@ -252,25 +115,7 @@ const CPTSetup: React.FC = () => {
         );
 
         const newItems: any[] = (res as any)?.items || (res as any)?.insertedItems || [];
-        if (newItems.length) applyImmediatePrepend(newItems);
         window.dispatchEvent(new CustomEvent('cpt:added', { detail: { items: newItems } }));
-
-        if (isFiltered) {
-          const sort = nextFilteredSort(filterPagination.sort);
-          setFilterPagination(prev => ({ ...prev, page: 0, sort }));
-          setFilterTs(Date.now());
-          await handleFilterChange(
-            recordOfFilter.filter,
-            recordOfFilter.value,
-            0,
-            filterPagination.size,
-            sort,
-            true
-          );
-        } else {
-          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-          refetch();
-        }
       }
     } catch (error: any) {
       dispatch(
@@ -304,25 +149,7 @@ const CPTSetup: React.FC = () => {
 
       const newItems: any[] =
         (res as any)?.items || (res as any)?.insertedItems || (res as any)?.updatedItems || [];
-      if (newItems.length) applyImmediatePrepend(newItems);
       window.dispatchEvent(new CustomEvent('cpt:added', { detail: { items: newItems } }));
-
-      if (isFiltered) {
-        const sort = nextFilteredSort(filterPagination.sort);
-        setFilterPagination(prev => ({ ...prev, page: 0, sort }));
-        setFilterTs(Date.now());
-        await handleFilterChange(
-          recordOfFilter.filter,
-          recordOfFilter.value,
-          0,
-          filterPagination.size,
-          sort,
-          true
-        );
-      } else {
-        setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-        refetch();
-      }
     } catch (error: any) {
       dispatch(
         notify({
@@ -333,151 +160,15 @@ const CPTSetup: React.FC = () => {
     }
   };
 
-  // Filter fields
-  const filterFields = [
-    { label: 'Main Category', value: 'mainCategory' },
-    { label: 'Service Category', value: 'serviceCategory' },
-    { label: 'Code', value: 'code' },
-    { label: 'Description', value: 'description' }
-  ];
-
-  // Centralized filtered fetch (adds ts to bust cache)
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort || paginationParams.sort,
-    ts?: number
-  ) => {
-    if (!value) return undefined;
-    const common = { page, size, sort, ts: ts ?? filterTs };
-    if (fieldName === 'mainCategory') {
-      return await fetchByMainCategory({
-        mainCategory: String(value),
-        ...common
-      }).unwrap();
-    }
-    if (fieldName === 'serviceCategory') {
-      return await fetchByServiceCategory({
-        serviceCategory: String(value),
-        ...common
-      }).unwrap();
-    } else if (fieldName === 'code') {
-      return await fetchByCode({
-        code: value,
-        ...common
-      }).unwrap();
-    } else if (fieldName === 'description') {
-      return await fetchByDescription({
-        description: value,
-        ...common
-      }).unwrap();
-    }
-    return undefined;
-  };
-
-  // Apply or clear filter
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort,
-    silent = false
-  ) => {
-    if (!value) {
-      resetToUnfiltered();
-      if (!silent) refetch();
-      return;
-    }
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort, Date.now());
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination({ page, size, sort });
-    } catch {
-      resetToUnfiltered();
-      if (!silent) refetch();
-    }
-  };
-
-  // Auto reset when filter value cleared
-  useEffect(() => {
-    if (!recordOfFilter.value && isFiltered) {
-      resetToUnfiltered();
-    }
-  }, [recordOfFilter.value, isFiltered]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Filters UI
-  const filters = () => (
-    <Form fluid className="form-of-filters-set-up">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-
-      {recordOfFilter.filter ? (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder={
-            recordOfFilter.filter === 'code'
-              ? 'Enter Code'
-              : recordOfFilter.filter === 'description'
-              ? 'Enter description'
-              : recordOfFilter.filter === 'mainCategory'
-              ? 'Enter main category'
-              : recordOfFilter.filter === 'serviceCategory'
-              ? 'Enter service category'
-              : 'Enter value'
-          }
-          width={300}
-        />
-      ) : null}
-
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => {
-          if (!recordOfFilter.value) {
-            resetToUnfiltered();
-          } else {
-            setFilterTs(Date.now());
-            handleFilterChange(
-              recordOfFilter.filter,
-              recordOfFilter.value,
-              0,
-              filterPagination.size,
-              filterPagination.sort || 'id,desc'
-            );
-          }
-        }}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
   // Table columns
   const columns = [
-    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
+    {
+      key: 'code',
+      title: 'Code',
+      width: 130,
+      ...headerSearch('code', 'Search code'),
+      render: (row: any) => row?.code ?? ''
+    },
     {
       key: 'codeCategory',
       title: 'Code Category',
@@ -486,14 +177,24 @@ const CPTSetup: React.FC = () => {
     {
       key: 'serviceCategory',
       title: 'Service Category',
+      width: 180,
+      ...headerSearch('serviceCategory', 'Search'),
       render: (row: any) => row?.serviceCategory ?? ''
     },
     {
       key: 'mainCategory',
       title: 'Main Category',
+      width: 180,
+      ...headerSearch('mainCategory', 'Search'),
       render: (row: any) => row?.mainCategory ?? ''
     },
-    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
+    {
+      key: 'description',
+      title: 'Description',
+      width: 320,
+      ...headerSearch('description', 'Search description'),
+      render: (row: any) => row?.description ?? ''
+    },
     {
       key: 'lastUpdated',
       title: 'Last Updated',
@@ -577,19 +278,8 @@ const CPTSetup: React.FC = () => {
       <MyTable
         data={tableData}
         columns={columns}
-        filters={
-          <div
-            className="mb-3"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              justifyContent: 'space-between',
-              flexWrap: 'wrap'
-            }}
-          >
-            <div>{filters()}</div>
-
+        tableButtons={
+          <div className="container-of-add-new-button">
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <MyButton
                 appearance="ghost"
@@ -613,8 +303,8 @@ const CPTSetup: React.FC = () => {
         }
         totalCount={totalCount}
         loading={isFetching}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />

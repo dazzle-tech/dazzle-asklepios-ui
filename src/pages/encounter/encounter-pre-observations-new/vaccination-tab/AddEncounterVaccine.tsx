@@ -170,6 +170,8 @@ const AddEncounterVaccine = ({
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [isEncounterVaccineStatusClose, setIsEncounterVacineStatusClose] = useState(false);
   const [isDisabledField, setIsDisabledField] = useState(false);
+  // The vaccine and the brand that was given (and charged) cannot change once saved
+  const isVaccineLocked = isDisabledField || Boolean(encounterVaccination?.id);
 
   const [inputValue, setInputValue] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -244,8 +246,9 @@ const AddEncounterVaccine = ({
 
   const activeVaccineId = vaccine?.id as number | undefined;
 
+  // Inactive brands cannot be given
   const { data: vaccineBrandsPage, refetch: refetchBrands } = useGetVaccineBrandsByVaccineQuery(
-    { vaccineId: activeVaccineId, page: brandPage, size: PAGE_SIZE, sort: 'id,asc' },
+    { vaccineId: activeVaccineId, isActive: true, page: brandPage, size: PAGE_SIZE, sort: 'id,asc' },
     { skip: !activeVaccineId }
   );
   const { data: vaccineDosesPage, refetch: refetchDoses } = useGetVaccineDosesByVaccineIdQuery(
@@ -445,6 +448,16 @@ const AddEncounterVaccine = ({
     });
   }, [vaccineBrandsPage?.data, brandPage]);
 
+  // Only active brands are loaded; a brand saved on the vaccination that was deactivated
+  // later is added back so editing it does not show an empty brand
+  const selectableBrands = useMemo(
+    () =>
+      vaccineBrand?.id && !allBrands.some(brand => brand.id === vaccineBrand.id)
+        ? [vaccineBrand, ...allBrands]
+        : allBrands,
+    [allBrands, vaccineBrand]
+  );
+
   useEffect(() => {
     const pageData = (vaccineDosesPage?.data ?? []) as VaccineDose[];
     setAllDoses(prev => {
@@ -564,7 +577,7 @@ const AddEncounterVaccine = ({
             <MyLabel label="Vaccine Name" />
             <InputGroup inside>
               <Input
-                disabled={isDisabledField}
+                disabled={isVaccineLocked}
                 placeholder="Search"
                 value={inputValue}
                 onChange={value => {
@@ -580,7 +593,7 @@ const AddEncounterVaccine = ({
                   if (e.key === 'Enter') executeSearch();
                 }}
               />
-              <InputGroup.Button disabled={isDisabledField} onClick={executeSearch}>
+              <InputGroup.Button disabled={isVaccineLocked} onClick={executeSearch}>
                 <SearchIcon />
               </InputGroup.Button>
             </InputGroup>
@@ -700,7 +713,7 @@ const AddEncounterVaccine = ({
               fieldLabel="Used Brand"
               fieldType="selectPagination"
               fieldName="vaccineBrandId"
-              selectData={allBrands}
+              selectData={selectableBrands}
               selectDataLabel="name"
               selectDataValue="id"
               record={brandPicker}
@@ -727,7 +740,7 @@ const AddEncounterVaccine = ({
                 setBrandPicker({ vaccineBrandId: item.id as number });
               }}
               placeholder={vaccineBrand?.name ? vaccineBrand.name : 'Select'}
-              disabled={isDisabledField}
+              disabled={isVaccineLocked}
             />
             <MyInput
               column
@@ -953,7 +966,7 @@ const AddEncounterVaccine = ({
               <Translate>Vaccine Brands</Translate>
             </h6>
             <InfoCardList
-              list={vaccine?.id ? allBrands : []}
+              list={vaccine?.id ? selectableBrands : []}
               fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}
               fieldLabels={{
                 manufacture: 'Manufacturer',

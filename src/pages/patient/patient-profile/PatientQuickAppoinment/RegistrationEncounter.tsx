@@ -10,6 +10,7 @@ import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
 import { useEnumOptions } from '@/services/enumsApi';
 
 import {
+  useGetDepartmentByIdQuery,
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useLazyGetDepartmentByIdQuery
 } from '@/services/security/departmentService';
@@ -21,6 +22,7 @@ import {
 import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 
 import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetProceduresByDepartmentQuery } from '@/services/setup/procedure/procedureService';
 
 import {
   useLazyCountTodayEncountersByFacilityQuery,
@@ -69,7 +71,7 @@ const RegistrationEncounter = ({
   const [defaultServiceLabel, setDefaultServiceLabel] = useState('');
 
   const EncounterTypeEnum = useEnumOptions('EncounterType', {
-    exclude: ['DAYCASE', 'INPATIENT']
+    exclude: ['DAYCASE', 'INPATIENT', 'ALL']
   });
   const EncounterReasonEnum = useEnumOptions('EncounterReason', {
     exclude:
@@ -284,6 +286,32 @@ useEffect(() => {
   const [triggerGetDefaultService, { isFetching: isDefaultServiceFetching }] =
     useLazyGetServicesByDepartmentQuery();
 
+  const defaultProceduresDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const defaultProceduresSpecialty = String(localEncounter?.specialty ?? '').trim();
+
+  const { data: defaultProceduresPage, isFetching: isDefaultProceduresFetching } =
+    useGetProceduresByDepartmentQuery(
+      {
+        sourceId: defaultProceduresDepartmentId,
+        specialty: defaultProceduresSpecialty,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      { skip: !defaultProceduresDepartmentId || !defaultProceduresSpecialty }
+    );
+
+  const defaultProceduresLabel = useMemo(
+    () =>
+      defaultProceduresDepartmentId && defaultProceduresSpecialty
+        ? (defaultProceduresPage?.data ?? [])
+            .map((procedure: any) => String(procedure?.name ?? '').trim())
+            .filter(Boolean)
+            .join(', ')
+        : '',
+    [defaultProceduresPage, defaultProceduresDepartmentId, defaultProceduresSpecialty]
+  );
+
   const practHasMore = Boolean(practitionersList?.links?.next);
 
   const prevDeptRef = useRef<number | null>(null);
@@ -294,6 +322,18 @@ useEffect(() => {
     () => formatSpecialtyLabel(localEncounter?.specialty),
     [localEncounter?.specialty]
   );
+
+  const selectedDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const { data: selectedDepartmentDetails } = useGetDepartmentByIdQuery(selectedDepartmentId, {
+    skip: !selectedDepartmentId
+  });
+
+  const assignsPractitionerOnVisitStart = Boolean(
+    selectedDepartmentDetails?.assignPractitionerOnVisitStart
+  );
+
+  const allowsNullPractitionerAtRegistration =
+    localEncounter?.encounterType === 'EMERGENCY' || assignsPractitionerOnVisitStart;
 
   const mergePractitioners = (rows: any[]) => {
     if (!rows?.length) return;
@@ -695,7 +735,7 @@ useEffect(() => {
 
       <MyInput
         vr={validationResult}
-        required={localEncounter?.encounterType !== 'EMERGENCY'}
+        required={!allowsNullPractitionerAtRegistration}
         column
         fieldType="selectPagination"
         fieldLabel="Practitioner"
@@ -706,6 +746,11 @@ useEffect(() => {
         record={localEncounter}
         setRecord={handlePractitionerChange}
         disabled={isReadOnly || !localEncounter?.departmentId}
+        placeholder={
+          assignsPractitionerOnVisitStart && !isReadOnly
+            ? 'Practitioner is optional. If left blank, it will be assigned when the visit starts.'
+            : undefined
+        }
         loading={isPractitionersFetching}
         searchable
         hasMore={practHasMore}
@@ -746,6 +791,22 @@ useEffect(() => {
             : isDefaultServiceFetching
               ? 'Loading...'
               : defaultServiceLabel || 'No linked service found'
+        }
+      />
+
+      <MyInput
+        column
+        fieldLabel="Default Procedures"
+        fieldName="defaultProceduresLabel"
+        record={{ defaultProceduresLabel }}
+        setRecord={() => undefined}
+        disabled
+        placeholder={
+          !localEncounter?.specialty
+            ? 'Select practitioner first'
+            : isDefaultProceduresFetching
+              ? 'Loading...'
+              : defaultProceduresLabel || 'No linked procedure found'
         }
       />
 

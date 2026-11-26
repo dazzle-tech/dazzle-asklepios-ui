@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
+import dayjs from 'dayjs';
 
 import type {
   BillingItemType,
@@ -18,6 +19,17 @@ export type PagedParams = {
   timestamp?: number;
   billingItemType?: BillingItemType | '';
   name?: string;
+  paymentType?: string;
+  billingTrigger?: string;
+  isDefault?: boolean | string;
+  /** A day (YYYY-MM-DD): rules created on that day in the user's time zone */
+  createdDate?: string;
+};
+
+type FilterPageParams = {
+  page: number;
+  size: number;
+  sort?: string;
 };
 
 export type LinkMap = {
@@ -80,6 +92,11 @@ const mapPagedResponse = <T>(
   };
 };
 
+const toBillingRulePage = (
+  response: BillingRule[] | SpringPageResponse<BillingRule>,
+  meta: any
+) => mapPagedResponse<BillingRule>(response, meta);
+
 export const billingRuleSetupService = createApi({
   reducerPath: 'billingRuleSetupService',
 
@@ -92,50 +109,33 @@ export const billingRuleSetupService = createApi({
       PagedResult<BillingRule>,
       PagedParams
     >({
+      // One list endpoint; optional filters are ANDed by the backend, empty ones are left out
       query: ({
         page,
         size,
         sort = 'id,desc',
         billingItemType,
-        name
+        name,
+        paymentType,
+        billingTrigger,
+        isDefault,
+        createdDate
       }) => {
-        const trimmedName = name?.trim();
-
-        if (trimmedName) {
-          return {
-            url: `/api/setup/billing-rule/by-name/${encodeURIComponent(
-              trimmedName
-            )}`,
-            params: {
-              page,
-              size,
-              sort,
-              ...(billingItemType
-                ? { billingItemType }
-                : {})
-            }
-          };
-        }
-
-        if (billingItemType) {
-          return {
-            url: `/api/setup/billing-rule/search/by-item-type/${encodeURIComponent(
-              billingItemType
-            )}`,
-            params: {
-              page,
-              size,
-              sort
-            }
-          };
-        }
+        const dayStart = createdDate ? dayjs(createdDate).startOf('day') : null;
 
         return {
           url: '/api/setup/billing-rule',
           params: {
             page,
             size,
-            sort
+            sort,
+            name: name?.trim() || undefined,
+            billingItemType: billingItemType || undefined,
+            paymentType: paymentType || undefined,
+            billingTrigger: billingTrigger || undefined,
+            isDefault: isDefault === '' ? undefined : isDefault,
+            createdFrom: dayStart?.isValid() ? dayStart.toISOString() : undefined,
+            createdTo: dayStart?.isValid() ? dayStart.add(1, 'day').toISOString() : undefined
           }
         };
       },
@@ -171,6 +171,78 @@ export const billingRuleSetupService = createApi({
                 id: 'LIST'
               }
             ]
+    }),
+
+    getBillingRulesByName: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { name: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/by-name/${encodeURIComponent(filter.name)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByItemType: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { billingItemType: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-item-type/${encodeURIComponent(filter.billingItemType)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByPaymentType: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { paymentType: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-payment-type/${encodeURIComponent(filter.paymentType)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByTrigger: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { billingTrigger: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-trigger/${encodeURIComponent(filter.billingTrigger)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByDefault: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { isDefault: boolean }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: `/api/setup/billing-rule/search/by-default/${filter.isDefault}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
+    }),
+
+    getBillingRulesByCreatedDate: builder.query<
+      PagedResult<BillingRule>,
+      FilterPageParams & { from: string; to: string }
+    >({
+      query: ({ page, size, sort = 'id,desc', ...filter }) => ({
+        url: '/api/setup/billing-rule/search/by-created-date',
+        params: { page, size, sort, from: filter.from, to: filter.to }
+      }),
+      transformResponse: toBillingRulePage,
+      providesTags: [{ type: 'BillingRule' as const, id: 'LIST' }]
     }),
 
     getBillingRuleById: builder.query<
@@ -298,6 +370,12 @@ export const billingRuleSetupService = createApi({
 export const {
   useGetBillingRulesQuery,
   useLazyGetBillingRulesQuery,
+  useLazyGetBillingRulesByNameQuery,
+  useLazyGetBillingRulesByItemTypeQuery,
+  useLazyGetBillingRulesByPaymentTypeQuery,
+  useLazyGetBillingRulesByTriggerQuery,
+  useLazyGetBillingRulesByDefaultQuery,
+  useLazyGetBillingRulesByCreatedDateQuery,
   useGetBillingRuleByIdQuery,
   useAddBillingRuleMutation,
   useUpdateBillingRuleMutation,

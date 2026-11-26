@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import type { PreAuthorizationAlertItem } from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 
 import {
   useCreateDiagnosticOrderMutation,
@@ -99,6 +100,7 @@ const extractErrorMessage = (error: any) => {
 
 export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTestsRef, setLoading }: UseDiagnosticsOrderArgs) => {
   const dispatch = useAppDispatch();
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const patientId = patient?.id;
@@ -169,6 +171,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const departments = departmentsResponse?.data ?? [];
 
   const resolveFromDepartmentId = () => {
+    if (encounter?.departmentId) return encounter.departmentId;
+
     const selectedDeptId = selectedDepartment?.departmentId;
     const selectedDeptName = selectedDepartment?.departmentName ?? selectedDepartment?.name;
     const selectedFacilityId = selectedDepartment?.facilityId;
@@ -248,11 +252,17 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
   const isSubmitDisabled = !orderId || orders?.status !== 'NEW';
 
-  const { data: ordersListResponse, refetch: ordersRefetch } = useFilterDiagnosticOrdersQuery(
+  const {
+    data: ordersListResponse,
+    refetch: ordersRefetch,
+    isSuccess: ordersSuccess,
+    isError: ordersError
+  } = useFilterDiagnosticOrdersQuery(
     patientId && encounterId ? { patientId, encounterId } : skipToken
   );
 
   const ordersList = ordersListResponse?.data ?? [];
+  const ordersLoaded = ordersSuccess || ordersError || !(patientId && encounterId);
 
   const hasOpenOrder = ordersList.some((o: any) => o.status === 'NEW' || o.saveDraft === true);
 
@@ -420,15 +430,36 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
   const [previewDiagnosticsOrder, setPreviewDiagnosticsOrder] = useState<any | null>(null);
 
+  const suppressAutoSelectRef = useRef(false);
+
   const handleClearDiagnostics = () => {
     setOrderTest({ ...newDiagnosticOrderTest });
     setTest({ ...newDiagnosticTest });
     setPreviewDiagnosticsOrder(null);
   };
 
+  const handleSelectOrder = useCallback((item: any) => {
+    suppressAutoSelectRef.current = false;
+    setOrders(item ?? {});
+    handleClearDiagnostics();
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    suppressAutoSelectRef.current = true;
+    setOrders({ ...newDiagnosticOrder });
+    handleClearDiagnostics();
+    setSelectedRows([]);
+    setOpenDetailsModel(false);
+    setConfirmDeleteModel(false);
+  }, []);
+
   useEffect(() => {
     if (!ordersList?.length) return;
-    if (orders?.id) return;
+    if (orders?.id) {
+      suppressAutoSelectRef.current = false;
+      return;
+    }
+    if (suppressAutoSelectRef.current) return;
 
     const draftOrder = ordersList.find((o: any) => o.saveDraft === true && o.status === 'NEW');
     if (draftOrder) setOrders(draftOrder);
@@ -712,7 +743,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     return warnings;
   };
 
-  const handleSaveTests = async () => {
+  // Resolves true when every selected test was saved without errors
+  const handleSaveTests = async (): Promise<boolean> => {
     setOpenTestsModal(false);
 
 
@@ -721,12 +753,12 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     if (!_orderId || !patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
-      return;
+      return false;
     }
 
     if (!fromDepartmentId) {
       dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
-      return;
+      return false;
     }
 
     try {
@@ -771,6 +803,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       );
 
       let added: string[] = [];
+      let held: PreAuthorizationAlertItem[] = [];
       let duplicates: string[] = [];
       let failed: string[] = [];
 
@@ -795,7 +828,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               return;
             }
 
-            await createOrderTest({
+            const created = await createOrderTest({
               orderId: _orderId,
               testId,
               orderType: item.type || 'LABORATORY',
@@ -805,7 +838,13 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
               )
             }).unwrap();
 
-            added.push(testName);
+            // Radiology does not stop the order screen: it is notified on submit instead.
+            const isRadiology = String(item.type ?? '').toUpperCase() === 'RADIOLOGY';
+            if (created?.coveragePreApprovalPending && !isRadiology) {
+              held.push({ label: testName });
+            } else {
+              added.push(testName);
+            }
           } catch (e: any) {
             if (isUncoveredCashCancelled(e)) {
               return;
@@ -824,6 +863,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
             sev: 'success'
           })
         );
+      }
+
+      if (held.length) {
+        setPreAuthAlert(held);
       }
 
       if (duplicates.length) {
@@ -848,9 +891,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
       await orderTestRefetch();
       patientPrevTestsRef?.current?.refetchPrevTests();
+      return failed.length === 0;
     } catch (error: any) {
       if (isUncoveredCashCancelled(error)) {
-        return;
+        return false;
       }
       console.error('Save tests failed:', error);
       dispatch(
@@ -859,6 +903,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
           sev: 'error'
         })
       );
+      return false;
     }
     finally {
       console.log("Fainaly ")
@@ -873,8 +918,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       encounterId,
       labStatus: DiagnosticStatus.NEW,
       radStatus: DiagnosticStatus.NEW,
-      fromDepartmentId: selectedDepartment?.departmentId,
-      fromFacilityId: selectedDepartment?.facilityId
+      fromDepartmentId: encounter?.departmentId || selectedDepartment?.departmentId,
+      fromFacilityId: encounter?.facilityId || selectedDepartment?.facilityId
     };
 
     const response = await createOrder(createPayload).unwrap();
@@ -946,6 +991,22 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
       await submitDiagnosticOrder(_orderId).unwrap();
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+
+      // Radiology tests waiting on pre-authorization are not sent to the department on submit
+      // (they stay New until the decision); the alert lists them.
+      const radiologyHeldForApproval: PreAuthorizationAlertItem[] = orderTestList
+        .filter(
+          (t: any) =>
+            String(t.orderType ?? '').toUpperCase() === 'RADIOLOGY' &&
+            t.preAuthorizationBlocked === true
+        )
+        .map((t: any) => ({
+          patientServiceProductId: null,
+          label: t.test?.testName ?? t.test?.name ?? t.testName ?? 'Radiology test'
+        }));
+      if (radiologyHeldForApproval.length) {
+        setPreAuthAlert(radiologyHeldForApproval);
+      }
 
 
       await ordersRefetch();
@@ -1033,6 +1094,38 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     // sequential: each test may open the uncovered-as-cash confirmation
     for (const t of tests) {
       await handleRecallFavoriteTest(t, targetOrderId);
+    }
+  };
+
+  // open Select Tests on the open draft order if there is one, otherwise create a new order first
+  const handleOpenTestsSelection = async (): Promise<boolean> => {
+    if (!patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
+      return false;
+    }
+
+    if (String(authSlice.user?.jobRole ?? '').toUpperCase() === 'NURSE') {
+      dispatch(notify({ msg: 'Nurses cannot create diagnostic orders', sev: 'warning' }));
+      return false;
+    }
+
+    const draftOrder = orders?.id && isDraftOrder(orders) ? orders : ordersList.find(isDraftOrder);
+
+    try {
+      setLoading?.(true);
+      if (draftOrder) {
+        setOrders(draftOrder);
+      } else {
+        await createNewOrder();
+      }
+      setOpenTestsModal(true);
+      return true;
+    } catch (error) {
+      console.error('Create order failed:', error);
+      dispatch(notify({ msg: 'Failed to create order', sev: 'error' }));
+      return false;
+    } finally {
+      setLoading?.(false);
     }
   };
 
@@ -1132,6 +1225,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     // route data
     patient,
     encounter,
+    preAuthAlert,
+    clearPreAuthAlert: () => setPreAuthAlert(null),
     edit,
     reson,
     setReson,
@@ -1164,6 +1259,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     loadTests,
     hasOpenOrder,
     isSubmitDisabled,
+    ordersLoaded,
 
     // filters
     filters,
@@ -1225,6 +1321,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
 
     // actions
     handleClearDiagnostics,
+    handleClearSelection,
+    handleSelectOrder,
     handleSaveOrders,
     handleSaveTests,
     handleSaveTest,
@@ -1236,6 +1334,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit, patientPrevTests
     handleOpenRescheduleAppointments,
     handleRecallFavoriteTest,
     handleRecallFavoriteTests,
+    handleOpenTestsSelection,
 
     // helpers
     normalizeOrderTest,

@@ -18,19 +18,31 @@ type PagedResult<T> = {
 
 
 
+const toUomGroupPage = (response: any[], meta: any): PagedResult<any> => {
+  const headers = meta?.response?.headers;
+  return {
+    data: response,
+    totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+    links: parseLinkHeader(headers?.get("Link")),
+  };
+};
+
 export const uomGroupService = createApi({
   reducerPath: "newUOMGroupApi",
   baseQuery: BaseQuery,
   tagTypes: ["UOMGroup"],
   endpoints: builder => ({
 
-    // 🔹 Get all practitioners (paginated)
+    // Paginated list; optional name / description filters are ANDed by the backend
     getAllUOMGroups: builder.query({
-      query: ({name , ...params }) => ({
-    //  query: () => ({
-        url: `/api/setup/uom-groups?name=${name}`,
+      query: ({ name, description, ...params }) => ({
+        url: "/api/setup/uom-groups",
         method: "GET",
-        params,
+        params: {
+          ...params,
+          name: name?.trim() || undefined,
+          description: description?.trim() || undefined,
+        },
       }),
 
       transformResponse: (response: any[], meta) => {
@@ -45,6 +57,27 @@ export const uomGroupService = createApi({
       providesTags: ["UOMGroup"],
     }),
 
+
+    // Table filters
+    getUOMGroupsByName: builder.query<PagedResult<any>, PagedParams & { name: string }>({
+      query: ({ name, page, size, sort }) => ({
+        url: "/api/setup/uom-groups",
+        method: "GET",
+        params: { name, page, size, sort },
+      }),
+      transformResponse: toUomGroupPage,
+      providesTags: ["UOMGroup"],
+    }),
+
+    getUOMGroupsByDescription: builder.query<PagedResult<any>, PagedParams & { description: string }>({
+      query: ({ description, page, size, sort }) => ({
+        url: `/api/setup/uom-groups/by-description/${encodeURIComponent(description)}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: toUomGroupPage,
+      providesTags: ["UOMGroup"],
+    }),
 
     // 🔹 Get single practitioner
     getUOMGroupById: builder.query({
@@ -157,6 +190,8 @@ export const uomGroupService = createApi({
 
 export const {
     useGetAllUOMGroupsQuery,
+    useLazyGetUOMGroupsByNameQuery,
+    useLazyGetUOMGroupsByDescriptionQuery,
     useGetAllUnitsByGroupIdQuery,
     useDeleteUOMGroupMutation,
     useCreateUOMGroupMutation,

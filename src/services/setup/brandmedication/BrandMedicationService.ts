@@ -2,7 +2,7 @@ import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number; isActive?: boolean };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -22,11 +22,33 @@ export const BrandMedicationService = createApi({
   endpoints: (builder) => ({
 
     // 🔹 Get all
-    getAllBrandMedications: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getAllBrandMedications: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        name?: string;
+        manufacturer?: string;
+        dosageForm?: string;
+        roa?: string;
+        expiresAfterOpening?: boolean | string;
+        useSinglePatient?: boolean | string;
+      }
+    >({
+      query: ({ page, size, sort = "id,asc", isActive, name, manufacturer, dosageForm, roa, expiresAfterOpening, useSinglePatient }) => ({
         url: "/api/setup/brand-medication",
         method: "GET",
-        params: { page, size, sort },
+        params: {
+          page,
+          size,
+          sort,
+          isActive,
+          name: name?.trim() || undefined,
+          manufacturer: manufacturer || undefined,
+          dosageForm: dosageForm || undefined,
+          roa: roa || undefined,
+          expiresAfterOpening: expiresAfterOpening === "" ? undefined : expiresAfterOpening,
+          useSinglePatient: useSinglePatient === "" ? undefined : useSinglePatient,
+        },
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;

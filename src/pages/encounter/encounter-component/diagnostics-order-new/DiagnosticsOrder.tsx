@@ -9,6 +9,7 @@ import DiagnosticsOrderModals from './DiagnosticsOrderModals';
 import PatientHistorySummaryModal from './PatientHistorySummaryModal';
 import RescheduleAppointmentsLookupModal from './RescheduleAppointmentsLookupModal';
 import DiagnosticsOrderTable from './DiagnosticsOrderTable';
+import PreAuthorizationAlertModal from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 import clsx from 'clsx';
 import Backdrop from '@mui/material/Backdrop';
@@ -18,9 +19,13 @@ const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
 
+  // directTestsSelection: skip the order screen, create/reuse the draft order and open Select Tests directly
+  const directTestsSelection = props.directTestsSelection === true;
+  const closeDirect = () => props.onClose?.();
+
   //add new patient edits
-  const patient = location.state?.patient;
-  const encounter = location.state?.encounter;
+  const patient = (directTestsSelection && props.patient) || location.state?.patient;
+  const encounter = (directTestsSelection && props.encounter) || location.state?.encounter;
 
   const viewMode = location.state?.viewMode;
   const isAmendmentOpen = useIsAmendmentOpen();
@@ -48,6 +53,37 @@ const DiagnosticsOrder = (props: any) => {
       `
       ) !== null
     );
+  };
+
+  const directStartedRef = useRef(false);
+  useEffect(() => {
+    if (!directTestsSelection || directStartedRef.current || !vm.ordersLoaded) return;
+    directStartedRef.current = true;
+    vm.handleOpenTestsSelection().then(ok => {
+      if (!ok) closeDirect();
+    });
+  }, [directTestsSelection, vm.ordersLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setOpenTestsModal = (open: boolean) => {
+    vm.setOpenTestsModal(open);
+    if (directTestsSelection && !open) closeDirect();
+  };
+
+  const handleSaveTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (directTestsSelection) closeDirect();
+    return ok;
+  };
+
+  const handleSaveAndSubmitTests = async () => {
+    const ok = await vm.handleSaveTests();
+    if (ok) setOpenValidationSummaryModal(true);
+    else if (directTestsSelection) closeDirect();
+  };
+
+  const setValidationSummaryOpen = (open: boolean) => {
+    setOpenValidationSummaryModal(open);
+    if (directTestsSelection && !open) closeDirect();
   };
 
   useEffect(() => {
@@ -92,6 +128,8 @@ const DiagnosticsOrder = (props: any) => {
     dir={dir}
     // className={clsx({ 'disabled-panel': edit })}
   >
+      {!directTestsSelection && (
+      <>
       <DiagnosticsOrderHeader
         orders={vm.orders}
         ordersList={vm.ordersList}
@@ -108,7 +146,8 @@ const DiagnosticsOrder = (props: any) => {
         labCategoriesLovResponse={vm.labCategoriesLovResponse}
         radCategoriesLovResponse={vm.radCategoriesLovResponse}
         setOrders={vm.setOrders}
-        handleClearDiagnostics={vm.handleClearDiagnostics}
+        handleClearSelection={vm.handleClearSelection}
+        handleSelectOrder={vm.handleSelectOrder}
         handleSaveOrders={vm.handleSaveOrders}
         handleSubmitPres={vm.handleSubmitPres}
         setOpenTestsModal={vm.setOpenTestsModal}
@@ -146,7 +185,10 @@ const DiagnosticsOrder = (props: any) => {
         patient={vm.patient}
         departments={vm.departments}
         edit={vm.edit}
+        detailsLocked={vm.isSubmitDisabled}
       />
+      </>
+      )}
 
       <DiagnosticsOrderModals
         encounter={vm.encounter}
@@ -164,7 +206,7 @@ const DiagnosticsOrder = (props: any) => {
         attachmentsModalOpen={vm.attachmentsModalOpen}
         setAttachmentsModalOpen={vm.setAttachmentsModalOpen}
         openTestsModal={vm.openTestsModal}
-        setOpenTestsModal={vm.setOpenTestsModal}
+        setOpenTestsModal={setOpenTestsModal}
         openRequestTestModal={vm.openRequestTestModal}
         setOpenRequestTestModal={vm.setOpenRequestTestModal}
         recallFavoriteModal={vm.recallFavoriteModal}
@@ -189,7 +231,8 @@ const DiagnosticsOrder = (props: any) => {
         selectedDepartment={vm.selectedDepartment}
         resolveFromDepartmentId={vm.resolveFromDepartmentId}
         handleSaveTest={vm.handleSaveTest}
-        handleSaveTests={vm.handleSaveTests}
+        handleSaveTests={handleSaveTests}
+        handleSaveAndSubmitTests={handleSaveAndSubmitTests}
         handleCancle={vm.handleCancle}
         orderTestRefetch={vm.orderTestRefetch}
         setSelectedRows={vm.setSelectedRows}
@@ -201,10 +244,10 @@ const DiagnosticsOrder = (props: any) => {
 
       <PatientHistorySummaryModal
         open={openValidationSummaryModal}
-        setOpen={setOpenValidationSummaryModal}
+        setOpen={setValidationSummaryOpen}
         handleSave={async () => {
           const ok = await vm.handleSubmitPres();
-          if (ok) setOpenValidationSummaryModal(false);
+          if (ok) setValidationSummaryOpen(false);
         }}
         payload={{
           patientId: patient?.id ?? patient?.key,
@@ -219,6 +262,12 @@ const DiagnosticsOrder = (props: any) => {
         orderTest={vm.selectedOrderTestForReschedule}
         facilityId={vm.selectedDepartment?.facilityId}
         onClose={() => vm.setSelectedOrderTestForReschedule(null)}
+      />
+      <PreAuthorizationAlertModal
+        open={Boolean(vm.preAuthAlert?.length)}
+        encounterId={vm.encounterId}
+        items={vm.preAuthAlert ?? []}
+        onClosed={vm.clearPreAuthAlert}
       />
       <Backdrop
   open={loading}

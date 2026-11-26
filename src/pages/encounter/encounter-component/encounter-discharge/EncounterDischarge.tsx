@@ -12,7 +12,10 @@ import { newPatientEncounterDischarge } from '@/types/model-types-constructor-ne
 import { useMarkBedAsInCleaningMutation } from '@/services/setup/room/bedService';
 import MyInput from '@/components/MyInput';
 import { useLazyGetActiveAssignmentByEncounterIdQuery } from '@/services/patients/emergency/encounterAssignToBedService';
-import { useDischargeEncounterMutation } from '@/services/encounters/patientEncounterService';
+import {
+  useDischargeEncounterMutation,
+  useLazyGetEncounterCompletionValidationQuery
+} from '@/services/encounters/patientEncounterService';
 import dayjs from 'dayjs';
 import MyButton from '@/components/MyButton/MyButton';
 import DischargeReportModal from './DischargeReportModal';
@@ -43,6 +46,27 @@ const EncounterDischarge = ({
 
   const dischargeTypeEnum = useEnumOptions('DischargeType');
 
+  const [validateEncounterCompletion] = useLazyGetEncounterCompletionValidationQuery();
+  // The server tells when a Waseel insurance visit without investigations still needs the reason
+  const [reasonRequired, setReasonRequired] = useState(false);
+
+  useEffect(() => {
+    const encounterId = encounter?.id ?? encounter?.key;
+    if (!open || !encounterId) {
+      setReasonRequired(false);
+      return;
+    }
+
+    validateEncounterCompletion({ encounterId: Number(encounterId) })
+      .unwrap()
+      .then(validation =>
+        setReasonRequired(
+          validation?.insuranceVisit === true && validation?.investigationNotPerformedReason === false
+        )
+      )
+      .catch(() => setReasonRequired(false));
+  }, [open, encounter, validateEncounterCompletion]);
+
   const handleCompleteEncounter = async () => {
     try {
       const encounterId = encounter?.id ?? encounter?.key;
@@ -64,10 +88,22 @@ const EncounterDischarge = ({
         return;
       }
 
+      const investigationNotPerformedReason = localEncounter.investigationNotPerformedReason?.trim();
+      if (reasonRequired && !investigationNotPerformedReason) {
+        dispatch(
+          notify({
+            msg: 'No laboratory or radiology investigation was performed. Enter the reason.',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
       const dischargePayload: PatientEncounterDischarge = {
         encounterId: numericId,
         dischargeType: localEncounter.dischargeType,
-        dischargeAt: dayjs(localEncounter.dischargeAt).format('YYYY-MM-DDTHH:mm:ss')
+        dischargeAt: dayjs(localEncounter.dischargeAt).format('YYYY-MM-DDTHH:mm:ss'),
+        investigationNotPerformedReason: reasonRequired ? investigationNotPerformedReason : null
       };
 
       let bedId: number | null = null;
@@ -173,6 +209,17 @@ const EncounterDischarge = ({
         record={localEncounter}
         setRecord={setLocalEncounter}
       />
+      {reasonRequired && (
+        <MyInput
+          column
+          width={300}
+          fieldLabel="Reason Investigations Not Performed"
+          fieldType="textarea"
+          fieldName="investigationNotPerformedReason"
+          record={localEncounter}
+          setRecord={setLocalEncounter}
+        />
+      )}
        <MyButton
         prefixIcon={() => <FontAwesomeIcon icon={faFileMedical} />}
         onClick={handleGenerateDischargeReport}

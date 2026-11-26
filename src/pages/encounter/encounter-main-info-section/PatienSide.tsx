@@ -13,6 +13,10 @@ import {
   useGetLatestBodyMeasurementsByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import {
+  useGetLatestRandomBloodSugarByEncounterIdQuery,
+  useLazyGetLatestRandomBloodSugarByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/observations/randomBloodSugarService';
+import {
   useLazyExistsPatientDiagnosisByEncounterIdQuery,
   useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
@@ -34,6 +38,7 @@ import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
+import dayjs from 'dayjs';
 import {
   useGetEncounterCoverageQuery
 } from '@/services/encounters/patientEncounterService';
@@ -160,6 +165,12 @@ const {
     );
 
   const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
+  const { data: latestRandomBloodSugar, refetch: refetchLatestRandomBloodSugar } =
+    useGetLatestRandomBloodSugarByEncounterIdQuery(
+      { encounterId: encounter?.id },
+      { skip: !encounter?.id }
+    );
+  const [triggerGetLatestRandomBloodSugar] = useLazyGetLatestRandomBloodSugarByEncounterIdQuery();
   const {
     data: latestBodyMeasurements,
     refetch: refetchLatestBodyMeasurements
@@ -338,6 +349,7 @@ const patientConditionItems =
 
       if (encounter?.id) {
         triggerGetLatestVitalSigns({ encounterId: encounter?.id });
+        triggerGetLatestRandomBloodSugar({ encounterId: encounter?.id });
         triggerGetLatestPatientObservationsComplaints({ encounterId: encounter?.id });
         loadPrimaryDiagnosis(Number(encounter.id));
       }
@@ -346,6 +358,7 @@ const patientConditionItems =
     refetchList,
     triggerGetPrimaryDocument,
     triggerGetLatestVitalSigns,
+    triggerGetLatestRandomBloodSugar,
     triggerGetLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id
@@ -359,6 +372,7 @@ const patientConditionItems =
 
       if (encounter?.id) {
         refetchLatestVitalSigns();
+        refetchLatestRandomBloodSugar();
         refetchLatestPatientObservationsComplaints();
         loadPrimaryDiagnosis(Number(encounter.id));
       }
@@ -372,6 +386,7 @@ const patientConditionItems =
     refetchPatientSide,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
+    refetchLatestRandomBloodSugar,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -388,6 +403,7 @@ const patientConditionItems =
           refetchAllergies(),
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
+          encounter?.id ? refetchLatestRandomBloodSugar() : Promise.resolve(),
           patient?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
           encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
           encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
@@ -406,6 +422,7 @@ const patientConditionItems =
     refetchAllergies,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
+    refetchLatestRandomBloodSugar,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -418,7 +435,7 @@ const patientConditionItems =
 
 const getAllergenName = (allergy: any) => {
   if (allergy?.allergenType === 'OTHER') {
-    return <p>{allergy?.allergenName || '-'}</p>;
+    return <p>{allergy?.allergenName || 'Unknown'}</p>;
   }
 
   if (allergy?.allergenId && allergensListResponse?.data) {
@@ -426,7 +443,7 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.allergenId
     );
 
-    return <p>{allergen?.name ?? '-'}</p>;
+    return <p>{allergen?.name ?? 'Unknown'}</p>;
   }
 
   if (allergy?.medicationClassId && medicationClassesListResponse) {
@@ -434,10 +451,10 @@ const getAllergenName = (allergy: any) => {
       (item: any) => item.id === allergy.medicationClassId
     );
 
-    return <p>{medicationClass?.name ?? '-'}</p>;
+    return <p>{medicationClass?.name ?? 'Unknown'}</p>;
   }
 
-  return <p>-</p>;
+  return <p>Unknown</p>;
 };
 
   const activeAllergies =
@@ -490,6 +507,7 @@ const getAllergenName = (allergy: any) => {
   const oxygenSaturation = toNumber(latestVitalSigns?.oxygenSaturation);
   const bloodPressureSystolic = toNumber(latestVitalSigns?.bloodPressureSystolic);
   const bloodPressureDiastolic = toNumber(latestVitalSigns?.bloodPressureDiastolic);
+  const randomBloodGlucose = toNumber(latestRandomBloodSugar?.randomBloodGlucose);
 
   const weight = toNumber(latestBodyMeasurements?.weight);
   const height = toNumber(latestBodyMeasurements?.height);
@@ -589,7 +607,7 @@ const coverageTypeLabel =
             <span className="info-label">
               DOB:{' '}
               {textOr(
-                patient?.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '-'
+                patient?.dateOfBirth ? dayjs(patient.dateOfBirth).format('DD-MM-YYYY') : '-'
               )}
             </span>
           </div>
@@ -832,7 +850,14 @@ const coverageTypeLabel =
                 </Text>
               </div>
 
-              <div className="info-column" />
+              <div className="info-column">
+                <Text className="info-label">
+                  <Translate>Random Blood Sugar</Translate>
+                </Text>
+                <Text className="info-value">
+                  {randomBloodGlucose != null ? `${fmt(randomBloodGlucose, 2, '')} mg/dL` : ''}
+                </Text>
+              </div>
             </div>
           </div>
 
@@ -1043,8 +1068,16 @@ const coverageTypeLabel =
               <span>
                 <MyBadgeStatus
                   key={`allergy-${allergy.id || index}`}
-                  backgroundColor={getAllergySeverityColors(allergy.severity || '').bg}
-                  color={getAllergySeverityColors(allergy.severity || '').text}
+                  backgroundColor={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--light-green)'
+                      : getAllergySeverityColors(allergy.severity).bg
+                  }
+                  color={
+                    !allergy.severity || allergy.severity.toUpperCase() === 'UNKNOWN'
+                      ? 'var(--primary-green)'
+                      : getAllergySeverityColors(allergy.severity).text
+                  }
                   contant={
                     <div className="diagnosis-badge-content">
                       <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />

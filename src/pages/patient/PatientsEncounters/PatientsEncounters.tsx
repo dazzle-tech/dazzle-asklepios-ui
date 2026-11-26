@@ -153,24 +153,6 @@ const PatientsEncounters = () => {
         })
     );
 
-    const handlePatientSearchClick = () => {
-        const searchText = String(
-            patientSearch?.patientName ?? ''
-        ).trim();
-
-        setFilterRecord(prev => ({
-            ...prev,
-            patientName:
-                patientSearch?.searchByField === 'fullName'
-                    ? searchText
-                    : '',
-            mrn:
-                patientSearch?.searchByField === 'patientMrn'
-                    ? searchText
-                    : '',
-        }));
-    };
-
     const {
         data,
         isLoading,
@@ -182,6 +164,9 @@ const PatientsEncounters = () => {
             toDate: appliedFilters.toDate,
             patientName: appliedFilters.patientName,
             mrn: appliedFilters.mrn,
+            primaryMobileNumber: appliedFilters.primaryMobileNumber,
+            documentNumber: appliedFilters.documentNumber,
+            dateOfBirth: appliedFilters.dateOfBirth,
             encounterNumber: appliedFilters.encounterNumber,
             departmentId: appliedFilters.departmentId,
             practitionerId: appliedFilters.practitionerId,
@@ -334,11 +319,8 @@ const PatientsEncounters = () => {
     );
 
     const handleSearch = () => {
-        const patientName =
-            String(filterRecord.patientName ?? '').trim();
-
-        const mrn =
-            String(filterRecord.mrn ?? '').trim();
+        const searchText = String(patientSearch?.patientName ?? '').trim();
+        const field = patientSearch?.searchByField;
 
         const encounterNumber =
             String(filterRecord.encounterNumber ?? '').trim();
@@ -365,8 +347,13 @@ const PatientsEncounters = () => {
             fromDate: filterRecord.fromDate || todayDate,
             toDate: filterRecord.toDate || todayDate,
 
-            patientName: patientName || undefined,
-            mrn: mrn || undefined,
+            patientName: field === 'fullName' ? searchText || undefined : undefined,
+            mrn: field === 'patientMrn' ? searchText || undefined : undefined,
+            primaryMobileNumber:
+                field === 'phoneNumber' ? searchText || undefined : undefined,
+            documentNumber:
+                field === 'documentNumber' ? searchText || undefined : undefined,
+            dateOfBirth: field === 'dob' ? searchText || undefined : undefined,
             encounterNumber: encounterNumber || undefined,
 
             facilityId:
@@ -424,6 +411,9 @@ const PatientsEncounters = () => {
 
             patientName: undefined,
             mrn: undefined,
+            primaryMobileNumber: undefined,
+            documentNumber: undefined,
+            dateOfBirth: undefined,
             encounterNumber: undefined,
 
             facilityId: currentFacility?.id ?? undefined,
@@ -502,8 +492,7 @@ const PatientsEncounters = () => {
                                 <SearchPatientCriteria
                                     record={patientSearch}
                                     setRecord={setPatientSearch}
-                                    liveSearchMinLength={3}
-                                    onSearchClick={handlePatientSearchClick}
+                                    liveSearchMinLength={0}
                                 />
                             </div>
 

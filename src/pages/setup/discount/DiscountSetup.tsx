@@ -5,7 +5,6 @@ import React, {
 } from 'react';
 
 import {
-  Form,
   Panel
 } from 'rsuite';
 
@@ -22,7 +21,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -56,18 +54,12 @@ import {
 import {
   useChangeDiscountActivationStatusMutation,
   useDeleteDiscountMutation,
-  useGetDiscountsByApplicableOnQuery,
-  useGetDiscountsByCodeQuery,
   useGetDiscountsByFacilityQuery,
-  useGetDiscountsByNameQuery,
-  useGetDiscountsByTypeQuery,
   useSetDefaultDiscountMutation
 } from '@/services/billing/discountService';
 
 import type {
-  Discount,
-  DiscountApplicableOn,
-  DiscountType
+  Discount
 } from '@/types/model-types-new';
 
 import {
@@ -82,72 +74,18 @@ import {
 
 import './styles.less';
 
-type FilterCriteria =
-  | ''
-  | 'code'
-  | 'name'
-  | 'discountType'
-  | 'applicableOn';
-
-type DiscountFilter = {
-  criteria:
-    FilterCriteria;
-
-  textValue:
-    string;
-
-  discountType:
-    DiscountType | '';
-
-  applicableOn:
-    DiscountApplicableOn | '';
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  code: '',
+  name: '',
+  discountType: '',
+  value: '',
+  applicableOn: '',
+  requiresApproval: '',
+  isDefault: ''
 };
-
-const filterCriteriaOptions = [
-  {
-    label:
-      'Code',
-
-    value:
-      'code'
-  },
-  {
-    label:
-      'Name',
-
-    value:
-      'name'
-  },
-  {
-    label:
-      'Discount Type',
-
-    value:
-      'discountType'
-  },
-  {
-    label:
-      'Applicable On',
-
-    value:
-      'applicableOn'
-  }
-];
-
-const initialDiscountFilter:
-DiscountFilter = {
-  criteria:
-    '',
-
-  textValue:
-    '',
-
-  discountType:
-    '',
-
-  applicableOn:
-    ''
-};
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const DiscountSetup:
 React.FC = () => {
@@ -250,96 +188,23 @@ React.FC = () => {
       'desc'
     );
 
-  const [
-    discountFilter,
-    setDiscountFilter
-  ] =
-    useState<DiscountFilter>({
-      ...initialDiscountFilter
-    });
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no active param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
-  const [
-    appliedDiscountFilter,
-    setAppliedDiscountFilter
-  ] =
-    useState<DiscountFilter>({
-      ...initialDiscountFilter
-    });
-
-  const hasCodeFilter =
-    appliedDiscountFilter.criteria ===
-      'code' &&
-    Boolean(
-      appliedDiscountFilter
-        .textValue
-        .trim()
-    );
-
-  const hasNameFilter =
-    appliedDiscountFilter.criteria ===
-      'name' &&
-    Boolean(
-      appliedDiscountFilter
-        .textValue
-        .trim()
-    );
-
-  const hasTypeFilter =
-    appliedDiscountFilter.criteria ===
-      'discountType' &&
-    Boolean(
-      appliedDiscountFilter
-        .discountType
-    );
-
-  const hasApplicableOnFilter =
-    appliedDiscountFilter.criteria ===
-      'applicableOn' &&
-    Boolean(
-      appliedDiscountFilter
-        .applicableOn
-    );
-
-  const hasAnyFilter =
-    hasCodeFilter ||
-    hasNameFilter ||
-    hasTypeFilter ||
-    hasApplicableOnFilter;
-
+  // Discounts of the facility with the applied header filters
   const allDiscountsQuery =
     useGetDiscountsByFacilityQuery(
       {
         facilityId:
           facilityId as number,
 
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          hasAnyFilter
-      }
-    );
-
-  const discountsByCodeQuery =
-    useGetDiscountsByCodeQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        value:
-          appliedDiscountFilter
-            .textValue,
+        filters: {
+          ...appliedFilters,
+          active: activeFilter
+        },
 
         page:
           paginationParams.page,
@@ -355,97 +220,7 @@ React.FC = () => {
       },
       {
         skip:
-          !facilityId ||
-          !hasCodeFilter
-      }
-    );
-
-  const discountsByNameQuery =
-    useGetDiscountsByNameQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        value:
-          appliedDiscountFilter
-            .textValue,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasNameFilter
-      }
-    );
-
-  const discountsByTypeQuery =
-    useGetDiscountsByTypeQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        discountType:
-          appliedDiscountFilter
-            .discountType as
-            DiscountType,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasTypeFilter
-      }
-    );
-
-  const discountsByApplicableOnQuery =
-    useGetDiscountsByApplicableOnQuery(
-      {
-        facilityId:
-          facilityId as number,
-
-        applicableOn:
-          appliedDiscountFilter
-            .applicableOn as
-            DiscountApplicableOn,
-
-        page:
-          paginationParams.page,
-
-        size:
-          paginationParams.size,
-
-        sort:
-          paginationParams.sort,
-
-        timestamp:
-          paginationParams.timestamp
-      },
-      {
-        skip:
-          !facilityId ||
-          !hasApplicableOnFilter
+          !facilityId
       }
     );
 
@@ -482,161 +257,49 @@ React.FC = () => {
   ] =
     useSetDefaultDiscountMutation();
 
-  const activeResponse =
-    useMemo(() => {
-      if (
-        hasCodeFilter
-      ) {
-        return {
-          data:
-            discountsByCodeQuery
-              .data?.data ??
-            [],
+  const activeResponse = useMemo(
+    () => ({
+      data: allDiscountsQuery.data?.data ?? [],
+      totalCount: allDiscountsQuery.data?.totalCount ?? 0
+    }),
+    [allDiscountsQuery.data]
+  );
 
-          totalCount:
-            discountsByCodeQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  const isFetching = allDiscountsQuery.isFetching;
 
-      if (
-        hasNameFilter
-      ) {
-        return {
-          data:
-            discountsByNameQuery
-              .data?.data ??
-            [],
+  const activeQueryError = allDiscountsQuery.error;
 
-          totalCount:
-            discountsByNameQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  // ===== Header filters =====
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
+  };
 
-      if (
-        hasTypeFilter
-      ) {
-        return {
-          data:
-            discountsByTypeQuery
-              .data?.data ??
-            [],
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(previous => ({ ...previous, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
-          totalCount:
-            discountsByTypeQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
 
-      if (
-        hasApplicableOnFilter
-      ) {
-        return {
-          data:
-            discountsByApplicableOnQuery
-              .data?.data ??
-            [],
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
+  }, [statusFilter]);
 
-          totalCount:
-            discountsByApplicableOnQuery
-              .data
-              ?.totalCount ??
-            0
-        };
-      }
-
-      return {
-        data:
-          allDiscountsQuery
-            .data?.data ??
-          [],
-
-        totalCount:
-          allDiscountsQuery
-            .data
-            ?.totalCount ??
-          0
-      };
-    }, [
-      hasCodeFilter,
-      hasNameFilter,
-      hasTypeFilter,
-      hasApplicableOnFilter,
-      discountsByCodeQuery.data,
-      discountsByNameQuery.data,
-      discountsByTypeQuery.data,
-      discountsByApplicableOnQuery.data,
-      allDiscountsQuery.data
-    ]);
-
-  const isFetching =
-    allDiscountsQuery
-      .isFetching ||
-    discountsByCodeQuery
-      .isFetching ||
-    discountsByNameQuery
-      .isFetching ||
-    discountsByTypeQuery
-      .isFetching ||
-    discountsByApplicableOnQuery
-      .isFetching;
-
-  const activeQueryError =
-    hasCodeFilter
-      ? discountsByCodeQuery.error
-      : hasNameFilter
-        ? discountsByNameQuery.error
-        : hasTypeFilter
-          ? discountsByTypeQuery.error
-          : hasApplicableOnFilter
-            ? discountsByApplicableOnQuery.error
-            : allDiscountsQuery.error;
-
+  // Reload the table after add/edit/delete/default/activation changes
   const refetchActiveQuery =
     async () => {
-      if (
-        hasCodeFilter
-      ) {
-        await discountsByCodeQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasNameFilter
-      ) {
-        await discountsByNameQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasTypeFilter
-      ) {
-        await discountsByTypeQuery
-          .refetch();
-
-        return;
-      }
-
-      if (
-        hasApplicableOnFilter
-      ) {
-        await discountsByApplicableOnQuery
-          .refetch();
-
-        return;
-      }
-
       await allDiscountsQuery
         .refetch();
     };
@@ -688,15 +351,8 @@ React.FC = () => {
     };
   }, []);
 
+  // Another facility starts again from the first page
   useEffect(() => {
-    setDiscountFilter({
-      ...initialDiscountFilter
-    });
-
-    setAppliedDiscountFilter({
-      ...initialDiscountFilter
-    });
-
     setSelectedDiscount({
       ...newDiscount
     });
@@ -739,104 +395,6 @@ React.FC = () => {
     activeQueryError,
     dispatch
   ]);
-
-  const handleResetFilter =
-    () => {
-      setDiscountFilter({
-        ...initialDiscountFilter
-      });
-
-      setAppliedDiscountFilter({
-        ...initialDiscountFilter
-      });
-
-      setPaginationParams(
-        previous => ({
-          ...previous,
-
-          page:
-            0,
-
-          timestamp:
-            Date.now()
-        })
-      );
-    };
-
-  const handleSearch =
-    () => {
-      const {
-        criteria,
-        textValue,
-        discountType,
-        applicableOn
-      } =
-        discountFilter;
-
-      const valid =
-        (
-          (
-            criteria ===
-              'code' ||
-            criteria ===
-              'name'
-          ) &&
-          Boolean(
-            textValue.trim()
-          )
-        ) ||
-        (
-          criteria ===
-            'discountType' &&
-          Boolean(
-            discountType
-          )
-        ) ||
-        (
-          criteria ===
-            'applicableOn' &&
-          Boolean(
-            applicableOn
-          )
-        );
-
-      if (!valid) {
-        dispatch(
-          notify({
-            msg:
-              'Please complete the selected filter.',
-
-            sev:
-              'warning'
-          })
-        );
-
-        return;
-      }
-
-      setAppliedDiscountFilter({
-        criteria,
-
-        textValue:
-          textValue.trim(),
-
-        discountType,
-
-        applicableOn
-      });
-
-      setPaginationParams(
-        previous => ({
-          ...previous,
-
-          page:
-            0,
-
-          timestamp:
-            Date.now()
-        })
-      );
-    };
 
   const handleNew =
     () => {
@@ -1207,13 +765,15 @@ React.FC = () => {
       key:
         'code',
 
+      ...headerSearch('code'),
+
       title:
         <Translate>
           Code
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        130,
 
       sortable:
         true
@@ -1222,13 +782,15 @@ React.FC = () => {
       key:
         'name',
 
+      ...headerSearch('name'),
+
       title:
         <Translate>
           Name
         </Translate>,
 
-      flexGrow:
-        3,
+      width:
+        180,
 
       sortable:
         true
@@ -1237,13 +799,15 @@ React.FC = () => {
       key:
         'discountType',
 
+      ...headerSelect('discountType', discountTypeOptions ?? []),
+
       title:
         <Translate>
           Discount Type
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        160,
 
       sortable:
         true,
@@ -1262,13 +826,15 @@ React.FC = () => {
       key:
         'value',
 
+      ...headerSearch('value', 'Value'),
+
       title:
         <Translate>
           Discount Value
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        130,
 
       render: (
         row:
@@ -1288,13 +854,15 @@ React.FC = () => {
       key:
         'applicableOn',
 
+      ...headerSelect('applicableOn', applicableOnOptions ?? []),
+
       title:
         <Translate>
           Applicable On
         </Translate>,
 
-      flexGrow:
-        2,
+      width:
+        170,
 
       sortable:
         true,
@@ -1313,13 +881,18 @@ React.FC = () => {
       key:
         'requiresApproval',
 
+      ...headerSelect('requiresApproval', [
+        { label: 'Required', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
+
       title:
         <Translate>
           Approval
         </Translate>,
 
       width:
-        100,
+        120,
 
       align:
         'center' as const,
@@ -1346,13 +919,18 @@ React.FC = () => {
       key:
         'isDefault',
 
+      ...headerSelect('isDefault', [
+        { label: 'Default', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
+
       title:
         <Translate>
           Default
         </Translate>,
 
       width:
-        95,
+        110,
 
       align:
         'center' as const,
@@ -1379,13 +957,23 @@ React.FC = () => {
       key:
         'active',
 
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+
       title:
         <Translate>
           Active
         </Translate>,
 
       width:
-        95,
+        120,
 
       align:
         'center' as const,
@@ -1519,154 +1107,6 @@ React.FC = () => {
     }
   ];
 
-  const filters =
-    () => (
-      <Form
-        fluid
-        className="form-of-filters-set-up"
-      >
-        <MyInput
-          width="190px"
-          fieldName="criteria"
-          fieldType="select"
-          selectData={
-            filterCriteriaOptions
-          }
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={
-            discountFilter
-          }
-          setRecord={(
-            updated:
-              any
-          ) => {
-            const next =
-              typeof updated ===
-              'function'
-                ? updated(
-                    discountFilter
-                  )
-                : updated;
-
-            const nextCriteria =
-              (
-                next?.criteria ??
-                ''
-              ) as
-                FilterCriteria;
-
-            if (!nextCriteria) {
-              handleResetFilter();
-
-              return;
-            }
-
-            setDiscountFilter({
-              ...initialDiscountFilter,
-
-              criteria:
-                nextCriteria
-            });
-          }}
-          showLabel={false}
-          placeholder="Select Criteria"
-          searchable={false}
-        />
-
-        {(
-          discountFilter.criteria ===
-            'code' ||
-          discountFilter.criteria ===
-            'name'
-        ) && (
-          <MyInput
-            width="240px"
-            fieldName="textValue"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder={
-              discountFilter.criteria ===
-                'code'
-                ? 'Enter Discount Code'
-                : 'Enter Discount Name'
-            }
-          />
-        )}
-
-        {discountFilter.criteria ===
-          'discountType' && (
-          <MyInput
-            width="220px"
-            fieldName="discountType"
-            fieldType="select"
-            selectData={
-              discountTypeOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder="Select Discount Type"
-            searchable={false}
-          />
-        )}
-
-        {discountFilter.criteria ===
-          'applicableOn' && (
-          <MyInput
-            width="220px"
-            fieldName="applicableOn"
-            fieldType="select"
-            selectData={
-              applicableOnOptions
-            }
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={
-              discountFilter
-            }
-            setRecord={
-              setDiscountFilter
-            }
-            showLabel={false}
-            placeholder="Select Applicable On"
-            searchable={false}
-          />
-        )}
-
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={
-            handleSearch
-          }
-          width="80px"
-        >
-          Search
-        </MyButton>
-
-        <MyButton
-          color="var(--primary-gray)"
-          onClick={
-            handleResetFilter
-          }
-          width="80px"
-        >
-          Clear
-        </MyButton>
-      </Form>
-    );
-
   const selectedRowClass = (
     row:
       Discount
@@ -1713,9 +1153,6 @@ React.FC = () => {
           setSelectedDiscount(
             row
           )
-        }
-        filters={
-          filters()
         }
         page={
           paginationParams.page

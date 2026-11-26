@@ -124,6 +124,12 @@ Record<string, string> = {
   citizenCategory:
     'Citizen Category',
 
+  applyOnPatientCopayment:
+    'Patient Copayment',
+
+  applyOnClaimShare:
+    'Claim Share',
+
   validFrom:
     'Valid From',
 
@@ -594,6 +600,14 @@ React.FC<Props> = ({
           previous.citizenCategory ??
           'ALL',
 
+        applyOnPatientCopayment:
+          previous.applyOnPatientCopayment ??
+          true,
+
+        applyOnClaimShare:
+          previous.applyOnClaimShare ??
+          true,
+
         validFrom:
           previous.validFrom ||
           new Date()
@@ -876,6 +890,14 @@ React.FC<Props> = ({
           tax.citizenCategory as
             TaxCitizenCategory,
 
+        applyOnPatientCopayment:
+          tax.applyOnPatientCopayment ??
+          true,
+
+        applyOnClaimShare:
+          tax.applyOnClaimShare ??
+          true,
+
         validFrom:
           String(
             tax.validFrom
@@ -1060,6 +1082,7 @@ React.FC<Props> = ({
               width="100%"
               fieldLabel="Fixed Amount"
               fieldType="number"
+              allowDecimal
               fieldName="fixedAmount"
               record={
                 tax
@@ -1097,6 +1120,7 @@ React.FC<Props> = ({
             width="100%"
             fieldLabel="Percentage"
             fieldType="number"
+            allowDecimal
             fieldName="percentage"
             record={
               tax
@@ -1176,6 +1200,40 @@ React.FC<Props> = ({
           placeholder="Select Citizen Category"
           searchable={false}
         />
+
+        <br />
+
+        <div className="tax-two-columns">
+          <MyInput
+            width="100%"
+            fieldLabel="Patient Copayment"
+            fieldType="checkbox"
+            fieldName="applyOnPatientCopayment"
+            checkedLabel="Taxed"
+            unCheckedLabel="Not Taxed"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
+          />
+
+          <MyInput
+            width="100%"
+            fieldLabel="Claim Share"
+            fieldType="checkbox"
+            fieldName="applyOnClaimShare"
+            checkedLabel="Taxed"
+            unCheckedLabel="Not Taxed"
+            record={
+              tax
+            }
+            setRecord={
+              setTax
+            }
+          />
+        </div>
 
         <br />
 

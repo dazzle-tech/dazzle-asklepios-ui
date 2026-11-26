@@ -245,8 +245,16 @@ useEffect(() => {
     <div className="container">
       <div className="left-box">
         <Panel>
-          <div className="container-bt">
-            <div className="left">
+        <div
+          className="container-bt"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}
+        >    
+        <div className="left">
               {!inModal && (
                 <BackButton
                   onClick={handleGoBack}
@@ -285,12 +293,17 @@ useEffect(() => {
               </Form>
             </div>
 
-            {!inModal && (
-              <div className="right">
-                <NurseSummeryReportButton encounterId={localEncounter?.id} />
-              
-              </div>
-            )}
+          {!inModal && (
+            <div
+              className="right"
+              style={{
+                marginLeft: 'auto',
+                flexShrink: 0
+              }}
+            >
+              <NurseSummeryReportButton encounterId={localEncounter?.id} />
+            </div>
+          )}
           </div>
 
           <Divider />

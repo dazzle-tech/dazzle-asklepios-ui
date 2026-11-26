@@ -7,23 +7,6 @@
   width: 100%;
 }
 
-.billing-rule-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 16px;
-  margin-bottom: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--rs-border-primary, #e5e5ea);
-  border-radius: 10px;
-  background: #fafbfc;
-
-  .my-input-container.rs-form-group {
-    margin-bottom: 0;
-    min-width: 220px;
-  }
-}
-
 .container-of-icons {
   display: flex;
   align-items: center;
@@ -86,15 +69,5 @@
 @media screen and (max-width: 700px) {
   .billing-rule-two-columns {
     grid-template-columns: 1fr;
-  }
-
-  .billing-rule-filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-
-    .my-input-container.rs-form-group {
-      min-width: 0;
-      width: 100%;
-    }
   }
 }

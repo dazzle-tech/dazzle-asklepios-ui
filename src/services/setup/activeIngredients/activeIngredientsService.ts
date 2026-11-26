@@ -33,10 +33,28 @@ export const activeIngredientsService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['ActiveIngredients'],
   endpoints: (builder) => ({
-    getActiveIngredients: builder.query<PagedResult<ActiveIngredient>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+    // Optional filters are ANDed by the backend; empty ones are left out
+    getActiveIngredients: builder.query<
+      PagedResult<ActiveIngredient>,
+      PagedParams & {
+        isActive?: boolean;
+        name?: string;
+        atcCode?: string;
+        drugClassIds?: (number | string)[];
+      }
+    >({
+      query: ({ page, size, sort = 'id,asc', timestamp, isActive, name, atcCode, drugClassIds }) => ({
         url: '/api/setup/active-ingredients',
-        params: { page, size, sort, timestamp },
+        params: {
+          page,
+          size,
+          sort,
+          timestamp,
+          isActive,
+          name: name?.trim() || undefined,
+          atcCode: atcCode?.trim() || undefined,
+          drugClassIds: drugClassIds?.length ? drugClassIds : undefined,
+        },
       }),
       transformResponse: (response: ActiveIngredient[], meta) =>
         mapPaged<ActiveIngredient>(response, meta),
@@ -165,6 +183,10 @@ export const activeIngredientsService = createApi({
           ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
+    getActiveIngredientById: builder.query<ActiveIngredient, Id>({
+      query: (id) => `/api/setup/active-ingredients/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'ActiveIngredients', id }],
+    }),
     getActiveIngredientsByIds: builder.mutation<ActiveIngredient[], Id[]>({
   query: (ids) => ({
     url: '/api/setup/active-ingredients/by-ids',
@@ -199,6 +221,8 @@ export const {
   useGetAllActiveIngredientsQuery,
   useLazyGetAllActiveIngredientsQuery,
   useGetActiveIngredientsByIdsMutation,
+  useGetActiveIngredientByIdQuery,
+  useLazyGetActiveIngredientByIdQuery,
 
 } = activeIngredientsService;
 

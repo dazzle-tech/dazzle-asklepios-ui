@@ -1,14 +1,13 @@
 import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
 import {
   useCreateProcdureMutation,
   useUpdateProcdureMutation
 } from '@/services/patients/patientProcedureService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSortedLovQuery } from './useSortedLovQuery';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
@@ -21,6 +20,9 @@ import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import UncoveredInsuranceWarning from '@/components/UncoveredInsuranceWarning';
 import { useInsurancePriceListCoverage } from '@/hooks/useInsurancePriceListCoverage';
+import PreAuthorizationAlertModal, {
+  type PreAuthorizationAlertItem
+} from '@/pages/billing-module/accounting/components/PreAuthorizationAlertModal';
 import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
@@ -164,6 +166,8 @@ const Details = ({
   proRefetch
 }) => {
   const authSlice = useAppSelector(state => state.auth);
+  const sourceFacilityId = encounter?.facilityId || authSlice?.selectedDepartment?.facilityId;
+  const sourceDepartmentId = encounter?.departmentId || authSlice?.selectedDepartment?.departmentId;
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
   const [procedurePage, setProcedurePage] = useState(0);
@@ -181,11 +185,12 @@ const Details = ({
   const { uncoveredItems, checkItem, clearUncoveredItems, requiresCashConfirmation } =
     useInsurancePriceListCoverage(encounter?.id);
 
+  const [preAuthAlert, setPreAuthAlert] = useState<PreAuthorizationAlertItem[] | null>(null);
   const [createProcedure] = useCreateProcdureMutation();
   const [updateProcedure] = useUpdateProcdureMutation();
 
-  const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-  const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
+  const { data: bodypartLovQueryResponse } = useSortedLovQuery('BODY_PARTS');
+  const { data: sideLovQueryResponse } = useSortedLovQuery('SIDES');
   const categoryOptions = useEnumOptions('ProcedureCategory');
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
@@ -352,10 +357,10 @@ const Details = ({
       setProcedure(prev => ({
         ...prev,
         toDepartmentId: null,
-        toFacilityId: authSlice?.selectedDepartment?.facilityId
+        toFacilityId: sourceFacilityId
       }));
     }
-  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
+  }, [procedure.currentDepartment, sourceFacilityId]);
 
   // Reset & reload departments whenever facility changes
   useEffect(() => {
@@ -512,11 +517,11 @@ const Details = ({
         procedureId: procedure.procedureId,
         patientId: patient?.id,
         encounterId: encounter?.id,
-        fromFacilityId: authSlice?.selectedDepartment?.facilityId,
+        fromFacilityId: sourceFacilityId,
         toFacilityId: procedure.currentDepartment
-          ? authSlice?.selectedDepartment?.facilityId
+          ? sourceFacilityId
           : procedure.toFacilityId,
-        fromDepartmentId: authSlice?.selectedDepartment?.departmentId,
+        fromDepartmentId: sourceDepartmentId,
         toDepartmentId: procedure.toDepartmentId,
         indicationId: procedure.indicationId,
         procedureLevel: procedure.procedureLevel,
@@ -543,7 +548,7 @@ const Details = ({
           bodyPart: procedure.bodyPart || '',
           side: procedure.side,
           toFacilityId: procedure.currentDepartment
-            ? authSlice?.selectedDepartment?.facilityId
+            ? sourceFacilityId
             : procedure.toFacilityId,
           toDepartmentId: procedure.toDepartmentId,
           scheduledDateTime: procedure.scheduledDateTime
@@ -554,10 +559,14 @@ const Details = ({
           result: procedure.result
         }).unwrap();
       } else {
-        await createProcedure({
+        const created = await createProcedure({
           ...procedureData,
           acceptUncoveredAsCash: requiresCashConfirmation
         }).unwrap();
+        const createdRow = ((created as any)?.object ?? created) as { status?: string } | null;
+        if (createdRow?.status === 'WAITING_PRE_AUTHORIZATION') {
+          setPreAuthAlert([{ patientServiceProductId: null, label: 'Procedure' }]);
+        }
       }
 
       setOpenDetailsModal(false);
@@ -623,7 +632,7 @@ const Details = ({
             <MyButton
               appearance="ghost"
               onClick={() => setOpenOrderModel(true)}
-              disabled={editing}
+              disabled={editing || edit}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
@@ -899,17 +908,15 @@ const Details = ({
         }
       />
 
-      <MyModal
-        open={openOrderModel}
-        setOpen={setOpenOrderModel}
-        size="lg"
-        title="Add Order"
-        content={
-          <div dir={dir}>
-            <PatientOrder edit={edit} patient={patient} encounter={encounter} />
-          </div>
-        }
-      />
+      {openOrderModel && (
+        <PatientOrder
+          directTestsSelection
+          edit={edit}
+          patient={patient}
+          encounter={encounter}
+          onClose={() => setOpenOrderModel(false)}
+        />
+      )}
 
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
@@ -918,6 +925,13 @@ const Details = ({
         refetchData={() => { }}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.id ? Number(procedure.id) : 0}
+      />
+
+      <PreAuthorizationAlertModal
+        open={Boolean(preAuthAlert?.length)}
+        encounterId={encounter?.id}
+        items={preAuthAlert ?? []}
+        onClosed={() => setPreAuthAlert(null)}
       />
     </>
   );

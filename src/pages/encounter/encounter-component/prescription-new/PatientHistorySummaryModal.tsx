@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientHistorySummary from './PatientHistorySummary';
 
@@ -31,21 +31,24 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
     const isRTL = direction === 'RTL';
 
     const dir = isRTL ? 'rtl' : 'ltr';
+    const [ready, setReady] = useState(false);
 
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Treatment Validation Summary"
+            title="AI Medication Validation"
             size="70vw"
             bodyheight="75vh"
             actionButtonFunction={handleSave}
             actionButtonLoading={saving}
-            isDisabledActionBtn={saving}
+            isDisabledActionBtn={saving || !ready}
             content={() => (<div dir={dir}>
                 <PatientHistorySummary
-                    title="Medication Validation"
                     aiPayload={medicationValidationPayload}
+                    onReadyChange={setReady}
+                    onContinueWithoutAi={handleSave}
+                    onEditPrescription={() => setOpen(false)}
                 /></div>
             )}
 

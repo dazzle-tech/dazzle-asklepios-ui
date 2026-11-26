@@ -1,7 +1,7 @@
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
-import GenericAdministeredMedications from "@/pages/encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
+import GenericAdministeredMedications from '@/components/clinical/GenericAdministeredMedications';
 import { useGetAntimicrobialProphylaxisGivenListQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useSaveAntimicrobialProphylaxisGivenMutation, useSaveSurgicalPreparationIncisionMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery, useGetUsersQuery } from "@/services/setupService";
 import { newApOperationAntimicrobialProphylaxisGiven, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";

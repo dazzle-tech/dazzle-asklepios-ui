@@ -1,10 +1,9 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Panel, Form } from 'rsuite';
+import { Panel } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditAgeGroup from './AddEditAgeGroup';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -16,13 +15,8 @@ import {
   useGetAgeGroupsQuery,
   useAddAgeGroupMutation,
   useUpdateAgeGroupMutation,
-  useDeleteAgeGroupMutation,
-  useLazyGetAgeGroupsByLabelQuery,
-  useLazyGetAgeGroupsByFromAgeQuery,
-  useLazyGetAgeGroupsByToAgeQuery,
-  useLazyGetAgeGroupsByFacilityQuery
+  useDeleteAgeGroupMutation
 } from '@/services/setup/ageGroupService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
 import { AgeGroup } from '@/types/model-types-new';
@@ -40,40 +34,22 @@ const AgeGroupSetup: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
 
-  // Filter state
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { facilityId: '', ageGroup: '', fromAge: '', toAge: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   // Mutations
   const [addAgeGroup] = useAddAgeGroupMutation();
   const [updateAgeGroup] = useUpdateAgeGroupMutation();
   const [deleteAgeGroup] = useDeleteAgeGroupMutation();
 
-  // Lazy queries used for filters
-  const [fetchByLabel] = useLazyGetAgeGroupsByLabelQuery();
-  const [fetchByFromAge] = useLazyGetAgeGroupsByFromAgeQuery();
-  const [fetchByToAge] = useLazyGetAgeGroupsByToAgeQuery();
-  const [fetchByFacility] = useLazyGetAgeGroupsByFacilityQuery();
-
-  // Unfiltered pagination (main API)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
-  });
-
-  // Filtered pagination
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,desc'
+    sort: 'id,asc'
   });
 
   // Enums and facilities
@@ -85,28 +61,13 @@ const AgeGroupSetup: React.FC = () => {
   } = useGetAgeGroupsQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort
+    sort: paginationParams.sort,
+    ...appliedFilters
   });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
-  // Derived table values
-  const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : pageData?.totalCount ?? 0),
-    [isFiltered, filteredTotal, pageData?.totalCount]
-  );
-  const links = (isFiltered ? filteredLinks : pageData?.links) || {};
-  const tableData = useMemo(
-    () => (isFiltered ? filteredData : pageData?.data ?? []),
-    [isFiltered, filteredData, pageData?.data]
-  );
-
-  // Available filters
-  const filterFields = [
-    { label: 'Facility', value: 'facilityId' },
-    { label: 'Age Group', value: 'ageGroup' },
-    { label: 'From Age', value: 'fromAge' },
-    { label: 'To Age', value: 'toAge' }
-  ];
+  const totalCount = pageData?.totalCount ?? 0;
+  const tableData = useMemo(() => pageData?.data ?? [], [pageData?.data]);
 
   // Open "Add new"
   const handleNew = () => {
@@ -117,19 +78,6 @@ const AgeGroupSetup: React.FC = () => {
   // Helper to coerce numbers
   const numberOrUndefined = (v: any) =>
     v === '' || v === null || typeof v === 'undefined' ? undefined : Number(v);
-
-  /**
-   * Centralized: reset to the unfiltered main API list & original pagination logic.
-   */
-  const resetToUnfiltered = () => {
-    setIsFiltered(false);
-    setFilteredData([]);
-    setFilteredTotal(0);
-    setFilteredLinks(undefined);
-    setFilterPagination(prev => ({ ...prev, page: 0, sort: 'id,desc' }));
-    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
-    refetch();
-  };
 
   /**
    * Save (add or update) and refresh list correctly for current view (filtered/unfiltered).
@@ -161,13 +109,8 @@ const AgeGroupSetup: React.FC = () => {
         }).unwrap();
 
         dispatch(notify({ msg: 'Age Group updated successfully', sev: 'success' }));
-
-        if (isFiltered) {
-          // نحدّث الصف في filteredData
-          setFilteredData(prev => prev.map(row => (row.id === updated.id ? updated : row)));
-        } else {
-          refetch();
-        }
+        setAgeGroup(prev => (prev?.id === updated?.id ? { ...prev, ...updated } : prev));
+        refetch();
       } else {
         const created = await addAgeGroup({
           facilityId: effectiveFacilityId,
@@ -175,42 +118,9 @@ const AgeGroupSetup: React.FC = () => {
         }).unwrap();
 
         dispatch(notify({ msg: 'Age Group added successfully', sev: 'success' }));
-
-        if (isFiltered) {
-          // نتحقق إذا الـ age group الجديد يطابق شروط الفلتر
-          const filterField = recordOfFilter.filter;
-          const filterValue = recordOfFilter.value;
-          let matchesFilter = false;
-
-          if (filterField === 'facilityId') {
-            matchesFilter = created.facilityId === Number(filterValue);
-          } else if (filterField === 'ageGroup') {
-            matchesFilter = created.ageGroup === String(filterValue);
-          } else if (filterField === 'fromAge') {
-            matchesFilter = String(created.fromAge ?? '').includes(String(filterValue));
-          } else if (filterField === 'toAge') {
-            matchesFilter = String(created.toAge ?? '').includes(String(filterValue));
-          }
-
-          if (matchesFilter) {
-            // نضيف الـ age group الجديد في أول القائمة المفلترة
-            setFilteredData(prev => [created, ...prev]);
-            setFilteredTotal(prev => prev + 1);
-            // نرجع لأول صفحة عشان نشوف الـ age group الجديد
-            setFilterPagination(prev => ({ ...prev, page: 0 }));
-          } else {
-            // إذا ما بطابق الفلتر، نعلم المستخدم
-            dispatch(
-              notify({
-                msg: 'Age Group added but does not match current filter',
-                sev: 'warning'
-              })
-            );
-          }
-        } else {
-          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-          refetch();
-        }
+        setAgeGroup(created);
+        // Reload the list with the current filters
+        refetch();
       }
     } catch (err: any) {
       const data = err?.data ?? {};
@@ -280,68 +190,6 @@ const AgeGroupSetup: React.FC = () => {
   };
 
   /**
-   * Run the correct filter query with explicit sort.
-   */
-  const runFilterQuery = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = paginationParams.size,
-    sort?: string
-  ) => {
-    if (!value && value !== 0) return undefined;
-
-    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
-
-    if (fieldName === 'facilityId') {
-      return await fetchByFacility({
-        facilityId: Number(value),
-        page,
-        size,
-        sort: effectiveSort
-      }).unwrap();
-    } else if (fieldName === 'ageGroup') {
-      return await fetchByLabel({ label: String(value), page, size, sort: effectiveSort }).unwrap();
-    } else if (fieldName === 'fromAge') {
-      return await fetchByFromAge({
-        fromAge: String(value),
-        page,
-        size,
-        sort: effectiveSort
-      }).unwrap();
-    } else if (fieldName === 'toAge') {
-      return await fetchByToAge({ toAge: String(value), page, size, sort: effectiveSort }).unwrap();
-    }
-    return undefined;
-  };
-
-  /**
-   * Apply or clear a filter.
-   */
-  const handleFilterChange = async (
-    fieldName: string,
-    value: any,
-    page = 0,
-    size = filterPagination.size,
-    sort = filterPagination.sort
-  ) => {
-    if (!value && value !== 0) {
-      resetToUnfiltered();
-      return;
-    }
-    try {
-      const resp = await runFilterQuery(fieldName, value, page, size, sort);
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setFilterPagination(prev => ({ ...prev, page, size, sort }));
-    } catch {
-      resetToUnfiltered();
-    }
-  };
-
-  /**
    * Delete a row and refresh correctly in both modes.
    */
   const handleDelete = async () => {
@@ -350,70 +198,36 @@ const AgeGroupSetup: React.FC = () => {
     try {
       await deleteAgeGroup({ id: ageGroup.id }).unwrap();
       dispatch(notify({ msg: 'Age Group deleted successfully', sev: 'success' }));
-      if (isFiltered) {
-        await handleFilterChange(
-          recordOfFilter.filter,
-          recordOfFilter.value,
-          filterPagination.page,
-          filterPagination.size,
-          filterPagination.sort
-        );
-      } else {
-        refetch();
-      }
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Failed to delete age group', sev: 'error' }));
     }
   };
 
-  /**
-   * Pagination: in filtered mode re-run the same filter with the new page/size/sort.
-   * In unfiltered mode follow Link headers.
-   */
   const handlePageChange = (_: unknown, newPage: number) => {
-    if (isFiltered) {
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        newPage,
-        filterPagination.size,
-        filterPagination.sort
-      );
-      return;
-    }
-
-    const currentPage = paginationParams.page;
-    const linksMap = links || {};
-    let targetLink: string | null | undefined = null;
-    if (newPage > currentPage && linksMap.next) targetLink = linksMap.next;
-    else if (newPage < currentPage && linksMap.prev) targetLink = linksMap.prev;
-    else if (newPage === 0 && linksMap.first) targetLink = linksMap.first;
-    else if (newPage > currentPage + 1 && linksMap.last) targetLink = linksMap.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  /**
-   * Rows per page change: keep filter pagination when filtered; otherwise update unfiltered.
-   */
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
-    if (isFiltered) {
-      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
-      handleFilterChange(
-        recordOfFilter.filter,
-        recordOfFilter.value,
-        0,
-        newSize,
-        filterPagination.sort
-      );
-    } else {
-      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
-    }
+    setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
   };
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
 
   // Selected row helper
   const isSelected = (row: any) => (row?.id === ageGroup?.id ? 'selected-row' : '');
@@ -449,7 +263,13 @@ const AgeGroupSetup: React.FC = () => {
     {
       key: 'facilityId',
       title: <Translate>Facility Name</Translate>,
-      flexGrow: 4,
+      width: 200,
+      ...headerSearch('facilityId'),
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'All', value: '' },
+        ...(facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }))
+      ],
       render: (row: any) => (
         <span>
           {conjureValueBasedOnIDFromList(facilityListResponse ?? [], row?.facilityId, 'name')}
@@ -459,19 +279,24 @@ const AgeGroupSetup: React.FC = () => {
     {
       key: 'ageGroup',
       title: <Translate>Age Group</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('ageGroup'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(ageGroupOptions ?? [])],
       render: (row: any) => (row?.ageGroup ? formatEnumString(row?.ageGroup) : '')
     },
     {
       key: 'fromAge',
       title: <Translate>Age From Unit</Translate>,
-      flexGrow: 3,
+      width: 140,
+      ...headerSearch('fromAge', 'From age'),
       render: (row: any) => `${row?.fromAge ?? ''} ${row?.fromAgeUnit ?? ''}`
     },
     {
       key: 'toAge',
       title: <Translate>Age To Unit</Translate>,
-      flexGrow: 3,
+      width: 140,
+      ...headerSearch('toAge', 'To age'),
       render: (row: any) => `${row?.toAge ?? ''} ${row?.toAgeUnit ?? ''}`
     },
     {
@@ -481,93 +306,6 @@ const AgeGroupSetup: React.FC = () => {
       render: (row: any) => iconsForActions(row)
     }
   ];
-
-  // Filters UI
-  const filters = () => {
-    const selectedFilter = recordOfFilter.filter;
-    let dynamicInput: React.ReactNode;
-
-    if (selectedFilter === 'facilityId') {
-      dynamicInput = (
-        <MyInput
-          width={"100%"}
-          fieldLabel=""
-          fieldName="value"
-          fieldType="select"
-          selectData={facilityListResponse ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-        />
-      );
-    } else if (selectedFilter === 'ageGroup') {
-      dynamicInput = (
-        <MyInput
-          width={"12vw"}
-          fieldName="value"
-          fieldLabel=""
-          fieldType="select"
-          selectData={ageGroupOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          searchable={false}
-        />
-      );
-    } else {
-      dynamicInput = (
-        <MyInput
-          fieldName="value"
-          fieldType="text"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Enter Value"
-          width={"100%"}
-        />
-      );
-    }
-
-    return (
-      <Form fluid className='form-of-filters-set-up'>
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="12vw"
-        />
-        {recordOfFilter.filter && dynamicInput}
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => {
-            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
-              resetToUnfiltered();
-            } else {
-              handleFilterChange(
-                recordOfFilter.filter,
-                recordOfFilter.value,
-                0,
-                filterPagination.size,
-                filterPagination.sort || 'id,desc'
-              );
-            }
-          }}
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
-  };
 
   // Header setup and resize listener
   useEffect(() => {
@@ -586,13 +324,6 @@ const AgeGroupSetup: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Auto-revert when filter value is cleared
-  useEffect(() => {
-    if (!recordOfFilter.value && recordOfFilter.value !== 0 && isFiltered) {
-      resetToUnfiltered();
-    }
-  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
-
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -608,9 +339,8 @@ const AgeGroupSetup: React.FC = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={row => setAgeGroup(row)}
-        filters={filters()}
-        page={isFiltered ? filterPagination.page : paginationParams.page}
-        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         tableButtons={

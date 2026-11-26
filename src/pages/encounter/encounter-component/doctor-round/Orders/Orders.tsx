@@ -7,7 +7,7 @@ import DiagnosticsOrder from '../../diagnostics-order-new';
 import DrugOrder from '../../drug-order';
 import IVFluidOrder from '../../iv-fluid-order';
 import OperationRequest from '../../operation-request/OperationRequest';
-import Referrals from '../../procedure';
+import Referrals from '../../procedure-new';
 const Orders = ({ encounter, patient, edit }) => {
 
             // Direction handling for RTL/LTR

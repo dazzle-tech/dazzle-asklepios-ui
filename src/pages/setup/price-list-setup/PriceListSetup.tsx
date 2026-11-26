@@ -7,10 +7,11 @@ import React, {
 import { Panel } from 'rsuite';
 
 import {
-  MdCheckCircle,
-  MdDelete,
-  MdList,
-  MdModeEdit
+    MdCheckCircle,
+    MdContentCopy,
+    MdDelete,
+    MdList,
+    MdModeEdit
 } from 'react-icons/md';
 
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -19,6 +20,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyTab from '@/components/MyTab';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -37,11 +39,13 @@ import {
 
 import {
   conjureValueBasedOnIDFromList,
+  formatDateWithoutSeconds,
   formatEnumString
 } from '@/utils';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllNphiesPayersQuery } from '@/services/setup/payer/NphiesPayerSetupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 import {
   useActivatePriceListSetupMutation,
@@ -59,8 +63,24 @@ import {
 
 import AddEditPriceListSetup from './AddEditPriceListSetup';
 import PriceListSetupItems from './PriceListSetupItems';
+import PriceListItemDashboard from './PriceListItemDashboard';
 
 import './styles.less';
+
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  facilityId: '',
+  name: '',
+  type: '',
+  payerId: '',
+  versionNumber: '',
+  effectiveFrom: '',
+  effectiveTo: '',
+  currency: '',
+  status: ''
+};
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const PriceListSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -97,6 +117,13 @@ const PriceListSetup: React.FC = () => {
     setDeleteConfirmationOpen
   ] = useState(false);
 
+  const [
+    cloneSourceId,
+    setCloneSourceId
+  ] = useState<number | undefined>();
+
+  const [activeTab, setActiveTab] = useState('1');
+
   const [width, setWidth] = useState(
     typeof window !== 'undefined'
       ? window.innerWidth
@@ -113,6 +140,9 @@ const PriceListSetup: React.FC = () => {
     timestamp: Date.now()
   });
 
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+
   const {
     data: priceListPage,
     isFetching,
@@ -121,7 +151,8 @@ const PriceListSetup: React.FC = () => {
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort,
-    timestamp: paginationParams.timestamp
+    timestamp: paginationParams.timestamp,
+    ...appliedFilters
   });
 
   const {
@@ -135,6 +166,10 @@ const PriceListSetup: React.FC = () => {
     size: 500,
     sort: 'nameEn,asc'
   });
+
+  const typeOptions = useEnumOptions('PriceListSetupType');
+  const statusOptions = useEnumOptions('PriceListSetupStatus');
+  const currencyOptions = useEnumOptions('Currency');
 
   const [
     deletePriceListSetup
@@ -180,7 +215,40 @@ const PriceListSetup: React.FC = () => {
     };
   }, []);
 
+  // ──────────────────────────── HEADER FILTERS ────────────────────────────
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(previous => ({ ...previous, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(previous => ({ ...previous, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  const facilityOptions = (facilityListResponse ?? []).map((f: any) => ({ label: f.name, value: String(f.id) }));
+  const payerOptions = (payerListResponse?.data ?? []).map((p: any) => ({ label: p.nameEn ?? p.nameAr ?? '', value: String(p.id) }));
+
+  // Reload the table after add/edit/delete
+  const refetchList = async () => {
+    await refetch();
+  };
+
   const handleNew = () => {
+    setCloneSourceId(undefined);
+
     setSelectedPriceList({
       ...newPriceListSetup,
 
@@ -208,8 +276,79 @@ const PriceListSetup: React.FC = () => {
   const handleEdit = (
     row: PriceListSetupModel
   ) => {
+    setCloneSourceId(undefined);
+
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
     setSelectedPriceList({
-      ...row
+      ...row,
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      isActive: row.status === 'ACTIVE'
+    });
+
+    setHeaderModalOpen(true);
+  };
+
+  const handleClone = (
+    row: PriceListSetupModel
+  ) => {
+    if (!row.id) {
+      return;
+    }
+
+    setCloneSourceId(row.id);
+
+    const nphiesPayerId =
+      row.nphiesPayerId != null
+        ? Number(row.nphiesPayerId)
+        : undefined;
+    const payerId =
+      row.payerId != null
+        ? Number(row.payerId)
+        : undefined;
+    const useNphies = nphiesPayerId != null;
+
+    setSelectedPriceList({
+      ...row,
+      id: undefined,
+      name: row.name
+        ? `${row.name} (Copy)`
+        : undefined,
+      versionNumber:
+        (row.versionNumber ?? 1) + 1,
+      nphiesPayerId: useNphies
+        ? nphiesPayerId
+        : undefined,
+      nphiesPayerName: useNphies
+        ? row.nphiesPayerName
+        : undefined,
+      payerId: useNphies
+        ? undefined
+        : payerId,
+      payerName: useNphies
+        ? undefined
+        : row.payerName,
+      status: 'ACTIVE',
+      isActive: true
     });
 
     setHeaderModalOpen(true);
@@ -253,6 +392,7 @@ const PriceListSetup: React.FC = () => {
           sev: 'success'
         })
       );
+
     } catch (error: any) {
       dispatch(
         notify({
@@ -290,7 +430,7 @@ const PriceListSetup: React.FC = () => {
         ...newPriceListSetup
       });
 
-      await refetch();
+      await refetchList();
     } catch (error: any) {
       dispatch(
         notify({
@@ -314,7 +454,7 @@ const PriceListSetup: React.FC = () => {
       timestamp: Date.now()
     }));
 
-    await refetch();
+    await refetchList();
   };
 
   const handlePageChange = (
@@ -347,7 +487,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'facilityId',
       title: <Translate>Facility</Translate>,
-      flexGrow: 3,
+      width: 180,
+      ...headerSelect('facilityId', facilityOptions),
 
       render: (
         row: PriceListSetupModel
@@ -362,13 +503,22 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 4
+      width: 200,
+      ...headerSearch('name')
+    },
+
+    {
+      key: 'shortName',
+      title: <Translate>Short Name</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.shortName || '-'
     },
 
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 2,
+      width: 150,
+      ...headerSelect('type', typeOptions ?? []),
 
       render: (
         row: PriceListSetupModel
@@ -381,16 +531,21 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'payerName',
       title: <Translate>Payer</Translate>,
-      flexGrow: 3,
+      width: 190,
+      ...headerSelect('payerId', payerOptions),
 
       render: (
         row: PriceListSetupModel
       ) => {
+        if (row.nphiesPayerName) {
+          return row.nphiesPayerName;
+        }
+
         if (row.payerName) {
           return row.payerName;
         }
 
-        if (!row.payerId) {
+        if (!row.payerId && !row.nphiesPayerId) {
           return '-';
         }
 
@@ -398,7 +553,7 @@ const PriceListSetup: React.FC = () => {
           payerListResponse?.data?.find(
             item =>
               Number(item.id) ===
-              Number(row.payerId)
+              Number(row.nphiesPayerId ?? row.payerId)
           );
 
         return (
@@ -412,7 +567,8 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'versionNumber',
       title: <Translate>Version</Translate>,
-      width: 90,
+      width: 100,
+      ...headerSearch('versionNumber', 'Version'),
       align: 'center' as const
     },
 
@@ -422,7 +578,9 @@ const PriceListSetup: React.FC = () => {
         <Translate>
           Effective From
         </Translate>,
-      flexGrow: 2
+      width: 160,
+      ...headerSearch('effectiveFrom'),
+      searchType: 'date' as const
     },
 
     {
@@ -431,7 +589,9 @@ const PriceListSetup: React.FC = () => {
         <Translate>
           Effective To
         </Translate>,
-      flexGrow: 2,
+      width: 160,
+      ...headerSearch('effectiveTo'),
+      searchType: 'date' as const,
 
       render: (
         row: PriceListSetupModel
@@ -440,16 +600,51 @@ const PriceListSetup: React.FC = () => {
     },
 
     {
+      key: 'taxName',
+      title: <Translate>Tax</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.taxName || '-'
+    },
+
+    {
       key: 'currency',
       title: <Translate>Currency</Translate>,
-      width: 100,
-      align: 'center' as const
+      width: 110,
+      ...headerSelect('currency', currencyOptions ?? []),
+      align: 'center' as const,
+      render: (row: PriceListSetupModel) => (
+        <span>
+          {row.currency ? String(row.currency).toUpperCase() : '-'}
+        </span>
+      )
+    },
+
+    {
+      key: 'createdBy',
+      title: <Translate>Created By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.createdBy || '-'
+    },
+
+    {
+      key: 'createdDate',
+      title: <Translate>Created Date</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => formatDateWithoutSeconds(row.createdDate) || '-'
+    },
+
+    {
+      key: 'lastModifiedBy',
+      title: <Translate>Updated By</Translate>,
+      flexGrow: 2,
+      render: (row: PriceListSetupModel) => row.lastModifiedBy || '-'
     },
 
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      width: 110,
+      width: 130,
+      ...headerSelect('status', statusOptions ?? []),
 
       render: (
         row: PriceListSetupModel
@@ -476,7 +671,7 @@ const PriceListSetup: React.FC = () => {
     {
       key: 'actions',
       title: <Translate>Actions</Translate>,
-      width: 190,
+      width: 220,
       align: 'center' as const,
 
       render: (
@@ -488,8 +683,9 @@ const PriceListSetup: React.FC = () => {
               className="icons-style"
               title="Activate for billing"
               size={23}
-              fill="var(--primary-green, #28a745)"
-              onClick={() => {
+              fill="var(--primary-gray)"
+              onClick={event => {
+                event.stopPropagation();
                 void handleActivate(row);
               }}
             />
@@ -500,29 +696,43 @@ const PriceListSetup: React.FC = () => {
             title="Edit"
             size={23}
             fill="var(--primary-gray)"
-            onClick={() =>
-              handleEdit(row)
-            }
+            onClick={event => {
+              event.stopPropagation();
+              handleEdit(row);
+            }}
+          />
+
+          <MdContentCopy
+            className="icons-style"
+            title="Clone"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleClone(row);
+            }}
           />
 
           <MdList
             className="icons-style"
             title="Price List Items"
             size={24}
-            fill="var(--deep-blue)"
-            onClick={() =>
-              handleOpenItems(row)
-            }
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleOpenItems(row);
+            }}
           />
 
           <MdDelete
             className="icons-style"
             title="Delete"
             size={23}
-            fill="var(--primary-pink)"
-            onClick={() =>
-              handleDeleteRequest(row)
-            }
+            fill="var(--primary-gray)"
+            onClick={event => {
+              event.stopPropagation();
+              handleDeleteRequest(row);
+            }}
           />
         </div>
       )
@@ -547,45 +757,72 @@ const PriceListSetup: React.FC = () => {
 
   return (
     <Panel dir={dir}>
-      <MyTable
-        data={tableData}
-        totalCount={totalCount}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={selectedRowClass}
-        onRowClick={row =>
-          setSelectedPriceList(row)
-        }
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={
-          handleRowsPerPageChange
-        }
-        tableButtons={
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => (
-                <AddOutlineIcon />
-              )}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="125px"
-              disabled={!facilityId}
-            >
-              Add New
-            </MyButton>
-          </div>
-        }
+      <MyTab
+        className="price-list-setup-tabs"
+        activeTab={activeTab}
+        setActiveTab={key => setActiveTab(String(key))}
+        data={[
+          {
+            title: 'Price Lists',
+            content: (
+              <MyTable
+                data={tableData}
+                totalCount={totalCount}
+                loading={isFetching}
+                columns={tableColumns}
+                rowClassName={selectedRowClass}
+                onRowClick={row => {
+                  if (headerModalOpen || itemsModalOpen) {
+                    return;
+                  }
+
+                  setSelectedPriceList(row);
+                }}
+                page={paginationParams.page}
+                rowsPerPage={paginationParams.size}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={
+                  handleRowsPerPageChange
+                }
+                tableButtons={
+                  <div className="container-of-add-new-button">
+                    <MyButton
+                      prefixIcon={() => (
+                        <AddOutlineIcon />
+                      )}
+                      color="var(--deep-blue)"
+                      onClick={handleNew}
+                      width="125px"
+                      disabled={!facilityId}
+                    >
+                      Add New
+                    </MyButton>
+                  </div>
+                }
+              />
+            )
+          },
+          {
+            title: 'Item Dashboard',
+            content: <PriceListItemDashboard active={activeTab === '2'} />
+          }
+        ]}
       />
 
       <AddEditPriceListSetup
         open={headerModalOpen}
-        setOpen={setHeaderModalOpen}
+        setOpen={value => {
+          setHeaderModalOpen(value);
+
+          if (!value) {
+            setCloneSourceId(undefined);
+          }
+        }}
         width={width}
         priceList={selectedPriceList}
         setPriceList={setSelectedPriceList}
         onSaveSuccess={handleSaveSuccess}
+        cloneSourceId={cloneSourceId}
       />
 
       <PriceListSetupItems

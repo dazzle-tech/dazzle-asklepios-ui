@@ -21,13 +21,35 @@ export const prescriptionInstructionService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ["prescriptionInstructions"],
   endpoints: builder => ({
-    // 🔹 Get all diagnostic tests (paginated)
-    getAllPrescriptionInstructions: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
-        url: "/api/setup/prescription-instruction",
-        method: "GET",
-        params: { page, size, sort },
-      }),
+    // Paginated list; optional filters are ANDed by the backend, empty ones are left out
+    getAllPrescriptionInstructions: builder.query<
+      PagedResult<any>,
+      PagedParams & {
+        category?: string;
+        dose?: number | string;
+        unit?: string;
+        rout?: string;
+        frequency?: string;
+      }
+    >({
+      query: ({ page, size, sort = "id,asc", category, dose, unit, rout, frequency }) => {
+        const doseText = String(dose ?? "").trim();
+        return {
+          url: "/api/setup/prescription-instruction",
+          method: "GET",
+          params: {
+            page,
+            size,
+            sort,
+            category: category || undefined,
+            // A dose that is not a number would be rejected, so it is left out
+            dose: doseText && !isNaN(Number(doseText)) ? doseText : undefined,
+            unit: unit || undefined,
+            rout: rout || undefined,
+            frequency: frequency || undefined,
+          },
+        };
+      },
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {

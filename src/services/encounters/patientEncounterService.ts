@@ -54,9 +54,10 @@ export type PatientEncounterCompletionValidation = {
   surgicalHistory: boolean;
   socialHistory: boolean;
 
-  progressNotes: boolean;
   vitalSigns: boolean;
   bodyMeasurements: boolean;
+  /** False when a Waseel insurance visit without investigations has no reason why none was done. */
+  investigationNotPerformedReason: boolean;
   canComplete: boolean;
   missing: string[];
   diagnosticApprovals?: DiagnosticCheckoutApproval[];
@@ -165,6 +166,7 @@ export type EncounterExecutedServiceLine = {
   taxAmount: number | null;
   taxRate: number | null;
   coverageStatus: string | null;
+  priceListName?: string | null;
 };
 
 export type EncounterListVM = {
@@ -268,12 +270,16 @@ export const patientEncounterService = createApi({
       PagedResult<PatientEncounter>,
       {
         departmentId: Id;
+        departmentIds?: Id[];
         fromDate?: string;
         toDate?: string;
         statuses?: string | string[];
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
         priorities?: string[];
@@ -286,12 +292,16 @@ export const patientEncounterService = createApi({
     >({
       query: ({
         departmentId,
+        departmentIds,
         fromDate,
         toDate,
         statuses,
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterReasons,
         chiefComplaint,
         priorities,
@@ -312,11 +322,15 @@ export const patientEncounterService = createApi({
           method: 'GET',
           params: {
             departmentId,
+            departmentIds,
             fromDate,
             toDate,
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterReasons,
             chiefComplaint,
             priorities,
@@ -352,6 +366,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -370,6 +387,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -398,6 +418,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
@@ -443,6 +466,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -458,6 +484,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -483,6 +512,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
@@ -530,6 +562,7 @@ export const patientEncounterService = createApi({
         documentType?: string;
         documentNumber?: string;
         primaryMobileNumber?: string;
+        dateOfBirth?: string;
         encounterType?: string;
         encounterNumber?: string;
         departmentId?: Id;
@@ -561,6 +594,7 @@ export const patientEncounterService = createApi({
         documentType,
         documentNumber,
         primaryMobileNumber,
+        dateOfBirth,
         encounterType,
         encounterNumber,
         departmentId,
@@ -596,6 +630,7 @@ export const patientEncounterService = createApi({
           documentType,
           documentNumber,
           primaryMobileNumber,
+          dateOfBirth,
           encounterType,
           encounterNumber,
           departmentId,
@@ -670,6 +705,9 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
+        primaryMobileNumber?: string;
+        documentNumber?: string;
+        dateOfBirth?: string;
         encounterNumber?: string;
         encounterReasons?: string[];
         chiefComplaint?: string;
@@ -686,6 +724,9 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
+        primaryMobileNumber,
+        documentNumber,
+        dateOfBirth,
         encounterNumber,
         encounterReasons,
         chiefComplaint,
@@ -712,6 +753,9 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
+            primaryMobileNumber,
+            documentNumber,
+            dateOfBirth,
             encounterNumber,
             encounterReasons,
             chiefComplaint,
@@ -788,6 +832,18 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
+    /** Whether the visit is locked until pre-authorization (nurse station has no start endpoint). */
+    getEncounterPreAuthorizationLock: builder.query<
+      { locked: boolean; message: string | null },
+      Id
+    >({
+      query: id => ({
+        url: `/api/patient/encounter/${id}/pre-authorization-lock`,
+        method: 'GET'
+      }),
+      keepUnusedDataFor: 0
+    }),
+
     startEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/start`,
@@ -821,6 +877,18 @@ export const patientEncounterService = createApi({
         url: `/api/patient/encounter/${id}/discharge`,
         method: 'POST',
         body
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+
+    saveInvestigationNotPerformedReason: builder.mutation<
+      PatientEncounter,
+      { id: Id; investigationNotPerformedReason: string }
+    >({
+      query: ({ id, investigationNotPerformedReason }) => ({
+        url: `/api/patient/encounter/${id}/investigation-not-performed-reason`,
+        method: 'PUT',
+        body: { investigationNotPerformedReason }
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
@@ -1178,9 +1246,11 @@ export const {
   useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useStartEncounterMutation,
+  useLazyGetEncounterPreAuthorizationLockQuery,
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
+  useSaveInvestigationNotPerformedReasonMutation,
   useCloseEncounterForBillingMutation,
   useReassignPractitionerMutation,
 

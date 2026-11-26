@@ -12,6 +12,7 @@ import {
 import { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { useLoginMutation } from '@/services/authServiceApi';
+import { useForgotPasswordMutation } from '@/services/userService';
 import { enumsApi } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
@@ -28,6 +29,7 @@ import Logo from '../../../images/Logo_BLUE_New1.svg';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import { useBranding } from '@/hooks/useBranding';
+import { markActivity } from '@/hooks/useIdleTimeout';
 
 
 const mapDefaultDepartmentToSelectedDepartment = (
@@ -74,6 +76,7 @@ const background = branding.loginBackground || Background;
   const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [forgotPassword, { isLoading: isSendingReset }] = useForgotPasswordMutation();
   const [getAccount] = useLazyGetAccountQuery();
   const [getDefaultUserDepartmentByUser] = useLazyGetDefaultUserDepartmentByUserQuery();
   const [getMenuTrigger] = useLazyGetMenuQuery();
@@ -116,6 +119,8 @@ const background = branding.loginBackground || Background;
         rememberMe: true
       }).unwrap();
 
+      // Start the idle timer fresh so a stale value from an old session can't log us out.
+      markActivity();
       dispatch(setToken(resp.id_token));
       localStorage.setItem('id_token', resp.id_token);
 
@@ -185,6 +190,33 @@ const background = branding.loginBackground || Background;
     }
   };
 
+
+  // Sends the reset link for the user name already typed above, then shows where it was sent.
+  const handleForgotPassword = async () => {
+    const username = (credentials.username ?? '').trim();
+    if (!username) {
+      setErrText('Please enter your user name first, then click Forgot password.');
+      return;
+    }
+
+    try {
+      const resp = await forgotPassword(username).unwrap();
+      if (resp?.maskedEmail) {
+        setErrText(' ');
+        navigate('/forgot-password', { state: { maskedEmail: resp.maskedEmail } });
+      } else {
+        setErrText(
+          'Could not send a reset link for this user name. Please check it, or contact your system administrator.'
+        );
+      }
+    } catch (err: any) {
+      if (err?.status === 'FETCH_ERROR') {
+        setErrText('Server Cannot be Reached, Please Contact System Administrator');
+      } else {
+        setErrText('Failed to send reset link. Please try again.');
+      }
+    }
+  };
 
   useEffect(() => {
     const languages = Array.isArray(langData) ? langData : [];
@@ -276,7 +308,17 @@ const background = branding.loginBackground || Background;
                 showLabel={false}
               />
 
-
+              <div style={{ textAlign: 'end', marginTop: -4, marginBottom: 4 }}>
+                <Button
+                  appearance="link"
+                  size="sm"
+                  style={{ padding: 0 }}
+                  onClick={handleForgotPassword}
+                  loading={isSendingReset}
+                >
+                  Forgot password?
+                </Button>
+              </div>
 
               <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
               <MyButton

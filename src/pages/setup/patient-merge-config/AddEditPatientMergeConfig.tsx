@@ -127,19 +127,6 @@ const AddEditPatientMergeConfig = ({
 
             <MyInput
                 width="100%"
-                fieldName="autoDiscoverFields"
-                fieldLabel="Auto Discover Fields"
-                fieldType="select"
-                selectData={booleanOptions}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={record}
-                setRecord={setRecord}
-                searchable={false}
-            />
-
-            <MyInput
-                width="100%"
                 fieldName="primaryKeyColumnName"
                 fieldLabel="Primary Key Column"
                 fieldType="select"
@@ -197,15 +184,6 @@ const AddEditPatientMergeConfig = ({
                 setRecord={setRecord}
                 searchable
                 menuMaxHeight={250}
-            />
-
-            <MyInput
-                width="100%"
-                fieldName="sortOrder"
-                fieldLabel="Sort Order"
-                fieldType="number"
-                record={record}
-                setRecord={setRecord}
             />
         </Form>
     );

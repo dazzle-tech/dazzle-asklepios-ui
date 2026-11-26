@@ -1,16 +1,22 @@
 import React, { useMemo } from 'react';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaFilePrescription } from 'react-icons/fa6';
+import { FaFilePrescription, FaPrescriptionBottleMedical } from 'react-icons/fa6';
+import { IconButton, Tooltip, Whisper } from 'rsuite';
 import PlusIcon from '@rsuite/icons/Plus';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
+import ReloadIcon from '@rsuite/icons/Reload';
 
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
 
+import type { NahdiSyncStatus } from '@/services/patients/Prescription/patientPrescriptionService';
+
 import PrescriptionReportButton from './PrescriptionReportButton';
+import AiTooltip from '@/components/AiTooltip/AiTooltip';
+import '@/components/AiValidationResult/styles.less';
 
 type Props = {
   edit: boolean;
@@ -26,11 +32,142 @@ type Props = {
   setOpenCancellation: React.Dispatch<React.SetStateAction<boolean>>;
   setSummaryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleNewPrescriptionAndAddMedication: () => void;
+  handleClearSelection: () => void;
+  // Sends the edited (submitted) prescription to Nahdi again.
+  handleResendToNahdi: () => void;
+  isResending: boolean;
+  // The submitted prescription changed after its last send.
+  hasUnsentChanges: boolean;
+  // Re-checks the pharmacy dispensing status.
+  handleRefreshDispensingStatus: () => void;
+  isRefreshingDispensing: boolean;
+  // Whether the submitted prescription reached the pharmacy (order number, or the reason it failed).
+  nahdiSyncStatus?: NahdiSyncStatus;
 };
 
 const isDraftStatus = (status: any) => {
   const s = String(status ?? '').toUpperCase();
   return !s || s === 'DRAFT' || s === 'NEW';
+};
+
+const PHARMACY_UNREACHABLE = 'Could not reach the pharmacy system. Try Resend later; if it keeps failing, contact IT.';
+
+type PharmacyTone = 'sent' | 'pending' | 'failed' | 'off';
+
+type PharmacyPanelProps = {
+  status?: NahdiSyncStatus;
+  hasUnsentChanges: boolean;
+  // Allowed to change the submitted prescription (edit-after-submit permission).
+  canAct: boolean;
+  onResend: () => void;
+  isResending: boolean;
+  onCheckDispensing: () => void;
+  isCheckingDispensing: boolean;
+};
+
+/**
+ * Everything about the pharmacy (Nahdi) for a submitted prescription, in one card under the buttons:
+ * a colour strip for the state, what happened (order number or the doctor's message), and the actions:
+ * "Resend" only when there is something to send, and an icon to check what the pharmacy dispensed.
+ */
+const PharmacyPanel = ({
+  status,
+  hasUnsentChanges,
+  canAct,
+  onResend,
+  isResending,
+  onCheckDispensing,
+  isCheckingDispensing
+}: PharmacyPanelProps) => {
+  if (!status) return null;
+
+  let tone: PharmacyTone;
+  let title: string;
+  let detail: string | null = null;
+  let hint: string | null = null;
+
+  if (!status.integrationEnabled) {
+    tone = 'off';
+    title = 'Not sent';
+    detail = 'Pharmacy integration is off';
+  } else if (status.lastAttemptStatus === 'FAILED') {
+    tone = 'failed';
+    title = 'Not delivered';
+    detail = [
+      status.failureMessage || PHARMACY_UNREACHABLE,
+      status.lastAttemptAt ? formatDateWithoutSeconds(status.lastAttemptAt) : null
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    // The technical reason (e.g. invalid token) is only a hint for IT.
+    hint = status.failureReason ? `Technical details: ${status.failureReason}` : null;
+  } else if (status.lastSentAt) {
+    tone = hasUnsentChanges ? 'pending' : 'sent';
+    title = hasUnsentChanges ? 'Changes not sent yet' : 'Sent';
+    detail = [
+      status.orderNumber ? `Order ${status.orderNumber}` : null,
+      formatDateWithoutSeconds(status.lastSentAt)
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  } else if (hasUnsentChanges) {
+    tone = 'pending';
+    title = 'Changes not sent yet';
+  } else {
+    // Sent before sends were recorded: nothing to show.
+    return null;
+  }
+
+  // A prescription that never reached the pharmacy can be resent by anyone (it is delivered as submitted);
+  // after it was delivered, resending a changed prescription needs the edit-after-submit permission (canAct).
+  const neverDelivered = !status.lastSentAt;
+  const showResend = (canAct || neverDelivered) && status.integrationEnabled && hasUnsentChanges;
+  const showCheckDispensing = canAct && status.integrationEnabled;
+
+  return (
+    <div className={`pharmacy-panel pharmacy-panel--${tone}`}>
+      <span className="pharmacy-panel__icon">
+        <FaPrescriptionBottleMedical />
+      </span>
+      <div className="pharmacy-panel__text" title={hint ?? undefined}>
+        <span className="pharmacy-panel__label">
+          <Translate>Pharmacy</Translate>
+        </span>
+        <span className="pharmacy-panel__title">
+          <Translate>{title}</Translate>
+        </span>
+        {detail && <span className="pharmacy-panel__detail">{detail}</span>}
+      </div>
+      {(showResend || showCheckDispensing) && (
+        <div className="pharmacy-panel__actions">
+          {showResend && (
+            <MyButton
+              size="xsmall"
+              prefixIcon={() => <ReloadIcon />}
+              onClick={onResend}
+              loading={isResending}
+              disabled={isResending}
+              backgroundColor="var(--primary-orange)"
+            >
+              <Translate>Resend</Translate>
+            </MyButton>
+          )}
+          {showCheckDispensing && (
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Check what the pharmacy dispensed</Tooltip>}>
+              <IconButton
+                size="sm"
+                appearance="subtle"
+                icon={<ReloadIcon spin={isCheckingDispensing} />}
+                onClick={onCheckDispensing}
+                disabled={isCheckingDispensing}
+                aria-label="Check what the pharmacy dispensed"
+              />
+            </Whisper>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const PrescriptionToolbar = ({
@@ -46,9 +183,17 @@ const PrescriptionToolbar = ({
   setSelectedRows,
   setOpenCancellation,
   setSummaryModalOpen,
-  handleNewPrescriptionAndAddMedication
+  handleNewPrescriptionAndAddMedication,
+  handleClearSelection,
+  handleResendToNahdi,
+  isResending,
+  hasUnsentChanges,
+  handleRefreshDispensingStatus,
+  isRefreshingDispensing,
+  nahdiSyncStatus
 }: Props) => {
   const isSubmitted = String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED';
+  const hasSelection = currentPrescription?.id != null;
 
   // Drafts on top, then newest first
   const displayedPrescriptions = useMemo(() => {
@@ -75,7 +220,14 @@ const PrescriptionToolbar = ({
             <span className="orders-list-header-title">
               <Translate>Prescriptions</Translate>
             </span>
-            <span className="orders-list-count-badge">{displayedPrescriptions.length}</span>
+            <div className="orders-list-header-actions">
+              {hasSelection && (
+                <MyButton appearance="ghost" size="xs" onClick={handleClearSelection}>
+                  Clear Selection
+                </MyButton>
+              )}
+              <span className="orders-list-count-badge">{displayedPrescriptions.length}</span>
+            </div>
           </div>
 
           <div className="orders-compact-list">
@@ -149,7 +301,7 @@ const PrescriptionToolbar = ({
               onClick={handleNewPrescriptionAndAddMedication}
               prefixIcon={() => <PlusIcon />}
               loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-              disabled={edit || isNurse || isSubmitted}
+              disabled={edit || isNurse}
             >
               Add Medication
             </MyButton>
@@ -162,29 +314,50 @@ const PrescriptionToolbar = ({
                 }
                 setOpenCancellation(true);
               }}
-              disabled={
-                (!selectedRows.length && !patientPrescriptionMedicationObject?.id) ||
-                edit ||
-                isSubmitted
-              }
+              disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
             >
               Cancel
             </MyButton>
 
-            <MyButton
-              loading={isLoadingPrescriptions}
-              onClick={() => setSummaryModalOpen(true)}
-              disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
-              prefixIcon={() => <CheckIcon />}
+            <AiTooltip
+              title="AI medication validation"
+              body="Before the order is signed, AI checks these medications against the patient's age, gender, diagnosis and documented allergies, and suggests safer options. It does not prescribe."
+              chips={['Interactions', 'Dosing', 'Duplicates', 'Contraindications']}
+              foot="Nothing changes without your review."
             >
-              Sign & Submit Order
-            </MyButton>
+              <span className="mv-submit">
+                <MyButton
+                  loading={isLoadingPrescriptions}
+                  onClick={() => setSummaryModalOpen(true)}
+                  disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
+                  prefixIcon={() => <CheckIcon />}
+                >
+                  Sign & Submit Order
+                </MyButton>
+                <span className="mv-submit__badge" aria-hidden="true">
+                  AI
+                </span>
+              </span>
+            </AiTooltip>
 
             <PrescriptionReportButton
               prescriptionId={currentPrescription?.id}
               disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
             />
           </div>
+
+          {/* Everything about the pharmacy in one card under the buttons. */}
+          {isSubmitted && (
+            <PharmacyPanel
+              status={nahdiSyncStatus}
+              hasUnsentChanges={hasUnsentChanges}
+              canAct={!edit}
+              onResend={handleResendToNahdi}
+              isResending={isResending}
+              onCheckDispensing={handleRefreshDispensingStatus}
+              isCheckingDispensing={isRefreshingDispensing}
+            />
+          )}
         </div>
       </div>
     </div>

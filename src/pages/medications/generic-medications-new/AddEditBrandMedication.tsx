@@ -224,6 +224,7 @@ const AddEditBrandMedication = ({
                     fieldLabel="Price"
                     fieldName="price"
                     fieldType="number"
+                    allowDecimal
                     record={brandMedication}
                     setRecord={setBrandMedication}
                   />

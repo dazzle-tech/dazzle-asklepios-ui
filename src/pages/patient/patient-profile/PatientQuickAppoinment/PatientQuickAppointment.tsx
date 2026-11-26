@@ -11,23 +11,137 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
+import { Loader, Modal } from 'rsuite';
 import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
-import { getEncounterTreatmentStatus } from '@/utils/encounterStatusHelpers';
+import { getEncounterLifecycleStatus } from '@/utils/encounterStatusHelpers';
+import { formatEnumString } from '@/utils';
 import {
   newPatientEncounter,
   newPatientInsurance,
   newPatientPayments
 } from '@/types/model-types-constructor-new';
 import {
-  useCreateQuickAppointmentMutation
+  useCheckInAppointmentMutation,
+  useConfirmAppointmentMutation,
+  useCreateQuickAppointmentMutation,
+  useLazyFilterAppointmentsWithoutPaginationQuery
 } from '@/services/appointment/appointmentService';
-import { useLazyIsPatientAgeAllowedQuery } from '@/services/security/departmentService';
+import {
+  useLazyGetEncounterByIdQuery,
+  useLazyGetEncountersByAppointmentQuery
+} from '@/services/encounters/patientEncounterService';
+import {
+  useGetDepartmentByIdQuery,
+  useLazyIsPatientAgeAllowedQuery
+} from '@/services/security/departmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
-import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
+
+const LOADABLE_APPOINTMENT_STATUSES = new Set(['BOOKED', 'CONFIRMED']);
+
+const normalizeAppointmentStatus = (value: unknown) =>
+  String(value ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+const appointmentRecordId = (appointment: any) => Number(appointment?.id ?? appointment?.key ?? 0);
+
+const appointmentStartValue = (appointment: any) =>
+  appointment?.startDatetime ??
+  appointment?.appointmentDateTime ??
+  appointment?.appointmentDate ??
+  appointment?.startDate ??
+  null;
+
+const appointmentDepartmentId = (appointment: any) =>
+  Number(appointment?.departmentId ?? appointment?.department?.id ?? appointment?.departmentKey ?? 0);
+
+const isSameLocalDate = (a: any, b: any) => {
+  const da = a instanceof Date ? a : new Date(a);
+  const db = b instanceof Date ? b : new Date(b);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+};
+
+const isLoadableSameDepartmentAppointment = (
+  appointment: any,
+  patientId: number,
+  departmentId: number
+) => {
+  if (!appointmentRecordId(appointment)) return false;
+  const status = normalizeAppointmentStatus(appointment?.status ?? appointment?.appointmentStatus);
+  if (!LOADABLE_APPOINTMENT_STATUSES.has(status)) return false;
+
+  const rowPatientId = Number(appointment?.patientId ?? appointment?.patient?.id ?? 0);
+  if (rowPatientId && rowPatientId !== patientId) return false;
+
+  const rowDepartmentId = appointmentDepartmentId(appointment);
+  if (rowDepartmentId && rowDepartmentId !== departmentId) return false;
+
+  const start = appointmentStartValue(appointment);
+  return Boolean(start) && isSameLocalDate(start, new Date());
+};
+
+const linkedEncounterIdOnAppointment = (appointment: any) => {
+  const raw =
+    appointment?.encounterId ??
+    appointment?.patientEncounterId ??
+    appointment?.encounter?.id ??
+    null;
+  const id = Number(raw);
+  return Number.isFinite(id) && id > 0 ? id : 0;
+};
+
+const linkedEncounterIdFromReference = (encounterRef: unknown) => {
+  if (encounterRef == null || encounterRef === '') return 0;
+  if (typeof encounterRef === 'string' || typeof encounterRef === 'number') {
+    const id = Number(encounterRef);
+    return Number.isFinite(id) && id > 0 ? id : 0;
+  }
+  if (typeof encounterRef === 'object') {
+    const id = Number((encounterRef as { id?: number | string }).id ?? 0);
+    return Number.isFinite(id) && id > 0 ? id : 0;
+  }
+  return 0;
+};
+
+const isMissingEncounterError = (error: any) => {
+  const status = error?.status ?? error?.originalStatus ?? error?.data?.status;
+  return status === 404 || status === 204;
+};
+
+const isEncounterStillOpen = (encounter: any) => {
+  if (!encounter) return false;
+  const lifecycle = getEncounterLifecycleStatus(encounter);
+  return lifecycle !== 'CLOSED' && lifecycle !== 'CANCELLED';
+};
+
+const isAppointmentToday = (appointment: any) => {
+  const start = appointmentStartValue(appointment);
+  return Boolean(start) && isSameLocalDate(start, new Date());
+};
+
+const isEncounterToday = (encounter: any) => {
+  const value = encounter?.encounterDate ?? encounter?.createdDate ?? encounter?.createdAt ?? null;
+  if (!value) return true;
+  return isSameLocalDate(value, new Date());
+};
+
+const formatAppointmentTime = (appointment: any) => {
+  const start = appointmentStartValue(appointment);
+  if (!start) return '';
+  const date = new Date(start);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+};
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -50,6 +164,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
+  'practitioner.required': 'Practitioner is required for this department.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
@@ -154,16 +269,37 @@ const PatientQuickAppointment = ({
   const isViewMode = Boolean(isDisabeld);
   const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
-
-  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode || isEncounterSaved);
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
   const [createQuickAppointment] = useCreateQuickAppointmentMutation();
+  const [searchAppointments] = useLazyFilterAppointmentsWithoutPaginationQuery();
+  const [checkInAppointment] = useCheckInAppointmentMutation();
+  const [confirmAppointment] = useConfirmAppointmentMutation();
+  const [getEncounterByAppointment] = useLazyGetEncountersByAppointmentQuery();
+  const [getEncounterById] = useLazyGetEncounterByIdQuery();
   const [checkPatientAgeAllowed] = useLazyIsPatientAgeAllowedQuery();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
-  const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
+  const [isSavingEncounter, setIsSavingEncounter] = useState(false);
+  const [existingAppointmentPromptOpen, setExistingAppointmentPromptOpen] = useState(false);
+  const [existingAppointments, setExistingAppointments] = useState<any[]>([]);
+  const [selectedExistingAppointmentId, setSelectedExistingAppointmentId] = useState<number | null>(null);
+  const [isLoadingExistingAppointment, setIsLoadingExistingAppointment] = useState(false);
+  const encounterReadOnly = Boolean(
+    isReadOnly ||
+      isViewMode ||
+      isPaymentMode ||
+      isEncounterSaved ||
+      isSavingEncounter ||
+      isLoadingExistingAppointment ||
+      existingAppointmentPromptOpen
+  );
+  const selectedDepartmentId = Number(localEncounter?.departmentId ?? 0);
+  const { data: selectedDepartment } = useGetDepartmentByIdQuery(selectedDepartmentId, {
+    skip: !selectedDepartmentId
+  });
 
   const didAcceptReferralRef = useRef(false);
+  const promptedDepartmentIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const departmentId = Number(localEncounter?.departmentId ?? 0);
@@ -272,18 +408,31 @@ const PatientQuickAppointment = ({
   useEffect(() => {
     if (!quickAppointmentModel) {
       didAcceptReferralRef.current = false;
+      promptedDepartmentIdRef.current = null;
+      setExistingAppointmentPromptOpen(false);
+      setExistingAppointments([]);
+      setSelectedExistingAppointmentId(null);
     }
   }, [quickAppointmentModel]);
+
+  useEffect(() => {
+    if (!existingAppointmentPromptOpen || promptedDepartmentIdRef.current == null) return;
+    if (Number(localEncounter?.departmentId ?? 0) === promptedDepartmentIdRef.current) return;
+    promptedDepartmentIdRef.current = null;
+    setExistingAppointmentPromptOpen(false);
+    setExistingAppointments([]);
+    setSelectedExistingAppointmentId(null);
+  }, [existingAppointmentPromptOpen, localEncounter?.departmentId]);
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
-    if (
-      localEncounter?.encounterType !== 'EMERGENCY' &&
-      !localEncounter?.practitionerId
-    ) {
+    const allowsNullPractitionerAtRegistration =
+      localEncounter?.encounterType === 'EMERGENCY' ||
+      Boolean(selectedDepartment?.assignPractitionerOnVisitStart);
+    if (!allowsNullPractitionerAtRegistration && !localEncounter?.practitionerId) {
       missingFields.push('Practitioner');
     }
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
@@ -306,18 +455,6 @@ const PatientQuickAppointment = ({
     return true;
   };
 
-  const isSameLocalDate = (a: any, b: any) => {
-    const da = a instanceof Date ? a : new Date(a);
-    const db = b instanceof Date ? b : new Date(b);
-    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
-    return (
-      da.getFullYear() === db.getFullYear() &&
-      da.getMonth() === db.getMonth() &&
-      da.getDate() === db.getDate()
-    );
-  };
-
-
   const extractErrorMessage = (response: any): string => {
     try {
       const msg = response?.data?.message ?? response?.message;
@@ -331,6 +468,279 @@ const PatientQuickAppointment = ({
       return '';
     }
   };
+  const closeExistingAppointmentPrompt = () => {
+    promptedDepartmentIdRef.current = null;
+    setExistingAppointmentPromptOpen(false);
+    setExistingAppointments([]);
+    setSelectedExistingAppointmentId(null);
+  };
+
+  const applySavedEncounter = async (
+    encounter: any,
+    appointment: any | null,
+    successMessage: string
+  ) => {
+    const createdEncounterId = Number(encounter?.id ?? 0) || localEncounter?.id || 0;
+    const linkedAppointmentId = appointment ? appointmentRecordId(appointment) : 0;
+
+    if (encounter && typeof encounter === 'object') {
+      setLocalEncounter(prev => ({
+        ...prev,
+        ...encounter,
+        appointmentId: linkedAppointmentId ? String(linkedAppointmentId) : prev.appointmentId ?? null
+      }));
+    } else {
+      setLocalEncounter(prev => ({
+        ...prev,
+        id: createdEncounterId || prev.id,
+        appointmentId: linkedAppointmentId ? String(linkedAppointmentId) : prev.appointmentId ?? null
+      }));
+    }
+
+    setPaymentDraft((prev: any) => ({
+      ...prev,
+      encounterId: createdEncounterId || prev.encounterId
+    }));
+    if (appointment && typeof appointment === 'object') {
+      setValidationResult((prev: any) => ({ ...prev, appointmentFromTemplate: appointment }));
+    }
+    setIsEncounterSaved(true);
+
+    if (openedFromReferral && localReferral?.id && !didAcceptReferralRef.current) {
+      await acceptReferralRequest({ id: localReferral.id }).unwrap();
+      didAcceptReferralRef.current = true;
+    }
+
+    dispatch(notify({ msg: successMessage, sev: 'success' }));
+    if (onEncounterSaved) await onEncounterSaved();
+  };
+
+  const createNewVisit = async () => {
+    const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+
+    const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+      facilityId: Number(localEncounter?.facilityId ?? 0),
+      departmentId,
+      resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+      resourceId: practitionerId > 0 ? practitionerId : departmentId,
+      patientId,
+      service: String(localEncounter?.encounterReason ?? '') as modelTypes.EncounterReason,
+      priority: String(localEncounter?.priorityLevel ?? ''),
+      defaultServiceId: (localEncounter as any)?.defaultServiceId
+        ? Number((localEncounter as any).defaultServiceId)
+        : null,
+      defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+      reason: (localEncounter as any)?.chiefComplaint as string | null,
+      note: (localEncounter?.notes ?? null) as string | null,
+      followUpEncounterId:
+        localEncounter?.encounterReason === 'FOLLOW_UP' && localEncounter?.followUpEncounterId
+          ? Number(localEncounter.followUpEncounterId)
+          : null,
+      originType: (localEncounter as any)?.originType ?? null,
+      originName: (localEncounter as any)?.originName ?? null,
+      promotionName: (localEncounter as any)?.promotionName || null,
+      promotionCode: (localEncounter as any)?.promotionCode || null
+    };
+
+    const saved = await createQuickAppointment(payload).unwrap();
+    const returnedEncounter = (saved as any)?.encounter ?? null;
+    const returnedAppointment = (saved as any)?.appointmentFromTemplate ?? null;
+    await applySavedEncounter(
+      returnedEncounter ?? { id: localEncounter?.id },
+      returnedAppointment,
+      'Quick appointment saved successfully'
+    );
+  };
+
+  const searchDepartmentAppointments = async (patientId: number, departmentId: number) => {
+    const facilityId = Number(localEncounter?.facilityId ?? 0);
+    const rows = await searchAppointments(
+      {
+        filter: {
+          facility: facilityId > 0 ? facilityId : null,
+          departmentIds: [departmentId],
+          patientId
+        }
+      },
+      false
+    ).unwrap();
+
+    const list = Array.isArray(rows) ? rows : [];
+    return list.filter(row => {
+      if (!appointmentRecordId(row)) return false;
+      const rowPatientId = Number(row?.patientId ?? row?.patient?.id ?? 0);
+      if (rowPatientId && rowPatientId !== patientId) return false;
+      const rowDepartmentId = appointmentDepartmentId(row);
+      if (rowDepartmentId && rowDepartmentId !== departmentId) return false;
+      return isAppointmentToday(row);
+    });
+  };
+
+  const readLinkedEncounter = async (appointment: any) => {
+    const inlineEncounter = appointment?.encounter;
+    if (
+      inlineEncounter &&
+      typeof inlineEncounter === 'object' &&
+      (inlineEncounter.encounterStatus || inlineEncounter.treatmentStatus || inlineEncounter.status)
+    ) {
+      return inlineEncounter;
+    }
+
+    const linkedId = linkedEncounterIdOnAppointment(appointment);
+    if (linkedId) {
+      try {
+        return await getEncounterById({ id: linkedId }).unwrap();
+      } catch (error: any) {
+        if (isMissingEncounterError(error)) return null;
+        throw error;
+      }
+    }
+
+    const appointmentId = appointmentRecordId(appointment);
+    if (!appointmentId) return null;
+    try {
+      const encounterRef = await getEncounterByAppointment({ appointmentId }).unwrap();
+      const encounterId = linkedEncounterIdFromReference(encounterRef);
+      if (!encounterId) {
+        return encounterRef && typeof encounterRef === 'object' ? encounterRef : null;
+      }
+      return await getEncounterById({ id: encounterId }).unwrap();
+    } catch (error: any) {
+      if (isMissingEncounterError(error)) return null;
+      throw error;
+    }
+  };
+
+  const findOpenLinkedEncounter = async (appointments: any[]) => {
+    const todaysAppointments = appointments.filter(isAppointmentToday);
+    const seen = new Set<number>();
+    const toCheck = todaysAppointments.filter(row => {
+      const id = appointmentRecordId(row);
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+
+    const encounters = await Promise.all(toCheck.map(row => readLinkedEncounter(row)));
+    return (
+      encounters.find(encounter => isEncounterStillOpen(encounter) && isEncounterToday(encounter)) ??
+      null
+    );
+  };
+
+  const warnOpenEncounterBlocksNewVisit = (encounter: any) => {
+    const encounterNumber = encounter?.encounterNumber ? ` (${encounter.encounterNumber})` : '';
+    const departmentLabel =
+      selectedDepartment?.name || selectedDepartment?.departmentName || 'this department';
+    dispatch(
+      notify({
+        msg: `This patient already has an open encounter${encounterNumber} today linked to an appointment in ${departmentLabel}. A new encounter and appointment cannot be created in this department until that encounter is closed.`,
+        sev: 'warning'
+      })
+    );
+  };
+
+  const findLoadableAppointments = async (appointments: any[], patientId: number, departmentId: number) => {
+    const candidates = appointments.filter(row =>
+      isLoadableSameDepartmentAppointment(row, patientId, departmentId)
+    );
+    const unlinked = await Promise.all(
+      candidates.map(async row => ((await appointmentHasLinkedEncounter(row)) ? null : row))
+    );
+
+    return unlinked
+      .filter(Boolean)
+      .sort((left: any, right: any) => {
+        const leftTime = new Date(appointmentStartValue(left) ?? 0).getTime();
+        const rightTime = new Date(appointmentStartValue(right) ?? 0).getTime();
+        return leftTime - rightTime;
+      });
+  };
+
+  const appointmentHasLinkedEncounter = async (appointment: any) => {
+    if (linkedEncounterIdOnAppointment(appointment)) return true;
+    const appointmentId = appointmentRecordId(appointment);
+    if (!appointmentId) return true;
+
+    try {
+      const encounterRef = await getEncounterByAppointment({ appointmentId }).unwrap();
+      return linkedEncounterIdFromReference(encounterRef) > 0;
+    } catch (error: any) {
+      if (isMissingEncounterError(error)) return false;
+      throw error;
+    }
+  };
+
+  const resolveEncounterForAppointment = async (appointmentId: number) => {
+    const readEncounter = async () => {
+      const encounterRef = await getEncounterByAppointment({ appointmentId }).unwrap();
+      if (typeof encounterRef === 'string' || typeof encounterRef === 'number') {
+        const encounterId = Number(encounterRef);
+        if (!encounterId) return null;
+        return getEncounterById({ id: encounterId }).unwrap();
+      }
+      if (encounterRef && typeof encounterRef === 'object') {
+        const encounterId = Number((encounterRef as any).id ?? 0);
+        if (!encounterId) return encounterRef as PatientEncounter;
+        try {
+          return await getEncounterById({ id: encounterId }).unwrap();
+        } catch {
+          return encounterRef as PatientEncounter;
+        }
+      }
+      return null;
+    };
+
+    let encounter = await readEncounter().catch(() => null);
+    if (!encounter) {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      encounter = await readEncounter().catch(() => null);
+    }
+    return encounter;
+  };
+
+  const checkInLoadedAppointment = async (appointment: any) => {
+    const appointmentId = appointmentRecordId(appointment);
+    const status = normalizeAppointmentStatus(appointment?.status ?? appointment?.appointmentStatus);
+    const alreadyCheckedIn = status === 'CHECKEDIN' || status === 'CHECKED_IN';
+    if (alreadyCheckedIn) return appointment;
+
+    const needsConfirmation =
+      appointment?.requireConfirmation === true && status !== 'CONFIRMED';
+
+    const runCheckIn = async () => {
+      if (needsConfirmation) {
+        await confirmAppointment({ id: appointmentId }).unwrap();
+      }
+      return checkInAppointment({ id: appointmentId }).unwrap();
+    };
+
+    try {
+      return await runCheckIn();
+    } catch (error: any) {
+      const message = extractErrorMessage(error).toLowerCase();
+      const alreadyIn = message.includes('already') && message.includes('check');
+      if (alreadyIn) return appointment;
+      if (message.includes('confirm')) {
+        await confirmAppointment({ id: appointmentId }).unwrap();
+        return checkInAppointment({ id: appointmentId }).unwrap();
+      }
+      throw error;
+    }
+  };
+
+  const reportSaveError = (err: any) => {
+    setValidationResult(err?.data ?? err);
+    const backendMsg = extractErrorMessage(err);
+    if (backendMsg) {
+      dispatch(notify({ msg: backendMsg, sev: 'error' }));
+      return;
+    }
+    handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+  };
+
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
     if (!isPatientAgeAllowed) {
@@ -338,84 +748,111 @@ const PatientQuickAppointment = ({
       return;
     }
 
-    const patientId = Number(localPatient?.id );
-    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
     const departmentId = Number(localEncounter?.departmentId ?? 0);
-
-   
+    setIsSavingEncounter(true);
 
     try {
+      const departmentAppointments = patientId
+        ? await searchDepartmentAppointments(patientId, departmentId)
+        : [];
+      const openEncounter = await findOpenLinkedEncounter(departmentAppointments);
+      if (openEncounter) {
+        warnOpenEncounterBlocksNewVisit(openEncounter);
+        return;
+      }
 
-      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
-        facilityId: Number(localEncounter?.facilityId ?? 0),
-        departmentId,
-        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
-        resourceId: practitionerId > 0 ? practitionerId : departmentId,
+      const matches = await findLoadableAppointments(
+        departmentAppointments,
         patientId,
-        service: String(localEncounter?.encounterReason ?? '') as modelTypes.EncounterReason,
-        priority: String(localEncounter?.priorityLevel ?? ''),
-        defaultServiceId: (localEncounter as any)?.defaultServiceId
-          ? Number((localEncounter as any).defaultServiceId)
-          : null,
-        defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
-        reason: (localEncounter as any)?.chiefComplaint as string | null,
-        note: (localEncounter?.notes ?? null) as string | null,
-        followUpEncounterId:
-          localEncounter?.encounterReason === 'FOLLOW_UP' && localEncounter?.followUpEncounterId
-            ? Number(localEncounter.followUpEncounterId)
-            : null,
-        originType: (localEncounter as any)?.originType ?? null,
-        originName: (localEncounter as any)?.originName ?? null,
-        promotionName: (localEncounter as any)?.promotionName || null,
-        promotionCode: (localEncounter as any)?.promotionCode || null
-      };
-
-      const saved = await createQuickAppointment(payload).unwrap();
-      const returnedEncounter = (saved as any)?.encounter ?? null;
-      const returnedAppointment = (saved as any)?.appointmentFromTemplate ?? null;
-      const createdEncounterId = Number(returnedEncounter?.id ?? 0) || localEncounter?.id || 0;
-
-      if (returnedEncounter && typeof returnedEncounter === 'object') {
-        setLocalEncounter(prev => ({ ...prev, ...returnedEncounter }));
-      } else {
-        setLocalEncounter(prev => ({ ...prev, id: createdEncounterId || prev.id }));
+        departmentId
+      );
+      if (matches.length > 0) {
+        promptedDepartmentIdRef.current = departmentId;
+        setExistingAppointments(matches);
+        setSelectedExistingAppointmentId(appointmentRecordId(matches[0]));
+        setExistingAppointmentPromptOpen(true);
+        return;
       }
-      setPaymentDraft((prev: any) => ({
-        ...prev,
-        encounterId: createdEncounterId || prev.encounterId
-      }));
-      if (returnedAppointment && typeof returnedAppointment === 'object') {
-        setValidationResult((prev: any) => ({ ...prev, appointmentFromTemplate: returnedAppointment }));
-      }
-      setIsEncounterSaved(true);
-
-      if (
-        openedFromReferral &&
-        localReferral?.id &&
-        !didAcceptReferralRef.current
-      ) {
-        await acceptReferralRequest({ id: localReferral.id }).unwrap();
-        didAcceptReferralRef.current = true;
-      }
-
-      dispatch(notify({ msg: 'Quick appointment saved successfully', sev: 'success' }));
-
-      if (onEncounterSaved) await onEncounterSaved();
+      await createNewVisit();
     } catch (err: any) {
-      setValidationResult(err?.data ?? err);
-      const backendMsg = extractErrorMessage(err);
+      reportSaveError(err);
+    } finally {
+      setIsSavingEncounter(false);
+    }
+  };
 
-      if (backendMsg) {
+  const handleLoadExistingAppointment = async () => {
+    const appointment =
+      existingAppointments.find(
+        row => appointmentRecordId(row) === Number(selectedExistingAppointmentId)
+      ) ?? existingAppointments[0];
+    const appointmentId = appointmentRecordId(appointment);
+    if (!appointmentId) {
+      dispatch(notify({ msg: 'Select an appointment to load', sev: 'warning' }));
+      return;
+    }
+
+    const currentDepartmentId = Number(localEncounter?.departmentId ?? 0);
+    const rowDepartmentId = appointmentDepartmentId(appointment);
+    if (rowDepartmentId && rowDepartmentId !== currentDepartmentId) {
+      closeExistingAppointmentPrompt();
+      dispatch(
+        notify({
+          msg: 'Department changed. Save again to check appointments for the selected department.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    setIsLoadingExistingAppointment(true);
+    try {
+      if (await appointmentHasLinkedEncounter(appointment)) {
+        const remaining = existingAppointments.filter(
+          row => appointmentRecordId(row) !== appointmentId
+        );
+        setExistingAppointments(remaining);
+        setSelectedExistingAppointmentId(
+          remaining.length ? appointmentRecordId(remaining[0]) : null
+        );
+        if (!remaining.length) closeExistingAppointmentPrompt();
         dispatch(
           notify({
-            msg: backendMsg,
+            msg: remaining.length
+              ? 'This appointment already has an encounter. Choose another appointment or change the department.'
+              : 'This appointment already has an encounter. Change the department and save again.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const checkedIn = await checkInLoadedAppointment(appointment);
+      const encounter = await resolveEncounterForAppointment(appointmentId);
+      if (!encounter || !Number((encounter as any)?.id ?? 0)) {
+        dispatch(
+          notify({
+            msg: 'The appointment was checked in, but the linked encounter was not found. Please try again.',
             sev: 'error'
           })
         );
         return;
       }
 
-      handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+      await applySavedEncounter(
+        {
+          ...encounter,
+          appointmentId: String(appointmentId)
+        },
+        checkedIn ?? appointment,
+        'Appointment loaded and checked in. Continue to open the visit.'
+      );
+      closeExistingAppointmentPrompt();
+    } catch (err: any) {
+      reportSaveError(err);
+    } finally {
+      setIsLoadingExistingAppointment(false);
     }
   };
 
@@ -441,6 +878,7 @@ const PatientQuickAppointment = ({
       dept: 0
     });
     setPatientInsuranceDraft({ ...newPatientInsurance, payorName: '', planName: '' });
+    closeExistingAppointmentPrompt();
   };
 
   useEffect(() => {
@@ -491,14 +929,21 @@ const PatientQuickAppointment = ({
     switch (stepNumber) {
       case 0:
         return (
-          <RegistrationEncounter
-            localEncounter={localEncounter}
-            setLocalEncounter={setLocalEncounter}
-            isReadOnly={encounterReadOnly}
-            localPatient={localPatient}
-            localReferral={localReferral}
-            openedFromReferral={openedFromReferral}
-          />
+          <div className="walk-in-encounter-step">
+            {isSavingEncounter && (
+              <div className="walk-in-save-loading">
+                <Loader size="md" content="Saving..." vertical />
+              </div>
+            )}
+            <RegistrationEncounter
+              localEncounter={localEncounter}
+              setLocalEncounter={setLocalEncounter}
+              isReadOnly={encounterReadOnly}
+              localPatient={localPatient}
+              localReferral={localReferral}
+              openedFromReferral={openedFromReferral}
+            />
+          </div>
         );
       case 1:
         return (
@@ -529,7 +974,9 @@ const PatientQuickAppointment = ({
   const isRTL = direction === 'RTL';
 
   const dir = isRTL ? 'rtl' : 'ltr';
-
+  const departmentName =
+    selectedDepartment?.name || selectedDepartment?.departmentName || 'this department';
+  const promptBusy = isSavingEncounter || isLoadingExistingAppointment;
 
   return (<div dir={dir}>
     <MyModal
@@ -552,15 +999,17 @@ const PatientQuickAppointment = ({
               </MyButton>
               <MyButton
                 disabled={
-                  encounterReadOnly ||
+                  (encounterReadOnly && !isSavingEncounter) ||
                   localPatient?.patientStatus === 'MERGED' ||
                   isCheckingPatientAge ||
-                  !isPatientAgeAllowed
+                  !isPatientAgeAllowed ||
+                  isLoadingExistingAppointment
                 }
+                loading={isSavingEncounter}
                 onClick={handleSave}
-                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                prefixIcon={isSavingEncounter ? null : () => <FontAwesomeIcon icon={faCheckDouble} />}
               >
-                Save
+                {isSavingEncounter ? 'Saving...' : 'Save'}
               </MyButton>
             </>
           )
@@ -596,6 +1045,65 @@ const PatientQuickAppointment = ({
       hideActionBtn={true}
       initialStep={initialStep}
     />
+    <Modal
+      open={existingAppointmentPromptOpen}
+      onClose={closeExistingAppointmentPrompt}
+      size="36vw"
+      className="walk-in-existing-appointment-modal"
+    >
+      <Modal.Header>
+        <Modal.Title>Existing appointment</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p className="walk-in-existing-appointment__message">
+          This patient already has an appointment in {departmentName} today that is not linked to
+          an encounter. Load it to check in and continue with that appointment, or go back and
+          choose another department — saving again checks that department.
+        </p>
+        <div className="walk-in-existing-appointment__list" role="radiogroup" aria-label="Appointments">
+          {existingAppointments.map(appointment => {
+            const appointmentId = appointmentRecordId(appointment);
+            const selected = appointmentId === Number(selectedExistingAppointmentId);
+            const timeLabel = formatAppointmentTime(appointment);
+            const serviceLabel = formatEnumString(
+              String(appointment?.service ?? appointment?.encounterReason ?? '')
+            );
+            const statusLabel = formatEnumString(
+              String(appointment?.status ?? appointment?.appointmentStatus ?? '')
+            );
+            return (
+              <button
+                key={appointmentId}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className={`walk-in-existing-appointment__option${selected ? ' is-selected' : ''}`}
+                onClick={() => setSelectedExistingAppointmentId(appointmentId)}
+                disabled={promptBusy}
+              >
+                <span>{timeLabel || 'Today'}</span>
+                <span>{serviceLabel || 'Appointment'}</span>
+                <span>{statusLabel}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <div className="walk-in-existing-appointment__actions">
+          <MyButton appearance="subtle" onClick={closeExistingAppointmentPrompt} disabled={promptBusy}>
+            Change department
+          </MyButton>
+          <MyButton
+            onClick={handleLoadExistingAppointment}
+            disabled={promptBusy || !selectedExistingAppointmentId}
+            loading={isLoadingExistingAppointment}
+          >
+            Load appointment
+          </MyButton>
+        </div>
+      </Modal.Footer>
+    </Modal>
   </div>
   );
 };

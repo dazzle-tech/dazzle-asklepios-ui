@@ -14,6 +14,7 @@ export const encounterAttachmentsService = createApi({
     uploadAttachment: builder.mutation<UploadResponse, UploadEncounterAttachmentParams>({
       query: ({
         encounterId,
+        patientId,
         file,
         type,
         details,
@@ -37,6 +38,9 @@ export const encounterAttachmentsService = createApi({
         if (source && source.trim()) {
           formData.append('source', source);
         }
+        if (patientId != null) {
+          formData.append('patientId', String(patientId));
+        }
         if (documentDefinitionId != null) {
           formData.append('documentDefinitionId', String(documentDefinitionId));
         }
@@ -47,6 +51,7 @@ export const encounterAttachmentsService = createApi({
           url: `/api/setup/encounters/${encounterId}/attachments`,
           method: 'POST',
           body: formData,
+          params: patientId != null ? { patientId } : undefined,
         };
       },
       invalidatesTags: (_res, _err, { encounterId }) => [

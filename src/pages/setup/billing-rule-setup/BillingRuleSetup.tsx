@@ -4,7 +4,7 @@ import React, {
   useState
 } from 'react';
 
-import { Form, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 
 import {
   MdDelete,
@@ -18,7 +18,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
@@ -54,15 +53,17 @@ import AddEditBillingRuleSetup from './AddEditBillingRuleSetup';
 
 import './styles.less';
 
-type FilterState = {
-  billingItemType: BillingItemType | '';
-  name: string;
-};
-
-const initialFilterState: FilterState = {
+// Header filters: draft values typed in the inputs, applied on Enter / select change.
+// Everything is sent to one endpoint and combined with AND.
+const emptyHeaderFilters = {
+  name: '',
   billingItemType: '',
-  name: ''
+  paymentType: '',
+  billingTrigger: '',
+  isDefault: '',
+  createdDate: ''
 };
+type HeaderFilterField = keyof typeof emptyHeaderFilters;
 
 const normalizeBillingRuleError = (
   error: any
@@ -115,17 +116,8 @@ const BillingRuleSetup: React.FC = () => {
       : 1200
   );
 
-  const [filters, setFilters] =
-    useState<FilterState>(
-      initialFilterState
-    );
-
-  const [
-    appliedFilters,
-    setAppliedFilters
-  ] = useState<FilterState>(
-    initialFilterState
-  );
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
 
   const [
     paginationParams,
@@ -137,6 +129,7 @@ const BillingRuleSetup: React.FC = () => {
     timestamp: Date.now()
   });
 
+  // Billing rules with the applied header filters
   const {
     data: billingRulePage,
     isFetching,
@@ -146,9 +139,8 @@ const BillingRuleSetup: React.FC = () => {
     size: paginationParams.size,
     sort: paginationParams.sort,
     timestamp: paginationParams.timestamp,
-    billingItemType:
-      appliedFilters.billingItemType,
-    name: appliedFilters.name
+    ...appliedFilters,
+    billingItemType: appliedFilters.billingItemType as BillingItemType | ''
   });
 
   const [
@@ -167,13 +159,16 @@ const BillingRuleSetup: React.FC = () => {
     useEnumOptions('BillingTrigger') ??
     [];
 
+  const paymentTypeOptions =
+    useEnumOptions('BillingRulePaymentType') ??
+    [];
+
   const tableData = useMemo(
     () => billingRulePage?.data ?? [],
     [billingRulePage?.data]
   );
 
-  const totalCount =
-    billingRulePage?.totalCount ?? 0;
+  const totalCount = billingRulePage?.totalCount ?? 0;
 
   useEffect(() => {
     dispatch(setPageCode('BillingRuleSetup'));
@@ -205,11 +200,39 @@ const BillingRuleSetup: React.FC = () => {
     };
   }, []);
 
+  // ===== Header filters =====
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  const headerSelect = (field: HeaderFilterField, options: { label: string; value: string }[]) => ({
+    ...headerSearch(field),
+    searchType: 'select' as const,
+    searchOptions: [{ label: 'All', value: '' }, ...options]
+  });
+
+  // Reload the table after add/edit/delete/default changes
+  const refreshList = async () => {
+    await refetch();
+  };
+
   const handleNew = () => {
     setSelectedRule({
       ...newBillingRule,
       billingItemType:
-        filters.billingItemType ||
+        (appliedFilters.billingItemType as BillingItemType) ||
         'SERVICE'
     });
 
@@ -260,7 +283,7 @@ const BillingRuleSetup: React.FC = () => {
         ...newBillingRule
       });
 
-      await refetch();
+      await refreshList();
     } catch (error: any) {
       dispatch(
         notify({
@@ -294,7 +317,7 @@ const BillingRuleSetup: React.FC = () => {
         })
       );
 
-      await refetch();
+      await refreshList();
     } catch (error: any) {
       dispatch(
         notify({
@@ -310,16 +333,10 @@ const BillingRuleSetup: React.FC = () => {
 
   const handleSaveSuccess = async () => {
     setHeaderModalOpen(false);
-
-    setPaginationParams(previous => ({
-      ...previous,
-      page: 0,
-      timestamp: Date.now()
-    }));
-
-    await refetch();
+    await refreshList();
   };
 
+  // Pagination
   const handlePageChange = (
     _: unknown,
     newPage: number
@@ -331,6 +348,7 @@ const BillingRuleSetup: React.FC = () => {
     }));
   };
 
+  // Rows per page
   const handleRowsPerPageChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -346,59 +364,12 @@ const BillingRuleSetup: React.FC = () => {
     }));
   };
 
-  const handleFilterChange = (
-    updatedFilters: FilterState
-  ) => {
-    setFilters(updatedFilters);
-
-    setAppliedFilters(previous => ({
-      ...previous,
-      billingItemType:
-        updatedFilters.billingItemType
-    }));
-
-    setPaginationParams(previous => ({
-      ...previous,
-      page: 0,
-      timestamp: Date.now()
-    }));
-  };
-
-  const handleNameChange = (
-    updatedFilters: FilterState
-  ) => {
-    setFilters(previous => ({
-      ...previous,
-      name: updatedFilters.name ?? ''
-    }));
-  };
-
-  const handleSearch = () => {
-    setAppliedFilters(filters);
-
-    setPaginationParams(previous => ({
-      ...previous,
-      page: 0,
-      timestamp: Date.now()
-    }));
-  };
-
-  const handleResetFilters = () => {
-    setFilters(initialFilterState);
-    setAppliedFilters(initialFilterState);
-
-    setPaginationParams(previous => ({
-      ...previous,
-      page: 0,
-      timestamp: Date.now()
-    }));
-  };
-
   const tableColumns = [
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 3
+      width: 220,
+      ...headerSearch('name')
     },
 
     {
@@ -407,7 +378,8 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Item Type
         </Translate>,
-      flexGrow: 2,
+      width: 170,
+      ...headerSelect('billingItemType', itemTypeOptions),
 
       render: (
         row: BillingRuleModel
@@ -422,7 +394,8 @@ const BillingRuleSetup: React.FC = () => {
     {
       key: 'paymentType',
       title: <Translate>Payment Type</Translate>,
-      flexGrow: 2,
+      width: 160,
+      ...headerSelect('paymentType', paymentTypeOptions),
       render: (row: BillingRuleModel) =>
         row.paymentType
           ? formatEnumString(row.paymentType)
@@ -435,7 +408,8 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Billing Trigger
         </Translate>,
-      flexGrow: 2,
+      width: 190,
+      ...headerSelect('billingTrigger', billingTriggerOptions),
 
       render: (
         row: BillingRuleModel
@@ -455,6 +429,10 @@ const BillingRuleSetup: React.FC = () => {
           Default
         </Translate>,
       width: 110,
+      ...headerSelect('isDefault', [
+        { label: 'Yes', value: 'true' },
+        { label: 'No', value: 'false' }
+      ]),
       align: 'center' as const,
 
       render: (
@@ -475,7 +453,9 @@ const BillingRuleSetup: React.FC = () => {
         <Translate>
           Created Date
         </Translate>,
-      flexGrow: 2,
+      width: 190,
+      ...headerSearch('createdDate'),
+      searchType: 'date' as const,
 
       render: (
         row: BillingRuleModel
@@ -561,52 +541,6 @@ const BillingRuleSetup: React.FC = () => {
 
   return (
     <Panel dir={dir}>
-      <Form fluid className="billing-rule-filter-bar">
-        <MyInput
-          column
-          fieldLabel="Rule Name"
-          fieldName="name"
-          record={filters}
-          setRecord={handleNameChange}
-          enterClick={handleSearch}
-        />
-
-        <MyInput
-          column
-          fieldLabel="Item Type"
-          fieldType="select"
-          fieldName="billingItemType"
-          selectData={[
-            {
-              label: 'All Item Types',
-              value: ''
-            },
-            ...itemTypeOptions
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={filters}
-          setRecord={handleFilterChange}
-          searchable={false}
-        />
-
-        <MyButton
-          appearance="primary"
-          onClick={handleSearch}
-        >
-          Search
-        </MyButton>
-
-        <MyButton
-          appearance="subtle"
-          onClick={
-            handleResetFilters
-          }
-        >
-          Reset
-        </MyButton>
-      </Form>
-
       <MyTable
         data={tableData}
         totalCount={totalCount}

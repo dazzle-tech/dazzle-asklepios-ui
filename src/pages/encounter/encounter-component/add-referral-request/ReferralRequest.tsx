@@ -254,13 +254,16 @@ const ReferralRequest = () => {
     try {
       dispatch(showSystemLoader());
 
+      const fromFacilityId = encounter?.facilityId || selectedFacility?.id;
+      const fromDepartmentId = encounter?.departmentId || selectedDepartment?.departmentId;
+
       const payload = {
         ...(referral?.id && { id: Number(referral.id) }),
         patientId,
         encounterId,
         referralType: referral.referralType,
-        fromFacilityId: selectedFacility?.id ? Number(selectedFacility.id) : null,
-        fromDepartmentId: selectedDepartment?.departmentId ? Number(selectedDepartment.departmentId) : null,
+        fromFacilityId: fromFacilityId ? Number(fromFacilityId) : null,
+        fromDepartmentId: fromDepartmentId ? Number(fromDepartmentId) : null,
         toFacilityId:
           referral?.referralType === 'INTERNAL'
             ? selectedFacility?.id
@@ -519,6 +522,7 @@ const ReferralRequest = () => {
           setOpen={setOpenPopup}
           referral={referral}
           setReferral={setReferral}
+          encounter={encounter}
           handleSave={handleSave}
           width={width}
         />

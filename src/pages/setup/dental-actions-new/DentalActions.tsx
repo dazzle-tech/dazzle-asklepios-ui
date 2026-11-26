@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './styles.less';
 import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { PiToothFill } from 'react-icons/pi';
 import { MdModeEdit } from 'react-icons/md';
@@ -17,19 +16,14 @@ import AddEditDentalAction from './AddEditDentalAction';
 import MyButton from '@/components/MyButton/MyButton';
 import TreatmentLinkedProcedures from './TreatmentLinkedProcedures';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { newDentalAction } from '@/types/model-types-constructor-new';
 import { DentalAction } from '@/types/model-types-new';
 import { useGetAllDentalActionsQuery,
          useCreateDentalActionMutation,
          useUpdateDentalActionMutation, 
-         useToggleDiagnosticTestActiveMutation,
-         useGetDentalActionsByTypeQuery,
-         useGetDentalActionsByDescriptionQuery} from '@/services/setup/dental-action/dentalActionService';
+         useToggleDiagnosticTestActiveMutation} from '@/services/setup/dental-action/dentalActionService';
 import { formatEnumString } from '@/utils';
-import { skipToken } from "@reduxjs/toolkit/query";
 import { useEnumOptions } from '@/services/enumsApi';
-import { PaginationPerPage } from "@/utils/paginationPerPage";
 
 const DentalActions = () => {
   const dispatch = useAppDispatch();
@@ -40,15 +34,6 @@ const DentalActions = () => {
     useState<boolean>(false);
   const [stateOfDeleteDentalAction, setStateOfDeleteDentalAction] = useState<string>('delete');
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<DentalAction[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [link, setLink] = useState({});
-  const [filterPagination, setFilterPagination] = useState({
-    page: 0,
-    size: 15,
-    sort: "id,asc",
-  });
   const [sortColumn, setSortColumn] = useState("id");
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
@@ -64,11 +49,15 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
     sort: "id,asc",
   });
 
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const filterFields = [
-    { label: 'Description', value: 'description' },
-    { label: 'Type', value: 'type' }
-  ];
+  // Header filters: draft values typed in the inputs, applied on Enter / select change.
+  // Everything is sent to one endpoint and combined with AND.
+  const emptyHeaderFilters = { description: '', type: '' };
+  type HeaderFilterField = keyof typeof emptyHeaderFilters;
+  const [headerFilters, setHeaderFilters] = useState(emptyHeaderFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyHeaderFilters);
+  // 'all' sends no isActive param
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const activeFilter = statusFilter === 'all' ? undefined : statusFilter === 'active';
 
     useEffect(() => {
       dispatch(setPageCode('Dental_Actions'));
@@ -87,18 +76,8 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
   };
 
   const handlePageChange = (event, newPage) => {
-  if (isFiltered) {
-    setFilterPagination((prev) => ({
-      ...prev,
-      page: newPage,
-    }));
-  } else {
-    setPaginationParams((prev) => ({
-      ...prev,
-      page: newPage,
-    }));
-  }
-};
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
+  };
 
   const handleNew = () => {
     setDentalAction({ ...newDentalAction });
@@ -107,9 +86,9 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
 
     const {
       data: dentalActionListResponse,
-      isLoading: isDentalActionLoading,
       isFetching: isDentalActionFetching,
-    } = useGetAllDentalActionsQuery(!isFiltered ? paginationParams : skipToken);
+      refetch,
+    } = useGetAllDentalActionsQuery({ ...paginationParams, ...appliedFilters, isActive: activeFilter });
 
     const handleSave = async () => {
       try {
@@ -133,7 +112,7 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
         }
 
         setPopupOpen(false);
-
+        refetch();
       } catch (err) {
         dispatch(notify({ msg: 'Failed to save Dental Action', sev: 'error' }));
       } finally {
@@ -158,6 +137,7 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
         );
 
         setOpenConfirmDeleteDentalAction(false);
+        refetch();
       } catch (error) {
         dispatch(
           notify({
@@ -223,16 +203,43 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
     </div>
   );
 
+  const actiontype = useEnumOptions('DentalActionType');
+
+  // Applying one header filter also applies whatever is typed in the others
+  const applyHeaderFilter = (field: HeaderFilterField, value: string) => {
+    const next = { ...headerFilters, [field]: value };
+    setHeaderFilters(next);
+    setAppliedFilters(next);
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const headerSearch = (field: HeaderFilterField, placeholder?: string) => ({
+    searchable: true,
+    searchPlaceholder: placeholder,
+    searchValue: headerFilters[field],
+    onSearchChange: (value: string) => setHeaderFilters(prev => ({ ...prev, [field]: value })),
+    onSearchSubmit: (value?: string) => applyHeaderFilter(field, value ?? headerFilters[field])
+  });
+
+  // Changing the status filter starts again from the first page
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [statusFilter]);
+
   const tableColumns = [
     {
       key: 'description',
       title: <Translate>Description</Translate>,
-      flexGrow: 4
+      width: 260,
+      ...headerSearch('description', 'Search description')
     },
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 4,
+      width: 180,
+      ...headerSearch('type'),
+      searchType: 'select' as const,
+      searchOptions: [{ label: 'All', value: '' }, ...(actiontype ?? [])],
       render: (rowData) => <p>{formatEnumString(rowData?.type)}</p>,
     },
     {
@@ -241,68 +248,32 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
       flexGrow: 4
     },
     {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      searchable: true,
+      searchType: 'select' as const,
+      searchOptions: [
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'All', value: 'all' }
+      ],
+      searchValue: statusFilter,
+      onSearchChange: (value: string) => setStatusFilter(value as 'active' | 'inactive' | 'all'),
+      render: rowData => (
+        <MyBadgeStatus
+          contant={rowData?.isActive ? 'Active' : 'Inactive'}
+          color={rowData?.isActive ? '#415be7' : '#b1acacff'}
+        />
+      )
+    },
+    {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
       render: rowData => iconsForActions(rowData)
     }
   ];
-
-  const actiontype = useEnumOptions('DentalActionType');
-
-const filters = () => (
-  <Form fluid className="form-of-filters-set-up">
-    <MyInput
-      selectDataValue="value"
-      selectDataLabel="label"
-      selectData={filterFields}
-      fieldName="filter"
-      fieldType="select"
-      record={recordOfFilter}
-      setRecord={updatedRecord => {
-        setRecordOfFilter({ filter: updatedRecord.filter, value: "" });
-      }}
-      showLabel={false}
-      placeholder="Select Filter"
-      searchable={false}
-    />
-
-    {recordOfFilter.filter === "type" ? (
-      <MyInput
-        width="9vw"
-        fieldName="value"
-        fieldType="select"
-        selectData={actiontype ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        searchable={false}
-      />
-    ) : (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
-    )}
-
-    <MyButton
-      color="var(--deep-blue)"
-      width="80px"
-      onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-    >
-      Search
-    </MyButton>
-
-  </Form>
-);
-
-
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -313,70 +284,15 @@ const filters = () => (
 
 
 
-    const {
-      data: filteredDescriptionResponse,
-      isFetching: isFetchingFilteredDescription,
-    } = useGetDentalActionsByDescriptionQuery(
-      isFiltered && recordOfFilter.filter === "description"
-        ? {
-            description: recordOfFilter.value,
-            page: filterPagination.page,
-            size: filterPagination.size,
-          }
-        : skipToken
-    );
-
-    const {
-      data: filteredTypeResponse,
-      isFetching: isFetchingFilteredType,
-    } = useGetDentalActionsByTypeQuery(
-      isFiltered && recordOfFilter.filter === "type"
-        ? {
-            type: recordOfFilter.value?.toUpperCase(),
-            page: filterPagination.page,
-            size: filterPagination.size,
-          }
-        : skipToken
-    );
-
-
-
-  const handleFilterChange = (field: string, value: string, page = 0, size?: number) => {
-    if (!field || !value) {
-      setIsFiltered(false);
-      setFilteredList([]);
-      return;
-    }
-
-    setIsFiltered(true);
-    setFilterPagination({
-      ...filterPagination,
-      page: 0,
-      size: size ?? filterPagination.size,
-    });
-    setRecordOfFilter({ filter: field, value });
-  };
-
 const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
   setSortColumn(sortColumn);
   setSortType(sortType);
 
   const sortValue = `${sortColumn},${sortType}`;
-
-  if (isFiltered) {
-    setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
-    handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
-  } else {
-    setPaginationParams({
-      ...paginationParams,
-      sort: sortValue,
-      page: 0,
-    });
-  }
+  setPaginationParams(prev => ({ ...prev, sort: sortValue, page: 0 }));
 };
 
   const totalCount = dentalActionListResponse?.totalCount ?? 0;
-  const links = dentalActionListResponse?.links || {};
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
@@ -392,40 +308,18 @@ const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
     <Panel dir={dir}>
 
     <MyTable
-      data={
-        isFiltered
-          ? recordOfFilter.filter === "type"
-            ? filteredTypeResponse?.data ?? []
-            : filteredDescriptionResponse?.data ?? []
-          : dentalActionListResponse?.data ?? []
-      }
-      totalCount={
-        isFiltered
-          ? recordOfFilter.filter === "type"
-            ? filteredTypeResponse?.totalCount ?? 0
-            : filteredDescriptionResponse?.totalCount ?? 0
-          : dentalActionListResponse?.totalCount ?? 0
-      }
-      loading={isDentalActionFetching || isFetchingFilteredType || isFetchingFilteredDescription}
+      data={dentalActionListResponse?.data ?? []}
+      totalCount={totalCount}
+      loading={isDentalActionFetching}
       columns={tableColumns}
       rowClassName={isSelected}
       onRowClick={(rowData) => setDentalAction(rowData)}
-      filters={filters()}
-      page={isFiltered ? filterPagination.page : pageIndex}
-      rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
+      page={pageIndex}
+      rowsPerPage={rowsPerPage}
       onPageChange={handlePageChange}
       onRowsPerPageChange={(e) => {
         const newSize = Number(e.target.value);
-        if (isFiltered) {
-          setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-        } else {
-          setPaginationParams({
-            ...paginationParams,
-            size: newSize,
-            page: 0,
-          });
-        }
+        setPaginationParams(prev => ({ ...prev, size: newSize, page: 0 }));
       }}
       sortColumn={sortColumn}
       sortType={sortType}

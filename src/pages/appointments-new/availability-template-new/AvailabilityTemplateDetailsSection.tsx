@@ -15,7 +15,7 @@ import {
 } from '@/services/appointment/availabilityTemplateService';
 import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { normalizeAllowedServices } from './utils';
+import { FALLBACK_TEMPLATE_COLOR, normalizeAllowedServices } from './utils';
 import { useTemplateFormOptions } from './useTemplateFormOptions';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import AddResourceModal from './AddResourceModal';
@@ -178,7 +178,7 @@ const AvailabilityTemplateDetailsSection: React.FC<Props> = ({ template }) => {
                   <div className="block">
                     <Translate>Color</Translate>
                     <div className="color-picker-row">
-                      <input disabled type="color" value={record?.templateColor ?? '#6982F0'} onChange={() => {}} />
+                      <input disabled type="color" value={record?.templateColor ?? FALLBACK_TEMPLATE_COLOR} onChange={() => {}} />
                     </div>
                   </div>
                 </Row>
