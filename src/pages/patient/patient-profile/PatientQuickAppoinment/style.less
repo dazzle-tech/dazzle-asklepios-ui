@@ -761,3 +761,56 @@
     }
   }
 }
+
+.walk-in-encounter-step {
+  position: relative;
+  min-height: 240px;
+}
+
+.walk-in-save-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.walk-in-existing-appointment__message {
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.walk-in-existing-appointment__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.walk-in-existing-appointment__option {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: start;
+  color: inherit;
+  border: 1px solid var(--rs-border-primary, #e2e8f0);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+
+  &.is-selected {
+    border-color: var(--primary-blue);
+    box-shadow: inset 0 0 0 1px var(--primary-blue);
+  }
+}
+
+.walk-in-existing-appointment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
