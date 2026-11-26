@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Form, RadioGroup, Radio } from 'rsuite';
 import clsx from 'clsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faPaperclip, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 
 import AdvancedModal from '@/components/AdvancedModal';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
@@ -19,7 +19,11 @@ import { useCreateMutation, useUpdateMutation } from '@/services/consultation/co
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
+import {
+  useGetSpecialtyConsultationMutation,
+  type SpecialtyConsultationResponse
+} from '@/services/ai-services/clinicalRecommendationsService';
+import SpecialtyRecommendations, { SpecialtyAiButton, type SpecialtyAiPhase } from './SpecialtyRecommendations';
 import { newConsultation } from '@/types/model-types-constructor-new';
 import { Consultation, ConsultationUpdatePayload } from '@/types/model-types-new';
 import { useLazyGetSpecialistPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
@@ -263,8 +267,8 @@ const Details = ({
     fromDepartmentId: resolvedFromDepartmentId
   });
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
-  const [showAiPanel, setShowAiPanel] = useState(false);
-  const [localAiSummary, setLocalAiSummary] = useState<string | null>(null);
+  const [aiPhase, setAiPhase] = useState<SpecialtyAiPhase>('idle');
+  const [aiResult, setAiResult] = useState<SpecialtyConsultationResponse | null>(null);
   const [specialtyName, setSpecialtyName] = useState<string | null>(null);
 
   const [practitionerPage, setPractitionerPage] = useState(0);
@@ -283,15 +287,41 @@ const Details = ({
   const [createConsultation] = useCreateMutation();
   const [updateConsultation] = useUpdateMutation();
 
-  const [
-    getSpecialtyConsultation,
-    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
-  ] = useGetSpecialtyConsultationMutation();
+  const [getSpecialtyConsultation] = useGetSpecialtyConsultationMutation();
 
   const [triggerGetSpecialistPractitioners, practitionersResult] =
     useLazyGetSpecialistPractitionersQuery();
 
-  const aiSummary = localAiSummary;
+  const resetAi = () => {
+    setAiPhase('idle');
+    setAiResult(null);
+    setSpecialtyName(null);
+  };
+
+  const runAi = (name: string | null) => {
+    if (!name || !patient?.id || !encounter?.id) return;
+    setAiPhase('loading');
+    setAiResult(null);
+    getSpecialtyConsultation({
+      patientId: Number(patient.id),
+      encounterId: Number(encounter.id),
+      specialty: name.toLowerCase().replace(/\s+/g, ' ').trim()
+    })
+      .unwrap()
+      .then(res => {
+        const hasContent = !!res?.summary || (Array.isArray(res?.actions) && res.actions.length > 0);
+        setAiResult(res ?? null);
+        setAiPhase(hasContent ? 'result' : 'empty');
+      })
+      .catch(() => setAiPhase('error'));
+  };
+
+  // Display name of the selected Consultant Specialty, sent to the AI
+  const selectedSpecialtyName = (key?: unknown) =>
+    String(
+      (consultantSpecialtyLovQueryResponse?.object ?? []).find(x => String(x.key) === String(key))
+        ?.lovDisplayVale ?? ''
+    ).trim();
 
   const destinationType = formData?.destinationType ?? 'DEPARTMENT';
 
@@ -325,9 +355,7 @@ const Details = ({
   useEffect(() => {
     if (!open) {
       handleClear();
-      setShowAiPanel(false);
-      setLocalAiSummary(null);
-      setSpecialtyName(null);
+      resetAi();
     }
   }, [open]);
 
@@ -338,41 +366,12 @@ const Details = ({
   }, [formData?.toFacilityId, open, getDepartmentsByFacility]);
 
   useEffect(() => {
-    if (!specialtyName) return;
-    if (!patient?.id || !encounter?.id) return;
-
-    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
-
-    setLocalAiSummary(null);
-
-    getSpecialtyConsultation({
-      patientId: Number(patient.id),
-      encounterId: Number(encounter.id),
-      specialty: specialtyApi
-    })
-      .unwrap()
-      .then(res => {
-        const actionsText = Array.isArray(res?.actions) && res.actions.length > 0
-          ? '\n\nActions:\n' +
-          res.actions
-            .map(
-              (a, index) =>
-                `${index + 1}. ${a.title}${a.priority ? ` (${a.priority})` : ''}\n${a.description || ''}`
-            )
-            .join('\n\n')
-          : '';
-
-        setLocalAiSummary((res?.summary ?? '') + actionsText);
-      })
-      .catch(() => {
-        setLocalAiSummary(null);
-      });
-  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id]);
+    runAi(specialtyName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specialtyName, patient?.id, encounter?.id]);
 
   useEffect(() => {
-    setShowAiPanel(false);
-    setLocalAiSummary(null);
-    setSpecialtyName(null);
+    resetAi();
   }, [formData?.id]);
 
   useEffect(() => {
@@ -554,9 +553,7 @@ const handleClear = () => {
     }));
 
     if (value === 'DEPARTMENT') {
-      setShowAiPanel(false);
-      setLocalAiSummary(null);
-      setSpecialtyName(null);
+      resetAi();
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
@@ -694,9 +691,6 @@ const handleClear = () => {
                             fieldName={'consultantSpeciality'}
                             record={formData}
                             setRecord={value => {
-                              setLocalAiSummary(null);
-                              setShowAiPanel(false);
-
                               setFormData({ ...value, practitionerId: null });
                               setAllPractitioners([]);
                               setPractitionerPage(0);
@@ -712,22 +706,11 @@ const handleClear = () => {
                                   handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
                                 });
 
-                                const selected = (
-                                  consultantSpecialtyLovQueryResponse?.object ?? []
-                                ).find(x => String(x.key) === String(value.consultantSpeciality));
-
-                                const specialtyDisplay = String(
-                                  selected?.lovDisplayVale ?? ''
-                                ).trim();
-
-                                if (specialtyDisplay) {
-                                  setSpecialtyName(specialtyDisplay);
-                                  setShowAiPanel(true);
-                                }
+                                // Selecting a specialty starts the AI recommendations
+                                const specialtyDisplay = selectedSpecialtyName(value.consultantSpeciality);
+                                if (specialtyDisplay) setSpecialtyName(specialtyDisplay);
                               } else {
-                                setSpecialtyName(null);
-                                setShowAiPanel(false);
-                                setLocalAiSummary(null);
+                                resetAi();
                               }
                             }}
                             required
@@ -735,52 +718,25 @@ const handleClear = () => {
 
                           />
 
-                          <button
-                            type="button"
-                            className="ai-icon-btn"
-                            title="AI Assistant"
+                          <SpecialtyAiButton
+                            disabled={!formData?.consultantSpeciality}
+                            phase={aiPhase}
                             onClick={() => {
-                              if (!formData?.consultantSpeciality) {
+                              const specialtyDisplay = selectedSpecialtyName(formData?.consultantSpeciality);
+                              if (!specialtyDisplay) {
                                 dispatch(
                                   notify({
-                                    msg: 'Please select Consultant Specialty first.',
+                                    msg: 'Specialty name not found. Please re-select Consultant Specialty.',
                                     sev: 'warning'
                                   })
                                 );
                                 return;
                               }
-
-                              if (!aiSummary) {
-                                const selected = (
-                                  consultantSpecialtyLovQueryResponse?.object ?? []
-                                ).find(
-                                  x => String(x.key) === String(formData.consultantSpeciality)
-                                );
-
-                                const specialtyDisplay = String(
-                                  selected?.lovDisplayVale ?? ''
-                                ).trim();
-                                if (!specialtyDisplay) {
-                                  dispatch(
-                                    notify({
-                                      msg: 'Specialty name not found. Please re-select Consultant Specialty.',
-                                      sev: 'warning'
-                                    })
-                                  );
-                                  return;
-                                }
-
-                                setSpecialtyName(specialtyDisplay);
-                                setShowAiPanel(true);
-                                return;
-                              }
-
-                              setShowAiPanel(prev => !prev);
+                              // Same specialty: run again; a new one starts through the effect
+                              if (specialtyDisplay === specialtyName) runAi(specialtyDisplay);
+                              else setSpecialtyName(specialtyDisplay);
                             }}
-                          >
-                            <FontAwesomeIcon icon={faRobot} />
-                            <span className="ai-badge">AI</span>
-                          </button>
+                          />
                         </div>
 
                         <MyInput
@@ -936,24 +892,12 @@ const handleClear = () => {
           <div className="left-panel-container">
             <Diagnosis patient={patient} encounter={encounter} />
 
-            {showAiPanel && destinationType === 'CONSULTANT' && (
-              <SectionContainer
-                title={<Translate>Specialty Recommendations</Translate>}
-                content={
-                  <div className="ai-panel-body">
-                    {aiLoading && (
-                      <div className="ai-spinner-container">
-                        <div className="ai-spinner" />
-                      </div>
-                    )}
-
-                    {!aiLoading && !aiError && (
-                      <div className="consultation-content-container">
-                        {aiSummary ?? 'Suggestions will appear here'}
-                      </div>
-                    )}
-                  </div>
-                }
+            {destinationType === 'CONSULTANT' && (
+              <SpecialtyRecommendations
+                phase={aiPhase}
+                specialty={specialtyName}
+                result={aiResult}
+                onRetry={() => runAi(specialtyName)}
               />
             )}
           </div>
