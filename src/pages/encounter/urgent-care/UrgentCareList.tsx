@@ -1300,6 +1300,8 @@ const handleRowsPerPageChange = useCallback(
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
         const isViewOnlyStatus = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
+        // A discharged visit is closed for nursing: saving there rewrote the closed visit.
+        const canOpenNurseStation = !isViewOnlyStatus && statusUpper !== 'DISCHARGED';
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -1350,7 +1352,7 @@ const handleRowsPerPageChange = useCallback(
               </Whisper>
             )}
 
-            {!isViewOnlyStatus && (
+            {canOpenNurseStation && (
               <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
                 <div>
                   <MyButton

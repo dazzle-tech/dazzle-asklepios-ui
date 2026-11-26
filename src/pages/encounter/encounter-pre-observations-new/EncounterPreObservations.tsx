@@ -103,7 +103,8 @@ useEffect(() => {
     : isFromEMR ||
       viewMode === 'readOnly' ||
       location.state?.edit ||
-      localEncounter?.status === 'COMPLETED';
+      localEncounter?.status === 'COMPLETED' ||
+      localEncounter?.status === 'DISCHARGED';
 
   const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 

@@ -35,7 +35,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({ ...(encounter as any) });
 console.log(localPatient);
   useEffect(() => {
-    if (localEncounter?.status === 'COMPLETED') {
+    // A discharged visit is closed too: saving observations there rewrote the closed visit.
+    if (localEncounter?.status === 'COMPLETED' || localEncounter?.status === 'DISCHARGED') {
       setIsEncounterStatusClosed(true);
     } else {
       setIsEncounterStatusClosed(false);
